@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>driftwood</title>
+  <meta name="description" content="driftwood — agentic continual learning lab" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      background: #000;
+      color: #fff;
+      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    main {
+      text-align: center;
+      animation: breathe 4s ease-in-out infinite alternate;
+    }
+
+    .title {
+      font-size: clamp(2.75rem, 9vw, 6.5rem);
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1;
+    }
+
+    .subtitle {
+      font-size: clamp(0.75rem, 1.4vw, 0.95rem);
+      font-weight: 400;
+      margin-top: 1.5rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      opacity: 0.55;
+    }
+
+    @keyframes breathe {
+      0%   { opacity: 0.55; }
+      100% { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1 class="title">driftwood</h1>
+    <p class="subtitle">agentic continual learning lab</p>
+  </main>
+</body>
+</html>
