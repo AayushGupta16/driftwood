@@ -868,7 +868,7 @@
 
     const baseLongitude = THREE.MathUtils.degToRad(localLongitude + (localHour - 12) * 1.7);
     const baseView = {
-      x: THREE.MathUtils.degToRad(8),
+      x: THREE.MathUtils.degToRad(26), // tilt up to show more northern hemisphere
       y: baseLongitude + Math.PI * 0.48,
       z: THREE.MathUtils.degToRad(-4)
     };
@@ -923,7 +923,7 @@
       const deltaX = event.clientX - dragState.lastX;
       const deltaY = event.clientY - dragState.lastY;
       const dragScale = event.pointerType === "touch" ? 0.0036 : 0.0032;
-      const nextX = THREE.MathUtils.clamp(orbitTarget.x - deltaY * dragScale, -0.54, 0.54);
+      const nextX = THREE.MathUtils.clamp(orbitTarget.x - deltaY * dragScale, -1.2, 1.2);
       const appliedX = nextX - orbitTarget.x;
 
       orbitTarget.y -= deltaX * dragScale;
@@ -985,7 +985,7 @@
       if (!dragState.active && !reducedMotion) {
         const damping = Math.pow(0.89, delta * 60);
         orbitTarget.y += rotationVelocity.y * delta;
-        orbitTarget.x = THREE.MathUtils.clamp(orbitTarget.x + rotationVelocity.x * delta, -0.54, 0.54);
+        orbitTarget.x = THREE.MathUtils.clamp(orbitTarget.x + rotationVelocity.x * delta, -1.2, 1.2);
         rotationVelocity.y *= damping;
         rotationVelocity.x *= damping;
 
