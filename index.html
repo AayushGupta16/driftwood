@@ -97,14 +97,15 @@
       position: absolute;
       inset: 5.4vh 5.8vw 5.8vh;
       content: "";
-      border: 1px solid rgba(225, 236, 235, 0.22);
+      border: 2px solid rgba(225, 236, 235, 0.34);
       background:
         linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent 28%, transparent 72%, rgba(255, 255, 255, 0.012)),
         radial-gradient(circle at 50% 47%, transparent 0 43%, rgba(0, 0, 0, 0.34) 73%);
       box-shadow:
-        inset 0 0 0 1px rgba(0, 0, 0, 0.62),
-        inset 0 0 0 10px rgba(255, 255, 255, 0.012),
+        inset 0 0 0 1px rgba(0, 0, 0, 0.72),
+        inset 0 0 0 12px rgba(255, 255, 255, 0.016),
         inset 0 0 120px rgba(0, 0, 0, 0.46),
+        0 0 0 1px rgba(243, 238, 219, 0.08),
         0 42px 110px rgba(0, 0, 0, 0.62);
     }
 
@@ -112,7 +113,7 @@
       position: absolute;
       inset: clamp(18px, 2.6vw, 42px);
       content: "";
-      border: 1px solid rgba(239, 233, 211, 0.08);
+      border: 1px solid rgba(239, 233, 211, 0.16);
       box-shadow:
         inset 0 0 0 1px rgba(0, 0, 0, 0.76),
         inset 0 0 80px rgba(0, 0, 0, 0.34);
@@ -193,48 +194,47 @@
 
     .poster-overlay::before {
       inset: 7vh 7vw 7vh;
-      opacity: 0.46;
-      background-image:
-        linear-gradient(rgba(232, 238, 224, 0.12) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(232, 238, 224, 0.1) 1px, transparent 1px);
-      background-size: 66px 66px;
-      mask-image: radial-gradient(circle at 50% 48%, transparent 0 29%, black 43%, transparent 72%);
+      opacity: 0.3;
+      border: 1px solid rgba(232, 238, 224, 0.18);
+      box-shadow:
+        inset 0 0 0 10px rgba(255, 255, 255, 0.012),
+        0 0 42px rgba(99, 139, 171, 0.06);
     }
 
     .poster-overlay::after {
       inset: 0;
-      opacity: 0.24;
+      opacity: 0.36;
       background:
-        linear-gradient(90deg, transparent 5.8vw, rgba(242, 238, 220, 0.34) 5.8vw calc(5.8vw + 1px), transparent calc(5.8vw + 1px)),
-        linear-gradient(90deg, transparent calc(100vw - 5.8vw), rgba(242, 238, 220, 0.28) calc(100vw - 5.8vw) calc(100vw - 5.8vw + 1px), transparent calc(100vw - 5.8vw + 1px)),
-        linear-gradient(180deg, transparent 5.4vh, rgba(242, 238, 220, 0.3) 5.4vh calc(5.4vh + 1px), transparent calc(5.4vh + 1px)),
-        linear-gradient(180deg, transparent 94.2vh, rgba(242, 238, 220, 0.24) 94.2vh calc(94.2vh + 1px), transparent calc(94.2vh + 1px));
+        linear-gradient(90deg, transparent 5.8vw, rgba(242, 238, 220, 0.5) 5.8vw calc(5.8vw + 2px), transparent calc(5.8vw + 2px)),
+        linear-gradient(90deg, transparent calc(100vw - 5.8vw), rgba(242, 238, 220, 0.42) calc(100vw - 5.8vw) calc(100vw - 5.8vw + 2px), transparent calc(100vw - 5.8vw + 2px)),
+        linear-gradient(180deg, transparent 5.4vh, rgba(242, 238, 220, 0.48) 5.4vh calc(5.4vh + 2px), transparent calc(5.4vh + 2px)),
+        linear-gradient(180deg, transparent 94.2vh, rgba(242, 238, 220, 0.38) 94.2vh calc(94.2vh + 2px), transparent calc(94.2vh + 2px));
     }
 
     .crop {
       position: absolute;
-      width: clamp(28px, 4vw, 58px);
-      height: clamp(28px, 4vw, 58px);
-      opacity: 0.52;
+      width: clamp(34px, 4.8vw, 72px);
+      height: clamp(34px, 4.8vw, 72px);
+      opacity: 0.72;
     }
 
     .crop::before,
     .crop::after {
       position: absolute;
       content: "";
-      background: rgba(241, 236, 218, 0.66);
-      box-shadow: 0 0 14px rgba(92, 139, 168, 0.18);
+      background: rgba(241, 236, 218, 0.84);
+      box-shadow: 0 0 18px rgba(92, 139, 168, 0.24);
     }
 
     .crop::before {
       width: 100%;
-      height: 1px;
+      height: 2px;
       top: 0;
       left: 0;
     }
 
     .crop::after {
-      width: 1px;
+      width: 2px;
       height: 100%;
       top: 0;
       left: 0;
@@ -261,8 +261,8 @@
     .hairline {
       position: absolute;
       display: block;
-      background: rgba(230, 236, 226, 0.28);
-      opacity: 0.54;
+      background: rgba(230, 236, 226, 0.38);
+      opacity: 0.66;
     }
 
     .hairline.is-horizontal {
@@ -285,15 +285,15 @@
     .wordmark {
       position: absolute;
       z-index: 4;
-      top: clamp(6px, 1.9vw, 30px);
+      top: clamp(76px, 9vh, 104px);
       left: 50%;
-      width: min(96vw, 1680px);
+      width: min(92vw, 1500px);
       margin: 0;
       transform: translateX(-50%) scaleX(0.94);
       transform-origin: 50% 0;
       color: #f2eee1;
       font-family: Impact, "Arial Black", "Helvetica Neue Condensed Black", "Helvetica Neue", Arial, sans-serif;
-      font-size: clamp(4.55rem, 18vw, 17.2rem);
+      font-size: clamp(4.4rem, 16.4vw, 15.2rem);
       font-weight: 950;
       line-height: 0.82;
       letter-spacing: -0.018em;
@@ -310,16 +310,12 @@
       position: absolute;
       z-index: 2;
       left: 50%;
-      top: 50%;
-      width: min(78vw, 1010px);
-      height: min(78vw, 1010px);
-      min-width: 470px;
-      min-height: 470px;
+      top: 52%;
+      width: min(72vw, 930px);
+      height: min(72vw, 930px);
+      min-width: 448px;
+      min-height: 448px;
       transform: translate(-50%, -50%);
-      filter:
-        saturate(1.16)
-        contrast(1.14)
-        drop-shadow(0 72px 70px rgba(0, 0, 0, 0.92));
     }
 
     .globe-shell canvas {
@@ -347,7 +343,7 @@
       position: absolute;
       z-index: 4;
       left: 50%;
-      bottom: clamp(32px, 4.8vw, 68px);
+      bottom: clamp(42px, 5.4vw, 78px);
       width: min(92vw, 980px);
       margin: 0;
       transform: translateX(-50%);
@@ -441,18 +437,18 @@
       }
 
       .wordmark {
-        top: clamp(18px, 6vw, 44px);
-        width: 92vw;
-        font-size: clamp(3.55rem, 19.7vw, 6.7rem);
+        top: clamp(78px, 11vh, 98px);
+        width: 88vw;
+        font-size: clamp(3.35rem, 18vw, 6.15rem);
         letter-spacing: -0.012em;
       }
 
       .globe-shell {
-        top: 47.5%;
-        width: 136vw;
-        height: 136vw;
-        min-width: 420px;
-        min-height: 420px;
+        top: 51.5%;
+        width: 96vw;
+        height: 96vw;
+        min-width: 0;
+        min-height: 0;
       }
 
       .globe-shadow {
@@ -462,14 +458,14 @@
       }
 
       .subtitle {
-        bottom: clamp(34px, 9vw, 74px);
+        bottom: clamp(68px, 15vw, 108px);
         font-size: clamp(0.66rem, 2.4vw, 0.84rem);
         letter-spacing: clamp(0.12em, 1.65vw, 0.25em);
       }
 
       .feed-indicator {
         right: 6vw;
-        bottom: clamp(39px, 9.4vw, 78px);
+        bottom: clamp(66px, 14.4vw, 104px);
         width: 6px;
         height: 6px;
       }
@@ -509,23 +505,21 @@
 
       .poster-overlay::before {
         inset: 9.2vh 5.2vw 7.4vh;
-        background-size: 48px 48px;
-        mask-image: radial-gradient(circle at 50% 42%, transparent 0 33%, black 46%, transparent 78%);
       }
 
       .poster-overlay::after {
-        opacity: 0.2;
+        opacity: 0.32;
         background:
-          linear-gradient(90deg, transparent 5.5vw, rgba(242, 238, 220, 0.2) 5.5vw calc(5.5vw + 1px), transparent calc(5.5vw + 1px)),
-          linear-gradient(90deg, transparent 94.5vw, rgba(242, 238, 220, 0.16) 94.5vw calc(94.5vw + 1px), transparent calc(94.5vw + 1px)),
-          linear-gradient(180deg, transparent 13vh, rgba(242, 238, 220, 0.18) 13vh calc(13vh + 1px), transparent calc(13vh + 1px)),
-          linear-gradient(180deg, transparent 88vh, rgba(242, 238, 220, 0.16) 88vh calc(88vh + 1px), transparent calc(88vh + 1px));
+          linear-gradient(90deg, transparent 5.5vw, rgba(242, 238, 220, 0.36) 5.5vw calc(5.5vw + 2px), transparent calc(5.5vw + 2px)),
+          linear-gradient(90deg, transparent 94.5vw, rgba(242, 238, 220, 0.28) 94.5vw calc(94.5vw + 2px), transparent calc(94.5vw + 2px)),
+          linear-gradient(180deg, transparent 13vh, rgba(242, 238, 220, 0.32) 13vh calc(13vh + 2px), transparent calc(13vh + 2px)),
+          linear-gradient(180deg, transparent 88vh, rgba(242, 238, 220, 0.28) 88vh calc(88vh + 2px), transparent calc(88vh + 2px));
       }
 
       .crop {
-        width: 32px;
-        height: 32px;
-        opacity: 0.42;
+        width: 38px;
+        height: 38px;
+        opacity: 0.58;
       }
 
       .crop.is-tr {
@@ -535,12 +529,12 @@
 
       .crop.is-bl {
         left: 6vw;
-        bottom: 8vh;
+        bottom: 7.2vh;
       }
 
       .crop.is-br {
         right: 6vw;
-        bottom: 8vh;
+        bottom: 7.2vh;
       }
 
       .hairline.is-horizontal {
@@ -558,15 +552,13 @@
 
     @media (max-width: 420px) {
       .wordmark {
-        font-size: clamp(3rem, 18.6vw, 5.45rem);
+        font-size: clamp(2.9rem, 17.5vw, 5.1rem);
         letter-spacing: -0.01em;
       }
 
       .globe-shell {
-        width: 144vw;
-        height: 144vw;
-        min-width: 410px;
-        min-height: 410px;
+        width: 96vw;
+        height: 96vw;
       }
     }
   </style>
@@ -608,7 +600,9 @@
       powerPreference: "high-performance"
     });
     renderer.setClearColor(0x000000, 0);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    let renderPixelRatio = Math.min(window.devicePixelRatio || 1, 3);
+    renderer.setPixelRatio(renderPixelRatio);
     globeMount.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
@@ -697,9 +691,10 @@
       -Math.cos(declination) * Math.sin(subsolarLongitude)
     ).normalize();
 
+    const highResolutionTextures = renderer.capabilities.maxTextureSize >= 8192;
     const [dayMap, nightMap, cloudMap] = await Promise.all([
-      loadTexture("earth-no-clouds-2048.jpg"),
-      loadTexture("black-marble-2016-3600.jpg"),
+      loadTexture(highResolutionTextures ? "earth-with-clouds-8192.jpg" : "earth-no-clouds-2048.jpg"),
+      loadTexture(highResolutionTextures ? "black-marble-2016-8192.jpg" : "black-marble-2016-3600.jpg"),
       makeCloudMask("earth-with-clouds-2048.jpg", "earth-no-clouds-2048.jpg")
     ]);
 
@@ -749,17 +744,17 @@
           vec3 nightColor = texture2D(nightMap, uv).rgb;
           float cityLight = smoothstep(0.055, 0.72, max(max(nightColor.r, nightColor.g), nightColor.b));
 
-          dayColor = pow(dayColor, vec3(1.04)) * vec3(0.3, 0.43, 0.56);
-          dayColor += vec3(0.02, 0.04, 0.064) * (0.36 + rim);
-          nightColor = pow(nightColor, vec3(0.58)) * vec3(2.5, 1.72, 0.92);
+          dayColor = pow(dayColor, vec3(0.98)) * vec3(0.46, 0.6, 0.76);
+          dayColor += vec3(0.032, 0.058, 0.088) * (0.44 + rim);
+          nightColor = pow(nightColor, vec3(0.54)) * vec3(3.06, 2.08, 1.12);
 
           vec3 nightBody = vec3(0.012, 0.027, 0.049) * (0.98 + rim * 0.5);
-          vec3 cityColor = nightColor * cityLight * cityMask * (0.9 + cityLight * 0.78);
-          vec3 color = mix(nightBody, dayColor, daySide * 0.78);
+          vec3 cityColor = nightColor * cityLight * cityMask * (1.16 + cityLight * 0.92);
+          vec3 color = mix(nightBody, dayColor, daySide * 0.88);
           color += cityColor;
           color += terminator * vec3(0.12, 0.28, 0.38) * (0.72 + nightSide * 0.46);
           color += rim * vec3(0.2, 0.42, 0.72) * (0.9 + daySide * 0.16);
-          color *= 0.68 + smoothstep(-0.72, 0.82, normalWorld.y) * 0.2;
+          color *= 0.76 + smoothstep(-0.72, 0.82, normalWorld.y) * 0.22;
 
           float limb = smoothstep(0.04, 0.18, dot(normalWorld, normalize(vViewDirection)));
           gl_FragColor = vec4(color * limb, 1.0);
@@ -845,37 +840,12 @@
       `
     });
 
-    const globe = new THREE.Mesh(new THREE.SphereGeometry(2.52, 192, 96), globeMaterial);
-    const clouds = new THREE.Mesh(new THREE.SphereGeometry(2.565, 192, 96), cloudMaterial);
-    const atmosphere = new THREE.Mesh(new THREE.SphereGeometry(2.72, 192, 96), atmosphereMaterial);
+    const globe = new THREE.Mesh(new THREE.SphereGeometry(2.52, 256, 128), globeMaterial);
+    const clouds = new THREE.Mesh(new THREE.SphereGeometry(2.565, 256, 128), cloudMaterial);
+    const atmosphere = new THREE.Mesh(new THREE.SphereGeometry(2.72, 256, 128), atmosphereMaterial);
     const group = new THREE.Group();
     group.add(atmosphere, globe, clouds);
     scene.add(group);
-
-    const starGeometry = new THREE.BufferGeometry();
-    const starCount = 420;
-    const starPositions = new Float32Array(starCount * 3);
-    const starSeed = 37;
-    for (let i = 0; i < starCount; i += 1) {
-      const a = Math.sin((i + 1) * 12.9898 + starSeed) * 43758.5453;
-      const b = Math.sin((i + 3) * 78.233 + starSeed) * 19341.223;
-      const c = Math.sin((i + 7) * 24.521 + starSeed) * 9271.137;
-      starPositions[i * 3] = (a - Math.floor(a) - 0.5) * 18;
-      starPositions[i * 3 + 1] = (b - Math.floor(b) - 0.5) * 12;
-      starPositions[i * 3 + 2] = -5 - (c - Math.floor(c)) * 4;
-    }
-    starGeometry.setAttribute("position", new THREE.BufferAttribute(starPositions, 3));
-    const stars = new THREE.Points(
-      starGeometry,
-      new THREE.PointsMaterial({
-        color: 0xb7c7d8,
-        size: 0.008,
-        transparent: true,
-        opacity: 0.38,
-        depthWrite: false
-      })
-    );
-    scene.add(stars);
 
     const baseLongitude = THREE.MathUtils.degToRad(localLongitude + (localHour - 12) * 1.7);
     const baseView = {
@@ -971,6 +941,11 @@
       const rect = globeMount.getBoundingClientRect();
       const width = Math.max(1, Math.floor(rect.width));
       const height = Math.max(1, Math.floor(rect.height));
+      const nextPixelRatio = Math.min(window.devicePixelRatio || 1, 3);
+      if (nextPixelRatio !== renderPixelRatio) {
+        renderPixelRatio = nextPixelRatio;
+        renderer.setPixelRatio(renderPixelRatio);
+      }
       renderer.setSize(width, height, false);
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
@@ -1013,7 +988,6 @@
       clouds.rotation.y = 0;
       clouds.rotation.x = 0;
       clouds.rotation.z = 0;
-      stars.rotation.z = motion * 0.0012;
 
       renderer.render(scene, camera);
       requestAnimationFrame(animate);

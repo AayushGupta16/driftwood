@@ -15,6 +15,15 @@ NASA usage guidance:
 - Direct source URL: https://assets.science.nasa.gov/content/dam/science/esd/eo/images/imagerecords/144000/144898/BlackMarble_2016_01deg.jpg
 - Credit: NASA Earth Observatory / NASA Science.
 
+### `assets/nasa/black-marble-2016-8192.jpg`
+
+- Source: NASA Earth Observatory / NASA Science, Earth at Night/Black Marble flat maps.
+- Source file downloaded: `BlackMarble_2016_3km.jpg`, 2016 color global 13500x6750 JPEG.
+- Local processing: resized to 8192x4096 JPEG for broad WebGL texture compatibility.
+- Source page: https://science.nasa.gov/earth/earth-observatory/earth-at-night/maps/
+- Direct source URL: https://assets.science.nasa.gov/content/dam/science/esd/eo/images/imagerecords/144000/144898/BlackMarble_2016_3km.jpg
+- Credit: NASA Earth Observatory / NASA Science.
+
 ### `assets/nasa/earth-no-clouds-2048.jpg`
 
 - Source: NASA Goddard Space Flight Center Scientific Visualization Studio, "Equirectangular Projected Earth for LARGEST."
@@ -31,7 +40,15 @@ NASA usage guidance:
 - Direct source URL: https://svs.gsfc.nasa.gov/vis/a000000/a003600/a003615/flat_earth03.jpg
 - Requested credit: NASA/Goddard Space Flight Center Scientific Visualization Studio. The Blue Marble Next Generation data is courtesy of Reto Stockli (NASA/GSFC) and NASA's Earth Observatory.
 
-The page derives an in-browser transparent cloud mask from the two SVS images above by comparing the with-clouds and no-clouds versions. No NASA logos or marks are included.
+### `assets/nasa/earth-with-clouds-8192.jpg`
+
+- Source: NASA Goddard Space Flight Center Scientific Visualization Studio, "Equirectangular Projected Earth for LARGEST."
+- File downloaded: `flat_earth_Largest_still.0330.jpg`, 8192x4096 JPEG.
+- Source page: https://svs.gsfc.nasa.gov/3615/
+- Direct source URL: https://svs.gsfc.nasa.gov/vis/a000000/a003600/a003615/flat_earth_Largest_still.0330.jpg
+- Requested credit: NASA/Goddard Space Flight Center Scientific Visualization Studio. The Blue Marble Next Generation data is courtesy of Reto Stockli (NASA/GSFC) and NASA's Earth Observatory.
+
+The page derives an in-browser transparent cloud mask from the 2048px SVS images above by comparing the with-clouds and no-clouds versions. No NASA logos or marks are included.
 
 ## Runtime Dependency
 
