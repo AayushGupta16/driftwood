@@ -628,6 +628,18 @@
       }, undefined, reject);
     });
 
+    const loadTextureFallback = async (names) => {
+      let lastError;
+      for (const name of names) {
+        try {
+          return await loadTexture(name);
+        } catch (error) {
+          lastError = error;
+        }
+      }
+      throw lastError;
+    };
+
     const makeCloudMask = async (withCloudsUrl, noCloudsUrl) => {
       const [withClouds, noClouds] = await Promise.all([
         loadImage(`${assetBase}${withCloudsUrl}`),
@@ -694,13 +706,27 @@
     ).normalize();
 
     const highResolutionTextures = renderer.capabilities.maxTextureSize >= 8192;
+    const loadCloudTexture = async () => {
+      if (highResolutionTextures) {
+        try {
+          return await loadTexture("earth-clouds-alpha-8192.png");
+        } catch {
+          // Fall back to the derived 2K cloud mask if the deployed high-res alpha map is unavailable.
+        }
+      }
+      return makeCloudMask("earth-with-clouds-2048.jpg", "earth-no-clouds-2048.jpg");
+    };
     const [dayMap, nightMap, cloudMap, specularMap] = await Promise.all([
-      loadTexture(highResolutionTextures ? "earth-topography-8192.jpg" : "earth-no-clouds-2048.jpg"),
-      loadTexture(highResolutionTextures ? "black-marble-2016-8192.jpg" : "black-marble-2016-3600.jpg"),
-      highResolutionTextures
-        ? loadTexture("earth-clouds-alpha-8192.png")
-        : makeCloudMask("earth-with-clouds-2048.jpg", "earth-no-clouds-2048.jpg"),
-      loadTexture(highResolutionTextures ? "earth-specular-8192.jpg" : "earth-no-clouds-2048.jpg")
+      loadTextureFallback(highResolutionTextures
+        ? ["earth-topography-8192.jpg", "earth-no-clouds-2048.jpg"]
+        : ["earth-no-clouds-2048.jpg"]),
+      loadTextureFallback(highResolutionTextures
+        ? ["black-marble-2016-8192.jpg", "black-marble-2016-3600.jpg"]
+        : ["black-marble-2016-3600.jpg"]),
+      loadCloudTexture(),
+      loadTextureFallback(highResolutionTextures
+        ? ["earth-specular-8192.jpg", "earth-no-clouds-2048.jpg"]
+        : ["earth-no-clouds-2048.jpg"])
     ]);
 
     const globeUniforms = {
