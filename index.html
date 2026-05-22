@@ -4,60 +4,1022 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>driftwood</title>
-  <meta name="description" content="driftwood — agentic continual learning lab" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <meta name="description" content="driftwood - agentic continual learning lab" />
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      color-scheme: dark;
+      --paper: #030303;
+      --paper-warm: #100d0a;
+      --ink: #f3efe4;
+      --ink-soft: rgba(243, 239, 228, 0.84);
+      --rim: #79a7d7;
+    }
 
-    html, body {
-      height: 100%;
-      background: #000;
-      color: #fff;
-      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      overflow: hidden;
+      font-family: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+      text-rendering: geometricPrecision;
     }
 
     body {
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      min-height: 100vh;
+    }
+
+    body::before,
+    body::after {
+      position: fixed;
+      inset: 0;
+      content: "";
+      pointer-events: none;
+    }
+
+    body::before {
+      z-index: 0;
+      background:
+        radial-gradient(circle at 50% 47%, rgba(28, 43, 54, 0.58) 0 15%, rgba(8, 9, 10, 0.86) 48%, rgba(0, 0, 0, 0.99) 78%),
+        radial-gradient(circle at 47% 35%, rgba(95, 68, 42, 0.22), transparent 40%),
+        linear-gradient(120deg, #000 0%, var(--paper-warm) 48%, #020202 100%);
+    }
+
+    body::after {
+      z-index: 5;
+      opacity: 0.13;
+      mix-blend-mode: screen;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+        radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.25) 0 0.5px, transparent 0.7px),
+        radial-gradient(circle at 72% 62%, rgba(255, 255, 255, 0.16) 0 0.45px, transparent 0.65px);
+      background-size: 100% 6px, 7px 100%, 37px 41px, 53px 47px;
+    }
+
+    .stage {
+      position: relative;
+      z-index: 1;
+      width: 100vw;
+      height: 100svh;
+      min-height: 620px;
+      isolation: isolate;
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .stage.is-dragging {
+      cursor: grabbing;
+    }
+
+    .poster-back,
+    .poster-overlay {
+      position: absolute;
+      inset: 0;
       overflow: hidden;
+      pointer-events: none;
     }
 
-    main {
+    .poster-back {
+      z-index: 1;
+    }
+
+    .poster-back::before {
+      position: absolute;
+      inset: 5.4vh 5.8vw 5.8vh;
+      content: "";
+      border: 1px solid rgba(225, 236, 235, 0.22);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent 28%, transparent 72%, rgba(255, 255, 255, 0.012)),
+        radial-gradient(circle at 50% 47%, transparent 0 43%, rgba(0, 0, 0, 0.34) 73%);
+      box-shadow:
+        inset 0 0 0 1px rgba(0, 0, 0, 0.62),
+        inset 0 0 0 10px rgba(255, 255, 255, 0.012),
+        inset 0 0 120px rgba(0, 0, 0, 0.46),
+        0 42px 110px rgba(0, 0, 0, 0.62);
+    }
+
+    .poster-back::after {
+      position: absolute;
+      inset: clamp(18px, 2.6vw, 42px);
+      content: "";
+      border: 1px solid rgba(239, 233, 211, 0.08);
+      box-shadow:
+        inset 0 0 0 1px rgba(0, 0, 0, 0.76),
+        inset 0 0 80px rgba(0, 0, 0, 0.34);
+    }
+
+    .poster-plane,
+    .poster-block,
+    .paper-rip {
+      position: absolute;
+      display: block;
+    }
+
+    .poster-plane {
+      background: linear-gradient(120deg, rgba(5, 10, 13, 0.92), rgba(15, 28, 33, 0.4));
+      box-shadow: 0 32px 90px rgba(0, 0, 0, 0.54);
+      opacity: 0.8;
+      transform-origin: center;
+    }
+
+    .poster-plane.is-left {
+      left: -8vw;
+      top: 22vh;
+      width: 34vw;
+      height: 58vh;
+      transform: rotate(-12deg) skewY(-5deg);
+      clip-path: polygon(0 9%, 83% 0, 100% 78%, 14% 100%);
+    }
+
+    .poster-plane.is-right {
+      right: -11vw;
+      top: 15vh;
+      width: 42vw;
+      height: 68vh;
+      background: linear-gradient(145deg, rgba(8, 18, 23, 0.84), rgba(42, 54, 54, 0.22));
+      transform: rotate(8deg) skewY(5deg);
+      clip-path: polygon(12% 0, 100% 12%, 82% 100%, 0 80%);
+    }
+
+    .poster-block {
+      right: clamp(34px, 9vw, 150px);
+      bottom: clamp(86px, 12vh, 140px);
+      width: min(19vw, 260px);
+      height: min(17vw, 220px);
+      background:
+        linear-gradient(135deg, rgba(163, 69, 34, 0.42), rgba(76, 32, 24, 0.12)),
+        linear-gradient(180deg, rgba(255, 215, 156, 0.08), transparent);
+      border: 1px solid rgba(236, 153, 89, 0.15);
+      clip-path: polygon(0 16%, 88% 0, 100% 78%, 14% 100%);
+      filter: blur(0.2px);
+      mix-blend-mode: screen;
+      opacity: 0.42;
+    }
+
+    .paper-rip {
+      left: clamp(18px, 4.8vw, 76px);
+      top: 13vh;
+      width: clamp(16px, 2.6vw, 34px);
+      height: 74vh;
+      opacity: 0.18;
+      background:
+        linear-gradient(90deg, transparent, rgba(244, 238, 219, 0.26) 43%, rgba(244, 238, 219, 0.08) 100%);
+      clip-path: polygon(44% 0, 70% 6%, 48% 13%, 62% 21%, 38% 32%, 64% 44%, 43% 56%, 72% 66%, 46% 75%, 59% 86%, 37% 100%, 0 100%, 0 0);
+      mix-blend-mode: screen;
+    }
+
+    .poster-overlay {
+      z-index: 3;
+      opacity: 0.76;
+      mix-blend-mode: screen;
+    }
+
+    .poster-overlay::before,
+    .poster-overlay::after {
+      position: absolute;
+      content: "";
+      pointer-events: none;
+    }
+
+    .poster-overlay::before {
+      inset: 7vh 7vw 7vh;
+      opacity: 0.46;
+      background-image:
+        linear-gradient(rgba(232, 238, 224, 0.12) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(232, 238, 224, 0.1) 1px, transparent 1px);
+      background-size: 66px 66px;
+      mask-image: radial-gradient(circle at 50% 48%, transparent 0 29%, black 43%, transparent 72%);
+    }
+
+    .poster-overlay::after {
+      inset: 0;
+      opacity: 0.24;
+      background:
+        linear-gradient(90deg, transparent 5.8vw, rgba(242, 238, 220, 0.34) 5.8vw calc(5.8vw + 1px), transparent calc(5.8vw + 1px)),
+        linear-gradient(90deg, transparent calc(100vw - 5.8vw), rgba(242, 238, 220, 0.28) calc(100vw - 5.8vw) calc(100vw - 5.8vw + 1px), transparent calc(100vw - 5.8vw + 1px)),
+        linear-gradient(180deg, transparent 5.4vh, rgba(242, 238, 220, 0.3) 5.4vh calc(5.4vh + 1px), transparent calc(5.4vh + 1px)),
+        linear-gradient(180deg, transparent 94.2vh, rgba(242, 238, 220, 0.24) 94.2vh calc(94.2vh + 1px), transparent calc(94.2vh + 1px));
+    }
+
+    .crop {
+      position: absolute;
+      width: clamp(28px, 4vw, 58px);
+      height: clamp(28px, 4vw, 58px);
+      opacity: 0.52;
+    }
+
+    .crop::before,
+    .crop::after {
+      position: absolute;
+      content: "";
+      background: rgba(241, 236, 218, 0.66);
+      box-shadow: 0 0 14px rgba(92, 139, 168, 0.18);
+    }
+
+    .crop::before {
+      width: 100%;
+      height: 1px;
+      top: 0;
+      left: 0;
+    }
+
+    .crop::after {
+      width: 1px;
+      height: 100%;
+      top: 0;
+      left: 0;
+    }
+
+    .crop.is-tr {
+      top: 5.4vh;
+      right: 5.8vw;
+      transform: scaleX(-1);
+    }
+
+    .crop.is-bl {
+      left: 5.8vw;
+      bottom: 5.8vh;
+      transform: scaleY(-1);
+    }
+
+    .crop.is-br {
+      right: 5.8vw;
+      bottom: 5.8vh;
+      transform: scale(-1);
+    }
+
+    .hairline {
+      position: absolute;
+      display: block;
+      background: rgba(230, 236, 226, 0.28);
+      opacity: 0.54;
+    }
+
+    .hairline.is-horizontal {
+      left: 7vw;
+      right: 7vw;
+      top: 34.5vh;
+      height: 1px;
+      transform: translateY(-50%);
+    }
+
+    .hairline.is-vertical {
+      top: 6vh;
+      bottom: 6vh;
+      left: 50%;
+      width: 1px;
+      transform: translateX(-50%);
+      opacity: 0.18;
+    }
+
+    .wordmark {
+      position: absolute;
+      z-index: 4;
+      top: clamp(6px, 1.9vw, 30px);
+      left: 50%;
+      width: min(96vw, 1680px);
+      margin: 0;
+      transform: translateX(-50%) scaleX(0.94);
+      transform-origin: 50% 0;
+      color: #f2eee1;
+      font-family: Impact, "Arial Black", "Helvetica Neue Condensed Black", "Helvetica Neue", Arial, sans-serif;
+      font-size: clamp(4.55rem, 18vw, 17.2rem);
+      font-weight: 950;
+      line-height: 0.82;
+      letter-spacing: -0.018em;
       text-align: center;
-      animation: breathe 4s ease-in-out infinite alternate;
+      text-transform: lowercase;
+      white-space: nowrap;
+      filter:
+        drop-shadow(0 1px 0 rgba(255, 255, 255, 0.05))
+        drop-shadow(0 22px 28px rgba(0, 0, 0, 0.82));
+      pointer-events: none;
     }
 
-    .title {
-      font-size: clamp(2.75rem, 9vw, 6.5rem);
-      font-weight: 700;
-      letter-spacing: -0.04em;
-      line-height: 1;
+    .globe-shell {
+      position: absolute;
+      z-index: 2;
+      left: 50%;
+      top: 50%;
+      width: min(78vw, 1010px);
+      height: min(78vw, 1010px);
+      min-width: 470px;
+      min-height: 470px;
+      transform: translate(-50%, -50%);
+      filter:
+        saturate(1.16)
+        contrast(1.14)
+        drop-shadow(0 72px 70px rgba(0, 0, 0, 0.92));
+    }
+
+    .globe-shell canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    .globe-shadow {
+      position: absolute;
+      z-index: 1;
+      left: 50%;
+      top: 78%;
+      width: min(64vw, 820px);
+      height: min(13vw, 132px);
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: radial-gradient(ellipse, rgba(0, 0, 0, 0.82) 0 22%, rgba(0, 0, 0, 0.32) 54%, transparent 73%);
+      filter: blur(18px);
+      opacity: 0.86;
     }
 
     .subtitle {
-      font-size: clamp(0.75rem, 1.4vw, 0.95rem);
-      font-weight: 400;
-      margin-top: 1.5rem;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
-      opacity: 0.55;
+      position: absolute;
+      z-index: 4;
+      left: 50%;
+      bottom: clamp(32px, 4.8vw, 68px);
+      width: min(92vw, 980px);
+      margin: 0;
+      transform: translateX(-50%);
+      color: var(--ink-soft);
+      font-family: "SF Mono", "IBM Plex Mono", "Roboto Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: clamp(0.7rem, 1.32vw, 1.02rem);
+      font-weight: 560;
+      letter-spacing: clamp(0.14em, 1.15vw, 0.4em);
+      line-height: 1.35;
+      text-align: center;
+      text-transform: lowercase;
+      text-shadow: 0 1px 18px rgba(0, 0, 0, 0.96), 0 0 28px rgba(96, 137, 174, 0.18);
+      pointer-events: none;
     }
 
-    @keyframes breathe {
-      0%   { opacity: 0.55; }
-      100% { opacity: 1; }
+    .feed-indicator {
+      position: absolute;
+      z-index: 4;
+      right: clamp(46px, 11.6vw, 168px);
+      bottom: clamp(35px, 4.9vw, 70px);
+      width: clamp(5px, 0.58vw, 8px);
+      height: clamp(5px, 0.58vw, 8px);
+      border-radius: 50%;
+      background: #ff3b2f;
+      box-shadow:
+        0 0 0 1px rgba(255, 102, 86, 0.34),
+        0 0 18px rgba(255, 41, 32, 0.36),
+        0 0 42px rgba(255, 41, 32, 0.12);
+      opacity: 0.62;
+      pointer-events: none;
+      animation: feedPulse 2.7s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+    }
+
+    .feed-indicator::before {
+      position: absolute;
+      inset: -7px;
+      content: "";
+      border: 1px solid rgba(255, 75, 58, 0.13);
+      border-radius: 50%;
+      opacity: 0.52;
+    }
+
+    @keyframes feedPulse {
+      0%,
+      58%,
+      100% {
+        opacity: 0.42;
+        transform: scale(0.92);
+        box-shadow:
+          0 0 0 1px rgba(255, 102, 86, 0.22),
+          0 0 12px rgba(255, 41, 32, 0.18),
+          0 0 32px rgba(255, 41, 32, 0.08);
+      }
+
+      12%,
+      28% {
+        opacity: 0.86;
+        transform: scale(1);
+        box-shadow:
+          0 0 0 1px rgba(255, 128, 108, 0.42),
+          0 0 22px rgba(255, 48, 36, 0.54),
+          0 0 52px rgba(255, 48, 36, 0.18);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .feed-indicator {
+        animation: none;
+        opacity: 0.58;
+        transform: none;
+        box-shadow:
+          0 0 0 1px rgba(255, 102, 86, 0.24),
+          0 0 14px rgba(255, 41, 32, 0.2);
+      }
+    }
+
+    .vignette {
+      position: fixed;
+      z-index: 3;
+      inset: -1px;
+      pointer-events: none;
+      background:
+        linear-gradient(90deg, rgba(0, 0, 0, 0.9), transparent 14%, transparent 86%, rgba(0, 0, 0, 0.9)),
+        linear-gradient(180deg, rgba(0, 0, 0, 0.78), transparent 27%, transparent 72%, rgba(0, 0, 0, 0.86));
+      mix-blend-mode: multiply;
+    }
+
+    @media (max-width: 760px) {
+      .stage {
+        min-height: 560px;
+      }
+
+      .wordmark {
+        top: clamp(18px, 6vw, 44px);
+        width: 92vw;
+        font-size: clamp(3.55rem, 19.7vw, 6.7rem);
+        letter-spacing: -0.012em;
+      }
+
+      .globe-shell {
+        top: 47.5%;
+        width: 136vw;
+        height: 136vw;
+        min-width: 420px;
+        min-height: 420px;
+      }
+
+      .globe-shadow {
+        width: 96vw;
+        height: 24vw;
+        top: 74%;
+      }
+
+      .subtitle {
+        bottom: clamp(34px, 9vw, 74px);
+        font-size: clamp(0.66rem, 2.4vw, 0.84rem);
+        letter-spacing: clamp(0.12em, 1.65vw, 0.25em);
+      }
+
+      .feed-indicator {
+        right: 6vw;
+        bottom: clamp(39px, 9.4vw, 78px);
+        width: 6px;
+        height: 6px;
+      }
+
+      .poster-back::before {
+        inset: 7.4vh 4.4vw 6.3vh;
+      }
+
+      .poster-plane.is-left {
+        left: -38vw;
+        top: 20vh;
+        width: 72vw;
+        height: 56vh;
+      }
+
+      .poster-plane.is-right {
+        right: -34vw;
+        top: 17vh;
+        width: 76vw;
+        height: 62vh;
+      }
+
+      .poster-block {
+        right: -10vw;
+        bottom: 18vh;
+        width: 42vw;
+        height: 35vw;
+        opacity: 0.32;
+      }
+
+      .paper-rip {
+        left: 4vw;
+        top: 18vh;
+        height: 58vh;
+        opacity: 0.14;
+      }
+
+      .poster-overlay::before {
+        inset: 9.2vh 5.2vw 7.4vh;
+        background-size: 48px 48px;
+        mask-image: radial-gradient(circle at 50% 42%, transparent 0 33%, black 46%, transparent 78%);
+      }
+
+      .poster-overlay::after {
+        opacity: 0.2;
+        background:
+          linear-gradient(90deg, transparent 5.5vw, rgba(242, 238, 220, 0.2) 5.5vw calc(5.5vw + 1px), transparent calc(5.5vw + 1px)),
+          linear-gradient(90deg, transparent 94.5vw, rgba(242, 238, 220, 0.16) 94.5vw calc(94.5vw + 1px), transparent calc(94.5vw + 1px)),
+          linear-gradient(180deg, transparent 13vh, rgba(242, 238, 220, 0.18) 13vh calc(13vh + 1px), transparent calc(13vh + 1px)),
+          linear-gradient(180deg, transparent 88vh, rgba(242, 238, 220, 0.16) 88vh calc(88vh + 1px), transparent calc(88vh + 1px));
+      }
+
+      .crop {
+        width: 32px;
+        height: 32px;
+        opacity: 0.42;
+      }
+
+      .crop.is-tr {
+        top: 13vh;
+        right: 6vw;
+      }
+
+      .crop.is-bl {
+        left: 6vw;
+        bottom: 8vh;
+      }
+
+      .crop.is-br {
+        right: 6vw;
+        bottom: 8vh;
+      }
+
+      .hairline.is-horizontal {
+        top: 28vh;
+        left: 0;
+        right: 0;
+        opacity: 0.26;
+      }
+
+      .hairline.is-vertical {
+        left: 8vw;
+        opacity: 0.12;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .wordmark {
+        font-size: clamp(3rem, 18.6vw, 5.45rem);
+        letter-spacing: -0.01em;
+      }
+
+      .globe-shell {
+        width: 144vw;
+        height: 144vw;
+        min-width: 410px;
+        min-height: 410px;
+      }
     }
   </style>
 </head>
 <body>
-  <main>
-    <h1 class="title">driftwood</h1>
+  <main class="stage" aria-label="driftwood agentic continual learning lab">
+    <div class="poster-back" aria-hidden="true">
+      <span class="poster-plane is-left"></span>
+      <span class="poster-plane is-right"></span>
+      <span class="poster-block"></span>
+      <span class="paper-rip"></span>
+    </div>
+    <h1 class="wordmark">driftwood</h1>
+    <div class="globe-shell" id="globe" aria-hidden="true"></div>
+    <div class="globe-shadow" aria-hidden="true"></div>
+    <div class="poster-overlay" aria-hidden="true">
+      <span class="crop is-tr"></span>
+      <span class="crop is-bl"></span>
+      <span class="crop is-br"></span>
+      <span class="hairline is-horizontal"></span>
+      <span class="hairline is-vertical"></span>
+    </div>
+    <span class="feed-indicator" aria-hidden="true"></span>
     <p class="subtitle">agentic continual learning lab</p>
+    <div class="vignette" aria-hidden="true"></div>
   </main>
+
+  <script type="module">
+    import * as THREE from "./assets/vendor/three.module.js";
+
+    const stage = document.querySelector(".stage");
+    const globeMount = document.querySelector("#globe");
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const assetBase = "./assets/nasa/";
+
+    const renderer = new THREE.WebGLRenderer({
+      alpha: true,
+      antialias: true,
+      powerPreference: "high-performance"
+    });
+    renderer.setClearColor(0x000000, 0);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    globeMount.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(28, 1, 0.1, 100);
+    const cameraRig = new THREE.Group();
+    camera.position.set(0, 0, 11.7);
+    camera.lookAt(0, 0, 0);
+    cameraRig.add(camera);
+    scene.add(cameraRig);
+
+    const textureLoader = new THREE.TextureLoader();
+    textureLoader.setCrossOrigin("anonymous");
+
+    const loadTexture = (name) => new Promise((resolve, reject) => {
+      textureLoader.load(`${assetBase}${name}`, (texture) => {
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.ClampToEdgeWrapping;
+        resolve(texture);
+      }, undefined, reject);
+    });
+
+    const makeCloudMask = async (withCloudsUrl, noCloudsUrl) => {
+      const [withClouds, noClouds] = await Promise.all([
+        loadImage(`${assetBase}${withCloudsUrl}`),
+        loadImage(`${assetBase}${noCloudsUrl}`)
+      ]);
+
+      const width = Math.min(withClouds.naturalWidth, noClouds.naturalWidth);
+      const height = Math.min(withClouds.naturalHeight, noClouds.naturalHeight);
+      const canvas = document.createElement("canvas");
+      const compare = document.createElement("canvas");
+      canvas.width = compare.width = width;
+      canvas.height = compare.height = height;
+
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      const compareCtx = compare.getContext("2d", { willReadFrequently: true });
+      ctx.drawImage(withClouds, 0, 0, width, height);
+      compareCtx.drawImage(noClouds, 0, 0, width, height);
+
+      const cloudData = ctx.getImageData(0, 0, width, height);
+      const baseData = compareCtx.getImageData(0, 0, width, height).data;
+      const pixels = cloudData.data;
+
+      for (let index = 0; index < pixels.length; index += 4) {
+        const cloudLuma = pixels[index] * 0.2126 + pixels[index + 1] * 0.7152 + pixels[index + 2] * 0.0722;
+        const baseLuma = baseData[index] * 0.2126 + baseData[index + 1] * 0.7152 + baseData[index + 2] * 0.0722;
+        const diff = Math.max(0, cloudLuma - baseLuma);
+        const whiteness = 255 - (Math.max(pixels[index], pixels[index + 1], pixels[index + 2]) - Math.min(pixels[index], pixels[index + 1], pixels[index + 2]));
+        const alpha = THREE.MathUtils.clamp((diff * 2.2 + Math.max(0, whiteness - 216) * 0.42) / 255, 0, 0.86);
+
+        pixels[index] = 232;
+        pixels[index + 1] = 238;
+        pixels[index + 2] = 240;
+        pixels[index + 3] = Math.round(alpha * 255);
+      }
+
+      ctx.putImageData(cloudData, 0, 0);
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.ClampToEdgeWrapping;
+      return texture;
+    };
+
+    const loadImage = (src) => new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = reject;
+      image.src = src;
+    });
+
+    const date = new Date();
+    const localLongitude = -date.getTimezoneOffset() / 4;
+    const localHour = date.getHours() + date.getMinutes() / 60;
+    const yearStart = new Date(date.getFullYear(), 0, 0);
+    const dayOfYear = Math.floor((date - yearStart) / 86400000);
+    const declination = THREE.MathUtils.degToRad(23.44 * Math.sin(THREE.MathUtils.degToRad((360 / 365) * (dayOfYear - 81))));
+    const utcHour = date.getUTCHours() + date.getUTCMinutes() / 60 + date.getUTCSeconds() / 3600;
+    const subsolarLongitude = THREE.MathUtils.degToRad(-15 * (utcHour - 12));
+    const sunDirection = new THREE.Vector3(
+      Math.cos(declination) * Math.cos(subsolarLongitude),
+      Math.sin(declination),
+      -Math.cos(declination) * Math.sin(subsolarLongitude)
+    ).normalize();
+
+    const [dayMap, nightMap, cloudMap] = await Promise.all([
+      loadTexture("earth-no-clouds-2048.jpg"),
+      loadTexture("black-marble-2016-3600.jpg"),
+      makeCloudMask("earth-with-clouds-2048.jpg", "earth-no-clouds-2048.jpg")
+    ]);
+
+    const globeUniforms = {
+      dayMap: { value: dayMap },
+      nightMap: { value: nightMap },
+      sunDirection: { value: sunDirection },
+      time: { value: 0 }
+    };
+
+    const globeMaterial = new THREE.ShaderMaterial({
+      uniforms: globeUniforms,
+      vertexShader: `
+        varying vec2 vUv;
+        varying vec3 vNormalWorld;
+        varying vec3 vViewDirection;
+
+        void main() {
+          vUv = uv;
+          vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+          vNormalWorld = normalize(mat3(modelMatrix) * normal);
+          vViewDirection = normalize(cameraPosition - worldPosition.xyz);
+          gl_Position = projectionMatrix * viewMatrix * worldPosition;
+        }
+      `,
+      fragmentShader: `
+        uniform sampler2D dayMap;
+        uniform sampler2D nightMap;
+        uniform vec3 sunDirection;
+        uniform float time;
+
+        varying vec2 vUv;
+        varying vec3 vNormalWorld;
+        varying vec3 vViewDirection;
+
+        void main() {
+          vec3 normalWorld = normalize(vNormalWorld);
+          float sunlight = dot(normalWorld, normalize(sunDirection));
+          float daySide = smoothstep(-0.12, 0.34, sunlight);
+          float nightSide = 1.0 - smoothstep(-0.26, -0.08, sunlight);
+          float cityMask = 1.0 - smoothstep(-0.24, -0.075, sunlight);
+          float terminator = smoothstep(-0.18, 0.08, sunlight) * (1.0 - smoothstep(0.1, 0.42, sunlight));
+          float rim = pow(1.0 - max(dot(normalWorld, normalize(vViewDirection)), 0.0), 2.2);
+
+          vec2 uv = vUv;
+          vec3 dayColor = texture2D(dayMap, uv).rgb;
+          vec3 nightColor = texture2D(nightMap, uv).rgb;
+          float cityLight = smoothstep(0.055, 0.72, max(max(nightColor.r, nightColor.g), nightColor.b));
+
+          dayColor = pow(dayColor, vec3(1.04)) * vec3(0.3, 0.43, 0.56);
+          dayColor += vec3(0.02, 0.04, 0.064) * (0.36 + rim);
+          nightColor = pow(nightColor, vec3(0.58)) * vec3(2.5, 1.72, 0.92);
+
+          vec3 nightBody = vec3(0.012, 0.027, 0.049) * (0.98 + rim * 0.5);
+          vec3 cityColor = nightColor * cityLight * cityMask * (0.9 + cityLight * 0.78);
+          vec3 color = mix(nightBody, dayColor, daySide * 0.78);
+          color += cityColor;
+          color += terminator * vec3(0.12, 0.28, 0.38) * (0.72 + nightSide * 0.46);
+          color += rim * vec3(0.2, 0.42, 0.72) * (0.9 + daySide * 0.16);
+          color *= 0.68 + smoothstep(-0.72, 0.82, normalWorld.y) * 0.2;
+
+          float limb = smoothstep(0.04, 0.18, dot(normalWorld, normalize(vViewDirection)));
+          gl_FragColor = vec4(color * limb, 1.0);
+        }
+      `
+    });
+
+    const cloudUniforms = {
+      cloudMap: { value: cloudMap },
+      sunDirection: { value: sunDirection },
+      time: { value: 0 }
+    };
+
+    const cloudMaterial = new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.NormalBlending,
+      uniforms: cloudUniforms,
+      vertexShader: `
+        varying vec2 vUv;
+        varying vec3 vNormalWorld;
+        varying vec3 vViewDirection;
+
+        void main() {
+          vUv = uv;
+          vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+          vNormalWorld = normalize(mat3(modelMatrix) * normal);
+          vViewDirection = normalize(cameraPosition - worldPosition.xyz);
+          gl_Position = projectionMatrix * viewMatrix * worldPosition;
+        }
+      `,
+      fragmentShader: `
+        uniform sampler2D cloudMap;
+        uniform vec3 sunDirection;
+        uniform float time;
+
+        varying vec2 vUv;
+        varying vec3 vNormalWorld;
+        varying vec3 vViewDirection;
+
+        void main() {
+          vec2 wind = vec2(time * 0.00045, 0.0);
+          vec4 cloud = texture2D(cloudMap, vUv + wind);
+          float sunlight = dot(normalize(vNormalWorld), normalize(sunDirection));
+          float daySide = smoothstep(-0.18, 0.28, sunlight);
+          float rim = pow(1.0 - max(dot(normalize(vNormalWorld), normalize(vViewDirection)), 0.0), 2.1);
+          float alpha = cloud.a * (0.06 + daySide * 0.22 + rim * 0.18);
+          vec3 color = mix(vec3(0.16, 0.25, 0.31), vec3(0.54, 0.62, 0.64), daySide);
+          gl_FragColor = vec4(color, alpha);
+        }
+      `
+    });
+
+    const atmosphereMaterial = new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      side: THREE.BackSide,
+      blending: THREE.AdditiveBlending,
+      uniforms: {
+        sunDirection: { value: sunDirection }
+      },
+      vertexShader: `
+        varying vec3 vNormalWorld;
+        varying vec3 vViewDirection;
+
+        void main() {
+          vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+          vNormalWorld = normalize(mat3(modelMatrix) * normal);
+          vViewDirection = normalize(cameraPosition - worldPosition.xyz);
+          gl_Position = projectionMatrix * viewMatrix * worldPosition;
+        }
+      `,
+      fragmentShader: `
+        uniform vec3 sunDirection;
+        varying vec3 vNormalWorld;
+        varying vec3 vViewDirection;
+
+        void main() {
+          float fresnel = pow(1.0 - max(dot(normalize(vNormalWorld), normalize(vViewDirection)), 0.0), 2.42);
+          float sun = smoothstep(-0.35, 0.65, dot(normalize(vNormalWorld), normalize(sunDirection)));
+          gl_FragColor = vec4(vec3(0.26, 0.56, 0.86) * fresnel * (0.58 + sun * 0.5), fresnel * 0.6);
+        }
+      `
+    });
+
+    const globe = new THREE.Mesh(new THREE.SphereGeometry(2.52, 192, 96), globeMaterial);
+    const clouds = new THREE.Mesh(new THREE.SphereGeometry(2.565, 192, 96), cloudMaterial);
+    const atmosphere = new THREE.Mesh(new THREE.SphereGeometry(2.72, 192, 96), atmosphereMaterial);
+    const group = new THREE.Group();
+    group.add(atmosphere, globe, clouds);
+    scene.add(group);
+
+    const starGeometry = new THREE.BufferGeometry();
+    const starCount = 420;
+    const starPositions = new Float32Array(starCount * 3);
+    const starSeed = 37;
+    for (let i = 0; i < starCount; i += 1) {
+      const a = Math.sin((i + 1) * 12.9898 + starSeed) * 43758.5453;
+      const b = Math.sin((i + 3) * 78.233 + starSeed) * 19341.223;
+      const c = Math.sin((i + 7) * 24.521 + starSeed) * 9271.137;
+      starPositions[i * 3] = (a - Math.floor(a) - 0.5) * 18;
+      starPositions[i * 3 + 1] = (b - Math.floor(b) - 0.5) * 12;
+      starPositions[i * 3 + 2] = -5 - (c - Math.floor(c)) * 4;
+    }
+    starGeometry.setAttribute("position", new THREE.BufferAttribute(starPositions, 3));
+    const stars = new THREE.Points(
+      starGeometry,
+      new THREE.PointsMaterial({
+        color: 0xb7c7d8,
+        size: 0.008,
+        transparent: true,
+        opacity: 0.38,
+        depthWrite: false
+      })
+    );
+    scene.add(stars);
+
+    const baseLongitude = THREE.MathUtils.degToRad(localLongitude + (localHour - 12) * 1.7);
+    const baseView = {
+      x: THREE.MathUtils.degToRad(8),
+      y: baseLongitude + Math.PI * 0.48,
+      z: THREE.MathUtils.degToRad(-4)
+    };
+    const orbitRotation = { x: 0, y: 0 };
+    const orbitTarget = { x: 0, y: 0 };
+    const rotationVelocity = { x: 0, y: 0 };
+    const dragState = {
+      active: false,
+      pointerId: null,
+      lastX: 0,
+      lastY: 0,
+      lastTime: performance.now()
+    };
+    let lastInteractionAt = performance.now();
+    let autoDriftY = 0;
+    let autoTiltX = 0;
+
+    group.rotation.set(0, 0, 0);
+    clouds.rotation.set(0, 0, 0);
+    cameraRig.rotation.set(baseView.x, baseView.y, baseView.z);
+
+    const setDragging = (isDragging) => {
+      dragState.active = isDragging;
+      stage.classList.toggle("is-dragging", isDragging);
+    };
+
+    const beginDrag = (event) => {
+      if (event.pointerType === "mouse" && event.button !== 0) {
+        return;
+      }
+
+      event.preventDefault();
+      stage.setPointerCapture?.(event.pointerId);
+      dragState.pointerId = event.pointerId;
+      dragState.lastX = event.clientX;
+      dragState.lastY = event.clientY;
+      dragState.lastTime = performance.now();
+      rotationVelocity.x = 0;
+      rotationVelocity.y = 0;
+      lastInteractionAt = dragState.lastTime;
+      setDragging(true);
+    };
+
+    const updateDrag = (event) => {
+      if (!dragState.active || event.pointerId !== dragState.pointerId) {
+        return;
+      }
+
+      event.preventDefault();
+      const now = performance.now();
+      const deltaTime = Math.max(12, now - dragState.lastTime);
+      const deltaX = event.clientX - dragState.lastX;
+      const deltaY = event.clientY - dragState.lastY;
+      const dragScale = event.pointerType === "touch" ? 0.0036 : 0.0032;
+      const nextX = THREE.MathUtils.clamp(orbitTarget.x - deltaY * dragScale, -0.54, 0.54);
+      const appliedX = nextX - orbitTarget.x;
+
+      orbitTarget.y -= deltaX * dragScale;
+      orbitTarget.x = nextX;
+      rotationVelocity.y = THREE.MathUtils.clamp((-deltaX * dragScale) / (deltaTime / 1000), -2.6, 2.6);
+      rotationVelocity.x = THREE.MathUtils.clamp(appliedX / (deltaTime / 1000), -1.8, 1.8);
+      dragState.lastX = event.clientX;
+      dragState.lastY = event.clientY;
+      dragState.lastTime = now;
+      lastInteractionAt = now;
+    };
+
+    const endDrag = (event) => {
+      if (!dragState.active || event.pointerId !== dragState.pointerId) {
+        return;
+      }
+
+      stage.releasePointerCapture?.(event.pointerId);
+      dragState.pointerId = null;
+      lastInteractionAt = performance.now();
+      setDragging(false);
+    };
+
+    stage.addEventListener("pointerdown", beginDrag);
+    stage.addEventListener("pointermove", updateDrag);
+    stage.addEventListener("pointerup", endDrag);
+    stage.addEventListener("pointercancel", endDrag);
+    stage.addEventListener("lostpointercapture", () => {
+      dragState.pointerId = null;
+      setDragging(false);
+    });
+
+    const resize = () => {
+      const rect = globeMount.getBoundingClientRect();
+      const width = Math.max(1, Math.floor(rect.width));
+      const height = Math.max(1, Math.floor(rect.height));
+      renderer.setSize(width, height, false);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+    };
+
+    window.addEventListener("resize", resize, { passive: true });
+    resize();
+
+    const clock = new THREE.Clock();
+    const animate = () => {
+      const delta = Math.min(clock.getDelta(), 0.05);
+      const elapsed = clock.elapsedTime;
+      const now = performance.now();
+      const motion = reducedMotion ? 0 : elapsed;
+      globeUniforms.time.value = motion;
+      cloudUniforms.time.value = motion;
+
+      if (!dragState.active && !reducedMotion) {
+        const damping = Math.pow(0.89, delta * 60);
+        orbitTarget.y += rotationVelocity.y * delta;
+        orbitTarget.x = THREE.MathUtils.clamp(orbitTarget.x + rotationVelocity.x * delta, -0.54, 0.54);
+        rotationVelocity.y *= damping;
+        rotationVelocity.x *= damping;
+
+        if (Math.abs(rotationVelocity.y) < 0.004) rotationVelocity.y = 0;
+        if (Math.abs(rotationVelocity.x) < 0.003) rotationVelocity.x = 0;
+      }
+
+      const follow = dragState.active ? 0.36 : 0.18;
+      orbitRotation.y += (orbitTarget.y - orbitRotation.y) * (1.0 - Math.pow(1.0 - follow, delta * 60));
+      orbitRotation.x += (orbitTarget.x - orbitRotation.x) * (1.0 - Math.pow(1.0 - follow, delta * 60));
+
+      const idleBlend = reducedMotion ? 0 : THREE.MathUtils.smoothstep((now - lastInteractionAt) / 950, 0, 1);
+      autoDriftY += delta * 0.052 * idleBlend;
+      autoTiltX = Math.sin(motion * 0.11) * 0.018 * idleBlend;
+
+      cameraRig.rotation.y = baseView.y + autoDriftY + orbitRotation.y;
+      cameraRig.rotation.x = baseView.x + autoTiltX + orbitRotation.x;
+      cameraRig.rotation.z = baseView.z;
+      clouds.rotation.y = 0;
+      clouds.rotation.x = 0;
+      clouds.rotation.z = 0;
+      stars.rotation.z = motion * 0.0012;
+
+      renderer.render(scene, camera);
+      requestAnimationFrame(animate);
+    };
+
+    animate();
+  </script>
 </body>
 </html>
