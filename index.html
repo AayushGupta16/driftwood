@@ -296,7 +296,7 @@
       font-size: clamp(4.4rem, 16.4vw, 15.2rem);
       font-weight: 950;
       line-height: 0.82;
-      letter-spacing: -0.018em;
+      letter-spacing: -0.008em;
       text-align: center;
       text-transform: lowercase;
       white-space: nowrap;
@@ -440,7 +440,7 @@
         top: clamp(78px, 11vh, 98px);
         width: 88vw;
         font-size: clamp(3.35rem, 18vw, 6.15rem);
-        letter-spacing: -0.012em;
+        letter-spacing: -0.004em;
       }
 
       .globe-shell {
@@ -553,7 +553,7 @@
     @media (max-width: 420px) {
       .wordmark {
         font-size: clamp(2.9rem, 17.5vw, 5.1rem);
-        letter-spacing: -0.01em;
+        letter-spacing: -0.002em;
       }
 
       .globe-shell {
@@ -692,15 +692,19 @@
     ).normalize();
 
     const highResolutionTextures = renderer.capabilities.maxTextureSize >= 8192;
-    const [dayMap, nightMap, cloudMap] = await Promise.all([
-      loadTexture(highResolutionTextures ? "earth-with-clouds-8192.jpg" : "earth-no-clouds-2048.jpg"),
+    const [dayMap, nightMap, cloudMap, specularMap] = await Promise.all([
+      loadTexture(highResolutionTextures ? "earth-topography-8192.jpg" : "earth-no-clouds-2048.jpg"),
       loadTexture(highResolutionTextures ? "black-marble-2016-8192.jpg" : "black-marble-2016-3600.jpg"),
-      makeCloudMask("earth-with-clouds-2048.jpg", "earth-no-clouds-2048.jpg")
+      highResolutionTextures
+        ? loadTexture("earth-clouds-alpha-8192.png")
+        : makeCloudMask("earth-with-clouds-2048.jpg", "earth-no-clouds-2048.jpg"),
+      loadTexture(highResolutionTextures ? "earth-specular-8192.jpg" : "earth-no-clouds-2048.jpg")
     ]);
 
     const globeUniforms = {
       dayMap: { value: dayMap },
       nightMap: { value: nightMap },
+      specularMap: { value: specularMap },
       sunDirection: { value: sunDirection },
       time: { value: 0 }
     };
@@ -723,6 +727,7 @@
       fragmentShader: `
         uniform sampler2D dayMap;
         uniform sampler2D nightMap;
+        uniform sampler2D specularMap;
         uniform vec3 sunDirection;
         uniform float time;
 
@@ -737,22 +742,35 @@
           float nightSide = 1.0 - smoothstep(-0.26, -0.08, sunlight);
           float cityMask = 1.0 - smoothstep(-0.24, -0.075, sunlight);
           float terminator = smoothstep(-0.18, 0.08, sunlight) * (1.0 - smoothstep(0.1, 0.42, sunlight));
+          float warmEdge = smoothstep(-0.1, 0.04, sunlight) * (1.0 - smoothstep(0.04, 0.22, sunlight));
+          float violetEdge = smoothstep(-0.24, -0.08, sunlight) * (1.0 - smoothstep(-0.06, 0.12, sunlight));
           float rim = pow(1.0 - max(dot(normalWorld, normalize(vViewDirection)), 0.0), 2.2);
 
           vec2 uv = vUv;
           vec3 dayColor = texture2D(dayMap, uv).rgb;
           vec3 nightColor = texture2D(nightMap, uv).rgb;
+          float waterMask = texture2D(specularMap, uv).r;
           float cityLight = smoothstep(0.055, 0.72, max(max(nightColor.r, nightColor.g), nightColor.b));
 
-          dayColor = pow(dayColor, vec3(0.98)) * vec3(0.46, 0.6, 0.76);
-          dayColor += vec3(0.032, 0.058, 0.088) * (0.44 + rim);
+          // Brighten and slightly boost contrast
+          dayColor = pow(dayColor, vec3(0.85)); 
+          dayColor = clamp((dayColor - 0.5) * 1.1 + 0.5, 0.0, 1.0);
+          // Cool down the shadows and midtones slightly, keep highlights natural
+          dayColor = mix(dayColor, dayColor * vec3(0.85, 0.95, 1.15), 0.5);
+          dayColor += vec3(0.02, 0.05, 0.1) * (0.5 + rim * 0.8);
           nightColor = pow(nightColor, vec3(0.54)) * vec3(3.06, 2.08, 1.12);
+
+          vec3 reflectedSun = reflect(-normalize(sunDirection), normalWorld);
+          float oceanGlint = pow(max(dot(reflectedSun, normalize(vViewDirection)), 0.0), 36.0) * waterMask * daySide;
 
           vec3 nightBody = vec3(0.012, 0.027, 0.049) * (0.98 + rim * 0.5);
           vec3 cityColor = nightColor * cityLight * cityMask * (1.16 + cityLight * 0.92);
-          vec3 color = mix(nightBody, dayColor, daySide * 0.88);
+          vec3 color = mix(nightBody, dayColor, daySide * 0.95);
           color += cityColor;
-          color += terminator * vec3(0.12, 0.28, 0.38) * (0.72 + nightSide * 0.46);
+          color += oceanGlint * vec3(0.32, 0.5, 0.68);
+          color += terminator * vec3(0.08, 0.2, 0.34) * (0.55 + nightSide * 0.36);
+          color += warmEdge * vec3(0.34, 0.16, 0.055) * 0.32;
+          color += violetEdge * vec3(0.12, 0.07, 0.2) * 0.22;
           color += rim * vec3(0.2, 0.42, 0.72) * (0.9 + daySide * 0.16);
           color *= 0.76 + smoothstep(-0.72, 0.82, normalWorld.y) * 0.22;
 
@@ -801,8 +819,9 @@
           float sunlight = dot(normalize(vNormalWorld), normalize(sunDirection));
           float daySide = smoothstep(-0.18, 0.28, sunlight);
           float rim = pow(1.0 - max(dot(normalize(vNormalWorld), normalize(vViewDirection)), 0.0), 2.1);
-          float alpha = cloud.a * (0.06 + daySide * 0.22 + rim * 0.18);
-          vec3 color = mix(vec3(0.16, 0.25, 0.31), vec3(0.54, 0.62, 0.64), daySide);
+          float cloudCoverage = max(cloud.a, smoothstep(0.18, 0.78, cloud.r) * 0.72);
+          float alpha = cloudCoverage * (0.035 + daySide * 0.16 + rim * 0.12);
+          vec3 color = mix(vec3(0.14, 0.22, 0.28), vec3(0.68, 0.73, 0.72), daySide);
           gl_FragColor = vec4(color, alpha);
         }
       `
