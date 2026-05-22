@@ -608,9 +608,11 @@
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(28, 1, 0.1, 100);
     const cameraRig = new THREE.Group();
+    const pitchRig = new THREE.Group();
     camera.position.set(0, 0, 11.7);
     camera.lookAt(0, 0, 0);
-    cameraRig.add(camera);
+    pitchRig.add(camera);
+    cameraRig.add(pitchRig);
     scene.add(cameraRig);
 
     const textureLoader = new THREE.TextureLoader();
@@ -868,10 +870,19 @@
 
     const baseLongitude = THREE.MathUtils.degToRad(localLongitude + (localHour - 12) * 1.7);
     const baseView = {
-      x: THREE.MathUtils.degToRad(26), // tilt up to show more northern hemisphere
+      x: THREE.MathUtils.degToRad(-26), // pitch toward the northern hemisphere on load
       y: baseLongitude + Math.PI * 0.48,
       z: THREE.MathUtils.degToRad(-4)
     };
+    const pitchBounds = {
+      min: THREE.MathUtils.degToRad(-62),
+      max: THREE.MathUtils.degToRad(46)
+    };
+    const clampOrbitPitch = (pitchOffset) => THREE.MathUtils.clamp(
+      pitchOffset,
+      pitchBounds.min - baseView.x,
+      pitchBounds.max - baseView.x
+    );
     const orbitRotation = { x: 0, y: 0 };
     const orbitTarget = { x: 0, y: 0 };
     const rotationVelocity = { x: 0, y: 0 };
@@ -888,7 +899,9 @@
 
     group.rotation.set(0, 0, 0);
     clouds.rotation.set(0, 0, 0);
-    cameraRig.rotation.set(baseView.x, baseView.y, baseView.z);
+    cameraRig.rotation.set(0, baseView.y, 0);
+    pitchRig.rotation.set(baseView.x, 0, 0);
+    camera.rotation.z = baseView.z;
 
     const setDragging = (isDragging) => {
       dragState.active = isDragging;
@@ -922,14 +935,14 @@
       const deltaTime = Math.max(12, now - dragState.lastTime);
       const deltaX = event.clientX - dragState.lastX;
       const deltaY = event.clientY - dragState.lastY;
-      const dragScale = event.pointerType === "touch" ? 0.0036 : 0.0032;
-      const nextX = THREE.MathUtils.clamp(orbitTarget.x - deltaY * dragScale, -1.2, 1.2);
+      const dragScale = event.pointerType === "touch" ? 0.00325 : 0.0029;
+      const nextX = clampOrbitPitch(orbitTarget.x - deltaY * dragScale);
       const appliedX = nextX - orbitTarget.x;
 
       orbitTarget.y -= deltaX * dragScale;
       orbitTarget.x = nextX;
       rotationVelocity.y = THREE.MathUtils.clamp((-deltaX * dragScale) / (deltaTime / 1000), -2.6, 2.6);
-      rotationVelocity.x = THREE.MathUtils.clamp(appliedX / (deltaTime / 1000), -1.8, 1.8);
+      rotationVelocity.x = THREE.MathUtils.clamp(appliedX / (deltaTime / 1000), -1.35, 1.35);
       dragState.lastX = event.clientX;
       dragState.lastY = event.clientY;
       dragState.lastTime = now;
@@ -985,7 +998,7 @@
       if (!dragState.active && !reducedMotion) {
         const damping = Math.pow(0.89, delta * 60);
         orbitTarget.y += rotationVelocity.y * delta;
-        orbitTarget.x = THREE.MathUtils.clamp(orbitTarget.x + rotationVelocity.x * delta, -1.2, 1.2);
+        orbitTarget.x = clampOrbitPitch(orbitTarget.x + rotationVelocity.x * delta);
         rotationVelocity.y *= damping;
         rotationVelocity.x *= damping;
 
@@ -993,7 +1006,7 @@
         if (Math.abs(rotationVelocity.x) < 0.003) rotationVelocity.x = 0;
       }
 
-      const follow = dragState.active ? 0.36 : 0.18;
+      const follow = dragState.active ? 0.54 : 0.18;
       orbitRotation.y += (orbitTarget.y - orbitRotation.y) * (1.0 - Math.pow(1.0 - follow, delta * 60));
       orbitRotation.x += (orbitTarget.x - orbitRotation.x) * (1.0 - Math.pow(1.0 - follow, delta * 60));
 
@@ -1002,8 +1015,12 @@
       autoTiltX = Math.sin(motion * 0.11) * 0.018 * idleBlend;
 
       cameraRig.rotation.y = baseView.y + autoDriftY + orbitRotation.y;
-      cameraRig.rotation.x = baseView.x + autoTiltX + orbitRotation.x;
-      cameraRig.rotation.z = baseView.z;
+      cameraRig.rotation.x = 0;
+      cameraRig.rotation.z = 0;
+      pitchRig.rotation.x = baseView.x + autoTiltX + orbitRotation.x;
+      pitchRig.rotation.y = 0;
+      pitchRig.rotation.z = 0;
+      camera.rotation.z = baseView.z;
       clouds.rotation.y = 0;
       clouds.rotation.x = 0;
       clouds.rotation.z = 0;
