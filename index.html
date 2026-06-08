@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>driftwood</title>
   <meta name="description" content="driftwood - agentic continual learning lab" />
+  <link rel="icon" href="data:," />
   <style>
     :root {
       color-scheme: dark;
@@ -1011,6 +1012,57 @@
 
     window.addEventListener("resize", resize, { passive: true });
     resize();
+
+    // Render the live globe into a small offscreen target and publish it as the
+    // favicon, so the tab icon matches what's on screen (user longitude + day/night).
+    const faviconSize = 128;
+    const faviconTarget = new THREE.WebGLRenderTarget(faviconSize, faviconSize, {
+      colorSpace: THREE.SRGBColorSpace,
+      depthBuffer: true,
+      samples: 4
+    });
+    const faviconCamera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
+    const faviconDistance = 10.8; // frames the globe to fill the icon
+    const faviconPixels = new Uint8Array(faviconSize * faviconSize * 4);
+    const faviconCanvas = document.createElement("canvas");
+    faviconCanvas.width = faviconCanvas.height = faviconSize;
+    const faviconCtx = faviconCanvas.getContext("2d");
+    const faviconImage = faviconCtx.createImageData(faviconSize, faviconSize);
+    const faviconRowBytes = faviconSize * 4;
+    const faviconLink = document.querySelector("link[rel='icon']") || document.createElement("link");
+    faviconLink.rel = "icon";
+    faviconLink.type = "image/png";
+    if (!faviconLink.isConnected) document.head.appendChild(faviconLink);
+
+    const faviconPosition = new THREE.Vector3();
+    const faviconQuaternion = new THREE.Quaternion();
+    const updateFavicon = () => {
+      if (document.hidden) return;
+      camera.updateWorldMatrix(true, false);
+      camera.getWorldPosition(faviconPosition);
+      camera.getWorldQuaternion(faviconQuaternion);
+      faviconCamera.position.copy(faviconPosition).normalize().multiplyScalar(faviconDistance);
+      faviconCamera.quaternion.copy(faviconQuaternion);
+
+      renderer.setRenderTarget(faviconTarget);
+      renderer.render(scene, faviconCamera);
+      renderer.readRenderTargetPixels(faviconTarget, 0, 0, faviconSize, faviconSize, faviconPixels);
+      renderer.setRenderTarget(null);
+
+      // WebGL reads bottom-to-top, so flip rows into the 2D canvas.
+      for (let y = 0; y < faviconSize; y++) {
+        const src = (faviconSize - 1 - y) * faviconRowBytes;
+        faviconImage.data.set(faviconPixels.subarray(src, src + faviconRowBytes), y * faviconRowBytes);
+      }
+      faviconCtx.putImageData(faviconImage, 0, 0);
+      faviconLink.href = faviconCanvas.toDataURL("image/png");
+    };
+
+    updateFavicon();
+    setInterval(updateFavicon, 2000);
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) updateFavicon();
+    });
 
     const clock = new THREE.Clock();
     const animate = () => {
