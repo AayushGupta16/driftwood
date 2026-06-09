@@ -77,6 +77,15 @@ NASA usage guidance:
 
 The page derives an in-browser transparent cloud mask from the 2048px SVS images above by comparing the with-clouds and no-clouds versions. No NASA logos or marks are included.
 
+## Fonts
+
+### `assets/fonts/nasalization-rg.woff2`
+
+- Source: Nasalization Regular by Typodermic Fonts (Ray Larabie), inspired by the 1975 NASA "worm" logotype.
+- Source page: https://typodermicfonts.com/nasalization/
+- Downloaded the freeware Regular weight (`Nasalization Rg.otf`), converted locally to woff2 with fontTools.
+- License: Typodermic freeware desktop EULA for the Regular weight; used here on a personal site. Typodermic's full web license covers other weights/uses: https://typodermicfonts.com
+
 ## Runtime Dependency
 
 - Three.js r160 is stored locally as `assets/vendor/three.module.js`.

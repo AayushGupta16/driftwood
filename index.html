@@ -7,6 +7,14 @@
   <meta name="description" content="driftwood - agentic continual learning lab" />
   <link rel="icon" href="data:," />
   <style>
+    @font-face {
+      font-family: "Nasalization";
+      src: url("./assets/fonts/nasalization-rg.woff2") format("woff2");
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+
     :root {
       color-scheme: dark;
       --paper: #030303;
@@ -286,18 +294,17 @@
     .wordmark {
       position: absolute;
       z-index: 4;
-      top: clamp(76px, 9vh, 104px);
+      top: clamp(72px, 8.6vh, 100px);
       left: 50%;
-      width: min(92vw, 1500px);
+      width: min(94vw, 1500px);
       margin: 0;
-      transform: translateX(-50%) scaleX(0.94);
-      transform-origin: 50% 0;
+      transform: translateX(-50%);
       color: #f2eee1;
-      font-family: Impact, "Arial Black", "Helvetica Neue Condensed Black", "Helvetica Neue", Arial, sans-serif;
-      font-size: clamp(4.4rem, 16.4vw, 15.2rem);
-      font-weight: 950;
-      line-height: 0.82;
-      letter-spacing: -0.008em;
+      font-family: Nasalization, "Trebuchet MS", "Helvetica Neue", Arial, sans-serif;
+      font-size: clamp(3.4rem, 11vw, 10rem);
+      font-weight: 400;
+      line-height: 1;
+      letter-spacing: 0.01em;
       text-align: center;
       text-transform: lowercase;
       white-space: nowrap;
@@ -310,13 +317,7 @@
     .globe-shell {
       position: absolute;
       z-index: 2;
-      left: 50%;
-      top: 52%;
-      width: min(72vw, 930px);
-      height: min(72vw, 930px);
-      min-width: 448px;
-      min-height: 448px;
-      transform: translate(-50%, -50%);
+      inset: 0;
     }
 
     .globe-shell canvas {
@@ -340,23 +341,44 @@
       opacity: 0.86;
     }
 
-    .subtitle {
+    .contact {
       position: absolute;
       z-index: 4;
       left: 50%;
       bottom: clamp(42px, 5.4vw, 78px);
-      width: min(92vw, 980px);
-      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: clamp(12px, 1.5vw, 24px);
       transform: translateX(-50%);
-      color: var(--ink-soft);
       font-family: "SF Mono", "IBM Plex Mono", "Roboto Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: clamp(0.7rem, 1.32vw, 1.02rem);
+      font-size: clamp(0.68rem, 1.05vw, 0.9rem);
       font-weight: 560;
-      letter-spacing: clamp(0.14em, 1.15vw, 0.4em);
+      letter-spacing: clamp(0.12em, 0.85vw, 0.24em);
       line-height: 1.35;
-      text-align: center;
       text-transform: lowercase;
+      white-space: nowrap;
+    }
+
+    .contact a {
+      color: var(--ink-soft);
+      text-decoration: none;
+      padding: 6px 1px 4px;
+      border-bottom: 1px solid rgba(243, 239, 228, 0.22);
       text-shadow: 0 1px 18px rgba(0, 0, 0, 0.96), 0 0 28px rgba(96, 137, 174, 0.18);
+      cursor: pointer;
+      transition: color 0.22s ease, border-color 0.22s ease, text-shadow 0.22s ease;
+    }
+
+    .contact a:hover,
+    .contact a:focus-visible {
+      color: #fff;
+      border-color: rgba(121, 167, 215, 0.85);
+      text-shadow: 0 1px 18px rgba(0, 0, 0, 0.96), 0 0 26px rgba(121, 167, 215, 0.55);
+      outline: none;
+    }
+
+    .contact .divider {
+      color: rgba(243, 239, 228, 0.34);
       pointer-events: none;
     }
 
@@ -438,18 +460,10 @@
       }
 
       .wordmark {
-        top: clamp(78px, 11vh, 98px);
-        width: 88vw;
-        font-size: clamp(3.35rem, 18vw, 6.15rem);
-        letter-spacing: -0.004em;
-      }
-
-      .globe-shell {
-        top: 51.5%;
-        width: 96vw;
-        height: 96vw;
-        min-width: 0;
-        min-height: 0;
+        top: clamp(74px, 10.5vh, 96px);
+        width: 94vw;
+        font-size: clamp(2.4rem, 10.8vw, 4.1rem);
+        letter-spacing: 0.008em;
       }
 
       .globe-shadow {
@@ -458,10 +472,11 @@
         top: 74%;
       }
 
-      .subtitle {
+      .contact {
         bottom: clamp(68px, 15vw, 108px);
-        font-size: clamp(0.66rem, 2.4vw, 0.84rem);
-        letter-spacing: clamp(0.12em, 1.65vw, 0.25em);
+        gap: clamp(10px, 2.6vw, 16px);
+        font-size: clamp(0.62rem, 2.2vw, 0.8rem);
+        letter-spacing: clamp(0.08em, 1.1vw, 0.16em);
       }
 
       .feed-indicator {
@@ -553,13 +568,8 @@
 
     @media (max-width: 420px) {
       .wordmark {
-        font-size: clamp(2.9rem, 17.5vw, 5.1rem);
-        letter-spacing: -0.002em;
-      }
-
-      .globe-shell {
-        width: 96vw;
-        height: 96vw;
+        font-size: clamp(2.1rem, 10.4vw, 3.4rem);
+        letter-spacing: 0;
       }
     }
   </style>
@@ -583,7 +593,11 @@
       <span class="hairline is-vertical"></span>
     </div>
     <span class="feed-indicator" aria-hidden="true"></span>
-    <p class="subtitle"></p>
+    <nav class="contact" aria-label="contact">
+      <a href="mailto:aayush@driftwood.sh">aayush@driftwood.sh</a>
+      <span class="divider" aria-hidden="true">/</span>
+      <a href="https://www.linkedin.com/in/aayushgupta04/" target="_blank" rel="noopener">linkedin</a>
+    </nav>
     <div class="vignette" aria-hidden="true"></div>
   </main>
 
@@ -607,7 +621,7 @@
     globeMount.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(28, 1, 0.1, 100);
+    const camera = new THREE.PerspectiveCamera(28, 1, 0.1, 240);
     const cameraRig = new THREE.Group();
     const pitchRig = new THREE.Group();
     camera.position.set(0, 0, 11.7);
@@ -895,6 +909,205 @@
     group.add(atmosphere, globe, clouds);
     scene.add(group);
 
+    // --- Cinematic starfield ---
+    const starGroup = new THREE.Group();
+    const starPalette = [
+      [0.62, 0.73, 1.0],   // hot blue-white
+      [0.9, 0.94, 1.0],    // white
+      [1.0, 0.96, 0.85],   // pale gold
+      [1.0, 0.82, 0.58]    // amber giant
+    ];
+    // The 28-degree fov only sees ~3% of the sky shell at a time, so the
+    // count needs to be high for a convincingly dense field in-frame.
+    const starCount = 6500;
+    const starPosition = new Float32Array(starCount * 3);
+    const starTint = new Float32Array(starCount * 3);
+    const starSize = new Float32Array(starCount);
+    const starPhase = new Float32Array(starCount);
+
+    for (let i = 0; i < starCount; i += 1) {
+      const radius = 44 + Math.pow(Math.random(), 0.62) * 38;
+      const y = Math.random() * 2 - 1;
+      const theta = Math.random() * Math.PI * 2;
+      const horizontal = Math.sqrt(Math.max(0, 1 - y * y));
+      starPosition[i * 3] = radius * horizontal * Math.cos(theta);
+      starPosition[i * 3 + 1] = radius * y;
+      starPosition[i * 3 + 2] = radius * horizontal * Math.sin(theta);
+
+      // Bias heavily toward cool colors; warm stars stay rare.
+      const palette = starPalette[Math.floor(Math.pow(Math.random(), 1.7) * starPalette.length)];
+      const brightness = 0.55 + Math.pow(Math.random(), 2.0) * 0.45;
+      starTint[i * 3] = palette[0] * brightness;
+      starTint[i * 3 + 1] = palette[1] * brightness;
+      starTint[i * 3 + 2] = palette[2] * brightness;
+
+      const hero = Math.random() < 0.05;
+      starSize[i] = hero ? 3.4 + Math.random() * 2.2 : 1.1 + Math.random() * 1.7;
+      starPhase[i] = Math.random() * Math.PI * 2;
+    }
+
+    const starGeometry = new THREE.BufferGeometry();
+    starGeometry.setAttribute("position", new THREE.BufferAttribute(starPosition, 3));
+    starGeometry.setAttribute("tint", new THREE.BufferAttribute(starTint, 3));
+    starGeometry.setAttribute("size", new THREE.BufferAttribute(starSize, 1));
+    starGeometry.setAttribute("phase", new THREE.BufferAttribute(starPhase, 1));
+
+    const starUniforms = {
+      time: { value: 0 },
+      pixelRatio: { value: renderPixelRatio }
+    };
+
+    const starMaterial = new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      uniforms: starUniforms,
+      vertexShader: `
+        attribute float size;
+        attribute float phase;
+        attribute vec3 tint;
+        uniform float time;
+        uniform float pixelRatio;
+        varying vec3 vTint;
+        varying float vTwinkle;
+
+        void main() {
+          vTint = tint;
+          float speed = 0.55 + fract(phase * 0.3183) * 1.9;
+          vTwinkle = 0.74 + 0.26 * sin(time * speed + phase * 7.0);
+          vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+          gl_PointSize = size * pixelRatio * clamp(190.0 / -mvPosition.z, 0.5, 6.0);
+          gl_Position = projectionMatrix * mvPosition;
+        }
+      `,
+      fragmentShader: `
+        varying vec3 vTint;
+        varying float vTwinkle;
+
+        void main() {
+          vec2 offset = gl_PointCoord - vec2(0.5);
+          float dist = length(offset);
+          float halo = smoothstep(0.5, 0.04, dist);
+          float core = smoothstep(0.2, 0.0, dist);
+          float alpha = (halo * halo * 0.85 + core) * vTwinkle;
+          if (alpha < 0.004) discard;
+          gl_FragColor = vec4(vTint * (0.6 + core * 0.9), alpha);
+        }
+      `
+    });
+
+    starGroup.add(new THREE.Points(starGeometry, starMaterial));
+    scene.add(starGroup);
+
+    // --- Satellites with glow sprites, fading trails, and faint orbit rings ---
+    const makeGlowTexture = () => {
+      const size = 96;
+      const canvas = document.createElement("canvas");
+      canvas.width = canvas.height = size;
+      const ctx = canvas.getContext("2d");
+      const gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+      gradient.addColorStop(0, "rgba(255, 255, 255, 1)");
+      gradient.addColorStop(0.16, "rgba(222, 236, 255, 0.92)");
+      gradient.addColorStop(0.4, "rgba(132, 176, 232, 0.3)");
+      gradient.addColorStop(1, "rgba(70, 110, 180, 0)");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, size, size);
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      return texture;
+    };
+
+    const glowTexture = makeGlowTexture();
+    const TRAIL_SEGMENTS = 72;
+    const satelliteConfigs = [
+      { radius: 3.18, inclination: 1.12, node: 0.7, speed: 0.21, phase: 0.6, scale: 0.17, color: 0xbfd9ff, trailSpan: 1.1, trailStrength: 1.0, blink: 1.4 },
+      { radius: 3.52, inclination: 0.42, node: 2.4, speed: -0.146, phase: 2.8, scale: 0.14, color: 0xd8e6ff, trailSpan: 0.95, trailStrength: 0.8, blink: 0.9 },
+      { radius: 3.86, inclination: 1.78, node: 4.2, speed: 0.105, phase: 4.4, scale: 0.13, color: 0xffe2bc, trailSpan: 0.85, trailStrength: 0.7, blink: 1.9 },
+      { radius: 4.28, inclination: 0.86, node: 5.4, speed: -0.082, phase: 1.7, scale: 0.115, color: 0xcfe2ff, trailSpan: 0.75, trailStrength: 0.6, blink: 1.1 }
+    ];
+
+    const satelliteGroup = new THREE.Group();
+    const satellites = satelliteConfigs.map((config) => {
+      const orbit = new THREE.Group();
+      orbit.rotation.set(config.inclination, config.node, 0);
+
+      const ringSegments = 160;
+      const ringPositions = new Float32Array((ringSegments + 1) * 3);
+      for (let j = 0; j <= ringSegments; j += 1) {
+        const angle = (j / ringSegments) * Math.PI * 2;
+        ringPositions[j * 3] = Math.cos(angle) * config.radius;
+        ringPositions[j * 3 + 1] = 0;
+        ringPositions[j * 3 + 2] = Math.sin(angle) * config.radius;
+      }
+      const ringGeometry = new THREE.BufferGeometry();
+      ringGeometry.setAttribute("position", new THREE.BufferAttribute(ringPositions, 3));
+      const ring = new THREE.Line(ringGeometry, new THREE.LineBasicMaterial({
+        color: 0x96b4dc,
+        transparent: true,
+        opacity: 0.05,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      }));
+
+      const trailPositions = new Float32Array(TRAIL_SEGMENTS * 3);
+      const trailColors = new Float32Array(TRAIL_SEGMENTS * 3);
+      const headColor = new THREE.Color(config.color);
+      for (let j = 0; j < TRAIL_SEGMENTS; j += 1) {
+        const fade = Math.pow(1 - j / (TRAIL_SEGMENTS - 1), 2.2) * config.trailStrength;
+        trailColors[j * 3] = headColor.r * fade;
+        trailColors[j * 3 + 1] = headColor.g * fade;
+        trailColors[j * 3 + 2] = headColor.b * fade;
+      }
+      const trailGeometry = new THREE.BufferGeometry();
+      trailGeometry.setAttribute("position", new THREE.BufferAttribute(trailPositions, 3));
+      trailGeometry.setAttribute("color", new THREE.BufferAttribute(trailColors, 3));
+      const trail = new THREE.Line(trailGeometry, new THREE.LineBasicMaterial({
+        vertexColors: true,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      }));
+      trail.frustumCulled = false;
+
+      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: glowTexture,
+        color: config.color,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      }));
+      sprite.scale.setScalar(config.scale);
+
+      orbit.add(ring, trail, sprite);
+      satelliteGroup.add(orbit);
+      return { ...config, sprite, trail, trailPositions };
+    });
+    scene.add(satelliteGroup);
+
+    const satelliteWorldPosition = new THREE.Vector3();
+    const updateSatellites = (time) => {
+      for (const sat of satellites) {
+        const angle = sat.phase + time * sat.speed;
+        sat.sprite.position.set(Math.cos(angle) * sat.radius, 0, Math.sin(angle) * sat.radius);
+
+        const direction = Math.sign(sat.speed) || 1;
+        for (let j = 0; j < TRAIL_SEGMENTS; j += 1) {
+          const trailAngle = angle - direction * (j / (TRAIL_SEGMENTS - 1)) * sat.trailSpan;
+          sat.trailPositions[j * 3] = Math.cos(trailAngle) * sat.radius;
+          sat.trailPositions[j * 3 + 1] = 0;
+          sat.trailPositions[j * 3 + 2] = Math.sin(trailAngle) * sat.radius;
+        }
+        sat.trail.geometry.attributes.position.needsUpdate = true;
+
+        // Sunlit satellites glint brighter; shadowed ones dim to a faint beacon.
+        sat.sprite.getWorldPosition(satelliteWorldPosition).normalize();
+        const glint = Math.max(0, satelliteWorldPosition.dot(sunDirection));
+        const beacon = 0.82 + 0.18 * Math.sin(time * sat.blink + sat.phase * 3.0);
+        sat.sprite.material.opacity = (0.42 + glint * 0.58) * beacon;
+      }
+    };
+    updateSatellites(0);
+
     const baseLongitude = THREE.MathUtils.degToRad(localLongitude + (localHour - 12) * 1.7);
     const baseView = {
       x: THREE.MathUtils.degToRad(-26), // pitch toward the northern hemisphere on load
@@ -937,6 +1150,9 @@
 
     const beginDrag = (event) => {
       if (event.pointerType === "mouse" && event.button !== 0) {
+        return;
+      }
+      if (event.target.closest?.("a")) {
         return;
       }
 
@@ -996,6 +1212,11 @@
       setDragging(false);
     });
 
+    const GLOBE_RADIUS = 2.52;
+    // Fraction of the old square shell the globe silhouette used to fill
+    // (asin(2.52 / 11.7) projected through the 28-degree fov).
+    const GLOBE_SHELL_FILL = 0.884;
+
     const resize = () => {
       const rect = globeMount.getBoundingClientRect();
       const width = Math.max(1, Math.floor(rect.width));
@@ -1004,9 +1225,24 @@
       if (nextPixelRatio !== renderPixelRatio) {
         renderPixelRatio = nextPixelRatio;
         renderer.setPixelRatio(renderPixelRatio);
+        starUniforms.pixelRatio.value = renderPixelRatio;
       }
       renderer.setSize(width, height, false);
+
+      // The canvas now covers the whole stage; recreate the old globe-shell
+      // sizing (min(72vw, 930px), 96vw on mobile) by solving for the camera
+      // distance that projects the globe to the same pixel diameter.
+      const isMobile = width <= 760;
+      const shellSize = isMobile ? width * 0.96 : Math.max(Math.min(width * 0.72, 930), 448);
+      const globeDiameterPx = shellSize * GLOBE_SHELL_FILL;
+      const tanHalfFov = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+      const apparentAngle = Math.atan((globeDiameterPx / height) * tanHalfFov);
+      camera.position.z = GLOBE_RADIUS / Math.sin(Math.max(apparentAngle, 0.02));
+
+      // Keep the globe center at 52% (51.5% mobile) of the stage height.
+      const centerY = isMobile ? 0.515 : 0.52;
       camera.aspect = width / height;
+      camera.setViewOffset(width, height, 0, -(centerY - 0.5) * height, width, height);
       camera.updateProjectionMatrix();
     };
 
@@ -1016,10 +1252,11 @@
     // Render the live globe into a small offscreen target and publish it as the
     // favicon, so the tab icon matches what's on screen (user longitude + day/night).
     const faviconSize = 128;
+    // No MSAA: the globe limb is already feathered in-shader, and a plain
+    // framebuffer lets us read pixels back asynchronously without a GPU stall.
     const faviconTarget = new THREE.WebGLRenderTarget(faviconSize, faviconSize, {
       colorSpace: THREE.SRGBColorSpace,
-      depthBuffer: true,
-      samples: 4
+      depthBuffer: true
     });
     const faviconCamera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
     const faviconDistance = 10.8; // frames the globe to fill the icon
@@ -1036,8 +1273,22 @@
 
     const faviconPosition = new THREE.Vector3();
     const faviconQuaternion = new THREE.Quaternion();
+    const faviconGL = renderer.getContext();
+    const supportsAsyncRead = renderer.capabilities.isWebGL2;
+    let faviconReadPending = false;
+
+    const publishFaviconPixels = () => {
+      // WebGL reads bottom-to-top, so flip rows into the 2D canvas.
+      for (let y = 0; y < faviconSize; y++) {
+        const src = (faviconSize - 1 - y) * faviconRowBytes;
+        faviconImage.data.set(faviconPixels.subarray(src, src + faviconRowBytes), y * faviconRowBytes);
+      }
+      faviconCtx.putImageData(faviconImage, 0, 0);
+      faviconLink.href = faviconCanvas.toDataURL("image/png");
+    };
+
     const updateFavicon = () => {
-      if (document.hidden) return;
+      if (document.hidden || faviconReadPending) return;
       camera.updateWorldMatrix(true, false);
       camera.getWorldPosition(faviconPosition);
       camera.getWorldQuaternion(faviconQuaternion);
@@ -1046,16 +1297,45 @@
 
       renderer.setRenderTarget(faviconTarget);
       renderer.render(scene, faviconCamera);
-      renderer.readRenderTargetPixels(faviconTarget, 0, 0, faviconSize, faviconSize, faviconPixels);
-      renderer.setRenderTarget(null);
 
-      // WebGL reads bottom-to-top, so flip rows into the 2D canvas.
-      for (let y = 0; y < faviconSize; y++) {
-        const src = (faviconSize - 1 - y) * faviconRowBytes;
-        faviconImage.data.set(faviconPixels.subarray(src, src + faviconRowBytes), y * faviconRowBytes);
+      if (!supportsAsyncRead) {
+        renderer.readRenderTargetPixels(faviconTarget, 0, 0, faviconSize, faviconSize, faviconPixels);
+        renderer.setRenderTarget(null);
+        publishFaviconPixels();
+        return;
       }
-      faviconCtx.putImageData(faviconImage, 0, 0);
-      faviconLink.href = faviconCanvas.toDataURL("image/png");
+
+      // Kick the readback into a pixel-pack buffer and poll a fence instead of
+      // blocking the main render pipeline (sync ReadPixels causes GPU stalls
+      // that hitch the satellite/star animation).
+      const gl = faviconGL;
+      const pixelBuffer = gl.createBuffer();
+      gl.bindBuffer(gl.PIXEL_PACK_BUFFER, pixelBuffer);
+      gl.bufferData(gl.PIXEL_PACK_BUFFER, faviconPixels.byteLength, gl.STREAM_READ);
+      gl.readPixels(0, 0, faviconSize, faviconSize, gl.RGBA, gl.UNSIGNED_BYTE, 0);
+      const fence = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
+      gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+      renderer.setRenderTarget(null);
+      gl.flush();
+      faviconReadPending = true;
+
+      const poll = () => {
+        const status = gl.clientWaitSync(fence, 0, 0);
+        if (status === gl.TIMEOUT_EXPIRED) {
+          setTimeout(poll, 32);
+          return;
+        }
+        if (status !== gl.WAIT_FAILED) {
+          gl.bindBuffer(gl.PIXEL_PACK_BUFFER, pixelBuffer);
+          gl.getBufferSubData(gl.PIXEL_PACK_BUFFER, 0, faviconPixels);
+          gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+          publishFaviconPixels();
+        }
+        gl.deleteSync(fence);
+        gl.deleteBuffer(pixelBuffer);
+        faviconReadPending = false;
+      };
+      setTimeout(poll, 16);
     };
 
     updateFavicon();
@@ -1072,6 +1352,9 @@
       const motion = reducedMotion ? 0 : elapsed;
       globeUniforms.time.value = motion;
       cloudUniforms.time.value = motion;
+      starUniforms.time.value = motion;
+      starGroup.rotation.y = motion * 0.0042;
+      updateSatellites(motion);
 
       if (!dragState.active && !reducedMotion) {
         const damping = Math.pow(0.89, delta * 60);
