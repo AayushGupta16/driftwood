@@ -1,8 +1,10 @@
 import { BugDemoCard } from "./components/AgentDemo";
 import { Wordmark } from "./components/Chrome";
 
-/* Social share card, rendered at /og and screenshotted to public/og.png.
-   Regenerate with: playwright screenshot of /og at 1200x630. */
+/* Social share card, rendered at /og and screenshotted to public/og-2.png
+   (bump the filename + the og:image metas in index.html on every regen so
+   link scrapers re-fetch). Regenerate with: playwright screenshot of /og
+   at 1200x630. */
 export default function OgCard() {
   return (
     <div className="relative flex h-[630px] w-[1200px] flex-col overflow-hidden bg-paper px-18 py-14">
@@ -26,10 +28,10 @@ export default function OgCard() {
 
       <div className="flex flex-1 items-center gap-14">
         <div className="min-w-0 flex-1">
-          <p className="m-0 font-mono text-[17px] font-medium text-[#d4574a]">
-            ! bug found: double-clicking Pay charges twice
-          </p>
-          <h1 className="mb-0 mt-5 text-[64px] font-semibold leading-[1.08] tracking-[-0.02em] text-ink">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-tide-wash px-4 py-1.5 font-mono text-[17px] font-medium text-tide ring-1 ring-tide/25 -rotate-1">
+            a real bug, found this morning
+          </span>
+          <h1 className="mb-0 mt-6 text-[64px] font-semibold leading-[1.08] tracking-[-0.02em] text-ink">
             Ship a custom
             <br />
             demo in every
