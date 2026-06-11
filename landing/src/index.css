@@ -31,8 +31,10 @@ html {
 body {
   margin: 0;
   background:
-    radial-gradient(900px 480px at 82% -120px, rgba(21, 85, 126, 0.055), transparent 62%),
-    radial-gradient(760px 520px at -120px 36%, rgba(232, 223, 204, 0.55), transparent 64%),
+    radial-gradient(900px 480px at 82% -120px, rgba(21, 85, 126, 0.085), transparent 62%),
+    radial-gradient(760px 520px at -120px 36%, rgba(232, 223, 204, 0.75), transparent 64%),
+    radial-gradient(1100px 640px at 110% 72%, rgba(21, 85, 126, 0.05), transparent 60%),
+    radial-gradient(900px 560px at -80px 104%, rgba(232, 223, 204, 0.65), transparent 62%),
     var(--color-paper);
   color: var(--color-ink);
   font-family: var(--font-sans);

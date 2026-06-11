@@ -9,6 +9,16 @@ import { SquareOrderMock } from "./components/examples/SquareMock";
 
 /* ---------- shared chrome ---------- */
 
+/* soft radial pool behind a stage, so cards sit in a lit area instead of on flat paper */
+function StageGlow({ className }: { className?: string }) {
+  return (
+    <div
+      aria-hidden="true"
+      className={`pointer-events-none absolute -z-10 bg-[radial-gradient(closest-side,rgba(21,85,126,0.11),rgba(232,223,204,0.35)_58%,transparent_78%)] ${className ?? ""}`}
+    />
+  );
+}
+
 /* card shell every story graphic shares, so the stage reads as one consistent object */
 function CardShell({
   left,
@@ -23,7 +33,7 @@ function CardShell({
 }) {
   return (
     <div
-      className={`flex w-full max-w-135 flex-col rounded-2xl border border-line bg-surface shadow-[0_24px_60px_-28px_rgba(13,60,91,0.35),0_4px_16px_-8px_rgba(22,24,29,0.08)] ${className ?? ""}`}
+      className={`flex w-full max-w-135 flex-col rounded-2xl border border-line bg-surface shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_24px_60px_-26px_rgba(13,60,91,0.42),0_4px_16px_-8px_rgba(22,24,29,0.1)] ${className ?? ""}`}
     >
       <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-3">
         <span className="flex min-w-0 items-center gap-2 font-mono text-[14px] font-medium text-ink-soft">
@@ -252,7 +262,7 @@ function StoryComposeCard({
   const blockClass = on ? "block-in" : "invisible";
   return (
     <div className="relative w-full max-w-135">
-      <div className="flex flex-col rounded-2xl border border-line bg-surface shadow-[0_24px_60px_-28px_rgba(13,60,91,0.35),0_4px_16px_-8px_rgba(22,24,29,0.08)] lg:min-h-110">
+      <div className="flex flex-col rounded-2xl border border-line bg-surface shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_24px_60px_-26px_rgba(13,60,91,0.42),0_4px_16px_-8px_rgba(22,24,29,0.1)] lg:min-h-110">
         {/* title bar */}
         <div className="flex items-center gap-2 border-b border-line px-5 py-3">
           <span className="size-2.5 rounded-full bg-[#e8b4a8]" />
@@ -334,7 +344,7 @@ function StoryComposeCard({
 /* beat 4 — the reply, styled as a real inbox thread */
 function StoryReplyThread({ on }: { on: boolean }) {
   return (
-    <div className="flex w-full max-w-135 flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-[0_24px_60px_-28px_rgba(13,60,91,0.35),0_4px_16px_-8px_rgba(22,24,29,0.08)] lg:min-h-110">
+    <div className="flex w-full max-w-135 flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_24px_60px_-26px_rgba(13,60,91,0.42),0_4px_16px_-8px_rgba(22,24,29,0.1)] lg:min-h-110">
       {/* thread header */}
       <div className="border-b border-line px-5 py-4">
         <p className="m-0 text-[16.5px] font-semibold text-ink">Re: found a bug in Acme's checkout</p>
@@ -547,7 +557,8 @@ function StorySection() {
           </div>
 
           {/* stage — all beats share one grid cell so the stage never changes height */}
-          <div className="mt-7 grid w-full">
+          <div className="relative mt-7 grid w-full">
+            <StageGlow className="left-1/2 top-1/2 h-[115%] w-[min(860px,100%)] -translate-x-1/2 -translate-y-1/2 rounded-[50%]" />
             {panes.map((pane, i) => (
               <div
                 key={BEATS[i].title}
@@ -610,7 +621,9 @@ function EmailFrame({
   return (
     <div
       className={`flex flex-1 flex-col rounded-2xl border bg-white p-5 ${
-        highlight ? "border-tide/35 shadow-[0_20px_50px_-28px_rgba(13,60,91,0.4)]" : "border-line"
+        highlight
+          ? "border-tide/35 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_24px_56px_-26px_rgba(13,60,91,0.48)]"
+          : "border-line shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_16px_40px_-26px_rgba(22,24,29,0.4)]"
       }`}
     >
       <p className="m-0 border-b border-[#eceef1] pb-3 text-[17px] font-semibold text-[#202124]">{subject}</p>
@@ -728,6 +741,7 @@ function CompareSection() {
             </h2>
           </div>
           <div className="relative mx-auto mt-16 grid w-full max-w-5xl grid-cols-2 items-stretch gap-8 lg:gap-12">
+            <StageGlow className="left-1/2 top-1/2 h-[115%] w-[110%] -translate-x-1/2 -translate-y-1/2 rounded-[50%]" />
             {/* hand-drawn arrow with a loop, scrubbed by the pinned scroll */}
             <svg
               viewBox="0 0 260 100"
@@ -819,10 +833,11 @@ function ExamplesSection() {
         </div>
 
         {/* the demo for the selected company */}
-        <div className="min-w-0">
+        <div className="relative min-w-0">
+          <StageGlow className="left-1/2 top-1/2 h-[110%] w-[110%] -translate-x-1/2 -translate-y-1/2 rounded-[50%]" />
           <div
             key={slide.key}
-            className="materialize flex flex-col gap-4 rounded-2xl border border-line bg-surface p-4 shadow-[0_24px_60px_-28px_rgba(13,60,91,0.35),0_4px_16px_-8px_rgba(22,24,29,0.08)] sm:p-5"
+            className="materialize flex flex-col gap-4 rounded-2xl border border-line bg-surface p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_24px_60px_-26px_rgba(13,60,91,0.42),0_4px_16px_-8px_rgba(22,24,29,0.1)] sm:p-5"
           >
             <div className="flex items-center justify-between gap-3">
               <span className="min-w-0 truncate font-mono text-[14px] text-ink-soft">
@@ -870,6 +885,7 @@ export default function App() {
         {/* hero */}
         <section className="relative isolate flex flex-col items-center pb-8 pt-14 text-center sm:pt-16 lg:pt-20">
           <HeroContours />
+          <StageGlow className="left-1/2 top-[44%] h-105 w-[min(920px,96vw)] -translate-x-1/2 -translate-y-1/2 rounded-[50%]" />
           <h1 className="m-0 max-w-5xl text-[clamp(2.9rem,6.5vw,4.9rem)] font-semibold leading-[1.05] tracking-[-0.02em]">
             Ship a custom demo in every cold email.
           </h1>

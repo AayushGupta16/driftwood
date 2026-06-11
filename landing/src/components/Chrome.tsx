@@ -31,7 +31,7 @@ export function Wordmark({ className, markSize = "size-7" }: { className?: strin
 
 export function Nav({ homePrefix = "" }: { homePrefix?: string }) {
   return (
-    <header className="sticky top-0 z-40 border-b border-line/70 bg-paper/85 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-line/70 bg-paper/85 shadow-[0_10px_28px_-24px_rgba(22,24,29,0.5)] backdrop-blur-md">
       <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-8">
         <a href={homePrefix || "#top"} className="text-[19px] text-ink no-underline">
           <Wordmark markSize="size-8" />

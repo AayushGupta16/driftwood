@@ -38,7 +38,7 @@ export default function WaitlistForm({ id }: { id?: string }) {
   return (
     <form
       onSubmit={submit}
-      className="flex w-full max-w-md items-center gap-1.5 rounded-2xl border border-ink/12 bg-surface p-1.5 shadow-[0_2px_12px_-6px_rgba(22,24,29,0.16)] transition-shadow focus-within:border-tide/60 focus-within:ring-2 focus-within:ring-tide/20"
+      className="flex w-full max-w-md items-center gap-1.5 rounded-2xl border border-ink/12 bg-surface p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_12px_30px_-16px_rgba(22,24,29,0.3)] transition-shadow focus-within:border-tide/60 focus-within:ring-2 focus-within:ring-tide/20"
     >
       <label className="sr-only" htmlFor={id ?? "email"}>
         Work email
