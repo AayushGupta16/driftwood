@@ -217,16 +217,16 @@ export default function AgentDemo() {
                   <span className="pulse-dot size-1.5 rounded-full bg-tide" />
                   autosana &times; driftwood
                 </span>
-                <span className="rounded-full bg-sand px-2.5 py-0.5 text-[11px] font-medium text-ink-soft">
+                <span className="hidden rounded-full bg-sand px-2.5 py-0.5 text-[11px] font-medium text-ink-soft sm:inline-block">
                   prospect: Sarah Chen &middot; Acme
                 </span>
               </div>
               <div className="space-y-2.5 px-5 pb-2 pt-4 font-mono text-[12.5px] text-ink-soft">
                 {LOG_LINES.slice(0, f.logs).map((line, i) => (
-                  <p key={line} className="log-line m-0 flex items-center gap-2.5" style={{ animationDelay: `${i * 0.04}s` }}>
+                  <p key={line} className="log-line m-0 flex items-start gap-2.5" style={{ animationDelay: `${i * 0.04}s` }}>
                     <svg
                       viewBox="0 0 24 24"
-                      className={`size-3.5 shrink-0 ${i === 2 ? "stroke-[#d4574a]" : "stroke-tide"}`}
+                      className={`mt-[2.5px] size-3.5 shrink-0 ${i === 2 ? "stroke-[#d4574a]" : "stroke-tide"}`}
                       fill="none"
                       strokeWidth="2.4"
                       strokeLinecap="round"

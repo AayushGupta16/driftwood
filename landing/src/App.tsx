@@ -459,6 +459,9 @@ function HowSection() {
               </span>
               <h3 className="m-0 text-[18px] font-semibold">{step.title}</h3>
               <p className="mb-0 mt-2 max-w-110 text-[14.5px] leading-relaxed text-ink-soft">{step.body}</p>
+              <div className="-ml-16 mt-5 sm:ml-0 sm:max-w-130">
+                <step.art />
+              </div>
             </li>
           ))}
         </ol>
@@ -632,7 +635,7 @@ function WedgeSection() {
             Don't send slop.
           </h2>
         </div>
-        <div className="reveal wedge-reveal mt-12 grid gap-6 lg:grid-cols-2">
+        <div className="reveal wedge-reveal mt-12 grid gap-10 lg:grid-cols-2 lg:gap-6">
           <div className="wedge-usual flex flex-col">
             <p className="mb-3 ml-1 font-mono text-[11.5px] tracking-[0.02em] text-ink-faint">The usual</p>
             <UsualEmail />
