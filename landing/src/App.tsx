@@ -12,7 +12,6 @@ const STEPS = [
   {
     title: "Personalize",
     body: "A demo artifact for every prospect, made from their own data and checked before it ships.",
-    highlight: true,
     art: PersonalizeArt,
   },
   {
@@ -22,7 +21,7 @@ const STEPS = [
   },
   {
     title: "Iterate",
-    body: "Opens, clicks, and replies feed back into targeting, copy, and timing. Sequences branch on behavior, not timers.",
+    body: "Opens, clicks, and replies feed back into targeting, copy, and timing. Whatever wins gets the volume.",
     art: IterateArt,
   },
 ];
@@ -45,7 +44,7 @@ const WORKING = [
 function HowHeading() {
   return (
     <>
-      <p className="m-0 font-mono text-[12px] font-medium uppercase tracking-[0.18em] text-tide">What we handle</p>
+      <p className="m-0 font-mono text-[12px] font-medium tracking-[0.02em] text-tide">What we handle</p>
       <h2 className="mb-0 mt-3 text-[clamp(1.6rem,3.6vw,2.4rem)] font-semibold leading-tight tracking-[-0.015em]">
         You take the meetings. We run everything else.
       </h2>
@@ -58,7 +57,7 @@ function VignetteFrame({ label, meta, children }: { label: string; meta: string;
   return (
     <div className="flex h-full flex-col rounded-2xl border border-line bg-surface shadow-[0_24px_60px_-28px_rgba(13,60,91,0.35),0_4px_16px_-8px_rgba(22,24,29,0.08)]">
       <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-3">
-        <span className="flex items-center gap-2 font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-ink-soft">
+        <span className="flex items-center gap-2 font-mono text-[11px] font-medium tracking-[0.02em] text-ink-soft">
           <span className="pulse-dot size-1.5 rounded-full bg-tide" />
           {label}
         </span>
@@ -129,48 +128,26 @@ function SourceArt() {
   );
 }
 
-/* Personalize — a demo artifact assembled for one prospect */
+/* Personalize — the artifact is the bug recording itself, built for one prospect */
 function PersonalizeArt() {
   return (
     <VignetteFrame label="demo build" meta="built for Sarah · Acme">
       <div className="flex flex-1 flex-col justify-center">
-        <div className="rounded-xl border border-line bg-[#eef0f3] p-3">
-          <div className="overflow-hidden rounded-lg border border-[#d8dce2] bg-white shadow-sm">
-            <div className="flex items-center gap-1.5 border-b border-[#e8eaee] bg-[#f6f7f9] px-2.5 py-1.5">
-              <span className="size-1.5 rounded-full bg-[#d9dde3]" />
-              <span className="size-1.5 rounded-full bg-[#d9dde3]" />
-              <span className="size-1.5 rounded-full bg-[#d9dde3]" />
-              <span className="ml-1.5 rounded bg-white px-2 py-0.5 font-mono text-[9.5px] text-[#7a8190] ring-1 ring-[#e8eaee]">
-                demo.driftwood.run/acme
-              </span>
-            </div>
-            <div className="space-y-2 px-3.5 py-3">
-              <p className="m-0 text-[12px] font-semibold text-ink">Acme checkout &middot; QA walkthrough</p>
-              <div className="h-1.5 w-3/4 rounded-full bg-[#e6e9ee]" />
-              <div className="h-1.5 w-1/2 rounded-full bg-[#e6e9ee]" />
-              <div className="flex items-center justify-between gap-2 rounded-md bg-[#fff5f4] px-2 py-1.5 ring-[1.5px] ring-[#d4574a]">
-                <span className="font-mono text-[9px] font-medium text-[#3c424e]">step 3 &middot; Pay button fires twice</span>
-                <span className="rounded-full bg-[#d4574a] px-1.5 py-px font-mono text-[8px] font-bold text-white">found</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <BugDemoCard />
         <div className="mt-5 space-y-2.5 font-mono text-[11.5px] text-ink-soft">
-          {["pulled from acme.com · 14 pages", "rebuilt their checkout with their own data"].map((line) => (
-            <p key={line} className="m-0 flex items-center gap-2.5">
-              <svg
-                viewBox="0 0 24 24"
-                className="size-3.5 shrink-0 stroke-tide"
-                fill="none"
-                strokeWidth="2.4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M5 12.5l4.5 4.5L19 7.5" />
-              </svg>
-              <span>{line}</span>
-            </p>
-          ))}
+          <p className="m-0 flex items-center gap-2.5">
+            <svg
+              viewBox="0 0 24 24"
+              className="size-3.5 shrink-0 stroke-tide"
+              fill="none"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M5 12.5l4.5 4.5L19 7.5" />
+            </svg>
+            <span>pulled from acme.com &middot; 14 pages</span>
+          </p>
           <p className="m-0 flex items-center gap-2.5">
             <span className="pulse-dot mx-1 size-1.5 shrink-0 rounded-full bg-tide" />
             <span className="text-ink">human review before it ships</span>
@@ -207,7 +184,7 @@ function DeliverArt() {
         </div>
         <div>
           <div className="flex items-baseline justify-between gap-3">
-            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">send window</span>
+            <span className="font-mono text-[10px] tracking-[0.02em] text-ink-faint">send window</span>
             <span className="font-mono text-[10px] text-ink-faint">Tue&ndash;Thu &middot; 8:40&ndash;11:10 am local</span>
           </div>
           <div className="mt-2 flex h-9 items-end gap-1">
@@ -223,7 +200,7 @@ function DeliverArt() {
       </div>
       <div className="mt-4 flex items-end justify-between gap-4 border-t border-line pt-4">
         <div>
-          <p className="m-0 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">inbox placement</p>
+          <p className="m-0 font-mono text-[10px] tracking-[0.02em] text-ink-faint">inbox placement</p>
           <p className="m-0 mt-1 text-[22px] font-semibold tracking-[-0.01em] text-ink">
             98.6%
             <span className="ml-2.5 rounded-full bg-tide-wash px-2 py-0.5 align-middle font-mono text-[10px] font-medium text-tide">
@@ -245,52 +222,86 @@ function DeliverArt() {
   );
 }
 
-/* Iterate — sequences branch on behavior, winners get the budget */
+/* Iterate — which angles and templates are actually working */
 function IterateArt() {
+  const angles = [
+    {
+      subject: "“found a bug on your checkout”",
+      opens: "61% open",
+      replies: "4.9% reply",
+      width: "82%",
+      tone: "win",
+      tag: "gets the budget",
+    },
+    {
+      subject: "“what manual QA costs you”",
+      opens: "47% open",
+      replies: "2.6% reply",
+      width: "44%",
+      tone: "mid",
+      tag: undefined,
+    },
+    {
+      subject: "“quick question about QA”",
+      opens: "31% open",
+      replies: "1.1% reply",
+      width: "18%",
+      tone: "cut",
+      tag: "cut this week",
+    },
+  ] as const;
   return (
-    <VignetteFrame label="sequence" meta="branches on behavior">
-      <div className="flex flex-1 flex-col justify-center">
-        <div className="flex justify-center">
-          <span className="rounded-lg border border-line bg-paper px-3 py-1.5 font-mono text-[11px] font-medium text-ink">
-            email 1 &middot; demo attached
-          </span>
-        </div>
-        <svg viewBox="0 0 240 36" className="mx-auto mt-1 h-9 w-60" fill="none" preserveAspectRatio="none" aria-hidden="true">
-          <path d="M120 2 v8 C 120 24 60 20 60 34" stroke="var(--color-line)" strokeWidth="1.5" />
-          <path d="M120 2 v8 C 120 24 180 20 180 34" stroke="var(--color-line)" strokeWidth="1.5" />
-        </svg>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="text-center">
-            <p className="m-0 font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-tide">replied</p>
-            <span className="mt-1.5 inline-block rounded-lg bg-tide px-3 py-1.5 font-mono text-[11px] font-medium text-white shadow-[0_10px_22px_-12px_rgba(13,60,91,0.7)]">
-              hand off to you
-            </span>
+    <VignetteFrame label="angle testing" meta="re-ranked weekly">
+      <div className="flex flex-1 flex-col justify-center gap-3">
+        {angles.map((a, i) => (
+          <div
+            key={a.subject}
+            className={`rounded-xl px-3.5 py-3 ${
+              a.tone === "win" ? "bg-tide-wash/70 ring-1 ring-tide/35" : "bg-paper/70"
+            } ${a.tone === "cut" ? "opacity-55" : ""}`}
+          >
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="flex min-w-0 items-baseline gap-2.5">
+                <span className="shrink-0 font-mono text-[10px] text-ink-faint">0{i + 1}</span>
+                <span
+                  className={`truncate font-mono text-[11.5px] ${
+                    a.tone === "win" ? "font-medium text-ink" : "text-ink-soft"
+                  }`}
+                >
+                  {a.subject}
+                </span>
+              </span>
+              {a.tag && (
+                <span
+                  className={`shrink-0 rounded-full px-2 py-0.5 font-mono text-[9.5px] font-medium ${
+                    a.tone === "win" ? "bg-tide text-white" : "bg-surface text-ink-faint ring-1 ring-line"
+                  }`}
+                >
+                  {a.tag}
+                </span>
+              )}
+            </div>
+            <div className="mt-2.5 flex items-center gap-3">
+              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-line/50">
+                <div
+                  className={`h-full rounded-full ${a.tone === "win" ? "bg-tide" : "bg-ink-faint/50"}`}
+                  style={{ width: a.width }}
+                />
+              </div>
+              <span
+                className={`shrink-0 font-mono text-[10px] ${
+                  a.tone === "win" ? "font-medium text-tide" : "text-ink-faint"
+                }`}
+              >
+                {a.opens} &rarr; {a.replies}
+              </span>
+            </div>
           </div>
-          <div className="text-center">
-            <p className="m-0 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-faint">no reply &middot; 3 days</p>
-            <span className="mt-1.5 inline-block rounded-lg border border-line bg-surface px-3 py-1.5 font-mono text-[11px] text-ink-soft">
-              email 2 &middot; new angle
-            </span>
-          </div>
-        </div>
+        ))}
       </div>
-      <div className="mt-4 space-y-2 border-t border-line pt-4">
-        <div className="flex items-center gap-3">
-          <span className="w-14 shrink-0 font-mono text-[10.5px] text-ink-faint">angle A</span>
-          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-line/50">
-            <div className="h-full w-[34%] rounded-full bg-ink-faint/50" />
-          </div>
-          <span className="w-20 shrink-0 text-right font-mono text-[10px] text-ink-faint">2.1% replies</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="w-14 shrink-0 font-mono text-[10.5px] font-medium text-ink">angle B</span>
-          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-line/50">
-            <div className="h-full w-[78%] rounded-full bg-tide" />
-          </div>
-          <span className="w-20 shrink-0 text-right font-mono text-[10px] font-medium text-tide">4.9% replies</span>
-        </div>
-        <p className="m-0 pt-1 text-center font-mono text-[10.5px] text-ink-faint">angle B gets the budget next week</p>
-      </div>
+      <p className="mb-0 mt-4 text-center font-mono text-[10.5px] text-ink-faint">
+        the loser rotates out &middot; a new angle takes its slot
+      </p>
     </VignetteFrame>
   );
 }
@@ -365,11 +376,6 @@ function HowSection() {
                     <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1.5">
                       <h3 className="m-0 text-[19px] font-semibold tracking-[-0.01em]">{step.title}</h3>
                       <span className="font-mono text-[11px] text-ink-faint">0{i + 1}</span>
-                      {step.highlight && (
-                        <span className="rounded-full bg-tide-wash px-2.5 py-0.5 font-mono text-[10.5px] font-medium text-tide">
-                          why prospects reply
-                        </span>
-                      )}
                     </div>
                     <p className="mb-0 mt-2 max-w-105 text-[14.5px] leading-relaxed text-ink-soft">{step.body}</p>
                   </div>
@@ -411,14 +417,7 @@ function HowSection() {
               <span className="absolute left-0 top-0 flex size-10 items-center justify-center rounded-full border border-tide/40 bg-tide-wash font-mono text-[12px] font-semibold text-tide">
                 0{i + 1}
               </span>
-              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1.5">
-                <h3 className="m-0 text-[18px] font-semibold">{step.title}</h3>
-                {step.highlight && (
-                  <span className="rounded-full bg-tide-wash px-2.5 py-0.5 font-mono text-[10.5px] font-medium text-tide">
-                    why prospects reply
-                  </span>
-                )}
-              </div>
+              <h3 className="m-0 text-[18px] font-semibold">{step.title}</h3>
               <p className="mb-0 mt-2 max-w-110 text-[14.5px] leading-relaxed text-ink-soft">{step.body}</p>
             </li>
           ))}
@@ -482,31 +481,32 @@ export default function App() {
             </h2>
           </div>
 
-          <div className="mt-12 grid gap-6 lg:grid-cols-2">
+          <div className="reveal wedge-reveal mt-12 grid gap-6 lg:grid-cols-2">
             {/* generic email */}
-            <div className="reveal flex flex-col">
-              <p className="mb-3 ml-1 font-mono text-[11.5px] uppercase tracking-[0.14em] text-ink-faint">The usual</p>
+            <div className="wedge-usual flex flex-col">
+              <p className="mb-3 ml-1 font-mono text-[11.5px] tracking-[0.02em] text-ink-faint">The usual</p>
               <div className="flex flex-1 flex-col rounded-2xl border border-line bg-surface/60 p-5">
                 <div className="space-y-1.5 border-b border-line pb-3 text-[12.5px]">
                   <p className="m-0 text-ink-faint">
-                    Subject: <span className="text-ink-soft">Sarah, AI startup asked me to reach out</span>
+                    Subject: <span className="text-ink-soft">Sarah — quick question (Acme x Skylith AI)</span>
                   </p>
                 </div>
                 <div className="mb-0 mt-4 space-y-5 text-[13.5px] leading-relaxed text-ink-faint">
                   <p>Hey Sarah,</p>
                   <p>
-                    Saw Acme just crossed 200 employees while keeping NPS above 60. That's the kind of growth that
-                    gets noticed.
+                    Huge fan of what you're building at Acme — saw you just crossed 200 employees. Incredible
+                    momentum.
                   </p>
                   <p>
-                    I'm working with an AI-powered platform that helps companies like Acme streamline their
-                    workflows - they're growing incredibly fast and I thought you might be interested.
+                    I'm the founder of Skylith, an AI-powered platform that automates workflows end-to-end. We
+                    just closed our seed round and are growing 40% month over month — teams like yours are
+                    seeing huge results.
                   </p>
                   <p>
-                    Do you want me to set up a quick intro call? Happy to share more details or other options if
-                    this one isn't a fit.
+                    Would love to connect and show you what we're building. Any chance you have 15 minutes this
+                    week?
                   </p>
-                  <p>Cheers,</p>
+                  <p>Best,</p>
                 </div>
                 <span className="mt-auto self-start pt-4">
                   <span className="inline-block rounded-full bg-paper px-2.5 py-1 font-mono text-[10.5px] text-ink-faint">
@@ -517,9 +517,9 @@ export default function App() {
             </div>
 
             {/* driftwood email */}
-            <div className="reveal flex flex-col" style={{ transitionDelay: "0.12s" }}>
-              <p className="mb-3 ml-1 font-mono text-[11.5px] uppercase tracking-[0.14em] text-tide">A driftwood send</p>
-              <div className="flex flex-1 flex-col rounded-2xl border border-tide/30 bg-surface p-5 shadow-[0_20px_50px_-28px_rgba(13,60,91,0.4)]">
+            <div className="wedge-drift flex flex-col">
+              <p className="mb-3 ml-1 font-mono text-[11.5px] tracking-[0.02em] text-tide">A driftwood send</p>
+              <div className="wedge-drift-card flex flex-1 flex-col rounded-2xl border border-tide/30 bg-surface p-5 shadow-[0_20px_50px_-28px_rgba(13,60,91,0.4)]">
                 <div className="space-y-1.5 border-b border-line pb-3 text-[12.5px]">
                   <p className="m-0 text-ink-faint">
                     Subject: <span className="font-medium text-ink">found a bug in Acme's checkout</span>
@@ -541,7 +541,7 @@ export default function App() {
                   <p>Open to a quick call this week?</p>
                 </div>
                 <span className="mt-auto self-start pt-4">
-                  <span className="inline-block rounded-full bg-tide-wash px-2.5 py-1 font-mono text-[10.5px] font-medium text-tide">
+                  <span className="wedge-reply inline-block rounded-full bg-tide-wash px-2.5 py-1 font-mono text-[10.5px] font-medium text-tide">
                     "ok this is wild. got time Thursday?"
                   </span>
                 </span>
@@ -557,7 +557,7 @@ export default function App() {
         {/* working with us */}
         <section id="working" className="border-t border-line py-20 sm:py-26">
           <div className="reveal max-w-150">
-            <p className="m-0 font-mono text-[12px] font-medium uppercase tracking-[0.18em] text-tide">Working with us</p>
+            <p className="m-0 font-mono text-[12px] font-medium tracking-[0.02em] text-tide">Working with us</p>
             <h2 className="mb-0 mt-3 text-[clamp(1.6rem,3.6vw,2.4rem)] font-semibold leading-tight tracking-[-0.015em]">
               You talk to founders, not agents.
             </h2>

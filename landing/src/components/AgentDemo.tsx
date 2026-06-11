@@ -198,19 +198,24 @@ export default function AgentDemo() {
 
   return (
     <div className="relative mx-auto w-full max-w-152">
-      {/* stage — both cards stay mounted in one grid cell so the stage sizes to the tallest */}
-      <div className="grid" aria-hidden="true">
+      {/* stage — on sm+ both cards stay mounted in one grid cell so the stage sizes to the tallest;
+          on mobile the inactive card is pulled out of flow so the stage follows the active card */}
+      <div className="relative grid" aria-hidden="true">
         {/* BUILD */}
         <div
           className={`col-start-1 row-start-1 ${
-            f.stage === "build" ? (f.exiting ? "stage-exit" : "stage-enter") : "invisible"
+            f.stage === "build"
+              ? f.exiting
+                ? "stage-exit"
+                : "stage-enter"
+              : "invisible absolute inset-x-0 top-0 sm:relative"
           }`}
         >
             <div className="flex h-full flex-col rounded-2xl border border-line bg-surface shadow-[0_24px_60px_-28px_rgba(13,60,91,0.35),0_4px_16px_-8px_rgba(22,24,29,0.08)]">
               <div className="flex items-center justify-between border-b border-line px-5 py-3">
-                <span className="flex items-center gap-2 font-mono text-[11.5px] font-medium tracking-wide text-ink-soft">
+                <span className="flex items-center gap-2 font-mono text-[11.5px] font-medium text-ink-soft">
                   <span className="pulse-dot size-1.5 rounded-full bg-tide" />
-                  AUTOSANA &times; driftwood
+                  autosana &times; driftwood
                 </span>
                 <span className="rounded-full bg-sand px-2.5 py-0.5 text-[11px] font-medium text-ink-soft">
                   prospect: Sarah Chen &middot; Acme
@@ -243,8 +248,10 @@ export default function AgentDemo() {
 
         {/* SEND + REPLY */}
         <div
-          className={`relative col-start-1 row-start-1 ${
-            f.stage !== "build" ? (f.exiting ? "stage-exit" : "stage-enter") : "invisible"
+          className={`col-start-1 row-start-1 ${
+            f.stage !== "build"
+              ? `relative ${f.exiting ? "stage-exit" : "stage-enter"}`
+              : "invisible absolute inset-x-0 top-0 sm:relative"
           }`}
         >
             <div className="rounded-2xl border border-line bg-surface shadow-[0_24px_60px_-28px_rgba(13,60,91,0.35),0_4px_16px_-8px_rgba(22,24,29,0.08)]">
@@ -322,7 +329,7 @@ export default function AgentDemo() {
       </div>
 
       {/* stage navigation */}
-      <div className="mt-12 flex justify-center">
+      <div className="mt-8 flex justify-center sm:mt-12">
         <div className="flex items-center gap-1 rounded-full border border-line bg-surface p-1 shadow-[0_2px_10px_-4px_rgba(22,24,29,0.12)]">
           {(["build", "send", "reply"] as const).map((stage) => (
             <button

@@ -36,33 +36,12 @@ export function Nav({ homePrefix = "" }: { homePrefix?: string }) {
         <a href={homePrefix || "#top"} className="text-[17px] text-ink no-underline">
           <Wordmark />
         </a>
-        <div className="flex items-center gap-5 sm:gap-7">
-          <a
-            href={`${homePrefix}#wedge`}
-            className="hidden text-[13.5px] font-medium text-ink-soft no-underline transition-colors hover:text-ink sm:block"
-          >
-            What we send
-          </a>
-          <a
-            href={`${homePrefix}#how`}
-            className="hidden text-[13.5px] font-medium text-ink-soft no-underline transition-colors hover:text-ink sm:block"
-          >
-            What we handle
-          </a>
-          {/* Pricing link parked until pricing is finalized:
-          <a
-            href="/pricing"
-            className="hidden text-[13.5px] font-medium text-ink-soft no-underline transition-colors hover:text-ink sm:block"
-          >
-            Pricing
-          </a> */}
-          <a
-            href="#join"
-            className="rounded-lg bg-ink px-3.5 py-1.5 text-[13px] font-semibold text-paper no-underline transition-colors hover:bg-tide-deep"
-          >
-            Get early access
-          </a>
-        </div>
+        <a
+          href="#join"
+          className="rounded-lg bg-ink px-3.5 py-1.5 text-[13px] font-semibold text-paper no-underline transition-colors hover:bg-tide-deep"
+        >
+          Get early access
+        </a>
       </nav>
     </header>
   );
