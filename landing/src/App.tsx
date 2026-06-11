@@ -2,6 +2,10 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { BugDemoCard } from "./components/AgentDemo";
 import WaitlistForm from "./components/WaitlistForm";
 import { Nav, Footer, useReveal } from "./components/Chrome";
+import { RunwayAdMock } from "./components/examples/RunwayMock";
+import { RampSpendMock } from "./components/examples/RampMock";
+import { ShopifyRebuildMock } from "./components/examples/ShopifyMock";
+import { SquareOrderMock } from "./components/examples/SquareMock";
 
 /* ---------- shared chrome ---------- */
 
@@ -13,7 +17,7 @@ function CardShell({
   className,
 }: {
   left: ReactNode;
-  right: ReactNode;
+  right?: ReactNode;
   children: ReactNode;
   className?: string;
 }) {
@@ -26,7 +30,9 @@ function CardShell({
           <span className="pulse-dot size-1.5 shrink-0 rounded-full bg-tide" />
           <span className="truncate">{left}</span>
         </span>
-        <span className="shrink-0 rounded-full bg-sand px-2.5 py-0.5 font-mono text-[13.5px] text-ink-soft">{right}</span>
+        {right ? (
+          <span className="shrink-0 rounded-full bg-sand px-2.5 py-0.5 font-mono text-[13.5px] text-ink-soft">{right}</span>
+        ) : null}
       </div>
       {children}
     </div>
@@ -107,15 +113,7 @@ const DEMO_IDEAS = [
 
 function StoryOnboardCard({ building, icps, ideas }: { building: boolean; icps: boolean; ideas: number }) {
   return (
-    <CardShell
-      left={
-        <>
-          client: Autosana &middot; AI QA agents
-        </>
-      }
-      right="15-minute onboarding call"
-      className="lg:min-h-110"
-    >
+    <CardShell left="15-minute onboarding call" className="lg:min-h-110">
       <div className="flex flex-1 flex-col justify-center gap-5 px-5 py-5">
         <div className={building ? "log-line" : "invisible"}>
           <p className="m-0 font-mono text-[14px] tracking-[0.02em] text-ink-faint">what they're building</p>
@@ -169,11 +167,7 @@ const PROSPECT_PLAN = [
 
 function StoryAgentCard({ plans, logs, thumb }: { plans: number; logs: number; thumb: boolean }) {
   return (
-    <CardShell
-      left={<>autosana &times; driftwood</>}
-      right={<>prospect: Sarah &middot; self-serve product</>}
-      className="lg:min-h-110"
-    >
+    <CardShell left={<>prospect: Sarah &middot; self-serve product</>} className="lg:min-h-110">
       <div className="flex flex-1 flex-col justify-center gap-4 px-5 py-5">
         <div>
           <p className="m-0 font-mono text-[14px] tracking-[0.02em] text-ink-faint">the plan for sarah</p>
@@ -401,7 +395,7 @@ const PROOF_RANKING = [
 
 function StoryDataCard({ rows }: { rows: number }) {
   return (
-    <CardShell left="proof testing" right="re-ranked weekly" className="lg:min-h-110">
+    <CardShell left="proof testing" className="lg:min-h-110">
       <div className="flex flex-1 flex-col justify-center gap-3 px-5 py-5">
         {PROOF_RANKING.map((a, i) => (
           <div
@@ -511,8 +505,9 @@ function StorySection() {
       {/* pinned walkthrough (desktop, motion ok) */}
       <div ref={wrapRef} className="relative hidden h-[520vh] lg:motion-safe:block">
         <div className="sticky top-0 flex h-screen flex-col justify-center overflow-hidden">
-          {/* beat title */}
-          <div className="grid text-center">
+          {/* beat title — items-end keeps the gap to the subheading constant
+              whether the active title wraps to one line or two */}
+          <div className="grid items-end text-center">
             {BEATS.map((beat, i) => (
               <p
                 key={beat.title}
@@ -527,7 +522,7 @@ function StorySection() {
           </div>
 
           {/* beat subheading — beat 1 gets the example-campaign kicker instead */}
-          <div className="mt-4 grid text-center">
+          <div className="mt-4 grid items-start text-center">
             {BEATS.map((beat, i) => (
               <p
                 key={beat.title}
@@ -627,11 +622,6 @@ function UsualEmail() {
         </p>
         <p className="m-0">Best,</p>
       </div>
-      <span className="mt-auto self-start pt-4">
-        <span className="inline-block rounded-full bg-paper px-2.5 py-1 font-mono text-[14px] text-ink-soft ring-1 ring-line">
-          read in 4 seconds, archived
-        </span>
-      </span>
     </div>
   );
 }
@@ -650,19 +640,54 @@ function DriftwoodEmail() {
           Our QA agent ran Acme's checkout this morning and caught a real bug: double-clicking Pay
           charges the card twice. The 47-second recording is below.
         </p>
+        <p className="m-0">
+          We already work with Y Combinator's engineering team to catch bugs before they ship, and our
+          customers save an average of 10 hours a week on QA.
+        </p>
         <p className="m-0">Open to a quick call this week?</p>
       </div>
-      <SquareVideoThumb className="w-36" />
-      <span className="mt-auto self-start pt-4">
-        <span className="inline-block rounded-full bg-tide-wash px-2.5 py-1 font-mono text-[14px] font-medium text-tide">
-          "ok this is wild. got time Thursday?" &middot; 2h later
-        </span>
-      </span>
+      <SquareVideoThumb className="mb-1 w-36" />
     </div>
   );
 }
 
 function CompareSection() {
+  const gridRef = useRef<HTMLDivElement>(null);
+  const pathRef = useRef<SVGPathElement>(null);
+  const headRef = useRef<SVGPathElement>(null);
+
+  /* the arrow is scrubbed by scroll: it draws as the section travels up the
+     viewport and un-draws if you scroll back */
+  useEffect(() => {
+    const grid = gridRef.current;
+    const path = pathRef.current;
+    const head = headRef.current;
+    if (!grid || !path || !head) return;
+    const length = path.getTotalLength();
+    path.style.strokeDasharray = `${length}`;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const r = grid.getBoundingClientRect();
+      const vh = window.innerHeight;
+      const p = reduced ? 1 : Math.min(1, Math.max(0, (vh * 0.92 - r.top) / (vh * 0.55)));
+      path.style.strokeDashoffset = `${length * (1 - p)}`;
+      head.style.opacity = p > 0.97 ? "1" : "0";
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+
   return (
     <section id="compare" className="scroll-mt-20 border-t border-line py-14 sm:py-18">
       <div className="reveal mx-auto max-w-150 text-center">
@@ -671,28 +696,30 @@ function CompareSection() {
         </h2>
       </div>
 
-      <div className="reveal relative mx-auto mt-14 grid w-full max-w-5xl items-stretch gap-8 sm:grid-cols-2 lg:gap-12">
-        {/* hand-drawn arrow from the slop to the driftwood email, draws in on scroll */}
+      <div ref={gridRef} className="reveal relative mx-auto mt-16 grid w-full max-w-5xl items-stretch gap-8 sm:grid-cols-2 lg:gap-12">
+        {/* hand-drawn arrow with a loop, from the slop to the driftwood email */}
         <svg
-          viewBox="0 0 240 86"
+          viewBox="0 0 260 100"
           aria-hidden="true"
-          className="pointer-events-none absolute -top-13 left-1/2 z-10 hidden w-60 -translate-x-1/2 text-tide sm:block"
+          className="pointer-events-none absolute -top-17 left-1/2 z-10 hidden w-65 -translate-x-1/2 text-tide sm:block"
         >
           <path
-            className="arrow-draw"
-            d="M14 60 C 56 8, 168 2, 218 52"
+            ref={pathRef}
+            d="M 14 70 C 40 36, 72 20, 102 28 C 130 36, 132 64, 112 62 C 92 60, 98 32, 128 28 C 166 23, 208 36, 234 58"
             fill="none"
             stroke="currentColor"
             strokeWidth="2.5"
             strokeLinecap="round"
           />
           <path
-            className="arrow-head"
-            d="M222 56 l-15 -2.5 M222 56 l-1 -15"
+            ref={headRef}
+            className="transition-opacity duration-300"
+            d="M 234 58 l -15 -2 M 234 58 l -3 -14.5"
             fill="none"
             stroke="currentColor"
             strokeWidth="2.5"
             strokeLinecap="round"
+            style={{ opacity: 0 }}
           />
         </svg>
 
@@ -714,290 +741,11 @@ function CompareSection() {
 
 /* ---------- examples carousel: a product you know pitching a company you know ---------- */
 
-/* floating annotation chip, same voice as the story compose card */
-function Anno({ text, pos }: { text: string; pos: string }) {
-  return (
-    <span
-      className={`absolute z-10 hidden items-center gap-1.5 rounded-full bg-tide-wash px-3 py-1 font-mono text-[14px] font-medium text-tide shadow-[0_8px_20px_-10px_rgba(13,60,91,0.45)] ring-1 ring-tide/25 md:inline-flex ${pos}`}
-    >
-      {text}
-    </span>
-  );
-}
-
-/* Runway → Liquid Death: a finished custom ad, built from their own assets */
-function RunwayAdMock() {
-  const assets = [
-    { label: "logo + colors", detail: "matched from their site" },
-    { label: "product shots", detail: "their cans, cut out + animated" },
-    { label: "tagline", detail: "“Murder your thirst.”" },
-  ];
-  return (
-    <div className="relative flex flex-1 flex-col gap-3">
-      <Anno text="tagline: from their homepage" pos="-top-3 right-8 rotate-1" />
-      <Anno text="can shots: from their product pages" pos="bottom-8 -left-3 -rotate-1" />
-      <div className="flex flex-col gap-4 rounded-xl bg-[#16181d] p-4 sm:p-5">
-        <div className="flex items-center justify-between gap-3 font-mono text-[13px] text-white/70">
-          <span className="truncate">liquid_death_15s_v1.mp4 &middot; made with runway</span>
-          <span className="shrink-0">1080 &times; 1080</span>
-        </div>
-        <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-stretch sm:gap-5">
-          {/* the paused frame */}
-          <div className="relative flex aspect-square w-full max-w-72 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-white/15 bg-[linear-gradient(160deg,#23262d,#101216)]">
-            <span className="absolute left-3 top-3 rounded-full border border-white/25 px-2.5 py-1 font-mono text-[11px] font-semibold tracking-[0.08em] text-white/85">
-              LIQUID DEATH
-            </span>
-            {/* their tallboy can, cut out + in motion */}
-            <div className="relative h-32 w-14 -rotate-6 rounded-[10px] bg-[linear-gradient(90deg,#878e99,#e8ebef_45%,#6f7682)] shadow-[0_18px_40px_-12px_rgba(0,0,0,0.7)]">
-              <div className="absolute inset-x-1 top-1.5 h-1 rounded-full bg-black/25" />
-              <div className="absolute inset-x-1.5 top-1/2 -translate-y-1/2 rounded-sm bg-[#16181d] px-1 py-2 text-center font-mono text-[8px] font-bold leading-tight tracking-widest text-white">
-                LIQUID
-                <br />
-                DEATH
-              </div>
-            </div>
-            <span className="absolute left-1/2 top-1/2 flex size-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 shadow-[0_8px_24px_-8px_rgba(0,0,0,0.5)]">
-              <svg viewBox="0 0 24 24" className="ml-0.5 size-4 fill-[#16181d]" aria-hidden="true">
-                <path d="M8 5.5v13l11-6.5z" />
-              </svg>
-            </span>
-            <p className="absolute inset-x-0 bottom-4 m-0 text-center text-[16.5px] font-bold text-white">
-              “Murder your thirst.”
-            </p>
-          </div>
-          {/* the assets the ad was assembled from */}
-          <div className="flex min-w-0 flex-1 flex-col justify-center gap-2.5">
-            <p className="m-0 font-mono text-[13px] text-white/55">assembled from liquiddeath.com</p>
-            {assets.map((a) => (
-              <div
-                key={a.label}
-                className="flex items-center justify-between gap-3 rounded-lg bg-white/10 px-3 py-2.5 ring-1 ring-white/15"
-              >
-                <span className="shrink-0 font-mono text-[13px] font-medium text-white/90">{a.label}</span>
-                <span className="truncate font-mono text-[13px] text-white/55">{a.detail}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        {/* scrubber */}
-        <div className="flex items-center gap-3">
-          <div className="relative h-1.5 min-w-0 flex-1 rounded-full bg-white/15" aria-hidden="true">
-            <span className="absolute inset-y-0 left-0 w-[60%] rounded-full bg-white/80" />
-            <span className="absolute left-[60%] top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white" />
-          </div>
-          <span className="shrink-0 font-mono text-[13px] text-white/70">0:09 / 0:15</span>
-        </div>
-      </div>
-      <p className="m-0 mt-auto text-center font-mono text-[13.5px] text-ink-faint">
-        a finished ad for Liquid Death, assembled from assets already on their site
-      </p>
-    </div>
-  );
-}
-
-/* Ramp → Notion: their software stack, categorized + priced from public signals */
-function RampSpendMock() {
-  const stats = [
-    { label: "est. annual SaaS spend", value: "$4.2M" },
-    { label: "vendors found", value: "63" },
-    { label: "est. savings on Ramp", value: "$310k/yr" },
-  ];
-  return (
-    <div className="relative flex flex-1 flex-col gap-3">
-      <Anno text="estimated from public signals" pos="-top-3 right-8 rotate-1" />
-      <Anno text="stack determined with BuiltWith + their job posts" pos="bottom-8 -left-4 -rotate-1" />
-      <div className="flex flex-1 flex-col gap-3 rounded-xl border border-line bg-white p-4 sm:p-5">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="font-mono text-[13.5px] text-ink-soft">notion's software stack — categorized + priced</span>
-          <span className="font-mono text-[13.5px] text-ink-faint">prices: public list pricing</span>
-        </div>
-        <div className="grid grid-cols-3 gap-2.5">
-          {stats.map((s) => (
-            <div key={s.label} className="rounded-lg bg-paper/60 px-3 py-2.5 ring-1 ring-line/70">
-              <p className="m-0 font-mono text-[12px] leading-snug text-ink-faint">{s.label}</p>
-              <p className="m-0 mt-1 text-[21px] font-bold tracking-[-0.01em] text-ink sm:text-[24px]">{s.value}</p>
-            </div>
-          ))}
-        </div>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between gap-3 rounded-lg bg-paper/60 px-3 py-2.5 ring-1 ring-line/70">
-            <span className="font-mono text-[13.5px] text-ink">
-              <span className="font-semibold">AWS</span> &middot; engineering
-            </span>
-            <span className="shrink-0 font-mono text-[13.5px] text-ink-soft">~$2.4M/yr</span>
-          </div>
-          <div className="flex items-center justify-between gap-3 rounded-lg bg-paper/60 px-3 py-2.5 ring-1 ring-line/70">
-            <span className="font-mono text-[13.5px] text-ink">
-              <span className="font-semibold">Salesforce</span> &middot; sales
-            </span>
-            <span className="shrink-0 font-mono text-[13.5px] text-ink-soft">
-              ~$310k/yr &middot; <span className="font-semibold text-tide">partner discount</span>
-            </span>
-          </div>
-          <div className="flex items-center justify-between gap-3 rounded-lg bg-tide-wash/70 px-3 py-2.5 ring-1 ring-tide/35">
-            <span className="font-mono text-[13.5px] text-ink">
-              <span className="font-semibold">Zoom + Google Meet</span> &middot; overlap
-            </span>
-            <span className="shrink-0 font-mono text-[14px] font-medium text-tide">pick one, save ~$40k</span>
-          </div>
-          <div className="flex items-center justify-between gap-3 rounded-lg bg-paper/40 px-3 py-2.5 ring-1 ring-line/50 opacity-60">
-            <span className="font-mono text-[13.5px] text-ink-soft">+ 60 more vendors, categorized</span>
-            <span className="font-mono text-[13.5px] text-ink-faint">&hellip;</span>
-          </div>
-        </div>
-      </div>
-      <p className="m-0 text-center font-mono text-[13.5px] text-ink-faint">
-        their software spend mapped and priced before they've shared a single statement
-      </p>
-    </div>
-  );
-}
-
-/* Shopify → Patagonia: their store rebuilt, side by side */
-function ShopifyRebuildMock() {
-  const thumbs = (label: string) => (
-    <div className="grid grid-cols-3 gap-2">
-      {[0, 1, 2].map((i) => (
-        <div
-          key={i}
-          className="flex h-18 items-end justify-center rounded-lg bg-[linear-gradient(150deg,#e7e2d4,#cfc8b4)] pb-1.5 font-mono text-[10.5px] text-ink-faint"
-        >
-          {label}
-        </div>
-      ))}
-    </div>
-  );
-  return (
-    <div className="relative flex flex-1 flex-col gap-3">
-      <Anno text="1.1 second load — was 8.2" pos="-top-3 right-8 rotate-1" />
-      <Anno text="product photos: from their own catalog" pos="-bottom-2 -left-2 -rotate-1" />
-      <div className="grid flex-1 gap-3 sm:grid-cols-2">
-        {/* before */}
-        <div className="flex flex-col rounded-xl border border-dashed border-line bg-paper/50">
-          <div className="flex items-center justify-between gap-2 border-b border-line/70 px-3.5 py-2.5">
-            <span className="truncate font-mono text-[13px] text-ink-soft">their store today — patagonia.com</span>
-            <span className="shrink-0 rounded-full bg-surface px-2 py-0.5 font-mono text-[12px] text-ink-faint ring-1 ring-line">
-              8.2s load
-            </span>
-          </div>
-          <div className="flex flex-1 flex-col gap-2.5 p-3.5">
-            {thumbs("their jacket")}
-            <div className="h-2.5 w-3/5 rounded-full bg-line/70" />
-            <div className="h-2.5 w-2/5 rounded-full bg-line/70" />
-            <span className="mt-auto self-start rounded-full bg-surface px-2.5 py-1 font-mono text-[12.5px] text-ink-soft ring-1 ring-line">
-              checkout &middot; 5 steps &middot; abandons at step 3
-            </span>
-          </div>
-        </div>
-        {/* after */}
-        <div className="flex flex-col rounded-xl border-2 border-tide/35 bg-white shadow-[0_16px_40px_-24px_rgba(13,60,91,0.4)]">
-          <div className="flex items-center justify-between gap-2 border-b border-line/70 px-3.5 py-2.5">
-            <span className="truncate font-mono text-[13px] font-medium text-ink">rebuilt on Shopify — same brand</span>
-            <span className="shrink-0 rounded-full bg-tide-wash px-2 py-0.5 font-mono text-[12px] font-medium text-tide">
-              1.1s load
-            </span>
-          </div>
-          <div className="flex flex-1 flex-col gap-2.5 p-3.5">
-            {thumbs("same jacket")}
-            <div className="h-2.5 w-3/5 rounded-full bg-line/70" />
-            <span className="rounded-lg bg-ink py-2 text-center text-[14px] font-semibold text-paper">
-              Buy now &middot; Shop Pay — 1-page checkout
-            </span>
-            <span className="mt-auto self-center rounded-full bg-tide-wash px-2.5 py-1 font-mono text-[12.5px] font-medium text-tide">
-              their catalog imported overnight &middot; 412 products
-            </span>
-          </div>
-        </div>
-      </div>
-      <p className="m-0 text-center font-mono text-[13.5px] text-ink-faint">
-        Patagonia's own store rebuilt — same products, same brand, checkout visibly faster
-      </p>
-    </div>
-  );
-}
-
-/* Square → Joe's Pizza: their real menu, live as an ordering page they never set up */
-function SquareOrderMock() {
-  const menu = [
-    { item: "cheese slice", price: "$3.50" },
-    { item: "pepperoni slice", price: "$4.75" },
-    { item: "garlic knots (4)", price: "$4.00" },
-  ];
-  return (
-    <div className="relative flex flex-1 flex-col gap-3">
-      <Anno text="menu: from the PDF on their site" pos="-top-3 right-8 rotate-1" />
-      <Anno text="photos: from their Google listing" pos="bottom-8 -left-4 -rotate-1" />
-      <div className="relative overflow-hidden rounded-xl bg-[linear-gradient(165deg,#2b2f37,#191c22)] p-4 sm:p-5">
-        <div className="flex items-center justify-between gap-3 font-mono text-[13px] text-white/65">
-          <span className="truncate">joespizza.nyc &middot; ordering page, live on Square</span>
-          <span className="flex shrink-0 items-center gap-1.5">
-            <span className="pulse-dot size-1.5 rounded-full bg-[#3fb98a]" />
-            accepting orders
-          </span>
-        </div>
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-6 sm:gap-10">
-          {/* the ordering page */}
-          <div className="flex w-66 flex-col gap-2 rounded-[20px] bg-white p-3 shadow-[0_24px_50px_-20px_rgba(0,0,0,0.6)]">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-[16px] font-bold text-ink">Joe's Pizza</span>
-              <span className="rounded-full bg-tide-wash px-2 py-0.5 font-mono text-[12px] font-medium text-tide">
-                order online
-              </span>
-            </div>
-            <div className="flex h-15 items-end rounded-lg bg-[linear-gradient(160deg,#3a3e46,#1c1f25)] px-2.5 pb-1.5 font-mono text-[11px] text-white/75">
-              their Carmine St storefront
-            </div>
-            {menu.map((m) => (
-              <div
-                key={m.item}
-                className="flex items-center justify-between gap-2 rounded-lg bg-paper/60 px-2.5 py-2 ring-1 ring-line/70"
-              >
-                <span className="font-mono text-[13px] text-ink">{m.item}</span>
-                <span className="font-mono text-[13px] text-ink-soft">
-                  {m.price} <span className="text-tide">&oplus;</span>
-                </span>
-              </div>
-            ))}
-            <span className="rounded-lg bg-ink py-2 text-center text-[13.5px] font-semibold text-paper">
-              2 slices &middot; $8.25 &middot; Checkout
-            </span>
-          </div>
-          {/* the first order, landing on their kitchen printer */}
-          <div className="w-56 rotate-2 rounded-md bg-[#fbf7ea] px-4 py-3.5 font-mono shadow-[0_24px_50px_-20px_rgba(0,0,0,0.65)]">
-            <p className="m-0 text-center text-[12.5px] font-bold tracking-[0.14em] text-[#2a2d33]">NEW ONLINE ORDER</p>
-            <p className="m-0 mt-0.5 text-center text-[11.5px] text-[#8a8576]">#001 &middot; 6:42 PM</p>
-            <div className="my-2.5 border-t border-dashed border-[#cfc8b0]" />
-            <div className="space-y-1.5 text-[12.5px] text-[#3c3a30]">
-              <p className="m-0 flex justify-between">
-                <span>2&times; cheese slice</span>
-                <span>$7.00</span>
-              </p>
-              <p className="m-0 flex justify-between">
-                <span>1&times; garlic knots</span>
-                <span>$4.00</span>
-              </p>
-            </div>
-            <div className="my-2.5 border-t border-dashed border-[#cfc8b0]" />
-            <p className="m-0 flex justify-between text-[13px] font-bold text-[#2a2d33]">
-              <span>total</span>
-              <span>$11.00</span>
-            </p>
-            <p className="m-0 mt-2.5 text-center text-[11.5px] text-[#8a8576]">test order — simulated, no charge</p>
-          </div>
-        </div>
-      </div>
-      <p className="m-0 text-center font-mono text-[13.5px] text-ink-faint">
-        Joe's real menu, already live as an ordering page they never set up
-      </p>
-    </div>
-  );
-}
-
 const SLIDES = [
   { key: "runway", company: "Runway", domain: "AI video", prospect: "Liquid Death", art: RunwayAdMock },
   { key: "ramp", company: "Ramp", domain: "spend management", prospect: "Notion", art: RampSpendMock },
   { key: "shopify", company: "Shopify", domain: "commerce", prospect: "Patagonia", art: ShopifyRebuildMock },
-  { key: "square", company: "Square", domain: "local commerce", prospect: "Joe's Pizza (NYC)", art: SquareOrderMock },
+  { key: "square", company: "Square", domain: "local commerce", prospect: "Joe's Pizza", art: SquareOrderMock },
 ];
 
 function ExamplesSection() {
@@ -1030,9 +778,7 @@ function ExamplesSection() {
               <span className={`block text-[16.5px] ${i === index ? "font-semibold text-ink" : "font-medium text-ink-soft"}`}>
                 {s.company}
               </span>
-              <span className="mt-0.5 hidden font-mono text-[13.5px] text-ink-faint lg:block">
-                {s.domain} &middot; pitching {s.prospect}
-              </span>
+              <span className="mt-0.5 hidden font-mono text-[13.5px] text-ink-faint lg:block">{s.domain}</span>
             </button>
           ))}
         </div>
@@ -1045,14 +791,13 @@ function ExamplesSection() {
           >
             <div className="flex items-center justify-between gap-3">
               <span className="min-w-0 truncate font-mono text-[14px] text-ink-soft">
-                <span className="font-semibold text-ink">{slide.company}</span> &middot; {slide.domain} — pitching{" "}
-                <span className="font-semibold text-ink">{slide.prospect}</span>
+                what <span className="font-semibold text-ink">{slide.prospect}</span> gets
               </span>
             </div>
             <slide.art />
           </div>
           <p className="mb-0 mt-4 text-center font-mono text-[13.5px] text-ink-faint">
-            illustrative examples — these companies aren't driftwood customers
+            illustrative examples, not customers
           </p>
         </div>
       </div>
