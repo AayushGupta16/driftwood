@@ -467,13 +467,13 @@ function HowSection() {
   );
 }
 
-/* the generic cold email; `stamped` pops the archived stamp over it (pinned story only) */
-function UsualEmail({ stamped }: { stamped?: boolean }) {
+/* the generic cold email */
+function UsualEmail() {
   return (
     <div className="relative flex flex-1 flex-col rounded-2xl border border-line bg-surface/60 p-5">
       <div className="space-y-1.5 border-b border-line pb-3 text-[12.5px]">
         <p className="m-0 text-ink-faint">
-          Subject: <span className="text-ink-soft">Sarah — quick question (Acme x Skylith AI)</span>
+          Subject: <span className="text-ink-soft">Sarah — quick question (Acme x Autosana)</span>
         </p>
       </div>
       <div className="mb-0 mt-4 space-y-5 text-[13.5px] leading-relaxed text-ink-faint">
@@ -483,9 +483,9 @@ function UsualEmail({ stamped }: { stamped?: boolean }) {
           momentum.
         </p>
         <p>
-          I'm the founder of Skylith, an AI-powered platform that automates workflows end-to-end. We
-          just closed our seed round and are growing 40% month over month — teams like yours are
-          seeing huge results.
+          I'm the founder of Autosana, an AI-powered platform that automates QA end-to-end. We just
+          closed our seed round and are growing 40% month over month — teams like yours are seeing
+          huge results.
         </p>
         <p>
           Would love to connect and show you what we're building. Any chance you have 15 minutes this
@@ -496,11 +496,6 @@ function UsualEmail({ stamped }: { stamped?: boolean }) {
       <span className="mt-auto self-start pt-4">
         <span className="inline-block rounded-full bg-paper px-2.5 py-1 font-mono text-[10.5px] text-ink-faint">
           read in 4 seconds, archived
-        </span>
-      </span>
-      <span aria-hidden="true" className={`absolute inset-0 flex items-center justify-center ${stamped ? "stamp-in" : "invisible"}`}>
-        <span className="-rotate-8 rounded-lg border-2 border-[#a04432]/70 bg-paper/85 px-4 py-1.5 font-mono text-[16px] font-semibold tracking-[0.04em] text-[#a04432]">
-          archived
         </span>
       </span>
     </div>
@@ -550,6 +545,8 @@ function DriftwoodEmail({ pinned, live }: { pinned?: boolean; live?: boolean }) 
 
 function WedgeSection() {
   const wrapRef = useRef<HTMLDivElement>(null);
+  const arrowRef = useRef<SVGPathElement>(null);
+  const headRef = useRef<SVGPathElement>(null);
   const [flipped, setFlipped] = useState(false);
 
   useEffect(() => {
@@ -561,6 +558,10 @@ function WedgeSection() {
       const total = wrap.offsetHeight - window.innerHeight;
       if (total <= 0) return;
       const p = Math.min(1, Math.max(0, -wrap.getBoundingClientRect().top / total));
+      /* the arrow draws between 12% and 55% of the pin, finishing as the emphasis flips */
+      const draw = Math.min(1, Math.max(0, (p - 0.12) / 0.43));
+      if (arrowRef.current) arrowRef.current.style.strokeDashoffset = String(1 - draw);
+      if (headRef.current) headRef.current.style.opacity = draw >= 1 ? "1" : "0";
       setFlipped(p > 0.45);
     };
     const onScroll = () => {
@@ -584,18 +585,37 @@ function WedgeSection() {
           <h2 className="m-0 text-center text-[clamp(1.8rem,4vw,2.7rem)] font-semibold leading-tight tracking-[-0.015em]">
             Don't send slop.
           </h2>
-          <div className="mt-8 grid w-full grid-cols-2 items-start gap-6">
+          <div className="relative mt-8 grid w-full grid-cols-2 items-start gap-6">
+            {/* hand-drawn arrow from the slop email to the driftwood send, drawn by scroll */}
+            <svg
+              viewBox="0 0 200 70"
+              aria-hidden="true"
+              className="pointer-events-none absolute -top-9 left-1/2 z-10 w-48 -translate-x-1/2 text-tide"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            >
+              <path
+                ref={arrowRef}
+                d="M12 54 C 50 16, 132 6, 186 40"
+                pathLength={1}
+                strokeDasharray={1}
+                strokeDashoffset={1}
+              />
+              <path ref={headRef} d="M186 40 l-14 -2 M186 40 l-2 -14" className="transition-opacity duration-300" opacity={0} />
+            </svg>
             <div
               className={`flex h-full flex-col transition-all duration-700 ease-out ${
-                flipped ? "scale-[0.97] opacity-40" : "opacity-100"
+                flipped ? "scale-[0.99] opacity-65" : "opacity-100"
               }`}
             >
               <p className="mb-3 ml-1 font-mono text-[11.5px] tracking-[0.02em] text-ink-faint">The usual</p>
-              <UsualEmail stamped={flipped} />
+              <UsualEmail />
             </div>
             <div
               className={`flex h-full flex-col transition-all duration-700 ease-out ${
-                flipped ? "translate-y-0 opacity-100" : "translate-y-4 opacity-45"
+                flipped ? "translate-y-0 opacity-100" : "translate-y-3 opacity-75"
               }`}
             >
               <p className="mb-3 ml-1 font-mono text-[11.5px] tracking-[0.02em] text-tide">A driftwood send</p>

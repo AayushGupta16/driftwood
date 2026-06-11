@@ -181,16 +181,6 @@ body {
   animation: toast-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.45s both;
 }
 
-/* archived stamp slams onto the generic email */
-.stamp-in {
-  animation: stamp-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.25s both;
-}
-
-@keyframes stamp-in {
-  from { opacity: 0; transform: scale(1.5); }
-  to { opacity: 1; transform: none; }
-}
-
 /* status dot pulse */
 .pulse-dot {
   animation: pulse-dot 1.6s ease-in-out infinite;
@@ -230,8 +220,7 @@ body {
   .wedge-reveal.is-visible .wedge-drift-card,
   .wedge-reveal.is-visible .wedge-reply,
   .glow-now,
-  .toast-now,
-  .stamp-in {
+  .toast-now {
     animation: none;
     opacity: 1;
     transform: none;
