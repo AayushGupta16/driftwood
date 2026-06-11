@@ -787,8 +787,9 @@ const SLIDES = [
     domain: "spend management",
     prospect: "Notion",
     to: "finance@notion.so",
-    subject: "Notion is overpaying 12 of its vendors",
-    body: "We priced Notion's stack against what companies your size pay on Ramp. The benchmark is below — Salesforce alone is 28% over.",
+    time: "9:02 AM",
+    subject: "is Notion paying list price for Salesforce?",
+    body: "We mapped the 63 tools Notion runs and priced them against what companies your size pay on Ramp. If you're at list, Salesforce alone is 28% over — full benchmark below.",
     art: RampSpendMock,
   },
   {
@@ -797,6 +798,7 @@ const SLIDES = [
     domain: "commerce",
     prospect: "Patagonia",
     to: "web@patagonia.com",
+    time: "7:48 AM",
     subject: "we rebuilt patagonia.com overnight",
     body: "All 412 products imported, checkout cut from 6 clicks to 2. The live preview is below.",
     art: ShopifyRebuildMock,
@@ -807,6 +809,7 @@ const SLIDES = [
     domain: "AI video",
     prospect: "Liquid Death",
     to: "marketing@liquiddeath.com",
+    time: "10:14 AM",
     subject: "we made Liquid Death a 15-second ad",
     body: "Built from your own Instagram assets this morning. The cut is below.",
     art: RunwayAdMock,
@@ -817,6 +820,7 @@ const SLIDES = [
     domain: "local commerce",
     prospect: "Joe's Pizza",
     to: "joe@joespizza.nyc",
+    time: "6:51 PM",
     subject: "Joe's doesn't take online orders — so we built it",
     body: "Your full menu, live on a Square ordering page. We ran a test order — the receipt is below.",
     art: SquareOrderMock,
@@ -833,6 +837,9 @@ function ExamplesSection() {
         <h2 className="m-0 text-[clamp(1.9rem,4vw,2.7rem)] font-semibold leading-tight tracking-[-0.015em]">
           See how this looks for different companies
         </h2>
+        <p className="mb-0 mt-4 text-[17px] leading-relaxed text-ink-soft">
+          Pick a company you know — this is the email driftwood would send their prospect.
+        </p>
       </div>
 
       <div className="reveal mt-8 grid items-start gap-5 lg:mt-10 lg:grid-cols-[250px_1fr] lg:gap-9">
@@ -851,13 +858,12 @@ function ExamplesSection() {
               }`}
             >
               <span className={`block text-[16.5px] ${i === index ? "font-semibold text-ink" : "font-medium text-ink-soft"}`}>
-                {s.company}{" "}
-                <span aria-hidden="true" className={`font-normal ${i === index ? "text-tide" : "text-ink-faint"}`}>
-                  &rarr;
-                </span>{" "}
-                {s.prospect}
+                {s.company}
               </span>
-              <span className="mt-0.5 hidden font-mono text-[13.5px] text-ink-faint lg:block">{s.domain}</span>
+              <span className={`mt-0.5 block font-mono text-[13px] ${i === index ? "text-tide" : "text-ink-faint"}`}>
+                pitching {s.prospect}
+              </span>
+              <span className="mt-0.5 hidden font-mono text-[13px] text-ink-faint lg:block">{s.domain}</span>
             </button>
           ))}
         </div>
@@ -868,18 +874,43 @@ function ExamplesSection() {
             key={slide.key}
             className="materialize flex flex-col rounded-2xl border border-line bg-surface shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_24px_60px_-26px_rgba(13,60,91,0.42),0_4px_16px_-8px_rgba(22,24,29,0.1)]"
           >
-            {/* opened-email header: the subject is the pitch */}
-            <div className="border-b border-line px-4 py-4 sm:px-5">
-              <p className="m-0 text-[17.5px] font-semibold leading-snug text-ink">{slide.subject}</p>
-              <p className="m-0 mt-1.5 font-mono text-[13.5px] text-ink-faint">
-                <span className="font-medium text-ink-soft">{slide.company}</span> &middot; sent by driftwood &middot; to{" "}
-                {slide.to}
-              </p>
+            {/* thread header: the subject is the pitch */}
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-line px-4 py-4 sm:px-5">
+              <p className="m-0 min-w-0 text-[17.5px] font-semibold leading-snug text-ink">{slide.subject}</p>
+              <span className="shrink-0 rounded-full bg-paper px-2.5 py-0.5 font-mono text-[12.5px] text-ink-faint ring-1 ring-line">
+                Inbox
+              </span>
             </div>
-            <div className="px-4 pb-4 pt-4 sm:px-5 sm:pb-5">
-              <p className="m-0 text-[15.5px] leading-relaxed text-ink-soft">{slide.body}</p>
+            <div className="px-4 py-4 sm:px-5 sm:pb-5">
+              {/* sender row */}
+              <div className="flex items-start gap-3">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-tide font-mono text-[13px] font-semibold text-white">
+                  {slide.company[0]}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
+                    <p className="m-0 text-[15.5px] font-semibold text-ink">{slide.company}</p>
+                    <span className="font-mono text-[13px] text-ink-faint">via driftwood</span>
+                    <span className="ml-auto font-mono text-[13px] text-ink-faint">{slide.time}</span>
+                  </div>
+                  <p className="m-0 mt-0.5 font-mono text-[13px] text-ink-faint">to {slide.to}</p>
+                </div>
+              </div>
+              {/* body, as the inbox renders it */}
+              <p className="m-0 mt-4 text-[14.5px] leading-[1.55] text-[#202124] [font-family:Arial,Helvetica,sans-serif]">
+                {slide.body}
+              </p>
               <div className="mt-7 flex flex-col">
                 <slide.art />
+              </div>
+              {/* reply chrome */}
+              <div className="mt-6 flex gap-2" aria-hidden="true">
+                <span className="rounded-full px-4 py-1.5 text-[13.5px] font-medium text-ink-soft ring-1 ring-line">
+                  &#8617; Reply
+                </span>
+                <span className="rounded-full px-4 py-1.5 text-[13.5px] font-medium text-ink-soft ring-1 ring-line">
+                  &#8618; Forward
+                </span>
               </div>
             </div>
           </div>
