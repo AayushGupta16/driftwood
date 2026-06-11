@@ -26,7 +26,7 @@ export default function WaitlistForm({ id }: { id?: string }) {
 
   if (status === "done") {
     return (
-      <div className="flex h-14 items-center gap-2.5 text-[15px] font-medium text-tide">
+      <div className="flex h-15 items-center gap-2.5 text-[15px] font-medium text-tide">
         <svg viewBox="0 0 24 24" className="size-5 stroke-tide" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M5 12.5l4.5 4.5L19 7.5" />
         </svg>
@@ -47,17 +47,17 @@ export default function WaitlistForm({ id }: { id?: string }) {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         placeholder="Work email"
-        className="h-14 flex-1 rounded-xl border border-line bg-surface px-4.5 text-[16px] text-ink outline-none transition-shadow placeholder:text-ink-faint focus:border-tide focus:ring-2 focus:ring-tide/25"
+        className="flex-1 appearance-none rounded-xl border border-ink/15 bg-surface px-5 py-[19px] text-[16px] leading-[20px] text-ink shadow-[0_2px_12px_-6px_rgba(22,24,29,0.16)] outline-none transition-shadow placeholder:text-ink-faint focus:border-tide focus:ring-2 focus:ring-tide/25"
       />
       <button
         type="submit"
         disabled={status === "loading"}
-        className="h-14 shrink-0 cursor-pointer rounded-xl bg-tide px-5.5 text-[15.5px] font-semibold text-white transition-colors hover:bg-tide-deep disabled:opacity-60"
+        className="h-15 shrink-0 cursor-pointer rounded-xl bg-tide px-5.5 text-[15.5px] font-semibold text-white transition-colors hover:bg-tide-deep disabled:opacity-60"
       >
         {status === "loading" ? "Joining\u2026" : "Get early access"}
       </button>
       {status === "error" && (
-        <p className="m-0 text-[13px] text-[#a04432] sm:absolute sm:translate-y-15">
+        <p className="m-0 text-[13px] text-[#a04432] sm:absolute sm:translate-y-16">
           Something broke on our end. Email aayush@driftwood.ai instead.
         </p>
       )}
