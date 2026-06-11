@@ -133,6 +133,16 @@ body {
   to { transform: none; }
 }
 
+/* soft pulsing ring around the driftwood email in the compare beat */
+.tide-ring-pulse {
+  animation: tide-ring 2.4s ease-in-out infinite;
+}
+
+@keyframes tide-ring {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(21, 85, 126, 0); }
+  50% { box-shadow: 0 0 0 6px rgba(21, 85, 126, 0.16); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .reveal {
     opacity: 1;
@@ -145,7 +155,8 @@ body {
   .pop-in,
   .toast-in,
   .pulse-dot,
-  .send-fill {
+  .send-fill,
+  .tide-ring-pulse {
     animation: none;
     opacity: 1;
     transform: none;

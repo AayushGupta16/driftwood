@@ -10,13 +10,13 @@ const STEPS = [
     art: ResearchArt,
   },
   {
-    title: "A demo artifact in every email",
+    title: "Proof of value in every email",
     body: "We turn the best finding into something they can click — like a recording of a real bug in their own checkout. A human checks every one before it ships.",
     art: PersonalizeArt,
   },
   {
     title: "Replies decide what we build next",
-    body: "We test different artifact formats against each other and watch the replies. Whatever wins gets the volume; whatever doesn't gets cut.",
+    body: "We test different proof formats against each other and watch the replies. Whatever wins gets the volume; whatever doesn't gets cut.",
     art: IterateArt,
   },
 ];
@@ -28,6 +28,41 @@ function HowHeading() {
         You take the meetings. We run everything else.
       </h2>
     </>
+  );
+}
+
+const PLUMBING = ["domains", "inboxes", "warming", "deliverability", "send windows"];
+
+/* the deliberate non-step footer of the topic list: campaign plumbing we run daily */
+function PlumbingNote() {
+  return (
+    <div>
+      <p className="m-0 max-w-105 text-[15px] leading-relaxed text-ink-soft">
+        <span className="font-semibold text-ink">The plumbing is included.</span> We run it daily, so reply rates
+        don't quietly die.
+      </p>
+      <ul className="m-0 mt-3.5 flex list-none flex-wrap gap-2 p-0">
+        {PLUMBING.map((item) => (
+          <li
+            key={item}
+            className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface/60 px-2.5 py-1 font-mono text-[12px] lowercase text-ink-soft"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              className="size-3 shrink-0 stroke-tide"
+              fill="none"
+              strokeWidth="2.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M5 12.5l4.5 4.5L19 7.5" />
+            </svg>
+            {item}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -137,7 +172,7 @@ function PersonalizeArt() {
           </p>
         </div>
       </div>
-      <p className="mb-0 mt-4 text-center font-mono text-[11px] text-ink-faint">one artifact per prospect, never reused</p>
+      <p className="mb-0 mt-4 text-center font-mono text-[11px] text-ink-faint">built fresh for each prospect, never reused</p>
     </VignetteFrame>
   );
 }
@@ -207,7 +242,7 @@ function IterateArt() {
     },
   ] as const;
   return (
-    <VignetteFrame label="artifact testing" meta="re-ranked weekly">
+    <VignetteFrame label="proof testing" meta="re-ranked weekly">
       <div className="flex flex-1 flex-col justify-center gap-3">
         {artifacts.map((a) => (
           <div
@@ -261,7 +296,7 @@ function IterateArt() {
         ))}
       </div>
       <p className="mb-0 mt-4 text-center font-mono text-[11px] text-ink-faint">
-        replies decide which artifact prospects get next
+        replies decide what prospects get next
       </p>
     </VignetteFrame>
   );
@@ -342,6 +377,9 @@ function HowSection() {
                   </div>
                 </button>
               ))}
+              <div className="border-t border-line pl-6 pt-6">
+                <PlumbingNote />
+              </div>
             </div>
 
             {/* vignettes */}
@@ -367,7 +405,7 @@ function HowSection() {
       </div>
 
       {/* plain list (mobile + reduced motion) */}
-      <div className="pt-20 sm:pt-26 lg:motion-safe:hidden">
+      <div className="py-20 sm:py-26 lg:motion-safe:hidden">
         <div className="reveal max-w-150">
           <HowHeading />
         </div>
@@ -386,20 +424,15 @@ function HowSection() {
             </li>
           ))}
         </ol>
-      </div>
-
-      {/* the plumbing, in one quiet line */}
-      <div className="reveal mt-14 pb-20 sm:pb-26 lg:motion-safe:mt-0 lg:motion-safe:pb-24">
-        <p className="m-0 rounded-2xl border border-line bg-surface/60 px-6 py-5 text-[15px] leading-relaxed text-ink-soft">
-          And the plumbing — domains, inboxes, warming, deliverability, send windows. Handled daily, so reply
-          rates don't quietly die.
-        </p>
+        <div className="reveal mt-14 border-t border-line pt-8">
+          <PlumbingNote />
+        </div>
       </div>
     </section>
   );
 }
 
-/* ---------- the story: one send, start to reply ---------- */
+/* ---------- the story: one campaign, end to end ---------- */
 
 const STORY_KICKER = (
   <>
@@ -409,18 +442,30 @@ const STORY_KICKER = (
 );
 
 const STORY_CAPTIONS = [
-  "First, our agent tests their product and finds something real.",
-  "The email writes itself around the finding.",
+  "First, we learn Autosana inside and out.",
+  "An agent researches each prospect and builds their proof.",
+  "The email goes out.",
   "Sarah replies.",
-  "What everyone else sends gets archived in 4 seconds.",
+  "Everyone else's email gets archived in 4 seconds. Ours got a meeting.",
 ];
 
-const STORY_LOGS = [
-  "crawling acme.com · 14 pages",
-  "testing checkout flows",
-  "bug found: double-clicking Pay charges twice",
-  "recording the repro · 0:47",
+/* beat 1 — what we learn about the client, and the proof ideas it produces */
+const CLIENT_FACTS = ["runs automated QA on web apps", "sells to engineering leaders"];
+
+const PROOF_IDEAS = [
+  "bug recording on the prospect's own site",
+  "QA dashboard run against their app",
+  "test-coverage teardown",
 ];
+
+/* beat 2 — the agent's run over one prospect; "pick" ties back to the beat-1 ideas */
+const STORY_LOGS = [
+  { text: "crawling acme.com · 14 pages", tone: "run" },
+  { text: "best idea for acme: bug recording", tone: "pick" },
+  { text: "testing checkout flows", tone: "run" },
+  { text: "bug found: double-clicking Pay charges twice", tone: "alert" },
+  { text: "recording the repro · 0:47", tone: "run" },
+] as const;
 
 const COMPOSE_ANNOS = [
   { text: "a real bug, found this morning", pos: "right-0 top-24 translate-x-[55%] -rotate-2" },
@@ -428,7 +473,69 @@ const COMPOSE_ANNOS = [
   { text: "specific ask, easy yes", pos: "bottom-16 right-0 translate-x-[50%] -rotate-1" },
 ];
 
-/* beat 1 — the build/log card; lines are revealed by scroll state, never timers */
+/* beat 1 — the understanding/ideation workspace for the client (not the prospect);
+   facts and ideas are revealed by scroll state, never timers */
+function StoryClientCard({ facts, ideas }: { facts: number; ideas: number }) {
+  return (
+    <div className="flex w-full max-w-135 flex-col rounded-2xl border border-line bg-surface shadow-[0_24px_60px_-28px_rgba(13,60,91,0.35),0_4px_16px_-8px_rgba(22,24,29,0.08)]">
+      <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-3">
+        <span className="flex items-center gap-2 font-mono text-[12.5px] font-medium text-ink-soft">
+          <span className="pulse-dot size-1.5 rounded-full bg-tide" />
+          client: Autosana &middot; AI QA agent
+        </span>
+        <span className="rounded-full bg-sand px-2.5 py-0.5 font-mono text-[12.5px] text-ink-soft">
+          onboarding &middot; week one
+        </span>
+      </div>
+      <div className="px-5 pt-5">
+        <p className="m-0 font-mono text-[12.5px] tracking-[0.02em] text-ink-faint">what they do</p>
+        <div className="mt-3 space-y-2.5 text-[15px] leading-relaxed text-ink-soft">
+          {CLIENT_FACTS.map((fact, i) => (
+            <p key={fact} className={`m-0 flex items-center gap-2.5 ${i < facts ? "log-line" : "invisible"}`}>
+              <svg
+                viewBox="0 0 24 24"
+                className="size-3.5 shrink-0 stroke-tide"
+                fill="none"
+                strokeWidth="2.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M5 12.5l4.5 4.5L19 7.5" />
+              </svg>
+              {fact}
+            </p>
+          ))}
+        </div>
+      </div>
+      <div className="px-5 pb-5 pt-5">
+        <p className="m-0 flex items-center gap-2.5 font-mono text-[12.5px] tracking-[0.02em] text-ink-faint">
+          <span className="pulse-dot size-1.5 shrink-0 rounded-full bg-tide" />
+          proof ideas &middot; what we could build for a prospect
+        </p>
+        <div className="mt-3 space-y-2">
+          {PROOF_IDEAS.map((idea, i) => (
+            <div
+              key={idea}
+              className={`flex items-center justify-between gap-3 rounded-xl bg-paper/70 px-3.5 py-2.5 ring-1 ring-line/70 ${
+                i < ideas ? "toast-in" : "invisible"
+              }`}
+            >
+              <span className="truncate text-[13.5px] font-medium text-ink-soft">{idea}</span>
+              <span className="shrink-0 rounded-full bg-surface px-2 py-0.5 font-mono text-[12.5px] text-ink-faint ring-1 ring-line">
+                idea
+              </span>
+            </div>
+          ))}
+        </div>
+        <p className="mb-0 mt-4 text-center font-mono text-[12.5px] text-ink-faint">
+          none chosen yet — the best fit gets picked per prospect
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* beat 2 — the agent's build/log card; lines are revealed by scroll state, never timers */
 function StoryBuildCard({ logs, thumb }: { logs: number; thumb: boolean }) {
   return (
     <div className="flex w-full max-w-135 flex-col rounded-2xl border border-line bg-surface shadow-[0_24px_60px_-28px_rgba(13,60,91,0.35),0_4px_16px_-8px_rgba(22,24,29,0.08)]">
@@ -437,24 +544,30 @@ function StoryBuildCard({ logs, thumb }: { logs: number; thumb: boolean }) {
           <span className="pulse-dot size-1.5 rounded-full bg-tide" />
           autosana's QA agent &times; driftwood
         </span>
-        <span className="rounded-full bg-sand px-2.5 py-0.5 font-mono text-[12px] text-ink-soft">
+        <span className="rounded-full bg-sand px-2.5 py-0.5 font-mono text-[12.5px] text-ink-soft">
           prospect: Sarah Chen &middot; Acme
         </span>
       </div>
       <div className="space-y-3 px-5 pb-2 pt-5 font-mono text-[13px] text-ink-soft">
         {STORY_LOGS.map((line, i) => (
-          <p key={line} className={`m-0 flex items-start gap-2.5 ${i < logs ? "log-line" : "invisible"}`}>
+          <p key={line.text} className={`m-0 flex items-start gap-2.5 ${i < logs ? "log-line" : "invisible"}`}>
             <svg
               viewBox="0 0 24 24"
-              className={`mt-[3px] size-3.5 shrink-0 ${i === 2 ? "stroke-[#d4574a]" : "stroke-tide"}`}
+              className={`mt-[3px] size-3.5 shrink-0 ${line.tone === "alert" ? "stroke-[#d4574a]" : "stroke-tide"}`}
               fill="none"
               strokeWidth="2.4"
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              {i === 2 ? <path d="M12 4.5v10M12 19v.5" /> : <path d="M5 12.5l4.5 4.5L19 7.5" />}
+              {line.tone === "alert" ? <path d="M12 4.5v10M12 19v.5" /> : <path d="M5 12.5l4.5 4.5L19 7.5" />}
             </svg>
-            <span className={i === 2 ? "font-medium text-ink" : undefined}>{line}</span>
+            <span
+              className={
+                line.tone === "alert" ? "font-medium text-ink" : line.tone === "pick" ? "font-medium text-tide" : undefined
+              }
+            >
+              {line.text}
+            </span>
           </p>
         ))}
       </div>
@@ -467,7 +580,7 @@ function StoryBuildCard({ logs, thumb }: { logs: number; thumb: boolean }) {
   );
 }
 
-/* beat 2 — the compose window; body blocks slide in with the beat, annotations point at why it works */
+/* beat 3 — the compose window; body blocks slide in with the beat, annotations point at why it works */
 function StoryComposeCard({
   on,
   sent,
@@ -574,7 +687,7 @@ function StoryComposeCard({
   );
 }
 
-/* beat 3 — the reply, styled as a real inbox thread */
+/* beat 4 — the reply, styled as a real inbox thread */
 function StoryReplyThread({ on }: { on: boolean }) {
   return (
     <div className="w-full max-w-135 overflow-hidden rounded-2xl border border-line bg-surface shadow-[0_24px_60px_-28px_rgba(13,60,91,0.35),0_4px_16px_-8px_rgba(22,24,29,0.08)]">
@@ -690,30 +803,36 @@ function DriftwoodEmail() {
   );
 }
 
-/* beat 4 — the contrast; the slop email lands beside the driftwood send */
-function StoryCompare({ on, draw }: { on: boolean; draw: number }) {
+/* beat 5 — the contrast; slop on the left, the driftwood send on the right (before → after).
+   The old hand-drawn arrow clipped and floated off the cards, so it's replaced by things that
+   can't break: a centered "vs" chip in the gap, and a pulsing tide ring on the driftwood card. */
+function StoryCompare({ on, vs }: { on: boolean; vs: boolean }) {
   return (
-    <div className="relative grid w-full max-w-5xl items-start gap-8 sm:grid-cols-2 lg:gap-10">
-      {/* hand-drawn arrow from the slop email back to the driftwood send, drawn by scroll */}
-      <svg
-        viewBox="0 0 200 70"
-        aria-hidden="true"
-        className="pointer-events-none absolute -top-10 left-1/2 z-10 hidden w-44 -translate-x-1/2 text-tide lg:block"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-      >
-        <path d="M188 54 C 150 16, 68 6, 14 40" pathLength={1} strokeDasharray={1} style={{ strokeDashoffset: 1 - draw }} />
-        <path d="M14 40 l14 -3 M14 40 l3 -14" className="transition-opacity duration-300" opacity={draw >= 1 ? 1 : 0} />
-      </svg>
+    <div className="relative grid w-full max-w-5xl items-stretch gap-8 sm:grid-cols-2 lg:gap-10">
       <div className="flex h-full flex-col">
-        <p className="mb-3 ml-1 font-mono text-[12.5px] tracking-[0.02em] text-tide">what driftwood sent</p>
-        <DriftwoodEmail />
-      </div>
-      <div className={`flex h-full flex-col transition-all delay-150 duration-700 ease-out ${on ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"}`}>
         <p className="mb-3 ml-1 font-mono text-[12.5px] tracking-[0.02em] text-ink-soft">what everyone else sends</p>
         <UsualEmail />
+      </div>
+
+      {/* "vs" chip, dead-center in the gap between the two columns */}
+      <span
+        aria-hidden="true"
+        className={`absolute left-1/2 top-1/2 z-10 hidden -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-surface px-3.5 py-1.5 font-mono text-[12.5px] font-semibold text-ink-soft shadow-[0_8px_20px_-10px_rgba(13,60,91,0.45)] sm:inline-flex ${
+          vs ? "toast-in" : "invisible"
+        }`}
+      >
+        vs
+      </span>
+
+      <div
+        className={`flex h-full flex-col transition-all delay-150 duration-700 ease-out ${
+          on ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"
+        }`}
+      >
+        <p className="mb-3 ml-1 font-mono text-[12.5px] tracking-[0.02em] text-tide">what driftwood sent</p>
+        <div className={`flex flex-1 flex-col rounded-2xl ${vs ? "tide-ring-pulse" : ""}`}>
+          <DriftwoodEmail />
+        </div>
       </div>
     </div>
   );
@@ -732,7 +851,7 @@ function StorySection() {
       const total = wrap.offsetHeight - window.innerHeight;
       if (total <= 0) return;
       const p = Math.min(1, Math.max(0, -wrap.getBoundingClientRect().top / total));
-      setProg(Math.round(p * 400) / 400);
+      setProg(Math.round(p * 500) / 500);
     };
     const onScroll = () => {
       if (!raf) raf = requestAnimationFrame(update);
@@ -750,25 +869,33 @@ function StorySection() {
   /* everything below derives from scroll progress, so scrubbing back up just works */
   const active = Math.min(STORY_CAPTIONS.length - 1, Math.floor(prog * STORY_CAPTIONS.length));
   const local = prog * STORY_CAPTIONS.length - active;
-  const logs = active > 0 ? STORY_LOGS.length : Math.min(STORY_LOGS.length, Math.floor(local / 0.16) + 1);
-  const thumb = active > 0 || local > 0.66;
-  const sent = active > 1 || (active === 1 && local > 0.75);
-  const annos = active > 1 ? 3 : active === 1 ? (local > 0.62 ? 3 : local > 0.4 ? 2 : local > 0.18 ? 1 : 0) : 0;
-  const draw = active === 3 ? Math.min(1, Math.max(0, (local - 0.1) / 0.45)) : 0;
+  /* beat 1 — client facts, then proof ideas, one by one */
+  const facts = active > 0 ? CLIENT_FACTS.length : Math.min(CLIENT_FACTS.length, Math.floor(local / 0.16) + 1);
+  const ideas = active > 0 ? PROOF_IDEAS.length : local > 0.74 ? 3 : local > 0.56 ? 2 : local > 0.38 ? 1 : 0;
+  /* beat 2 — agent log lines, then the artifact materializes */
+  const logs =
+    active > 1 ? STORY_LOGS.length : active === 1 ? Math.min(STORY_LOGS.length, Math.floor(local / 0.13) + 1) : 0;
+  const thumb = active > 1 || (active === 1 && local > 0.72);
+  /* beat 3 — annotations, then the Draft→Sent flip */
+  const sent = active > 2 || (active === 2 && local > 0.75);
+  const annos = active > 2 ? 3 : active === 2 ? (local > 0.62 ? 3 : local > 0.4 ? 2 : local > 0.18 ? 1 : 0) : 0;
+  /* beat 5 — the "vs" chip lands once both emails are on screen */
+  const vs = active === 4 && local > 0.35;
 
   const panes = [
+    <StoryClientCard key="client" facts={facts} ideas={ideas} />,
     <StoryBuildCard key="build" logs={logs} thumb={thumb} />,
-    <StoryComposeCard key="compose" on={active === 1} sent={sent} annos={annos} />,
-    <StoryReplyThread key="reply" on={active === 2} />,
-    <StoryCompare key="compare" on={active === 3} draw={draw} />,
+    <StoryComposeCard key="compose" on={active === 2} sent={sent} annos={annos} />,
+    <StoryReplyThread key="reply" on={active === 3} />,
+    <StoryCompare key="compare" on={active === 4} vs={vs} />,
   ];
 
   return (
     <section id="story" className="scroll-mt-20 border-t border-line">
-      <h2 className="sr-only">Watch one send, start to reply</h2>
+      <h2 className="sr-only">Watch one campaign happen</h2>
 
       {/* pinned walkthrough (desktop, motion ok) */}
-      <div ref={wrapRef} className="relative hidden h-[420vh] lg:motion-safe:block">
+      <div ref={wrapRef} className="relative hidden h-[520vh] lg:motion-safe:block">
         <div className="sticky top-0 flex h-screen flex-col justify-center overflow-hidden">
           {/* persistent kicker — who this example is about, always on screen */}
           <p className="m-0 text-center font-mono text-[13px] text-ink-soft">{STORY_KICKER}</p>
@@ -824,10 +951,11 @@ function StorySection() {
         <p className="reveal m-0 font-mono text-[13px] leading-relaxed text-ink-soft">{STORY_KICKER}</p>
         <div className="mt-12 space-y-18">
           {[
+            <StoryClientCard key="client" facts={CLIENT_FACTS.length} ideas={PROOF_IDEAS.length} />,
             <StoryBuildCard key="build" logs={STORY_LOGS.length} thumb />,
             <StoryComposeCard key="compose" on sent annos={3} inlineAnnos />,
             <StoryReplyThread key="reply" on />,
-            <StoryCompare key="compare" on draw={1} />,
+            <StoryCompare key="compare" on vs />,
           ].map((stage, i) => (
             <div key={STORY_CAPTIONS[i]} className="reveal">
               <p className="m-0 font-mono text-[12.5px] font-medium text-tide">0{i + 1}</p>
@@ -843,177 +971,350 @@ function StorySection() {
   );
 }
 
-/* ── artifacts: every product has a demo artifact; three fictional senders ── */
+/* ── proof of value: three fictional senders, three ways to show the product working ── */
 
-/* Autosana — a bug recording, the site's existing motif in miniature */
-function RecArtifactMock() {
+/* Autosana — a screen recording of a real bug, caught on the prospect's own checkout */
+function RecordingProofMock() {
   return (
-    <div className="relative flex h-44 flex-col overflow-hidden rounded-xl bg-[#16181d]">
-      <span className="absolute right-3 top-3 z-10 flex items-center gap-1.5 rounded-full bg-white/10 px-2 py-0.5 font-mono text-[12px] font-medium text-white/90">
-        <span className="pulse-dot size-1.5 rounded-full bg-[#e2574a]" />
-        rec
-      </span>
-      {/* faint page skeleton behind the play button */}
-      <div className="absolute inset-x-5 top-8 space-y-2 opacity-15" aria-hidden="true">
-        <div className="h-1.5 w-2/3 rounded-full bg-white" />
-        <div className="h-1.5 w-1/2 rounded-full bg-white" />
-        <div className="h-1.5 w-3/5 rounded-full bg-white" />
+    <div className="overflow-hidden rounded-2xl bg-[#16181d] shadow-[0_24px_60px_-28px_rgba(13,60,91,0.35),0_4px_16px_-8px_rgba(22,24,29,0.08)]">
+      {/* player title bar */}
+      <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-6">
+        <span className="truncate font-mono text-[12px] text-white/75">bug recording &middot; acme.com checkout</span>
+        <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 font-mono text-[12px] font-medium text-white/90">
+          <span className="pulse-dot size-1.5 rounded-full bg-[#e2574a]" />
+          rec
+        </span>
       </div>
-      <div className="relative flex flex-1 items-center justify-center">
-        <span className="flex size-11 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/25">
-          <svg viewBox="0 0 24 24" className="ml-0.5 size-4 fill-white" aria-hidden="true">
+
+      {/* the recorded browser */}
+      <div className="px-4 sm:px-6">
+        <div className="overflow-hidden rounded-xl border border-white/10 bg-white">
+          {/* browser chrome */}
+          <div className="flex items-center gap-2 border-b border-[#e8eaee] bg-[#f6f7f9] px-3.5 py-2.5">
+            <span className="size-2 rounded-full bg-[#d9dde3]" />
+            <span className="size-2 rounded-full bg-[#d9dde3]" />
+            <span className="size-2 rounded-full bg-[#d9dde3]" />
+            <span className="ml-2 min-w-0 truncate rounded-md bg-white px-2.5 py-1 font-mono text-[12px] text-[#7a8190] ring-1 ring-[#e8eaee]">
+              acme.com/checkout
+            </span>
+          </div>
+          {/* the checkout, mid-bug */}
+          <div className="space-y-2.5 px-3.5 py-4 sm:px-5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="m-0 truncate text-[14px] font-semibold text-[#16181d]">Checkout &mdash; order #4821</p>
+                <p className="m-0 mt-0.5 font-mono text-[12px] text-[#7a8190]">1 item &middot; $84.00</p>
+              </div>
+              <span className="relative shrink-0 rounded-lg bg-[#16181d] px-4 py-2 text-[13px] font-semibold text-white">
+                Pay $84.00
+                <span className="absolute -right-2 -top-2 rounded-full bg-[#d4574a] px-1.5 py-0.5 font-mono text-[11px] font-bold leading-none text-white">
+                  &times;2
+                </span>
+              </span>
+            </div>
+            <p className="m-0 pt-1 font-mono text-[12px] text-[#7a8190]">one click on Pay &middot; two charges posted</p>
+            <div className="flex items-center justify-between gap-3 rounded-lg bg-[#f1f3f6] px-3 py-2.5 ring-1 ring-[#e6e9ee]">
+              <span className="truncate font-mono text-[12.5px] font-medium text-[#3c424e]">Visa &middot;&middot;&middot;&middot; 4242</span>
+              <span className="shrink-0 font-mono text-[12px] text-[#7a8190]">$84.00 &middot; 4:02:11 PM</span>
+            </div>
+            <div className="flex items-center justify-between gap-3 rounded-lg bg-[#fff5f4] px-3 py-2.5 ring-[1.5px] ring-[#d4574a]">
+              <span className="flex min-w-0 items-center gap-2 font-mono text-[12.5px] font-medium text-[#3c424e]">
+                <span className="truncate">Visa &middot;&middot;&middot;&middot; 4242</span>
+                <span className="shrink-0 rounded-full bg-[#d4574a] px-2 py-0.5 text-[11px] font-bold text-white">duplicate</span>
+              </span>
+              <span className="shrink-0 font-mono text-[12px] font-semibold text-[#d4574a]">$84.00 &middot; 4:02:12 PM</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* play bar with scrubber */}
+      <div className="flex items-center gap-3 px-4 py-4 sm:gap-4 sm:px-6">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/25">
+          <svg viewBox="0 0 24 24" className="ml-0.5 size-3.5 fill-white" aria-hidden="true">
             <path d="M8 5.5v13l11-6.5z" />
           </svg>
         </span>
+        <div className="relative h-1.5 min-w-0 flex-1 rounded-full bg-white/15" aria-hidden="true">
+          <span className="absolute inset-y-0 left-0 w-[42%] rounded-full bg-white/80" />
+          <span className="absolute left-[42%] top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white" />
+        </div>
+        <span className="shrink-0 font-mono text-[12px] text-white/75">0:19 / 0:47</span>
       </div>
-      <div className="relative flex items-center justify-between gap-3 border-t border-white/10 px-3.5 py-2.5">
-        <span className="truncate font-mono text-[12px] text-white/75">acme.com checkout &middot; 0:47</span>
-        <span className="h-1 w-12 shrink-0 overflow-hidden rounded-full bg-white/15" aria-hidden="true">
-          <span className="block h-full w-1/3 rounded-full bg-white/70" />
+
+      {/* provenance */}
+      <div className="border-t border-white/10 px-4 py-3 sm:px-6">
+        <p className="m-0 truncate text-center font-mono text-[12px] text-white/60">
+          recorded on acme.com &middot; nothing installed
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* Lumen — a working dashboard already filled with the prospect's own numbers */
+function DashboardProofMock() {
+  const stats = [
+    { label: "fulfillment lag", value: "2.4 days", delta: "+0.6 this month", bad: true },
+    { label: "orders at risk", value: "31", delta: "9 flagged today", bad: true },
+    { label: "refund rate", value: "1.8%", delta: "−0.2 vs april", bad: false },
+  ];
+  const nav = ["overview", "orders", "fulfillment", "refunds", "alerts"];
+  return (
+    <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-[0_24px_60px_-28px_rgba(13,60,91,0.35),0_4px_16px_-8px_rgba(22,24,29,0.08)]">
+      {/* app header */}
+      <div className="flex items-center justify-between gap-3 border-b border-[#ecedf1] px-4 py-3 sm:px-5">
+        <span className="flex min-w-0 items-center gap-2.5">
+          <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-tide font-mono text-[12px] font-semibold text-white">
+            N
+          </span>
+          <span className="truncate font-mono text-[12.5px] font-medium text-ink">Northwind &middot; ops overview</span>
+        </span>
+        <span className="flex shrink-0 items-center gap-1.5 font-mono text-[12px] text-ink-faint">
+          <span className="pulse-dot size-1.5 rounded-full bg-tide" />
+          live
         </span>
       </div>
-    </div>
-  );
-}
 
-/* Lumen — a live dashboard pre-filled with the prospect's own public data */
-function DashArtifactMock() {
-  return (
-    <div className="flex h-44 flex-col overflow-hidden rounded-xl border border-line bg-white">
-      <div className="flex items-center justify-between gap-3 border-b border-line px-3.5 py-2">
-        <span className="truncate font-mono text-[12px] font-medium text-ink">Northwind &middot; ops overview</span>
-        <span className="pulse-dot size-1.5 shrink-0 rounded-full bg-tide" />
-      </div>
-      <div className="flex min-h-0 flex-1">
-        <div className="flex w-8 shrink-0 flex-col items-center gap-1.5 border-r border-line bg-paper/70 py-2.5" aria-hidden="true">
-          <span className="size-2.5 rounded-sm bg-tide/70" />
-          <span className="size-2.5 rounded-sm bg-line" />
-          <span className="size-2.5 rounded-sm bg-line" />
-        </div>
-        <div className="flex min-w-0 flex-1 flex-col gap-2 p-2.5">
-          <div className="grid grid-cols-2 gap-2">
-            <div className="rounded-lg bg-paper/70 px-2.5 py-1.5">
-              <p className="m-0 truncate font-mono text-[12px] text-ink-faint">fulfillment lag</p>
-              <p className="m-0 text-[14px] font-semibold tracking-[-0.01em] text-ink">2.4 days</p>
-            </div>
-            <div className="rounded-lg bg-paper/70 px-2.5 py-1.5">
-              <p className="m-0 truncate font-mono text-[12px] text-ink-faint">orders at risk</p>
-              <p className="m-0 text-[14px] font-semibold tracking-[-0.01em] text-ink">31</p>
-            </div>
-          </div>
-          <div className="min-h-0 flex-1 rounded-lg bg-paper/70 p-2">
-            <svg
-              viewBox="0 0 160 40"
-              className="size-full overflow-visible"
-              preserveAspectRatio="none"
-              fill="none"
-              aria-hidden="true"
+      <div className="flex">
+        {/* sidebar */}
+        <div className="hidden w-34 shrink-0 flex-col gap-1 border-r border-[#ecedf1] bg-paper/60 p-2.5 sm:flex" aria-hidden="true">
+          {nav.map((item, i) => (
+            <span
+              key={item}
+              className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 font-mono text-[12px] ${
+                i === 0 ? "bg-tide-wash font-medium text-tide" : "text-ink-faint"
+              }`}
             >
+              <span className={`size-2 shrink-0 rounded-sm ${i === 0 ? "bg-tide" : "bg-[#d4d7df]"}`} />
+              {item}
+            </span>
+          ))}
+        </div>
+
+        {/* main pane */}
+        <div className="min-w-0 flex-1 p-3.5 sm:p-5">
+          {/* stat tiles */}
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
+            {stats.map((s) => (
+              <div key={s.label} className="min-w-0 rounded-xl border border-[#ecedf1] bg-paper/50 px-2.5 py-2.5 sm:px-3.5 sm:py-3">
+                <p className="m-0 font-mono text-[12px] leading-snug text-ink-faint">{s.label}</p>
+                <p className="m-0 mt-1 text-[17px] font-semibold tracking-[-0.01em] text-ink sm:text-[20px]">{s.value}</p>
+                <p className={`m-0 mt-1 font-mono text-[12px] leading-snug ${s.bad ? "text-[#c2503f]" : "text-tide"}`}>
+                  {s.delta}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* trend chart */}
+          <div className="mt-3 rounded-xl border border-[#ecedf1] bg-paper/50 p-3 sm:p-4">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
+              <p className="m-0 font-mono text-[12px] text-ink-soft">avg fulfillment lag &middot; last 8 weeks</p>
+              <span className="flex shrink-0 items-center gap-3 font-mono text-[12px] text-ink-faint">
+                <span className="flex items-center gap-1.5">
+                  <span className="h-0.5 w-4 rounded-full bg-tide" />
+                  northwind
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-4 border-t-2 border-dashed border-[#a9aeb9]" />
+                  target
+                </span>
+              </span>
+            </div>
+            <svg viewBox="0 0 320 110" className="mt-2.5 h-auto w-full" fill="none" aria-hidden="true">
+              <path d="M2 14H318 M2 50H318 M2 86H318" stroke="#e7e9ee" strokeWidth="1" />
               <path
-                d="M2 32 C 24 30 34 22 56 24 C 78 26 92 12 114 14 C 132 15 146 8 158 6"
+                d="M2 78 C 40 74 64 64 96 60 C 128 56 152 48 192 40 C 232 32 272 26 314 14 L314 106 L2 106 Z"
+                fill="var(--color-tide)"
+                opacity="0.07"
+              />
+              <path d="M2 84 C 60 83 140 82 318 80" stroke="#a9aeb9" strokeWidth="2" strokeDasharray="5 5" strokeLinecap="round" />
+              <path
+                d="M2 78 C 40 74 64 64 96 60 C 128 56 152 48 192 40 C 232 32 272 26 314 14"
                 stroke="var(--color-tide)"
-                strokeWidth="2"
+                strokeWidth="2.5"
                 strokeLinecap="round"
               />
-              <circle cx="158" cy="6" r="2.5" fill="var(--color-tide)" />
+              <circle cx="314" cy="14" r="3.5" fill="var(--color-tide)" />
             </svg>
+            <div className="mt-1.5 flex justify-between font-mono text-[12px] text-ink-faint" aria-hidden="true">
+              <span>apr 13</span>
+              <span>may 4</span>
+              <span>may 25</span>
+              <span>jun 8</span>
+            </div>
           </div>
         </div>
+      </div>
+
+      {/* provenance */}
+      <div className="border-t border-[#ecedf1] px-4 py-3 sm:px-5">
+        <p className="m-0 truncate text-center font-mono text-[12px] text-ink-faint">
+          built from Northwind's public data &middot; no login, no integration
+        </p>
       </div>
     </div>
   );
 }
 
-/* Relay — a cost teardown built from the prospect's public pricing */
-function DocArtifactMock() {
+/* Relay — the prospect's payment costs, torn down line by line */
+function TeardownProofMock() {
   const rows = [
-    { item: "card processing", cost: "$21,300/mo" },
-    { item: "cross-border fees", cost: "$4,100/mo" },
+    { item: "card processing", detail: "2.9% + 30¢ · ~9,400 charges", cost: "$21,300/mo" },
+    { item: "cross-border fees", detail: "+1.5% on 18% of volume", cost: "$4,100/mo" },
+    { item: "chargeback fees", detail: "$15 × ~76 disputes", cost: "$1,150/mo" },
+    { item: "currency conversion", detail: "1% on international payouts", cost: "$980/mo" },
   ];
   return (
-    <div className="flex h-44 flex-col overflow-hidden rounded-xl border border-line bg-white">
-      <div className="border-b border-line px-3.5 py-2.5">
-        <p className="m-0 text-[13px] font-semibold tracking-[-0.01em] text-ink">What Brightline pays today</p>
-        <p className="m-0 mt-0.5 font-mono text-[12px] text-ink-faint">prepared by Relay</p>
+    <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-[0_24px_60px_-28px_rgba(13,60,91,0.35),0_4px_16px_-8px_rgba(22,24,29,0.08)]">
+      {/* document header */}
+      <div className="border-b border-[#ecedf1] px-4 py-4 sm:px-7 sm:py-5">
+        <p className="m-0 text-[16.5px] font-semibold tracking-[-0.01em] text-ink sm:text-[18px]">
+          What Brightline pays today
+        </p>
+        <p className="m-0 mt-1 font-mono text-[12px] text-ink-faint">prepared by Relay &middot; june 2026</p>
       </div>
-      <div className="flex flex-1 flex-col justify-center gap-2 px-3.5">
-        {rows.map((r) => (
-          <div key={r.item} className="flex items-baseline justify-between gap-3">
-            <span className="truncate text-[13px] text-ink-soft">{r.item}</span>
-            <span className="shrink-0 font-mono text-[12px] text-ink-soft">{r.cost}</span>
-          </div>
-        ))}
-        <div className="-mx-2.5 mt-0.5 flex items-baseline justify-between gap-3 rounded-lg bg-tide-wash/70 px-2.5 py-1.5 ring-1 ring-tide/35">
-          <span className="truncate text-[13px] font-medium text-ink">same volume on Relay</span>
-          <span className="shrink-0 font-mono text-[12px] font-semibold text-tide">&minus;$8,400/mo</span>
+
+      <div className="px-4 py-4 sm:px-7 sm:py-5">
+        {/* line items */}
+        <div className="space-y-3">
+          {rows.map((r) => (
+            <div key={r.item} className="flex items-baseline justify-between gap-3">
+              <span className="min-w-0">
+                <span className="block truncate text-[14.5px] font-medium text-ink">{r.item}</span>
+                <span className="block truncate font-mono text-[12px] text-ink-faint">{r.detail}</span>
+              </span>
+              <span className="shrink-0 font-mono text-[13px] text-ink-soft">{r.cost}</span>
+            </div>
+          ))}
         </div>
+        <div className="mt-4 flex items-baseline justify-between gap-3 border-t border-[#ecedf1] pt-3">
+          <span className="truncate text-[14.5px] font-semibold text-ink">total, current stack</span>
+          <span className="shrink-0 font-mono text-[13px] font-semibold text-ink">$27,530/mo</span>
+        </div>
+
+        {/* the punchline */}
+        <div className="mt-3.5 flex items-center justify-between gap-3 rounded-xl bg-tide-wash/70 px-3.5 py-3 ring-1 ring-tide/35">
+          <span className="min-w-0">
+            <span className="block truncate text-[14.5px] font-semibold text-ink">same volume on Relay</span>
+            <span className="block truncate font-mono text-[12px] text-tide">flat 2.2% &middot; no cross-border markup</span>
+          </span>
+          <span className="shrink-0 font-mono text-[15px] font-semibold text-tide sm:text-[16px]">&minus;$8,400/mo</span>
+        </div>
+
+        {/* bar comparison */}
+        <div className="mt-4 space-y-2" aria-hidden="true">
+          <div className="flex items-center gap-3">
+            <span className="w-16 shrink-0 text-right font-mono text-[12px] text-ink-faint">today</span>
+            <span className="block h-2.5 min-w-0 flex-1 overflow-hidden rounded-full bg-paper">
+              <span className="block h-full w-full rounded-full bg-[#b6bac4]" />
+            </span>
+            <span className="w-17 shrink-0 font-mono text-[12px] text-ink-soft">$27,530</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="w-16 shrink-0 text-right font-mono text-[12px] text-ink-faint">on relay</span>
+            <span className="block h-2.5 min-w-0 flex-1 overflow-hidden rounded-full bg-paper">
+              <span className="block h-full w-[69%] rounded-full bg-tide" />
+            </span>
+            <span className="w-17 shrink-0 font-mono text-[12px] font-medium text-tide">$19,130</span>
+          </div>
+        </div>
+      </div>
+
+      {/* provenance */}
+      <div className="border-t border-[#ecedf1] px-4 py-3 sm:px-7">
+        <p className="m-0 truncate text-center font-mono text-[12px] text-ink-faint">
+          from their public pricing + a real checkout we ran
+        </p>
       </div>
     </div>
   );
 }
 
-const ARTIFACT_EXAMPLES = [
+const PROOF_EXAMPLES = [
   {
-    company: "autosana · ai qa agent",
-    artifact: "bug recording",
-    art: RecArtifactMock,
-    source: "recorded on acme.com · nothing installed",
-    caption:
-      "Autosana's agent ran the prospect's checkout and caught a real bug. The 47-second recording is the whole pitch.",
+    format: "a bug recording",
+    title: "A real bug, caught on the prospect's own site.",
+    who: "Autosana sells automated QA — an AI agent that tests web apps and catches bugs before users do.",
+    sends: "A screen recording of a real bug Autosana's agent just found in the prospect's own checkout.",
+    lands: "The prospect watches the product do its job on their site before anyone asks them for a call.",
+    art: RecordingProofMock,
   },
   {
-    company: "lumen · analytics for ops teams",
-    artifact: "live dashboard",
-    art: DashArtifactMock,
-    source: "built from Northwind's public data",
-    caption:
-      "A working dashboard with the prospect's own numbers already in it. They open the email and see their operation.",
+    format: "a live dashboard",
+    title: "Their own numbers, already on the dashboard.",
+    who: "Lumen sells analytics for ops teams.",
+    sends: "A working dashboard pre-filled with the prospect's operation — orders, lag, refunds — built from their public data.",
+    lands: "They open an email and see exactly what Lumen would show them every morning. No sample data, nothing to imagine.",
+    art: DashboardProofMock,
   },
   {
-    company: "relay · payments api",
-    artifact: "cost teardown",
-    art: DocArtifactMock,
-    source: "from their public pricing + checkout",
-    caption:
-      "A line-by-line read of what the prospect pays now, with the saving Relay would unlock already worked out.",
+    format: "a cost teardown",
+    title: "What they pay now — and what they'd save.",
+    who: "Relay sells a payments API with lower processing costs.",
+    sends: "A line-by-line teardown of the prospect's current payment costs, with the saving on Relay already worked out.",
+    lands: "The first thing the prospect reads is a number: what switching is worth to them, specifically.",
+    art: TeardownProofMock,
   },
 ];
+
+function ProofExplainer({ label, text }: { label: string; text: string }) {
+  return (
+    <div>
+      <p className="m-0 font-mono text-[12px] tracking-[0.02em] text-ink-faint">{label}</p>
+      <p className="mb-0 mt-1 text-[15.5px] leading-relaxed text-ink-soft">{text}</p>
+    </div>
+  );
+}
 
 function ArtifactsSection() {
   return (
     <section id="artifacts" className="scroll-mt-20 border-t border-line py-20 sm:py-26">
       <div className="reveal max-w-150">
         <h2 className="m-0 text-[clamp(1.6rem,3.6vw,2.4rem)] font-semibold leading-tight tracking-[-0.015em]">
-          Your product has an artifact too.
+          Proof, not promises.
         </h2>
-        <p className="mb-0 mt-4 max-w-130 text-[16.5px] leading-relaxed text-ink-soft">
-          A bug recording is just what proof looks like for a QA agent. Whatever you sell, there's a format that
-          shows your product working on each prospect's own data — and finding it is our job, not yours.
+        <p className="mb-0 mt-4 max-w-135 text-[16.5px] leading-relaxed text-ink-soft">
+          Every email we send shows the prospect what your product would do for them, specifically — before they
+          ever take a call. Here's what that looks like for three different products.
         </p>
       </div>
 
-      <div className="mt-12 grid gap-5 lg:grid-cols-3">
-        {ARTIFACT_EXAMPLES.map((ex, i) => (
-          <div
-            key={ex.company}
-            className="reveal flex flex-col rounded-2xl border border-line bg-surface p-5 shadow-[0_24px_60px_-28px_rgba(13,60,91,0.35),0_4px_16px_-8px_rgba(22,24,29,0.08)]"
-            style={{ transitionDelay: `${i * 0.08}s` }}
-          >
-            <div className="flex items-center justify-between gap-3 pb-4">
-              <span className="truncate font-mono text-[12px] font-medium text-ink-soft">{ex.company}</span>
-              <span className="shrink-0 rounded-full bg-sand px-2.5 py-0.5 font-mono text-[12px] text-ink-soft">
-                {ex.artifact}
-              </span>
+      <div className="mt-14 space-y-16 sm:mt-16 sm:space-y-20">
+        {PROOF_EXAMPLES.map((ex, i) => {
+          const flip = i % 2 === 1;
+          return (
+            <div
+              key={ex.format}
+              className={`grid items-center gap-8 lg:gap-14 ${
+                flip ? "lg:grid-cols-[1.2fr_0.8fr]" : "lg:grid-cols-[0.8fr_1.2fr]"
+              }`}
+            >
+              <div className={`reveal ${flip ? "lg:order-2" : ""}`}>
+                <p className="m-0 font-mono text-[12.5px] font-medium text-tide">
+                  example 0{i + 1} &middot; {ex.format}
+                </p>
+                <h3 className="m-0 mt-3 max-w-115 text-[20px] font-semibold leading-snug tracking-[-0.01em] sm:text-[22px]">
+                  {ex.title}
+                </h3>
+                <div className="mt-5 max-w-115 space-y-4">
+                  <ProofExplainer label="who's sending" text={ex.who} />
+                  <ProofExplainer label="what their prospects get" text={ex.sends} />
+                  <ProofExplainer label="why it lands" text={ex.lands} />
+                </div>
+              </div>
+              <div className={`reveal min-w-0 ${flip ? "lg:order-1" : ""}`} style={{ transitionDelay: "0.08s" }}>
+                <ex.art />
+              </div>
             </div>
-            <ex.art />
-            <p className="m-0 mt-2.5 font-mono text-[12px] text-ink-faint">{ex.source}</p>
-            <p className="mb-0 mt-3 text-[13.5px] leading-relaxed text-ink-soft">{ex.caption}</p>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
-      <p className="reveal mb-0 mt-10 max-w-130 text-[16.5px] leading-relaxed text-ink-soft" style={{ transitionDelay: "0.1s" }}>
-        If you sell software, there's a version of this for you. Finding it is the first thing we do.
+      <p className="reveal mb-0 mt-16 max-w-135 text-[16.5px] leading-relaxed text-ink-soft">
+        If you sell software, there's a way to prove what it does — on each prospect's own site, data, or bill.
+        Finding yours is the first thing we do.
       </p>
     </section>
   );
@@ -1064,7 +1365,7 @@ export default function App() {
             href="#story"
             className="mt-14 inline-flex flex-col items-center gap-2 font-mono text-[13px] text-ink-soft no-underline transition-colors hover:text-tide"
           >
-            watch one send, start to reply
+            watch one campaign happen
             <svg
               viewBox="0 0 24 24"
               aria-hidden="true"
@@ -1079,7 +1380,7 @@ export default function App() {
           </a>
         </section>
 
-        {/* one send, start to reply */}
+        {/* one campaign, end to end */}
         <StorySection />
 
         {/* works for any product */}
