@@ -9,16 +9,6 @@ import { SquareOrderMock } from "./components/examples/SquareMock";
 
 /* ---------- shared chrome ---------- */
 
-/* soft radial pool behind a stage, so cards sit in a lit area instead of on flat paper */
-function StageGlow({ className }: { className?: string }) {
-  return (
-    <div
-      aria-hidden="true"
-      className={`pointer-events-none absolute -z-10 bg-[radial-gradient(closest-side,rgba(21,85,126,0.11),rgba(232,223,204,0.35)_58%,transparent_78%)] ${className ?? ""}`}
-    />
-  );
-}
-
 /* card shell every story graphic shares, so the stage reads as one consistent object */
 function CardShell({
   left,
@@ -514,7 +504,8 @@ function StorySection() {
 
       {/* pinned walkthrough (desktop, motion ok) */}
       <div ref={wrapRef} className="relative hidden h-[520vh] lg:motion-safe:block">
-        <div className="sticky top-0 flex h-screen flex-col justify-center overflow-hidden">
+        <div className="sticky top-0 isolate flex h-screen flex-col justify-center overflow-hidden">
+          <HeroContours className="pointer-events-none absolute -bottom-48 -left-48 -z-10 size-155 text-tide opacity-[0.05]" />
           {/* beat title — items-end keeps the gap to the subheading constant
               whether the active title wraps to one line or two */}
           <div className="grid items-end text-center">
@@ -557,8 +548,7 @@ function StorySection() {
           </div>
 
           {/* stage — all beats share one grid cell so the stage never changes height */}
-          <div className="relative mt-7 grid w-full">
-            <StageGlow className="left-1/2 top-1/2 h-[115%] w-[min(860px,100%)] -translate-x-1/2 -translate-y-1/2 rounded-[50%]" />
+          <div className="mt-7 grid w-full">
             {panes.map((pane, i) => (
               <div
                 key={BEATS[i].title}
@@ -734,14 +724,14 @@ function CompareSection() {
     <section id="compare" className="scroll-mt-20 border-t border-line">
       {/* pinned walkthrough (desktop, motion ok) */}
       <div ref={wrapRef} className="relative hidden h-[230vh] lg:motion-safe:block">
-        <div className="sticky top-0 flex h-screen flex-col justify-center overflow-hidden">
+        <div className="sticky top-0 isolate flex h-screen flex-col justify-center overflow-hidden">
+          <HeroContours className="pointer-events-none absolute -bottom-52 -right-44 -z-10 size-155 text-tide opacity-[0.05]" />
           <div className="mx-auto max-w-150 text-center">
             <h2 className="m-0 text-[clamp(1.9rem,4vw,2.7rem)] font-semibold leading-tight tracking-[-0.015em]">
               Don't send out AI slop
             </h2>
           </div>
           <div className="relative mx-auto mt-16 grid w-full max-w-5xl grid-cols-2 items-stretch gap-8 lg:gap-12">
-            <StageGlow className="left-1/2 top-1/2 h-[115%] w-[110%] -translate-x-1/2 -translate-y-1/2 rounded-[50%]" />
             {/* hand-drawn arrow with a loop, scrubbed by the pinned scroll */}
             <svg
               viewBox="0 0 260 100"
@@ -833,8 +823,7 @@ function ExamplesSection() {
         </div>
 
         {/* the demo for the selected company */}
-        <div className="relative min-w-0">
-          <StageGlow className="left-1/2 top-1/2 h-[110%] w-[110%] -translate-x-1/2 -translate-y-1/2 rounded-[50%]" />
+        <div className="min-w-0">
           <div
             key={slide.key}
             className="materialize flex flex-col gap-4 rounded-2xl border border-line bg-surface p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_24px_60px_-26px_rgba(13,60,91,0.42),0_4px_16px_-8px_rgba(22,24,29,0.1)] sm:p-5"
@@ -855,14 +844,14 @@ function ExamplesSection() {
   );
 }
 
-/* faint sea-chart contour lines behind the hero */
-function HeroContours() {
+/* faint sea-chart contour lines — the hero's motif, reused for depth on pinned screens */
+function HeroContours({
+  className = "pointer-events-none absolute -right-44 -top-48 -z-10 hidden size-155 text-tide opacity-[0.06] lg:block",
+}: {
+  className?: string;
+}) {
   return (
-    <svg
-      viewBox="0 0 600 600"
-      aria-hidden="true"
-      className="pointer-events-none absolute -right-44 -top-48 -z-10 hidden size-155 text-tide opacity-[0.06] lg:block"
-    >
+    <svg viewBox="0 0 600 600" aria-hidden="true" className={className}>
       <g fill="none" stroke="currentColor" strokeWidth="1.3">
         <path d="M300 40 C 420 50 540 140 555 280 C 568 400 480 530 330 555 C 190 575 60 480 45 340 C 32 210 150 55 300 40 Z" />
         <path d="M300 90 C 400 95 495 170 508 285 C 518 380 445 480 320 502 C 205 520 100 440 90 330 C 80 225 180 92 300 90 Z" />
@@ -885,7 +874,6 @@ export default function App() {
         {/* hero */}
         <section className="relative isolate flex flex-col items-center pb-8 pt-14 text-center sm:pt-16 lg:pt-20">
           <HeroContours />
-          <StageGlow className="left-1/2 top-[44%] h-105 w-[min(920px,96vw)] -translate-x-1/2 -translate-y-1/2 rounded-[50%]" />
           <h1 className="m-0 max-w-5xl text-[clamp(2.9rem,6.5vw,4.9rem)] font-semibold leading-[1.05] tracking-[-0.02em]">
             Ship a custom demo in every cold email.
           </h1>
