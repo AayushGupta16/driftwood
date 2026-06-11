@@ -597,57 +597,95 @@ function StorySection() {
 
 /* ---------- the contrast: slop vs a custom demo ---------- */
 
-function UsualEmail() {
+/* gmail-style frame shared by the two compare emails */
+function EmailFrame({
+  subject,
+  time,
+  highlight,
+  children,
+}: {
+  subject: string;
+  time: string;
+  highlight?: boolean;
+  children: ReactNode;
+}) {
   return (
-    <div className="flex flex-1 flex-col rounded-2xl border border-line bg-surface/70 p-5">
-      <div className="border-b border-line pb-3 text-[14.5px]">
-        <p className="m-0 text-ink-faint">
-          Subject: <span className="text-ink-soft">Sarah — quick question (Acme x Autosana)</span>
-        </p>
+    <div
+      className={`flex flex-1 flex-col rounded-2xl border bg-white p-5 ${
+        highlight ? "border-tide/35 shadow-[0_20px_50px_-28px_rgba(13,60,91,0.4)]" : "border-line"
+      }`}
+    >
+      <p className="m-0 text-[17px] font-semibold text-[#202124]">{subject}</p>
+      <div className="mt-3 flex items-start gap-2.5 border-b border-[#eceef1] pb-3.5">
+        <span
+          className={`flex size-8 shrink-0 items-center justify-center rounded-full text-[13px] font-semibold text-white ${
+            highlight ? "bg-tide" : "bg-[#9aa0a6]"
+          }`}
+        >
+          A
+        </span>
+        <div className="min-w-0 flex-1 leading-tight">
+          <p className="m-0 truncate text-[13.5px] text-[#202124]">
+            <span className="font-semibold">Autosana</span>{" "}
+            <span className="text-[#5f6368]">&lt;founder@autosana.io&gt;</span>
+          </p>
+          <p className="m-0 mt-0.5 text-[12.5px] text-[#5f6368]">to sarah@acme.com</p>
+        </div>
+        <span className="shrink-0 text-[12.5px] text-[#5f6368]">{time}</span>
       </div>
-      <div className="mb-0 mt-4 space-y-4 text-[15.5px] leading-relaxed text-ink-soft">
-        <p className="m-0">Hey Sarah,</p>
-        <p className="m-0">
-          Huge fan of what you're building at Acme — saw you just crossed 200 employees. Incredible
-          momentum.
-        </p>
-        <p className="m-0">
-          I'm the founder of Autosana, an AI-powered platform that automates QA end-to-end. We just
-          closed our seed round and are growing 40% month over month — teams like yours are seeing
-          huge results.
-        </p>
-        <p className="m-0">
-          Would love to connect and show you what we're building. Any chance you have 15 minutes this
-          week?
-        </p>
-        <p className="m-0">Best,</p>
+      <div className="mt-4 text-[14.5px] leading-[1.55] text-[#202124] [font-family:Arial,Helvetica,sans-serif]">
+        {children}
       </div>
     </div>
   );
 }
 
+function UsualEmail() {
+  return (
+    <EmailFrame subject="Sarah — quick question (Acme x Autosana)" time="5:02 PM">
+      <p className="m-0">Hey Sarah,</p>
+      <p className="m-0 mt-4">
+        Huge fan of what you're building at Acme — saw you just crossed 200 employees. Incredible
+        momentum.
+      </p>
+      <p className="m-0 mt-4">
+        I'm the founder of Autosana, an <strong>AI-powered platform that automates QA end-to-end</strong>.
+        We just closed our seed round and are growing <strong>40% month over month</strong> — teams like
+        yours are seeing huge results.
+      </p>
+      <p className="m-0 mt-4">
+        Would love to connect and show you what we're building. Any chance you have 15 minutes this
+        week? You can <span className="cursor-pointer text-[#1a0dab] underline">grab time here</span>.
+      </p>
+      <p className="m-0 mt-4">
+        Best,
+        <br />
+        The Autosana Team
+      </p>
+    </EmailFrame>
+  );
+}
+
 function DriftwoodEmail() {
   return (
-    <div className="flex flex-1 flex-col rounded-2xl border border-tide/35 bg-surface p-5 shadow-[0_20px_50px_-28px_rgba(13,60,91,0.4)]">
-      <div className="border-b border-line pb-3 text-[14.5px]">
-        <p className="m-0 text-ink-faint">
-          Subject: <span className="font-medium text-ink">found a bug in Acme's checkout</span>
-        </p>
-      </div>
-      <div className="mb-4 mt-4 space-y-4 text-[15.5px] leading-relaxed text-ink-soft">
-        <p className="m-0">Hi Sarah,</p>
-        <p className="m-0">
-          Our QA agent ran Acme's checkout this morning and caught a real bug: double-clicking Pay
-          charges the card twice. The 47-second recording is below.
-        </p>
-        <p className="m-0">
-          We already work with Y Combinator's engineering team to catch bugs before they ship, and our
-          customers save an average of 10 hours a week on QA.
-        </p>
-        <p className="m-0">Open to a quick call this week?</p>
-      </div>
-      <SquareVideoThumb className="mb-1 w-36" />
-    </div>
+    <EmailFrame subject="found a bug in Acme's checkout" time="9:02 AM" highlight>
+      <p className="m-0">Hi Sarah,</p>
+      <p className="m-0 mt-4">
+        Our QA agent ran Acme's checkout this morning and caught a real bug:{" "}
+        <strong>double-clicking Pay charges the card twice</strong>. The 47-second recording is below.
+      </p>
+      <p className="m-0 mt-4">
+        We already work with Y Combinator's engineering team to catch bugs before they ship, and our
+        customers save an average of 10 hours a week on QA.
+      </p>
+      <p className="m-0 mt-4">Open to a quick call this week?</p>
+      <SquareVideoThumb className="mt-4 w-36" />
+      <p className="m-0 mt-4">
+        Best,
+        <br />
+        Maya · Autosana
+      </p>
+    </EmailFrame>
   );
 }
 
