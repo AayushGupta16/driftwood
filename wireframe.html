@@ -384,35 +384,135 @@
     </div>
   </section>
 
-  <!-- ═══════════════ EXAMPLES — carousel, one big card per view ═══════════════
-       Familiar companies, each showing the custom demo driftwood would have
-       built for THEIR prospects. One company fills the viewport at a time. -->
+  <!-- ═══════════════ EXAMPLES — picker + email frame ═══════════════
+       Familiar companies, but each slide is now the OPENED EMAIL the prospect
+       receives: the subject line carries the context, the artifact sits inside
+       the email body. Picker names both parties: customer → prospect. -->
   <section>
-    <span class="tag">EXAMPLES — CAROUSEL (ALL 4 SLIDES SHOWN FOR AUDIT)</span>
+    <span class="tag">EXAMPLES — PICKER + EMAIL FRAME (ALL 4 SHOWN FOR AUDIT)</span>
     <div class="stack center">
       <h2>See how this looks for different companies</h2>
-      <p class="mono" style="margin-top: 10px;">every slide: a product you know pitching a company you know — zero fiction to parse. live page shows one slide per view with ‹ › arrows + dots; all four expanded here for audit.</p>
+      <p class="mono" style="margin-top: 10px;">live page: picker rail on the left, one email card on the right; clicking a company swaps the email. all four expanded here for audit.</p>
 
-      <!-- ── slide 1: Runway — a finished custom ad for the prospect's product ── -->
-      <div class="row" style="width: 100%; margin-top: 28px; align-items: center;">
-        <span class="chip">‹</span>
-        <div class="box card-body" style="flex: 1; min-height: 540px;">
-          <div class="row between">
-            <span class="mono" style="font-size: 14px;"><strong>Runway</strong> · AI video — pitching <strong>Liquid Death</strong></span>
-            <span class="pill">slide 1 / 4</span>
+      <!-- picker rail, as rendered on the live page (Ramp active) -->
+      <div class="row" style="margin-top: 24px; flex-wrap: wrap; justify-content: center;">
+        <span class="btn" style="padding: 8px 14px; font-size: 13px;">Ramp → Notion</span>
+        <span class="chip" style="padding: 8px 14px;">Shopify → Patagonia</span>
+        <span class="chip" style="padding: 8px 14px;">Runway → Liquid Death</span>
+        <span class="chip" style="padding: 8px 14px;">Square → Joe's Pizza</span>
+      </div>
+
+      <!-- ── slide 1: Ramp → Notion — the price-benchmark email ── -->
+      <div class="box" style="width: 100%; margin-top: 28px; display: flex; flex-direction: column;">
+        <div style="border-bottom: 1px solid var(--line-soft); padding: 14px;">
+          <strong style="font-size: 16px;">Notion is overpaying 12 of its vendors</strong>
+          <p class="mono" style="margin: 6px 0 0;"><strong>Ramp</strong> · sent by driftwood · to finance@notion.so</p>
+        </div>
+        <div class="card-body">
+          <p style="margin: 0; font-size: 14px; max-width: 640px;">We priced Notion's stack against what companies your size pay on Ramp. The benchmark is below — Salesforce alone is 28% over.</p>
+          <!-- artifact: the benchmark dashboard (only claims we can source) -->
+          <div class="box" style="display: flex; flex-direction: column; gap: 10px; padding: 14px;">
+            <div class="row between">
+              <span class="mono"><strong>Notion · price benchmarks</strong></span>
+              <span class="mono">vs companies your size</span>
+            </div>
+            <div class="row" style="align-items: stretch;">
+              <div class="panel" style="flex: 1;">
+                <span class="mono">vendors found</span>
+                <p style="margin: 6px 0 0; font-size: 24px; font-weight: 700;">63</p>
+              </div>
+              <div class="panel" style="flex: 1;">
+                <span class="mono">with Ramp benchmarks</span>
+                <p style="margin: 6px 0 0; font-size: 24px; font-weight: 700;">12</p>
+              </div>
+              <div class="panel" style="flex: 1;">
+                <span class="mono">median Ramp discount</span>
+                <p style="margin: 6px 0 0; font-size: 24px; font-weight: 700;">−22%</p>
+              </div>
+            </div>
+            <div class="stack" style="gap: 6px;">
+              <div class="panel row between">
+                <span class="mono"><strong>Salesforce</strong> · sales — list $165/seat · ramp median $118/seat</span>
+                <span class="mono"><strong>−28% on Ramp</strong></span>
+              </div>
+              <div class="panel row between">
+                <span class="mono"><strong>Slack</strong> · collab — list $15/seat · ramp median $11.75/seat</span>
+                <span class="mono"><strong>−21% on Ramp</strong></span>
+              </div>
+              <div class="panel row between" style="border-width: 2px;">
+                <span class="mono"><strong>Zoom + Google Meet</strong> · you're running both</span>
+                <span class="pill">consolidate</span>
+              </div>
+              <div class="panel row between" style="opacity: 0.6;">
+                <span class="mono">+ 10 more vendors with benchmark data</span>
+                <span class="mono">…</span>
+              </div>
+            </div>
+            <div class="row" style="flex-wrap: wrap; gap: 6px; justify-content: center;">
+              <span class="chip">stack found via the BuiltWith API</span>
+              <span class="chip">prices: what Ramp customers actually pay</span>
+            </div>
           </div>
-          <!-- dark video player, paused mid-ad -->
-          <div class="player" style="flex: 1;">
+        </div>
+      </div>
+
+      <p class="mono" style="margin-top: 28px;">slides 2–4, same email frame:</p>
+
+      <!-- ── slide 2: Shopify → Patagonia — the rebuilt-store email ── -->
+      <div class="box" style="width: 100%; margin-top: 10px; display: flex; flex-direction: column;">
+        <div style="border-bottom: 1px solid var(--line-soft); padding: 14px;">
+          <strong style="font-size: 16px;">we rebuilt patagonia.com overnight</strong>
+          <p class="mono" style="margin: 6px 0 0;"><strong>Shopify</strong> · sent by driftwood · to web@patagonia.com</p>
+        </div>
+        <div class="card-body">
+          <p style="margin: 0; font-size: 14px; max-width: 640px;">All 412 products imported, checkout cut from 6 clicks to 2. The live preview is below.</p>
+          <!-- artifact: browser frame, their store rebuilt -->
+          <div class="box" style="display: flex; flex-direction: column;">
+            <div class="card-head">
+              <span class="mono">patagonia.com · rebuilt preview</span>
+              <span class="pill">on Shopify</span>
+            </div>
+            <div class="card-body">
+              <div class="media" style="height: 96px;"><span>storefront hero — "Built for the long haul"</span></div>
+              <div class="row" style="align-items: stretch;">
+                <div class="media" style="flex: 1; height: 72px;"><span>Down Jacket $229</span></div>
+                <div class="media" style="flex: 1; height: 72px;"><span>Storm Shell $179</span></div>
+                <div class="media" style="flex: 1; height: 72px;"><span>Trail Fleece $119</span></div>
+              </div>
+              <span class="btn" style="text-align: center;">Buy now — 1-tap checkout</span>
+            </div>
+          </div>
+          <div class="row" style="flex-wrap: wrap; gap: 6px; justify-content: center;">
+            <span class="chip">412 products imported overnight</span>
+            <span class="chip">checkout: 6 clicks → 2</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── slide 3: Runway → Liquid Death — the finished-ad email ── -->
+      <div class="box" style="width: 100%; margin-top: 16px; display: flex; flex-direction: column;">
+        <div style="border-bottom: 1px solid var(--line-soft); padding: 14px;">
+          <strong style="font-size: 16px;">we made Liquid Death a 15-second ad</strong>
+          <p class="mono" style="margin: 6px 0 0;"><strong>Runway</strong> · sent by driftwood · to marketing@liquiddeath.com</p>
+        </div>
+        <div class="card-body">
+          <p style="margin: 0; font-size: 14px; max-width: 640px;">Built from your own Instagram assets this morning. The cut is below.</p>
+          <!-- artifact: dark player, paused mid-ad, storyboard filmstrip -->
+          <div class="player">
             <div class="row between">
               <span class="mono">liquid_death_15s_v1.mp4 · made with runway</span>
               <span class="mono">1080 × 1080</span>
             </div>
-            <!-- the paused frame -->
-            <div style="flex: 1; position: relative; border: 1px solid rgba(255,255,255,0.35); border-radius: 8px; display: flex; align-items: center; justify-content: center; min-height: 250px;">
-              <span class="chip" style="position: absolute; top: 10px; left: 10px;">Liquid Death logo</span>
-              <div class="media" style="width: 160px; height: 160px;"><span>their tallboy can, cut out + in motion</span></div>
-              <span style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 48px; height: 48px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; color: #2a2d33; font-size: 15px;">▶</span>
-              <div style="position: absolute; bottom: 12px; left: 0; right: 0; text-align: center; color: #fff; font-weight: 700; font-size: 17px;">“Murder your thirst.”</div>
+            <div style="position: relative; border: 1px solid rgba(255,255,255,0.35); border-radius: 8px; display: flex; align-items: center; justify-content: center; min-height: 200px;">
+              <div class="media" style="width: 130px; height: 130px;"><span>their tallboy can, mid-splash</span></div>
+              <span style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 44px; height: 44px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; color: #2a2d33; font-size: 14px;">▶</span>
+              <div style="position: absolute; bottom: 10px; left: 0; right: 0; text-align: center; color: #fff; font-weight: 700; font-size: 16px;">“Murder your thirst.”</div>
+            </div>
+            <div class="row">
+              <span class="chip">0:00 can drop</span>
+              <span class="chip">0:05 splash</span>
+              <span class="chip" style="border-width: 2px;">0:09 tagline</span>
+              <span class="chip">0:12 end card</span>
             </div>
             <div class="row">
               <div style="flex: 1; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.3); position: relative;">
@@ -421,159 +521,50 @@
               <span class="mono">0:09 / 0:15</span>
             </div>
           </div>
-          <!-- provenance: everything in the ad came from their site -->
           <div class="row" style="flex-wrap: wrap; gap: 6px; justify-content: center;">
-            <span class="chip">tagline: their own, from their homepage</span>
-            <span class="chip">can shots: from their product pages</span>
-            <span class="chip">logo + colors: matched</span>
+            <span class="chip">images sourced from their instagram</span>
           </div>
-          <p class="mono" style="margin: 0; text-align: center;">a finished ad for Liquid Death, assembled from assets already on their site</p>
         </div>
-        <span class="chip">›</span>
       </div>
 
-      <div class="row" style="gap: 6px; margin-top: 16px;">
-        <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--ink);"></span>
-        <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--line-soft);"></span>
-        <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--line-soft);"></span>
-        <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--line-soft);"></span>
-      </div>
-
-      <p class="mono" style="margin-top: 28px;">slides 2–4, same frame:</p>
-
-      <!-- ── slide 2: Ramp — their software spend, categorized from public signals ── -->
-      <div class="box card-body" style="width: 100%; min-height: 540px; margin-top: 10px;">
-        <div class="row between">
-          <span class="mono" style="font-size: 14px;"><strong>Ramp</strong> · spend management — pitching <strong>Notion</strong></span>
-          <span class="pill">slide 2 / 4</span>
+      <!-- ── slide 4: Square → Joe's Pizza — the ordering-page email ── -->
+      <div class="box" style="width: 100%; margin-top: 16px; display: flex; flex-direction: column;">
+        <div style="border-bottom: 1px solid var(--line-soft); padding: 14px;">
+          <strong style="font-size: 16px;">Joe's doesn't take online orders — so we built it</strong>
+          <p class="mono" style="margin: 6px 0 0;"><strong>Square</strong> · sent by driftwood · to joe@joespizza.nyc</p>
         </div>
-        <!-- the spend dashboard -->
-        <div class="box" style="flex: 1; display: flex; flex-direction: column; gap: 10px; padding: 14px;">
-          <div class="row between">
-            <span class="mono">notion's software stack — categorized + priced</span>
-            <span class="chip">estimated from public signals</span>
-          </div>
-          <div class="row" style="align-items: stretch;">
-            <div class="panel" style="flex: 1;">
-              <span class="mono">est. annual SaaS spend</span>
-              <p style="margin: 6px 0 0; font-size: 24px; font-weight: 700;">$4.2M</p>
+        <div class="card-body">
+          <p style="margin: 0; font-size: 14px; max-width: 640px;">Your full menu, live on a Square ordering page. We ran a test order — the receipt is below.</p>
+          <div style="display: flex; align-items: center; justify-content: center; gap: 28px; flex-wrap: wrap;">
+            <!-- the ordering page -->
+            <div class="box" style="width: 270px; border-radius: 18px; padding: 12px; display: flex; flex-direction: column; gap: 8px;">
+              <div class="row between">
+                <strong style="font-size: 15px;">Joe's Pizza</strong>
+                <span class="pill">order online</span>
+              </div>
+              <div class="media" style="height: 64px;"><span>their Carmine St storefront</span></div>
+              <div class="panel row between"><span class="mono">cheese slice</span><span class="mono">$3.50 ⊕</span></div>
+              <div class="panel row between"><span class="mono">pepperoni slice</span><span class="mono">$4.75 ⊕</span></div>
+              <div class="panel row between"><span class="mono">garlic knots (4)</span><span class="mono">$4.00 ⊕</span></div>
+              <span class="btn" style="text-align: center; font-size: 13px;">2 slices · $8.25 · Checkout</span>
             </div>
-            <div class="panel" style="flex: 1;">
-              <span class="mono">vendors found</span>
-              <p style="margin: 6px 0 0; font-size: 24px; font-weight: 700;">63</p>
-            </div>
-            <div class="panel" style="flex: 1;">
-              <span class="mono">est. savings on Ramp</span>
-              <p style="margin: 6px 0 0; font-size: 24px; font-weight: 700;">$310k/yr</p>
-            </div>
-          </div>
-          <div class="stack" style="gap: 6px;">
-            <div class="panel row between">
-              <span class="mono"><strong>AWS</strong> · engineering</span>
-              <span class="mono">~$2.4M/yr</span>
-            </div>
-            <div class="panel row between">
-              <span class="mono"><strong>Salesforce</strong> · sales</span>
-              <span class="mono">~$310k/yr · <strong>partner discount available</strong></span>
-            </div>
-            <div class="panel row between">
-              <span class="mono"><strong>Zoom + Google Meet</strong> · productivity</span>
-              <span class="mono"><strong>overlap</strong> · pick one, save ~$40k</span>
-            </div>
-            <div class="panel row between" style="opacity: 0.6;">
-              <span class="mono">+ 60 more vendors, categorized</span>
-              <span class="mono">…</span>
+            <!-- the first order, off the kitchen printer -->
+            <div class="box" style="width: 220px; padding: 12px; display: flex; flex-direction: column; gap: 6px;">
+              <span class="mono" style="text-align: center;"><strong>NEW ONLINE ORDER</strong> · #001</span>
+              <div class="panel row between"><span class="mono">2× cheese slice</span><span class="mono">$7.00</span></div>
+              <div class="panel row between"><span class="mono">1× garlic knots</span><span class="mono">$4.00</span></div>
+              <div class="panel row between"><span class="mono"><strong>total</strong></span><span class="mono"><strong>$11.00</strong></span></div>
+              <span class="chip" style="align-self: center;">test order — simulated, no charge</span>
             </div>
           </div>
           <div class="row" style="flex-wrap: wrap; gap: 6px; justify-content: center;">
-            <span class="chip">stack inferred from their job posts + site tech</span>
-            <span class="chip">prices: public list pricing</span>
+            <span class="chip">menu: from their PDF</span>
           </div>
         </div>
-        <p class="mono" style="margin: 0; text-align: center;">their software spend mapped and priced before they've shared a single statement</p>
       </div>
 
-      <!-- ── slide 3: Shopify — their store, rebuilt, side by side ── -->
-      <div class="box card-body" style="width: 100%; min-height: 540px; margin-top: 16px;">
-        <div class="row between">
-          <span class="mono" style="font-size: 14px;"><strong>Shopify</strong> · commerce — pitching <strong>Patagonia</strong></span>
-          <span class="pill">slide 3 / 4</span>
-        </div>
-        <div class="grid-2" style="flex: 1; gap: 16px;">
-          <!-- before: their store today -->
-          <div class="box-soft" style="display: flex; flex-direction: column;">
-            <div class="card-head">
-              <span class="mono">their store today — patagonia.com</span>
-              <span class="chip">8.2s load</span>
-            </div>
-            <div class="card-body">
-              <div class="row" style="align-items: stretch;">
-                <div class="media" style="flex: 1; height: 80px;"><span>their jacket</span></div>
-                <div class="media" style="flex: 1; height: 80px;"><span>their jacket</span></div>
-                <div class="media" style="flex: 1; height: 80px;"><span>their jacket</span></div>
-              </div>
-              <div class="bar w-60"></div>
-              <div class="bar w-40"></div>
-              <span class="chip" style="align-self: flex-start; margin-top: auto;">checkout · 5 steps · cart abandons at step 3</span>
-            </div>
-          </div>
-          <!-- after: rebuilt on Shopify -->
-          <div class="box" style="display: flex; flex-direction: column; border-width: 2px;">
-            <div class="card-head">
-              <span class="mono"><strong>rebuilt on Shopify</strong> — same products, same brand</span>
-              <span class="pill">1.1s load</span>
-            </div>
-            <div class="card-body">
-              <div class="row" style="align-items: stretch;">
-                <div class="media" style="flex: 1; height: 80px;"><span>same jacket</span></div>
-                <div class="media" style="flex: 1; height: 80px;"><span>same jacket</span></div>
-                <div class="media" style="flex: 1; height: 80px;"><span>same jacket</span></div>
-              </div>
-              <div class="bar w-60"></div>
-              <span class="btn" style="text-align: center; margin-top: auto;">Buy now · Shop Pay — 1-page checkout</span>
-              <span class="chip" style="align-self: center;">their catalog imported overnight · 412 products</span>
-            </div>
-          </div>
-        </div>
-        <p class="mono" style="margin: 0; text-align: center;">Patagonia's own store rebuilt — same products, same brand, checkout visibly faster</p>
-      </div>
-
-      <!-- ── slide 4: Square — their menu, live as an ordering page ── -->
-      <div class="box card-body" style="width: 100%; min-height: 540px; margin-top: 16px;">
-        <div class="row between">
-          <span class="mono" style="font-size: 14px;"><strong>Square</strong> · local commerce — pitching <strong>Joe's Pizza</strong> (NYC)</span>
-          <span class="pill">slide 4 / 4</span>
-        </div>
-        <div style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 28px; flex-wrap: wrap;">
-          <!-- phone frame -->
-          <div class="box" style="width: 270px; border-radius: 18px; padding: 12px; display: flex; flex-direction: column; gap: 8px;">
-            <div class="row between">
-              <strong style="font-size: 15px;">Joe's Pizza</strong>
-              <span class="pill">order online</span>
-            </div>
-            <div class="media" style="height: 64px;"><span>their Carmine St storefront</span></div>
-            <div class="panel row between"><span class="mono">cheese slice</span><span class="mono">$3.50 ⊕</span></div>
-            <div class="panel row between"><span class="mono">pepperoni slice</span><span class="mono">$4.75 ⊕</span></div>
-            <div class="panel row between"><span class="mono">garlic knots (4)</span><span class="mono">$4.00 ⊕</span></div>
-            <span class="btn" style="text-align: center; font-size: 13px;">2 slices · $8.25 · Checkout</span>
-          </div>
-          <!-- provenance notes beside the phone -->
-          <div class="stack" style="max-width: 250px;">
-            <span class="chip">menu scraped from the PDF on their site</span>
-            <span class="chip">items + prices verbatim</span>
-            <span class="chip">✓ test order #001 placed — simulated</span>
-          </div>
-        </div>
-        <p class="mono" style="margin: 0; text-align: center;">Joe's real menu, already live as an ordering page they never set up</p>
-      </div>
+      <p class="mono" style="margin-top: 16px;">illustrative examples, not customers</p>
     </div>
-
-    <p class="ask">
-      OPEN — slide 4: Square (restaurant menu live as an ordering page) vs Squire
-      (a barbershop's booking page + chair schedule already set up). Square is more
-      broadly known; Squire is the cooler "your shop, already running on it" story.
-      Both break the b2b-saas mold. Pick one or keep rotating.
-    </p>
   </section>
 
   <!-- ═══════════════ FINAL CTA ═══════════════ -->
@@ -602,7 +593,7 @@
       <strong style="font-size: 14px; letter-spacing: 0.08em;">driftwood</strong>
     </div>
     <div class="row" style="gap: 18px;">
-      <span class="mono">aayush@driftwood.ai</span>
+      <span class="mono">aayush@driftwood.sh</span>
       <span class="mono">© 2026 driftwood</span>
     </div>
   </div>

@@ -28,7 +28,7 @@ function CardShell({
       <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-3">
         <span className="flex min-w-0 items-center gap-2 font-mono text-[14px] font-medium text-ink-soft">
           <span className="pulse-dot size-1.5 shrink-0 rounded-full bg-tide" />
-          <span className="truncate">{left}</span>
+          <span className="min-w-0 sm:truncate">{left}</span>
         </span>
         {right ? (
           <span className="shrink-0 rounded-full bg-sand px-2.5 py-0.5 font-mono text-[13.5px] text-ink-soft">{right}</span>
@@ -145,7 +145,7 @@ function StoryOnboardCard({ building, icps, ideas }: { building: boolean; icps: 
                   i < ideas ? "toast-in" : "invisible"
                 }`}
               >
-                <span className="truncate text-[15.5px] font-medium text-ink-soft">{idea}</span>
+                <span className="min-w-0 text-[15.5px] font-medium text-ink-soft sm:truncate">{idea}</span>
                 <span className="shrink-0 rounded-full bg-surface px-2 py-0.5 font-mono text-[13.5px] text-ink-faint ring-1 ring-line">
                   idea
                 </span>
@@ -180,7 +180,7 @@ function StoryAgentCard({ plans, logs, thumb }: { plans: number; logs: number; t
                 } ${i < plans ? "toast-in" : "invisible"}`}
               >
                 <span
-                  className={`truncate text-[15.5px] ${i === 0 ? "font-semibold text-ink" : "font-medium text-ink-soft"}`}
+                  className={`min-w-0 text-[15.5px] sm:truncate ${i === 0 ? "font-semibold text-ink" : "font-medium text-ink-soft"}`}
                 >
                   <span className="mr-2 font-mono text-[13.5px] text-ink-faint">{i + 1}</span>
                   {step}
@@ -406,7 +406,7 @@ function StoryDataCard({ rows }: { rows: number }) {
           >
             <div className="flex items-center justify-between gap-3">
               <span
-                className={`truncate text-[14.5px] ${a.tone === "win" ? "font-semibold text-ink" : "font-medium text-ink-soft"}`}
+                className={`min-w-0 text-[14.5px] sm:truncate ${a.tone === "win" ? "font-semibold text-ink" : "font-medium text-ink-soft"}`}
               >
                 {a.name}
               </span>
@@ -781,10 +781,46 @@ function CompareSection() {
 /* ---------- examples carousel: a product you know pitching a company you know ---------- */
 
 const SLIDES = [
-  { key: "ramp", company: "Ramp", domain: "spend management", prospect: "Notion", art: RampSpendMock },
-  { key: "shopify", company: "Shopify", domain: "commerce", prospect: "Patagonia", art: ShopifyRebuildMock },
-  { key: "runway", company: "Runway", domain: "AI video", prospect: "Liquid Death", art: RunwayAdMock },
-  { key: "square", company: "Square", domain: "local commerce", prospect: "Joe's Pizza", art: SquareOrderMock },
+  {
+    key: "ramp",
+    company: "Ramp",
+    domain: "spend management",
+    prospect: "Notion",
+    to: "finance@notion.so",
+    subject: "Notion is overpaying 12 of its vendors",
+    body: "We priced Notion's stack against what companies your size pay on Ramp. The benchmark is below — Salesforce alone is 28% over.",
+    art: RampSpendMock,
+  },
+  {
+    key: "shopify",
+    company: "Shopify",
+    domain: "commerce",
+    prospect: "Patagonia",
+    to: "web@patagonia.com",
+    subject: "we rebuilt patagonia.com overnight",
+    body: "All 412 products imported, checkout cut from 6 clicks to 2. The live preview is below.",
+    art: ShopifyRebuildMock,
+  },
+  {
+    key: "runway",
+    company: "Runway",
+    domain: "AI video",
+    prospect: "Liquid Death",
+    to: "marketing@liquiddeath.com",
+    subject: "we made Liquid Death a 15-second ad",
+    body: "Built from your own Instagram assets this morning. The cut is below.",
+    art: RunwayAdMock,
+  },
+  {
+    key: "square",
+    company: "Square",
+    domain: "local commerce",
+    prospect: "Joe's Pizza",
+    to: "joe@joespizza.nyc",
+    subject: "Joe's doesn't take online orders — so we built it",
+    body: "Your full menu, live on a Square ordering page. We ran a test order — the receipt is below.",
+    art: SquareOrderMock,
+  },
 ];
 
 function ExamplesSection() {
@@ -815,25 +851,37 @@ function ExamplesSection() {
               }`}
             >
               <span className={`block text-[16.5px] ${i === index ? "font-semibold text-ink" : "font-medium text-ink-soft"}`}>
-                {s.company}
+                {s.company}{" "}
+                <span aria-hidden="true" className={`font-normal ${i === index ? "text-tide" : "text-ink-faint"}`}>
+                  &rarr;
+                </span>{" "}
+                {s.prospect}
               </span>
               <span className="mt-0.5 hidden font-mono text-[13.5px] text-ink-faint lg:block">{s.domain}</span>
             </button>
           ))}
         </div>
 
-        {/* the demo for the selected company */}
+        {/* the email the prospect receives, artifact inside */}
         <div className="min-w-0">
           <div
             key={slide.key}
-            className="materialize flex flex-col gap-4 rounded-2xl border border-line bg-surface p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_24px_60px_-26px_rgba(13,60,91,0.42),0_4px_16px_-8px_rgba(22,24,29,0.1)] sm:p-5"
+            className="materialize flex flex-col rounded-2xl border border-line bg-surface shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_24px_60px_-26px_rgba(13,60,91,0.42),0_4px_16px_-8px_rgba(22,24,29,0.1)]"
           >
-            <div className="flex items-center justify-between gap-3">
-              <span className="min-w-0 truncate font-mono text-[14px] text-ink-soft">
-                what <span className="font-semibold text-ink">{slide.prospect}</span> gets
-              </span>
+            {/* opened-email header: the subject is the pitch */}
+            <div className="border-b border-line px-4 py-4 sm:px-5">
+              <p className="m-0 text-[17.5px] font-semibold leading-snug text-ink">{slide.subject}</p>
+              <p className="m-0 mt-1.5 font-mono text-[13.5px] text-ink-faint">
+                <span className="font-medium text-ink-soft">{slide.company}</span> &middot; sent by driftwood &middot; to{" "}
+                {slide.to}
+              </p>
             </div>
-            <slide.art />
+            <div className="px-4 pb-4 pt-4 sm:px-5 sm:pb-5">
+              <p className="m-0 text-[15.5px] leading-relaxed text-ink-soft">{slide.body}</p>
+              <div className="mt-7 flex flex-col">
+                <slide.art />
+              </div>
+            </div>
           </div>
           <p className="mb-0 mt-4 text-center font-mono text-[13.5px] text-ink-faint">
             illustrative examples, not customers
