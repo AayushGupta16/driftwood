@@ -3,6 +3,9 @@ import { useEffect, useRef, useState } from "react";
 const EMAIL_BODY =
   "Hi Sarah,\n\nOur QA agent ran Acme's checkout this morning and caught a real bug: double-clicking Pay charges the card twice. Here's the 47-second recording:";
 
+const EMAIL_CLOSING =
+  "We already work with Y Combinator's engineering team to catch bugs before they ship, and our customers save an average of 10 hours a week on QA.\n\nOpen to a quick call this week?";
+
 const LOG_LINES = [
   "crawling acme.com \u00b7 14 pages",
   "testing checkout with Autosana's QA agent",
@@ -19,6 +22,7 @@ type Frame = {
   thumb: boolean;
   typed: number;
   card: boolean;
+  closing: boolean;
   sent: boolean;
   toast: boolean;
 };
@@ -30,6 +34,7 @@ const INITIAL: Frame = {
   thumb: false,
   typed: 0,
   card: false,
+  closing: false,
   sent: false,
   toast: false,
 };
@@ -41,6 +46,7 @@ const DONE: Frame = {
   thumb: true,
   typed: EMAIL_BODY.length,
   card: true,
+  closing: true,
   sent: true,
   toast: true,
 };
@@ -138,6 +144,7 @@ export default function AgentDemo() {
         );
       }
       at(offset + 3270, () => setF((p) => ({ ...p, card: true })));
+      at(offset + 3900, () => setF((p) => ({ ...p, closing: true })));
       at(offset + 4520, () => setF((p) => ({ ...p, sent: true })));
       at(offset + 5620, () => setF((p) => ({ ...p, stage: "reply", toast: true })));
       at(offset + 9520, () => setF((p) => ({ ...p, exiting: true })));
@@ -280,6 +287,8 @@ export default function AgentDemo() {
                 <div className={`mt-2 ${f.card ? "pop-in" : "invisible"}`}>
                   <BugDemoCard compact />
                 </div>
+                {/* space stays reserved via `invisible` so the card height never changes */}
+                <p className={`m-0 mt-2.5 whitespace-pre-wrap ${f.closing ? "pop-in" : "invisible"}`}>{EMAIL_CLOSING}</p>
               </div>
 
               {/* footer */}

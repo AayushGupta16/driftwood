@@ -1,30 +1,29 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import AgentDemo, { BugDemoCard } from "./components/AgentDemo";
 import WaitlistForm from "./components/WaitlistForm";
 import { Nav, Footer, useReveal } from "./components/Chrome";
-import { IconRadar, IconSwell, IconDemo, IconLoop } from "./components/Icons";
 
 const STEPS = [
   {
-    icon: IconRadar,
     title: "Source",
     body: "Lead lists built from your ICP and live intent signals, then re-cut based on who actually replies.",
+    art: SourceArt,
   },
   {
-    icon: IconDemo,
     title: "Personalize",
     body: "A demo artifact for every prospect, made from their own data and checked before it ships.",
     highlight: true,
+    art: PersonalizeArt,
   },
   {
-    icon: IconSwell,
     title: "Deliver",
     body: "Domains, inboxes, warming, send windows. We watch deliverability daily so reply rates don't quietly die.",
+    art: DeliverArt,
   },
   {
-    icon: IconLoop,
     title: "Iterate",
     body: "Opens, clicks, and replies feed back into targeting, copy, and timing. Sequences branch on behavior, not timers.",
+    art: IterateArt,
   },
 ];
 
@@ -51,6 +50,248 @@ function HowHeading() {
         You take the meetings. We run everything else.
       </h2>
     </>
+  );
+}
+
+/* shared card shell so every vignette keeps the same footprint */
+function VignetteFrame({ label, meta, children }: { label: string; meta: string; children: ReactNode }) {
+  return (
+    <div className="flex h-full flex-col rounded-2xl border border-line bg-surface shadow-[0_24px_60px_-28px_rgba(13,60,91,0.35),0_4px_16px_-8px_rgba(22,24,29,0.08)]">
+      <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-3">
+        <span className="flex items-center gap-2 font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-ink-soft">
+          <span className="pulse-dot size-1.5 rounded-full bg-tide" />
+          {label}
+        </span>
+        <span className="rounded-full bg-sand px-2.5 py-0.5 font-mono text-[10.5px] text-ink-soft">{meta}</span>
+      </div>
+      <div className="flex flex-1 flex-col p-5">{children}</div>
+    </div>
+  );
+}
+
+/* Source — a lead list scored by live intent signals */
+function SourceArt() {
+  const rows = [
+    { initials: "MP", name: "Maya Patel", company: "Northwind", tags: [{ text: "hiring SDRs", tone: "signal" }] },
+    {
+      initials: "SC",
+      name: "Sarah Chen",
+      company: "Acme",
+      tags: [
+        { text: "raised Series A", tone: "signal" },
+        { text: "qualified", tone: "qualified" },
+      ],
+      hot: true,
+    },
+    { initials: "TO", name: "Tom Okafor", company: "Brightline", tags: [{ text: "hiring SDRs", tone: "signal" }] },
+    { initials: "JR", name: "Jess Romero", company: "Cobalt", tags: [{ text: "no signal", tone: "none" }], dim: true },
+    { initials: "DW", name: "Dan Walsh", company: "Hearth", tags: [{ text: "switched CRMs", tone: "signal" }] },
+  ];
+  return (
+    <VignetteFrame label="lead sourcing" meta="2,140 accounts scanned">
+      <div className="flex flex-1 flex-col justify-center gap-2">
+        {rows.map((row) => (
+          <div
+            key={row.name}
+            className={`flex items-center justify-between gap-3 rounded-xl px-3.5 py-2.5 ${
+              row.hot ? "bg-tide-wash/70 ring-1 ring-tide/35" : "bg-paper/70"
+            } ${row.dim ? "opacity-50" : ""}`}
+          >
+            <span className="flex min-w-0 items-center gap-2.5">
+              <span className="flex size-6.5 shrink-0 items-center justify-center rounded-full bg-sand font-mono text-[9px] font-semibold text-ink-soft">
+                {row.initials}
+              </span>
+              <span className="truncate text-[12.5px] font-medium text-ink">
+                {row.name} <span className="font-normal text-ink-faint">&middot; {row.company}</span>
+              </span>
+            </span>
+            <span className="flex shrink-0 items-center gap-1.5">
+              {row.tags.map((tag) => (
+                <span
+                  key={tag.text}
+                  className={`rounded-full px-2 py-0.5 font-mono text-[9.5px] font-medium ${
+                    tag.tone === "qualified"
+                      ? "bg-tide text-white"
+                      : tag.tone === "signal"
+                        ? "bg-tide-wash text-tide"
+                        : "bg-surface text-ink-faint ring-1 ring-line"
+                  }`}
+                >
+                  {tag.text}
+                </span>
+              ))}
+            </span>
+          </div>
+        ))}
+      </div>
+      <p className="mb-0 mt-4 text-center font-mono text-[10.5px] text-ink-faint">re-cut weekly from who actually replies</p>
+    </VignetteFrame>
+  );
+}
+
+/* Personalize — a demo artifact assembled for one prospect */
+function PersonalizeArt() {
+  return (
+    <VignetteFrame label="demo build" meta="built for Sarah · Acme">
+      <div className="flex flex-1 flex-col justify-center">
+        <div className="rounded-xl border border-line bg-[#eef0f3] p-3">
+          <div className="overflow-hidden rounded-lg border border-[#d8dce2] bg-white shadow-sm">
+            <div className="flex items-center gap-1.5 border-b border-[#e8eaee] bg-[#f6f7f9] px-2.5 py-1.5">
+              <span className="size-1.5 rounded-full bg-[#d9dde3]" />
+              <span className="size-1.5 rounded-full bg-[#d9dde3]" />
+              <span className="size-1.5 rounded-full bg-[#d9dde3]" />
+              <span className="ml-1.5 rounded bg-white px-2 py-0.5 font-mono text-[9.5px] text-[#7a8190] ring-1 ring-[#e8eaee]">
+                demo.driftwood.run/acme
+              </span>
+            </div>
+            <div className="space-y-2 px-3.5 py-3">
+              <p className="m-0 text-[12px] font-semibold text-ink">Acme checkout &middot; QA walkthrough</p>
+              <div className="h-1.5 w-3/4 rounded-full bg-[#e6e9ee]" />
+              <div className="h-1.5 w-1/2 rounded-full bg-[#e6e9ee]" />
+              <div className="flex items-center justify-between gap-2 rounded-md bg-[#fff5f4] px-2 py-1.5 ring-[1.5px] ring-[#d4574a]">
+                <span className="font-mono text-[9px] font-medium text-[#3c424e]">step 3 &middot; Pay button fires twice</span>
+                <span className="rounded-full bg-[#d4574a] px-1.5 py-px font-mono text-[8px] font-bold text-white">found</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="mt-5 space-y-2.5 font-mono text-[11.5px] text-ink-soft">
+          {["pulled from acme.com · 14 pages", "rebuilt their checkout with their own data"].map((line) => (
+            <p key={line} className="m-0 flex items-center gap-2.5">
+              <svg
+                viewBox="0 0 24 24"
+                className="size-3.5 shrink-0 stroke-tide"
+                fill="none"
+                strokeWidth="2.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M5 12.5l4.5 4.5L19 7.5" />
+              </svg>
+              <span>{line}</span>
+            </p>
+          ))}
+          <p className="m-0 flex items-center gap-2.5">
+            <span className="pulse-dot mx-1 size-1.5 shrink-0 rounded-full bg-tide" />
+            <span className="text-ink">human review before it ships</span>
+          </p>
+        </div>
+      </div>
+      <p className="mb-0 mt-4 text-center font-mono text-[10.5px] text-ink-faint">one artifact per prospect, never reused</p>
+    </VignetteFrame>
+  );
+}
+
+/* Deliver — domains warming, send windows, inbox placement */
+function DeliverArt() {
+  const domains = [
+    { host: "mail.acmedemos.com", width: "88%", label: "warm · day 24" },
+    { host: "try-acmedemos.co", width: "54%", label: "warming · day 9" },
+  ];
+  const hours = [3, 4, 6, 9, 13, 16, 14, 10, 7, 5, 4, 3];
+  return (
+    <VignetteFrame label="deliverability" meta="checked daily">
+      <div className="flex flex-1 flex-col justify-center gap-7">
+        <div className="space-y-4">
+          {domains.map((d) => (
+            <div key={d.host}>
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="font-mono text-[11px] font-medium text-ink">{d.host}</span>
+                <span className="font-mono text-[10px] text-ink-faint">{d.label}</span>
+              </div>
+              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-line/50">
+                <div className="h-full rounded-full bg-tide" style={{ width: d.width }} />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div>
+          <div className="flex items-baseline justify-between gap-3">
+            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">send window</span>
+            <span className="font-mono text-[10px] text-ink-faint">Tue&ndash;Thu &middot; 8:40&ndash;11:10 am local</span>
+          </div>
+          <div className="mt-2 flex h-9 items-end gap-1">
+            {hours.map((h, i) => (
+              <span
+                key={i}
+                className={`flex-1 rounded-t-sm ${i >= 3 && i <= 6 ? "bg-tide" : "bg-line"}`}
+                style={{ height: `${h * 6}%` }}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="mt-4 flex items-end justify-between gap-4 border-t border-line pt-4">
+        <div>
+          <p className="m-0 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">inbox placement</p>
+          <p className="m-0 mt-1 text-[22px] font-semibold tracking-[-0.01em] text-ink">
+            98.6%
+            <span className="ml-2.5 rounded-full bg-tide-wash px-2 py-0.5 align-middle font-mono text-[10px] font-medium text-tide">
+              &#8599; 30 days
+            </span>
+          </p>
+        </div>
+        <svg viewBox="0 0 120 36" className="h-9 w-30 shrink-0 overflow-visible" fill="none" aria-hidden="true">
+          <path
+            d="M2 30 C 20 28 28 24 42 24 C 58 24 64 18 78 16 C 92 14 100 9 118 6"
+            stroke="var(--color-tide)"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+          <circle cx="118" cy="6" r="3" fill="var(--color-tide)" />
+        </svg>
+      </div>
+    </VignetteFrame>
+  );
+}
+
+/* Iterate — sequences branch on behavior, winners get the budget */
+function IterateArt() {
+  return (
+    <VignetteFrame label="sequence" meta="branches on behavior">
+      <div className="flex flex-1 flex-col justify-center">
+        <div className="flex justify-center">
+          <span className="rounded-lg border border-line bg-paper px-3 py-1.5 font-mono text-[11px] font-medium text-ink">
+            email 1 &middot; demo attached
+          </span>
+        </div>
+        <svg viewBox="0 0 240 36" className="mx-auto mt-1 h-9 w-60" fill="none" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M120 2 v8 C 120 24 60 20 60 34" stroke="var(--color-line)" strokeWidth="1.5" />
+          <path d="M120 2 v8 C 120 24 180 20 180 34" stroke="var(--color-line)" strokeWidth="1.5" />
+        </svg>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="text-center">
+            <p className="m-0 font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-tide">replied</p>
+            <span className="mt-1.5 inline-block rounded-lg bg-tide px-3 py-1.5 font-mono text-[11px] font-medium text-white shadow-[0_10px_22px_-12px_rgba(13,60,91,0.7)]">
+              hand off to you
+            </span>
+          </div>
+          <div className="text-center">
+            <p className="m-0 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-faint">no reply &middot; 3 days</p>
+            <span className="mt-1.5 inline-block rounded-lg border border-line bg-surface px-3 py-1.5 font-mono text-[11px] text-ink-soft">
+              email 2 &middot; new angle
+            </span>
+          </div>
+        </div>
+      </div>
+      <div className="mt-4 space-y-2 border-t border-line pt-4">
+        <div className="flex items-center gap-3">
+          <span className="w-14 shrink-0 font-mono text-[10.5px] text-ink-faint">angle A</span>
+          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-line/50">
+            <div className="h-full w-[34%] rounded-full bg-ink-faint/50" />
+          </div>
+          <span className="w-20 shrink-0 text-right font-mono text-[10px] text-ink-faint">2.1% replies</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="w-14 shrink-0 font-mono text-[10.5px] font-medium text-ink">angle B</span>
+          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-line/50">
+            <div className="h-full w-[78%] rounded-full bg-tide" />
+          </div>
+          <span className="w-20 shrink-0 text-right font-mono text-[10px] font-medium text-tide">4.9% replies</span>
+        </div>
+        <p className="m-0 pt-1 text-center font-mono text-[10.5px] text-ink-faint">angle B gets the budget next week</p>
+      </div>
+    </VignetteFrame>
   );
 }
 
@@ -94,31 +335,55 @@ function HowSection() {
     <section id="how" className="scroll-mt-20 border-t border-line">
       {/* pinned scroll story (desktop, motion ok) */}
       <div ref={wrapRef} className="relative hidden h-[300vh] lg:motion-safe:block">
-        <div className="sticky top-0 flex h-screen items-center overflow-hidden">
-          <div className="grid w-full grid-cols-[0.85fr_1.15fr] items-center gap-20">
-            <div>
-              <HowHeading />
-              <div className="mt-10 flex items-center gap-2">
-                {STEPS.map((step, i) => (
-                  <button
-                    key={step.title}
-                    type="button"
-                    aria-label={`Go to ${step.title}`}
-                    onClick={() => jumpTo(i)}
-                    className={`h-1.5 cursor-pointer rounded-full border-0 p-0 transition-all duration-500 ${
-                      i === active ? "w-10 bg-tide" : "w-2.5 bg-line hover:bg-ink-faint"
+        <div className="sticky top-0 flex h-screen flex-col justify-center overflow-hidden">
+          <div className="max-w-150">
+            <HowHeading />
+          </div>
+
+          <div className="mt-12 grid w-full grid-cols-[1fr_1.05fr] items-center gap-16 xl:gap-20">
+            {/* topics */}
+            <div className="flex flex-col gap-8">
+              {STEPS.map((step, i) => (
+                <button
+                  key={step.title}
+                  type="button"
+                  aria-current={i === active ? "step" : undefined}
+                  onClick={() => jumpTo(i)}
+                  className="group relative block w-full cursor-pointer border-0 bg-transparent p-0 pl-6 text-left"
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`absolute bottom-1 left-0 top-1 w-[3px] rounded-full transition-colors duration-500 ${
+                      i === active ? "bg-tide" : "bg-line group-hover:bg-ink-faint/60"
                     }`}
                   />
-                ))}
-              </div>
+                  <div
+                    className={`transition-opacity duration-500 ${
+                      i === active ? "opacity-100" : "opacity-40 group-hover:opacity-70"
+                    }`}
+                  >
+                    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1.5">
+                      <h3 className="m-0 text-[19px] font-semibold tracking-[-0.01em]">{step.title}</h3>
+                      <span className="font-mono text-[11px] text-ink-faint">0{i + 1}</span>
+                      {step.highlight && (
+                        <span className="rounded-full bg-tide-wash px-2.5 py-0.5 font-mono text-[10.5px] font-medium text-tide">
+                          why prospects reply
+                        </span>
+                      )}
+                    </div>
+                    <p className="mb-0 mt-2 max-w-105 text-[14.5px] leading-relaxed text-ink-soft">{step.body}</p>
+                  </div>
+                </button>
+              ))}
             </div>
 
-            <div className="relative h-80">
+            {/* vignettes */}
+            <div className="relative h-105">
               {STEPS.map((step, i) => (
                 <div
                   key={step.title}
                   aria-hidden={i !== active}
-                  className={`absolute inset-0 flex flex-col justify-center transition-all duration-500 ease-out ${
+                  className={`absolute inset-0 transition-all duration-500 ease-out ${
                     i === active
                       ? "translate-y-0 opacity-100"
                       : i < active
@@ -126,25 +391,7 @@ function HowSection() {
                         : "pointer-events-none translate-y-8 opacity-0"
                   }`}
                 >
-                  <span
-                    aria-hidden="true"
-                    className="pointer-events-none absolute -top-4 right-0 select-none font-mono text-[170px] font-semibold leading-none text-ink/[0.045]"
-                  >
-                    0{i + 1}
-                  </span>
-                  <span className="flex size-13 items-center justify-center rounded-2xl bg-tide shadow-[0_14px_30px_-14px_rgba(13,60,91,0.65)]">
-                    <step.icon className="size-6.5 text-white" />
-                  </span>
-                  <div className="mt-7 flex flex-wrap items-baseline gap-x-3.5 gap-y-2">
-                    <h3 className="m-0 text-[30px] font-semibold tracking-[-0.01em]">{step.title}</h3>
-                    <span className="font-mono text-[12px] text-ink-faint">0{i + 1} / 04</span>
-                    {step.highlight && (
-                      <span className="rounded-full bg-tide-wash px-2.5 py-1 font-mono text-[11px] font-medium text-tide">
-                        why prospects reply
-                      </span>
-                    )}
-                  </div>
-                  <p className="mb-0 mt-3.5 max-w-120 text-[16.5px] leading-relaxed text-ink-soft">{step.body}</p>
+                  <step.art />
                 </div>
               ))}
             </div>
@@ -161,12 +408,11 @@ function HowSection() {
           <span className="absolute bottom-6 left-5 top-6 w-px bg-line" aria-hidden="true" />
           {STEPS.map((step, i) => (
             <li key={step.title} className="reveal relative pl-16" style={{ transitionDelay: `${i * 0.06}s` }}>
-              <span className="absolute left-0 top-0 flex size-10 items-center justify-center rounded-full border border-tide/40 bg-tide-wash">
-                <step.icon className="size-5 text-tide" />
+              <span className="absolute left-0 top-0 flex size-10 items-center justify-center rounded-full border border-tide/40 bg-tide-wash font-mono text-[12px] font-semibold text-tide">
+                0{i + 1}
               </span>
               <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1.5">
                 <h3 className="m-0 text-[18px] font-semibold">{step.title}</h3>
-                <span className="font-mono text-[11px] text-ink-faint">0{i + 1}</span>
                 {step.highlight && (
                   <span className="rounded-full bg-tide-wash px-2.5 py-0.5 font-mono text-[10.5px] font-medium text-tide">
                     why prospects reply
@@ -214,7 +460,7 @@ export default function App() {
           <HeroContours />
           <div>
             <h1 className="m-0 max-w-130 text-[clamp(2.1rem,5.2vw,3.4rem)] font-semibold leading-[1.06] tracking-[-0.02em]">
-              Every cold email ships with a custom demo.
+              Ship every cold email with a custom demo.
             </h1>
             <p className="mt-5 max-w-110 text-[16.5px] leading-relaxed text-ink-soft">
               We run your whole cold email channel and build each prospect a demo of your product, so more sends
@@ -289,10 +535,10 @@ export default function App() {
                 <BugDemoCard compact />
                 <div className="mb-0 mt-4 space-y-5 text-[13.5px] leading-relaxed text-ink-soft">
                   <p>
-                    It flagged two more in your signup flow. Y Combinator's engineering team runs Autosana on
-                    their releases, and Lucra cut most of their regression work with it.
+                    We already work with Y Combinator's engineering team to catch bugs before they ship, and
+                    our customers save an average of 10 hours a week on QA.
                   </p>
-                  <p>Worth 15 minutes Thursday to walk through all three?</p>
+                  <p>Open to a quick call this week?</p>
                 </div>
                 <span className="mt-auto self-start pt-4">
                   <span className="inline-block rounded-full bg-tide-wash px-2.5 py-1 font-mono text-[10.5px] font-medium text-tide">
