@@ -1,20 +1,19 @@
 import { Anno } from "./Anno";
 
-/* Ramp → Notion: their software stack, categorized + priced from public signals,
-   framed as a generic spend-management app (inspired-by, not a brand clone) */
+/* Ramp → Notion: their stack (from public signals) priced against Ramp's own
+   customer benchmark data — no claims about their actual spend, only what's
+   observable (the tools) and what Ramp genuinely knows (what others pay). */
 
 const stats = [
-  { label: "est. annual SaaS spend", value: "$4.2M" },
   { label: "vendors found", value: "63" },
-  { label: "est. savings on Ramp", value: "$310k/yr" },
+  { label: "with Ramp benchmarks", value: "12" },
+  { label: "median Ramp discount", value: "−22%" },
 ];
 
-/* spend by category — sums to ~$4.2M; widths relative to the largest bar */
-const categories = [
-  { label: "infra & cloud", value: "$2.6M", pct: 100 },
-  { label: "sales & crm", value: "$640k", pct: 25 },
-  { label: "collab & comms", value: "$480k", pct: 19 },
-  { label: "everything else", value: "$480k", pct: 19 },
+/* list price vs what companies their size actually pay on Ramp */
+const benchmarks = [
+  { vendor: "Salesforce", category: "sales", list: "$165/seat", median: "$118/seat", medianPct: 72, delta: "−28% on Ramp" },
+  { vendor: "Slack", category: "collab", list: "$15/seat", median: "$11.75/seat", medianPct: 78, delta: "−21% on Ramp" },
 ];
 
 const navItems = [
@@ -74,7 +73,8 @@ function NavIconChart() {
 export function RampSpendMock() {
   return (
     <div className="relative flex flex-1 flex-col gap-3">
-      <Anno text="stack found via the BuiltWith API" pos="-top-3 right-8 rotate-1" />
+      <Anno text="stack found via the BuiltWith API" pos="-top-6 right-8 rotate-1" />
+      <Anno text="prices: what Ramp customers actually pay" pos="-bottom-2 -left-3 -rotate-1" />
 
       {/* app frame */}
       <div className="flex flex-1 overflow-hidden rounded-xl border border-line bg-white">
@@ -84,9 +84,7 @@ export function RampSpendMock() {
             <span
               key={item.label}
               className={`flex items-center justify-center gap-2 rounded-md px-2 py-1.5 font-mono text-[12px] md:justify-start ${
-                item.active
-                  ? "bg-tide-wash font-medium text-tide ring-1 ring-tide/20"
-                  : "text-ink-faint"
+                item.active ? "bg-tide-wash font-medium text-tide ring-1 ring-tide/20" : "text-ink-faint"
               }`}
             >
               {item.icon}
@@ -99,13 +97,8 @@ export function RampSpendMock() {
         <div className="flex min-w-0 flex-1 flex-col gap-3 p-3.5 sm:p-4">
           {/* panel header */}
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line/70 pb-2.5">
-            <span className="font-mono text-[13.5px] font-semibold text-ink">
-              Notion &middot; spend overview
-            </span>
-            <span className="inline-flex items-center gap-1.5 font-mono text-[13px] text-ink-faint">
-              <span className="pulse-dot h-1.5 w-1.5 rounded-full bg-tide" />
-              0 accounts connected
-            </span>
+            <span className="font-mono text-[13.5px] font-semibold text-ink">Notion &middot; price benchmarks</span>
+            <span className="font-mono text-[13px] text-ink-faint">vs companies your size</span>
           </div>
 
           {/* KPI cards */}
@@ -113,72 +106,55 @@ export function RampSpendMock() {
             {stats.map((s) => (
               <div key={s.label} className="rounded-lg bg-paper/60 px-2.5 py-2 ring-1 ring-line/70">
                 <p className="m-0 font-mono text-[12px] leading-snug text-ink-faint">{s.label}</p>
-                <p className="m-0 mt-0.5 text-[19px] font-bold tracking-[-0.01em] text-ink sm:text-[22px]">
-                  {s.value}
-                </p>
+                <p className="m-0 mt-0.5 text-[19px] font-bold tracking-[-0.01em] text-ink sm:text-[22px]">{s.value}</p>
               </div>
             ))}
           </div>
 
-          {/* spend by category — small horizontal bars */}
-          <div className="rounded-lg bg-paper/40 px-2.5 py-2 ring-1 ring-line/50">
-            <p className="m-0 mb-1.5 font-mono text-[12px] text-ink-faint">spend by category</p>
-            <div className="space-y-1.5">
-              {categories.map((c) => (
-                <div key={c.label} className="flex items-center gap-2">
-                  <span className="w-[108px] shrink-0 truncate font-mono text-[13px] text-ink-soft sm:w-[124px]">
-                    {c.label}
+          {/* benchmark rows: list price vs the Ramp median */}
+          <div className="space-y-2">
+            {benchmarks.map((b) => (
+              <div key={b.vendor} className="rounded-lg bg-paper/60 px-3 py-2.5 ring-1 ring-line/70">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="truncate font-mono text-[13.5px] text-ink">
+                    <span className="font-semibold">{b.vendor}</span> &middot; {b.category}
                   </span>
-                  <svg
-                    viewBox="0 0 100 8"
-                    preserveAspectRatio="none"
-                    className="h-2 min-w-0 flex-1"
-                    aria-hidden="true"
-                  >
-                    <rect x="0" y="0" width="100" height="8" rx="4" className="fill-sand/45" />
-                    <rect x="0" y="0" width={c.pct} height="8" rx="4" className="fill-tide/80" />
-                  </svg>
-                  <span className="w-[52px] shrink-0 text-right font-mono text-[13px] text-ink-soft">
-                    {c.value}
-                  </span>
+                  <span className="shrink-0 font-mono text-[13px] font-medium text-tide">{b.delta}</span>
                 </div>
-              ))}
-            </div>
-          </div>
+                <div className="mt-2 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="w-22 shrink-0 font-mono text-[12px] text-ink-faint">list price</span>
+                    <div className="h-2 min-w-0 flex-1 rounded-full bg-sand/60" />
+                    <span className="w-19 shrink-0 text-right font-mono text-[12.5px] text-ink-soft">{b.list}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-22 shrink-0 font-mono text-[12px] text-ink-faint">ramp median</span>
+                    <div className="h-2 min-w-0 flex-1 rounded-full bg-line/40">
+                      <div className="h-full rounded-full bg-tide/80" style={{ width: `${b.medianPct}%` }} />
+                    </div>
+                    <span className="w-19 shrink-0 text-right font-mono text-[12.5px] font-medium text-ink">{b.median}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
 
-          {/* vendor rows */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between gap-3 rounded-lg bg-paper/60 px-3 py-2 ring-1 ring-line/70">
-              <span className="truncate font-mono text-[13.5px] text-ink">
-                <span className="font-semibold">AWS</span> &middot; engineering
-              </span>
-              <span className="shrink-0 font-mono text-[13.5px] text-ink-soft">~$2.4M/yr</span>
-            </div>
-            <div className="flex items-center justify-between gap-3 rounded-lg bg-paper/60 px-3 py-2 ring-1 ring-line/70">
-              <span className="truncate font-mono text-[13.5px] text-ink">
-                <span className="font-semibold">Salesforce</span> &middot; sales
-              </span>
-              <span className="shrink-0 font-mono text-[13.5px] text-ink-soft">
-                ~$310k/yr &middot; <span className="font-medium text-tide">partner discount</span>
-              </span>
-            </div>
-            {/* hero insight */}
+            {/* the overlap insight — observable from their stack alone */}
             <div className="flex items-center justify-between gap-3 rounded-lg bg-tide-wash/80 px-3 py-2.5 shadow-[0_6px_16px_-10px_rgba(13,60,91,0.5)] ring-1 ring-tide/40">
               <span className="truncate font-mono text-[13.5px] text-ink">
-                <span className="font-semibold">Zoom + Google Meet</span> &middot; overlap
+                <span className="font-semibold">Zoom + Google Meet</span> &middot; you're running both
               </span>
               <span className="shrink-0 rounded-full bg-tide px-2.5 py-1 font-mono text-[13px] font-medium text-white">
-                pick one, save ~$40k
+                consolidate
               </span>
             </div>
+
             <div className="flex items-center justify-between gap-3 rounded-lg bg-paper/40 px-3 py-2 ring-1 ring-line/50 opacity-60">
-              <span className="font-mono text-[13.5px] text-ink-soft">+ 60 more vendors, categorized</span>
+              <span className="font-mono text-[13.5px] text-ink-soft">+ 10 more vendors with benchmark data</span>
               <span className="font-mono text-[13.5px] text-ink-faint">&hellip;</span>
             </div>
           </div>
         </div>
       </div>
-
     </div>
   );
 }
