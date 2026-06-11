@@ -198,17 +198,13 @@ export default function AgentDemo() {
 
   return (
     <div className="relative mx-auto w-full max-w-152">
-      {/* stage — on sm+ both cards stay mounted in one grid cell so the stage sizes to the tallest;
-          on mobile the inactive card is pulled out of flow so the stage follows the active card */}
+      {/* stage — both cards stay mounted in one grid cell so the stage sizes to the tallest
+          and NEVER changes height between stages (a height change shifts the whole page) */}
       <div className="relative grid" aria-hidden="true">
         {/* BUILD */}
         <div
           className={`col-start-1 row-start-1 ${
-            f.stage === "build"
-              ? f.exiting
-                ? "stage-exit"
-                : "stage-enter"
-              : "invisible absolute inset-x-0 top-0 sm:relative"
+            f.stage === "build" ? (f.exiting ? "stage-exit" : "stage-enter") : "invisible"
           }`}
         >
             <div className="flex h-full flex-col rounded-2xl border border-line bg-surface shadow-[0_24px_60px_-28px_rgba(13,60,91,0.35),0_4px_16px_-8px_rgba(22,24,29,0.08)]">
@@ -248,10 +244,8 @@ export default function AgentDemo() {
 
         {/* SEND + REPLY */}
         <div
-          className={`col-start-1 row-start-1 ${
-            f.stage !== "build"
-              ? `relative ${f.exiting ? "stage-exit" : "stage-enter"}`
-              : "invisible absolute inset-x-0 top-0 sm:relative"
+          className={`relative col-start-1 row-start-1 ${
+            f.stage !== "build" ? (f.exiting ? "stage-exit" : "stage-enter") : "invisible"
           }`}
         >
             <div className="rounded-2xl border border-line bg-surface shadow-[0_24px_60px_-28px_rgba(13,60,91,0.35),0_4px_16px_-8px_rgba(22,24,29,0.08)]">
@@ -294,8 +288,11 @@ export default function AgentDemo() {
                 <div className={`mt-2 ${f.card ? "pop-in" : "invisible"}`}>
                   <BugDemoCard compact />
                 </div>
-                {/* space stays reserved via `invisible` so the card height never changes */}
-                <p className={`m-0 mt-2.5 whitespace-pre-wrap ${f.closing ? "pop-in" : "invisible"}`}>{EMAIL_CLOSING}</p>
+                {/* space stays reserved via `invisible` so the card height never changes;
+                    skipped on mobile to keep the stage compact */}
+                <p className={`m-0 mt-2.5 hidden whitespace-pre-wrap sm:block ${f.closing ? "pop-in" : "invisible"}`}>
+                  {EMAIL_CLOSING}
+                </p>
               </div>
 
               {/* footer */}
@@ -311,8 +308,8 @@ export default function AgentDemo() {
               </div>
             </div>
 
-            {/* reply toast */}
-            <div className={`mt-3 sm:absolute sm:-bottom-6 sm:-right-5 sm:mt-0 sm:w-72 ${f.toast ? "toast-in" : "invisible"}`}>
+            {/* reply toast — overlays the card so it never adds layout height */}
+            <div className={`absolute -bottom-3 inset-x-3 sm:-bottom-6 sm:-right-5 sm:inset-x-auto sm:w-72 ${f.toast ? "toast-in" : "invisible"}`}>
               <div className="flex items-start gap-3 rounded-xl border border-line bg-surface px-4 py-3 shadow-[0_18px_44px_-18px_rgba(22,24,29,0.3)]">
                 <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-tide-wash text-[11.5px] font-bold text-tide">
                   SC
