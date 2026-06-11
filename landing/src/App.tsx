@@ -91,7 +91,7 @@ const STORY_KICKER = (
 );
 
 const BEATS = [
-  { title: "Develop ICPs and brainstorm possible demos", sub: null },
+  { title: "We learn who you sell to and what would impress them", sub: null },
   {
     title: "An agent goes through each prospect and makes them a custom demo",
     sub: "Every email is verified by a human before it goes out.",
