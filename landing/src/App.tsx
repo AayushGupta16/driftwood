@@ -62,11 +62,11 @@ function SquareVideoThumb({ small, className }: { small?: boolean; className?: s
 const BEATS = [
   {
     title: "We learn what you sell and who to win over",
-    sub: "One 15-minute call. You tell us what you sell and who buys it.",
+    sub: "One 15-minute call, and we walk away with your first demo ideas.",
   },
   {
     title: "An agent builds every prospect a demo of your product",
-    sub: "The agent does a deep dive on the company, from the founders to their graphics, before deciding what to build them.",
+    sub: "It starts with a deep dive on the company, from the founders to their graphics.",
   },
   {
     title: "We review every email by hand, then send it",
@@ -74,7 +74,7 @@ const BEATS = [
   },
   {
     title: "We test demos against ICPs and keep what wins",
-    sub: "We track which demos get replies and send more of those.",
+    sub: "The results land in your Slack every week.",
   },
 ];
 
