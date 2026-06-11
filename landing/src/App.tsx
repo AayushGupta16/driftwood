@@ -777,9 +777,9 @@ function CompareSection() {
 /* ---------- examples carousel: a product you know pitching a company you know ---------- */
 
 const SLIDES = [
-  { key: "runway", company: "Runway", domain: "AI video", prospect: "Liquid Death", art: RunwayAdMock },
   { key: "ramp", company: "Ramp", domain: "spend management", prospect: "Notion", art: RampSpendMock },
   { key: "shopify", company: "Shopify", domain: "commerce", prospect: "Patagonia", art: ShopifyRebuildMock },
+  { key: "runway", company: "Runway", domain: "AI video", prospect: "Liquid Death", art: RunwayAdMock },
   { key: "square", company: "Square", domain: "local commerce", prospect: "Joe's Pizza", art: SquareOrderMock },
 ];
 
