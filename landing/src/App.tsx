@@ -70,10 +70,10 @@ const BEATS = [
   },
   {
     title: "We review every email by hand, then send it",
-    sub: "A person reads every email before it goes out, and we handle the inboxes and follow-ups.",
+    sub: "We also run the inboxes, the warming, and the follow-up sequences.",
   },
   {
-    title: "We test different demos against different ICPs",
+    title: "We test demos against ICPs and keep what wins",
     sub: "We track which demos get replies and send more of those.",
   },
 ];
@@ -284,8 +284,7 @@ function DriftwoodEmail() {
         <strong>double-clicking Pay charges the card twice</strong>. The 47-second recording is below.
       </p>
       <p className="m-0 mt-4">
-        We already work with Y Combinator's engineering team to catch bugs before they ship, and our
-        customers save an average of 10 hours a week on QA.
+        We already work with Y Combinator's engineering team to catch bugs before they ship.
       </p>
       <p className="m-0 mt-4">Open to a quick call this week?</p>
       <SquareVideoThumb className="mt-4 w-36" />
@@ -412,17 +411,6 @@ function CompareSection() {
 
 const SLIDES = [
   {
-    key: "ramp",
-    company: "Ramp",
-    domain: "spend management",
-    prospect: "Notion",
-    to: "finance@notion.so",
-    time: "9:02 AM",
-    subject: "is Notion paying list price for Salesforce?",
-    body: "We mapped the 63 tools Notion runs and priced them against what companies your size pay on Ramp. If you're at list, Salesforce alone is 28% over. The full benchmark is below.",
-    art: RampSpendMock,
-  },
-  {
     key: "shopify",
     company: "Shopify",
     domain: "commerce",
@@ -432,6 +420,17 @@ const SLIDES = [
     subject: "we rebuilt patagonia.com overnight",
     body: "All 412 products imported, checkout cut from 6 clicks to 2. The live preview is below.",
     art: ShopifyRebuildMock,
+  },
+  {
+    key: "ramp",
+    company: "Ramp",
+    domain: "spend management",
+    prospect: "Notion",
+    to: "finance@notion.so",
+    time: "9:02 AM",
+    subject: "is Notion paying list price for Salesforce?",
+    body: "We mapped the 63 tools Notion runs and priced them against what companies your size pay on Ramp. If you're at list, Salesforce alone is 28% over. The full benchmark is below.",
+    art: RampSpendMock,
   },
   {
     key: "runway",
@@ -465,7 +464,7 @@ function ExamplesSection() {
     <section id="examples" className="scroll-mt-20 border-t border-line py-14 sm:py-18">
       <div className="reveal max-w-160">
         <h2 className="m-0 text-[clamp(1.9rem,4vw,2.7rem)] font-semibold leading-tight tracking-[-0.015em]">
-          See how this looks for different companies
+          What we'd build for companies you know
         </h2>
       </div>
 
@@ -542,7 +541,7 @@ function ExamplesSection() {
             </div>
           </div>
           <p className="mb-0 mt-4 text-center font-mono text-[13.5px] text-ink-faint">
-            illustrative examples, not customers
+            made-up examples, not customers
           </p>
         </div>
       </div>
@@ -584,7 +583,7 @@ export default function App() {
             Ship a custom demo in every cold email.
           </h1>
           <p className="mx-auto mt-6 max-w-145 text-[19px] leading-relaxed text-ink-soft sm:text-[20px]">
-            We manage your entire cold email channel. Each prospect gets a custom demo built for their company.
+            We run your cold email end to end. Every prospect gets a demo built just for them.
           </p>
           <div className="relative mt-8 flex justify-center">
             <WaitlistForm id="email-hero" />

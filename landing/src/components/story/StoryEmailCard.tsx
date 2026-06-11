@@ -70,8 +70,7 @@ export function StoryEmailCard({ on, replied }: { on: boolean; replied: boolean 
             card twice. The 47-second recording is below.
           </p>
           <p className={`m-0 mt-2.5 ${blockClass}`} style={block(1)}>
-            We already work with Y Combinator's engineering team to catch bugs before they ship, and our customers
-            save an average of 10 hours a week on QA.
+            We already work with Y Combinator's engineering team to catch bugs before they ship.
           </p>
           <p className={`m-0 mt-2.5 ${blockClass}`} style={block(2)}>
             Open to a quick call this week?

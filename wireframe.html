@@ -135,8 +135,7 @@
     <div class="stack center" style="gap: 0; padding-top: 24px;">
       <h1 style="max-width: 760px;">Ship a custom demo in every cold email.</h1>
       <p class="sub" style="text-align: center;">
-        We manage your entire cold email channel. Each prospect gets a custom demo
-        built for their company.
+        We run your cold email end to end. Every prospect gets a demo built just for them.
       </p>
       <div class="row" style="margin-top: 28px; width: 100%; max-width: 440px;">
         <span class="input">Work email</span>
@@ -246,7 +245,7 @@
       <div class="stack center" style="gap: 0;">
         <h2>“We review every email by hand, then send it”</h2>
         <p class="sub" style="text-align: center; margin-top: 10px;">
-          A person reads every email before it goes out, and we handle the inboxes and follow-ups.
+          We also run the inboxes, the warming, and the follow-up sequences.
         </p>
         <div class="dots" style="margin-top: 14px;">
           <span></span><span></span><span class="on"></span><span></span>
@@ -281,7 +280,7 @@
 
       <!-- BEAT 4: replies drive iteration, framed as a Slack update from the driftwood bot -->
       <div class="stack center" style="gap: 0;">
-        <h2>“We test different demos against different ICPs”</h2>
+        <h2>“We test demos against ICPs and keep what wins”</h2>
         <p class="sub" style="text-align: center; margin-top: 10px;">
           We track which demos get replies and send more of those.
         </p>
@@ -366,19 +365,53 @@
   <section>
     <span class="tag">EXAMPLES — PICKER + EMAIL FRAME (ALL 4 SHOWN FOR AUDIT)</span>
     <div class="stack center">
-      <h2>See how this looks for different companies</h2>
+      <h2>What we'd build for companies you know</h2>
       <p class="mono" style="margin-top: 10px;">live page: picker rail left, one email card right; all four expanded here for audit.</p>
 
       <!-- picker rail, as rendered on the live page (Ramp active) -->
       <div class="row" style="margin-top: 24px; flex-wrap: wrap; justify-content: center;">
-        <span class="btn" style="padding: 8px 14px; font-size: 13px;">Ramp · pitching Notion</span>
-        <span class="chip" style="padding: 8px 14px;">Shopify · pitching Patagonia</span>
+        <span class="btn" style="padding: 8px 14px; font-size: 13px;">Shopify · pitching Patagonia</span>
+        <span class="chip" style="padding: 8px 14px;">Ramp · pitching Notion</span>
         <span class="chip" style="padding: 8px 14px;">Runway · pitching Liquid Death</span>
         <span class="chip" style="padding: 8px 14px;">Square · pitching Joe's Pizza</span>
       </div>
 
-      <!-- ── slide 1: Ramp → Notion — the price-benchmark email ── -->
+      <!-- ── slide 1: Shopify → Patagonia — the rebuilt-store email ── -->
       <div class="box" style="width: 100%; margin-top: 28px; display: flex; flex-direction: column;">
+        <div style="border-bottom: 1px solid var(--line-soft); padding: 14px;">
+          <strong style="font-size: 16px;">we rebuilt patagonia.com overnight</strong>
+          <p class="mono" style="margin: 6px 0 0;">(avatar) <strong>Shopify</strong> · via driftwood · 7:48 AM · to web@patagonia.com</p>
+        </div>
+        <div class="card-body">
+          <p style="margin: 0; font-size: 14px; max-width: 640px;">All 412 products imported, checkout cut from 6 clicks to 2. The live preview is below.</p>
+          <!-- artifact: browser frame, their store rebuilt -->
+          <div class="box" style="display: flex; flex-direction: column;">
+            <div class="card-head">
+              <span class="mono">patagonia.com · rebuilt preview</span>
+              <span class="pill">on Shopify</span>
+            </div>
+            <div class="card-body">
+              <div class="media" style="height: 96px;"><span>storefront hero — "Built for the long haul"</span></div>
+              <div class="row" style="align-items: stretch;">
+                <div class="media" style="flex: 1; height: 72px;"><span>Down Jacket $229</span></div>
+                <div class="media" style="flex: 1; height: 72px;"><span>Storm Shell $179</span></div>
+                <div class="media" style="flex: 1; height: 72px;"><span>Trail Fleece $119</span></div>
+              </div>
+              <span class="btn" style="text-align: center;">Buy now — 1-tap checkout</span>
+            </div>
+          </div>
+          <div class="row" style="flex-wrap: wrap; gap: 6px; justify-content: center;">
+            <span class="chip">412 products imported overnight</span>
+            <span class="chip">checkout: 6 clicks → 2</span>
+          </div>
+          <div class="row" style="gap: 8px;"><span class="chip">↩ Reply</span><span class="chip">↪ Forward</span></div>
+        </div>
+      </div>
+
+      <p class="mono" style="margin-top: 28px;">slides 2–4, same email frame:</p>
+
+      <!-- ── slide 2: Ramp → Notion — the price-benchmark email ── -->
+      <div class="box" style="width: 100%; margin-top: 10px; display: flex; flex-direction: column;">
         <div style="border-bottom: 1px solid var(--line-soft); padding: 14px;">
           <strong style="font-size: 16px;">is Notion paying list price for Salesforce?</strong>
           <p class="mono" style="margin: 6px 0 0;">(avatar) <strong>Ramp</strong> · via driftwood · 9:02 AM · to finance@notion.so</p>
@@ -432,40 +465,6 @@
         </div>
       </div>
 
-      <p class="mono" style="margin-top: 28px;">slides 2–4, same email frame:</p>
-
-      <!-- ── slide 2: Shopify → Patagonia — the rebuilt-store email ── -->
-      <div class="box" style="width: 100%; margin-top: 10px; display: flex; flex-direction: column;">
-        <div style="border-bottom: 1px solid var(--line-soft); padding: 14px;">
-          <strong style="font-size: 16px;">we rebuilt patagonia.com overnight</strong>
-          <p class="mono" style="margin: 6px 0 0;">(avatar) <strong>Shopify</strong> · via driftwood · 7:48 AM · to web@patagonia.com</p>
-        </div>
-        <div class="card-body">
-          <p style="margin: 0; font-size: 14px; max-width: 640px;">All 412 products imported, checkout cut from 6 clicks to 2. The live preview is below.</p>
-          <!-- artifact: browser frame, their store rebuilt -->
-          <div class="box" style="display: flex; flex-direction: column;">
-            <div class="card-head">
-              <span class="mono">patagonia.com · rebuilt preview</span>
-              <span class="pill">on Shopify</span>
-            </div>
-            <div class="card-body">
-              <div class="media" style="height: 96px;"><span>storefront hero — "Built for the long haul"</span></div>
-              <div class="row" style="align-items: stretch;">
-                <div class="media" style="flex: 1; height: 72px;"><span>Down Jacket $229</span></div>
-                <div class="media" style="flex: 1; height: 72px;"><span>Storm Shell $179</span></div>
-                <div class="media" style="flex: 1; height: 72px;"><span>Trail Fleece $119</span></div>
-              </div>
-              <span class="btn" style="text-align: center;">Buy now — 1-tap checkout</span>
-            </div>
-          </div>
-          <div class="row" style="flex-wrap: wrap; gap: 6px; justify-content: center;">
-            <span class="chip">412 products imported overnight</span>
-            <span class="chip">checkout: 6 clicks → 2</span>
-          </div>
-          <div class="row" style="gap: 8px;"><span class="chip">↩ Reply</span><span class="chip">↪ Forward</span></div>
-        </div>
-      </div>
-
       <!-- ── slide 3: Runway → Liquid Death — the finished-ad email ── -->
       <div class="box" style="width: 100%; margin-top: 16px; display: flex; flex-direction: column;">
         <div style="border-bottom: 1px solid var(--line-soft); padding: 14px;">
@@ -499,7 +498,7 @@
             </div>
           </div>
           <div class="row" style="flex-wrap: wrap; gap: 6px; justify-content: center;">
-            <span class="chip">images sourced from their instagram</span>
+            <span class="chip">pulled from their instagram</span>
           </div>
           <div class="row" style="gap: 8px;"><span class="chip">↩ Reply</span><span class="chip">↪ Forward</span></div>
         </div>
@@ -542,7 +541,7 @@
         </div>
       </div>
 
-      <p class="mono" style="margin-top: 16px;">illustrative examples, not customers</p>
+      <p class="mono" style="margin-top: 16px;">made-up examples, not customers</p>
     </div>
   </section>
 

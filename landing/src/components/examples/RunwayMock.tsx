@@ -50,7 +50,7 @@ export function RunwayAdMock() {
   ];
   return (
     <div className="relative flex flex-1 flex-col gap-3">
-      <Anno text="images sourced from their instagram" pos="-top-3 right-8 rotate-1" />
+      <Anno text="pulled from their instagram" pos="-top-3 right-8 rotate-1" />
       <div className="flex flex-col gap-3 rounded-xl bg-[#16181d] p-4 sm:p-5">
         {/* player title row */}
         <div className="flex items-center justify-between gap-3 font-mono text-[13px] text-white/70">
