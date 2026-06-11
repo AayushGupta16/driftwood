@@ -971,7 +971,7 @@ function StorySection() {
   );
 }
 
-/* ── proof of value: three fictional senders, three ways to show the product working ── */
+/* ── proof of value: three real products, three ways to show them working for a prospect ── */
 
 /* Autosana — a screen recording of a real bug, caught on the prospect's own checkout */
 function RecordingProofMock() {
@@ -1052,180 +1052,214 @@ function RecordingProofMock() {
   );
 }
 
-/* Lumen — a working dashboard already filled with the prospect's own numbers */
-function DashboardProofMock() {
-  const stats = [
-    { label: "fulfillment lag", value: "2.4 days", delta: "+0.6 this month", bad: true },
-    { label: "orders at risk", value: "31", delta: "9 flagged today", bad: true },
-    { label: "refund rate", value: "1.8%", delta: "−0.2 vs april", bad: false },
-  ];
-  const nav = ["overview", "orders", "fulfillment", "refunds", "alerts"];
+/* Lopus — a real question about the prospect's business, already answered */
+function AnsweredQuestionProofMock() {
+  const sources = ["billing", "support", "stripe"];
   return (
     <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-[0_24px_60px_-28px_rgba(13,60,91,0.35),0_4px_16px_-8px_rgba(22,24,29,0.08)]">
       {/* app header */}
       <div className="flex items-center justify-between gap-3 border-b border-[#ecedf1] px-4 py-3 sm:px-5">
         <span className="flex min-w-0 items-center gap-2.5">
           <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-tide font-mono text-[13px] font-semibold text-white">
-            N
+            L
           </span>
-          <span className="truncate font-mono text-[13.5px] font-medium text-ink">Northwind &middot; ops overview</span>
+          <span className="truncate font-mono text-[13.5px] font-medium text-ink">lopus &middot; northwind</span>
         </span>
-        <span className="flex shrink-0 items-center gap-1.5 font-mono text-[13px] text-ink-faint">
-          <span className="pulse-dot size-1.5 rounded-full bg-tide" />
-          live
-        </span>
+        <span className="shrink-0 font-mono text-[13px] text-ink-faint">answered in 14s</span>
       </div>
 
-      <div className="flex">
-        {/* sidebar */}
-        <div className="hidden w-34 shrink-0 flex-col gap-1 border-r border-[#ecedf1] bg-paper/60 p-2.5 sm:flex" aria-hidden="true">
-          {nav.map((item, i) => (
-            <span
-              key={item}
-              className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 font-mono text-[13px] ${
-                i === 0 ? "bg-tide-wash font-medium text-tide" : "text-ink-faint"
-              }`}
-            >
-              <span className={`size-2 shrink-0 rounded-sm ${i === 0 ? "bg-tide" : "bg-[#d4d7df]"}`} />
-              {item}
-            </span>
-          ))}
+      <div className="px-4 py-4 sm:px-5 sm:py-5">
+        {/* the question, in plain English */}
+        <div className="flex items-center gap-2.5 rounded-xl border border-[#ecedf1] bg-paper/60 px-3.5 py-2.5">
+          <svg
+            viewBox="0 0 24 24"
+            className="size-4 shrink-0 stroke-ink-faint"
+            fill="none"
+            strokeWidth="2"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.5-3.5" />
+          </svg>
+          <span className="min-w-0 truncate font-mono text-[13.5px] text-ink">why did refunds spike in march?</span>
         </div>
 
-        {/* main pane */}
-        <div className="min-w-0 flex-1 p-3.5 sm:p-5">
-          {/* stat tiles */}
-          <div className="grid grid-cols-3 gap-2 sm:gap-3">
-            {stats.map((s) => (
-              <div key={s.label} className="min-w-0 rounded-xl border border-[#ecedf1] bg-paper/50 px-2.5 py-2.5 sm:px-3.5 sm:py-3">
-                <p className="m-0 font-mono text-[13px] leading-snug text-ink-faint">{s.label}</p>
-                <p className="m-0 mt-1 text-[18px] font-semibold tracking-[-0.01em] text-ink sm:text-[22px]">{s.value}</p>
-                <p className={`m-0 mt-1 font-mono text-[13px] leading-snug ${s.bad ? "text-[#c2503f]" : "text-tide"}`}>
-                  {s.delta}
-                </p>
-              </div>
-            ))}
-          </div>
+        {/* the answer: root cause + the chart behind it */}
+        <div className="mt-3.5 rounded-xl border border-[#ecedf1] bg-paper/50 p-3.5 sm:p-4">
+          <p className="m-0 text-[15.5px] font-semibold tracking-[-0.01em] text-ink">Almost all of it is one product.</p>
+          <p className="m-0 mt-1 text-[13.5px] leading-relaxed text-ink-soft">
+            Refunds on the sampler box tripled after the March 9 packaging change. Support tickets from the same
+            weeks mention crushed boxes.
+          </p>
 
-          {/* trend chart */}
-          <div className="mt-3 rounded-xl border border-[#ecedf1] bg-paper/50 p-3 sm:p-4">
-            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
-              <p className="m-0 font-mono text-[13px] text-ink-soft">avg fulfillment lag &middot; last 8 weeks</p>
-              <span className="flex shrink-0 items-center gap-3 font-mono text-[13px] text-ink-faint">
-                <span className="flex items-center gap-1.5">
-                  <span className="h-0.5 w-4 rounded-full bg-tide" />
-                  northwind
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-4 border-t-2 border-dashed border-[#a9aeb9]" />
-                  target
-                </span>
-              </span>
-            </div>
-            <svg viewBox="0 0 320 110" className="mt-2.5 h-auto w-full" fill="none" aria-hidden="true">
-              <path d="M2 14H318 M2 50H318 M2 86H318" stroke="#e7e9ee" strokeWidth="1" />
-              <path
-                d="M2 78 C 40 74 64 64 96 60 C 128 56 152 48 192 40 C 232 32 272 26 314 14 L314 106 L2 106 Z"
-                fill="var(--color-tide)"
-                opacity="0.07"
-              />
-              <path d="M2 84 C 60 83 140 82 318 80" stroke="#a9aeb9" strokeWidth="2" strokeDasharray="5 5" strokeLinecap="round" />
-              <path
-                d="M2 78 C 40 74 64 64 96 60 C 128 56 152 48 192 40 C 232 32 272 26 314 14"
-                stroke="var(--color-tide)"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-              />
-              <circle cx="314" cy="14" r="3.5" fill="var(--color-tide)" />
-            </svg>
-            <div className="mt-1.5 flex justify-between font-mono text-[13px] text-ink-faint" aria-hidden="true">
-              <span>apr 13</span>
-              <span>may 4</span>
-              <span>may 25</span>
-              <span>jun 8</span>
-            </div>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
+            <p className="m-0 font-mono text-[13px] text-ink-soft">refunds per week &middot; jan to may</p>
+            <span className="flex shrink-0 items-center gap-1.5 font-mono text-[13px] text-[#c2503f]">
+              <span className="size-1.5 rounded-full bg-[#c2503f]" />
+              mar 9
+            </span>
           </div>
+          <svg viewBox="0 0 320 110" className="mt-2 h-auto w-full" fill="none" aria-hidden="true">
+            <path d="M2 14H318 M2 50H318 M2 86H318" stroke="#e7e9ee" strokeWidth="1" />
+            <path
+              d="M2 84 C 30 84 55 83 80 82 C 105 81 124 80 140 76 C 154 72 164 28 178 24 C 192 28 206 52 224 64 C 250 76 290 79 318 78 L318 106 L2 106 Z"
+              fill="var(--color-tide)"
+              opacity="0.07"
+            />
+            <path d="M178 30 V104" stroke="#c2503f" strokeWidth="1.5" strokeDasharray="4 4" opacity="0.45" />
+            <path
+              d="M2 84 C 30 84 55 83 80 82 C 105 81 124 80 140 76 C 154 72 164 28 178 24 C 192 28 206 52 224 64 C 250 76 290 79 318 78"
+              stroke="var(--color-tide)"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            />
+            <circle cx="178" cy="24" r="4" fill="#c2503f" stroke="white" strokeWidth="1.5" />
+          </svg>
+          <div className="mt-1.5 flex justify-between font-mono text-[13px] text-ink-faint" aria-hidden="true">
+            <span>jan</span>
+            <span>feb</span>
+            <span>mar</span>
+            <span>apr</span>
+            <span>may</span>
+          </div>
+        </div>
+
+        {/* sources + how the answer was made */}
+        <div className="mt-3.5 flex flex-wrap items-center gap-2">
+          <span className="font-mono text-[13px] text-ink-faint">sources</span>
+          {sources.map((s) => (
+            <span
+              key={s}
+              className="rounded-full bg-paper px-2.5 py-1 font-mono text-[12.5px] text-ink-soft ring-1 ring-[#e6e9ee]"
+            >
+              {s}
+            </span>
+          ))}
+          <span className="rounded-full bg-tide-wash px-2.5 py-1 font-mono text-[12.5px] font-medium text-tide">
+            high confidence &middot; sql shown
+          </span>
         </div>
       </div>
 
       {/* provenance */}
       <div className="border-t border-[#ecedf1] px-4 py-3 sm:px-5">
         <p className="m-0 truncate text-center font-mono text-[13px] text-ink-faint">
-          built from Northwind's public data &middot; no login, no integration
+          built from Northwind's public numbers &middot; nothing connected yet
         </p>
       </div>
     </div>
   );
 }
 
-/* Relay — the prospect's payment costs, torn down line by line */
-function TeardownProofMock() {
-  const rows = [
-    { item: "card processing", detail: "2.9% + 30¢ · ~9,400 charges", cost: "$21,300/mo" },
-    { item: "cross-border fees", detail: "+1.5% on 18% of volume", cost: "$4,100/mo" },
-    { item: "chargeback fees", detail: "$15 × ~76 disputes", cost: "$1,150/mo" },
-    { item: "currency conversion", detail: "1% on international payouts", cost: "$980/mo" },
-  ];
+/* Tour.video — a finished tour of the prospect's own property, agent already answering */
+function TourProofMock() {
+  const chapters = ["floor plan", "kitchen", "amenities", "pricing"];
   return (
-    <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-[0_24px_60px_-28px_rgba(13,60,91,0.35),0_4px_16px_-8px_rgba(22,24,29,0.08)]">
-      {/* document header */}
-      <div className="border-b border-[#ecedf1] px-4 py-4 sm:px-7 sm:py-5">
-        <p className="m-0 text-[17.5px] font-semibold tracking-[-0.01em] text-ink sm:text-[19px]">
-          What Brightline pays today
-        </p>
-        <p className="m-0 mt-1 font-mono text-[13px] text-ink-faint">prepared by Relay &middot; june 2026</p>
+    <div className="overflow-hidden rounded-2xl bg-[#16181d] shadow-[0_24px_60px_-28px_rgba(13,60,91,0.35),0_4px_16px_-8px_rgba(22,24,29,0.08)]">
+      {/* player title bar */}
+      <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-6">
+        <span className="truncate font-mono text-[13px] text-white/75">tour.video &middot; vista ridge apartments</span>
+        <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 font-mono text-[13px] font-medium text-white/90">
+          <span className="pulse-dot size-1.5 rounded-full bg-[#3fb98a]" />
+          agent on
+        </span>
       </div>
 
-      <div className="px-4 py-4 sm:px-7 sm:py-5">
-        {/* line items */}
-        <div className="space-y-3">
-          {rows.map((r) => (
-            <div key={r.item} className="flex items-baseline justify-between gap-3">
-              <span className="min-w-0">
-                <span className="block truncate text-[14.5px] font-medium text-ink">{r.item}</span>
-                <span className="block truncate font-mono text-[13px] text-ink-faint">{r.detail}</span>
-              </span>
-              <span className="shrink-0 font-mono text-[14px] text-ink-soft">{r.cost}</span>
-            </div>
-          ))}
-        </div>
-        <div className="mt-4 flex items-baseline justify-between gap-3 border-t border-[#ecedf1] pt-3">
-          <span className="truncate text-[14.5px] font-semibold text-ink">total, current stack</span>
-          <span className="shrink-0 font-mono text-[14px] font-semibold text-ink">$27,530/mo</span>
-        </div>
+      {/* the tour itself */}
+      <div className="px-4 sm:px-6">
+        <div className="relative overflow-hidden rounded-xl border border-white/10 bg-[linear-gradient(180deg,#2b303b,#1a1d24)]">
+          {/* sketched apartment interior */}
+          <svg viewBox="0 0 320 196" className="h-auto w-full" fill="none" aria-hidden="true">
+            <path d="M0 138 H320" stroke="white" strokeOpacity="0.14" strokeWidth="1.5" />
+            <path d="M14 196 L66 138 M306 196 L258 138" stroke="white" strokeOpacity="0.08" strokeWidth="1.5" />
+            <rect x="36" y="42" width="92" height="84" rx="2" stroke="white" strokeOpacity="0.28" strokeWidth="1.5" />
+            <path d="M82 42 V126 M36 84 H128" stroke="white" strokeOpacity="0.18" strokeWidth="1.5" />
+            <rect x="192" y="106" width="98" height="32" rx="2" stroke="white" strokeOpacity="0.24" strokeWidth="1.5" />
+            <path d="M198 138 V160 M284 138 V160" stroke="white" strokeOpacity="0.16" strokeWidth="1.5" />
+            <path d="M222 8 V32 M258 8 V24" stroke="white" strokeOpacity="0.2" strokeWidth="1.5" />
+            <circle cx="222" cy="37" r="5" stroke="white" strokeOpacity="0.26" strokeWidth="1.5" />
+            <circle cx="258" cy="29" r="5" stroke="white" strokeOpacity="0.26" strokeWidth="1.5" />
+          </svg>
 
-        {/* the punchline */}
-        <div className="mt-3.5 flex items-center justify-between gap-3 rounded-xl bg-tide-wash/70 px-3.5 py-3 ring-1 ring-tide/35">
-          <span className="min-w-0">
-            <span className="block truncate text-[14.5px] font-semibold text-ink">same volume on Relay</span>
-            <span className="block truncate font-mono text-[13px] text-tide">flat 2.2% &middot; no cross-border markup</span>
+          {/* what's playing */}
+          <div className="absolute left-3 top-3 sm:left-4 sm:top-4">
+            <p className="m-0 text-[13.5px] font-semibold text-white">Vista Ridge Apartments</p>
+            <p className="m-0 mt-0.5 font-mono text-[12.5px] text-white/65">2br walkthrough &middot; unit 204</p>
+          </div>
+
+          {/* play button */}
+          <span className="absolute left-[30%] top-1/2 flex size-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 shadow-[0_8px_24px_-8px_rgba(0,0,0,0.5)]">
+            <svg viewBox="0 0 24 24" className="ml-0.5 size-4 fill-[#16181d]" aria-hidden="true">
+              <path d="M8 5.5v13l11-6.5z" />
+            </svg>
           </span>
-          <span className="shrink-0 font-mono text-[16px] font-semibold text-tide sm:text-[17px]">&minus;$8,400/mo</span>
         </div>
 
-        {/* bar comparison */}
-        <div className="mt-4 space-y-2" aria-hidden="true">
-          <div className="flex items-center gap-3">
-            <span className="w-16 shrink-0 text-right font-mono text-[13px] text-ink-faint">today</span>
-            <span className="block h-2.5 min-w-0 flex-1 overflow-hidden rounded-full bg-paper">
-              <span className="block h-full w-full rounded-full bg-[#b6bac4]" />
-            </span>
-            <span className="w-17 shrink-0 font-mono text-[13px] text-ink-soft">$27,530</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="w-16 shrink-0 text-right font-mono text-[13px] text-ink-faint">on relay</span>
-            <span className="block h-2.5 min-w-0 flex-1 overflow-hidden rounded-full bg-paper">
-              <span className="block h-full w-[69%] rounded-full bg-tide" />
-            </span>
-            <span className="w-17 shrink-0 font-mono text-[13px] font-medium text-tide">$19,130</span>
+        {/* the leasing agent, mid-conversation, overlapping the player */}
+        <div className="relative z-10 -mt-13 ml-auto flex w-[78%] max-w-66 flex-col items-end gap-1.5 pr-2 sm:pr-3">
+          <span className="rounded-xl rounded-br-sm bg-[#2e333d] px-3 py-2 text-[12.5px] leading-snug text-white ring-1 ring-white/15">
+            is the 2br available in july?
+          </span>
+          <div className="w-full rounded-xl rounded-bl-sm bg-white px-3 py-2.5 shadow-[0_12px_32px_-12px_rgba(0,0,0,0.55)]">
+            <p className="m-0 font-mono text-[11.5px] text-[#7a8190]">vista ridge ai &middot; 11:42 pm</p>
+            <p className="m-0 mt-1 text-[12.5px] leading-snug text-[#16181d]">
+              Yes, unit 204 opens July 8 at $1,450/mo. Want to see it in person?
+            </p>
+            <p className="m-0 mt-2 flex items-center gap-1.5 border-t border-[#ecedf1] pt-2 font-mono text-[12px] font-medium text-[#1e7a5f]">
+              <svg
+                viewBox="0 0 24 24"
+                className="size-3.5 shrink-0 stroke-current"
+                fill="none"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="3" y="5" width="18" height="16" rx="2" />
+                <path d="M3 10h18M8 3v4M16 3v4" />
+              </svg>
+              tour booked &middot; sat 11:00 am
+            </p>
           </div>
         </div>
+      </div>
+
+      {/* play bar with scrubber */}
+      <div className="flex items-center gap-3 px-4 pb-3 pt-4 sm:gap-4 sm:px-6">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/25">
+          <svg viewBox="0 0 24 24" className="ml-0.5 size-3.5 fill-white" aria-hidden="true">
+            <path d="M8 5.5v13l11-6.5z" />
+          </svg>
+        </span>
+        <div className="relative h-1.5 min-w-0 flex-1 rounded-full bg-white/15" aria-hidden="true">
+          <span className="absolute inset-y-0 left-0 w-[31%] rounded-full bg-white/80" />
+          <span className="absolute left-[31%] top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white" />
+          <span className="absolute left-[25%] top-1/2 h-2.5 w-px -translate-y-1/2 bg-white/40" />
+          <span className="absolute left-[50%] top-1/2 h-2.5 w-px -translate-y-1/2 bg-white/40" />
+          <span className="absolute left-[75%] top-1/2 h-2.5 w-px -translate-y-1/2 bg-white/40" />
+        </div>
+        <span className="shrink-0 font-mono text-[13px] text-white/75">1:04 / 3:21</span>
+      </div>
+
+      {/* chapters */}
+      <div className="flex flex-wrap items-center gap-2 px-4 pb-4 sm:px-6" aria-hidden="true">
+        {chapters.map((c, i) => (
+          <span
+            key={c}
+            className={`rounded-full px-2.5 py-1 font-mono text-[12.5px] ${
+              i === 1 ? "bg-white/15 font-medium text-white" : "bg-white/5 text-white/55 ring-1 ring-white/10"
+            }`}
+          >
+            {c}
+          </span>
+        ))}
       </div>
 
       {/* provenance */}
-      <div className="border-t border-[#ecedf1] px-4 py-3 sm:px-7">
-        <p className="m-0 truncate text-center font-mono text-[13px] text-ink-faint">
-          from their public pricing + a real checkout we ran
+      <div className="border-t border-white/10 px-4 py-3 sm:px-6">
+        <p className="m-0 truncate text-center font-mono text-[13px] text-white/60">
+          built from Vista Ridge's listing page &middot; answered after hours
         </p>
       </div>
     </div>
@@ -1236,26 +1270,26 @@ const PROOF_EXAMPLES = [
   {
     format: "a bug recording",
     title: "A real bug, caught on the prospect's own site.",
-    who: "Autosana sells automated QA — an AI agent that tests web apps and catches bugs before users do.",
+    who: "Autosana sells an AI agent that tests apps automatically. Their prospects are engineering leaders who want to ship faster without breaking things.",
     sends: "A screen recording of a real bug Autosana's agent just found in the prospect's own checkout.",
-    lands: "The prospect watches the product do its job on their site before anyone asks them for a call.",
+    lands: "An engineering leader watches the product do its job on their own site before anyone asks for a call.",
     art: RecordingProofMock,
   },
   {
-    format: "a live dashboard",
-    title: "Their own numbers, already on the dashboard.",
-    who: "Lumen sells analytics for ops teams.",
-    sends: "A working dashboard pre-filled with the prospect's operation — orders, lag, refunds — built from their public data.",
-    lands: "They open the email and see exactly what Lumen would show them every morning.",
-    art: DashboardProofMock,
+    format: "an answered question",
+    title: "A real question about their business, already answered.",
+    who: "Lopus sells AI analytics to ops teams. It connects CRM, billing, product and support data so anyone can ask questions in plain English.",
+    sends: "A real question about the prospect's business, already answered: the root cause, the chart, and the sources, built from their public numbers.",
+    lands: "They see the product thinking about their numbers before they've connected a single tool.",
+    art: AnsweredQuestionProofMock,
   },
   {
-    format: "a cost teardown",
-    title: "What they pay now — and what they'd save.",
-    who: "Relay sells a payments API with lower processing costs.",
-    sends: "A line-by-line teardown of the prospect's current payment costs, with the saving on Relay already worked out.",
-    lands: "The first thing the prospect reads is a number: what switching is worth to them, specifically.",
-    art: TeardownProofMock,
+    format: "a finished tour",
+    title: "Their own property, already selling itself.",
+    who: "Tour.video sells interactive video tours and an AI leasing agent to property managers.",
+    sends: "A working tour of one of their own properties, with the AI agent answering a real renter question and booking the visit.",
+    lands: "The leasing team watches their own property sell itself after hours, with no one on shift.",
+    art: TourProofMock,
   },
 ];
 
@@ -1273,11 +1307,11 @@ function ArtifactsSection() {
     <section id="artifacts" className="scroll-mt-20 border-t border-line py-20 sm:py-26">
       <div className="reveal max-w-150">
         <h2 className="m-0 text-[clamp(1.9rem,4vw,2.7rem)] font-semibold leading-tight tracking-[-0.015em]">
-          Proof, not promises.
+          Give each prospect value upfront
         </h2>
         <p className="mb-0 mt-4 max-w-135 text-[17.5px] leading-relaxed text-ink-soft">
-          Every email we send shows the prospect what your product does for them, before they ever take a call.
-          Here's what that looks like for three different products.
+          Every email we send shows your product working on the prospect's own company. See what that looks like
+          for these three products.
         </p>
       </div>
 
@@ -1292,10 +1326,7 @@ function ArtifactsSection() {
               }`}
             >
               <div className={`reveal ${flip ? "lg:order-2" : ""}`}>
-                <p className="m-0 font-mono text-[13.5px] font-medium text-tide">
-                  example 0{i + 1} &middot; {ex.format}
-                </p>
-                <h3 className="m-0 mt-3 max-w-115 text-[22px] font-semibold leading-snug tracking-[-0.01em] sm:text-[24px]">
+                <h3 className="m-0 max-w-115 text-[22px] font-semibold leading-snug tracking-[-0.01em] sm:text-[24px]">
                   {ex.title}
                 </h3>
                 <div className="mt-5 max-w-115 space-y-4">
@@ -1313,7 +1344,7 @@ function ArtifactsSection() {
       </div>
 
       <p className="reveal mb-0 mt-16 max-w-135 text-[17.5px] leading-relaxed text-ink-soft">
-        If you sell software, there's a way to prove what it does on each prospect's own site, data, or bill.
+        If you sell software, there's a way to show it working on each prospect's own site, numbers, or listings.
         Finding yours is the first thing we do.
       </p>
     </section>
