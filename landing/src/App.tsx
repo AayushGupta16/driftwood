@@ -467,6 +467,166 @@ function HowSection() {
   );
 }
 
+/* the generic cold email; `stamped` pops the archived stamp over it (pinned story only) */
+function UsualEmail({ stamped }: { stamped?: boolean }) {
+  return (
+    <div className="relative flex flex-1 flex-col rounded-2xl border border-line bg-surface/60 p-5">
+      <div className="space-y-1.5 border-b border-line pb-3 text-[12.5px]">
+        <p className="m-0 text-ink-faint">
+          Subject: <span className="text-ink-soft">Sarah — quick question (Acme x Skylith AI)</span>
+        </p>
+      </div>
+      <div className="mb-0 mt-4 space-y-5 text-[13.5px] leading-relaxed text-ink-faint">
+        <p>Hey Sarah,</p>
+        <p>
+          Huge fan of what you're building at Acme — saw you just crossed 200 employees. Incredible
+          momentum.
+        </p>
+        <p>
+          I'm the founder of Skylith, an AI-powered platform that automates workflows end-to-end. We
+          just closed our seed round and are growing 40% month over month — teams like yours are
+          seeing huge results.
+        </p>
+        <p>
+          Would love to connect and show you what we're building. Any chance you have 15 minutes this
+          week?
+        </p>
+        <p>Best,</p>
+      </div>
+      <span className="mt-auto self-start pt-4">
+        <span className="inline-block rounded-full bg-paper px-2.5 py-1 font-mono text-[10.5px] text-ink-faint">
+          read in 4 seconds, archived
+        </span>
+      </span>
+      <span aria-hidden="true" className={`absolute inset-0 flex items-center justify-center ${stamped ? "stamp-in" : "invisible"}`}>
+        <span className="-rotate-8 rounded-lg border-2 border-[#a04432]/70 bg-paper/85 px-4 py-1.5 font-mono text-[16px] font-semibold tracking-[0.04em] text-[#a04432]">
+          archived
+        </span>
+      </span>
+    </div>
+  );
+}
+
+/* the driftwood email; `pinned` hands animation control to the scroll story via `live` */
+function DriftwoodEmail({ pinned, live }: { pinned?: boolean; live?: boolean }) {
+  return (
+    <div
+      className={`wedge-drift-card flex flex-1 flex-col rounded-2xl border border-tide/30 bg-surface p-5 shadow-[0_20px_50px_-28px_rgba(13,60,91,0.4)] ${
+        pinned && live ? "glow-now" : ""
+      }`}
+    >
+      <div className="space-y-1.5 border-b border-line pb-3 text-[12.5px]">
+        <p className="m-0 text-ink-faint">
+          Subject: <span className="font-medium text-ink">found a bug in Acme's checkout</span>
+        </p>
+      </div>
+      <div className="mb-3 mt-4 space-y-5 text-[13.5px] leading-relaxed text-ink-soft">
+        <p>Hi Sarah,</p>
+        <p>
+          Our QA agent ran Acme's checkout this morning and caught a real bug: double-clicking Pay
+          charges the card twice. Here's the 47-second recording:
+        </p>
+      </div>
+      <BugDemoCard compact />
+      <div className="mb-0 mt-4 space-y-5 text-[13.5px] leading-relaxed text-ink-soft">
+        <p>
+          We already work with Y Combinator's engineering team to catch bugs before they ship, and
+          our customers save an average of 10 hours a week on QA.
+        </p>
+        <p>Open to a quick call this week?</p>
+      </div>
+      <span className="mt-auto self-start pt-4">
+        <span
+          className={`wedge-reply inline-block rounded-full bg-tide-wash px-2.5 py-1 font-mono text-[10.5px] font-medium text-tide ${
+            pinned ? (live ? "toast-now" : "invisible") : ""
+          }`}
+        >
+          "ok this is wild. got time Thursday?"
+        </span>
+      </span>
+    </div>
+  );
+}
+
+function WedgeSection() {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [flipped, setFlipped] = useState(false);
+
+  useEffect(() => {
+    const wrap = wrapRef.current;
+    if (!wrap) return;
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const total = wrap.offsetHeight - window.innerHeight;
+      if (total <= 0) return;
+      const p = Math.min(1, Math.max(0, -wrap.getBoundingClientRect().top / total));
+      setFlipped(p > 0.45);
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  return (
+    <section id="wedge" className="scroll-mt-20 border-t border-line">
+      {/* pinned before/after flip (desktop, motion ok) */}
+      <div ref={wrapRef} className="relative hidden h-[200vh] lg:motion-safe:block">
+        <div className="sticky top-0 flex h-screen flex-col justify-center overflow-hidden">
+          <h2 className="m-0 text-center text-[clamp(1.8rem,4vw,2.7rem)] font-semibold leading-tight tracking-[-0.015em]">
+            Don't send slop.
+          </h2>
+          <div className="mt-8 grid w-full grid-cols-2 items-start gap-6">
+            <div
+              className={`flex h-full flex-col transition-all duration-700 ease-out ${
+                flipped ? "scale-[0.97] opacity-40" : "opacity-100"
+              }`}
+            >
+              <p className="mb-3 ml-1 font-mono text-[11.5px] tracking-[0.02em] text-ink-faint">The usual</p>
+              <UsualEmail stamped={flipped} />
+            </div>
+            <div
+              className={`flex h-full flex-col transition-all duration-700 ease-out ${
+                flipped ? "translate-y-0 opacity-100" : "translate-y-4 opacity-45"
+              }`}
+            >
+              <p className="mb-3 ml-1 font-mono text-[11.5px] tracking-[0.02em] text-tide">A driftwood send</p>
+              <DriftwoodEmail pinned live={flipped} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* stacked comparison (mobile + reduced motion) */}
+      <div className="py-20 sm:py-26 lg:motion-safe:hidden">
+        <div className="reveal max-w-150">
+          <h2 className="m-0 text-[clamp(1.6rem,3.6vw,2.4rem)] font-semibold leading-tight tracking-[-0.015em]">
+            Don't send slop.
+          </h2>
+        </div>
+        <div className="reveal wedge-reveal mt-12 grid gap-6 lg:grid-cols-2">
+          <div className="wedge-usual flex flex-col">
+            <p className="mb-3 ml-1 font-mono text-[11.5px] tracking-[0.02em] text-ink-faint">The usual</p>
+            <UsualEmail />
+          </div>
+          <div className="wedge-drift flex flex-col">
+            <p className="mb-3 ml-1 font-mono text-[11.5px] tracking-[0.02em] text-tide">A driftwood send</p>
+            <DriftwoodEmail />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* faint sea-chart contour lines behind the hero */
 function HeroContours() {
   return (
@@ -514,82 +674,7 @@ export default function App() {
         </section>
 
         {/* what we send */}
-        <section id="wedge" className="scroll-mt-20 border-t border-line py-20 sm:py-26">
-          <div className="reveal max-w-150">
-            <h2 className="m-0 text-[clamp(1.6rem,3.6vw,2.4rem)] font-semibold leading-tight tracking-[-0.015em]">
-              Don't send slop.
-            </h2>
-          </div>
-
-          <div className="reveal wedge-reveal mt-12 grid gap-6 lg:grid-cols-2">
-            {/* generic email */}
-            <div className="wedge-usual flex flex-col">
-              <p className="mb-3 ml-1 font-mono text-[11.5px] tracking-[0.02em] text-ink-faint">The usual</p>
-              <div className="flex flex-1 flex-col rounded-2xl border border-line bg-surface/60 p-5">
-                <div className="space-y-1.5 border-b border-line pb-3 text-[12.5px]">
-                  <p className="m-0 text-ink-faint">
-                    Subject: <span className="text-ink-soft">Sarah — quick question (Acme x Skylith AI)</span>
-                  </p>
-                </div>
-                <div className="mb-0 mt-4 space-y-5 text-[13.5px] leading-relaxed text-ink-faint">
-                  <p>Hey Sarah,</p>
-                  <p>
-                    Huge fan of what you're building at Acme — saw you just crossed 200 employees. Incredible
-                    momentum.
-                  </p>
-                  <p>
-                    I'm the founder of Skylith, an AI-powered platform that automates workflows end-to-end. We
-                    just closed our seed round and are growing 40% month over month — teams like yours are
-                    seeing huge results.
-                  </p>
-                  <p>
-                    Would love to connect and show you what we're building. Any chance you have 15 minutes this
-                    week?
-                  </p>
-                  <p>Best,</p>
-                </div>
-                <span className="mt-auto self-start pt-4">
-                  <span className="inline-block rounded-full bg-paper px-2.5 py-1 font-mono text-[10.5px] text-ink-faint">
-                    read in 4 seconds, archived
-                  </span>
-                </span>
-              </div>
-            </div>
-
-            {/* driftwood email */}
-            <div className="wedge-drift flex flex-col">
-              <p className="mb-3 ml-1 font-mono text-[11.5px] tracking-[0.02em] text-tide">A driftwood send</p>
-              <div className="wedge-drift-card flex flex-1 flex-col rounded-2xl border border-tide/30 bg-surface p-5 shadow-[0_20px_50px_-28px_rgba(13,60,91,0.4)]">
-                <div className="space-y-1.5 border-b border-line pb-3 text-[12.5px]">
-                  <p className="m-0 text-ink-faint">
-                    Subject: <span className="font-medium text-ink">found a bug in Acme's checkout</span>
-                  </p>
-                </div>
-                <div className="mb-3 mt-4 space-y-5 text-[13.5px] leading-relaxed text-ink-soft">
-                  <p>Hi Sarah,</p>
-                  <p>
-                    Our QA agent ran Acme's checkout this morning and caught a real bug: double-clicking Pay
-                    charges the card twice. Here's the 47-second recording:
-                  </p>
-                </div>
-                <BugDemoCard compact />
-                <div className="mb-0 mt-4 space-y-5 text-[13.5px] leading-relaxed text-ink-soft">
-                  <p>
-                    We already work with Y Combinator's engineering team to catch bugs before they ship, and
-                    our customers save an average of 10 hours a week on QA.
-                  </p>
-                  <p>Open to a quick call this week?</p>
-                </div>
-                <span className="mt-auto self-start pt-4">
-                  <span className="wedge-reply inline-block rounded-full bg-tide-wash px-2.5 py-1 font-mono text-[10.5px] font-medium text-tide">
-                    "ok this is wild. got time Thursday?"
-                  </span>
-                </span>
-              </div>
-            </div>
-          </div>
-
-        </section>
+        <WedgeSection />
 
         {/* what we handle */}
         <HowSection />
