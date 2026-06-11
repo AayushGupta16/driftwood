@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>driftwood — landing page wireframe v3</title>
+<style>
+  /* ── wireframe kit ─────────────────────────────────────────────
+     Lo-fi by design: grayscale, dashed boxes, placeholder media. */
+  :root {
+    --line: #b9bdc4;
+    --line-soft: #d8dbe0;
+    --fill: #f2f3f5;
+    --fill-dark: #e4e6ea;
+    --ink: #2a2d33;
+    --ink-soft: #6b7078;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #fafafa;
+    color: var(--ink);
+    font-family: Helvetica, Arial, sans-serif;
+    line-height: 1.45;
+  }
+  main { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+  section { position: relative; border-top: 1px dashed var(--line); padding: 64px 0; }
+
+  /* section name tag, top-left of each block */
+  .tag {
+    position: absolute; top: -10px; left: 0;
+    background: var(--ink); color: #fff;
+    font: 11px/1 monospace; letter-spacing: 0.08em;
+    padding: 4px 8px; border-radius: 3px;
+  }
+  /* open-question / proposal callout */
+  .ask {
+    border: 1.5px dashed #9a8a4a; background: #faf6e8; color: #6b5d2a;
+    border-radius: 8px; font: 12px monospace; padding: 8px 12px; margin-top: 16px;
+  }
+
+  /* generic wire boxes */
+  .box { border: 1.5px solid var(--line); border-radius: 10px; background: #fff; }
+  .box-soft { border: 1.5px dashed var(--line); border-radius: 10px; background: var(--fill); }
+  .bar { height: 12px; border-radius: 6px; background: var(--fill-dark); }
+  .bar.w-40 { width: 40%; } .bar.w-60 { width: 60%; } .bar.w-80 { width: 80%; } .bar.w-100 { width: 100%; }
+
+  /* media placeholder with an X through it */
+  .media {
+    position: relative; border: 1.5px solid var(--line); border-radius: 10px;
+    background:
+      linear-gradient(to top right, transparent calc(50% - 1px), var(--line-soft), transparent calc(50% + 1px)),
+      linear-gradient(to top left,  transparent calc(50% - 1px), var(--line-soft), transparent calc(50% + 1px)),
+      var(--fill);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .media span { background: #fff; border: 1px solid var(--line-soft); border-radius: 4px; font: 12px monospace; color: var(--ink-soft); padding: 4px 10px; text-align: center; max-width: 85%; }
+
+  /* text styles */
+  h1, h2, h3 { margin: 0; font-weight: 700; letter-spacing: -0.01em; }
+  h1 { font-size: 44px; line-height: 1.1; }
+  h2 { font-size: 28px; line-height: 1.2; }
+  h3 { font-size: 17px; }
+  .sub { color: var(--ink-soft); font-size: 16px; max-width: 560px; margin: 14px 0 0; }
+  .mono { font: 13px monospace; color: var(--ink-soft); letter-spacing: 0.03em; }
+
+  /* controls */
+  .btn {
+    display: inline-block; border: 1.5px solid var(--ink); border-radius: 8px;
+    background: var(--ink); color: #fff; font-size: 14px; font-weight: 600;
+    padding: 12px 18px; white-space: nowrap;
+  }
+  .input {
+    flex: 1; border: 1.5px solid var(--line); border-radius: 8px; background: #fff;
+    color: var(--ink-soft); font-size: 14px; padding: 12px 14px;
+  }
+  .chip {
+    display: inline-block; border: 1px solid var(--line); border-radius: 999px;
+    background: #fff; font: 11.5px monospace; color: var(--ink-soft); padding: 4px 10px;
+  }
+  .pill { display: inline-block; border-radius: 999px; background: var(--fill-dark); font: 11px monospace; color: var(--ink); padding: 3px 9px; }
+
+  /* layout helpers */
+  .row { display: flex; gap: 12px; align-items: center; }
+  .between { justify-content: space-between; }
+  .stack { display: flex; flex-direction: column; gap: 10px; }
+  .center { text-align: center; align-items: center; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: stretch; }
+  @media (max-width: 800px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  /* mini card chrome (header strip on mock cards) */
+  .card-head {
+    display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    border-bottom: 1px solid var(--line-soft); padding: 10px 14px;
+  }
+  .card-body { padding: 14px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+
+  /* ── STORY STAGE: every beat graphic is the SAME fixed size and must
+       fill it ("all the graphics should be the same size") ── */
+  .beat-card {
+    width: 100%; max-width: 560px; min-height: 440px;
+    display: flex; flex-direction: column;
+  }
+  .beat-card .card-body { justify-content: space-between; }
+
+  /* progress dots for the story stage */
+  .dots { display: flex; justify-content: center; gap: 6px; }
+  .dots span { width: 12px; height: 4px; border-radius: 2px; background: var(--line-soft); }
+  .dots span.on { width: 28px; background: var(--ink); }
+
+  /* carousel slide mocks */
+  .player { background: #5b5f68; border-radius: 10px; color: #fff; display: flex; flex-direction: column; gap: 10px; padding: 14px; }
+  .player .mono { color: rgba(255,255,255,0.78); }
+  .panel { border: 1px solid var(--line-soft); border-radius: 8px; background: #fff; padding: 10px 12px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ NAV (sticky) ═══════════════ -->
+<header style="position: sticky; top: 0; z-index: 10; background: #fff; border-bottom: 1.5px solid var(--line);">
+  <div class="row between" style="max-width: 1080px; margin: 0 auto; padding: 14px 24px;">
+    <div class="row" style="gap: 10px;">
+      <div style="width: 26px; height: 26px; border: 1.5px solid var(--ink); border-radius: 50%;"></div>
+      <strong style="letter-spacing: 0.08em;">driftwood</strong>
+    </div>
+    <span class="btn" style="padding: 8px 14px; font-size: 13px;">Get early access</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- ═══════════════ HERO ═══════════════ -->
+  <section style="border-top: none;">
+    <span class="tag">HERO</span>
+    <div class="stack center" style="gap: 0; padding-top: 24px;">
+      <h1 style="max-width: 760px;">Ship a custom demo in every cold email.</h1>
+      <p class="sub" style="text-align: center;">
+        We manage your entire cold email channel. Each prospect gets a custom demo
+        built for their company.
+      </p>
+      <div class="row" style="margin-top: 28px; width: 100%; max-width: 440px;">
+        <span class="input">Work email</span>
+        <span class="btn">Get early access</span>
+      </div>
+      <p class="mono" style="margin-top: 40px;">See an example ↓</p>
+    </div>
+  </section>
+
+  <!-- ═══════════════ STORY — pinned scroll walkthrough, 5 beats ═══════════════
+       Each frame below = one pinned-screen state. Order within every frame:
+       TITLE → subheading (example-campaign kicker) → dots → graphic.
+       All graphics share one fixed stage size (.beat-card) and fill it.   -->
+  <section>
+    <span class="tag">STORY — SCROLL WALKTHROUGH (5 BEATS)</span>
+
+    <div class="stack" style="gap: 64px;">
+
+      <!-- BEAT 1: onboarding + ideation -->
+      <div class="stack center" style="gap: 0;">
+        <h2>“Develop ICPs and brainstorm possible demos”</h2>
+        <p class="mono" style="margin: 10px 0 0;">Example campaign: Autosana, a company selling AI QA agents.</p>
+        <div class="dots" style="margin-top: 14px;">
+          <span class="on"></span><span></span><span></span><span></span><span></span>
+        </div>
+        <div class="box beat-card" style="margin-top: 22px;">
+          <div class="card-head">
+            <span class="mono">client: Autosana · AI QA agents</span>
+            <span class="pill">15-minute onboarding call</span>
+          </div>
+          <div class="card-body">
+            <div class="stack" style="gap: 8px;">
+              <span class="mono">what they're building</span>
+              <span style="font-size: 14px;">AI agents that QA web apps automatically</span>
+            </div>
+            <div class="stack" style="gap: 8px;">
+              <span class="mono">their ICPs</span>
+              <div class="row" style="gap: 6px;">
+                <span class="chip">CTOs</span>
+                <span class="chip">QA engineers</span>
+              </div>
+            </div>
+            <div class="stack" style="gap: 8px;">
+              <span class="mono">ideas for custom demos</span>
+              <div class="box-soft row between" style="padding: 8px 12px;">
+                <span class="mono">find bugs on the prospect's own site</span><span class="chip">idea</span>
+              </div>
+              <div class="box-soft row between" style="padding: 8px 12px;">
+                <span class="mono">custom flows for their product, shown in the dashboard</span><span class="chip">idea</span>
+              </div>
+              <div class="box-soft row between" style="padding: 8px 12px;">
+                <span class="mono">vibe-code a replica of their app + ship a feature with coding agents + the QA agent</span><span class="chip">idea</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BEAT 2: agent run per prospect, with the fallback playbook -->
+      <div class="stack center" style="gap: 0;">
+        <h2>“An agent goes through each prospect and makes them a custom demo”</h2>
+        <p class="sub" style="text-align: center; margin-top: 10px;">
+          Every email is verified by a human before it goes out.
+        </p>
+        <div class="dots" style="margin-top: 14px;">
+          <span></span><span class="on"></span><span></span><span></span><span></span>
+        </div>
+        <div class="box beat-card" style="margin-top: 22px;">
+          <div class="card-head">
+            <span class="mono">autosana's QA agent × driftwood</span>
+            <span class="pill">prospect: Sarah · self-serve product</span>
+          </div>
+          <div class="card-body">
+            <div class="stack" style="gap: 8px;">
+              <span class="mono">the plan for sarah</span>
+              <div class="box-soft row between" style="padding: 8px 12px;">
+                <span class="mono">1 · try to find bugs in the product</span><span class="pill">running</span>
+              </div>
+              <div class="box-soft row between" style="padding: 8px 12px; opacity: 0.55;">
+                <span class="mono">2 · if that doesn't work, create custom flows</span><span class="chip">fallback</span>
+              </div>
+              <div class="box-soft row between" style="padding: 8px 12px; opacity: 0.55;">
+                <span class="mono">3 · if easy to vibe-code, replicate it + add a feature</span><span class="chip">fallback</span>
+              </div>
+            </div>
+            <div class="stack" style="gap: 6px;">
+              <span class="mono">! bug found on the website</span>
+              <span class="mono">✓ recording the bug · 0:47</span>
+            </div>
+            <div class="media" style="height: 120px;"><span>bug recording thumb</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BEAT 3: the send. Square video at the BOTTOM of the email (emails
+           render video as a square thumb, no inline playback). The trust-strip
+           copy now lives here as the beat's sub-line.                      -->
+      <div class="stack center" style="gap: 0;">
+        <h2>“We send out the email”</h2>
+        <p class="sub" style="text-align: center; margin-top: 10px;">
+          We manage your inboxes, warming, and deliverability.
+        </p>
+        <div class="dots" style="margin-top: 14px;">
+          <span></span><span></span><span class="on"></span><span></span><span></span>
+        </div>
+        <div class="box beat-card" style="margin-top: 22px;">
+          <div class="card-head">
+            <span class="mono">●●● New message</span>
+            <span class="pill">Draft → Sent</span>
+          </div>
+          <div class="card-body">
+            <div class="stack" style="gap: 6px;">
+              <span class="mono">To: sarah@acme.com</span>
+              <span class="mono">Subject: found a bug in Acme's checkout</span>
+            </div>
+            <div class="stack" style="gap: 8px;">
+              <div class="bar w-100"></div>
+              <div class="bar w-80"></div>
+              <div class="bar w-100"></div>
+              <div class="bar w-40"></div>
+            </div>
+            <!-- square video thumb, end of email -->
+            <div class="media" style="width: 180px; height: 180px; align-self: flex-start;">
+              <span>square video thumb<br/>(how email clients render it)</span>
+            </div>
+            <div class="row" style="flex-wrap: wrap; gap: 6px;">
+              <span class="chip">← a real bug, found this morning</span>
+              <span class="chip">← the proof is attached</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BEAT 4: the reply -->
+      <div class="stack center" style="gap: 0;">
+        <h2>“Sarah replies.”</h2>
+        <p class="sub" style="text-align: center; margin-top: 10px;">
+          We track open rates, click-throughs, every conversion, and sequence the
+          follow-up.
+        </p>
+        <div class="dots" style="margin-top: 14px;">
+          <span></span><span></span><span></span><span class="on"></span><span></span>
+        </div>
+        <div class="box beat-card" style="margin-top: 22px;">
+          <div class="card-head">
+            <span class="mono"><strong>Re: found a bug in Acme's checkout</strong></span>
+            <span class="pill">Inbox · 2 messages</span>
+          </div>
+          <div class="card-body">
+            <div class="box-soft row between" style="padding: 8px 12px;">
+              <span class="mono">Autosana → sarah@acme.com (collapsed)</span>
+              <span class="mono">9:02 AM</span>
+            </div>
+            <div class="box" style="padding: 12px;">
+              <div class="row between">
+                <span class="mono"><strong>Sarah Chen</strong> · sarah@acme.com</span>
+                <span class="chip">2h later</span>
+              </div>
+              <p style="margin: 10px 0 0; font-size: 15px;">“ok this is wild. got time Thursday?”</p>
+            </div>
+            <div class="box-soft" style="padding: 10px 12px;">
+              <span class="mono">quoted original message…</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BEAT 5: replies drive iteration -->
+      <div class="stack center" style="gap: 0;">
+        <h2>“Each email serves as a datapoint”</h2>
+        <p class="sub" style="text-align: center; margin-top: 10px;">
+          We learn which demos win replies and which ICPs convert.
+        </p>
+        <div class="dots" style="margin-top: 14px;">
+          <span></span><span></span><span></span><span></span><span class="on"></span>
+        </div>
+        <div class="box beat-card" style="margin-top: 22px;">
+          <div class="card-head">
+            <span class="mono">proof testing</span>
+            <span class="pill">re-ranked weekly</span>
+          </div>
+          <div class="card-body" style="justify-content: flex-start; gap: 12px;">
+            <div class="box-soft" style="padding: 10px 12px;">
+              <div class="row between">
+                <span class="mono"><strong>bug recording</strong></span><span class="pill">gets the budget</span>
+              </div>
+              <div class="row" style="margin-top: 8px;">
+                <div class="bar" style="width: 82%; height: 8px;"></div><span class="mono">4.9% reply</span>
+              </div>
+            </div>
+            <div class="box-soft" style="padding: 10px 12px;">
+              <div class="row between">
+                <span class="mono">custom flows demo</span><span class="chip">testing now</span>
+              </div>
+              <div class="row" style="margin-top: 8px;">
+                <div class="bar" style="width: 54%; height: 8px;"></div><span class="mono">3.2% reply</span>
+              </div>
+            </div>
+            <div class="box-soft" style="padding: 10px 12px; opacity: 0.55;">
+              <div class="row between">
+                <span class="mono">coverage report</span><span class="chip">cut this week</span>
+              </div>
+              <div class="row" style="margin-top: 8px;">
+                <div class="bar" style="width: 18%; height: 8px;"></div><span class="mono">1.1% reply</span>
+              </div>
+            </div>
+            <p class="mono" style="margin: auto 0 0; text-align: center;">we keep you updated on results and what we're improving</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════ COMPARE — its own section ═══════════════ -->
+  <section>
+    <span class="tag">COMPARE — “DON'T SEND OUT AI SLOP”</span>
+    <div class="stack center">
+      <h2 style="max-width: 640px; text-align: center;">Don't send out AI slop</h2>
+      <div class="grid-2" style="width: 100%; max-width: 880px; margin-top: 32px; position: relative;">
+        <div class="box-soft card-body">
+          <span class="mono">what personalization tools send</span>
+          <div class="stack" style="gap: 8px;">
+            <span class="mono">Subject: {first_name} — quick question</span>
+            <div class="bar w-100"></div>
+            <div class="bar w-80"></div>
+            <div class="bar w-100"></div>
+            <div class="bar w-60"></div>
+          </div>
+          <span class="chip" style="align-self: flex-start;">read in 4 seconds, archived</span>
+        </div>
+        <span class="chip" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: #fff; z-index: 1;">vs</span>
+        <div class="box card-body" style="border-width: 2px;">
+          <span class="mono"><strong>what driftwood sent</strong></span>
+          <div class="stack" style="gap: 8px;">
+            <span class="mono">Subject: found a bug in Acme's checkout</span>
+            <div class="bar w-100"></div>
+            <div class="bar w-80"></div>
+          </div>
+          <div class="media" style="width: 120px; height: 120px;"><span>square video</span></div>
+          <span class="chip" style="align-self: flex-start;">“ok this is wild. got time Thursday?” · 2h later</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ EXAMPLES — carousel, one big card per view ═══════════════
+       Familiar companies, each showing the custom demo driftwood would have
+       built for THEIR prospects. One company fills the viewport at a time. -->
+  <section>
+    <span class="tag">EXAMPLES — CAROUSEL (ALL 4 SLIDES SHOWN FOR AUDIT)</span>
+    <div class="stack center">
+      <h2>See how this looks for different companies</h2>
+      <p class="mono" style="margin-top: 10px;">every slide: a product you know pitching a company you know — zero fiction to parse. live page shows one slide per view with ‹ › arrows + dots; all four expanded here for audit.</p>
+
+      <!-- ── slide 1: Runway — a finished custom ad for the prospect's product ── -->
+      <div class="row" style="width: 100%; margin-top: 28px; align-items: center;">
+        <span class="chip">‹</span>
+        <div class="box card-body" style="flex: 1; min-height: 540px;">
+          <div class="row between">
+            <span class="mono" style="font-size: 14px;"><strong>Runway</strong> · AI video — pitching <strong>Liquid Death</strong></span>
+            <span class="pill">slide 1 / 4</span>
+          </div>
+          <!-- dark video player, paused mid-ad -->
+          <div class="player" style="flex: 1;">
+            <div class="row between">
+              <span class="mono">liquid_death_15s_v1.mp4 · made with runway</span>
+              <span class="mono">1080 × 1080</span>
+            </div>
+            <!-- the paused frame -->
+            <div style="flex: 1; position: relative; border: 1px solid rgba(255,255,255,0.35); border-radius: 8px; display: flex; align-items: center; justify-content: center; min-height: 250px;">
+              <span class="chip" style="position: absolute; top: 10px; left: 10px;">Liquid Death logo</span>
+              <div class="media" style="width: 160px; height: 160px;"><span>their tallboy can, cut out + in motion</span></div>
+              <span style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 48px; height: 48px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; color: #2a2d33; font-size: 15px;">▶</span>
+              <div style="position: absolute; bottom: 12px; left: 0; right: 0; text-align: center; color: #fff; font-weight: 700; font-size: 17px;">“Murder your thirst.”</div>
+            </div>
+            <div class="row">
+              <div style="flex: 1; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.3); position: relative;">
+                <span style="position: absolute; left: 0; top: 0; bottom: 0; width: 60%; border-radius: 3px; background: #fff;"></span>
+              </div>
+              <span class="mono">0:09 / 0:15</span>
+            </div>
+          </div>
+          <!-- provenance: everything in the ad came from their site -->
+          <div class="row" style="flex-wrap: wrap; gap: 6px; justify-content: center;">
+            <span class="chip">tagline: their own, from their homepage</span>
+            <span class="chip">can shots: from their product pages</span>
+            <span class="chip">logo + colors: matched</span>
+          </div>
+          <p class="mono" style="margin: 0; text-align: center;">a finished ad for Liquid Death, assembled from assets already on their site</p>
+        </div>
+        <span class="chip">›</span>
+      </div>
+
+      <div class="row" style="gap: 6px; margin-top: 16px;">
+        <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--ink);"></span>
+        <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--line-soft);"></span>
+        <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--line-soft);"></span>
+        <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--line-soft);"></span>
+      </div>
+
+      <p class="mono" style="margin-top: 28px;">slides 2–4, same frame:</p>
+
+      <!-- ── slide 2: Ramp — their software spend, categorized from public signals ── -->
+      <div class="box card-body" style="width: 100%; min-height: 540px; margin-top: 10px;">
+        <div class="row between">
+          <span class="mono" style="font-size: 14px;"><strong>Ramp</strong> · spend management — pitching <strong>Notion</strong></span>
+          <span class="pill">slide 2 / 4</span>
+        </div>
+        <!-- the spend dashboard -->
+        <div class="box" style="flex: 1; display: flex; flex-direction: column; gap: 10px; padding: 14px;">
+          <div class="row between">
+            <span class="mono">notion's software stack — categorized + priced</span>
+            <span class="chip">estimated from public signals</span>
+          </div>
+          <div class="row" style="align-items: stretch;">
+            <div class="panel" style="flex: 1;">
+              <span class="mono">est. annual SaaS spend</span>
+              <p style="margin: 6px 0 0; font-size: 24px; font-weight: 700;">$4.2M</p>
+            </div>
+            <div class="panel" style="flex: 1;">
+              <span class="mono">vendors found</span>
+              <p style="margin: 6px 0 0; font-size: 24px; font-weight: 700;">63</p>
+            </div>
+            <div class="panel" style="flex: 1;">
+              <span class="mono">est. savings on Ramp</span>
+              <p style="margin: 6px 0 0; font-size: 24px; font-weight: 700;">$310k/yr</p>
+            </div>
+          </div>
+          <div class="stack" style="gap: 6px;">
+            <div class="panel row between">
+              <span class="mono"><strong>AWS</strong> · engineering</span>
+              <span class="mono">~$2.4M/yr</span>
+            </div>
+            <div class="panel row between">
+              <span class="mono"><strong>Salesforce</strong> · sales</span>
+              <span class="mono">~$310k/yr · <strong>partner discount available</strong></span>
+            </div>
+            <div class="panel row between">
+              <span class="mono"><strong>Zoom + Google Meet</strong> · productivity</span>
+              <span class="mono"><strong>overlap</strong> · pick one, save ~$40k</span>
+            </div>
+            <div class="panel row between" style="opacity: 0.6;">
+              <span class="mono">+ 60 more vendors, categorized</span>
+              <span class="mono">…</span>
+            </div>
+          </div>
+          <div class="row" style="flex-wrap: wrap; gap: 6px; justify-content: center;">
+            <span class="chip">stack inferred from their job posts + site tech</span>
+            <span class="chip">prices: public list pricing</span>
+          </div>
+        </div>
+        <p class="mono" style="margin: 0; text-align: center;">their software spend mapped and priced before they've shared a single statement</p>
+      </div>
+
+      <!-- ── slide 3: Shopify — their store, rebuilt, side by side ── -->
+      <div class="box card-body" style="width: 100%; min-height: 540px; margin-top: 16px;">
+        <div class="row between">
+          <span class="mono" style="font-size: 14px;"><strong>Shopify</strong> · commerce — pitching <strong>Patagonia</strong></span>
+          <span class="pill">slide 3 / 4</span>
+        </div>
+        <div class="grid-2" style="flex: 1; gap: 16px;">
+          <!-- before: their store today -->
+          <div class="box-soft" style="display: flex; flex-direction: column;">
+            <div class="card-head">
+              <span class="mono">their store today — patagonia.com</span>
+              <span class="chip">8.2s load</span>
+            </div>
+            <div class="card-body">
+              <div class="row" style="align-items: stretch;">
+                <div class="media" style="flex: 1; height: 80px;"><span>their jacket</span></div>
+                <div class="media" style="flex: 1; height: 80px;"><span>their jacket</span></div>
+                <div class="media" style="flex: 1; height: 80px;"><span>their jacket</span></div>
+              </div>
+              <div class="bar w-60"></div>
+              <div class="bar w-40"></div>
+              <span class="chip" style="align-self: flex-start; margin-top: auto;">checkout · 5 steps · cart abandons at step 3</span>
+            </div>
+          </div>
+          <!-- after: rebuilt on Shopify -->
+          <div class="box" style="display: flex; flex-direction: column; border-width: 2px;">
+            <div class="card-head">
+              <span class="mono"><strong>rebuilt on Shopify</strong> — same products, same brand</span>
+              <span class="pill">1.1s load</span>
+            </div>
+            <div class="card-body">
+              <div class="row" style="align-items: stretch;">
+                <div class="media" style="flex: 1; height: 80px;"><span>same jacket</span></div>
+                <div class="media" style="flex: 1; height: 80px;"><span>same jacket</span></div>
+                <div class="media" style="flex: 1; height: 80px;"><span>same jacket</span></div>
+              </div>
+              <div class="bar w-60"></div>
+              <span class="btn" style="text-align: center; margin-top: auto;">Buy now · Shop Pay — 1-page checkout</span>
+              <span class="chip" style="align-self: center;">their catalog imported overnight · 412 products</span>
+            </div>
+          </div>
+        </div>
+        <p class="mono" style="margin: 0; text-align: center;">Patagonia's own store rebuilt — same products, same brand, checkout visibly faster</p>
+      </div>
+
+      <!-- ── slide 4: Square — their menu, live as an ordering page ── -->
+      <div class="box card-body" style="width: 100%; min-height: 540px; margin-top: 16px;">
+        <div class="row between">
+          <span class="mono" style="font-size: 14px;"><strong>Square</strong> · local commerce — pitching <strong>Joe's Pizza</strong> (NYC)</span>
+          <span class="pill">slide 4 / 4</span>
+        </div>
+        <div style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 28px; flex-wrap: wrap;">
+          <!-- phone frame -->
+          <div class="box" style="width: 270px; border-radius: 18px; padding: 12px; display: flex; flex-direction: column; gap: 8px;">
+            <div class="row between">
+              <strong style="font-size: 15px;">Joe's Pizza</strong>
+              <span class="pill">order online</span>
+            </div>
+            <div class="media" style="height: 64px;"><span>their Carmine St storefront</span></div>
+            <div class="panel row between"><span class="mono">cheese slice</span><span class="mono">$3.50 ⊕</span></div>
+            <div class="panel row between"><span class="mono">pepperoni slice</span><span class="mono">$4.75 ⊕</span></div>
+            <div class="panel row between"><span class="mono">garlic knots (4)</span><span class="mono">$4.00 ⊕</span></div>
+            <span class="btn" style="text-align: center; font-size: 13px;">2 slices · $8.25 · Checkout</span>
+          </div>
+          <!-- provenance notes beside the phone -->
+          <div class="stack" style="max-width: 250px;">
+            <span class="chip">menu scraped from the PDF on their site</span>
+            <span class="chip">items + prices verbatim</span>
+            <span class="chip">✓ test order #001 placed — simulated</span>
+          </div>
+        </div>
+        <p class="mono" style="margin: 0; text-align: center;">Joe's real menu, already live as an ordering page they never set up</p>
+      </div>
+    </div>
+
+    <p class="ask">
+      OPEN — slide 4: Square (restaurant menu live as an ordering page) vs Squire
+      (a barbershop's booking page + chair schedule already set up). Square is more
+      broadly known; Squire is the cooler "your shop, already running on it" story.
+      Both break the b2b-saas mold. Pick one or keep rotating.
+    </p>
+  </section>
+
+  <!-- ═══════════════ FINAL CTA ═══════════════ -->
+  <section>
+    <span class="tag">FINAL CTA</span>
+    <div class="stack center">
+      <h2>See what we'd send your prospects.</h2>
+      <p class="sub" style="text-align: center;">
+        We're onboarding a few design partners. Leave a work email and we'll show you
+        what a campaign for your product looks like.
+      </p>
+      <div class="row" style="margin-top: 24px; width: 100%; max-width: 440px;">
+        <span class="input">Work email</span>
+        <span class="btn">Get early access</span>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ═══════════════ FOOTER ═══════════════ -->
+<footer style="border-top: 1.5px solid var(--line); margin-top: 24px;">
+  <div class="row between" style="max-width: 1080px; margin: 0 auto; padding: 24px; flex-wrap: wrap;">
+    <div class="row" style="gap: 8px;">
+      <div style="width: 18px; height: 18px; border: 1.5px solid var(--ink); border-radius: 50%;"></div>
+      <strong style="font-size: 14px; letter-spacing: 0.08em;">driftwood</strong>
+    </div>
+    <div class="row" style="gap: 18px;">
+      <span class="mono">aayush@driftwood.ai</span>
+      <span class="mono">© 2026 driftwood</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
