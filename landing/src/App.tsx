@@ -11,12 +11,12 @@ const STEPS = [
   },
   {
     title: "Proof of value in every email",
-    body: "We turn the best finding into something they can click — like a recording of a real bug in their own checkout. A human checks every one before it ships.",
+    body: "We turn the best finding into something they can click, like a recording of a real bug in their own checkout. A human checks every one before it ships.",
     art: PersonalizeArt,
   },
   {
     title: "Replies decide what we build next",
-    body: "We test different proof formats against each other and watch the replies. Whatever wins gets the volume; whatever doesn't gets cut.",
+    body: "We test different proof formats against each other and watch the replies. We keep sending what wins and cut what doesn't.",
     art: IterateArt,
   },
 ];
@@ -75,7 +75,7 @@ function VignetteFrame({ label, meta, children }: { label: string; meta: string;
           <span className="pulse-dot size-1.5 rounded-full bg-tide" />
           {label}
         </span>
-        <span className="rounded-full bg-sand px-2.5 py-0.5 font-mono text-[11px] text-ink-soft">{meta}</span>
+        <span className="rounded-full bg-sand px-2.5 py-0.5 font-mono text-[12px] text-ink-soft">{meta}</span>
       </div>
       <div className="flex flex-1 flex-col p-5">{children}</div>
     </div>
@@ -97,7 +97,7 @@ function ResearchArt() {
   return (
     <VignetteFrame label="prospect research" meta="Sarah · Acme">
       <div className="flex flex-1 flex-col justify-center">
-        <div className="space-y-2.5 font-mono text-[11.5px] text-ink-soft">
+        <div className="space-y-2.5 font-mono text-[12.5px] text-ink-soft">
           {runs.map((run) => (
             <p key={run.label} className="m-0 flex items-center gap-2.5">
               <svg
@@ -116,7 +116,7 @@ function ResearchArt() {
             </p>
           ))}
         </div>
-        <p className="mb-0 mt-5 flex items-center gap-2.5 font-mono text-[11px] tracking-[0.02em] text-ink-faint">
+        <p className="mb-0 mt-5 flex items-center gap-2.5 font-mono text-[12px] tracking-[0.02em] text-ink-faint">
           <span className="pulse-dot mx-1 size-1.5 shrink-0 rounded-full bg-tide" />3 findings
         </p>
         <div className="mt-2.5 space-y-2">
@@ -131,7 +131,7 @@ function ResearchArt() {
                 {f.text}
               </span>
               <span
-                className={`shrink-0 rounded-full px-2 py-0.5 font-mono text-[10.5px] font-medium ${
+                className={`shrink-0 rounded-full px-2 py-0.5 font-mono text-[11.5px] font-medium ${
                   f.hot ? "bg-tide text-white" : "bg-surface text-ink-faint ring-1 ring-line"
                 }`}
               >
@@ -141,7 +141,7 @@ function ResearchArt() {
           ))}
         </div>
       </div>
-      <p className="mb-0 mt-4 text-center font-mono text-[11px] text-ink-faint">one deep run per prospect, before we write a word</p>
+      <p className="mb-0 mt-4 text-center font-mono text-[12px] text-ink-faint">one deep run per prospect, before we write a word</p>
     </VignetteFrame>
   );
 }
@@ -152,7 +152,7 @@ function PersonalizeArt() {
     <VignetteFrame label="demo build" meta="built for Sarah · Acme">
       <div className="flex flex-1 flex-col justify-center">
         <BugDemoCard />
-        <div className="mt-5 space-y-2.5 font-mono text-[11.5px] text-ink-soft">
+        <div className="mt-5 space-y-2.5 font-mono text-[12.5px] text-ink-soft">
           <p className="m-0 flex items-center gap-2.5">
             <svg
               viewBox="0 0 24 24"
@@ -172,7 +172,7 @@ function PersonalizeArt() {
           </p>
         </div>
       </div>
-      <p className="mb-0 mt-4 text-center font-mono text-[11px] text-ink-faint">built fresh for each prospect, never reused</p>
+      <p className="mb-0 mt-4 text-center font-mono text-[12px] text-ink-faint">built fresh for each prospect, never reused</p>
     </VignetteFrame>
   );
 }
@@ -262,11 +262,11 @@ function IterateArt() {
                   >
                     {a.name}
                   </span>
-                  <span className="block truncate font-mono text-[11px] text-ink-faint">{a.desc}</span>
+                  <span className="block truncate font-mono text-[12px] text-ink-faint">{a.desc}</span>
                 </span>
               </span>
               <span
-                className={`shrink-0 rounded-full px-2 py-0.5 font-mono text-[10.5px] font-medium ${
+                className={`shrink-0 rounded-full px-2 py-0.5 font-mono text-[11.5px] font-medium ${
                   a.tone === "win"
                     ? "bg-tide text-white"
                     : a.tone === "mid"
@@ -285,7 +285,7 @@ function IterateArt() {
                 />
               </div>
               <span
-                className={`shrink-0 font-mono text-[11px] ${
+                className={`shrink-0 font-mono text-[12px] ${
                   a.tone === "win" ? "font-medium text-tide" : "text-ink-faint"
                 }`}
               >
@@ -295,7 +295,7 @@ function IterateArt() {
           </div>
         ))}
       </div>
-      <p className="mb-0 mt-4 text-center font-mono text-[11px] text-ink-faint">
+      <p className="mb-0 mt-4 text-center font-mono text-[12px] text-ink-faint">
         replies decide what prospects get next
       </p>
     </VignetteFrame>
@@ -436,13 +436,13 @@ function HowSection() {
 
 const STORY_KICKER = (
   <>
-    Example campaign — <span className="font-medium text-ink">Autosana</span>, an AI QA agent, selling to{" "}
+    Example campaign: <span className="font-medium text-ink">Autosana</span>, an AI QA agent, selling to{" "}
     <span className="font-medium text-ink">Sarah Chen</span> at Acme.
   </>
 );
 
 const STORY_CAPTIONS = [
-  "First, we learn Autosana inside and out.",
+  "First, we learn your company inside and out.",
   "An agent researches each prospect and builds their proof.",
   "The email goes out.",
   "Sarah replies.",
@@ -528,7 +528,7 @@ function StoryClientCard({ facts, ideas }: { facts: number; ideas: number }) {
           ))}
         </div>
         <p className="mb-0 mt-4 text-center font-mono text-[13.5px] text-ink-faint">
-          none chosen yet — the best fit gets picked per prospect
+          none chosen yet. the best fit gets picked per prospect
         </p>
       </div>
     </div>
@@ -698,7 +698,7 @@ function StoryReplyThread({ on }: { on: boolean }) {
       </div>
       {/* our send, collapsed */}
       <div className="flex items-center gap-3 border-b border-line bg-paper/50 px-5 py-3">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-tide font-mono text-[11px] font-semibold text-white">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-tide font-mono text-[12px] font-semibold text-white">
           A
         </span>
         <span className="min-w-0 flex-1">
@@ -891,7 +891,7 @@ function StorySection() {
   ];
 
   return (
-    <section id="story" className="scroll-mt-20 border-t border-line">
+    <section id="story" className="scroll-mt-20">
       <h2 className="sr-only">Watch one campaign happen</h2>
 
       {/* pinned walkthrough (desktop, motion ok) */}
@@ -1007,7 +1007,7 @@ function RecordingProofMock() {
               </div>
               <span className="relative shrink-0 rounded-lg bg-[#16181d] px-4 py-2 text-[14px] font-semibold text-white">
                 Pay $84.00
-                <span className="absolute -right-2 -top-2 rounded-full bg-[#d4574a] px-1.5 py-0.5 font-mono text-[11px] font-bold leading-none text-white">
+                <span className="absolute -right-2 -top-2 rounded-full bg-[#d4574a] px-1.5 py-0.5 font-mono text-[12px] font-bold leading-none text-white">
                   &times;2
                 </span>
               </span>
@@ -1020,7 +1020,7 @@ function RecordingProofMock() {
             <div className="flex items-center justify-between gap-3 rounded-lg bg-[#fff5f4] px-3 py-2.5 ring-[1.5px] ring-[#d4574a]">
               <span className="flex min-w-0 items-center gap-2 font-mono text-[13.5px] font-medium text-[#3c424e]">
                 <span className="truncate">Visa &middot;&middot;&middot;&middot; 4242</span>
-                <span className="shrink-0 rounded-full bg-[#d4574a] px-2 py-0.5 text-[11px] font-bold text-white">duplicate</span>
+                <span className="shrink-0 rounded-full bg-[#d4574a] px-2 py-0.5 text-[12px] font-bold text-white">duplicate</span>
               </span>
               <span className="shrink-0 font-mono text-[13px] font-semibold text-[#d4574a]">$84.00 &middot; 4:02:12 PM</span>
             </div>
@@ -1348,7 +1348,7 @@ export default function App() {
 
       <main id="top" className="mx-auto max-w-6xl px-5 sm:px-8">
         {/* hero */}
-        <section className="relative isolate flex flex-col items-center py-20 text-center sm:py-24 lg:py-28">
+        <section className="relative isolate flex flex-col items-center pb-10 pt-20 text-center sm:pt-24 lg:pt-28">
           <HeroContours />
           <h1 className="m-0 max-w-5xl text-[clamp(2.9rem,6.5vw,4.9rem)] font-semibold leading-[1.05] tracking-[-0.02em]">
             Ship a custom demo in every cold email.

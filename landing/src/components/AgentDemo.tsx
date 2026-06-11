@@ -11,7 +11,7 @@ export function BugDemoCard({ compact }: { compact?: boolean }) {
             <span className="size-1.5 rounded-full bg-[#d9dde3]" />
             <span className="size-1.5 rounded-full bg-[#d9dde3]" />
             <span className="size-1.5 rounded-full bg-[#d9dde3]" />
-            <span className="ml-1.5 rounded bg-white px-2 py-0.5 font-mono text-[9.5px] text-[#7a8190] ring-1 ring-[#e8eaee]">
+            <span className="ml-1.5 rounded bg-white px-2 py-0.5 font-mono text-[10.5px] text-[#7a8190] ring-1 ring-[#e8eaee]">
               acme.com/checkout
             </span>
           </div>
@@ -19,28 +19,28 @@ export function BugDemoCard({ compact }: { compact?: boolean }) {
           <div className={`space-y-1.5 px-3 ${compact ? "py-2" : "py-2.5"}`}>
             <div className="flex items-center justify-between">
               <div className="h-1.5 w-16 rounded-full bg-[#dfe3e9]" />
-              <span className="relative rounded-md bg-[#16181d] px-2.5 py-1 text-[9px] font-semibold text-white">
+              <span className="relative rounded-md bg-[#16181d] px-2.5 py-1 text-[10px] font-semibold text-white">
                 Pay $84
-                <span className="absolute -right-1.5 -top-1.5 rounded-full bg-[#d4574a] px-1 py-px font-mono text-[8px] font-bold leading-none text-white">
+                <span className="absolute -right-1.5 -top-1.5 rounded-full bg-[#d4574a] px-1 py-px font-mono text-[9px] font-bold leading-none text-white">
                   &times;2
                 </span>
               </span>
             </div>
             <div className="flex items-center justify-between rounded-md bg-[#f1f3f6] px-2 py-1.5 ring-1 ring-[#e6e9ee]">
-              <span className="font-mono text-[9px] font-medium text-[#3c424e]">Visa &middot;&middot;&middot;&middot;4242</span>
-              <span className="font-mono text-[9px] text-[#7a8190]">$84.00 &middot; 4:02 PM</span>
+              <span className="font-mono text-[10px] font-medium text-[#3c424e]">Visa &middot;&middot;&middot;&middot;4242</span>
+              <span className="font-mono text-[10px] text-[#7a8190]">$84.00 &middot; 4:02 PM</span>
             </div>
             <div className="flex items-center justify-between rounded-md bg-[#fff5f4] px-2 py-1.5 ring-[1.5px] ring-[#d4574a]">
-              <span className="flex items-center gap-1.5 font-mono text-[9px] font-medium text-[#3c424e]">
+              <span className="flex items-center gap-1.5 font-mono text-[10px] font-medium text-[#3c424e]">
                 Visa &middot;&middot;&middot;&middot;4242
-                <span className="rounded-full bg-[#d4574a] px-1.5 py-px text-[8px] font-bold text-white">duplicate</span>
+                <span className="rounded-full bg-[#d4574a] px-1.5 py-px text-[9px] font-bold text-white">duplicate</span>
               </span>
-              <span className="font-mono text-[9px] font-semibold text-[#d4574a]">$84.00 &middot; 4:02 PM</span>
+              <span className="font-mono text-[10px] font-semibold text-[#d4574a]">$84.00 &middot; 4:02 PM</span>
             </div>
           </div>
         </div>
         {/* rec badge */}
-        <span className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-black/70 py-0.5 pl-1.5 pr-2 font-mono text-[9.5px] font-medium text-white">
+        <span className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-black/70 py-0.5 pl-1.5 pr-2 font-mono text-[10.5px] font-medium text-white">
           <span className="size-1.5 rounded-full bg-[#e2574a]" />
           REC 0:47
         </span>
@@ -54,11 +54,11 @@ export function BugDemoCard({ compact }: { compact?: boolean }) {
             </svg>
           </div>
           <div className="min-w-0">
-            <p className="m-0 truncate text-[12.5px] font-semibold leading-tight text-ink">acme.com checkout, bug recording</p>
-            <p className="m-0 truncate text-[10.5px] leading-tight text-ink-faint">recorded by Autosana's QA agent</p>
+            <p className="m-0 truncate text-[13.5px] font-semibold leading-tight text-ink">acme.com checkout, bug recording</p>
+            <p className="m-0 truncate text-[11.5px] leading-tight text-ink-faint">recorded by Autosana's QA agent</p>
           </div>
         </div>
-        <span className="shrink-0 rounded-full bg-tide-wash px-2 py-0.5 font-mono text-[9.5px] font-medium text-tide">0:47</span>
+        <span className="shrink-0 rounded-full bg-tide-wash px-2 py-0.5 font-mono text-[10.5px] font-medium text-tide">0:47</span>
       </div>
     </div>
   );
