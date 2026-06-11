@@ -44,8 +44,7 @@ const WORKING = [
 function HowHeading() {
   return (
     <>
-      <p className="m-0 font-mono text-[12px] font-medium tracking-[0.02em] text-tide">What we handle</p>
-      <h2 className="mb-0 mt-3 text-[clamp(1.6rem,3.6vw,2.4rem)] font-semibold leading-tight tracking-[-0.015em]">
+      <h2 className="m-0 text-[clamp(1.6rem,3.6vw,2.4rem)] font-semibold leading-tight tracking-[-0.015em]">
         You take the meetings. We run everything else.
       </h2>
     </>
@@ -222,28 +221,64 @@ function DeliverArt() {
   );
 }
 
-/* Iterate — which angles and templates are actually working */
+/* tiny artifact previews for the Iterate readout */
+function ArtifactThumb({ kind }: { kind: "rec" | "dash" | "doc" }) {
+  if (kind === "rec") {
+    return (
+      <span className="relative flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#16181d]">
+        <svg viewBox="0 0 24 24" className="ml-0.5 size-3.5 fill-white" aria-hidden="true">
+          <path d="M8 5.5v13l11-6.5z" />
+        </svg>
+        <span className="absolute right-1 top-1 size-1.5 rounded-full bg-[#e2574a]" />
+      </span>
+    );
+  }
+  if (kind === "dash") {
+    return (
+      <span className="flex size-10 shrink-0 gap-1 rounded-lg border border-line bg-white p-1.5">
+        <span className="h-full w-1.5 rounded-sm bg-tide/70" />
+        <span className="flex flex-1 flex-col justify-between py-0.5">
+          <span className="h-1 w-full rounded-full bg-[#dfe3e9]" />
+          <span className="h-1 w-3/4 rounded-full bg-tide/50" />
+          <span className="h-1 w-full rounded-full bg-[#dfe3e9]" />
+        </span>
+      </span>
+    );
+  }
+  return (
+    <span className="flex size-10 shrink-0 flex-col justify-center gap-1 rounded-lg border border-line bg-white px-2">
+      <span className="h-1 w-full rounded-full bg-[#dfe3e9]" />
+      <span className="h-1 w-2/3 rounded-full bg-[#dfe3e9]" />
+      <span className="h-1 w-full rounded-full bg-[#d4574a]/60" />
+    </span>
+  );
+}
+
+/* Iterate — competing demo artifacts; replies pick what we build next */
 function IterateArt() {
-  const angles = [
+  const artifacts = [
     {
-      subject: "“found a bug on your checkout”",
-      opens: "61% open",
+      thumb: "rec",
+      name: "bug recording",
+      desc: "double-charge on checkout · 0:47",
       replies: "4.9% reply",
       width: "82%",
       tone: "win",
       tag: "gets the budget",
     },
     {
-      subject: "“what manual QA costs you”",
-      opens: "47% open",
-      replies: "2.6% reply",
-      width: "44%",
+      thumb: "dash",
+      name: "QA dashboard",
+      desc: "Acme's app · custom test suites written",
+      replies: "3.2% reply",
+      width: "54%",
       tone: "mid",
-      tag: undefined,
+      tag: "testing now",
     },
     {
-      subject: "“quick question about QA”",
-      opens: "31% open",
+      thumb: "doc",
+      name: "coverage report",
+      desc: "signup flow · 12 cases annotated",
       replies: "1.1% reply",
       width: "18%",
       tone: "cut",
@@ -251,35 +286,40 @@ function IterateArt() {
     },
   ] as const;
   return (
-    <VignetteFrame label="angle testing" meta="re-ranked weekly">
+    <VignetteFrame label="artifact testing" meta="re-ranked weekly">
       <div className="flex flex-1 flex-col justify-center gap-3">
-        {angles.map((a, i) => (
+        {artifacts.map((a) => (
           <div
-            key={a.subject}
+            key={a.name}
             className={`rounded-xl px-3.5 py-3 ${
               a.tone === "win" ? "bg-tide-wash/70 ring-1 ring-tide/35" : "bg-paper/70"
             } ${a.tone === "cut" ? "opacity-55" : ""}`}
           >
-            <div className="flex items-baseline justify-between gap-3">
-              <span className="flex min-w-0 items-baseline gap-2.5">
-                <span className="shrink-0 font-mono text-[10px] text-ink-faint">0{i + 1}</span>
-                <span
-                  className={`truncate font-mono text-[11.5px] ${
-                    a.tone === "win" ? "font-medium text-ink" : "text-ink-soft"
-                  }`}
-                >
-                  {a.subject}
+            <div className="flex items-center justify-between gap-3">
+              <span className="flex min-w-0 items-center gap-3">
+                <ArtifactThumb kind={a.thumb} />
+                <span className="min-w-0">
+                  <span
+                    className={`block truncate text-[12.5px] ${
+                      a.tone === "win" ? "font-semibold text-ink" : "font-medium text-ink-soft"
+                    }`}
+                  >
+                    {a.name}
+                  </span>
+                  <span className="block truncate font-mono text-[10px] text-ink-faint">{a.desc}</span>
                 </span>
               </span>
-              {a.tag && (
-                <span
-                  className={`shrink-0 rounded-full px-2 py-0.5 font-mono text-[9.5px] font-medium ${
-                    a.tone === "win" ? "bg-tide text-white" : "bg-surface text-ink-faint ring-1 ring-line"
-                  }`}
-                >
-                  {a.tag}
-                </span>
-              )}
+              <span
+                className={`shrink-0 rounded-full px-2 py-0.5 font-mono text-[9.5px] font-medium ${
+                  a.tone === "win"
+                    ? "bg-tide text-white"
+                    : a.tone === "mid"
+                      ? "bg-tide-wash text-tide"
+                      : "bg-surface text-ink-faint ring-1 ring-line"
+                }`}
+              >
+                {a.tag}
+              </span>
             </div>
             <div className="mt-2.5 flex items-center gap-3">
               <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-line/50">
@@ -293,14 +333,14 @@ function IterateArt() {
                   a.tone === "win" ? "font-medium text-tide" : "text-ink-faint"
                 }`}
               >
-                {a.opens} &rarr; {a.replies}
+                {a.replies}
               </span>
             </div>
           </div>
         ))}
       </div>
       <p className="mb-0 mt-4 text-center font-mono text-[10.5px] text-ink-faint">
-        the loser rotates out &middot; a new angle takes its slot
+        replies decide which artifact prospects get next
       </p>
     </VignetteFrame>
   );
@@ -557,8 +597,7 @@ export default function App() {
         {/* working with us */}
         <section id="working" className="border-t border-line py-20 sm:py-26">
           <div className="reveal max-w-150">
-            <p className="m-0 font-mono text-[12px] font-medium tracking-[0.02em] text-tide">Working with us</p>
-            <h2 className="mb-0 mt-3 text-[clamp(1.6rem,3.6vw,2.4rem)] font-semibold leading-tight tracking-[-0.015em]">
+            <h2 className="m-0 text-[clamp(1.6rem,3.6vw,2.4rem)] font-semibold leading-tight tracking-[-0.015em]">
               You talk to founders, not agents.
             </h2>
           </div>
