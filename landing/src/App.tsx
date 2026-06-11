@@ -737,9 +737,6 @@ function ExamplesSection() {
         <h2 className="m-0 text-[clamp(1.9rem,4vw,2.7rem)] font-semibold leading-tight tracking-[-0.015em]">
           See how this looks for different companies
         </h2>
-        <p className="mb-0 mt-4 text-[17px] leading-relaxed text-ink-soft">
-          Pick a company you know — this is the email driftwood would send their prospect.
-        </p>
       </div>
 
       <div className="reveal mt-8 grid items-start gap-5 lg:mt-10 lg:grid-cols-[250px_1fr] lg:gap-9">
