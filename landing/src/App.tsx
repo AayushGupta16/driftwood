@@ -4,6 +4,7 @@ import { Nav, Footer, useReveal } from "./components/Chrome";
 import { StoryCallCard } from "./components/story/StoryCallCard";
 import { StoryConsoleCard } from "./components/story/StoryConsoleCard";
 import { StorySlackCard } from "./components/story/StorySlackCard";
+import { StoryEmailCard } from "./components/story/StoryEmailCard";
 import { RunwayAdMock } from "./components/examples/RunwayMock";
 import { RampSpendMock } from "./components/examples/RampMock";
 import { ShopifyRebuildMock } from "./components/examples/ShopifyMock";
@@ -55,101 +56,27 @@ function SquareVideoThumb({ small, className }: { small?: boolean; className?: s
 }
 
 /* ---------- the story: one campaign, end to end ----------
-   titles describe what driftwood does for YOU — no fiction required;
-   subheadings carry the Autosana worked example */
+   titles + subs describe driftwood's capabilities, generic on purpose;
+   the graphics carry the Autosana worked example */
 
-const BEATS: { title: string; sub: ReactNode }[] = [
+const BEATS = [
   {
     title: "We learn what you sell and who to win over",
-    sub: (
-      <>
-        A 15-minute call. Our example: <span className="font-medium text-ink">Autosana</span>, who sells AI QA
-        agents.
-      </>
-    ),
+    sub: "A 15-minute call: what you sell, who buys it, and what would impress them.",
   },
   {
     title: "An agent builds every prospect a demo of your product",
-    sub: "Autosana's agent found a real bug on the prospect's checkout — and recorded it.",
+    sub: "An agent researches each prospect and picks the demo most likely to land.",
   },
   {
     title: "We review every email by hand, then send it",
-    sub: "Inboxes, warming, deliverability, follow-ups: handled. Two hours later, the reply.",
+    sub: "Every email is human-reviewed. Inboxes, warming, deliverability, follow-ups — handled.",
   },
   {
     title: "We test different demos against different ICPs",
-    sub: "Bug recordings win 4.9% replies. Coverage reports get cut.",
+    sub: "Every open, click, and reply is tracked — we double down on what converts.",
   },
 ];
-
-/* beat 3 — review → send → the reply, styled as a real inbox thread */
-function StoryReplyThread({ on }: { on: boolean }) {
-  return (
-    <div className="flex w-full max-w-135 flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_24px_60px_-26px_rgba(13,60,91,0.42),0_4px_16px_-8px_rgba(22,24,29,0.1)] lg:min-h-110">
-      {/* thread header */}
-      <div className="border-b border-line px-5 py-4">
-        <p className="m-0 text-[16.5px] font-semibold text-ink">Re: found a bug in Acme's checkout</p>
-        <p className="m-0 mt-1 font-mono text-[13.5px] text-ink-faint">Inbox &middot; 2 messages</p>
-      </div>
-      {/* review gate: a human approved it before it went out */}
-      <div className="flex items-center gap-2.5 border-b border-line px-5 py-2.5 font-mono text-[13.5px] text-ink-soft">
-        <svg
-          viewBox="0 0 24 24"
-          className="size-3.5 shrink-0 stroke-tide"
-          fill="none"
-          strokeWidth="2.4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M5 12.5l4.5 4.5L19 7.5" />
-        </svg>
-        reviewed by a human &middot; 8:51 AM
-      </div>
-      {/* our send, collapsed */}
-      <div className="flex items-center gap-3 border-b border-line bg-paper/50 px-5 py-3">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-tide font-mono text-[12px] font-semibold text-white">
-          A
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-[14.5px] font-medium text-ink-soft">
-            Autosana <span className="font-normal text-ink-faint">to sarah@acme.com</span>
-          </span>
-          <span className="block truncate text-[14px] text-ink-faint">
-            Our QA agent ran Acme's checkout this morning and caught a real bug&hellip;
-          </span>
-        </span>
-        <span className="shrink-0 font-mono text-[13.5px] text-ink-faint">9:02 AM</span>
-      </div>
-      {/* her reply, expanded */}
-      <div
-        className={`flex-1 px-5 py-4 ${on ? "block-in" : "invisible"}`}
-        style={on ? { animationDelay: "0.2s" } : undefined}
-      >
-        <div className="flex items-start gap-3">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-tide-wash text-[14px] font-bold text-tide">
-            SC
-          </span>
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <p className="m-0 text-[16px] font-semibold text-ink">Sarah Chen</p>
-              <span className="font-mono text-[13.5px] text-ink-faint">sarah@acme.com &middot; 11:08 AM</span>
-              <span className="ml-auto rounded-full bg-tide-wash px-2.5 py-0.5 font-mono text-[13px] font-medium text-tide">
-                2h later
-              </span>
-            </div>
-            <p className="m-0 mt-0.5 font-mono text-[13.5px] text-ink-faint">to autosana</p>
-            <p className="m-0 mt-3 text-[16.5px] leading-relaxed text-ink">ok this is wild. got time Thursday?</p>
-            <div className="mt-4 border-l-2 border-line pl-3 text-[14px] leading-relaxed text-ink-faint">
-              On Tue, Autosana wrote:
-              <br />
-              Our QA agent ran Acme's checkout this morning and caught a real bug&hellip;
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function StorySection() {
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -190,13 +117,15 @@ function StorySection() {
   const plans = active > 1 ? 3 : active === 1 ? Math.min(3, Math.floor(local / 0.14) + 1) : 0;
   const logs = active > 1 ? 2 : active === 1 ? (local > 0.58 ? 2 : local > 0.44 ? 1 : 0) : 0;
   const thumb = active > 1 || (active === 1 && local > 0.74);
+  /* beat 3 — the reply lands partway through the beat */
+  const replied = active > 2 || (active === 2 && local > 0.5);
   /* beat 4 — ranked rows land one by one */
   const rows = active === 3 ? Math.min(3, Math.floor(local / 0.18) + 1) : 0;
 
   const panes = [
     <StoryCallCard key="call" building={building} icps={icps} ideas={ideas} />,
     <StoryConsoleCard key="console" plans={plans} logs={logs} thumb={thumb} />,
-    <StoryReplyThread key="reply" on={active === 2} />,
+    <StoryEmailCard key="email" on={active === 2} replied={replied} />,
     <StorySlackCard key="slack" rows={rows} />,
   ];
 
@@ -204,9 +133,10 @@ function StorySection() {
     <section id="story" className="scroll-mt-20">
       <h2 className="sr-only">See an example campaign</h2>
 
-      {/* pinned walkthrough (desktop, motion ok) */}
+      {/* pinned walkthrough (desktop, motion ok) — pt-16 keeps the active
+          title from sliding under the sticky nav on tall stages */}
       <div ref={wrapRef} className="relative hidden h-[420vh] lg:motion-safe:block">
-        <div className="sticky top-0 isolate flex h-screen flex-col justify-center overflow-hidden">
+        <div className="sticky top-0 isolate flex h-screen flex-col justify-center overflow-hidden pt-16">
           <HeroContours className="pointer-events-none absolute -bottom-48 -left-48 -z-10 size-155 text-tide opacity-[0.05]" />
           {/* beat title — items-end keeps the gap to the subheading constant
               whether the active title wraps to one line or two */}
@@ -276,7 +206,7 @@ function StorySection() {
           {[
             <StoryCallCard key="call" building icps ideas={3} />,
             <StoryConsoleCard key="console" plans={3} logs={2} thumb />,
-            <StoryReplyThread key="reply" on />,
+            <StoryEmailCard key="email" on replied />,
             <StorySlackCard key="slack" rows={3} />,
           ].map((stage, i) => (
             <div key={BEATS[i].title} className="reveal">

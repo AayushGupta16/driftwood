@@ -157,11 +157,12 @@
 
     <div class="stack" style="gap: 64px;">
 
-      <!-- BEAT 1: onboarding + ideation, framed as a Zoom call + AI notetaker -->
+      <!-- BEAT 1: onboarding, framed as a screenshare: shared notes doc dominates,
+           presenter bar on top, tiny PiP participant tiles top-right -->
       <div class="stack center" style="gap: 0;">
         <h2>“We learn what you sell and who to win over”</h2>
         <p class="sub" style="text-align: center; margin-top: 10px;">
-          A 15-minute call. Our example: <strong>Autosana</strong>, who sells AI QA agents.
+          A 15-minute call: what you sell, who buys it, and what would impress them.
         </p>
         <div class="dots" style="margin-top: 14px;">
           <span class="on"></span><span></span><span></span><span></span>
@@ -172,11 +173,14 @@
             <span class="pill">● 12:04</span>
           </div>
           <div class="card-body">
-            <div class="row" style="align-items: stretch;">
-              <div class="media" style="flex: 1; height: 56px;"><span>video tile · Autosana</span></div>
-              <div class="media" style="flex: 1; height: 56px;"><span>video tile · driftwood</span></div>
+            <div class="box" style="background: #5b5f68; padding: 8px; display: flex; flex-direction: column; gap: 6px;">
+              <span class="pill" style="align-self: center;">You are viewing driftwood's screen</span>
+              <div class="row" style="justify-content: flex-end; gap: 4px;">
+                <span class="chip">PiP · Autosana</span>
+                <span class="chip">PiP · driftwood</span>
+              </div>
+              <span class="mono" style="background: #fff; border-radius: 6px; padding: 4px 8px;">shared doc: autosana — onboarding notes · ● live</span>
             </div>
-            <span class="mono">● notes · taken live</span>
             <div class="stack" style="gap: 8px;">
               <span class="mono">what they're building</span>
               <span style="font-size: 14px;">AI agents that QA web apps automatically</span>
@@ -204,75 +208,76 @@
         </div>
       </div>
 
-      <!-- BEAT 2: agent run per prospect, framed as an agent-console window -->
+      <!-- BEAT 2: agent run per prospect, framed as a dark TERMINAL session -->
       <div class="stack center" style="gap: 0;">
         <h2>“An agent builds every prospect a demo of your product”</h2>
         <p class="sub" style="text-align: center; margin-top: 10px;">
-          Autosana's agent found a real bug on the prospect's checkout — and recorded it.
+          An agent researches each prospect and picks the demo most likely to land.
         </p>
         <div class="dots" style="margin-top: 14px;">
           <span></span><span class="on"></span><span></span><span></span>
         </div>
         <div class="box beat-card" style="margin-top: 22px;">
           <div class="card-head">
-            <span class="mono">●●● driftwood agent (active tab)</span>
+            <span class="mono">●●● driftwood agent — sarah@acme.com (dark terminal window)</span>
             <span class="pill">prospect 14 of 200</span>
           </div>
           <div class="card-body">
-            <span class="mono">Sarah · acme.com · self-serve product</span>
+            <span class="mono">❯ driftwood run --prospect sarah@acme.com</span>
             <div class="stack" style="gap: 8px;">
-              <span class="mono">the plan for sarah</span>
+              <span class="mono">plan for sarah (terminal output)</span>
               <div class="box-soft row between" style="padding: 8px 12px;">
-                <span class="mono">1 · try to find bugs in the product</span><span class="pill">running</span>
+                <span class="mono">1. find bugs in the product</span><span class="pill">[running]</span>
               </div>
               <div class="box-soft row between" style="padding: 8px 12px; opacity: 0.55;">
-                <span class="mono">2 · if that doesn't work, create custom flows</span><span class="chip">fallback</span>
+                <span class="mono">2. create custom flows</span><span class="chip">[fallback]</span>
               </div>
               <div class="box-soft row between" style="padding: 8px 12px; opacity: 0.55;">
-                <span class="mono">3 · if easy to vibe-code, replicate it + add a feature</span><span class="chip">fallback</span>
+                <span class="mono">3. replicate + add a feature</span><span class="chip">[fallback]</span>
               </div>
             </div>
             <div class="stack" style="gap: 6px;">
-              <span class="mono">08:47 ! bug found: double-clicking Pay charges twice</span>
-              <span class="mono">08:49 ✓ recording the bug · 0:47</span>
+              <span class="mono">! bug found: double-clicking Pay charges twice</span>
+              <span class="mono">✓ recording the bug · 0:47 &nbsp; (then: blinking cursor ▍)</span>
             </div>
             <div class="media" style="height: 120px;"><span>bug recording thumb</span></div>
           </div>
         </div>
       </div>
 
-      <!-- BEAT 3 (merged send + reply): the thread shows our send collapsed
-           and her reply expanded — review/deliverability copy is the sub -->
+      <!-- BEAT 3 (merged send + reply): the FULL drafted email shown in place,
+           review gate in the header; Sarah's reply animates in below on scroll -->
       <div class="stack center" style="gap: 0;">
         <h2>“We review every email by hand, then send it”</h2>
         <p class="sub" style="text-align: center; margin-top: 10px;">
-          Inboxes, warming, deliverability, follow-ups: handled. Two hours later, the reply.
+          Every email is human-reviewed. Inboxes, warming, deliverability, follow-ups — handled.
         </p>
         <div class="dots" style="margin-top: 14px;">
           <span></span><span></span><span class="on"></span><span></span>
         </div>
         <div class="box beat-card" style="margin-top: 22px;">
           <div class="card-head">
-            <span class="mono"><strong>Re: found a bug in Acme's checkout</strong></span>
-            <span class="pill">Inbox · 2 messages</span>
+            <span class="mono"><strong>found a bug in Acme's checkout</strong></span>
+            <span class="pill">✓ reviewed by a human · 8:51 AM</span>
           </div>
           <div class="card-body">
-            <div class="row" style="padding: 0 2px;">
-              <span class="mono">✓ reviewed by a human · 8:51 AM</span>
-            </div>
-            <div class="box-soft row between" style="padding: 8px 12px;">
-              <span class="mono">Autosana → sarah@acme.com (collapsed)</span>
+            <div class="row between">
+              <span class="mono"><strong>Autosana</strong> · to sarah@acme.com</span>
               <span class="mono">9:02 AM</span>
             </div>
+            <div class="stack" style="gap: 6px;">
+              <span class="mono">Hi Sarah — our QA agent caught a real bug: double-clicking Pay charges twice…</span>
+              <div class="bar w-100"></div>
+              <div class="bar w-80"></div>
+              <div class="bar w-40"></div>
+            </div>
+            <div class="media" style="width: 90px; height: 90px;"><span>square video</span></div>
             <div class="box" style="padding: 12px;">
               <div class="row between">
-                <span class="mono"><strong>Sarah Chen</strong> · sarah@acme.com</span>
+                <span class="mono"><strong>Sarah Chen</strong> · 11:08 AM · scrolls in mid-beat</span>
                 <span class="chip">2h later</span>
               </div>
               <p style="margin: 10px 0 0; font-size: 15px;">“ok this is wild. got time Thursday?”</p>
-            </div>
-            <div class="box-soft" style="padding: 10px 12px;">
-              <span class="mono">quoted original message…</span>
             </div>
           </div>
         </div>
@@ -282,7 +287,7 @@
       <div class="stack center" style="gap: 0;">
         <h2>“We test different demos against different ICPs”</h2>
         <p class="sub" style="text-align: center; margin-top: 10px;">
-          Bug recordings win 4.9% replies. Coverage reports get cut.
+          Every open, click, and reply is tracked — we double down on what converts.
         </p>
         <div class="dots" style="margin-top: 14px;">
           <span></span><span></span><span></span><span class="on"></span>

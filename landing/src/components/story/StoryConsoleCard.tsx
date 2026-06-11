@@ -1,98 +1,73 @@
 import { BugDemoCard } from "../AgentDemo";
 
-/* beat 2, reframed as an agent console: the per-prospect plan with fallbacks,
-   a terminal-style run feed, ending in the recording */
-const PROSPECT_PLAN = [
-  "try to find bugs in the product",
-  "if that doesn't work, create custom flows",
-  "if easy to vibe-code, replicate it + add a feature",
+/* beat 2: the agent as a real terminal session — a run command, the
+   per-prospect plan as output, then the live run feed */
+const PLAN_LINES = [
+  { step: "find bugs in the product", tag: "running" },
+  { step: "create custom flows", tag: "fallback" },
+  { step: "replicate + add a feature", tag: "fallback" },
 ];
 
 export function StoryConsoleCard({ plans, logs, thumb }: { plans: number; logs: number; thumb: boolean }) {
   return (
-    <div className="flex w-full max-w-135 flex-col rounded-2xl border border-line bg-surface shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_24px_60px_-26px_rgba(13,60,91,0.42),0_4px_16px_-8px_rgba(22,24,29,0.1)] lg:min-h-110">
-      {/* app-window chrome: traffic lights, tab title, scale chip */}
-      <div className="flex items-center gap-3 border-b border-line px-4 py-2.5">
+    <div className="flex w-full max-w-135 flex-col overflow-hidden rounded-2xl border border-line bg-[#16181d] shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_24px_60px_-26px_rgba(13,60,91,0.42),0_4px_16px_-8px_rgba(22,24,29,0.1)] lg:min-h-110">
+      {/* terminal title bar: traffic lights, session title, scale chip */}
+      <div className="flex items-center gap-3 border-b border-white/8 bg-white/4 px-4 py-2.5">
         <span className="flex shrink-0 items-center gap-1.5" aria-hidden="true">
           <span className="size-2.5 rounded-full bg-[#e8b4a8]" />
           <span className="size-2.5 rounded-full bg-[#e6d3a3]" />
           <span className="size-2.5 rounded-full bg-[#b5cfae]" />
         </span>
-        <span className="flex min-w-0 items-center gap-2 rounded-t-md border border-b-0 border-line bg-paper/70 px-3 pb-1 pt-1.5 font-mono text-[13.5px] font-medium text-ink-soft">
-          <span className="pulse-dot size-1.5 shrink-0 rounded-full bg-tide" />
-          <span className="min-w-0 sm:truncate">driftwood agent</span>
+        <span className="min-w-0 font-mono text-[13.5px] text-white/60 sm:truncate">
+          driftwood agent &mdash; sarah@acme.com
         </span>
-        <span className="ml-auto shrink-0 rounded-full bg-sand px-2.5 py-0.5 font-mono text-[13px] text-ink-soft">
+        <span className="ml-auto shrink-0 rounded-full bg-white/10 px-2.5 py-0.5 font-mono text-[13px] text-white/70">
           prospect 14 of 200
         </span>
       </div>
-      {/* context row: who the agent is working through */}
-      <div className="border-b border-line px-5 py-2">
-        <p className="m-0 font-mono text-[13.5px] tracking-[0.02em] text-ink-faint">
-          Sarah &middot; acme.com &middot; self-serve product
+      {/* terminal body */}
+      <div className="flex flex-1 flex-col justify-center gap-3 px-5 py-4 font-mono text-[14px] leading-normal">
+        {/* the command, always visible */}
+        <p className="m-0 text-white/90">
+          <span className="mr-2.5 text-white/35">&#10095;</span>
+          driftwood run --prospect sarah@acme.com
         </p>
-      </div>
-      <div className="flex flex-1 flex-col justify-center gap-4 px-5 py-5">
-        <div>
-          <p className="m-0 font-mono text-[14px] tracking-[0.02em] text-ink-faint">the plan for sarah</p>
-          <div className="mt-2.5 space-y-2">
-            {PROSPECT_PLAN.map((step, i) => (
-              <div
-                key={step}
-                className={`flex items-center justify-between gap-3 rounded-xl px-3.5 py-2.5 ${
-                  i === 0 ? "bg-tide-wash/70 ring-1 ring-tide/35" : "bg-paper/70 opacity-60 ring-1 ring-line/70"
-                } ${i < plans ? "toast-in" : "invisible"}`}
+        {/* the plan, printed as output */}
+        <div className="space-y-1.5">
+          <p className="m-0 text-[13.5px] text-white/40">plan for sarah</p>
+          {PLAN_LINES.map((line, i) => (
+            <p key={line.step} className={`m-0 flex items-baseline gap-3 ${i < plans ? "toast-in" : "invisible"}`}>
+              <span className={`min-w-0 sm:truncate ${i === 0 ? "text-white" : "text-white/40"}`}>
+                <span className={`mr-2 ${i === 0 ? "text-white/50" : "text-white/30"}`}>{i + 1}.</span>
+                {line.step}
+              </span>
+              <span
+                className={`shrink-0 text-[13px] ${i === 0 ? "font-medium text-[#3fb98a]" : "text-white/35"}`}
               >
-                <span
-                  className={`min-w-0 text-[15.5px] sm:truncate ${i === 0 ? "font-semibold text-ink" : "font-medium text-ink-soft"}`}
-                >
-                  <span className="mr-2 font-mono text-[13.5px] text-ink-faint">{i + 1}</span>
-                  {step}
-                </span>
-                <span
-                  className={`shrink-0 rounded-full px-2 py-0.5 font-mono text-[12.5px] font-medium ${
-                    i === 0 ? "bg-tide text-white" : "bg-surface text-ink-faint ring-1 ring-line"
-                  }`}
-                >
-                  {i === 0 ? "running" : "fallback"}
-                </span>
-              </div>
-            ))}
-          </div>
+                [{line.tag}]
+              </span>
+            </p>
+          ))}
         </div>
-        {/* run feed: terminal-style output with timestamps and a hairline gutter */}
-        <div className="space-y-2 border-l-2 border-line/80 pl-3.5 font-mono text-[14.5px] text-ink-soft">
-          <p className={`m-0 flex items-start gap-2.5 ${logs > 0 ? "log-line" : "invisible"}`}>
-            <span className="mt-px shrink-0 text-[13px] text-ink-faint">08:47</span>
-            <svg
-              viewBox="0 0 24 24"
-              className="mt-[3px] size-3.5 shrink-0 stroke-[#d4574a]"
-              fill="none"
-              strokeWidth="2.4"
-              strokeLinecap="round"
-            >
-              <path d="M12 4.5v10M12 19v.5" />
-            </svg>
-            <span className="font-medium text-ink">bug found: double-clicking Pay charges twice</span>
+        {/* the run feed */}
+        <div className="space-y-1.5 text-[14.5px]">
+          <p className={`m-0 flex items-baseline gap-2.5 ${logs > 0 ? "log-line" : "invisible"}`}>
+            <span className="shrink-0 font-semibold text-[#d4574a]">!</span>
+            <span className="font-medium text-white/90">bug found: double-clicking Pay charges twice</span>
           </p>
-          <p className={`m-0 flex items-start gap-2.5 ${logs > 1 ? "log-line" : "invisible"}`}>
-            <span className="mt-px shrink-0 text-[13px] text-ink-faint">08:49</span>
-            <svg
-              viewBox="0 0 24 24"
-              className="mt-[3px] size-3.5 shrink-0 stroke-tide"
-              fill="none"
-              strokeWidth="2.4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M5 12.5l4.5 4.5L19 7.5" />
-            </svg>
+          <p className={`m-0 flex items-baseline gap-2.5 text-white/70 ${logs > 1 ? "log-line" : "invisible"}`}>
+            <span className="shrink-0 text-[#3fb98a]">&#10003;</span>
             recording the bug &middot; 0:47
           </p>
         </div>
+        {/* recorded clip, hovering inline like a file preview; the blinking
+            cursor sits under it so the session reads as still running */}
         <div className={thumb ? "materialize" : "invisible"}>
           <BugDemoCard compact />
         </div>
+        <p className="m-0 leading-none text-white/35" aria-hidden="true">
+          <span className="pulse-dot inline-block h-3.5 w-2 bg-white/70" />
+        </p>
       </div>
     </div>
   );
