@@ -49,7 +49,7 @@ const TIERS = [
       "Dedicated capacity",
     ],
     cta: "Email us",
-    href: "mailto:aayush@driftwood.ai",
+    href: "mailto:aayush@driftwood.sh",
   },
 ];
 

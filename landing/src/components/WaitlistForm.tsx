@@ -61,7 +61,7 @@ export default function WaitlistForm({ id }: { id?: string }) {
       </button>
       {status === "error" && (
         <p className="absolute m-0 translate-y-13 text-[14px] text-[#a04432]">
-          Something broke on our end. Email aayush@driftwood.ai instead.
+          Something broke on our end. Email aayush@driftwood.sh instead.
         </p>
       )}
     </form>
