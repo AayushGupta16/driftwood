@@ -146,21 +146,25 @@
     </div>
   </section>
 
-  <!-- ═══════════════ STORY — pinned scroll walkthrough, 5 beats ═══════════════
+  <!-- ═══════════════ STORY — pinned scroll walkthrough, 4 beats ═══════════════
        Each frame below = one pinned-screen state. Order within every frame:
-       TITLE → subheading (example-campaign kicker) → dots → graphic.
+       TITLE → subheading → dots → graphic. Titles describe what driftwood does
+       for YOU (no fiction required); subheadings carry the Autosana worked
+       example. Send + reply are one beat: the thread shows both.
        All graphics share one fixed stage size (.beat-card) and fill it.   -->
   <section>
-    <span class="tag">STORY — SCROLL WALKTHROUGH (5 BEATS)</span>
+    <span class="tag">STORY — SCROLL WALKTHROUGH (4 BEATS)</span>
 
     <div class="stack" style="gap: 64px;">
 
       <!-- BEAT 1: onboarding + ideation -->
       <div class="stack center" style="gap: 0;">
-        <h2>“We learn who you sell to and what would impress them”</h2>
-        <p class="mono" style="margin: 10px 0 0;">Example campaign: Autosana, a company selling AI QA agents.</p>
+        <h2>“We learn what you sell and who to win over”</h2>
+        <p class="sub" style="text-align: center; margin-top: 10px;">
+          A 15-minute call. Our example: <strong>Autosana</strong>, who sells AI QA agents.
+        </p>
         <div class="dots" style="margin-top: 14px;">
-          <span class="on"></span><span></span><span></span><span></span><span></span>
+          <span class="on"></span><span></span><span></span><span></span>
         </div>
         <div class="box beat-card" style="margin-top: 22px;">
           <div class="card-head">
@@ -197,12 +201,12 @@
 
       <!-- BEAT 2: agent run per prospect, with the fallback playbook -->
       <div class="stack center" style="gap: 0;">
-        <h2>“An agent goes through each prospect and makes them a custom demo”</h2>
+        <h2>“An agent builds every prospect a demo of your product”</h2>
         <p class="sub" style="text-align: center; margin-top: 10px;">
-          Every email is verified by a human before it goes out.
+          Autosana's agent found a real bug on the prospect's checkout — and recorded it.
         </p>
         <div class="dots" style="margin-top: 14px;">
-          <span></span><span class="on"></span><span></span><span></span><span></span>
+          <span></span><span class="on"></span><span></span><span></span>
         </div>
         <div class="box beat-card" style="margin-top: 22px;">
           <div class="card-head">
@@ -231,55 +235,15 @@
         </div>
       </div>
 
-      <!-- BEAT 3: the send. Square video at the BOTTOM of the email (emails
-           render video as a square thumb, no inline playback). The trust-strip
-           copy now lives here as the beat's sub-line.                      -->
+      <!-- BEAT 3 (merged send + reply): the thread shows our send collapsed
+           and her reply expanded — review/deliverability copy is the sub -->
       <div class="stack center" style="gap: 0;">
-        <h2>“We send out the email”</h2>
+        <h2>“We review every email by hand, then send it”</h2>
         <p class="sub" style="text-align: center; margin-top: 10px;">
-          We manage your inboxes, warming, and deliverability.
+          Inboxes, warming, deliverability, follow-ups: handled. Two hours later, the reply.
         </p>
         <div class="dots" style="margin-top: 14px;">
-          <span></span><span></span><span class="on"></span><span></span><span></span>
-        </div>
-        <div class="box beat-card" style="margin-top: 22px;">
-          <div class="card-head">
-            <span class="mono">●●● New message</span>
-            <span class="pill">Draft → Sent</span>
-          </div>
-          <div class="card-body">
-            <div class="stack" style="gap: 6px;">
-              <span class="mono">To: sarah@acme.com</span>
-              <span class="mono">Subject: found a bug in Acme's checkout</span>
-            </div>
-            <div class="stack" style="gap: 8px;">
-              <div class="bar w-100"></div>
-              <div class="bar w-80"></div>
-              <div class="bar w-100"></div>
-              <div class="bar w-40"></div>
-            </div>
-            <!-- square video thumb, end of email — small, so the body keeps
-                 greeting / proof / social proof / ask -->
-            <div class="media" style="width: 120px; height: 120px; align-self: flex-start;">
-              <span>square video<br/>(small)</span>
-            </div>
-            <div class="row" style="flex-wrap: wrap; gap: 6px;">
-              <span class="chip">← a real bug, found this morning</span>
-              <span class="chip">← the proof is attached</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- BEAT 4: the reply -->
-      <div class="stack center" style="gap: 0;">
-        <h2>“Sarah replies.”</h2>
-        <p class="sub" style="text-align: center; margin-top: 10px;">
-          We track open rates, click-throughs, every conversion, and sequence the
-          follow-up.
-        </p>
-        <div class="dots" style="margin-top: 14px;">
-          <span></span><span></span><span></span><span class="on"></span><span></span>
+          <span></span><span></span><span class="on"></span><span></span>
         </div>
         <div class="box beat-card" style="margin-top: 22px;">
           <div class="card-head">
@@ -305,14 +269,14 @@
         </div>
       </div>
 
-      <!-- BEAT 5: replies drive iteration -->
+      <!-- BEAT 4: replies drive iteration -->
       <div class="stack center" style="gap: 0;">
-        <h2>“Each email serves as a datapoint”</h2>
+        <h2>“We test different demos against different ICPs”</h2>
         <p class="sub" style="text-align: center; margin-top: 10px;">
-          We learn which demos win replies and which ICPs convert.
+          Bug recordings win 4.9% replies. Coverage reports get cut.
         </p>
         <div class="dots" style="margin-top: 14px;">
-          <span></span><span></span><span></span><span></span><span class="on"></span>
+          <span></span><span></span><span></span><span class="on"></span>
         </div>
         <div class="box beat-card" style="margin-top: 22px;">
           <div class="card-head">

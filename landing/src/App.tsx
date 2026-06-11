@@ -82,26 +82,32 @@ function SquareVideoThumb({ small, className }: { small?: boolean; className?: s
   );
 }
 
-/* ---------- the story: one campaign, end to end ---------- */
+/* ---------- the story: one campaign, end to end ----------
+   titles describe what driftwood does for YOU — no fiction required;
+   subheadings carry the Autosana worked example */
 
-const STORY_KICKER = (
-  <>
-    Example campaign: <span className="font-medium text-ink">Autosana</span>, a company selling AI QA agents.
-  </>
-);
-
-const BEATS = [
-  { title: "We learn who you sell to and what would impress them", sub: null },
+const BEATS: { title: string; sub: ReactNode }[] = [
   {
-    title: "An agent goes through each prospect and makes them a custom demo",
-    sub: "Every email is verified by a human before it goes out.",
+    title: "We learn what you sell and who to win over",
+    sub: (
+      <>
+        A 15-minute call. Our example: <span className="font-medium text-ink">Autosana</span>, who sells AI QA
+        agents.
+      </>
+    ),
   },
-  { title: "We send out the email", sub: "We manage your inboxes, warming, and deliverability." },
   {
-    title: "Sarah replies.",
-    sub: "We track open rates, click-throughs, every conversion, and sequence the follow-up.",
+    title: "An agent builds every prospect a demo of your product",
+    sub: "Autosana's agent found a real bug on the prospect's checkout — and recorded it.",
   },
-  { title: "Each email serves as a datapoint", sub: "We learn which demos win replies and which ICPs convert." },
+  {
+    title: "We review every email by hand, then send it",
+    sub: "Inboxes, warming, deliverability, follow-ups: handled. Two hours later, the reply.",
+  },
+  {
+    title: "We test different demos against different ICPs",
+    sub: "Bug recordings win 4.9% replies. Coverage reports get cut.",
+  },
 ];
 
 /* beat 1 — what we learn on the onboarding call, and the demo ideas it produces */
@@ -231,107 +237,7 @@ function StoryAgentCard({ plans, logs, thumb }: { plans: number; logs: number; t
   );
 }
 
-/* beat 3 — the compose window; video sits at the bottom as a square, like email clients render it */
-const COMPOSE_ANNOS = [
-  { text: "a real bug, found this morning", pos: "right-0 top-24 translate-x-[55%] -rotate-2" },
-  { text: "the proof is attached", pos: "bottom-20 right-0 translate-x-[50%] rotate-1" },
-];
-
-function StoryComposeCard({
-  on,
-  sent,
-  annos,
-  inlineAnnos,
-}: {
-  on: boolean;
-  sent: boolean;
-  annos: number;
-  inlineAnnos?: boolean;
-}) {
-  const block = (i: number) => (on ? { animationDelay: `${0.08 + i * 0.12}s` } : undefined);
-  const blockClass = on ? "block-in" : "invisible";
-  return (
-    <div className="relative w-full max-w-135">
-      <div className="flex flex-col rounded-2xl border border-line bg-surface shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_24px_60px_-26px_rgba(13,60,91,0.42),0_4px_16px_-8px_rgba(22,24,29,0.1)] lg:min-h-110">
-        {/* title bar */}
-        <div className="flex items-center gap-2 border-b border-line px-5 py-3">
-          <span className="size-2.5 rounded-full bg-[#e8b4a8]" />
-          <span className="size-2.5 rounded-full bg-[#e6d3a3]" />
-          <span className="size-2.5 rounded-full bg-[#b5cfae]" />
-          <span className="ml-2 font-mono text-[13.5px] text-ink-soft">New message</span>
-          <span
-            className={`ml-auto rounded-full px-2.5 py-0.5 font-mono text-[13px] font-medium transition-colors duration-500 ${
-              sent ? "bg-tide-wash text-tide" : "bg-paper text-ink-soft"
-            }`}
-          >
-            {sent ? "Sent" : "Draft"}
-          </span>
-        </div>
-
-        {/* headers */}
-        <div className="space-y-1.5 border-b border-line px-5 py-2.5 text-[15px]">
-          <div className="flex items-center gap-2">
-            <span className="w-14 shrink-0 text-ink-faint">To</span>
-            <span className="rounded-full bg-paper px-2 py-0.5 font-medium text-ink-soft">sarah@acme.com</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-14 shrink-0 text-ink-faint">Subject</span>
-            <span className="font-medium text-ink">found a bug in Acme's checkout</span>
-          </div>
-        </div>
-
-        {/* body — blocks fade in with the beat; `invisible` keeps the height reserved */}
-        <div className="flex-1 px-5 py-4 text-[15.5px] leading-relaxed text-ink-soft">
-          <p className={`m-0 ${blockClass}`} style={block(0)}>
-            Hi Sarah,
-          </p>
-          <p className={`m-0 mt-3 ${blockClass}`} style={block(0)}>
-            Our QA agent ran Acme's checkout this morning and caught a real bug: double-clicking Pay charges the
-            card twice. The 47-second recording is below.
-          </p>
-          <p className={`m-0 mt-3 ${blockClass}`} style={block(1)}>
-            We already work with Y Combinator's engineering team to catch bugs before they ship, and our customers
-            save an average of 10 hours a week on QA.
-          </p>
-          <p className={`m-0 mt-3 ${blockClass}`} style={block(2)}>
-            Open to a quick call this week?
-          </p>
-          <div className={`mt-3.5 ${on ? "pop-in" : "invisible"}`} style={block(3)}>
-            <SquareVideoThumb small />
-          </div>
-        </div>
-      </div>
-
-      {/* annotations — why this email works */}
-      {inlineAnnos ? (
-        <div className="mt-4 flex flex-wrap gap-2">
-          {COMPOSE_ANNOS.map((a) => (
-            <span
-              key={a.text}
-              className="inline-block rounded-full bg-tide-wash px-3 py-1 font-mono text-[14px] font-medium text-tide ring-1 ring-tide/20"
-            >
-              {a.text}
-            </span>
-          ))}
-        </div>
-      ) : (
-        COMPOSE_ANNOS.map((a, i) => (
-          <span
-            key={a.text}
-            className={`absolute z-10 inline-flex items-center gap-1.5 rounded-full bg-tide-wash px-3 py-1 font-mono text-[14px] font-medium text-tide shadow-[0_8px_20px_-10px_rgba(13,60,91,0.45)] ring-1 ring-tide/25 ${a.pos} ${
-              annos > i ? "toast-in" : "invisible"
-            }`}
-          >
-            <span aria-hidden="true">&larr;</span>
-            {a.text}
-          </span>
-        ))
-      )}
-    </div>
-  );
-}
-
-/* beat 4 — the reply, styled as a real inbox thread */
+/* beat 3 — review → send → the reply, styled as a real inbox thread */
 function StoryReplyThread({ on }: { on: boolean }) {
   return (
     <div className="flex w-full max-w-135 flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_24px_60px_-26px_rgba(13,60,91,0.42),0_4px_16px_-8px_rgba(22,24,29,0.1)] lg:min-h-110">
@@ -484,17 +390,13 @@ function StorySection() {
   const plans = active > 1 ? 3 : active === 1 ? Math.min(3, Math.floor(local / 0.14) + 1) : 0;
   const logs = active > 1 ? 2 : active === 1 ? (local > 0.58 ? 2 : local > 0.44 ? 1 : 0) : 0;
   const thumb = active > 1 || (active === 1 && local > 0.74);
-  /* beat 3 — annotations, then the Draft→Sent flip */
-  const sent = active > 2 || (active === 2 && local > 0.75);
-  const annos = active > 2 ? 2 : active === 2 ? (local > 0.45 ? 2 : local > 0.2 ? 1 : 0) : 0;
-  /* beat 5 — ranked rows land one by one */
-  const rows = active === 4 ? Math.min(3, Math.floor(local / 0.18) + 1) : 0;
+  /* beat 4 — ranked rows land one by one */
+  const rows = active === 3 ? Math.min(3, Math.floor(local / 0.18) + 1) : 0;
 
   const panes = [
     <StoryOnboardCard key="onboard" building={building} icps={icps} ideas={ideas} />,
     <StoryAgentCard key="agent" plans={plans} logs={logs} thumb={thumb} />,
-    <StoryComposeCard key="compose" on={active === 2} sent={sent} annos={annos} />,
-    <StoryReplyThread key="reply" on={active === 3} />,
+    <StoryReplyThread key="reply" on={active === 2} />,
     <StoryDataCard key="data" rows={rows} />,
   ];
 
@@ -503,7 +405,7 @@ function StorySection() {
       <h2 className="sr-only">See an example campaign</h2>
 
       {/* pinned walkthrough (desktop, motion ok) */}
-      <div ref={wrapRef} className="relative hidden h-[520vh] lg:motion-safe:block">
+      <div ref={wrapRef} className="relative hidden h-[420vh] lg:motion-safe:block">
         <div className="sticky top-0 isolate flex h-screen flex-col justify-center overflow-hidden">
           <HeroContours className="pointer-events-none absolute -bottom-48 -left-48 -z-10 size-155 text-tide opacity-[0.05]" />
           {/* beat title — items-end keeps the gap to the subheading constant
@@ -522,17 +424,17 @@ function StorySection() {
             ))}
           </div>
 
-          {/* beat subheading — beat 1 gets the example-campaign kicker instead */}
+          {/* beat subheading — carries the worked example under the generic title */}
           <div className="mt-4 grid items-start text-center">
             {BEATS.map((beat, i) => (
               <p
                 key={beat.title}
                 aria-hidden={i !== active}
-                className={`col-start-1 row-start-1 mx-auto my-0 max-w-2xl transition-all duration-500 ease-out ${
-                  i === 0 ? "font-mono text-[14.5px] text-ink-soft" : "text-[18px] leading-relaxed text-ink-soft"
-                } ${i === active ? "opacity-100" : "pointer-events-none opacity-0"}`}
+                className={`col-start-1 row-start-1 mx-auto my-0 max-w-2xl text-[18px] leading-relaxed text-ink-soft transition-all duration-500 ease-out ${
+                  i === active ? "opacity-100" : "pointer-events-none opacity-0"
+                }`}
               >
-                {i === 0 ? STORY_KICKER : beat.sub}
+                {beat.sub}
               </p>
             ))}
           </div>
@@ -570,12 +472,10 @@ function StorySection() {
 
       {/* stacked walkthrough (mobile + reduced motion) — every beat in order */}
       <div className="py-14 sm:py-18 lg:motion-safe:hidden">
-        <p className="reveal m-0 font-mono text-[14.5px] leading-relaxed text-ink-soft">{STORY_KICKER}</p>
-        <div className="mt-10 space-y-14">
+        <div className="space-y-14">
           {[
             <StoryOnboardCard key="onboard" building icps ideas={3} />,
             <StoryAgentCard key="agent" plans={3} logs={2} thumb />,
-            <StoryComposeCard key="compose" on sent annos={2} inlineAnnos />,
             <StoryReplyThread key="reply" on />,
             <StoryDataCard key="data" rows={3} />,
           ].map((stage, i) => (
