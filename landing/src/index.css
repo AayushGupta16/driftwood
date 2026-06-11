@@ -133,6 +133,33 @@ body {
   to { transform: none; }
 }
 
+/* compare-section arrow: line draws itself, then the head lands */
+.arrow-draw {
+  stroke-dasharray: 340;
+  stroke-dashoffset: 340;
+}
+
+.reveal.is-visible .arrow-draw {
+  animation: arrow-draw 0.95s cubic-bezier(0.22, 1, 0.36, 1) 0.4s forwards;
+}
+
+@keyframes arrow-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+.arrow-head {
+  opacity: 0;
+}
+
+.reveal.is-visible .arrow-head {
+  animation: arrow-head 0.25s ease-out 1.25s forwards;
+}
+
+@keyframes arrow-head {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 /* soft pulsing ring around the driftwood email in the compare beat */
 .tide-ring-pulse {
   animation: tide-ring 2.4s ease-in-out infinite;
@@ -156,11 +183,16 @@ body {
   .toast-in,
   .pulse-dot,
   .send-fill,
-  .tide-ring-pulse {
+  .tide-ring-pulse,
+  .arrow-head {
     animation: none;
     opacity: 1;
     transform: none;
     filter: none;
+  }
+  .arrow-draw {
+    animation: none;
+    stroke-dashoffset: 0;
   }
 }
 
