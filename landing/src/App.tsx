@@ -6,7 +6,7 @@ import { Nav, Footer, useReveal } from "./components/Chrome";
 const STEPS = [
   {
     title: "A research agent on every prospect",
-    body: "Before we write a word, an agent crawls the prospect's site and actually runs their product. It comes back with something real and current to say — not a first-name merge tag.",
+    body: "Before we write a word, an agent crawls the prospect's site and runs their product. It comes back with something real to say.",
     art: ResearchArt,
   },
   {
@@ -24,7 +24,7 @@ const STEPS = [
 function HowHeading() {
   return (
     <>
-      <h2 className="m-0 text-[clamp(1.6rem,3.6vw,2.4rem)] font-semibold leading-tight tracking-[-0.015em]">
+      <h2 className="m-0 text-[clamp(1.9rem,4vw,2.7rem)] font-semibold leading-tight tracking-[-0.015em]">
         You take the meetings. We run everything else.
       </h2>
     </>
@@ -37,15 +37,15 @@ const PLUMBING = ["domains", "inboxes", "warming", "deliverability", "send windo
 function PlumbingNote() {
   return (
     <div>
-      <p className="m-0 max-w-105 text-[15px] leading-relaxed text-ink-soft">
-        <span className="font-semibold text-ink">The plumbing is included.</span> We run it daily, so reply rates
-        don't quietly die.
+      <p className="m-0 max-w-105 text-[16px] leading-relaxed text-ink-soft">
+        <span className="font-semibold text-ink">The plumbing is included.</span> We check it every
+        day.
       </p>
       <ul className="m-0 mt-3.5 flex list-none flex-wrap gap-2 p-0">
         {PLUMBING.map((item) => (
           <li
             key={item}
-            className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface/60 px-2.5 py-1 font-mono text-[12px] lowercase text-ink-soft"
+            className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface/60 px-2.5 py-1 font-mono text-[13px] lowercase text-ink-soft"
           >
             <svg
               viewBox="0 0 24 24"
@@ -71,7 +71,7 @@ function VignetteFrame({ label, meta, children }: { label: string; meta: string;
   return (
     <div className="flex h-full flex-col rounded-2xl border border-line bg-surface shadow-[0_24px_60px_-28px_rgba(13,60,91,0.35),0_4px_16px_-8px_rgba(22,24,29,0.08)]">
       <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-3">
-        <span className="flex items-center gap-2 font-mono text-[12px] font-medium tracking-[0.02em] text-ink-soft">
+        <span className="flex items-center gap-2 font-mono text-[13px] font-medium tracking-[0.02em] text-ink-soft">
           <span className="pulse-dot size-1.5 rounded-full bg-tide" />
           {label}
         </span>
@@ -127,7 +127,7 @@ function ResearchArt() {
                 f.hot ? "bg-tide-wash/70 ring-1 ring-tide/35" : "bg-paper/70 opacity-70"
               }`}
             >
-              <span className={`truncate text-[12.5px] ${f.hot ? "font-semibold text-ink" : "font-medium text-ink-soft"}`}>
+              <span className={`truncate text-[13.5px] ${f.hot ? "font-semibold text-ink" : "font-medium text-ink-soft"}`}>
                 {f.text}
               </span>
               <span
@@ -256,7 +256,7 @@ function IterateArt() {
                 <ArtifactThumb kind={a.thumb} />
                 <span className="min-w-0">
                   <span
-                    className={`block truncate text-[12.5px] ${
+                    className={`block truncate text-[13.5px] ${
                       a.tone === "win" ? "font-semibold text-ink" : "font-medium text-ink-soft"
                     }`}
                   >
@@ -370,10 +370,10 @@ function HowSection() {
                     }`}
                   >
                     <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1.5">
-                      <h3 className="m-0 text-[19px] font-semibold tracking-[-0.01em]">{step.title}</h3>
-                      <span className="font-mono text-[12px] text-ink-faint">0{i + 1}</span>
+                      <h3 className="m-0 text-[20px] font-semibold tracking-[-0.01em]">{step.title}</h3>
+                      <span className="font-mono text-[13px] text-ink-faint">0{i + 1}</span>
                     </div>
-                    <p className="mb-0 mt-2 max-w-105 text-[15.5px] leading-relaxed text-ink-soft">{step.body}</p>
+                    <p className="mb-0 mt-2 max-w-105 text-[16.5px] leading-relaxed text-ink-soft">{step.body}</p>
                   </div>
                 </button>
               ))}
@@ -413,11 +413,11 @@ function HowSection() {
           <span className="absolute bottom-6 left-5 top-6 w-px bg-line" aria-hidden="true" />
           {STEPS.map((step, i) => (
             <li key={step.title} className="reveal relative pl-16" style={{ transitionDelay: `${i * 0.06}s` }}>
-              <span className="absolute left-0 top-0 flex size-10 items-center justify-center rounded-full border border-tide/40 bg-tide-wash font-mono text-[12px] font-semibold text-tide">
+              <span className="absolute left-0 top-0 flex size-10 items-center justify-center rounded-full border border-tide/40 bg-tide-wash font-mono text-[13px] font-semibold text-tide">
                 0{i + 1}
               </span>
-              <h3 className="m-0 text-[19px] font-semibold">{step.title}</h3>
-              <p className="mb-0 mt-2 max-w-110 text-[15.5px] leading-relaxed text-ink-soft">{step.body}</p>
+              <h3 className="m-0 text-[20px] font-semibold">{step.title}</h3>
+              <p className="mb-0 mt-2 max-w-110 text-[16.5px] leading-relaxed text-ink-soft">{step.body}</p>
               <div className="-ml-16 mt-5 sm:ml-0 sm:max-w-130">
                 <step.art />
               </div>
@@ -464,13 +464,13 @@ const STORY_LOGS = [
   { text: "best idea for acme: bug recording", tone: "pick" },
   { text: "testing checkout flows", tone: "run" },
   { text: "bug found: double-clicking Pay charges twice", tone: "alert" },
-  { text: "recording the repro · 0:47", tone: "run" },
+  { text: "recording the bug · 0:47", tone: "run" },
 ] as const;
 
 const COMPOSE_ANNOS = [
   { text: "a real bug, found this morning", pos: "right-0 top-24 translate-x-[55%] -rotate-2" },
-  { text: "proof attached, not claims", pos: "right-0 top-[52%] translate-x-[60%] rotate-1" },
-  { text: "specific ask, easy yes", pos: "bottom-16 right-0 translate-x-[50%] -rotate-1" },
+  { text: "the proof is attached", pos: "right-0 top-[52%] translate-x-[60%] rotate-1" },
+  { text: "one clear ask", pos: "bottom-16 right-0 translate-x-[50%] -rotate-1" },
 ];
 
 /* beat 1 — the understanding/ideation workspace for the client (not the prospect);
@@ -479,17 +479,17 @@ function StoryClientCard({ facts, ideas }: { facts: number; ideas: number }) {
   return (
     <div className="flex w-full max-w-135 flex-col rounded-2xl border border-line bg-surface shadow-[0_24px_60px_-28px_rgba(13,60,91,0.35),0_4px_16px_-8px_rgba(22,24,29,0.08)]">
       <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-3">
-        <span className="flex items-center gap-2 font-mono text-[12.5px] font-medium text-ink-soft">
+        <span className="flex items-center gap-2 font-mono text-[13.5px] font-medium text-ink-soft">
           <span className="pulse-dot size-1.5 rounded-full bg-tide" />
           client: Autosana &middot; AI QA agent
         </span>
-        <span className="rounded-full bg-sand px-2.5 py-0.5 font-mono text-[12.5px] text-ink-soft">
+        <span className="rounded-full bg-sand px-2.5 py-0.5 font-mono text-[13.5px] text-ink-soft">
           onboarding &middot; week one
         </span>
       </div>
       <div className="px-5 pt-5">
-        <p className="m-0 font-mono text-[12.5px] tracking-[0.02em] text-ink-faint">what they do</p>
-        <div className="mt-3 space-y-2.5 text-[15px] leading-relaxed text-ink-soft">
+        <p className="m-0 font-mono text-[13.5px] tracking-[0.02em] text-ink-faint">what they do</p>
+        <div className="mt-3 space-y-2.5 text-[16px] leading-relaxed text-ink-soft">
           {CLIENT_FACTS.map((fact, i) => (
             <p key={fact} className={`m-0 flex items-center gap-2.5 ${i < facts ? "log-line" : "invisible"}`}>
               <svg
@@ -508,7 +508,7 @@ function StoryClientCard({ facts, ideas }: { facts: number; ideas: number }) {
         </div>
       </div>
       <div className="px-5 pb-5 pt-5">
-        <p className="m-0 flex items-center gap-2.5 font-mono text-[12.5px] tracking-[0.02em] text-ink-faint">
+        <p className="m-0 flex items-center gap-2.5 font-mono text-[13.5px] tracking-[0.02em] text-ink-faint">
           <span className="pulse-dot size-1.5 shrink-0 rounded-full bg-tide" />
           proof ideas &middot; what we could build for a prospect
         </p>
@@ -520,14 +520,14 @@ function StoryClientCard({ facts, ideas }: { facts: number; ideas: number }) {
                 i < ideas ? "toast-in" : "invisible"
               }`}
             >
-              <span className="truncate text-[13.5px] font-medium text-ink-soft">{idea}</span>
-              <span className="shrink-0 rounded-full bg-surface px-2 py-0.5 font-mono text-[12.5px] text-ink-faint ring-1 ring-line">
+              <span className="truncate text-[14.5px] font-medium text-ink-soft">{idea}</span>
+              <span className="shrink-0 rounded-full bg-surface px-2 py-0.5 font-mono text-[13.5px] text-ink-faint ring-1 ring-line">
                 idea
               </span>
             </div>
           ))}
         </div>
-        <p className="mb-0 mt-4 text-center font-mono text-[12.5px] text-ink-faint">
+        <p className="mb-0 mt-4 text-center font-mono text-[13.5px] text-ink-faint">
           none chosen yet — the best fit gets picked per prospect
         </p>
       </div>
@@ -540,15 +540,15 @@ function StoryBuildCard({ logs, thumb }: { logs: number; thumb: boolean }) {
   return (
     <div className="flex w-full max-w-135 flex-col rounded-2xl border border-line bg-surface shadow-[0_24px_60px_-28px_rgba(13,60,91,0.35),0_4px_16px_-8px_rgba(22,24,29,0.08)]">
       <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-3">
-        <span className="flex items-center gap-2 font-mono text-[12.5px] font-medium text-ink-soft">
+        <span className="flex items-center gap-2 font-mono text-[13.5px] font-medium text-ink-soft">
           <span className="pulse-dot size-1.5 rounded-full bg-tide" />
           autosana's QA agent &times; driftwood
         </span>
-        <span className="rounded-full bg-sand px-2.5 py-0.5 font-mono text-[12.5px] text-ink-soft">
+        <span className="rounded-full bg-sand px-2.5 py-0.5 font-mono text-[13.5px] text-ink-soft">
           prospect: Sarah Chen &middot; Acme
         </span>
       </div>
-      <div className="space-y-3 px-5 pb-2 pt-5 font-mono text-[13px] text-ink-soft">
+      <div className="space-y-3 px-5 pb-2 pt-5 font-mono text-[14px] text-ink-soft">
         {STORY_LOGS.map((line, i) => (
           <p key={line.text} className={`m-0 flex items-start gap-2.5 ${i < logs ? "log-line" : "invisible"}`}>
             <svg
@@ -602,9 +602,9 @@ function StoryComposeCard({
           <span className="size-2.5 rounded-full bg-[#e8b4a8]" />
           <span className="size-2.5 rounded-full bg-[#e6d3a3]" />
           <span className="size-2.5 rounded-full bg-[#b5cfae]" />
-          <span className="ml-2 font-mono text-[12.5px] text-ink-soft">New message</span>
+          <span className="ml-2 font-mono text-[13.5px] text-ink-soft">New message</span>
           <span
-            className={`ml-auto rounded-full px-2.5 py-0.5 font-mono text-[12px] font-medium transition-colors duration-500 ${
+            className={`ml-auto rounded-full px-2.5 py-0.5 font-mono text-[13px] font-medium transition-colors duration-500 ${
               sent ? "bg-tide-wash text-tide" : "bg-paper text-ink-soft"
             }`}
           >
@@ -613,7 +613,7 @@ function StoryComposeCard({
         </div>
 
         {/* headers */}
-        <div className="space-y-1.5 border-b border-line px-5 py-2.5 text-[13.5px]">
+        <div className="space-y-1.5 border-b border-line px-5 py-2.5 text-[14.5px]">
           <div className="flex items-center gap-2">
             <span className="w-14 shrink-0 text-ink-faint">To</span>
             <span className="rounded-full bg-paper px-2 py-0.5 font-medium text-ink-soft">sarah@acme.com</span>
@@ -625,7 +625,7 @@ function StoryComposeCard({
         </div>
 
         {/* body — blocks fade in with the beat; `invisible` keeps the height reserved */}
-        <div className="px-5 py-4 text-[14px] leading-relaxed text-ink-soft">
+        <div className="px-5 py-4 text-[15px] leading-relaxed text-ink-soft">
           <p className={`m-0 ${blockClass}`} style={block(0)}>
             Hi Sarah,
           </p>
@@ -647,9 +647,9 @@ function StoryComposeCard({
 
         {/* footer */}
         <div className="flex items-center justify-between border-t border-line px-5 py-3">
-          <span className="font-mono text-[12.5px] text-ink-soft">recording attached by driftwood</span>
+          <span className="font-mono text-[13.5px] text-ink-soft">recording attached by driftwood</span>
           <span
-            className={`rounded-lg px-4 py-1.5 text-[13px] font-semibold text-white transition-colors duration-300 ${
+            className={`rounded-lg px-4 py-1.5 text-[14px] font-semibold text-white transition-colors duration-300 ${
               sent ? "send-fill bg-tide-deep" : "bg-tide"
             }`}
           >
@@ -664,7 +664,7 @@ function StoryComposeCard({
           {COMPOSE_ANNOS.map((a) => (
             <span
               key={a.text}
-              className="inline-block rounded-full bg-tide-wash px-3 py-1 font-mono text-[12.5px] font-medium text-tide ring-1 ring-tide/20"
+              className="inline-block rounded-full bg-tide-wash px-3 py-1 font-mono text-[13.5px] font-medium text-tide ring-1 ring-tide/20"
             >
               {a.text}
             </span>
@@ -674,7 +674,7 @@ function StoryComposeCard({
         COMPOSE_ANNOS.map((a, i) => (
           <span
             key={a.text}
-            className={`absolute z-10 inline-flex items-center gap-1.5 rounded-full bg-tide-wash px-3 py-1 font-mono text-[12.5px] font-medium text-tide shadow-[0_8px_20px_-10px_rgba(13,60,91,0.45)] ring-1 ring-tide/25 ${a.pos} ${
+            className={`absolute z-10 inline-flex items-center gap-1.5 rounded-full bg-tide-wash px-3 py-1 font-mono text-[13.5px] font-medium text-tide shadow-[0_8px_20px_-10px_rgba(13,60,91,0.45)] ring-1 ring-tide/25 ${a.pos} ${
               annos > i ? "toast-in" : "invisible"
             }`}
           >
@@ -693,8 +693,8 @@ function StoryReplyThread({ on }: { on: boolean }) {
     <div className="w-full max-w-135 overflow-hidden rounded-2xl border border-line bg-surface shadow-[0_24px_60px_-28px_rgba(13,60,91,0.35),0_4px_16px_-8px_rgba(22,24,29,0.08)]">
       {/* thread header */}
       <div className="border-b border-line px-5 py-4">
-        <p className="m-0 text-[15.5px] font-semibold text-ink">Re: found a bug in Acme's checkout</p>
-        <p className="m-0 mt-1 font-mono text-[12px] text-ink-faint">Inbox &middot; 2 messages</p>
+        <p className="m-0 text-[16.5px] font-semibold text-ink">Re: found a bug in Acme's checkout</p>
+        <p className="m-0 mt-1 font-mono text-[13px] text-ink-faint">Inbox &middot; 2 messages</p>
       </div>
       {/* our send, collapsed */}
       <div className="flex items-center gap-3 border-b border-line bg-paper/50 px-5 py-3">
@@ -702,32 +702,32 @@ function StoryReplyThread({ on }: { on: boolean }) {
           A
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[13.5px] font-medium text-ink-soft">
+          <span className="block truncate text-[14.5px] font-medium text-ink-soft">
             Autosana <span className="font-normal text-ink-faint">to sarah@acme.com</span>
           </span>
-          <span className="block truncate text-[13px] text-ink-faint">
+          <span className="block truncate text-[14px] text-ink-faint">
             Our QA agent ran Acme's checkout this morning and caught a real bug&hellip;
           </span>
         </span>
-        <span className="shrink-0 font-mono text-[12px] text-ink-faint">9:02 AM</span>
+        <span className="shrink-0 font-mono text-[13px] text-ink-faint">9:02 AM</span>
       </div>
       {/* her reply, expanded */}
       <div className={`px-5 py-4 ${on ? "block-in" : "invisible"}`} style={on ? { animationDelay: "0.2s" } : undefined}>
         <div className="flex items-start gap-3">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-tide-wash text-[13px] font-bold text-tide">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-tide-wash text-[14px] font-bold text-tide">
             SC
           </span>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <p className="m-0 text-[15px] font-semibold text-ink">Sarah Chen</p>
-              <span className="font-mono text-[12px] text-ink-faint">sarah@acme.com &middot; 11:08 AM</span>
-              <span className="ml-auto rounded-full bg-tide-wash px-2.5 py-0.5 font-mono text-[12px] font-medium text-tide">
+              <p className="m-0 text-[16px] font-semibold text-ink">Sarah Chen</p>
+              <span className="font-mono text-[13px] text-ink-faint">sarah@acme.com &middot; 11:08 AM</span>
+              <span className="ml-auto rounded-full bg-tide-wash px-2.5 py-0.5 font-mono text-[13px] font-medium text-tide">
                 2h later
               </span>
             </div>
-            <p className="m-0 mt-0.5 font-mono text-[12px] text-ink-faint">to autosana</p>
-            <p className="m-0 mt-3 text-[15.5px] leading-relaxed text-ink">ok this is wild. got time Thursday?</p>
-            <div className="mt-4 border-l-2 border-line pl-3 text-[13px] leading-relaxed text-ink-faint">
+            <p className="m-0 mt-0.5 font-mono text-[13px] text-ink-faint">to autosana</p>
+            <p className="m-0 mt-3 text-[16.5px] leading-relaxed text-ink">ok this is wild. got time Thursday?</p>
+            <div className="mt-4 border-l-2 border-line pl-3 text-[14px] leading-relaxed text-ink-faint">
               On Tue, Autosana wrote:
               <br />
               Our QA agent ran Acme's checkout this morning and caught a real bug&hellip;
@@ -743,12 +743,12 @@ function StoryReplyThread({ on }: { on: boolean }) {
 function UsualEmail() {
   return (
     <div className="flex flex-1 flex-col rounded-2xl border border-line bg-surface/70 p-5">
-      <div className="border-b border-line pb-3 text-[13px]">
+      <div className="border-b border-line pb-3 text-[14px]">
         <p className="m-0 text-ink-faint">
           Subject: <span className="text-ink-soft">Sarah — quick question (Acme x Autosana)</span>
         </p>
       </div>
-      <div className="mb-0 mt-4 space-y-4 text-[14px] leading-relaxed text-ink-soft">
+      <div className="mb-0 mt-4 space-y-4 text-[15px] leading-relaxed text-ink-soft">
         <p className="m-0">Hey Sarah,</p>
         <p className="m-0">
           Huge fan of what you're building at Acme — saw you just crossed 200 employees. Incredible
@@ -766,7 +766,7 @@ function UsualEmail() {
         <p className="m-0">Best,</p>
       </div>
       <span className="mt-auto self-start pt-4">
-        <span className="inline-block rounded-full bg-paper px-2.5 py-1 font-mono text-[12.5px] text-ink-soft ring-1 ring-line">
+        <span className="inline-block rounded-full bg-paper px-2.5 py-1 font-mono text-[13.5px] text-ink-soft ring-1 ring-line">
           read in 4 seconds, archived
         </span>
       </span>
@@ -778,12 +778,12 @@ function UsualEmail() {
 function DriftwoodEmail() {
   return (
     <div className="flex flex-1 flex-col rounded-2xl border border-tide/35 bg-surface p-5 shadow-[0_20px_50px_-28px_rgba(13,60,91,0.4)]">
-      <div className="border-b border-line pb-3 text-[13px]">
+      <div className="border-b border-line pb-3 text-[14px]">
         <p className="m-0 text-ink-faint">
           Subject: <span className="font-medium text-ink">found a bug in Acme's checkout</span>
         </p>
       </div>
-      <div className="mb-3 mt-4 space-y-4 text-[14px] leading-relaxed text-ink-soft">
+      <div className="mb-3 mt-4 space-y-4 text-[15px] leading-relaxed text-ink-soft">
         <p className="m-0">Hi Sarah,</p>
         <p className="m-0">
           Our QA agent ran Acme's checkout this morning and caught a real bug: double-clicking Pay
@@ -791,11 +791,11 @@ function DriftwoodEmail() {
         </p>
       </div>
       <BugDemoCard compact />
-      <div className="mb-0 mt-3 text-[14px] leading-relaxed text-ink-soft">
+      <div className="mb-0 mt-3 text-[15px] leading-relaxed text-ink-soft">
         <p className="m-0">Open to a quick call this week?</p>
       </div>
       <span className="mt-auto self-start pt-4">
-        <span className="inline-block rounded-full bg-tide-wash px-2.5 py-1 font-mono text-[12.5px] font-medium text-tide">
+        <span className="inline-block rounded-full bg-tide-wash px-2.5 py-1 font-mono text-[13.5px] font-medium text-tide">
           "ok this is wild. got time Thursday?" &middot; 2h later
         </span>
       </span>
@@ -810,14 +810,14 @@ function StoryCompare({ on, vs }: { on: boolean; vs: boolean }) {
   return (
     <div className="relative grid w-full max-w-5xl items-stretch gap-8 sm:grid-cols-2 lg:gap-10">
       <div className="flex h-full flex-col">
-        <p className="mb-3 ml-1 font-mono text-[12.5px] tracking-[0.02em] text-ink-soft">what everyone else sends</p>
+        <p className="mb-3 ml-1 font-mono text-[13.5px] tracking-[0.02em] text-ink-soft">what everyone else sends</p>
         <UsualEmail />
       </div>
 
       {/* "vs" chip, dead-center in the gap between the two columns */}
       <span
         aria-hidden="true"
-        className={`absolute left-1/2 top-1/2 z-10 hidden -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-surface px-3.5 py-1.5 font-mono text-[12.5px] font-semibold text-ink-soft shadow-[0_8px_20px_-10px_rgba(13,60,91,0.45)] sm:inline-flex ${
+        className={`absolute left-1/2 top-1/2 z-10 hidden -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-surface px-3.5 py-1.5 font-mono text-[13.5px] font-semibold text-ink-soft shadow-[0_8px_20px_-10px_rgba(13,60,91,0.45)] sm:inline-flex ${
           vs ? "toast-in" : "invisible"
         }`}
       >
@@ -829,7 +829,7 @@ function StoryCompare({ on, vs }: { on: boolean; vs: boolean }) {
           on ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"
         }`}
       >
-        <p className="mb-3 ml-1 font-mono text-[12.5px] tracking-[0.02em] text-tide">what driftwood sent</p>
+        <p className="mb-3 ml-1 font-mono text-[13.5px] tracking-[0.02em] text-tide">what driftwood sent</p>
         <div className={`flex flex-1 flex-col rounded-2xl ${vs ? "tide-ring-pulse" : ""}`}>
           <DriftwoodEmail />
         </div>
@@ -898,7 +898,7 @@ function StorySection() {
       <div ref={wrapRef} className="relative hidden h-[520vh] lg:motion-safe:block">
         <div className="sticky top-0 flex h-screen flex-col justify-center overflow-hidden">
           {/* persistent kicker — who this example is about, always on screen */}
-          <p className="m-0 text-center font-mono text-[13px] text-ink-soft">{STORY_KICKER}</p>
+          <p className="m-0 text-center font-mono text-[14px] text-ink-soft">{STORY_KICKER}</p>
 
           {/* narrator caption — one grid cell so the tallest caption reserves the height */}
           <div className="mt-6 grid text-center">
@@ -906,7 +906,7 @@ function StorySection() {
               <p
                 key={caption}
                 aria-hidden={i !== active}
-                className={`col-start-1 row-start-1 mx-auto my-0 max-w-3xl text-[clamp(1.5rem,2.6vw,2.1rem)] font-semibold leading-snug tracking-[-0.015em] transition-all duration-500 ease-out ${
+                className={`col-start-1 row-start-1 mx-auto my-0 max-w-3xl text-[clamp(1.7rem,3vw,2.4rem)] font-semibold leading-snug tracking-[-0.015em] transition-all duration-500 ease-out ${
                   i === active ? "translate-y-0 opacity-100" : i < active ? "-translate-y-3 opacity-0" : "translate-y-3 opacity-0"
                 }`}
               >
@@ -948,7 +948,7 @@ function StorySection() {
 
       {/* stacked walkthrough (mobile + reduced motion) — every beat in order */}
       <div className="py-20 sm:py-26 lg:motion-safe:hidden">
-        <p className="reveal m-0 font-mono text-[13px] leading-relaxed text-ink-soft">{STORY_KICKER}</p>
+        <p className="reveal m-0 font-mono text-[14px] leading-relaxed text-ink-soft">{STORY_KICKER}</p>
         <div className="mt-12 space-y-18">
           {[
             <StoryClientCard key="client" facts={CLIENT_FACTS.length} ideas={PROOF_IDEAS.length} />,
@@ -958,8 +958,8 @@ function StorySection() {
             <StoryCompare key="compare" on vs />,
           ].map((stage, i) => (
             <div key={STORY_CAPTIONS[i]} className="reveal">
-              <p className="m-0 font-mono text-[12.5px] font-medium text-tide">0{i + 1}</p>
-              <p className="mb-0 mt-2 max-w-150 text-[clamp(1.5rem,2.6vw,2.1rem)] font-semibold leading-snug tracking-[-0.015em]">
+              <p className="m-0 font-mono text-[13.5px] font-medium text-tide">0{i + 1}</p>
+              <p className="mb-0 mt-2 max-w-150 text-[clamp(1.7rem,3vw,2.4rem)] font-semibold leading-snug tracking-[-0.015em]">
                 {STORY_CAPTIONS[i]}
               </p>
               <div className="mt-7">{stage}</div>
@@ -979,8 +979,8 @@ function RecordingProofMock() {
     <div className="overflow-hidden rounded-2xl bg-[#16181d] shadow-[0_24px_60px_-28px_rgba(13,60,91,0.35),0_4px_16px_-8px_rgba(22,24,29,0.08)]">
       {/* player title bar */}
       <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-6">
-        <span className="truncate font-mono text-[12px] text-white/75">bug recording &middot; acme.com checkout</span>
-        <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 font-mono text-[12px] font-medium text-white/90">
+        <span className="truncate font-mono text-[13px] text-white/75">bug recording &middot; acme.com checkout</span>
+        <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 font-mono text-[13px] font-medium text-white/90">
           <span className="pulse-dot size-1.5 rounded-full bg-[#e2574a]" />
           rec
         </span>
@@ -994,7 +994,7 @@ function RecordingProofMock() {
             <span className="size-2 rounded-full bg-[#d9dde3]" />
             <span className="size-2 rounded-full bg-[#d9dde3]" />
             <span className="size-2 rounded-full bg-[#d9dde3]" />
-            <span className="ml-2 min-w-0 truncate rounded-md bg-white px-2.5 py-1 font-mono text-[12px] text-[#7a8190] ring-1 ring-[#e8eaee]">
+            <span className="ml-2 min-w-0 truncate rounded-md bg-white px-2.5 py-1 font-mono text-[13px] text-[#7a8190] ring-1 ring-[#e8eaee]">
               acme.com/checkout
             </span>
           </div>
@@ -1002,27 +1002,27 @@ function RecordingProofMock() {
           <div className="space-y-2.5 px-3.5 py-4 sm:px-5">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className="m-0 truncate text-[14px] font-semibold text-[#16181d]">Checkout &mdash; order #4821</p>
-                <p className="m-0 mt-0.5 font-mono text-[12px] text-[#7a8190]">1 item &middot; $84.00</p>
+                <p className="m-0 truncate text-[15px] font-semibold text-[#16181d]">Checkout &mdash; order #4821</p>
+                <p className="m-0 mt-0.5 font-mono text-[13px] text-[#7a8190]">1 item &middot; $84.00</p>
               </div>
-              <span className="relative shrink-0 rounded-lg bg-[#16181d] px-4 py-2 text-[13px] font-semibold text-white">
+              <span className="relative shrink-0 rounded-lg bg-[#16181d] px-4 py-2 text-[14px] font-semibold text-white">
                 Pay $84.00
                 <span className="absolute -right-2 -top-2 rounded-full bg-[#d4574a] px-1.5 py-0.5 font-mono text-[11px] font-bold leading-none text-white">
                   &times;2
                 </span>
               </span>
             </div>
-            <p className="m-0 pt-1 font-mono text-[12px] text-[#7a8190]">one click on Pay &middot; two charges posted</p>
+            <p className="m-0 pt-1 font-mono text-[13px] text-[#7a8190]">one click on Pay &middot; two charges posted</p>
             <div className="flex items-center justify-between gap-3 rounded-lg bg-[#f1f3f6] px-3 py-2.5 ring-1 ring-[#e6e9ee]">
-              <span className="truncate font-mono text-[12.5px] font-medium text-[#3c424e]">Visa &middot;&middot;&middot;&middot; 4242</span>
-              <span className="shrink-0 font-mono text-[12px] text-[#7a8190]">$84.00 &middot; 4:02:11 PM</span>
+              <span className="truncate font-mono text-[13.5px] font-medium text-[#3c424e]">Visa &middot;&middot;&middot;&middot; 4242</span>
+              <span className="shrink-0 font-mono text-[13px] text-[#7a8190]">$84.00 &middot; 4:02:11 PM</span>
             </div>
             <div className="flex items-center justify-between gap-3 rounded-lg bg-[#fff5f4] px-3 py-2.5 ring-[1.5px] ring-[#d4574a]">
-              <span className="flex min-w-0 items-center gap-2 font-mono text-[12.5px] font-medium text-[#3c424e]">
+              <span className="flex min-w-0 items-center gap-2 font-mono text-[13.5px] font-medium text-[#3c424e]">
                 <span className="truncate">Visa &middot;&middot;&middot;&middot; 4242</span>
                 <span className="shrink-0 rounded-full bg-[#d4574a] px-2 py-0.5 text-[11px] font-bold text-white">duplicate</span>
               </span>
-              <span className="shrink-0 font-mono text-[12px] font-semibold text-[#d4574a]">$84.00 &middot; 4:02:12 PM</span>
+              <span className="shrink-0 font-mono text-[13px] font-semibold text-[#d4574a]">$84.00 &middot; 4:02:12 PM</span>
             </div>
           </div>
         </div>
@@ -1039,12 +1039,12 @@ function RecordingProofMock() {
           <span className="absolute inset-y-0 left-0 w-[42%] rounded-full bg-white/80" />
           <span className="absolute left-[42%] top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white" />
         </div>
-        <span className="shrink-0 font-mono text-[12px] text-white/75">0:19 / 0:47</span>
+        <span className="shrink-0 font-mono text-[13px] text-white/75">0:19 / 0:47</span>
       </div>
 
       {/* provenance */}
       <div className="border-t border-white/10 px-4 py-3 sm:px-6">
-        <p className="m-0 truncate text-center font-mono text-[12px] text-white/60">
+        <p className="m-0 truncate text-center font-mono text-[13px] text-white/60">
           recorded on acme.com &middot; nothing installed
         </p>
       </div>
@@ -1065,12 +1065,12 @@ function DashboardProofMock() {
       {/* app header */}
       <div className="flex items-center justify-between gap-3 border-b border-[#ecedf1] px-4 py-3 sm:px-5">
         <span className="flex min-w-0 items-center gap-2.5">
-          <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-tide font-mono text-[12px] font-semibold text-white">
+          <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-tide font-mono text-[13px] font-semibold text-white">
             N
           </span>
-          <span className="truncate font-mono text-[12.5px] font-medium text-ink">Northwind &middot; ops overview</span>
+          <span className="truncate font-mono text-[13.5px] font-medium text-ink">Northwind &middot; ops overview</span>
         </span>
-        <span className="flex shrink-0 items-center gap-1.5 font-mono text-[12px] text-ink-faint">
+        <span className="flex shrink-0 items-center gap-1.5 font-mono text-[13px] text-ink-faint">
           <span className="pulse-dot size-1.5 rounded-full bg-tide" />
           live
         </span>
@@ -1082,7 +1082,7 @@ function DashboardProofMock() {
           {nav.map((item, i) => (
             <span
               key={item}
-              className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 font-mono text-[12px] ${
+              className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 font-mono text-[13px] ${
                 i === 0 ? "bg-tide-wash font-medium text-tide" : "text-ink-faint"
               }`}
             >
@@ -1098,9 +1098,9 @@ function DashboardProofMock() {
           <div className="grid grid-cols-3 gap-2 sm:gap-3">
             {stats.map((s) => (
               <div key={s.label} className="min-w-0 rounded-xl border border-[#ecedf1] bg-paper/50 px-2.5 py-2.5 sm:px-3.5 sm:py-3">
-                <p className="m-0 font-mono text-[12px] leading-snug text-ink-faint">{s.label}</p>
-                <p className="m-0 mt-1 text-[17px] font-semibold tracking-[-0.01em] text-ink sm:text-[20px]">{s.value}</p>
-                <p className={`m-0 mt-1 font-mono text-[12px] leading-snug ${s.bad ? "text-[#c2503f]" : "text-tide"}`}>
+                <p className="m-0 font-mono text-[13px] leading-snug text-ink-faint">{s.label}</p>
+                <p className="m-0 mt-1 text-[18px] font-semibold tracking-[-0.01em] text-ink sm:text-[22px]">{s.value}</p>
+                <p className={`m-0 mt-1 font-mono text-[13px] leading-snug ${s.bad ? "text-[#c2503f]" : "text-tide"}`}>
                   {s.delta}
                 </p>
               </div>
@@ -1110,8 +1110,8 @@ function DashboardProofMock() {
           {/* trend chart */}
           <div className="mt-3 rounded-xl border border-[#ecedf1] bg-paper/50 p-3 sm:p-4">
             <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
-              <p className="m-0 font-mono text-[12px] text-ink-soft">avg fulfillment lag &middot; last 8 weeks</p>
-              <span className="flex shrink-0 items-center gap-3 font-mono text-[12px] text-ink-faint">
+              <p className="m-0 font-mono text-[13px] text-ink-soft">avg fulfillment lag &middot; last 8 weeks</p>
+              <span className="flex shrink-0 items-center gap-3 font-mono text-[13px] text-ink-faint">
                 <span className="flex items-center gap-1.5">
                   <span className="h-0.5 w-4 rounded-full bg-tide" />
                   northwind
@@ -1138,7 +1138,7 @@ function DashboardProofMock() {
               />
               <circle cx="314" cy="14" r="3.5" fill="var(--color-tide)" />
             </svg>
-            <div className="mt-1.5 flex justify-between font-mono text-[12px] text-ink-faint" aria-hidden="true">
+            <div className="mt-1.5 flex justify-between font-mono text-[13px] text-ink-faint" aria-hidden="true">
               <span>apr 13</span>
               <span>may 4</span>
               <span>may 25</span>
@@ -1150,7 +1150,7 @@ function DashboardProofMock() {
 
       {/* provenance */}
       <div className="border-t border-[#ecedf1] px-4 py-3 sm:px-5">
-        <p className="m-0 truncate text-center font-mono text-[12px] text-ink-faint">
+        <p className="m-0 truncate text-center font-mono text-[13px] text-ink-faint">
           built from Northwind's public data &middot; no login, no integration
         </p>
       </div>
@@ -1170,10 +1170,10 @@ function TeardownProofMock() {
     <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-[0_24px_60px_-28px_rgba(13,60,91,0.35),0_4px_16px_-8px_rgba(22,24,29,0.08)]">
       {/* document header */}
       <div className="border-b border-[#ecedf1] px-4 py-4 sm:px-7 sm:py-5">
-        <p className="m-0 text-[16.5px] font-semibold tracking-[-0.01em] text-ink sm:text-[18px]">
+        <p className="m-0 text-[17.5px] font-semibold tracking-[-0.01em] text-ink sm:text-[19px]">
           What Brightline pays today
         </p>
-        <p className="m-0 mt-1 font-mono text-[12px] text-ink-faint">prepared by Relay &middot; june 2026</p>
+        <p className="m-0 mt-1 font-mono text-[13px] text-ink-faint">prepared by Relay &middot; june 2026</p>
       </div>
 
       <div className="px-4 py-4 sm:px-7 sm:py-5">
@@ -1183,48 +1183,48 @@ function TeardownProofMock() {
             <div key={r.item} className="flex items-baseline justify-between gap-3">
               <span className="min-w-0">
                 <span className="block truncate text-[14.5px] font-medium text-ink">{r.item}</span>
-                <span className="block truncate font-mono text-[12px] text-ink-faint">{r.detail}</span>
+                <span className="block truncate font-mono text-[13px] text-ink-faint">{r.detail}</span>
               </span>
-              <span className="shrink-0 font-mono text-[13px] text-ink-soft">{r.cost}</span>
+              <span className="shrink-0 font-mono text-[14px] text-ink-soft">{r.cost}</span>
             </div>
           ))}
         </div>
         <div className="mt-4 flex items-baseline justify-between gap-3 border-t border-[#ecedf1] pt-3">
           <span className="truncate text-[14.5px] font-semibold text-ink">total, current stack</span>
-          <span className="shrink-0 font-mono text-[13px] font-semibold text-ink">$27,530/mo</span>
+          <span className="shrink-0 font-mono text-[14px] font-semibold text-ink">$27,530/mo</span>
         </div>
 
         {/* the punchline */}
         <div className="mt-3.5 flex items-center justify-between gap-3 rounded-xl bg-tide-wash/70 px-3.5 py-3 ring-1 ring-tide/35">
           <span className="min-w-0">
             <span className="block truncate text-[14.5px] font-semibold text-ink">same volume on Relay</span>
-            <span className="block truncate font-mono text-[12px] text-tide">flat 2.2% &middot; no cross-border markup</span>
+            <span className="block truncate font-mono text-[13px] text-tide">flat 2.2% &middot; no cross-border markup</span>
           </span>
-          <span className="shrink-0 font-mono text-[15px] font-semibold text-tide sm:text-[16px]">&minus;$8,400/mo</span>
+          <span className="shrink-0 font-mono text-[16px] font-semibold text-tide sm:text-[17px]">&minus;$8,400/mo</span>
         </div>
 
         {/* bar comparison */}
         <div className="mt-4 space-y-2" aria-hidden="true">
           <div className="flex items-center gap-3">
-            <span className="w-16 shrink-0 text-right font-mono text-[12px] text-ink-faint">today</span>
+            <span className="w-16 shrink-0 text-right font-mono text-[13px] text-ink-faint">today</span>
             <span className="block h-2.5 min-w-0 flex-1 overflow-hidden rounded-full bg-paper">
               <span className="block h-full w-full rounded-full bg-[#b6bac4]" />
             </span>
-            <span className="w-17 shrink-0 font-mono text-[12px] text-ink-soft">$27,530</span>
+            <span className="w-17 shrink-0 font-mono text-[13px] text-ink-soft">$27,530</span>
           </div>
           <div className="flex items-center gap-3">
-            <span className="w-16 shrink-0 text-right font-mono text-[12px] text-ink-faint">on relay</span>
+            <span className="w-16 shrink-0 text-right font-mono text-[13px] text-ink-faint">on relay</span>
             <span className="block h-2.5 min-w-0 flex-1 overflow-hidden rounded-full bg-paper">
               <span className="block h-full w-[69%] rounded-full bg-tide" />
             </span>
-            <span className="w-17 shrink-0 font-mono text-[12px] font-medium text-tide">$19,130</span>
+            <span className="w-17 shrink-0 font-mono text-[13px] font-medium text-tide">$19,130</span>
           </div>
         </div>
       </div>
 
       {/* provenance */}
       <div className="border-t border-[#ecedf1] px-4 py-3 sm:px-7">
-        <p className="m-0 truncate text-center font-mono text-[12px] text-ink-faint">
+        <p className="m-0 truncate text-center font-mono text-[13px] text-ink-faint">
           from their public pricing + a real checkout we ran
         </p>
       </div>
@@ -1246,7 +1246,7 @@ const PROOF_EXAMPLES = [
     title: "Their own numbers, already on the dashboard.",
     who: "Lumen sells analytics for ops teams.",
     sends: "A working dashboard pre-filled with the prospect's operation — orders, lag, refunds — built from their public data.",
-    lands: "They open an email and see exactly what Lumen would show them every morning. No sample data, nothing to imagine.",
+    lands: "They open the email and see exactly what Lumen would show them every morning.",
     art: DashboardProofMock,
   },
   {
@@ -1262,8 +1262,8 @@ const PROOF_EXAMPLES = [
 function ProofExplainer({ label, text }: { label: string; text: string }) {
   return (
     <div>
-      <p className="m-0 font-mono text-[12px] tracking-[0.02em] text-ink-faint">{label}</p>
-      <p className="mb-0 mt-1 text-[15.5px] leading-relaxed text-ink-soft">{text}</p>
+      <p className="m-0 font-mono text-[13px] tracking-[0.02em] text-ink-faint">{label}</p>
+      <p className="mb-0 mt-1 text-[16.5px] leading-relaxed text-ink-soft">{text}</p>
     </div>
   );
 }
@@ -1272,12 +1272,12 @@ function ArtifactsSection() {
   return (
     <section id="artifacts" className="scroll-mt-20 border-t border-line py-20 sm:py-26">
       <div className="reveal max-w-150">
-        <h2 className="m-0 text-[clamp(1.6rem,3.6vw,2.4rem)] font-semibold leading-tight tracking-[-0.015em]">
+        <h2 className="m-0 text-[clamp(1.9rem,4vw,2.7rem)] font-semibold leading-tight tracking-[-0.015em]">
           Proof, not promises.
         </h2>
-        <p className="mb-0 mt-4 max-w-135 text-[16.5px] leading-relaxed text-ink-soft">
-          Every email we send shows the prospect what your product would do for them, specifically — before they
-          ever take a call. Here's what that looks like for three different products.
+        <p className="mb-0 mt-4 max-w-135 text-[17.5px] leading-relaxed text-ink-soft">
+          Every email we send shows the prospect what your product does for them, before they ever take a call.
+          Here's what that looks like for three different products.
         </p>
       </div>
 
@@ -1292,10 +1292,10 @@ function ArtifactsSection() {
               }`}
             >
               <div className={`reveal ${flip ? "lg:order-2" : ""}`}>
-                <p className="m-0 font-mono text-[12.5px] font-medium text-tide">
+                <p className="m-0 font-mono text-[13.5px] font-medium text-tide">
                   example 0{i + 1} &middot; {ex.format}
                 </p>
-                <h3 className="m-0 mt-3 max-w-115 text-[20px] font-semibold leading-snug tracking-[-0.01em] sm:text-[22px]">
+                <h3 className="m-0 mt-3 max-w-115 text-[22px] font-semibold leading-snug tracking-[-0.01em] sm:text-[24px]">
                   {ex.title}
                 </h3>
                 <div className="mt-5 max-w-115 space-y-4">
@@ -1312,8 +1312,8 @@ function ArtifactsSection() {
         })}
       </div>
 
-      <p className="reveal mb-0 mt-16 max-w-135 text-[16.5px] leading-relaxed text-ink-soft">
-        If you sell software, there's a way to prove what it does — on each prospect's own site, data, or bill.
+      <p className="reveal mb-0 mt-16 max-w-135 text-[17.5px] leading-relaxed text-ink-soft">
+        If you sell software, there's a way to prove what it does on each prospect's own site, data, or bill.
         Finding yours is the first thing we do.
       </p>
     </section>
@@ -1350,20 +1350,20 @@ export default function App() {
         {/* hero */}
         <section className="relative isolate flex flex-col items-center py-20 text-center sm:py-24 lg:py-28">
           <HeroContours />
-          <h1 className="m-0 max-w-5xl text-[clamp(2.6rem,6vw,4.4rem)] font-semibold leading-[1.05] tracking-[-0.02em]">
-            Ship every cold email with a custom demo.
+          <h1 className="m-0 max-w-5xl text-[clamp(2.9rem,6.5vw,4.9rem)] font-semibold leading-[1.05] tracking-[-0.02em]">
+            Ship a custom demo in every cold email.
           </h1>
-          <p className="mx-auto mt-6 max-w-145 text-[18px] leading-relaxed text-ink-soft sm:text-[19px]">
-            We run your whole cold email channel and build each prospect a demo of your product, so more sends
-            convert into meetings.
+          <p className="mx-auto mt-6 max-w-145 text-[19px] leading-relaxed text-ink-soft sm:text-[20px]">
+            Driftwood runs your whole cold email channel. Every prospect sees your product working on their own
+            company, before they ever book a call.
           </p>
           <div className="relative mt-9 flex justify-center">
             <WaitlistForm id="email-hero" />
           </div>
-          <p className="mt-4 font-mono text-[13px] text-ink-soft">Now onboarding a small group of design partners.</p>
+          <p className="mt-4 font-mono text-[14px] text-ink-soft">Now onboarding a small group of design partners.</p>
           <a
             href="#story"
-            className="mt-14 inline-flex flex-col items-center gap-2 font-mono text-[13px] text-ink-soft no-underline transition-colors hover:text-tide"
+            className="mt-14 inline-flex flex-col items-center gap-2 font-mono text-[14px] text-ink-soft no-underline transition-colors hover:text-tide"
           >
             watch one campaign happen
             <svg
@@ -1392,29 +1392,29 @@ export default function App() {
         {/* working with us */}
         <section id="working" className="border-t border-line py-20 sm:py-26">
           <div className="reveal max-w-150">
-            <p className="m-0 font-mono text-[13px] text-tide">Working with us</p>
-            <h2 className="m-0 mt-3 text-[clamp(1.6rem,3.6vw,2.4rem)] font-semibold leading-tight tracking-[-0.015em]">
-              You talk to founders, not agents.
+            <p className="m-0 font-mono text-[14px] text-tide">Working with us</p>
+            <h2 className="m-0 mt-3 text-[clamp(1.9rem,4vw,2.7rem)] font-semibold leading-tight tracking-[-0.015em]">
+              15 minutes of your time. We handle the rest.
             </h2>
           </div>
 
           <p
-            className="reveal mb-0 mt-8 max-w-xl text-[17px] leading-relaxed text-ink-soft"
+            className="reveal mb-0 mt-8 max-w-xl text-[18px] leading-relaxed text-ink-soft"
             style={{ transitionDelay: "0.08s" }}
           >
-            Driftwood is run by its founders — when you work with us, that's who you're talking to. You tell us
-            what you sell and who buys it; our agents do the research and build the demos, and a human reviews
-            every email before it ships. When a prospect replies, the meeting goes straight to your calendar.
+            After one short onboarding call, we set up and run your company's entire outbound email channel. We
+            take full ownership of every email we send, and each one gets a human review before it goes out.
+            Nothing will be spammy or out of context. We keep you updated on results and what we're improving.
           </p>
         </section>
 
         {/* final cta */}
         <section id="join" className="scroll-mt-20 border-t border-line py-20 sm:py-26">
           <div className="reveal mx-auto max-w-150 text-center">
-            <h2 className="m-0 text-[clamp(1.8rem,4.2vw,2.8rem)] font-semibold leading-tight tracking-[-0.015em]">
+            <h2 className="m-0 text-[clamp(2rem,4.6vw,3rem)] font-semibold leading-tight tracking-[-0.015em]">
               See what we'd send your prospects.
             </h2>
-            <p className="mt-4 text-[17px] leading-relaxed text-ink-soft">
+            <p className="mt-4 text-[18px] leading-relaxed text-ink-soft">
               We're onboarding a few design partners. Leave a work email and we'll show you what a campaign for
               your product looks like.
             </p>

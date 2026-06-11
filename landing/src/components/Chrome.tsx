@@ -54,7 +54,7 @@ export function Footer({ homePrefix = "" }: { homePrefix?: string }) {
         <a href={homePrefix || "#top"} className="text-[15px] text-ink no-underline">
           <Wordmark markSize="size-5" />
         </a>
-        <div className="flex items-center gap-5 font-mono text-[12px] text-ink-faint">
+        <div className="flex items-center gap-5 font-mono text-[13px] text-ink-soft">
           <a href="mailto:aayush@driftwood.ai" className="text-ink-faint no-underline transition-colors hover:text-ink">
             aayush@driftwood.ai
           </a>

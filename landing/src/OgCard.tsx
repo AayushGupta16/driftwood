@@ -30,10 +30,11 @@ export default function OgCard() {
             ! bug found: double-clicking Pay charges twice
           </p>
           <h1 className="mb-0 mt-5 text-[64px] font-semibold leading-[1.08] tracking-[-0.02em] text-ink">
-            Ship every cold
+            Ship a custom
             <br />
-            email with a<br />
-            custom demo.
+            demo in every
+            <br />
+            cold email.
           </h1>
         </div>
         <div className="w-105 shrink-0 scale-110 origin-center">
