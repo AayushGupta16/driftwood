@@ -74,7 +74,7 @@ function NavIconChart() {
 export function RampSpendMock() {
   return (
     <div className="relative flex flex-1 flex-col gap-3">
-      <Anno text="built from public data" pos="-top-3 right-8 rotate-1" />
+      <Anno text="stack found via the BuiltWith API" pos="-top-3 right-8 rotate-1" />
 
       {/* app frame */}
       <div className="flex flex-1 overflow-hidden rounded-xl border border-line bg-white">

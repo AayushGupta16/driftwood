@@ -12,7 +12,7 @@ export function ShopifyRebuildMock() {
   return (
     <div className="relative flex flex-1 flex-col gap-3">
       <Anno text="412 products imported overnight" pos="-top-3 left-8 -rotate-1" />
-      <Anno text="1.1s load — was 8.2s" pos="top-[44%] -right-4 rotate-1" />
+      <Anno text="checkout: 6 clicks → 2" pos="top-[44%] -right-4 rotate-1" />
 
       {/* browser frame */}
       <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-line bg-surface shadow-[0_16px_40px_-24px_rgba(13,60,91,0.4)]">

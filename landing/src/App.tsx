@@ -600,12 +600,10 @@ function StorySection() {
 /* gmail-style frame shared by the two compare emails */
 function EmailFrame({
   subject,
-  time,
   highlight,
   children,
 }: {
   subject: string;
-  time: string;
   highlight?: boolean;
   children: ReactNode;
 }) {
@@ -615,24 +613,7 @@ function EmailFrame({
         highlight ? "border-tide/35 shadow-[0_20px_50px_-28px_rgba(13,60,91,0.4)]" : "border-line"
       }`}
     >
-      <p className="m-0 text-[17px] font-semibold text-[#202124]">{subject}</p>
-      <div className="mt-3 flex items-start gap-2.5 border-b border-[#eceef1] pb-3.5">
-        <span
-          className={`flex size-8 shrink-0 items-center justify-center rounded-full text-[13px] font-semibold text-white ${
-            highlight ? "bg-tide" : "bg-[#9aa0a6]"
-          }`}
-        >
-          A
-        </span>
-        <div className="min-w-0 flex-1 leading-tight">
-          <p className="m-0 truncate text-[13.5px] text-[#202124]">
-            <span className="font-semibold">Autosana</span>{" "}
-            <span className="text-[#5f6368]">&lt;founder@autosana.io&gt;</span>
-          </p>
-          <p className="m-0 mt-0.5 text-[12.5px] text-[#5f6368]">to sarah@acme.com</p>
-        </div>
-        <span className="shrink-0 text-[12.5px] text-[#5f6368]">{time}</span>
-      </div>
+      <p className="m-0 border-b border-[#eceef1] pb-3 text-[17px] font-semibold text-[#202124]">{subject}</p>
       <div className="mt-4 text-[14.5px] leading-[1.55] text-[#202124] [font-family:Arial,Helvetica,sans-serif]">
         {children}
       </div>
@@ -642,7 +623,7 @@ function EmailFrame({
 
 function UsualEmail() {
   return (
-    <EmailFrame subject="Sarah — quick question (Acme x Autosana)" time="5:02 PM">
+    <EmailFrame subject="Sarah — quick question (Acme x Autosana)">
       <p className="m-0">Hey Sarah,</p>
       <p className="m-0 mt-4">
         Huge fan of what you're building at Acme — saw you just crossed 200 employees. Incredible
@@ -657,18 +638,13 @@ function UsualEmail() {
         Would love to connect and show you what we're building. Any chance you have 15 minutes this
         week? You can <span className="cursor-pointer text-[#1a0dab] underline">grab time here</span>.
       </p>
-      <p className="m-0 mt-4">
-        Best,
-        <br />
-        The Autosana Team
-      </p>
     </EmailFrame>
   );
 }
 
 function DriftwoodEmail() {
   return (
-    <EmailFrame subject="found a bug in Acme's checkout" time="9:02 AM" highlight>
+    <EmailFrame subject="found a bug in Acme's checkout" highlight>
       <p className="m-0">Hi Sarah,</p>
       <p className="m-0 mt-4">
         Our QA agent ran Acme's checkout this morning and caught a real bug:{" "}
@@ -680,38 +656,53 @@ function DriftwoodEmail() {
       </p>
       <p className="m-0 mt-4">Open to a quick call this week?</p>
       <SquareVideoThumb className="mt-4 w-36" />
-      <p className="m-0 mt-4">
-        Best,
-        <br />
-        Maya · Autosana
-      </p>
     </EmailFrame>
   );
 }
 
+const ARROW_PATH = "M 14 70 C 40 36, 72 20, 102 28 C 130 36, 132 64, 112 62 C 92 60, 98 32, 128 28 C 166 23, 208 36, 234 58";
+const ARROW_HEAD = "M 234 58 l -15 -2 M 234 58 l -3 -14.5";
+
+function CompareEmails() {
+  return (
+    <>
+      <div className="flex h-full flex-col">
+        <p className="mb-3 ml-1 font-mono text-[14px] tracking-[0.02em] text-ink-soft">what everyone else sends</p>
+        <UsualEmail />
+      </div>
+      <div className="flex h-full flex-col">
+        <p className="mb-3 ml-1 font-mono text-[14px] tracking-[0.02em] text-tide">what driftwood sent</p>
+        <div className="tide-ring-pulse flex flex-1 flex-col rounded-2xl">
+          <DriftwoodEmail />
+        </div>
+      </div>
+    </>
+  );
+}
+
 function CompareSection() {
-  const gridRef = useRef<HTMLDivElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
   const pathRef = useRef<SVGPathElement>(null);
   const headRef = useRef<SVGPathElement>(null);
 
-  /* the arrow is scrubbed by scroll: it draws as the section travels up the
-     viewport and un-draws if you scroll back */
+  /* pinned like the story: the screen holds while scroll scrubs the arrow,
+     with a beat of hold time before it starts and after it lands */
   useEffect(() => {
-    const grid = gridRef.current;
+    const wrap = wrapRef.current;
     const path = pathRef.current;
     const head = headRef.current;
-    if (!grid || !path || !head) return;
+    if (!wrap || !path || !head) return;
     const length = path.getTotalLength();
     path.style.strokeDasharray = `${length}`;
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let raf = 0;
     const update = () => {
       raf = 0;
-      const r = grid.getBoundingClientRect();
-      const vh = window.innerHeight;
-      const p = reduced ? 1 : Math.min(1, Math.max(0, (vh * 0.92 - r.top) / (vh * 0.55)));
-      path.style.strokeDashoffset = `${length * (1 - p)}`;
-      head.style.opacity = p > 0.97 ? "1" : "0";
+      const total = wrap.offsetHeight - window.innerHeight;
+      if (total <= 0) return;
+      const p = Math.min(1, Math.max(0, -wrap.getBoundingClientRect().top / total));
+      const draw = Math.min(1, Math.max(0, (p - 0.14) / 0.62));
+      path.style.strokeDashoffset = `${length * (1 - draw)}`;
+      head.style.opacity = draw > 0.97 ? "1" : "0";
     };
     const onScroll = () => {
       if (!raf) raf = requestAnimationFrame(update);
@@ -727,50 +718,56 @@ function CompareSection() {
   }, []);
 
   return (
-    <section id="compare" className="scroll-mt-20 border-t border-line py-14 sm:py-18">
-      <div className="reveal mx-auto max-w-150 text-center">
-        <h2 className="m-0 text-[clamp(1.9rem,4vw,2.7rem)] font-semibold leading-tight tracking-[-0.015em]">
-          Don't send out AI slop
-        </h2>
+    <section id="compare" className="scroll-mt-20 border-t border-line">
+      {/* pinned walkthrough (desktop, motion ok) */}
+      <div ref={wrapRef} className="relative hidden h-[230vh] lg:motion-safe:block">
+        <div className="sticky top-0 flex h-screen flex-col justify-center overflow-hidden">
+          <div className="mx-auto max-w-150 text-center">
+            <h2 className="m-0 text-[clamp(1.9rem,4vw,2.7rem)] font-semibold leading-tight tracking-[-0.015em]">
+              Don't send out AI slop
+            </h2>
+          </div>
+          <div className="relative mx-auto mt-16 grid w-full max-w-5xl grid-cols-2 items-stretch gap-8 lg:gap-12">
+            {/* hand-drawn arrow with a loop, scrubbed by the pinned scroll */}
+            <svg
+              viewBox="0 0 260 100"
+              aria-hidden="true"
+              className="pointer-events-none absolute -top-17 left-1/2 z-10 w-65 -translate-x-1/2 text-tide"
+            >
+              <path ref={pathRef} d={ARROW_PATH} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+              <path
+                ref={headRef}
+                className="transition-opacity duration-300"
+                d={ARROW_HEAD}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                style={{ opacity: 0 }}
+              />
+            </svg>
+            <CompareEmails />
+          </div>
+        </div>
       </div>
 
-      <div ref={gridRef} className="reveal relative mx-auto mt-16 grid w-full max-w-5xl items-stretch gap-8 sm:grid-cols-2 lg:gap-12">
-        {/* hand-drawn arrow with a loop, from the slop to the driftwood email */}
-        <svg
-          viewBox="0 0 260 100"
-          aria-hidden="true"
-          className="pointer-events-none absolute -top-17 left-1/2 z-10 hidden w-65 -translate-x-1/2 text-tide sm:block"
-        >
-          <path
-            ref={pathRef}
-            d="M 14 70 C 40 36, 72 20, 102 28 C 130 36, 132 64, 112 62 C 92 60, 98 32, 128 28 C 166 23, 208 36, 234 58"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-          />
-          <path
-            ref={headRef}
-            className="transition-opacity duration-300"
-            d="M 234 58 l -15 -2 M 234 58 l -3 -14.5"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            style={{ opacity: 0 }}
-          />
-        </svg>
-
-        <div className="flex h-full flex-col">
-          <p className="mb-3 ml-1 font-mono text-[14px] tracking-[0.02em] text-ink-soft">what everyone else sends</p>
-          <UsualEmail />
+      {/* stacked fallback (mobile + reduced motion) — arrow pre-drawn */}
+      <div className="py-14 sm:py-18 lg:motion-safe:hidden">
+        <div className="reveal mx-auto max-w-150 text-center">
+          <h2 className="m-0 text-[clamp(1.9rem,4vw,2.7rem)] font-semibold leading-tight tracking-[-0.015em]">
+            Don't send out AI slop
+          </h2>
         </div>
-
-        <div className="flex h-full flex-col">
-          <p className="mb-3 ml-1 font-mono text-[14px] tracking-[0.02em] text-tide">what driftwood sent</p>
-          <div className="tide-ring-pulse flex flex-1 flex-col rounded-2xl">
-            <DriftwoodEmail />
-          </div>
+        <div className="reveal relative mx-auto mt-16 grid w-full max-w-5xl items-stretch gap-8 sm:grid-cols-2 lg:gap-12">
+          <svg
+            viewBox="0 0 260 100"
+            aria-hidden="true"
+            className="pointer-events-none absolute -top-17 left-1/2 z-10 hidden w-65 -translate-x-1/2 text-tide sm:block"
+          >
+            <path d={ARROW_PATH} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+            <path d={ARROW_HEAD} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+          </svg>
+          <CompareEmails />
         </div>
       </div>
     </section>
