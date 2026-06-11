@@ -33,7 +33,7 @@ export function StorySlackCard({ rows }: { rows: number }) {
             </span>
             <span className="font-mono text-[12.5px] text-ink-faint">Fri 9:00 AM</span>
           </div>
-          <p className="m-0 mt-1.5 text-[15.5px] leading-relaxed text-ink">week 3 &mdash; what's winning:</p>
+          <p className="m-0 mt-1.5 text-[15.5px] leading-relaxed text-ink">week 3: what's winning</p>
           {/* attachment block: the ranking */}
           <div className="mt-2.5 space-y-2 rounded-lg rounded-l-none border-l-[3px] border-tide/45 bg-paper/60 py-2.5 pl-3 pr-2.5">
             {PROOF_RANKING.map((a, i) => (
@@ -78,7 +78,7 @@ export function StorySlackCard({ rows }: { rows: number }) {
             ))}
           </div>
           <p className="m-0 mt-2.5 text-[15px] leading-relaxed text-ink-soft">
-            scaling bug recordings; coverage reports are out.
+            we're scaling bug recordings and cutting coverage reports.
           </p>
           {/* reactions */}
           <div className="mt-2.5 flex gap-1.5">

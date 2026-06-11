@@ -62,19 +62,19 @@ function SquareVideoThumb({ small, className }: { small?: boolean; className?: s
 const BEATS = [
   {
     title: "We learn what you sell and who to win over",
-    sub: "A 15-minute call: what you sell, who buys it, and what would impress them.",
+    sub: "One 15-minute call. You tell us what you sell and who buys it.",
   },
   {
     title: "An agent builds every prospect a demo of your product",
-    sub: "An agent researches each prospect and picks the demo most likely to land.",
+    sub: "The agent reads the prospect's site and decides what to build them.",
   },
   {
     title: "We review every email by hand, then send it",
-    sub: "Every email is human-reviewed. Inboxes, warming, deliverability, follow-ups — handled.",
+    sub: "A person reads every email before it goes out, and we handle the inboxes and follow-ups.",
   },
   {
     title: "We test different demos against different ICPs",
-    sub: "Every open, click, and reply is tracked — we double down on what converts.",
+    sub: "We track which demos get replies and send more of those.",
   },
 ];
 
@@ -419,7 +419,7 @@ const SLIDES = [
     to: "finance@notion.so",
     time: "9:02 AM",
     subject: "is Notion paying list price for Salesforce?",
-    body: "We mapped the 63 tools Notion runs and priced them against what companies your size pay on Ramp. If you're at list, Salesforce alone is 28% over — full benchmark below.",
+    body: "We mapped the 63 tools Notion runs and priced them against what companies your size pay on Ramp. If you're at list, Salesforce alone is 28% over. The full benchmark is below.",
     art: RampSpendMock,
   },
   {
@@ -451,8 +451,8 @@ const SLIDES = [
     prospect: "Joe's Pizza",
     to: "joe@joespizza.nyc",
     time: "6:51 PM",
-    subject: "Joe's doesn't take online orders — so we built it",
-    body: "Your full menu, live on a Square ordering page. We ran a test order — the receipt is below.",
+    subject: "Joe's doesn't take online orders, so we built it",
+    body: "Your full menu, live on a Square ordering page. We ran a test order. The receipt is below.",
     art: SquareOrderMock,
   },
 ];
