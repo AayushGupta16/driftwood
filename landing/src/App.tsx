@@ -66,7 +66,7 @@ const BEATS = [
   },
   {
     title: "An agent builds every prospect a demo of your product",
-    sub: "The agent reads the prospect's site and decides what to build them.",
+    sub: "The agent does a deep dive on the company, from the founders to their graphics, before deciding what to build them.",
   },
   {
     title: "We review every email by hand, then send it",
