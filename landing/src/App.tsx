@@ -33,36 +33,44 @@ function CardShell({
   );
 }
 
-/* the bug recording as email clients actually render video: a square thumbnail */
-function SquareVideoThumb({ className }: { className?: string }) {
+/* the bug recording as email clients actually render video: a square thumbnail.
+   `small` drops the frozen-frame preview — at thumbnail size only REC, play, and
+   the duration survive, which is what a real inline video looks like in Gmail. */
+function SquareVideoThumb({ small, className }: { small?: boolean; className?: string }) {
   return (
-    <div className={`relative aspect-square w-40 shrink-0 overflow-hidden rounded-xl bg-[#16181d] ${className ?? ""}`}>
+    <div
+      className={`relative aspect-square ${small ? "w-28" : "w-40"} shrink-0 overflow-hidden rounded-xl bg-[#16181d] ${className ?? ""}`}
+    >
       <span className="absolute left-2.5 top-2.5 z-10 flex items-center gap-1 rounded-full bg-black/60 py-0.5 pl-1.5 pr-2 font-mono text-[10.5px] font-medium text-white">
         <span className="size-1.5 rounded-full bg-[#e2574a]" />
         REC
       </span>
       {/* frozen frame: the duplicate charge, mid-recording */}
-      <div className="mx-5 mt-9 rounded-md bg-white/95 px-2.5 py-2">
-        <div className="flex items-center justify-between">
-          <span className="h-1.5 w-10 rounded-full bg-[#dfe3e9]" />
-          <span className="relative rounded bg-[#16181d] px-1.5 py-0.5 text-[9px] font-semibold text-white">
-            Pay
-            <span className="absolute -right-1.5 -top-1.5 rounded-full bg-[#d4574a] px-1 py-px font-mono text-[8px] font-bold leading-none text-white">
-              &times;2
+      {!small && (
+        <div className="mx-5 mt-9 rounded-md bg-white/95 px-2.5 py-2">
+          <div className="flex items-center justify-between">
+            <span className="h-1.5 w-10 rounded-full bg-[#dfe3e9]" />
+            <span className="relative rounded bg-[#16181d] px-1.5 py-0.5 text-[9px] font-semibold text-white">
+              Pay
+              <span className="absolute -right-1.5 -top-1.5 rounded-full bg-[#d4574a] px-1 py-px font-mono text-[8px] font-bold leading-none text-white">
+                &times;2
+              </span>
             </span>
-          </span>
+          </div>
+          <div className="mt-1.5 h-1.5 w-full rounded-full bg-[#f1f3f6]" />
+          <div className="mt-1 h-1.5 w-full rounded-full bg-[#d4574a]/30" />
         </div>
-        <div className="mt-1.5 h-1.5 w-full rounded-full bg-[#f1f3f6]" />
-        <div className="mt-1 h-1.5 w-full rounded-full bg-[#d4574a]/30" />
-      </div>
-      <span className="absolute left-1/2 top-1/2 flex size-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 shadow-[0_6px_18px_-6px_rgba(0,0,0,0.5)]">
-        <svg viewBox="0 0 24 24" className="ml-0.5 size-3.5 fill-[#16181d]" aria-hidden="true">
+      )}
+      <span
+        className={`absolute left-1/2 top-1/2 flex ${small ? "size-8" : "size-10"} -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 shadow-[0_6px_18px_-6px_rgba(0,0,0,0.5)]`}
+      >
+        <svg viewBox="0 0 24 24" className={`ml-0.5 ${small ? "size-3" : "size-3.5"} fill-[#16181d]`} aria-hidden="true">
           <path d="M8 5.5v13l11-6.5z" />
         </svg>
       </span>
       <span className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 bg-gradient-to-t from-black/75 to-transparent px-2.5 pb-2 pt-5 font-mono text-[10.5px] text-white/85">
-        <span className="truncate">acme.com checkout bug</span>
-        <span className="shrink-0">0:47</span>
+        {!small && <span className="truncate">acme.com checkout bug</span>}
+        <span className="ml-auto shrink-0">0:47</span>
       </span>
     </div>
   );
@@ -288,10 +296,14 @@ function StoryComposeCard({
             card twice. The 47-second recording is below.
           </p>
           <p className={`m-0 mt-3 ${blockClass}`} style={block(1)}>
+            We already work with Y Combinator's engineering team to catch bugs before they ship, and our customers
+            save an average of 10 hours a week on QA.
+          </p>
+          <p className={`m-0 mt-3 ${blockClass}`} style={block(2)}>
             Open to a quick call this week?
           </p>
-          <div className={`mt-4 ${on ? "pop-in" : "invisible"}`} style={block(2)}>
-            <SquareVideoThumb />
+          <div className={`mt-3.5 ${on ? "pop-in" : "invisible"}`} style={block(3)}>
+            <SquareVideoThumb small />
           </div>
         </div>
       </div>
