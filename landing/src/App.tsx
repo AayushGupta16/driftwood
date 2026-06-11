@@ -1,43 +1,15 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { BugDemoCard } from "./components/AgentDemo";
 import WaitlistForm from "./components/WaitlistForm";
 import { Nav, Footer, useReveal } from "./components/Chrome";
+import { StoryCallCard } from "./components/story/StoryCallCard";
+import { StoryConsoleCard } from "./components/story/StoryConsoleCard";
+import { StorySlackCard } from "./components/story/StorySlackCard";
 import { RunwayAdMock } from "./components/examples/RunwayMock";
 import { RampSpendMock } from "./components/examples/RampMock";
 import { ShopifyRebuildMock } from "./components/examples/ShopifyMock";
 import { SquareOrderMock } from "./components/examples/SquareMock";
 
 /* ---------- shared chrome ---------- */
-
-/* card shell every story graphic shares, so the stage reads as one consistent object */
-function CardShell({
-  left,
-  right,
-  children,
-  className,
-}: {
-  left: ReactNode;
-  right?: ReactNode;
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <div
-      className={`flex w-full max-w-135 flex-col rounded-2xl border border-line bg-surface shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_24px_60px_-26px_rgba(13,60,91,0.42),0_4px_16px_-8px_rgba(22,24,29,0.1)] ${className ?? ""}`}
-    >
-      <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-3">
-        <span className="flex min-w-0 items-center gap-2 font-mono text-[14px] font-medium text-ink-soft">
-          <span className="pulse-dot size-1.5 shrink-0 rounded-full bg-tide" />
-          <span className="min-w-0 sm:truncate">{left}</span>
-        </span>
-        {right ? (
-          <span className="shrink-0 rounded-full bg-sand px-2.5 py-0.5 font-mono text-[13.5px] text-ink-soft">{right}</span>
-        ) : null}
-      </div>
-      {children}
-    </div>
-  );
-}
 
 /* the bug recording as email clients actually render video: a square thumbnail.
    `small` drops the frozen-frame preview — at thumbnail size only REC, play, and
@@ -110,133 +82,6 @@ const BEATS: { title: string; sub: ReactNode }[] = [
   },
 ];
 
-/* beat 1 — what we learn on the onboarding call, and the demo ideas it produces */
-const DEMO_IDEAS = [
-  "find bugs on the prospect's own site",
-  "custom flows for their product, shown in the dashboard",
-  "vibe-code a replica of their app + ship a feature",
-];
-
-function StoryOnboardCard({ building, icps, ideas }: { building: boolean; icps: boolean; ideas: number }) {
-  return (
-    <CardShell left="15-minute onboarding call" className="lg:min-h-110">
-      <div className="flex flex-1 flex-col justify-center gap-5 px-5 py-5">
-        <div className={building ? "log-line" : "invisible"}>
-          <p className="m-0 font-mono text-[14px] tracking-[0.02em] text-ink-faint">what they're building</p>
-          <p className="m-0 mt-1.5 text-[16px] leading-relaxed text-ink">AI agents that QA web apps automatically</p>
-        </div>
-        <div className={icps ? "log-line" : "invisible"}>
-          <p className="m-0 font-mono text-[14px] tracking-[0.02em] text-ink-faint">their ICPs</p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {["CTOs", "QA engineers"].map((icp) => (
-              <span
-                key={icp}
-                className="rounded-full border border-line bg-paper/70 px-3 py-1 font-mono text-[13px] text-ink-soft"
-              >
-                {icp}
-              </span>
-            ))}
-          </div>
-        </div>
-        <div>
-          <p className="m-0 flex items-center gap-2.5 font-mono text-[14px] tracking-[0.02em] text-ink-faint">
-            <span className="pulse-dot size-1.5 shrink-0 rounded-full bg-tide" />
-            ideas for custom demos
-          </p>
-          <div className="mt-2.5 space-y-2">
-            {DEMO_IDEAS.map((idea, i) => (
-              <div
-                key={idea}
-                className={`flex items-center justify-between gap-3 rounded-xl bg-paper/70 px-3.5 py-2.5 ring-1 ring-line/70 ${
-                  i < ideas ? "toast-in" : "invisible"
-                }`}
-              >
-                <span className="min-w-0 text-[15.5px] font-medium text-ink-soft sm:truncate">{idea}</span>
-                <span className="shrink-0 rounded-full bg-surface px-2 py-0.5 font-mono text-[13.5px] text-ink-faint ring-1 ring-line">
-                  idea
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </CardShell>
-  );
-}
-
-/* beat 2 — the agent's per-prospect plan, with fallbacks, ending in the recording */
-const PROSPECT_PLAN = [
-  "try to find bugs in the product",
-  "if that doesn't work, create custom flows",
-  "if easy to vibe-code, replicate it + add a feature",
-];
-
-function StoryAgentCard({ plans, logs, thumb }: { plans: number; logs: number; thumb: boolean }) {
-  return (
-    <CardShell left={<>prospect: Sarah &middot; self-serve product</>} className="lg:min-h-110">
-      <div className="flex flex-1 flex-col justify-center gap-4 px-5 py-5">
-        <div>
-          <p className="m-0 font-mono text-[14px] tracking-[0.02em] text-ink-faint">the plan for sarah</p>
-          <div className="mt-2.5 space-y-2">
-            {PROSPECT_PLAN.map((step, i) => (
-              <div
-                key={step}
-                className={`flex items-center justify-between gap-3 rounded-xl px-3.5 py-2.5 ${
-                  i === 0 ? "bg-tide-wash/70 ring-1 ring-tide/35" : "bg-paper/70 opacity-60 ring-1 ring-line/70"
-                } ${i < plans ? "toast-in" : "invisible"}`}
-              >
-                <span
-                  className={`min-w-0 text-[15.5px] sm:truncate ${i === 0 ? "font-semibold text-ink" : "font-medium text-ink-soft"}`}
-                >
-                  <span className="mr-2 font-mono text-[13.5px] text-ink-faint">{i + 1}</span>
-                  {step}
-                </span>
-                <span
-                  className={`shrink-0 rounded-full px-2 py-0.5 font-mono text-[12.5px] font-medium ${
-                    i === 0 ? "bg-tide text-white" : "bg-surface text-ink-faint ring-1 ring-line"
-                  }`}
-                >
-                  {i === 0 ? "running" : "fallback"}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="space-y-2 font-mono text-[14.5px] text-ink-soft">
-          <p className={`m-0 flex items-start gap-2.5 ${logs > 0 ? "log-line" : "invisible"}`}>
-            <svg
-              viewBox="0 0 24 24"
-              className="mt-[3px] size-3.5 shrink-0 stroke-[#d4574a]"
-              fill="none"
-              strokeWidth="2.4"
-              strokeLinecap="round"
-            >
-              <path d="M12 4.5v10M12 19v.5" />
-            </svg>
-            <span className="font-medium text-ink">bug found: double-clicking Pay charges twice</span>
-          </p>
-          <p className={`m-0 flex items-start gap-2.5 ${logs > 1 ? "log-line" : "invisible"}`}>
-            <svg
-              viewBox="0 0 24 24"
-              className="mt-[3px] size-3.5 shrink-0 stroke-tide"
-              fill="none"
-              strokeWidth="2.4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M5 12.5l4.5 4.5L19 7.5" />
-            </svg>
-            recording the bug &middot; 0:47
-          </p>
-        </div>
-        <div className={thumb ? "materialize" : "invisible"}>
-          <BugDemoCard compact />
-        </div>
-      </div>
-    </CardShell>
-  );
-}
-
 /* beat 3 — review → send → the reply, styled as a real inbox thread */
 function StoryReplyThread({ on }: { on: boolean }) {
   return (
@@ -245,6 +90,20 @@ function StoryReplyThread({ on }: { on: boolean }) {
       <div className="border-b border-line px-5 py-4">
         <p className="m-0 text-[16.5px] font-semibold text-ink">Re: found a bug in Acme's checkout</p>
         <p className="m-0 mt-1 font-mono text-[13.5px] text-ink-faint">Inbox &middot; 2 messages</p>
+      </div>
+      {/* review gate: a human approved it before it went out */}
+      <div className="flex items-center gap-2.5 border-b border-line px-5 py-2.5 font-mono text-[13.5px] text-ink-soft">
+        <svg
+          viewBox="0 0 24 24"
+          className="size-3.5 shrink-0 stroke-tide"
+          fill="none"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M5 12.5l4.5 4.5L19 7.5" />
+        </svg>
+        reviewed by a human &middot; 8:51 AM
       </div>
       {/* our send, collapsed */}
       <div className="flex items-center gap-3 border-b border-line bg-paper/50 px-5 py-3">
@@ -292,65 +151,6 @@ function StoryReplyThread({ on }: { on: boolean }) {
   );
 }
 
-/* beat 5 — every send feeds the ranking of what to build next */
-const PROOF_RANKING = [
-  { name: "bug recording", replies: "4.9% reply", width: "82%", tone: "win", tag: "gets the budget" },
-  { name: "custom flows demo", replies: "3.2% reply", width: "54%", tone: "mid", tag: "testing now" },
-  { name: "coverage report", replies: "1.1% reply", width: "18%", tone: "cut", tag: "cut this week" },
-] as const;
-
-function StoryDataCard({ rows }: { rows: number }) {
-  return (
-    <CardShell left="proof testing" className="lg:min-h-110">
-      <div className="flex flex-1 flex-col justify-center gap-3 px-5 py-5">
-        {PROOF_RANKING.map((a, i) => (
-          <div
-            key={a.name}
-            className={`rounded-xl px-3.5 py-3 ${a.tone === "win" ? "bg-tide-wash/70 ring-1 ring-tide/35" : "bg-paper/70 ring-1 ring-line/70"} ${
-              a.tone === "cut" ? "opacity-55" : ""
-            } ${i < rows ? "toast-in" : "invisible"}`}
-          >
-            <div className="flex items-center justify-between gap-3">
-              <span
-                className={`min-w-0 text-[14.5px] sm:truncate ${a.tone === "win" ? "font-semibold text-ink" : "font-medium text-ink-soft"}`}
-              >
-                {a.name}
-              </span>
-              <span
-                className={`shrink-0 rounded-full px-2 py-0.5 font-mono text-[12.5px] font-medium ${
-                  a.tone === "win"
-                    ? "bg-tide text-white"
-                    : a.tone === "mid"
-                      ? "bg-tide-wash text-tide"
-                      : "bg-surface text-ink-faint ring-1 ring-line"
-                }`}
-              >
-                {a.tag}
-              </span>
-            </div>
-            <div className="mt-2.5 flex items-center gap-3">
-              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-line/50">
-                <div
-                  className={`h-full rounded-full ${a.tone === "win" ? "bg-tide" : "bg-ink-faint/50"}`}
-                  style={{ width: a.width }}
-                />
-              </div>
-              <span
-                className={`shrink-0 font-mono text-[13px] ${a.tone === "win" ? "font-medium text-tide" : "text-ink-faint"}`}
-              >
-                {a.replies}
-              </span>
-            </div>
-          </div>
-        ))}
-        <p className="mb-0 mt-2 text-center font-mono text-[13.5px] text-ink-faint">
-          we keep you updated on results and what we're improving
-        </p>
-      </div>
-    </CardShell>
-  );
-}
-
 function StorySection() {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [prog, setProg] = useState(0);
@@ -394,10 +194,10 @@ function StorySection() {
   const rows = active === 3 ? Math.min(3, Math.floor(local / 0.18) + 1) : 0;
 
   const panes = [
-    <StoryOnboardCard key="onboard" building={building} icps={icps} ideas={ideas} />,
-    <StoryAgentCard key="agent" plans={plans} logs={logs} thumb={thumb} />,
+    <StoryCallCard key="call" building={building} icps={icps} ideas={ideas} />,
+    <StoryConsoleCard key="console" plans={plans} logs={logs} thumb={thumb} />,
     <StoryReplyThread key="reply" on={active === 2} />,
-    <StoryDataCard key="data" rows={rows} />,
+    <StorySlackCard key="slack" rows={rows} />,
   ];
 
   return (
@@ -474,10 +274,10 @@ function StorySection() {
       <div className="py-14 sm:py-18 lg:motion-safe:hidden">
         <div className="space-y-14">
           {[
-            <StoryOnboardCard key="onboard" building icps ideas={3} />,
-            <StoryAgentCard key="agent" plans={3} logs={2} thumb />,
+            <StoryCallCard key="call" building icps ideas={3} />,
+            <StoryConsoleCard key="console" plans={3} logs={2} thumb />,
             <StoryReplyThread key="reply" on />,
-            <StoryDataCard key="data" rows={3} />,
+            <StorySlackCard key="slack" rows={3} />,
           ].map((stage, i) => (
             <div key={BEATS[i].title} className="reveal">
               <p className="m-0 font-mono text-[14px] font-medium text-tide">0{i + 1}</p>
