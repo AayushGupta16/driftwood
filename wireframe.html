@@ -473,32 +473,31 @@
           <p class="mono" style="margin: 6px 0 0;">(avatar) <strong>Mintlify</strong> · via driftwood · 8:32 AM · to docs@supabase.com</p>
         </div>
         <div class="card-body">
-          <p style="margin: 0; font-size: 14px; max-width: 640px;">We loaded your public docs into Mintlify and pulled the most-asked questions from your Discord and GitHub. The docs answer them now. The demo is below.</p>
+          <p style="margin: 0; font-size: 14px; max-width: 640px;">Hey, we built you a docs page that uses AI to answer the most common questions from your Discord. It's live below.</p>
           <!-- artifact: docs site with the Ask AI panel answering harvested questions -->
           <div class="box" style="display: flex; flex-direction: column;">
             <div class="card-head">
-              <span class="mono"><strong>supabase</strong> docs · on Mintlify</span>
-              <span class="pill">⌘K · Ask AI</span>
+              <span class="mono"><strong>supabase</strong> docs</span>
+              <span class="pill">Search or ask… ⌘K</span>
             </div>
-            <div class="card-body">
-              <div class="box-soft row between" style="padding: 8px 12px;">
-                <span class="mono">"How do I reset a user's password from the server?"</span>
-                <span class="chip">asked 14× in your Discord</span>
-              </div>
-              <div class="box" style="padding: 10px 12px;">
-                <span class="mono">Use the admin API with the service role key:</span>
-                <div class="bar w-80" style="margin-top: 8px; background: #2a2d33;"></div>
-                <span class="chip" style="margin-top: 8px;">from /docs/auth/server-side</span>
-              </div>
-              <div class="row" style="flex-wrap: wrap; gap: 6px;">
-                <span class="chip">"Why is RLS blocking my service role?" · asked 9×</span>
-                <span class="chip">"Can I self-host?" · asked 23×</span>
+            <div class="card-body" style="background: var(--fill);">
+              <!-- ask-AI modal floating over the dimmed docs page -->
+              <div class="box" style="padding: 12px; margin: 8px 24px;">
+                <div class="row between">
+                  <span class="mono">"How do I reset a user's password from the server?"</span>
+                  <span class="chip">asked 14× in their Discord</span>
+                </div>
+                <span class="mono" style="display: block; margin-top: 8px;">Use the admin API with a service-role key:</span>
+                <div class="bar w-60" style="margin-top: 6px; background: #2a2d33;"></div>
+                <div class="row between" style="margin-top: 8px;">
+                  <span class="chip">Auth → Server-side admin</span>
+                  <span class="mono" style="font-size: 11px;">Powered by Mintlify</span>
+                </div>
               </div>
             </div>
           </div>
           <div class="row" style="flex-wrap: wrap; gap: 6px; justify-content: center;">
-            <span class="chip">docs: pulled from supabase.com/docs</span>
-            <span class="chip">questions: from their Discord + GitHub</span>
+            <span class="chip">answers come from their public docs</span>
           </div>
           <div class="row" style="gap: 8px;"><span class="chip">↩ Reply</span><span class="chip">↪ Forward</span></div>
         </div>

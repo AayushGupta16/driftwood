@@ -441,7 +441,7 @@ const SLIDES = [
     to: "docs@supabase.com",
     time: "8:32 AM",
     subject: "your Discord answers the same questions every week",
-    body: "We loaded your public docs into Mintlify and pulled the most-asked questions from your Discord and GitHub. The docs answer them now. The demo is below.",
+    body: "Hey, we built you a docs page that uses AI to answer the most common questions from your Discord. It's live below.",
     art: MintlifyAskMock,
   },
   {
@@ -498,10 +498,9 @@ function ExamplesSection() {
               <span className={`block text-[16.5px] ${i === index ? "font-semibold text-ink" : "font-medium text-ink-soft"}`}>
                 {s.company}
               </span>
-              <span className={`mt-0.5 block font-mono text-[13px] ${i === index ? "text-tide" : "text-ink-faint"}`}>
-                pitching {s.prospect}
+              <span className="mt-0.5 block font-mono text-[13px] text-ink-faint">
+                pitching <span className={i === index ? "text-tide" : "text-ink-soft"}>{s.prospect}</span>
               </span>
-              <span className="mt-0.5 hidden font-mono text-[13px] text-ink-faint lg:block">{s.domain}</span>
             </button>
           ))}
         </div>
