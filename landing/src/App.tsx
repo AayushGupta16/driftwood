@@ -73,8 +73,8 @@ const BEATS = [
     sub: "We also run the inboxes, the warming, and the follow-up sequences.",
   },
   {
-    title: "We test demos against ICPs and keep what wins",
-    sub: "The results land in your Slack every week.",
+    title: "Every email is an experiment",
+    sub: "We test demos across ICPs, and the results land in your Slack every week.",
   },
 ];
 
