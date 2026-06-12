@@ -4,7 +4,7 @@ export default function HelmMark({ className }: { className?: string }) {
     <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
       <rect width="64" height="64" rx="14" fill="#15557e" />
       <g
-        transform="translate(32 32)"
+        transform="translate(32 32) scale(0.88)"
         fill="none"
         stroke="#f7f4ec"
         strokeLinecap="round"
