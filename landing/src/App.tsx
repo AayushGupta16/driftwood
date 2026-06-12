@@ -61,7 +61,7 @@ function SquareVideoThumb({ small, className }: { small?: boolean; className?: s
 
 const BEATS = [
   {
-    title: "We learn what you sell and who to win over",
+    title: "We learn what you sell",
     sub: "One 15-minute call, and we walk away with your first demo ideas.",
   },
   {
