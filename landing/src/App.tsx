@@ -5,6 +5,7 @@ import { StoryCallCard } from "./components/story/StoryCallCard";
 import { StoryConsoleCard } from "./components/story/StoryConsoleCard";
 import { StorySlackCard } from "./components/story/StorySlackCard";
 import { StoryEmailCard } from "./components/story/StoryEmailCard";
+import { MintlifyAskMock } from "./components/examples/MintlifyMock";
 import { RunwayAdMock } from "./components/examples/RunwayMock";
 import { RampSpendMock } from "./components/examples/RampMock";
 import { ShopifyRebuildMock } from "./components/examples/ShopifyMock";
@@ -431,6 +432,17 @@ const SLIDES = [
     subject: "is Notion paying list price for Salesforce?",
     body: "We mapped the 63 tools Notion runs and priced them against what companies your size pay on Ramp. If you're at list, Salesforce alone is 28% over. The full benchmark is below.",
     art: RampSpendMock,
+  },
+  {
+    key: "mintlify",
+    company: "Mintlify",
+    domain: "developer docs",
+    prospect: "Supabase",
+    to: "docs@supabase.com",
+    time: "8:32 AM",
+    subject: "your Discord answers the same questions every week",
+    body: "We loaded your public docs into Mintlify and pulled the most-asked questions from your Discord and GitHub. The docs answer them now. The demo is below.",
+    art: MintlifyAskMock,
   },
   {
     key: "runway",
