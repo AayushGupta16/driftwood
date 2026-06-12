@@ -477,14 +477,19 @@
           <!-- artifact: docs site with the Ask AI panel answering harvested questions -->
           <div class="box" style="display: flex; flex-direction: column;">
             <div class="card-head">
-              <span class="mono"><strong>supabase</strong> docs</span>
-              <span class="pill">Search or ask… ⌘K</span>
+              <span class="mono"><strong>supabase</strong> · Documentation | Guides | API reference</span>
+              <span class="pill">Get started</span>
             </div>
             <div class="card-body" style="background: var(--fill);">
               <!-- ask-AI modal floating over the dimmed docs page -->
+              <!-- ⌘K dialog: query in the input row, Ask Assistant below -->
               <div class="box" style="padding: 12px; margin: 8px 24px;">
-                <div class="row between">
-                  <span class="mono">"How do I reset a user's password from the server?"</span>
+                <div class="row between" style="border-bottom: 1px solid var(--line-soft); padding-bottom: 8px;">
+                  <span class="mono">🔍 How do I reset a user's password from the server?</span>
+                  <span class="chip">esc</span>
+                </div>
+                <div class="row between" style="margin-top: 8px;">
+                  <span class="mono">✦ Ask Assistant</span>
                   <span class="chip">asked 14× in their Discord</span>
                 </div>
                 <span class="mono" style="display: block; margin-top: 8px;">Use the admin API with a service-role key:</span>
