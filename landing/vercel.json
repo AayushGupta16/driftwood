@@ -1,3 +1,9 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    {
+      "source": "/d/:slug*",
+      "destination": "https://driftwood-backend-767736087356.us-central1.run.app/d/:slug*"
+    },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }
