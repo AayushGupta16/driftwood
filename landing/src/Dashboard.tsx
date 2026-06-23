@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
 import { Wordmark } from "./components/Chrome";
 
 /* /dashboard — Google-login-gated shell. Talks to the same-origin /auth/*
@@ -227,6 +227,7 @@ function ApprovedView({ user }: { user: User }) {
       <LinkedInBanner />
       <Heading>{`Welcome back, ${firstName}.`}</Heading>
       <LinkedInCard connected={user.linkedin_connected} />
+      <ListsCard />
     </>
   );
 }
@@ -326,6 +327,155 @@ function LinkedInCard({ connected }: { connected: boolean }) {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ---------- lists (lead list + blacklist uploads) ---------- */
+
+type RowError = { row: number; reason: string };
+type LeadImportResult = {
+  added: number;
+  skipped_duplicate: number;
+  skipped_suppressed: number;
+  errors: RowError[];
+};
+type BlacklistImportResult = {
+  added: number;
+  already_present: number;
+  overlap_removed: number;
+  errors: RowError[];
+};
+
+const plural = (n: number, one: string, many: string) =>
+  `${n} ${n === 1 ? one : many}`;
+
+function summarizeLeads(r: LeadImportResult): string {
+  const parts = [`Added ${plural(r.added, "lead", "leads")}`];
+  if (r.skipped_duplicate)
+    parts.push(`${r.skipped_duplicate} already in your pipeline`);
+  if (r.skipped_suppressed) parts.push(`${r.skipped_suppressed} on your blacklist`);
+  if (r.errors.length) parts.push(`${r.errors.length} skipped (no email)`);
+  return parts.join(" · ") + ".";
+}
+
+function summarizeBlacklist(r: BlacklistImportResult): string {
+  const parts = [`Added ${plural(r.added, "entry", "entries")}`];
+  if (r.overlap_removed)
+    parts.push(`removed ${plural(r.overlap_removed, "matching lead", "matching leads")}`);
+  if (r.already_present) parts.push(`${r.already_present} already listed`);
+  return parts.join(" · ") + ".";
+}
+
+function ListsCard() {
+  return (
+    <div className={`mt-7 ${CARD} p-7 sm:p-8`}>
+      <h2 className="m-0 text-[18px] font-semibold tracking-[-0.01em]">Your lists</h2>
+      <p className="m-0 mt-2 text-[15px] leading-relaxed text-ink-soft">
+        Optional — we source leads for you either way. Add your own contacts, or a
+        do-not-contact list we&rsquo;ll always exclude.
+      </p>
+      <div className="mt-5 grid gap-4 sm:grid-cols-2">
+        <UploadField
+          title="Lead list"
+          hint="Contacts to add to your pipeline. Any CSV — we'll match on whatever columns you've got."
+          endpoint="/api/v1/imports/leads"
+          summarize={summarizeLeads}
+        />
+        <UploadField
+          title="Blacklist"
+          hint="Excluded from all outreach. Emails, domains, or LinkedIn URLs — one per row."
+          endpoint="/api/v1/imports/blacklist"
+          summarize={summarizeBlacklist}
+        />
+      </div>
+    </div>
+  );
+}
+
+type UploadState =
+  | { status: "idle" }
+  | { status: "uploading" }
+  | { status: "done"; message: string }
+  | { status: "error"; message: string };
+
+function UploadField<T>({
+  title,
+  hint,
+  endpoint,
+  summarize,
+}: {
+  title: string;
+  hint: string;
+  endpoint: string;
+  summarize: (data: T) => string;
+}) {
+  const [state, setState] = useState<UploadState>({ status: "idle" });
+
+  async function handleFile(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    // Reset so picking the same file again still fires onChange.
+    event.target.value = "";
+    if (!file) return;
+
+    setState({ status: "uploading" });
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      const res = await fetch(endpoint, {
+        method: "POST",
+        credentials: "include",
+        body,
+      });
+      if (!res.ok) throw new Error("request failed");
+      const data = (await res.json()) as T;
+      setState({ status: "done", message: summarize(data) });
+    } catch {
+      setState({
+        status: "error",
+        message: "Upload failed. Check the file and try again.",
+      });
+    }
+  }
+
+  const busy = state.status === "uploading";
+  const label = busy
+    ? "Uploading…"
+    : state.status === "done"
+      ? "Replace file"
+      : "Upload CSV";
+
+  return (
+    <div className="rounded-xl border border-line bg-paper/40 p-4">
+      <h3 className="m-0 text-[15px] font-semibold">{title}</h3>
+      <p className="m-0 mt-1.5 text-[13px] leading-relaxed text-ink-faint">{hint}</p>
+      <label
+        className={`mt-3 inline-flex items-center gap-2 rounded-lg border border-tide/40 bg-surface px-3.5 py-2 text-[13px] font-semibold text-tide transition-colors hover:border-tide hover:bg-tide-wash ${
+          busy ? "pointer-events-none opacity-60" : "cursor-pointer"
+        }`}
+      >
+        <input
+          type="file"
+          accept=".csv,text/csv"
+          className="hidden"
+          onChange={handleFile}
+          disabled={busy}
+        />
+        {label}
+      </label>
+      {state.status === "done" && (
+        <p className="m-0 mt-2.5 text-[13px] font-medium text-emerald-700">
+          {state.message}
+        </p>
+      )}
+      {state.status === "error" && (
+        <p
+          className="m-0 mt-2.5 text-[13px] font-medium text-red-700"
+          role="alert"
+        >
+          {state.message}
+        </p>
+      )}
     </div>
   );
 }
