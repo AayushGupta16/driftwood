@@ -199,47 +199,29 @@ function LoggedInView({ user, onLogout }: { user: User; onLogout: () => void }) 
 
       <main className="mx-auto w-full max-w-3xl flex-1 px-5 py-12 sm:px-8 sm:py-16">
         {user.is_approved ? (
-          <ApprovedView user={user} displayName={displayName} />
+          <ApprovedView user={user} />
         ) : (
-          <PendingView user={user} />
+          <PendingView />
         )}
       </main>
     </>
   );
 }
 
-function PageHead({
-  email,
-  heading,
-  sub,
-}: {
-  email: string;
-  heading: string;
-  sub: string;
-}) {
+function PageHead({ heading }: { heading: string }) {
   return (
-    <header>
-      <p className="m-0 font-mono text-[14px] text-ink-faint">{email}</p>
-      <h1 className="m-0 mt-2.5 text-[clamp(2rem,4.6vw,2.6rem)] font-semibold leading-[1.08] tracking-[-0.015em]">
-        {heading}
-      </h1>
-      <p className="m-0 mt-2.5 max-w-xl text-[15.5px] leading-relaxed text-ink-soft">
-        {sub}
-      </p>
-    </header>
+    <h1 className="m-0 text-[clamp(2rem,4.6vw,2.6rem)] font-semibold leading-[1.08] tracking-[-0.015em]">
+      {heading}
+    </h1>
   );
 }
 
 /* ---------- pending (awaiting approval) ---------- */
 
-function PendingView({ user }: { user: User }) {
+function PendingView() {
   return (
     <>
-      <PageHead
-        email={user.email}
-        heading="You're on the list."
-        sub="Your account is created and pending review. We'll email you the moment your workspace is switched on — usually within a day."
-      />
+      <PageHead heading="You're on the list." />
 
       <ChecklistCard
         title="What happens next"
@@ -266,27 +248,14 @@ function PendingView({ user }: { user: User }) {
 
 /* ---------- approved (workspace live) ---------- */
 
-function ApprovedView({
-  user,
-  displayName,
-}: {
-  user: User;
-  displayName: string;
-}) {
+function ApprovedView({ user }: { user: User }) {
   const connected = user.linkedin_connected;
+  const firstName = user.name.split(" ")[0] || user.email;
 
   return (
     <>
       <LinkedInBanner />
-      <PageHead
-        email={user.email}
-        heading={`Welcome back, ${displayName}.`}
-        sub={
-          connected
-            ? "Setup's complete. We're warming up your first campaigns — they'll appear here shortly."
-            : "Your workspace is live. One step left before campaigns can start."
-        }
-      />
+      <PageHead heading={`Welcome back, ${firstName}.`} />
 
       <AccountStrip connected={connected} />
 
