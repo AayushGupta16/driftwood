@@ -1,9 +1,12 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { Wordmark } from "./components/Chrome";
 
 /* /dashboard — Google-login-gated shell. Talks to the same-origin /auth/*
    endpoints (vite proxy in dev, vercel rewrite in prod), so every request
-   must send the first-party session cookie. */
+   must send the first-party session cookie.
+
+   Deliberately bare-bones: the page exists to let approved users connect
+   their accounts. Campaigns, demos and updates go out over Slack, not here. */
 
 type User = {
   id: string;
@@ -18,6 +21,9 @@ type AuthState =
   | { status: "loading" }
   | { status: "logged-out" }
   | { status: "logged-in"; user: User };
+
+const CARD =
+  "rounded-2xl border border-line bg-surface shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_16px_40px_-26px_rgba(22,24,29,0.4)]";
 
 function GoogleMark({ className }: { className?: string }) {
   return (
@@ -50,28 +56,11 @@ function LinkedInMark({ className }: { className?: string }) {
   );
 }
 
-const CARD =
-  "rounded-2xl border border-line bg-surface shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_16px_40px_-26px_rgba(22,24,29,0.4)]";
-
-function Pill({
-  tone,
-  children,
-}: {
-  tone: "active" | "pending";
-  children: ReactNode;
-}) {
-  const cls =
-    tone === "active"
-      ? "border-emerald-600/25 bg-emerald-500/10 text-emerald-700"
-      : "border-amber-600/25 bg-amber-500/10 text-amber-700";
-  const dot = tone === "active" ? "bg-emerald-500" : "bg-amber-500";
+function CheckMark({ className }: { className?: string }) {
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-[11px] font-medium uppercase tracking-[0.04em] ${cls}`}
-    >
-      <span className={`size-1.5 rounded-full ${dot}`} aria-hidden="true" />
-      {children}
-    </span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={className}>
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
   );
 }
 
@@ -141,7 +130,7 @@ function LoggedOutView() {
           Sign in to your dashboard
         </h1>
         <p className="mx-auto mt-2.5 max-w-[30ch] text-[15px] leading-relaxed text-ink-soft">
-          See the campaigns and prospect demos we&rsquo;re building for you.
+          Connect your accounts and we&rsquo;ll take it from there.
         </p>
         <a
           href="/auth/login"
@@ -166,7 +155,7 @@ function LoggedInView({ user, onLogout }: { user: User; onLogout: () => void }) 
   return (
     <>
       <header className="sticky top-0 z-40 border-b border-line/70 bg-paper/85 shadow-[0_10px_28px_-24px_rgba(22,24,29,0.5)] backdrop-blur-md">
-        <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-8">
+        <nav className="mx-auto flex h-16 max-w-5xl items-center justify-between px-5 sm:px-8">
           <a href="/" className="text-[18px] text-ink no-underline">
             <Wordmark markSize="size-8" />
           </a>
@@ -197,21 +186,17 @@ function LoggedInView({ user, onLogout }: { user: User; onLogout: () => void }) 
         </nav>
       </header>
 
-      <main className="mx-auto w-full max-w-3xl flex-1 px-5 py-12 sm:px-8 sm:py-16">
-        {user.is_approved ? (
-          <ApprovedView user={user} />
-        ) : (
-          <PendingView />
-        )}
+      <main className="mx-auto w-full max-w-xl flex-1 px-5 py-14 sm:px-8 sm:py-18">
+        {user.is_approved ? <ApprovedView user={user} /> : <PendingView />}
       </main>
     </>
   );
 }
 
-function PageHead({ heading }: { heading: string }) {
+function Heading({ children }: { children: string }) {
   return (
-    <h1 className="m-0 text-[clamp(2rem,4.6vw,2.6rem)] font-semibold leading-[1.08] tracking-[-0.015em]">
-      {heading}
+    <h1 className="m-0 text-[clamp(1.9rem,4.4vw,2.5rem)] font-semibold leading-[1.08] tracking-[-0.015em]">
+      {children}
     </h1>
   );
 }
@@ -221,27 +206,13 @@ function PageHead({ heading }: { heading: string }) {
 function PendingView() {
   return (
     <>
-      <PageHead heading="You're on the list." />
-
-      <ChecklistCard
-        title="What happens next"
-        aside={<Pill tone="pending">Pending review</Pill>}
-      >
-        <Step state="done" num={1} title="Account created">
-          You&rsquo;re signed in with Google. Nothing else to do here.
-        </Step>
-        <Step state="now" num={2} title="We review &amp; approve">
-          Our team confirms fit and switches on your workspace. You&rsquo;ll get
-          an email.
-        </Step>
-        <Step state="soon" num={3} title="Connect &amp; launch" tag="soon">
-          Link LinkedIn and watch your first prospect demos roll in.
-        </Step>
-      </ChecklistCard>
-
-      <p className="mt-6 text-center font-mono text-[12.5px] text-ink-faint">
-        Questions? Reply to your welcome email and we&rsquo;ll get right back.
-      </p>
+      <Heading>You&rsquo;re on the list.</Heading>
+      <div className={`mt-7 ${CARD} p-7 sm:p-8`}>
+        <p className="m-0 text-[15.5px] leading-relaxed text-ink-soft">
+          Your account is created and pending review. We&rsquo;ll email you the
+          moment your workspace is ready — usually within a day.
+        </p>
+      </div>
     </>
   );
 }
@@ -249,146 +220,18 @@ function PendingView() {
 /* ---------- approved (workspace live) ---------- */
 
 function ApprovedView({ user }: { user: User }) {
-  const connected = user.linkedin_connected;
   const firstName = user.name.split(" ")[0] || user.email;
 
   return (
     <>
       <LinkedInBanner />
-      <PageHead heading={`Welcome back, ${firstName}.`} />
-
-      <AccountStrip connected={connected} />
-
-      <ChecklistCard
-        title={connected ? "You're all set" : "Finish setup"}
-        aside={
-          connected ? (
-            <Pill tone="active">Setup complete</Pill>
-          ) : (
-            <span className="font-mono text-[12px] text-ink-faint">1 of 2 done</span>
-          )
-        }
-      >
-        <Step state="done" num={1} title="Account approved">
-          Your workspace is provisioned and ready.
-        </Step>
-        <LinkedInStep connected={connected} />
-        <Step
-          state="soon"
-          num={3}
-          title="Campaigns &amp; prospect demos"
-          tag="coming soon"
-        >
-          Once you&rsquo;re connected, your campaigns and the demos we build for
-          each prospect show up right here.
-        </Step>
-      </ChecklistCard>
+      <Heading>{`Welcome back, ${firstName}.`}</Heading>
+      <LinkedInCard connected={user.linkedin_connected} />
     </>
   );
 }
 
-function AccountStrip({ connected }: { connected: boolean }) {
-  return (
-    <div className="mt-7 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line">
-      <div className="bg-surface px-5 py-3.5">
-        <p className="m-0 font-mono text-[11px] uppercase tracking-[0.08em] text-ink-faint">
-          Status
-        </p>
-        <div className="mt-2">
-          <Pill tone="active">Active</Pill>
-        </div>
-      </div>
-      <div className="bg-surface px-5 py-3.5">
-        <p className="m-0 font-mono text-[11px] uppercase tracking-[0.08em] text-ink-faint">
-          LinkedIn
-        </p>
-        <p
-          className={`m-0 mt-2.5 text-[14.5px] font-medium ${
-            connected ? "text-emerald-700" : "text-ink-soft"
-          }`}
-        >
-          {connected ? "Connected" : "Not connected"}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-/* ---------- checklist primitives ---------- */
-
-function ChecklistCard({
-  title,
-  aside,
-  children,
-}: {
-  title: string;
-  aside?: ReactNode;
-  children: ReactNode;
-}) {
-  return (
-    <section className={`mt-7 overflow-hidden ${CARD}`}>
-      <div className="flex items-center justify-between gap-3 px-6 pt-5 pb-2">
-        <h2 className="m-0 text-[16px] font-semibold tracking-[-0.01em]">
-          {title}
-        </h2>
-        {aside}
-      </div>
-      <div>{children}</div>
-    </section>
-  );
-}
-
-function Step({
-  state,
-  num,
-  title,
-  tag,
-  children,
-  action,
-}: {
-  state: "done" | "now" | "soon";
-  num: number;
-  title: string;
-  tag?: string;
-  children: ReactNode;
-  action?: ReactNode;
-}) {
-  const iconCls =
-    state === "done"
-      ? "border-emerald-600/20 bg-emerald-500/10 text-emerald-700"
-      : state === "now"
-        ? "border-tide/25 bg-tide-wash text-tide"
-        : "border-dashed border-sand bg-paper text-ink-faint";
-
-  return (
-    <div className="flex gap-4 border-t border-line px-6 py-5">
-      <span
-        className={`flex size-8 shrink-0 items-center justify-center rounded-[10px] border font-mono text-[13px] font-semibold ${iconCls}`}
-        aria-hidden="true"
-      >
-        {state === "done" ? "✓" : num}
-      </span>
-      <div className="min-w-0 flex-1">
-        <h3 className="m-0 flex flex-wrap items-center gap-2.5 text-[15px] font-semibold tracking-[-0.005em]">
-          <span>{title}</span>
-          {tag && (
-            <span className="rounded-md border border-sand px-1.5 py-0.5 font-mono text-[10.5px] font-medium uppercase tracking-[0.06em] text-ink-faint">
-              {tag}
-            </span>
-          )}
-        </h3>
-        <p className="m-0 mt-1.5 max-w-md text-[14px] leading-relaxed text-ink-soft">
-          {children}
-        </p>
-        {action && <div className="mt-3.5">{action}</div>}
-      </div>
-    </div>
-  );
-}
-
-/* ---------- LinkedIn step (owns connect/disconnect state) ---------- */
-
-function LinkedInStep({ connected }: { connected: boolean }) {
+function LinkedInCard({ connected }: { connected: boolean }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -425,60 +268,65 @@ function LinkedInStep({ connected }: { connected: boolean }) {
     }
   }
 
-  const errorNode = error && (
-    <p className="m-0 mt-3 text-[13.5px] font-medium text-red-700" role="alert">
-      {error}
-    </p>
-  );
+  return (
+    <div className={`mt-7 ${CARD} p-7 sm:p-8`}>
+      <div className="flex items-start gap-4">
+        <span
+          className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${
+            connected
+              ? "bg-emerald-500/10 text-emerald-700"
+              : "bg-[#0A66C2]/10 text-[#0A66C2]"
+          }`}
+          aria-hidden="true"
+        >
+          {connected ? (
+            <CheckMark className="size-6" />
+          ) : (
+            <LinkedInMark className="size-6" />
+          )}
+        </span>
+        <div className="min-w-0 flex-1">
+          <h2 className="m-0 text-[18px] font-semibold tracking-[-0.01em]">
+            {connected ? "LinkedIn connected" : "Connect your LinkedIn"}
+          </h2>
+          <p className="m-0 mt-2 text-[15px] leading-relaxed text-ink-soft">
+            {connected
+              ? "You're all set — your LinkedIn is linked and ready. We'll take it from here."
+              : "This is all we need to get started. You'll sign in on a secure Unipile page — we never see your password."}
+          </p>
 
-  if (connected) {
-    return (
-      <Step
-        state="done"
-        num={2}
-        title="LinkedIn connected"
-        action={
-          <>
+          {connected ? (
             <button
               type="button"
               onClick={handleDisconnect}
               disabled={pending}
-              className="cursor-pointer rounded-xl border border-line bg-surface px-3.5 py-2 text-[13.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-5 cursor-pointer rounded-xl border border-line bg-surface px-3.5 py-2 text-[13.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
             >
               {pending ? "Disconnecting…" : "Disconnect"}
             </button>
-            {errorNode}
-          </>
-        }
-      >
-        Linked and ready for outreach.
-      </Step>
-    );
-  }
+          ) : (
+            <button
+              type="button"
+              onClick={handleConnect}
+              disabled={pending}
+              className="mt-5 inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-xl bg-[#0A66C2] px-4.5 py-2.5 text-[14.5px] font-semibold text-white shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] transition-all hover:-translate-y-px hover:bg-[#095196] disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <LinkedInMark className="size-4.5 shrink-0" />
+              {pending ? "Connecting…" : "Connect LinkedIn"}
+            </button>
+          )}
 
-  return (
-    <Step
-      state="now"
-      num={2}
-      title="Connect your LinkedIn"
-      action={
-        <>
-          <button
-            type="button"
-            onClick={handleConnect}
-            disabled={pending}
-            className="inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-xl bg-[#0A66C2] px-4.5 py-2.5 text-[14.5px] font-semibold text-white shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] transition-all hover:-translate-y-px hover:bg-[#095196] disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <LinkedInMark className="size-4.5 shrink-0" />
-            {pending ? "Connecting…" : "Connect LinkedIn"}
-          </button>
-          {errorNode}
-        </>
-      }
-    >
-      We use this to run your outreach. You&rsquo;ll sign in on a secure Unipile
-      page — we never see your password.
-    </Step>
+          {error && (
+            <p
+              className="m-0 mt-3 text-[13.5px] font-medium text-red-700"
+              role="alert"
+            >
+              {error}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 
