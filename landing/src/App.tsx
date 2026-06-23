@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import WaitlistForm from "./components/WaitlistForm";
-import { Nav, Footer, useReveal } from "./components/Chrome";
+import { Nav, Footer } from "./components/Chrome";
+import { useReveal } from "./components/useReveal";
 import { StoryCallCard } from "./components/story/StoryCallCard";
 import { StoryConsoleCard } from "./components/story/StoryConsoleCard";
 import { StorySlackCard } from "./components/story/StorySlackCard";

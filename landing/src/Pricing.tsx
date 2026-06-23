@@ -1,5 +1,6 @@
 import { useEffect } from "react";
-import { Nav, Footer, useReveal } from "./components/Chrome";
+import { Nav, Footer } from "./components/Chrome";
+import { useReveal } from "./components/useReveal";
 import WaitlistForm from "./components/WaitlistForm";
 
 const TIERS = [
