@@ -10,6 +10,7 @@ type User = {
   email: string;
   name: string;
   avatar_url: string | null;
+  is_approved: boolean;
 };
 
 type AuthState =
@@ -169,11 +170,13 @@ function LoggedInView({
           Logged in as {user.email}
         </p>
         <h1 className="m-0 mt-3 text-[clamp(2rem,4.6vw,2.8rem)] font-semibold leading-tight tracking-[-0.015em]">
-          Welcome back, {displayName}.
+          {user.is_approved ? `Welcome back, ${displayName}.` : "You're on the list."}
         </h1>
         <div className="mt-9 rounded-2xl border border-line bg-surface p-8 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_16px_40px_-26px_rgba(22,24,29,0.4)]">
           <p className="m-0 text-[17px] leading-relaxed text-ink-soft">
-            Your dashboard is coming soon.
+            {user.is_approved
+              ? "Your dashboard is coming soon."
+              : "Your account is created and pending access. We'll enable your dashboard shortly — keep an eye on your inbox."}
           </p>
         </div>
       </main>
