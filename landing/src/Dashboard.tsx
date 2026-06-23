@@ -291,7 +291,7 @@ function LinkedInCard({ connected }: { connected: boolean }) {
           </h2>
           <p className="m-0 mt-2 text-[15px] leading-relaxed text-ink-soft">
             {connected
-              ? "You're all set — your LinkedIn is linked and ready. We'll take it from here."
+              ? "You're connected! We'll take it from here."
               : "This is all we need to get started. You'll sign in on a secure Unipile page — we never see your password."}
           </p>
 
