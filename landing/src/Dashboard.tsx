@@ -219,41 +219,125 @@ function PendingView() {
 
 /* ---------- approved (workspace live) ---------- */
 
+/* ---------- dashboard summary (GET /api/v1/dashboard/summary) ---------- */
+
+type Sending = {
+  invites_sent: number;
+  invites_cap: number;
+  messages_sent: number;
+  messages_cap: number;
+  within_limits: boolean;
+  last_action_at: string | null;
+};
+type Funnel = {
+  active: number;
+  contacted: number;
+  replied: number;
+  meetings: number;
+};
+type Results = {
+  meetings: number;
+  meetings_delta_7d: number;
+  replies: number;
+  replies_delta_7d: number;
+  reply_rate: number;
+};
+type DashboardSummary = {
+  linkedin_connected: boolean;
+  sending: Sending | null;
+  funnel: Funnel;
+  results: Results;
+};
+
+type SummaryState =
+  | { status: "loading" }
+  | { status: "error" }
+  | { status: "ready"; summary: DashboardSummary };
+
+/* "4m ago" / "2h ago" / "3d ago"; null/invalid -> null (caller renders nothing). */
+function relativeTime(iso: string | null): string | null {
+  if (!iso) return null;
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return null;
+  const secs = Math.max(0, Math.round((Date.now() - then) / 1000));
+  if (secs < 60) return `${secs}s ago`;
+  const mins = Math.round(secs / 60);
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.round(hours / 24)}d ago`;
+}
+
 function ApprovedView({ user }: { user: User }) {
   const firstName = user.name.split(" ")[0] || user.email;
+  const [summary, setSummary] = useState<SummaryState>({ status: "loading" });
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/v1/dashboard/summary", {
+          credentials: "include",
+        });
+        if (!res.ok) throw new Error("request failed");
+        const data = (await res.json()) as DashboardSummary;
+        if (!cancelled) setSummary({ status: "ready", summary: data });
+      } catch {
+        if (!cancelled) setSummary({ status: "error" });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <>
       <LinkedInBanner />
       <Heading>{`Welcome back, ${firstName}.`}</Heading>
-      <LinkedInCard connected={user.linkedin_connected} />
+
+      {summary.status === "loading" && (
+        <div className="mt-7 flex justify-center py-10">
+          <span
+            className="size-6 animate-spin rounded-full border-2 border-line border-t-tide"
+            role="status"
+            aria-label="Loading dashboard"
+          />
+        </div>
+      )}
+
+      {summary.status === "error" && (
+        <p
+          className="mt-7 text-[14px] font-medium text-red-700"
+          role="alert"
+        >
+          Couldn&rsquo;t load your dashboard. Please refresh.
+        </p>
+      )}
+
+      {summary.status === "ready" && (
+        <>
+          {summary.summary.linkedin_connected && summary.summary.sending ? (
+            <StatusStrip sending={summary.summary.sending} />
+          ) : (
+            <LinkedInCard connected={user.linkedin_connected} />
+          )}
+          <ResultsRow results={summary.summary.results} />
+          <FunnelCard funnel={summary.summary.funnel} />
+        </>
+      )}
+
       <ListsCard />
     </>
   );
 }
 
-function LinkedInCard({ connected }: { connected: boolean }) {
+/* shared disconnect logic — reused by LinkedInCard and the status strip. */
+function useDisconnect() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleConnect() {
-    setPending(true);
-    setError(null);
-    try {
-      const res = await fetch("/linkedin/connect", {
-        method: "POST",
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("request failed");
-      const data = (await res.json()) as { url: string };
-      window.location.href = data.url;
-    } catch {
-      setError("Couldn't start the connection. Please try again.");
-      setPending(false);
-    }
-  }
-
-  async function handleDisconnect() {
+  async function disconnect() {
     setPending(true);
     setError(null);
     try {
@@ -266,6 +350,201 @@ function LinkedInCard({ connected }: { connected: boolean }) {
     } catch {
       setError("Couldn't disconnect. Please try again.");
       setPending(false);
+    }
+  }
+
+  return { pending, error, disconnect };
+}
+
+/* 1 · STATUS — is it on & safe. Mirrors the mockup's .status card. */
+function StatusStrip({ sending }: { sending: Sending }) {
+  const { pending, error, disconnect } = useDisconnect();
+  const rel = relativeTime(sending.last_action_at);
+
+  return (
+    <div className={`mt-7 ${CARD} p-5 sm:p-6`}>
+      <div className="flex items-center gap-3.5">
+        <span
+          className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-emerald-600/25 bg-emerald-500/10 text-emerald-700"
+          aria-hidden="true"
+        >
+          <CheckMark className="size-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="text-[15px] font-semibold tracking-[-0.01em]">
+            LinkedIn connected &amp; sending
+          </div>
+          <div className="mt-1 text-[12.5px] leading-relaxed text-ink-soft">
+            <span className="tabular-nums">
+              {sending.invites_sent}/{sending.invites_cap}
+            </span>{" "}
+            invites ·{" "}
+            <span className="tabular-nums">
+              {sending.messages_sent}/{sending.messages_cap}
+            </span>{" "}
+            messages today ·{" "}
+            <span
+              className={
+                sending.within_limits
+                  ? "font-medium text-emerald-700"
+                  : "font-medium text-amber-700"
+              }
+            >
+              {sending.within_limits ? "within safe limits" : "approaching limit"}
+            </span>
+            {rel && <> · last action {rel}</>}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={disconnect}
+          disabled={pending}
+          className="ml-auto shrink-0 cursor-pointer rounded-lg border border-line bg-surface px-3 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {pending ? "Disconnecting…" : "Disconnect"}
+        </button>
+      </div>
+      {error && (
+        <p className="m-0 mt-3 text-[13px] font-medium text-red-700" role="alert">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/* 2 · OUTCOMES — three stat cards; meetings is the focal tide card. */
+function ResultsRow({ results }: { results: Results }) {
+  return (
+    <div className="mt-7">
+      <div className="mb-2.5 font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-faint">
+        Results
+      </div>
+      <div className="flex gap-3">
+        <StatCard
+          label="Meetings booked"
+          value={String(results.meetings)}
+          delta={results.meetings_delta_7d}
+          focal
+        />
+        <StatCard
+          label="Replies"
+          value={String(results.replies)}
+          delta={results.replies_delta_7d}
+        />
+        <StatCard
+          label="Reply rate"
+          value={`${(results.reply_rate * 100).toFixed(1)}%`}
+        />
+      </div>
+    </div>
+  );
+}
+
+function StatCard({
+  label,
+  value,
+  delta,
+  focal = false,
+}: {
+  label: string;
+  value: string;
+  delta?: number;
+  focal?: boolean;
+}) {
+  return (
+    <div
+      className={`flex-1 rounded-xl border p-4 ${
+        focal
+          ? "border-tide/25 bg-gradient-to-br from-tide-wash to-surface"
+          : "border-line bg-surface"
+      }`}
+    >
+      <div className="text-[12px] font-medium text-ink-faint">{label}</div>
+      <div
+        className={`mt-1.5 text-[28px] font-semibold leading-[1.05] tracking-[-0.02em] tabular-nums ${
+          focal ? "text-tide-deep" : "text-ink"
+        }`}
+      >
+        {value}
+      </div>
+      {delta !== undefined && delta > 0 && (
+        <div className="mt-1 text-[12px] font-medium text-emerald-700 tabular-nums">
+          ↑ {delta} this week
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* 3 · FUNNEL — horizontal bars, tide fill on a tide-wash track. */
+function FunnelCard({ funnel }: { funnel: Funnel }) {
+  const rows: { name: string; count: number }[] = [
+    { name: "Active", count: funnel.active },
+    { name: "Contacted", count: funnel.contacted },
+    { name: "Replied", count: funnel.replied },
+    { name: "Meeting", count: funnel.meetings },
+  ];
+  const active = funnel.active;
+
+  return (
+    <div className="mt-7">
+      <div className="mb-2.5 font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-faint">
+        Pipeline
+      </div>
+      <div className={`${CARD} p-5 sm:p-6`}>
+        <div className="flex flex-col gap-2.5">
+          {rows.map((row) => {
+            const pct = active > 0 ? (row.count / active) * 100 : 0;
+            return (
+              <div
+                key={row.name}
+                className="grid grid-cols-[84px_1fr_auto] items-center gap-3"
+              >
+                <span className="text-[13px] text-ink-soft">{row.name}</span>
+                <div className="h-[22px] overflow-hidden rounded-md bg-tide-wash">
+                  <div
+                    className="h-full rounded-md bg-gradient-to-r from-tide to-tide-deep"
+                    style={{ width: `max(3px, ${pct}%)` }}
+                  />
+                </div>
+                <span className="whitespace-nowrap text-right text-[13px] font-semibold tabular-nums">
+                  {row.count.toLocaleString()}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LinkedInCard({ connected }: { connected: boolean }) {
+  const [connectPending, setConnectPending] = useState(false);
+  const [connectError, setConnectError] = useState<string | null>(null);
+  const {
+    pending: disconnectPending,
+    error: disconnectError,
+    disconnect: handleDisconnect,
+  } = useDisconnect();
+  const pending = connectPending || disconnectPending;
+  const error = connectError ?? disconnectError;
+
+  async function handleConnect() {
+    setConnectPending(true);
+    setConnectError(null);
+    try {
+      const res = await fetch("/linkedin/connect", {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("request failed");
+      const data = (await res.json()) as { url: string };
+      window.location.href = data.url;
+    } catch {
+      setConnectError("Couldn't start the connection. Please try again.");
+      setConnectPending(false);
     }
   }
 
