@@ -8,6 +8,10 @@
       "source": "/auth/:path*",
       "destination": "https://driftwood-backend-767736087356.us-central1.run.app/auth/:path*"
     },
+    {
+      "source": "/linkedin/:path*",
+      "destination": "https://driftwood-backend-767736087356.us-central1.run.app/linkedin/:path*"
+    },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

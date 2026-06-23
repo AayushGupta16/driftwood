@@ -11,6 +11,7 @@ type User = {
   name: string;
   avatar_url: string | null;
   is_approved: boolean;
+  linkedin_connected: boolean;
 };
 
 type AuthState =
@@ -122,6 +123,124 @@ function LoggedOutView() {
   );
 }
 
+function LinkedInMark({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={className}>
+      <path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zm1.78 13.02H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.22.79 24 1.77 24h20.45c.98 0 1.78-.78 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z" />
+    </svg>
+  );
+}
+
+function LinkedInBanner() {
+  const params = new URLSearchParams(window.location.search);
+  const status = params.get("linkedin");
+  if (status !== "connected" && status !== "failed") return null;
+
+  const connected = status === "connected";
+  return (
+    <div
+      role="status"
+      className={`mb-8 rounded-xl border px-4 py-3 text-[14.5px] font-medium ${
+        connected
+          ? "border-emerald-600/30 bg-emerald-500/10 text-emerald-800"
+          : "border-red-600/30 bg-red-500/10 text-red-800"
+      }`}
+    >
+      {connected ? "LinkedIn connected!" : "Connection failed, try again."}
+    </div>
+  );
+}
+
+function LinkedInCard({ connected }: { connected: boolean }) {
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleConnect() {
+    setPending(true);
+    setError(null);
+    try {
+      const res = await fetch("/linkedin/connect", {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("request failed");
+      const data = (await res.json()) as { url: string };
+      window.location.href = data.url;
+    } catch {
+      setError("Couldn't start the connection. Please try again.");
+      setPending(false);
+    }
+  }
+
+  async function handleDisconnect() {
+    setPending(true);
+    setError(null);
+    try {
+      const res = await fetch("/linkedin/disconnect", {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("request failed");
+      window.location.reload();
+    } catch {
+      setError("Couldn't disconnect. Please try again.");
+      setPending(false);
+    }
+  }
+
+  return (
+    <div className="mt-6 rounded-2xl border border-line bg-surface p-8 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_16px_40px_-26px_rgba(22,24,29,0.4)]">
+      {connected ? (
+        <>
+          <h2 className="m-0 flex items-center gap-2.5 text-[18px] font-semibold tracking-[-0.01em]">
+            <LinkedInMark className="size-5 shrink-0 text-[#0A66C2]" />
+            LinkedIn connected
+            <span className="text-emerald-600" aria-hidden="true">
+              &#10003;
+            </span>
+          </h2>
+          <p className="m-0 mt-2 text-[15px] leading-relaxed text-ink-soft">
+            Your LinkedIn account is linked and ready for outreach.
+          </p>
+          <button
+            type="button"
+            onClick={handleDisconnect}
+            disabled={pending}
+            className="mt-5 cursor-pointer rounded-xl border border-line bg-surface px-3.5 py-2 text-[14px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {pending ? "Disconnecting…" : "Disconnect"}
+          </button>
+        </>
+      ) : (
+        <>
+          <h2 className="m-0 flex items-center gap-2.5 text-[18px] font-semibold tracking-[-0.01em]">
+            <LinkedInMark className="size-5 shrink-0 text-[#0A66C2]" />
+            Connect your LinkedIn
+          </h2>
+          <p className="m-0 mt-2 max-w-md text-[15px] leading-relaxed text-ink-soft">
+            We use this to run your outreach. You&rsquo;ll be taken to a secure
+            Unipile page to sign in.
+          </p>
+          <button
+            type="button"
+            onClick={handleConnect}
+            disabled={pending}
+            className="mt-5 inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-xl bg-[#0A66C2] px-4.5 py-2.5 text-[15px] font-semibold text-white shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] transition-all hover:-translate-y-px hover:bg-[#095196] disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <LinkedInMark className="size-4.5 shrink-0" />
+            {pending ? "Connecting…" : "Connect LinkedIn"}
+          </button>
+        </>
+      )}
+      {error && (
+        <p className="m-0 mt-3 text-[13.5px] font-medium text-red-700" role="alert">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function LoggedInView({
   user,
   onLogout,
@@ -166,6 +285,7 @@ function LoggedInView({
       </header>
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-14 sm:px-8 sm:py-18">
+        {user.is_approved && <LinkedInBanner />}
         <p className="m-0 font-mono text-[14px] text-ink-faint">
           Logged in as {user.email}
         </p>
@@ -179,6 +299,9 @@ function LoggedInView({
               : "Your account is created and pending access. We'll enable your dashboard shortly — keep an eye on your inbox."}
           </p>
         </div>
+        {user.is_approved && (
+          <LinkedInCard connected={user.linkedin_connected} />
+        )}
       </main>
     </>
   );
