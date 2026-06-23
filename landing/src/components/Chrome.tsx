@@ -16,12 +16,20 @@ export function Nav({ homePrefix = "" }: { homePrefix?: string }) {
         <a href={homePrefix || "#top"} className="text-[19px] text-ink no-underline">
           <Wordmark markSize="size-8" />
         </a>
-        <a
-          href="#join"
-          className="rounded-xl bg-ink px-4.5 py-2 text-[14px] font-semibold text-paper no-underline shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] transition-all hover:-translate-y-px hover:bg-tide-deep"
-        >
-          Get early access
-        </a>
+        <div className="flex items-center gap-5 sm:gap-6">
+          <a
+            href="/dashboard"
+            className="text-[14px] font-medium text-ink-soft no-underline transition-colors hover:text-ink"
+          >
+            Log in
+          </a>
+          <a
+            href="#join"
+            className="rounded-xl bg-ink px-4.5 py-2 text-[14px] font-semibold text-paper no-underline shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] transition-all hover:-translate-y-px hover:bg-tide-deep"
+          >
+            Get early access
+          </a>
+        </div>
       </nav>
     </header>
   );
