@@ -186,7 +186,7 @@ function LoggedInView({ user, onLogout }: { user: User; onLogout: () => void }) 
         </nav>
       </header>
 
-      <main className="mx-auto w-full max-w-xl flex-1 px-5 py-14 sm:px-8 sm:py-18">
+      <main className="mx-auto w-full max-w-5xl flex-1 px-5 py-14 sm:px-8 sm:py-18">
         {user.is_approved ? <ApprovedView user={user} /> : <PendingView />}
       </main>
     </>
@@ -205,7 +205,7 @@ function Heading({ children }: { children: string }) {
 
 function PendingView() {
   return (
-    <>
+    <div className="mx-auto max-w-xl">
       <Heading>You&rsquo;re on the list.</Heading>
       <div className={`mt-7 ${CARD} p-7 sm:p-8`}>
         <p className="m-0 text-[15.5px] leading-relaxed text-ink-soft">
@@ -213,7 +213,7 @@ function PendingView() {
           moment your workspace is ready — usually within a day.
         </p>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -296,38 +296,20 @@ function ApprovedView({ user }: { user: User }) {
       <LinkedInBanner />
       <Heading>{`Welcome back, ${firstName}.`}</Heading>
 
-      {summary.status === "loading" && (
-        <div className="mt-7 flex justify-center py-10">
-          <span
-            className="size-6 animate-spin rounded-full border-2 border-line border-t-tide"
-            role="status"
-            aria-label="Loading dashboard"
-          />
-        </div>
-      )}
+      {/* top bar — connect prompt when LinkedIn isn't connected, otherwise the
+          slim sending-status strip once the summary loads. */}
+      {!user.linkedin_connected && <LinkedInCard connected={false} />}
+      {user.linkedin_connected &&
+        summary.status === "ready" &&
+        summary.summary.sending && (
+          <StatusStrip sending={summary.summary.sending} />
+        )}
 
-      {summary.status === "error" && (
-        <p
-          className="mt-7 text-[14px] font-medium text-red-700"
-          role="alert"
-        >
-          Couldn&rsquo;t load your dashboard. Please refresh.
-        </p>
-      )}
-
-      {summary.status === "ready" && (
-        <>
-          {summary.summary.linkedin_connected && summary.summary.sending ? (
-            <StatusStrip sending={summary.summary.sending} />
-          ) : (
-            <LinkedInCard connected={user.linkedin_connected} />
-          )}
-          <ResultsRow results={summary.summary.results} />
-          <FunnelCard funnel={summary.summary.funnel} />
-        </>
-      )}
-
-      <ListsCard />
+      {/* two equal-height columns: metrics left, lists right. */}
+      <div className="mt-3.5 grid grid-cols-1 items-stretch gap-3.5 lg:grid-cols-[1.45fr_1fr]">
+        <MetricsCard state={summary} />
+        <ListsCard />
+      </div>
     </>
   );
 }
@@ -362,13 +344,13 @@ function StatusStrip({ sending }: { sending: Sending }) {
   const rel = relativeTime(sending.last_action_at);
 
   return (
-    <div className={`mt-7 ${CARD} p-5 sm:p-6`}>
-      <div className="flex items-center gap-3.5">
+    <div className={`mt-7 ${CARD} p-4`}>
+      <div className="flex items-center gap-3">
         <span
-          className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-emerald-600/25 bg-emerald-500/10 text-emerald-700"
+          className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-emerald-600/25 bg-emerald-500/10 text-emerald-700"
           aria-hidden="true"
         >
-          <CheckMark className="size-5" />
+          <CheckMark className="size-[18px]" />
         </span>
         <div className="min-w-0 flex-1">
           <div className="text-[15px] font-semibold tracking-[-0.01em]">
@@ -413,72 +395,86 @@ function StatusStrip({ sending }: { sending: Sending }) {
   );
 }
 
-/* 2 · OUTCOMES — three stat cards; meetings is the focal tide card. */
-function ResultsRow({ results }: { results: Results }) {
+/* small section eyebrow shared by the metrics + lists cards. */
+function SectionLabel({ children }: { children: string }) {
   return (
-    <div className="mt-7">
-      <div className="mb-2.5 font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-faint">
-        Results
-      </div>
-      <div className="flex gap-3">
-        <StatCard
-          label="Meetings booked"
-          value={String(results.meetings)}
-          delta={results.meetings_delta_7d}
-          focal
-        />
-        <StatCard
-          label="Replies"
-          value={String(results.replies)}
-          delta={results.replies_delta_7d}
-        />
-        <StatCard
-          label="Reply rate"
-          value={`${(results.reply_rate * 100).toFixed(1)}%`}
-        />
-      </div>
+    <div className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-faint">
+      {children}
     </div>
   );
 }
 
-function StatCard({
-  label,
-  value,
-  delta,
-  focal = false,
-}: {
-  label: string;
-  value: string;
-  delta?: number;
-  focal?: boolean;
-}) {
+/* left column — Results (inline) + Pipeline funnel in one card. Owns the
+   summary's loading/error/ready states so the grid stays stable. */
+function MetricsCard({ state }: { state: SummaryState }) {
   return (
-    <div
-      className={`flex-1 rounded-xl border p-4 ${
-        focal
-          ? "border-tide/25 bg-gradient-to-br from-tide-wash to-surface"
-          : "border-line bg-surface"
-      }`}
-    >
-      <div className="text-[12px] font-medium text-ink-faint">{label}</div>
-      <div
-        className={`mt-1.5 text-[28px] font-semibold leading-[1.05] tracking-[-0.02em] tabular-nums ${
-          focal ? "text-tide-deep" : "text-ink"
-        }`}
-      >
-        {value}
-      </div>
-      {delta !== undefined && delta > 0 && (
-        <div className="mt-1 text-[12px] font-medium text-emerald-700 tabular-nums">
-          ↑ {delta} this week
+    <div className={`${CARD} flex flex-col p-5 sm:p-6`}>
+      {state.status === "loading" && (
+        <div className="flex flex-1 items-center justify-center py-12">
+          <span
+            className="size-6 animate-spin rounded-full border-2 border-line border-t-tide"
+            role="status"
+            aria-label="Loading metrics"
+          />
         </div>
+      )}
+      {state.status === "error" && (
+        <p className="m-0 text-[14px] font-medium text-red-700" role="alert">
+          Couldn&rsquo;t load your metrics. Please refresh.
+        </p>
+      )}
+      {state.status === "ready" && (
+        <>
+          <SectionLabel>Results</SectionLabel>
+          <InlineResults results={state.summary.results} />
+          <div className="my-4 h-px bg-line/70" />
+          <SectionLabel>Pipeline</SectionLabel>
+          <FunnelBars funnel={state.summary.funnel} />
+        </>
       )}
     </div>
   );
 }
 
-/* 3 · FUNNEL — horizontal bars, tide fill on a tide-wash track. */
-function FunnelCard({ funnel }: { funnel: Funnel }) {
+/* Results — meetings is the focal figure; replies + reply rate support it,
+   separated by hairline dividers (no boxes). */
+function InlineResults({ results }: { results: Results }) {
+  return (
+    <div className="mt-2.5 flex gap-4">
+      <div className="flex-1">
+        <div className="text-[11.5px] font-medium text-tide">Meetings booked</div>
+        <div className="mt-1.5 text-[32px] font-semibold leading-none tracking-[-0.02em] tabular-nums text-tide-deep">
+          {results.meetings}
+        </div>
+        {results.meetings_delta_7d > 0 && (
+          <div className="mt-1.5 text-[11px] font-semibold text-emerald-700 tabular-nums">
+            ↑ {results.meetings_delta_7d} this week
+          </div>
+        )}
+      </div>
+      <div className="flex-1 border-l border-line pl-4">
+        <div className="text-[11.5px] font-medium text-ink-faint">Replies</div>
+        <div className="mt-1.5 text-[22px] font-semibold leading-none tracking-[-0.02em] tabular-nums text-ink">
+          {results.replies}
+        </div>
+        {results.replies_delta_7d > 0 && (
+          <div className="mt-1.5 text-[11px] font-semibold text-emerald-700 tabular-nums">
+            ↑ {results.replies_delta_7d} this week
+          </div>
+        )}
+      </div>
+      <div className="flex-1 border-l border-line pl-4">
+        <div className="text-[11.5px] font-medium text-ink-faint">Reply rate</div>
+        <div className="mt-1.5 text-[22px] font-semibold leading-none tracking-[-0.02em] tabular-nums text-ink">
+          {(results.reply_rate * 100).toFixed(1)}%
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* Pipeline funnel — horizontal bars, tide fill on a tide-wash track. */
+function FunnelBars({ funnel }: { funnel: Funnel }) {
   const rows: { name: string; count: number }[] = [
     { name: "Active", count: funnel.active },
     { name: "Contacted", count: funnel.contacted },
@@ -488,34 +484,27 @@ function FunnelCard({ funnel }: { funnel: Funnel }) {
   const active = funnel.active;
 
   return (
-    <div className="mt-7">
-      <div className="mb-2.5 font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-faint">
-        Pipeline
-      </div>
-      <div className={`${CARD} p-5 sm:p-6`}>
-        <div className="flex flex-col gap-2.5">
-          {rows.map((row) => {
-            const pct = active > 0 ? (row.count / active) * 100 : 0;
-            return (
+    <div className="mt-2.5 flex flex-col gap-2">
+      {rows.map((row) => {
+        const pct = active > 0 ? (row.count / active) * 100 : 0;
+        return (
+          <div
+            key={row.name}
+            className="grid grid-cols-[74px_1fr_auto] items-center gap-3"
+          >
+            <span className="text-[12.5px] text-ink-soft">{row.name}</span>
+            <div className="h-[18px] overflow-hidden rounded-md bg-tide-wash">
               <div
-                key={row.name}
-                className="grid grid-cols-[84px_1fr_auto] items-center gap-3"
-              >
-                <span className="text-[13px] text-ink-soft">{row.name}</span>
-                <div className="h-[22px] overflow-hidden rounded-md bg-tide-wash">
-                  <div
-                    className="h-full rounded-md bg-gradient-to-r from-tide to-tide-deep"
-                    style={{ width: `max(3px, ${pct}%)` }}
-                  />
-                </div>
-                <span className="whitespace-nowrap text-right text-[13px] font-semibold tabular-nums">
-                  {row.count.toLocaleString()}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+                className="h-full rounded-md bg-gradient-to-r from-tide to-tide-deep"
+                style={{ width: `max(3px, ${pct}%)` }}
+              />
+            </div>
+            <span className="whitespace-nowrap text-right text-[12.5px] font-semibold tabular-nums">
+              {row.count.toLocaleString()}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -648,20 +637,22 @@ function summarizeBlacklist(r: BlacklistImportResult): string {
 
 function ListsCard() {
   return (
-    <div className={`mt-7 ${CARD} p-7 sm:p-8`}>
-      <h2 className="m-0 text-[18px] font-semibold tracking-[-0.01em]">Your lists</h2>
-      <p className="m-0 mt-2 text-[15px] leading-relaxed text-ink-soft">
+    <div className={`${CARD} flex flex-col p-5 sm:p-6`}>
+      <SectionLabel>Your lists</SectionLabel>
+      <p className="m-0 mt-2 text-[13px] leading-relaxed text-ink-soft">
         Optional — we source leads for you either way. Add your own contacts, or a
         do-not-contact list we&rsquo;ll always exclude.
       </p>
-      <div className="mt-5 grid gap-4 sm:grid-cols-2">
+      <div className="mt-3.5 flex flex-1 flex-col gap-3">
         <UploadField
+          className="flex-1"
           title="Lead list"
           hint="Contacts to add to your pipeline. Any CSV — we'll match on whatever columns you've got."
           endpoint="/api/v1/imports/leads"
           summarize={summarizeLeads}
         />
         <UploadField
+          className="flex-1"
           title="Blacklist"
           hint="Excluded from all outreach. Emails, domains, or LinkedIn URLs — one per row."
           endpoint="/api/v1/imports/blacklist"
@@ -679,11 +670,13 @@ type UploadState =
   | { status: "error"; message: string };
 
 function UploadField<T>({
+  className = "",
   title,
   hint,
   endpoint,
   summarize,
 }: {
+  className?: string;
   title: string;
   hint: string;
   endpoint: string;
@@ -725,7 +718,7 @@ function UploadField<T>({
       : "Upload CSV";
 
   return (
-    <div className="rounded-xl border border-line bg-paper/40 p-4">
+    <div className={`rounded-xl border border-line bg-paper/40 p-4 ${className}`}>
       <h3 className="m-0 text-[15px] font-semibold">{title}</h3>
       <p className="m-0 mt-1.5 text-[13px] leading-relaxed text-ink-faint">{hint}</p>
       <label
