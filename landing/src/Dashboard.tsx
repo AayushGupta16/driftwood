@@ -242,11 +242,16 @@ type Results = {
   replies_delta_7d: number;
   reply_rate: number;
 };
+type Lists = {
+  leads: number;
+  blacklist: number;
+};
 type DashboardSummary = {
   linkedin_connected: boolean;
   sending: Sending | null;
   funnel: Funnel;
   results: Results;
+  lists: Lists;
 };
 
 type SummaryState =
@@ -308,7 +313,7 @@ function ApprovedView({ user }: { user: User }) {
       {/* two equal-height columns: metrics left, lists right. */}
       <div className="mt-3.5 grid grid-cols-1 items-stretch gap-3.5 lg:grid-cols-[1.45fr_1fr]">
         <MetricsCard state={summary} />
-        <ListsCard />
+        <ListsCard state={summary} />
       </div>
     </>
   );
@@ -623,7 +628,7 @@ function summarizeLeads(r: LeadImportResult): string {
   if (r.skipped_duplicate)
     parts.push(`${r.skipped_duplicate} already in your pipeline`);
   if (r.skipped_suppressed) parts.push(`${r.skipped_suppressed} on your blacklist`);
-  if (r.errors.length) parts.push(`${r.errors.length} skipped (no email)`);
+  if (r.errors.length) parts.push(`${r.errors.length} skipped (empty rows)`);
   return parts.join(" · ") + ".";
 }
 
@@ -635,7 +640,19 @@ function summarizeBlacklist(r: BlacklistImportResult): string {
   return parts.join(" · ") + ".";
 }
 
-function ListsCard() {
+function ListsCard({ state }: { state: SummaryState }) {
+  const lists = state.status === "ready" ? state.summary.lists : null;
+  const leadsLine =
+    lists &&
+    (lists.leads
+      ? `${plural(lists.leads, "lead", "leads")} in your pipeline`
+      : "No leads yet.");
+  const blacklistLine =
+    lists &&
+    (lists.blacklist
+      ? `${plural(lists.blacklist, "entry", "entries")} on your blacklist`
+      : "Nothing blacklisted yet.");
+
   return (
     <div className={`${CARD} flex flex-col p-5 sm:p-6`}>
       <SectionLabel>Your lists</SectionLabel>
@@ -647,9 +664,10 @@ function ListsCard() {
         <UploadField
           className="flex-1"
           title="Lead list"
-          hint="Contacts to add to your pipeline. Any CSV — we'll match on whatever columns you've got."
+          hint="Contacts to add to your pipeline. Any CSV — name, email, or LinkedIn; we'll match on whatever columns you've got and enrich the rest."
           endpoint="/api/v1/imports/leads"
           summarize={summarizeLeads}
+          current={leadsLine}
         />
         <UploadField
           className="flex-1"
@@ -657,6 +675,7 @@ function ListsCard() {
           hint="Excluded from all outreach. Emails, domains, or LinkedIn URLs — one per row."
           endpoint="/api/v1/imports/blacklist"
           summarize={summarizeBlacklist}
+          current={blacklistLine}
         />
       </div>
     </div>
@@ -675,12 +694,16 @@ function UploadField<T>({
   hint,
   endpoint,
   summarize,
+  current,
 }: {
   className?: string;
   title: string;
   hint: string;
   endpoint: string;
   summarize: (data: T) => string;
+  /** Persisted state from the summary (e.g. "200 leads in your pipeline"),
+   *  shown until a fresh upload this session replaces it. */
+  current?: string | null;
 }) {
   const [state, setState] = useState<UploadState>({ status: "idle" });
 
@@ -739,6 +762,9 @@ function UploadField<T>({
         <p className="m-0 mt-2.5 text-[13px] font-medium text-emerald-700">
           {state.message}
         </p>
+      )}
+      {state.status !== "done" && state.status !== "error" && current && (
+        <p className="m-0 mt-2.5 text-[13px] font-medium text-ink-soft">{current}</p>
       )}
       {state.status === "error" && (
         <p
