@@ -1,4 +1,13 @@
-import { useEffect, useState, type ChangeEvent } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type ReactNode,
+} from "react";
 import { Wordmark } from "./components/Chrome";
 
 /* /dashboard — Google-login-gated shell. Talks to the same-origin /auth/*
@@ -64,6 +73,74 @@ function CheckMark({ className }: { className?: string }) {
   );
 }
 
+/* ---------- toasts ---------- */
+
+type ToastVariant = "success" | "error" | "info";
+type ToastItem = { id: number; message: string; variant: ToastVariant };
+
+const ToastContext = createContext<
+  (message: string, variant?: ToastVariant) => void
+>(() => {});
+
+function useToast() {
+  return useContext(ToastContext);
+}
+
+function ToastProvider({ children }: { children: ReactNode }) {
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
+  const nextId = useRef(0);
+
+  const dismiss = useCallback((id: number) => {
+    setToasts((ts) => ts.filter((t) => t.id !== id));
+  }, []);
+
+  const push = useCallback(
+    (message: string, variant: ToastVariant = "info") => {
+      const id = nextId.current++;
+      setToasts((ts) => [...ts, { id, message, variant }]);
+      window.setTimeout(() => dismiss(id), 5000);
+    },
+    [dismiss],
+  );
+
+  return (
+    <ToastContext.Provider value={push}>
+      {children}
+      <div
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex flex-col items-center gap-2 px-4 pb-5 sm:items-end sm:px-6"
+        aria-live="polite"
+      >
+        {toasts.map((t) => (
+          <Toast key={t.id} toast={t} onDismiss={() => dismiss(t.id)} />
+        ))}
+      </div>
+    </ToastContext.Provider>
+  );
+}
+
+const TOAST_STYLE: Record<ToastVariant, { ring: string; glyph: string; tint: string }> =
+  {
+    success: { ring: "border-emerald-600/30", glyph: "✓", tint: "text-emerald-600" },
+    error: { ring: "border-red-600/30", glyph: "✕", tint: "text-red-600" },
+    info: { ring: "border-tide/30", glyph: "•", tint: "text-tide" },
+  };
+
+function Toast({ toast, onDismiss }: { toast: ToastItem; onDismiss: () => void }) {
+  const s = TOAST_STYLE[toast.variant];
+  return (
+    <div
+      role="status"
+      onClick={onDismiss}
+      className={`toast-in pointer-events-auto flex w-full max-w-sm cursor-pointer items-start gap-2.5 rounded-xl border bg-surface px-4 py-3 text-[13.5px] font-medium text-ink shadow-[0_18px_40px_-20px_rgba(22,24,29,0.55)] ${s.ring}`}
+    >
+      <span aria-hidden="true" className={`mt-px shrink-0 text-[15px] leading-none ${s.tint}`}>
+        {s.glyph}
+      </span>
+      <span className="leading-snug">{toast.message}</span>
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const [auth, setAuth] = useState<AuthState>({ status: "loading" });
 
@@ -97,13 +174,15 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="grain relative flex min-h-screen flex-col overflow-x-clip">
-      {auth.status === "loading" && <LoadingView />}
-      {auth.status === "logged-out" && <LoggedOutView />}
-      {auth.status === "logged-in" && (
-        <LoggedInView user={auth.user} onLogout={handleLogout} />
-      )}
-    </div>
+    <ToastProvider>
+      <div className="grain relative flex min-h-screen flex-col overflow-x-clip">
+        {auth.status === "loading" && <LoadingView />}
+        {auth.status === "logged-out" && <LoggedOutView />}
+        {auth.status === "logged-in" && (
+          <LoggedInView user={auth.user} onLogout={handleLogout} />
+        )}
+      </div>
+    </ToastProvider>
   );
 }
 
@@ -277,24 +356,26 @@ function ApprovedView({ user }: { user: User }) {
   const firstName = user.name.split(" ")[0] || user.email;
   const [summary, setSummary] = useState<SummaryState>({ status: "loading" });
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch("/api/v1/dashboard/summary", {
-          credentials: "include",
-        });
-        if (!res.ok) throw new Error("request failed");
-        const data = (await res.json()) as DashboardSummary;
-        if (!cancelled) setSummary({ status: "ready", summary: data });
-      } catch {
-        if (!cancelled) setSummary({ status: "error" });
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+  // Reusable so a successful import can refresh the counts + funnel in place.
+  const loadSummary = useCallback(async () => {
+    try {
+      const res = await fetch("/api/v1/dashboard/summary", {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("request failed");
+      const data = (await res.json()) as DashboardSummary;
+      setSummary({ status: "ready", summary: data });
+    } catch {
+      // Don't blank out an already-loaded summary if a refresh fails.
+      setSummary((prev) => (prev.status === "ready" ? prev : { status: "error" }));
+    }
   }, []);
+
+  useEffect(() => {
+    void (async () => {
+      await loadSummary();
+    })();
+  }, [loadSummary]);
 
   return (
     <>
@@ -313,7 +394,7 @@ function ApprovedView({ user }: { user: User }) {
       {/* two equal-height columns: metrics left, lists right. */}
       <div className="mt-3.5 grid grid-cols-1 items-stretch gap-3.5 lg:grid-cols-[1.45fr_1fr]">
         <MetricsCard state={summary} />
-        <ListsCard state={summary} />
+        <ListsCard state={summary} onImported={loadSummary} />
       </div>
     </>
   );
@@ -640,7 +721,13 @@ function summarizeBlacklist(r: BlacklistImportResult): string {
   return parts.join(" · ") + ".";
 }
 
-function ListsCard({ state }: { state: SummaryState }) {
+function ListsCard({
+  state,
+  onImported,
+}: {
+  state: SummaryState;
+  onImported: () => void;
+}) {
   const lists = state.status === "ready" ? state.summary.lists : null;
   const leadsLine =
     lists &&
@@ -668,6 +755,7 @@ function ListsCard({ state }: { state: SummaryState }) {
           endpoint="/api/v1/imports/leads"
           summarize={summarizeLeads}
           current={leadsLine}
+          onImported={onImported}
         />
         <UploadField
           className="flex-1"
@@ -676,17 +764,14 @@ function ListsCard({ state }: { state: SummaryState }) {
           endpoint="/api/v1/imports/blacklist"
           summarize={summarizeBlacklist}
           current={blacklistLine}
+          onImported={onImported}
         />
       </div>
     </div>
   );
 }
 
-type UploadState =
-  | { status: "idle" }
-  | { status: "uploading" }
-  | { status: "done"; message: string }
-  | { status: "error"; message: string };
+type UploadStatus = "idle" | "uploading" | "done" | "error";
 
 function UploadField<T>({
   className = "",
@@ -695,6 +780,7 @@ function UploadField<T>({
   endpoint,
   summarize,
   current,
+  onImported,
 }: {
   className?: string;
   title: string;
@@ -704,8 +790,11 @@ function UploadField<T>({
   /** Persisted state from the summary (e.g. "200 leads in your pipeline"),
    *  shown until a fresh upload this session replaces it. */
   current?: string | null;
+  /** Called after a successful import so the parent can refresh the counts. */
+  onImported?: () => void;
 }) {
-  const [state, setState] = useState<UploadState>({ status: "idle" });
+  const [status, setStatus] = useState<UploadStatus>("idle");
+  const toast = useToast();
 
   async function handleFile(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -713,7 +802,7 @@ function UploadField<T>({
     event.target.value = "";
     if (!file) return;
 
-    setState({ status: "uploading" });
+    setStatus("uploading");
     try {
       const body = new FormData();
       body.append("file", file);
@@ -724,19 +813,19 @@ function UploadField<T>({
       });
       if (!res.ok) throw new Error("request failed");
       const data = (await res.json()) as T;
-      setState({ status: "done", message: summarize(data) });
+      setStatus("done");
+      toast(`${title}: ${summarize(data)}`, "success");
+      onImported?.();
     } catch {
-      setState({
-        status: "error",
-        message: "Upload failed. Check the file and try again.",
-      });
+      setStatus("error");
+      toast(`${title} upload failed. Check the file and try again.`, "error");
     }
   }
 
-  const busy = state.status === "uploading";
+  const busy = status === "uploading";
   const label = busy
-    ? "Uploading…"
-    : state.status === "done"
+    ? "Importing…"
+    : status === "done"
       ? "Replace file"
       : "Upload CSV";
 
@@ -756,23 +845,26 @@ function UploadField<T>({
           onChange={handleFile}
           disabled={busy}
         />
+        {busy && (
+          <span
+            aria-hidden="true"
+            className="size-3.5 animate-spin rounded-full border-[1.5px] border-tide/30 border-t-tide"
+          />
+        )}
         {label}
       </label>
-      {state.status === "done" && (
-        <p className="m-0 mt-2.5 text-[13px] font-medium text-emerald-700">
-          {state.message}
-        </p>
-      )}
-      {state.status !== "done" && state.status !== "error" && current && (
-        <p className="m-0 mt-2.5 text-[13px] font-medium text-ink-soft">{current}</p>
-      )}
-      {state.status === "error" && (
-        <p
-          className="m-0 mt-2.5 text-[13px] font-medium text-red-700"
-          role="alert"
+      {busy ? (
+        <div
+          role="progressbar"
+          aria-label={`Importing ${title.toLowerCase()}`}
+          className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-line/70"
         >
-          {state.message}
-        </p>
+          <div className="progress-indeterminate h-full w-1/4 rounded-full bg-tide" />
+        </div>
+      ) : (
+        current && (
+          <p className="m-0 mt-2.5 text-[13px] font-medium text-ink-soft">{current}</p>
+        )
       )}
     </div>
   );

@@ -125,6 +125,16 @@ body {
   50% { opacity: 0.35; }
 }
 
+/* indeterminate progress bar (import in flight — no server-side % to track) */
+.progress-indeterminate {
+  animation: progress-indeterminate 1.15s ease-in-out infinite;
+}
+
+@keyframes progress-indeterminate {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(420%); }
+}
+
 /* progress fill on send button */
 .send-fill {
   animation: send-fill 0.4s ease-out both;
@@ -157,6 +167,7 @@ body {
   .pop-in,
   .toast-in,
   .pulse-dot,
+  .progress-indeterminate,
   .send-fill,
   .tide-ring-pulse {
     animation: none;
