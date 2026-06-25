@@ -1,4 +1,5 @@
 import HelmMark from "./HelmMark";
+import BookDemo from "./BookDemo";
 
 export function Wordmark({ className, markSize = "size-7" }: { className?: string; markSize?: string }) {
   return (
@@ -19,16 +20,11 @@ export function Nav({ homePrefix = "" }: { homePrefix?: string }) {
         <div className="flex items-center gap-5 sm:gap-6">
           <a
             href="/dashboard"
-            className="text-[14px] font-medium text-ink-soft no-underline transition-colors hover:text-ink"
+            className="hidden text-[14px] font-medium text-ink-soft no-underline transition-colors hover:text-ink min-[480px]:block"
           >
             Log in
           </a>
-          <a
-            href="#join"
-            className="rounded-xl bg-ink px-4.5 py-2 text-[14px] font-semibold text-paper no-underline shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] transition-all hover:-translate-y-px hover:bg-tide-deep"
-          >
-            Get early access
-          </a>
+          <BookDemo variant="nav" />
         </div>
       </nav>
     </header>

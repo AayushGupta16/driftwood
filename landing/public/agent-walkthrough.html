@@ -1,0 +1,324 @@
+<!doctype html><html><head><meta charset="utf-8"><title>driftwood — agent walkthrough</title>
+<style>
+*{box-sizing:border-box;margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+.mono{font-family:ui-monospace,'SF Mono',Menlo,monospace}
+body{background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:8px 24px 18px;color:#16181d}
+.ctx{font-size:clamp(29px,4.6vw,40px);font-weight:700;letter-spacing:-.02em;color:#16181d;text-align:center;margin-bottom:3px}
+.ctx b{color:#16181d;font-weight:700}
+.cap{font-size:clamp(20px,3vw,26px);font-weight:600;color:#16181d;min-height:32px;text-align:center;margin-bottom:12px;transition:opacity .3s}
+.frame{width:100%;max-width:840px;border-radius:16px;background:#fff;border:1px solid #e2dccb;box-shadow:0 40px 90px -40px rgba(13,60,91,.45);overflow:hidden}
+.bar{display:flex;align-items:center;gap:10px;padding:11px 14px;background:#f1ece1;border-bottom:1px solid #e6ddca}
+.lights{display:flex;gap:7px}.lights i{width:11px;height:11px;border-radius:50%;display:block}
+.l1{background:#ec6a5e}.l2{background:#f3bf4f}.l3{background:#61c554}
+.url{flex:1;background:#fff;border:1px solid #e6ddca;border-radius:8px;padding:5px 12px;font-size:12.5px;color:#5b6470;display:flex;align-items:center;gap:7px}
+.lock{width:9px;height:9px;border:1.6px solid #9aa3af;border-radius:2px;border-bottom-width:5px;flex:none}
+.client{flex:none;display:flex;align-items:center;gap:6px;font-size:12px;color:#15557e;background:#eef4f8;border:1px solid #d8e6ef;border-radius:8px;padding:5px 10px}
+.client .dia{width:8px;height:8px;background:#15557e;border-radius:2px;transform:rotate(45deg)}
+.content{position:relative;height:498px;background:#fff;overflow:hidden}
+.panel{position:absolute;inset:0;opacity:0;transition:opacity .5s ease;pointer-events:none}
+.frame[data-scene="0"] .p0,.frame[data-scene="1"] .p1,.frame[data-scene="2"] .p2,.frame[data-scene="3"] .p3{opacity:1}
+.cursor{position:absolute;left:0;top:0;width:22px;height:22px;z-index:60;pointer-events:none;transition:transform .5s cubic-bezier(.4,0,.2,1)}
+.cursor svg{filter:drop-shadow(0 2px 3px rgba(0,0,0,.35))}
+.ripple{position:absolute;width:16px;height:16px;border-radius:50%;background:rgba(21,85,126,.4);transform:translate(-50%,-50%) scale(0);z-index:55;pointer-events:none;opacity:0}
+.ripple.go{animation:rip .55s ease-out}
+@keyframes rip{from{transform:translate(-50%,-50%) scale(.2);opacity:.65}to{transform:translate(-50%,-50%) scale(4);opacity:0}}
+/* 0 leads */
+.p0{display:flex;flex-direction:column}
+.p0head{display:flex;align-items:baseline;gap:10px;padding:18px 24px 12px}
+.p0head b{font-size:16px}.p0head .cnt{font-size:12.5px;color:#9aa3af}
+.p0srch{margin:0 24px 6px;border:1px solid #ebeef1;border-radius:9px;padding:8px 13px;font-size:13px;color:#aab1bc;display:flex;align-items:center;gap:9px}
+.llist{flex:1;overflow:hidden;padding:4px 14px 0}
+.lfilters{display:flex;gap:8px;padding:2px 24px 10px}
+.lchip{font-size:12px;color:#5f6368;border:1px solid #e4e4e4;border-radius:20px;padding:5px 12px}
+.lchip.on{background:#e8f0fe;color:#1a73e8;border-color:#d2e3fd;font-weight:500}
+.lrow{display:flex;align-items:center;gap:12px;padding:8px 12px;border-radius:9px;border:1px solid transparent}
+.lav{width:30px;height:30px;border-radius:7px;background:var(--c);flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:11.5px}
+.lmain{flex:1;min-width:0}.lmain b{font-size:14px;display:block}.lmain i{font-size:11.5px;color:#9aa3af;font-style:normal}
+.lright{display:flex;align-items:center;gap:10px;flex:none}
+.lrate{font-size:12px;color:#70757a;white-space:nowrap}
+.ltag{font-size:10.5px;border-radius:20px;padding:3px 9px;background:#f3eee2;color:#9a7b3e;border:1px solid #ece3cf;white-space:nowrap}
+.ltag.warn{background:#fcefe9;color:#b5562f;border-color:#f3d9cd}
+#leadJoe{border-color:#cfe0ec;background:#f2f8fc}
+#leadJoe .ltag{background:#e2ecf3;color:#15557e;border-color:#cfe0ec}
+.fade{position:absolute;left:0;right:0;bottom:0;height:64px;background:linear-gradient(transparent,#fff)}
+/* 1 google local */
+.p1{display:flex;flex-direction:column}
+.ghead{padding:15px 22px 0;border-bottom:1px solid #ebeef1}
+.gtop{display:flex;align-items:center;gap:18px}
+.glogo{font-size:21px;font-weight:500;letter-spacing:-.5px}
+.gsb{flex:1;max-width:440px;border:1px solid #dfe1e5;border-radius:24px;padding:8px 16px;display:flex;align-items:center;gap:11px;font-size:14px;box-shadow:0 1px 5px rgba(32,33,36,.08)}
+.gmag{width:14px;height:14px;border:2px solid #9aa3af;border-radius:50%;position:relative;flex:none}.gmag:after{content:'';position:absolute;width:2px;height:6px;background:#9aa3af;right:-3px;bottom:-3px;transform:rotate(-45deg)}
+.gtabs{display:flex;gap:22px;margin-top:13px;font-size:13px;color:#5f6368}
+.gtabs .act{color:#1a73e8;font-weight:500;border-bottom:3px solid #1a73e8;padding-bottom:10px}
+.gtabs span:not(.act){padding-bottom:10px}
+.glocal{flex:1;display:flex;min-height:0}
+.gcards{width:57%;padding:10px 16px;overflow:hidden;border-right:1px solid #ebeef1;position:relative}
+.gcard{display:flex;gap:13px;padding:12px;border-radius:11px;border:1px solid transparent}
+#joeResult{border-color:#e6e9ee;box-shadow:0 1px 6px rgba(32,33,36,.08)}
+.gc-main{flex:1}
+.gc-name{font-size:17px;color:#1a0dab;font-weight:400}
+.gc-rate{font-size:12.5px;color:#70757a;margin-top:2px;display:flex;align-items:center;gap:5px}
+.gc-rate b{color:#202124;font-weight:400}.st{color:#e7711b;letter-spacing:-1px}
+.gc-meta{font-size:12.5px;color:#70757a;margin-top:2px}
+.gc-open{font-size:12.5px;margin-top:2px}.gc-open b{color:#188038;font-weight:400}
+.gc-chips{display:flex;gap:7px;margin-top:9px}
+.gc-chips span{font-size:12px;color:#1a73e8;border:1px solid #dadce0;border-radius:18px;padding:4px 12px}
+.gc-prim{background:#e8f0fe;border-color:#e8f0fe!important}
+.gfilters{display:flex;gap:8px;margin-bottom:9px}
+.gchip{font-size:11.5px;color:#3c4043;border:1px solid #dadce0;border-radius:16px;padding:4px 11px}
+.gc-serv{font-size:12px;color:#70757a;margin-top:4px}
+.gc-rev{font-size:12px;color:#5f6368;margin-top:5px;font-style:italic}
+.gc-thumb{width:76px;height:76px;border-radius:9px;flex:none;background:linear-gradient(160deg,#f0c873,#d9952f);position:relative;overflow:hidden}
+.gc-thumb:before{content:'';position:absolute;left:0;right:0;top:11px;height:8px;background:repeating-linear-gradient(90deg,#b3403a 0 11px,#f3ece0 11px 22px)}
+.gcfade{position:absolute;left:0;right:0;bottom:0;height:50px;background:linear-gradient(transparent,#fff)}
+.gmapcol{flex:1;position:relative;overflow:hidden;background:#e7eee6}
+.gmapcol .rd{position:absolute;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.03)}
+.rdv1{left:30%;top:0;bottom:0;width:7px}.rdv2{left:63%;top:0;bottom:0;width:10px}
+.rdh1{top:24%;left:0;right:0;height:7px}.rdh2{top:53%;left:0;right:0;height:10px}.rdh3{top:80%;left:0;right:0;height:6px}
+.rdb{left:-15%;top:-12%;width:150%;height:9px;transform:rotate(33deg);transform-origin:left top}
+.mpark{position:absolute;left:7%;top:60%;width:19%;height:26%;background:#cfe6c2;border-radius:9px}
+.mwater{position:absolute;right:0;top:0;bottom:0;width:13%;background:linear-gradient(90deg,#bcd8e8,#a6cadd)}
+.pin{position:absolute;z-index:3;width:20px;height:20px;background:#ea4335;border-radius:50% 50% 50% 0;transform:translate(-50%,-100%) rotate(-45deg);box-shadow:0 5px 12px -3px rgba(0,0,0,.4)}
+.pin:after{content:'';position:absolute;inset:5.5px;background:#fff;border-radius:50%}
+.pin.big{width:27px;height:27px}
+/* 2 build */
+.p2{background:#fbfcfd;display:flex;align-items:center;justify-content:center}
+.b2wrap{display:flex;align-items:center;gap:24px}
+.srcmenu{width:300px;background:#fffdf3;border:1px solid #d8c9a0;border-radius:4px;box-shadow:0 16px 34px -18px rgba(0,0,0,.55);font-family:Georgia,'Times New Roman',serif;color:#3a2f1c;transform:rotate(-1.4deg);overflow:hidden}
+.smchk{height:12px;background:repeating-linear-gradient(45deg,#b3262a 0 9px,#fff 9px 18px)}
+.smhead{text-align:center;padding:9px 10px 5px}
+.smtitle{font-size:22px;font-weight:800;color:#b3262a;font-style:italic;line-height:1}
+.smtag{font-size:9px;color:#2e7d46;font-weight:700;letter-spacing:.12em;margin-top:3px}
+.smcols{display:flex;gap:13px;padding:3px 14px 7px}
+.smcol{flex:1;min-width:0}
+.smsec{font-size:10.5px;font-weight:800;color:#b3262a;text-transform:uppercase;letter-spacing:.03em;border-bottom:1.5px solid #d8c9a0;padding-bottom:2px;margin:8px 0 3px}
+.smi,.mext{display:flex;align-items:baseline;gap:4px;font-size:11.5px;color:#3a2f1c;padding:2.5px 0;transition:opacity .3s}
+.smi .lead,.mext .lead{flex:1;border-bottom:1px dotted #c3b486;transform:translateY(-3px)}
+.pr:before{content:'$'}
+.smfoot{background:#2e7d46;color:#fff;text-align:center;font-size:9.5px;font-weight:700;letter-spacing:.05em;padding:5px}
+.flyer{position:absolute;z-index:45;background:#f1f3f6;border:1px solid #e6e9ee;border-radius:9px;padding:8px 11px;font-size:13px;display:flex;justify-content:space-between;align-items:center;color:#3c424e;box-shadow:0 12px 24px -10px rgba(13,60,91,.45);transition:transform .55s cubic-bezier(.4,0,.2,1),width .55s cubic-bezier(.4,0,.2,1)}
+.b2arrow{font-size:30px;color:#cbbd9c;font-weight:300}
+.bld{width:334px;border:1px solid #e2dccb;border-radius:14px;overflow:hidden;box-shadow:0 18px 40px -28px rgba(13,60,91,.4);background:#fff}
+.bhdr{display:flex;justify-content:space-between;align-items:center;padding:10px 13px;background:#f6f7f9;border-bottom:1px solid #eceef1}
+.burl{font-size:11.5px;color:#7a8190;background:#fff;border:1px solid #e8eaee;border-radius:6px;padding:3px 9px}
+.badges{display:flex;gap:6px}.sq{font-size:10.5px;color:#15557e;background:#e2ecf3;border:1px solid #cfe0ec;border-radius:20px;padding:2px 8px}
+.live{font-size:10.5px;color:#fff;background:#3fb98a;border-radius:20px;padding:2px 8px;opacity:0;transition:.4s .6s}
+.frame[data-scene="2"] .live{opacity:1}
+.bbody{padding:14px}.bname{font-weight:700;font-size:14px;margin-bottom:9px}
+.bshot{height:54px;border-radius:9px;margin-bottom:10px;position:relative;overflow:hidden;background:radial-gradient(ellipse at 50% 130%,rgba(244,196,108,.55),transparent 60%),linear-gradient(170deg,#2b2f37,#181b21)}
+.bshot:before{content:'';position:absolute;left:0;right:0;top:9px;height:8px;background:repeating-linear-gradient(90deg,#b3403a 0 13px,#f3ece0 13px 26px)}
+.bshot:after{content:"Joe's Pizza · Carmine St";position:absolute;left:11px;bottom:7px;font-size:10px;color:rgba(255,255,255,.82);font-family:ui-monospace,Menlo,monospace}
+.bi{display:flex;justify-content:space-between;align-items:center;background:#f1f3f6;border:1px solid #e6e9ee;border-radius:9px;padding:8px 11px;margin-top:7px;font-size:13px;opacity:0;transition:opacity .25s}
+.plus{width:20px;height:20px;border-radius:50%;background:#fff;border:1px solid #e6e9ee;color:#15557e;display:inline-flex;align-items:center;justify-content:center}
+.bco{display:flex;justify-content:space-between;align-items:center;background:#16181d;color:#fff;border-radius:9px;padding:9px 13px;margin-top:8px;font-size:12px;opacity:0;transition:opacity .3s}
+/* 3 gmail inbox + compose */
+.p3{background:#fff;overflow:hidden;display:flex;flex-direction:column}
+.gmtop{display:flex;align-items:center;gap:14px;padding:9px 16px;border-bottom:1px solid #ecedef;flex:none}
+.gmlogo{display:flex;align-items:center;gap:8px;font-size:18px;color:#5f6368}
+.gmsearch{flex:1;max-width:520px;background:#eaf1fb;border-radius:9px;padding:9px 15px;color:#6b7280;font-size:13.5px;display:flex;align-items:center;gap:12px}
+.gm{display:flex;flex:1;min-height:0}
+.gm-side{width:160px;flex:none;padding:14px 8px;border-right:1px solid #ecedef}
+.gm-comp{display:inline-flex;align-items:center;gap:8px;background:#c2e7ff;color:#001d35;border-radius:16px;padding:10px 15px;font-size:13px;font-weight:500;margin:0 6px 16px}
+.gm-nav{font-size:13.5px;color:#444746;padding:8px 14px;border-radius:0 16px 16px 0;display:flex;justify-content:space-between}
+.gm-nav.act{background:#d3e3fd;color:#0b57d0;font-weight:700}
+.gm-main{flex:1;overflow:hidden}
+.gm-row{display:flex;gap:14px;align-items:center;padding:10px 18px;border-bottom:1px solid #f4f5f6;font-size:13px}
+.gm-row .fr{width:150px;flex:none;color:#5f6368;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.gm-row .sub{flex:1;color:#5f6368;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-width:0}
+.gm-row .sub b{color:#202124;font-weight:400}
+.gm-row .tm{color:#5f6368;font-size:12px;flex:none}
+.gm-row.un{background:#fff}.gm-row.un .fr{color:#202124;font-weight:700}.gm-row.un .sub b{font-weight:700}
+.gm-row.un .dotnew{width:7px;height:7px;border-radius:50%;background:#1a73e8;flex:none}
+.dotnew{width:7px;height:7px;flex:none}
+.compose{position:absolute;right:22px;bottom:0;width:470px;background:#fff;border-radius:12px 12px 0 0;box-shadow:0 30px 70px -24px rgba(0,0,0,.45);overflow:hidden;border:1px solid #e6e9ee;border-bottom:none}
+.ctop{background:#404040;color:#fff;font-size:13px;padding:11px 16px}
+.crow{padding:9px 16px;border-bottom:1px solid #f0f1f3;font-size:13.5px;color:#3c4043}.crow .lbl{color:#8a8e9b;margin-right:8px}
+.cbody{padding:13px 16px;font-size:13.5px;color:#3c4043;line-height:1.5}
+.cdemo{display:flex;gap:11px;align-items:center;border:1px solid #e6e9ee;border-radius:10px;padding:10px;margin-top:11px}
+.cthumb{width:54px;height:42px;border-radius:7px;background:linear-gradient(135deg,#f0c873,#dd9c38);flex:none}
+.cdemo b{font-size:13px}.cdemo i{font-style:normal;font-size:11.5px;color:#15557e}
+.cfoot{display:flex;align-items:center;gap:16px;padding:11px 16px}
+#sendBtn{background:#0b57d0;color:#fff;border-radius:20px;padding:9px 22px;font-size:14px;font-weight:500}
+.ctools{display:flex;gap:16px;align-items:center;margin-left:2px}
+/* pills */
+.dots{display:flex;gap:8px;justify-content:center;margin-top:20px}
+.dot{height:8px;width:8px;border-radius:20px;background:#d8d2c1;transition:all .4s;cursor:pointer;border:none;padding:0}
+.dot:hover{background:#bcae8f}.dot.on{width:30px;background:#15557e}
+@media(max-width:620px){
+ body{padding:4px 10px 14px}
+ .content{height:600px}
+ .gtabs{gap:14px;font-size:12px}
+ .glocal{flex-direction:column}
+ .gcards{width:100%;border-right:none}
+ .gmapcol{display:none}
+ .b2wrap{flex-direction:column;gap:6px}
+ .b2arrow{transform:rotate(90deg);font-size:22px;margin:-2px 0}
+ .srcmenu{width:78%;transform:none}
+ .smcols{padding:3px 12px 6px}
+ .bld{width:100%;max-width:330px}
+ .bshot{height:46px}
+ .gm-side{display:none}
+ .gmtop{padding:7px 12px}
+ .compose{width:92%;right:4%}
+}
+</style></head>
+<body>
+<div class="ctx">How <b>Square</b> would use <b>driftwood</b></div>
+<div class="cap" id="cap">&nbsp;</div>
+<div class="frame" id="frame" data-scene="0">
+  <div class="bar"><div class="lights"><i class="l1"></i><i class="l2"></i><i class="l3"></i></div><div class="url mono"><span class="lock"></span><span id="url">driftwood</span></div><span class="client mono"><span class="dia"></span>Square</span></div>
+  <div class="content" id="content">
+    <div class="cursor" id="cursor"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M5 3l14 7-6 1.5L10 18z" fill="#16181d" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></svg></div>
+    <div class="ripple" id="ripple"></div>
+    <!-- 0 leads -->
+    <div class="panel p0"><div class="p0head"><b>Prospects</b><span class="cnt mono">214 · NYC restaurants</span></div>
+      <div class="p0srch mono"><span class="gmag" style="border-color:#c4cad2"></span>search prospects…</div>
+      <div class="lfilters mono"><span class="lchip on">No online ordering · 86</span><span class="lchip">All · 214</span><span class="lchip">Top rated</span></div>
+      <div class="llist">
+        <div class="lrow" id="leadJoe"><span class="lav" style="--c:#dd9c38">J</span><div class="lmain"><b>Joe's Pizza</b><i>Carmine St · Pizzeria · $$</i></div><div class="lright"><span class="lrate">★ 4.6 · 2.3k</span><span class="ltag">weak ordering</span></div></div>
+        <div class="lrow"><span class="lav" style="--c:#b5562f">P</span><div class="lmain"><b>Prince St Pizza</b><i>Nolita · Pizzeria · $$</i></div><div class="lright"><span class="lrate">★ 4.5 · 5.1k</span><span class="ltag warn">no online order</span></div></div>
+        <div class="lrow"><span class="lav" style="--c:#7a8c4f">R</span><div class="lmain"><b>Rubirosa</b><i>SoHo · Italian · $$$</i></div><div class="lright"><span class="lrate">★ 4.6 · 1.2k</span></div></div>
+        <div class="lrow"><span class="lav" style="--c:#c08a3e">L</span><div class="lmain"><b>L'Industrie</b><i>Williamsburg · Pizzeria · $$</i></div><div class="lright"><span class="lrate">★ 4.7 · 980</span><span class="ltag warn">weak ordering</span></div></div>
+        <div class="lrow"><span class="lav" style="--c:#9c6b3e">L</span><div class="lmain"><b>Lucali</b><i>Carroll Gardens · Pizzeria · $$$</i></div><div class="lright"><span class="lrate">★ 4.8 · 3.4k</span></div></div>
+        <div class="lrow"><span class="lav" style="--c:#b5562f">D</span><div class="lmain"><b>Di Fara Pizza</b><i>Midwood · Pizzeria · $$</i></div><div class="lright"><span class="lrate">★ 4.4 · 2.1k</span><span class="ltag warn">no online order</span></div></div>
+        <div class="lrow"><span class="lav" style="--c:#7a8c4f">S</span><div class="lmain"><b>Scarr's Pizza</b><i>LES · Pizzeria · $$</i></div><div class="lright"><span class="lrate">★ 4.6 · 1.5k</span></div></div>
+        <div class="lrow"><span class="lav" style="--c:#c08a3e">M</span><div class="lmain"><b>Mama's Too</b><i>UWS · Pizzeria · $$</i></div><div class="lright"><span class="lrate">★ 4.5 · 1.1k</span><span class="ltag">weak ordering</span></div></div>
+        <div class="lrow"><span class="lav" style="--c:#9c6b3e">R</span><div class="lmain"><b>Roberta's</b><i>Bushwick · Pizzeria · $$</i></div><div class="lright"><span class="lrate">★ 4.5 · 4.0k</span></div></div>
+      </div>
+      <div class="fade"></div>
+    </div>
+    <!-- 1 google local -->
+    <div class="panel p1"><div class="ghead">
+      <div class="gtop"><span class="glogo"><span style="color:#4285f4">G</span><span style="color:#ea4335">o</span><span style="color:#fbbc04">o</span><span style="color:#4285f4">g</span><span style="color:#34a853">l</span><span style="color:#ea4335">e</span></span>
+        <div class="gsb"><span class="gmag"></span><span>joe's pizza nyc</span></div></div>
+      <div class="gtabs"><span class="act">Maps</span><span>All</span><span>Images</span><span>News</span><span>Reviews</span></div>
+    </div>
+    <div class="glocal">
+      <div class="gcards">
+        <div class="gfilters mono"><span class="gchip">Rating ▾</span><span class="gchip">Hours ▾</span><span class="gchip">Price ▾</span></div>
+        <div class="gcard" id="joeResult"><div class="gc-main"><div class="gc-name">Joe's Pizza</div>
+          <div class="gc-rate"><b>4.6</b><span class="st">★★★★★</span>(2,310)</div>
+          <div class="gc-meta">Pizza · $ · Carmine St</div>
+          <div class="gc-open"><b>Open</b> · closes 11 PM</div>
+          <div class="gc-serv">Dine-in · Takeout · <span style="color:#b5562f">No delivery</span></div>
+          <div class="gc-rev">"Best classic NY slice — but you can't order online"</div>
+          <div class="gc-chips"><span>Website</span><span>Directions</span><span class="gc-prim">Order online</span></div></div>
+          <div class="gc-thumb"></div></div>
+        <div class="gcard"><div class="gc-main"><div class="gc-name">Joe's Pizza</div>
+          <div class="gc-rate"><b>4.4</b><span class="st">★★★★★</span>(5,108)</div>
+          <div class="gc-meta">Pizza · $ · Broadway</div>
+          <div class="gc-open"><b>Open</b> · closes 4 AM</div>
+          <div class="gc-serv">Dine-in · Takeout · Delivery</div></div>
+          <div class="gc-thumb" style="background:linear-gradient(160deg,#e8c98a,#cf9a3e)"></div></div>
+        <div class="gcard"><div class="gc-main"><div class="gc-name">Joe's Pizza of the Village</div>
+          <div class="gc-rate"><b>4.5</b><span class="st">★★★★★</span>(1,742)</div>
+          <div class="gc-meta">Pizza · $ · Greenwich Ave</div>
+          <div class="gc-open"><b>Open</b> · closes 1 AM</div>
+          <div class="gc-serv">Dine-in · Takeout · Delivery</div></div>
+          <div class="gc-thumb" style="background:linear-gradient(160deg,#eccf94,#c98f33)"></div></div>
+      </div>
+      <div class="gcfade"></div>
+      <div class="gmapcol"><div class="mwater"></div><div class="mpark"></div><div class="rd rdv1"></div><div class="rd rdv2"></div><div class="rd rdh1"></div><div class="rd rdh2"></div><div class="rd rdh3"></div><div class="rd rdb"></div><div class="pin big" style="left:40%;top:42%"></div><div class="pin" style="left:66%;top:60%"></div><div class="pin" style="left:55%;top:28%"></div><div class="pin" style="left:30%;top:74%"></div></div>
+    </div></div>
+    <!-- 2 build -->
+    <div class="panel p2"><div class="b2wrap">
+      <div class="srcmenu">
+        <div class="smchk"></div>
+        <div class="smhead"><div class="smtitle">Joe's Pizza</div><div class="smtag">★ EST. 1975 · NEW YORK ★</div></div>
+        <div class="smcols">
+          <div class="smcol">
+            <div class="smsec">Slices</div>
+            <div class="smi"><span>Cheese</span><span class="lead"></span><span class="pr">3.50</span></div>
+            <div class="smi"><span>Pepperoni</span><span class="lead"></span><span class="pr">4.75</span></div>
+            <div class="smi"><span>Garlic knots</span><span class="lead"></span><span class="pr">4.00</span></div>
+            <div class="smi"><span>Sicilian</span><span class="lead"></span><span class="pr">4.50</span></div>
+            <div class="smi"><span>Whole pie</span><span class="lead"></span><span class="pr">24</span></div>
+            <div class="smsec">Sides</div>
+            <div class="mext"><span>Garlic bread</span><span class="lead"></span><span class="pr">5</span></div>
+            <div class="mext"><span>Mozz sticks</span><span class="lead"></span><span class="pr">7</span></div>
+          </div>
+          <div class="smcol">
+            <div class="smsec">Heroes</div>
+            <div class="mext"><span>Chicken parm</span><span class="lead"></span><span class="pr">11</span></div>
+            <div class="mext"><span>Meatball</span><span class="lead"></span><span class="pr">10</span></div>
+            <div class="mext"><span>Eggplant</span><span class="lead"></span><span class="pr">10</span></div>
+            <div class="smsec">Drinks</div>
+            <div class="mext"><span>Soda</span><span class="lead"></span><span class="pr">2.50</span></div>
+            <div class="mext"><span>Water</span><span class="lead"></span><span class="pr">2</span></div>
+            <div class="mext"><span>Coffee</span><span class="lead"></span><span class="pr">2</span></div>
+          </div>
+        </div>
+        <div class="smfoot">OPEN LATE · DELIVERY · (212) 555-0192</div>
+      </div>
+      <div class="b2arrow">→</div>
+      <div class="bld">
+        <div class="bhdr"><span class="burl mono">joespizza.nyc/order</span><span class="badges"><span class="sq mono">on Square</span><span class="live mono">● LIVE</span></span></div>
+        <div class="bbody"><div class="bshot"></div><div class="bname">Joe's Pizza · order online</div>
+          <div class="bi">Cheese slice <span style="display:flex;gap:9px;align-items:center;color:#7a8190">$3.50 <span class="plus">+</span></span></div>
+          <div class="bi">Pepperoni slice <span style="display:flex;gap:9px;align-items:center;color:#7a8190">$4.75 <span class="plus">+</span></span></div>
+          <div class="bi">Garlic knots <span style="display:flex;gap:9px;align-items:center;color:#7a8190">$4.00 <span class="plus">+</span></span></div>
+          <div class="bi">Sicilian slice <span style="display:flex;gap:9px;align-items:center;color:#7a8190">$4.50 <span class="plus">+</span></span></div>
+          <div class="bi">Whole pie <span style="display:flex;gap:9px;align-items:center;color:#7a8190">$24.00 <span class="plus">+</span></span></div>
+          <div class="bco mono"><span>2 slices · $8.25</span><span>Checkout →</span></div></div>
+      </div>
+    </div></div>
+    <!-- 3 gmail -->
+    <div class="panel p3">
+      <div class="gmtop">
+        <span class="gmlogo"><svg width="22" height="17" viewBox="0 0 52 40"><rect x="2" y="3" width="48" height="34" rx="5" fill="#fff" stroke="#e3e3e3" stroke-width="2"/><path d="M4 8 L26 25 L48 8" fill="none" stroke="#ea4335" stroke-width="5" stroke-linejoin="round"/></svg>Gmail</span>
+        <div class="gmsearch mono"><span class="gmag" style="border-color:#9aa3af"></span></div>
+      </div>
+      <div class="gm">
+        <div class="gm-side"><div class="gm-comp">✎ Compose</div>
+          <div class="gm-nav act"><span>Inbox</span><span>9</span></div>
+          <div class="gm-nav"><span>Starred</span></div>
+          <div class="gm-nav"><span>Sent</span></div>
+          <div class="gm-nav"><span>Drafts</span><span>2</span></div>
+        </div>
+        <div class="gm-main">
+          <div class="gm-row un"><span class="dotnew"></span><span class="fr">Maria · Rubirosa</span><span class="sub"><b>Re: your demo —</b> this is great, can we talk Thurs?</span><span class="tm">9:41 AM</span></div>
+          <div class="gm-row un"><span class="dotnew"></span><span class="fr">L'Industrie</span><span class="sub"><b>Re: ordering page —</b> interested, send details</span><span class="tm">9:12 AM</span></div>
+          <div class="gm-row"><span class="dotnew"></span><span class="fr">Square Dashboard</span><span class="sub"><b>Your weekly report is ready</b> — 18 replies this week</span><span class="tm">8:30 AM</span></div>
+          <div class="gm-row"><span class="dotnew"></span><span class="fr">Calendly</span><span class="sub"><b>New event booked</b> — Lucali, Fri 2:00 PM</span><span class="tm">8:02 AM</span></div>
+          <div class="gm-row"><span class="dotnew"></span><span class="fr">Prince St Pizza</span><span class="sub"><b>Automatic reply:</b> out of office</span><span class="tm">Yest.</span></div>
+          <div class="gm-row"><span class="dotnew"></span><span class="fr">Di Fara Pizza</span><span class="sub"><b>Re: quick question</b> — who is this?</span><span class="tm">Yest.</span></div>
+          <div class="gm-row"><span class="dotnew"></span><span class="fr">Scarr's Pizza</span><span class="sub"><b>Re: rebuilt your page</b> — love it</span><span class="tm">Mon</span></div>
+        </div>
+      </div>
+      <div class="compose">
+        <div class="ctop mono">New message</div>
+        <div class="crow"><span class="lbl">To</span>joe@joespizza.nyc</div>
+        <div class="crow"><span class="lbl">Subject</span>rebuilt your ordering page</div>
+        <div class="cbody">Hi Joe, your online ordering loses orders, so we rebuilt it on Square. It's live:
+          <div class="cdemo"><div class="cthumb"></div><div><b>joespizza.nyc/order</b><br><i>live ordering page · built for Joe's</i></div></div>
+        </div>
+        <div class="cfoot"><span id="sendBtn">Send</span><span class="ctools">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#5f6368" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h11"/></svg>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#5f6368" stroke-width="2" stroke-linecap="round"><path d="M21 11.5l-8.5 8.5a4.5 4.5 0 0 1-6.5-6.5l8.5-8.5a3 3 0 0 1 4.5 4.5l-8.6 8.5a1.5 1.5 0 0 1-2.2-2.2l7.8-7.8"/></svg>
+        </span></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="dots" id="dots"><button class="dot"></button><button class="dot"></button><button class="dot"></button></div>
+<script>
+var frame=document.getElementById('frame'),content=document.getElementById('content'),url=document.getElementById('url'),cap=document.getElementById('cap'),cursor=document.getElementById('cursor'),ripple=document.getElementById('ripple'),dots=Array.prototype.slice.call(document.querySelectorAll('.dot'));
+var steps=[
+ {p:0,u:'driftwood / leads',t:'#leadJoe',g:0,d:1700},
+ {p:1,u:'google.com/search?q=joes+pizza',t:'#joeResult',g:0,d:1900},
+ {p:2,u:'joespizza.nyc/order',t:null,g:1,d:3400},
+ {p:3,u:'mail.google.com',t:'#sendBtn',g:2,d:2200}
+];
+var caps=['Researches the prospect','Builds a custom demo','Real value, before the call'];
+var n=0,timer,HOLD=560;
+function moveTo(sel){var el=frame.querySelector(sel);if(!el)return;var f=content.getBoundingClientRect(),r=el.getBoundingClientRect();var x=r.left-f.left+r.width/2,y=r.top-f.top+r.height/2;cursor.style.transform='translate('+(x-3)+'px,'+(y-2)+'px)';setTimeout(function(){ripple.style.left=x+'px';ripple.style.top=y+'px';ripple.classList.remove('go');void ripple.offsetWidth;ripple.classList.add('go');},460);}
+function resetBuild(){frame.querySelectorAll('.p2 .bi').forEach(function(e){e.style.opacity='0'});var bco=frame.querySelector('.p2 .bco');if(bco)bco.style.opacity='0';frame.querySelectorAll('.p2 .smi').forEach(function(e){e.style.opacity='1'});Array.prototype.forEach.call(document.querySelectorAll('.flyer'),function(e){e.remove()});}
+function buildAnim(){var srcs=frame.querySelectorAll('.p2 .smi'),bis=frame.querySelectorAll('.p2 .bi'),cont=content.getBoundingClientRect();for(var i=0;i<bis.length;i++){(function(i){var s=srcs[i].getBoundingClientRect(),d=bis[i].getBoundingClientRect();var fl=document.createElement('div');fl.className='flyer';fl.innerHTML=bis[i].innerHTML;fl.style.left=(s.left-cont.left)+'px';fl.style.top=(s.top-cont.top)+'px';fl.style.width=s.width+'px';content.appendChild(fl);var dx=d.left-s.left,dy=d.top-s.top;setTimeout(function(){fl.style.transform='translate('+dx+'px,'+dy+'px)';fl.style.width=d.width+'px';srcs[i].style.opacity='.3';},220+i*200);setTimeout(function(){bis[i].style.opacity='1';fl.remove();},220+i*200+560);})(i);}setTimeout(function(){var bco=frame.querySelector('.p2 .bco');if(bco)bco.style.opacity='1';},220+bis.length*200+560);}
+function render(){var s=steps[n];frame.dataset.scene=s.p;url.textContent=s.u;cap.textContent=caps[s.g];dots.forEach(function(d,i){d.classList.toggle('on',i===s.g)});resetBuild();if(s.t)setTimeout(function(){moveTo(s.t);},HOLD);if(s.p===2)setTimeout(buildAnim,HOLD);}
+function stepDuration(s){if(s.p===2)return 3500;if(s.p===3)return 3000;return 2200;}
+function schedule(){timer=setTimeout(function(){n=(n+1)%steps.length;render();schedule();},stepDuration(steps[n]));}
+dots.forEach(function(d,i){d.addEventListener('click',function(){clearTimeout(timer);for(var k=0;k<steps.length;k++){if(steps[k].g===i){n=k;break;}}render();schedule();});});
+render();schedule();
+function postH(){try{parent.postMessage({t:'awh',h:Math.ceil(document.body.getBoundingClientRect().height)},'*');}catch(e){}}
+window.addEventListener('load',postH);window.addEventListener('resize',function(){clearTimeout(window.__hT);window.__hT=setTimeout(postH,140);});setTimeout(postH,250);setTimeout(postH,900);
+</script></body></html>

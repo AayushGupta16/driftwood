@@ -2,9 +2,9 @@
    customer's Slack channel: which demo types are winning, what we're cutting */
 
 const PROOF_RANKING = [
-  { name: "bug recording", replies: "4.9% reply", width: "82%", tone: "win", tag: "gets the budget" },
-  { name: "custom flows demo", replies: "3.2% reply", width: "54%", tone: "mid", tag: "testing now" },
-  { name: "coverage report", replies: "1.1% reply", width: "18%", tone: "cut", tag: "cut this week" },
+  { name: "live ordering page", replies: "4.9% reply", width: "82%", tone: "win", tag: "gets the budget" },
+  { name: "rebuilt menu preview", replies: "3.2% reply", width: "54%", tone: "mid", tag: "testing now" },
+  { name: "savings one-pager", replies: "1.1% reply", width: "18%", tone: "cut", tag: "cut this week" },
 ] as const;
 
 export function StorySlackCard({ rows }: { rows: number }) {
@@ -14,7 +14,7 @@ export function StorySlackCard({ rows }: { rows: number }) {
       <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-3">
         <span className="flex min-w-0 items-center gap-1.5 font-mono text-[14px] font-medium text-ink-soft">
           <span className="text-ink-faint">#</span>
-          <span className="min-w-0 sm:truncate">autosana-outbound</span>
+          <span className="min-w-0 sm:truncate">square-outbound</span>
         </span>
         <span className="shrink-0 rounded-full bg-sand px-2.5 py-0.5 font-mono text-[13px] text-ink-soft">
           2 members
@@ -78,7 +78,7 @@ export function StorySlackCard({ rows }: { rows: number }) {
             ))}
           </div>
           <p className="m-0 mt-2.5 text-[15px] leading-relaxed text-ink-soft">
-            we're scaling bug recordings and cutting coverage reports.
+            we're scaling live ordering pages and cutting one-pagers.
           </p>
           {/* reactions */}
           <div className="mt-2.5 flex gap-1.5">

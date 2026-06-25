@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Nav, Footer } from "./components/Chrome";
 import { useReveal } from "./components/useReveal";
-import WaitlistForm from "./components/WaitlistForm";
+import BookDemo, { CAL_URL } from "./components/BookDemo";
 
 const TIERS = [
   {
@@ -17,8 +17,8 @@ const TIERS = [
       "Replies land in your inbox",
       "Weekly readout",
     ],
-    cta: "Get early access",
-    href: "#join",
+    cta: "Book a demo",
+    href: CAL_URL,
   },
   {
     name: "Scale",
@@ -34,8 +34,8 @@ const TIERS = [
       "Lead lists re-cut from reply data",
       "Direct line to the founders",
     ],
-    cta: "Get early access",
-    href: "#join",
+    cta: "Book a demo",
+    href: CAL_URL,
   },
   {
     name: "Enterprise",
@@ -70,11 +70,11 @@ export default function Pricing() {
         <section className="py-16 sm:py-20">
           <div className="reveal is-visible mx-auto max-w-160 text-center">
             <h1 className="m-0 text-[clamp(2rem,4.6vw,3rem)] font-semibold leading-[1.08] tracking-[-0.02em]">
-              One retainer, the whole channel.
+              One retainer, every channel.
             </h1>
             <p className="mx-auto mt-5 max-w-130 text-[16px] leading-relaxed text-ink-soft">
-              Every tier ships the full pipeline: leads, warmed inboxes, deliverability, sequencing, and a demo
-              built for each prospect. A human reviews every send.
+              Every tier ships the full pipeline: leads, warmed inboxes and accounts across email, LinkedIn,
+              and X, deliverability, sequencing, and a demo built for each prospect. A human reviews every send.
             </p>
           </div>
         </section>
@@ -122,6 +122,8 @@ export default function Pricing() {
                 </ul>
                 <a
                   href={tier.href}
+                  target={tier.href.startsWith("http") ? "_blank" : undefined}
+                  rel={tier.href.startsWith("http") ? "noopener noreferrer" : undefined}
                   className={`mt-7 block rounded-xl px-4 py-2.5 text-center text-[14px] font-semibold no-underline transition-colors ${
                     tier.highlight
                       ? "bg-tide text-white hover:bg-tide-deep"
@@ -142,13 +144,13 @@ export default function Pricing() {
         <section id="join" className="scroll-mt-20 border-t border-line py-20 sm:py-24">
           <div className="reveal mx-auto max-w-150 text-center">
             <h2 className="m-0 text-[clamp(1.6rem,3.6vw,2.4rem)] font-semibold leading-tight tracking-[-0.015em]">
-              Start with a 15-minute call.
+              Start with a 30-minute call.
             </h2>
             <p className="mt-4 text-[16px] leading-relaxed text-ink-soft">
-              Leave a work email and we'll show you what a campaign for your product looks like.
+              Book a time and we'll show you what a campaign for your product looks like.
             </p>
             <div className="relative mt-8 flex justify-center">
-              <WaitlistForm id="email-pricing" />
+              <BookDemo />
             </div>
           </div>
         </section>

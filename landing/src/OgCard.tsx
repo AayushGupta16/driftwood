@@ -1,4 +1,4 @@
-import { BugDemoCard } from "./components/AgentDemo";
+import { OrderDemoCard } from "./components/AgentDemo";
 import { Wordmark } from "./components/Chrome";
 
 /* Social share card, rendered at /og and screenshotted to public/og-2.png
@@ -29,19 +29,19 @@ export default function OgCard() {
       <div className="flex flex-1 items-center gap-14">
         <div className="min-w-0 flex-1">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-tide-wash px-4 py-1.5 font-mono text-[17px] font-medium text-tide ring-1 ring-tide/25 -rotate-1">
-            a real bug, found this morning
+            a live ordering page, built this morning
           </span>
           <h1 className="mb-0 mt-6 text-[64px] font-semibold leading-[1.08] tracking-[-0.02em] text-ink">
             Ship a custom
             <br />
             demo in every
             <br />
-            cold email.
+            cold message.
           </h1>
         </div>
         <div className="w-105 shrink-0 scale-110 origin-center">
           <div className="rounded-2xl shadow-[0_36px_80px_-36px_rgba(13,60,91,0.45)]">
-            <BugDemoCard />
+            <OrderDemoCard />
           </div>
         </div>
       </div>
