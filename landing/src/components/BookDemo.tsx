@@ -1,7 +1,7 @@
 /* Single source of truth for the booking link. Replaces the old email
    waitlist everywhere — every CTA now drops the prospect straight onto the
    cal.com booking page. */
-export const CAL_URL = "https://cal.com/aayush-gupta-qyilz6/30min";
+export const CAL_URL = "https://cal.com/aayush-gupta-qyilz6/30-min";
 
 type Variant = "primary" | "nav" | "ghost";
 
