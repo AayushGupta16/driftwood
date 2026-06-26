@@ -756,6 +756,10 @@ function ListsCard({
           summarize={summarizeLeads}
           current={leadsLine}
           onImported={onImported}
+          clearEndpoint="/api/v1/imports/leads"
+          clearCount={lists?.leads ?? 0}
+          clearConfirm="Clear every lead in your pipeline? This can't be undone."
+          summarizeClear={(n) => `Cleared ${plural(n, "lead", "leads")}.`}
         />
         <UploadField
           className="flex-1"
@@ -765,6 +769,10 @@ function ListsCard({
           summarize={summarizeBlacklist}
           current={blacklistLine}
           onImported={onImported}
+          clearEndpoint="/api/v1/imports/blacklist"
+          clearCount={lists?.blacklist ?? 0}
+          clearConfirm="Clear your uploaded blacklist? Unsubscribes and bounces are kept. This can't be undone."
+          summarizeClear={(n) => `Cleared ${plural(n, "entry", "entries")}.`}
         />
       </div>
     </div>
@@ -781,6 +789,10 @@ function UploadField<T>({
   summarize,
   current,
   onImported,
+  clearEndpoint,
+  clearCount = 0,
+  clearConfirm,
+  summarizeClear,
 }: {
   className?: string;
   title: string;
@@ -792,9 +804,40 @@ function UploadField<T>({
   current?: string | null;
   /** Called after a successful import so the parent can refresh the counts. */
   onImported?: () => void;
+  /** DELETE endpoint that clears this list. Enables the "Clear" button. */
+  clearEndpoint?: string;
+  /** How many rows exist now — the Clear button hides when this is 0. */
+  clearCount?: number;
+  /** Confirmation prompt shown before clearing. */
+  clearConfirm?: string;
+  /** Builds the success toast from the cleared count. */
+  summarizeClear?: (cleared: number) => string;
 }) {
   const [status, setStatus] = useState<UploadStatus>("idle");
+  const [clearing, setClearing] = useState(false);
   const toast = useToast();
+
+  async function handleClear() {
+    if (!clearEndpoint) return;
+    if (!window.confirm(clearConfirm ?? `Clear ${title.toLowerCase()}? This can't be undone.`))
+      return;
+
+    setClearing(true);
+    try {
+      const res = await fetch(clearEndpoint, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("request failed");
+      const data = (await res.json()) as { cleared: number };
+      toast(`${title}: ${summarizeClear?.(data.cleared) ?? `cleared ${data.cleared}.`}`, "success");
+      onImported?.();
+    } catch {
+      toast(`Couldn't clear ${title.toLowerCase()}. Please try again.`, "error");
+    } finally {
+      setClearing(false);
+    }
+  }
 
   async function handleFile(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -822,37 +865,57 @@ function UploadField<T>({
     }
   }
 
-  const busy = status === "uploading";
-  const label = busy
+  const uploading = status === "uploading";
+  const busy = uploading || clearing;
+  const label = uploading
     ? "Importing…"
     : status === "done"
       ? "Replace file"
       : "Upload CSV";
+  const showClear = Boolean(clearEndpoint) && clearCount > 0;
 
   return (
     <div className={`rounded-xl border border-line bg-paper/40 p-4 ${className}`}>
       <h3 className="m-0 text-[15px] font-semibold">{title}</h3>
       <p className="m-0 mt-1.5 text-[13px] leading-relaxed text-ink-faint">{hint}</p>
-      <label
-        className={`mt-3 inline-flex items-center gap-2 rounded-lg border border-tide/40 bg-surface px-3.5 py-2 text-[13px] font-semibold text-tide transition-colors hover:border-tide hover:bg-tide-wash ${
-          busy ? "pointer-events-none opacity-60" : "cursor-pointer"
-        }`}
-      >
-        <input
-          type="file"
-          accept=".csv,text/csv"
-          className="hidden"
-          onChange={handleFile}
-          disabled={busy}
-        />
-        {busy && (
-          <span
-            aria-hidden="true"
-            className="size-3.5 animate-spin rounded-full border-[1.5px] border-tide/30 border-t-tide"
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <label
+          className={`inline-flex items-center gap-2 rounded-lg border border-tide/40 bg-surface px-3.5 py-2 text-[13px] font-semibold text-tide transition-colors hover:border-tide hover:bg-tide-wash ${
+            busy ? "pointer-events-none opacity-60" : "cursor-pointer"
+          }`}
+        >
+          <input
+            type="file"
+            accept=".csv,text/csv"
+            className="hidden"
+            onChange={handleFile}
+            disabled={busy}
           />
+          {uploading && (
+            <span
+              aria-hidden="true"
+              className="size-3.5 animate-spin rounded-full border-[1.5px] border-tide/30 border-t-tide"
+            />
+          )}
+          {label}
+        </label>
+        {showClear && (
+          <button
+            type="button"
+            onClick={handleClear}
+            disabled={busy}
+            className="inline-flex items-center gap-2 rounded-lg border border-line bg-surface px-3.5 py-2 text-[13px] font-medium text-ink-soft transition-colors hover:border-red-600/40 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {clearing && (
+              <span
+                aria-hidden="true"
+                className="size-3.5 animate-spin rounded-full border-[1.5px] border-red-600/30 border-t-red-600"
+              />
+            )}
+            {clearing ? "Clearing…" : "Clear"}
+          </button>
         )}
-        {label}
-      </label>
+      </div>
       {busy ? (
         <div
           role="progressbar"
