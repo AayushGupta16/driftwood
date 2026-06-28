@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Wordmark } from "./components/Chrome";
 import { ToastProvider } from "./Dashboard";
+import { GodModeButton, ImpersonationBanner } from "./GodMode";
 import { CARD, relativeTime, useToast } from "./dashboard-shared";
 
 /* /dashboard/leads — the full-width, dedicated "All leads" table. Self-contained
@@ -16,6 +17,8 @@ type User = {
   avatar_url: string | null;
   is_approved: boolean;
   linkedin_connected: boolean;
+  is_admin?: boolean;
+  impersonating?: boolean;
 };
 
 type LeadRow = {
@@ -101,6 +104,7 @@ function LeadsView({ user }: { user: User }) {
 
   return (
     <>
+      {user.impersonating && <ImpersonationBanner email={user.email} />}
       <header className="sticky top-0 z-40 border-b border-line/70 bg-paper/85 shadow-[0_10px_28px_-24px_rgba(22,24,29,0.5)] backdrop-blur-md">
         <nav className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-5 sm:px-8">
           <a href="/" className="text-[18px] text-ink no-underline">
@@ -122,6 +126,7 @@ function LeadsView({ user }: { user: User }) {
             <span className="hidden text-[14px] font-medium text-ink sm:inline">
               {displayName}
             </span>
+            {user.is_admin && <GodModeButton />}
             <button
               type="button"
               onClick={handleLogout}
