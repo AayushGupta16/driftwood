@@ -1,7 +1,5 @@
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useRef,
   useState,
@@ -9,6 +7,13 @@ import {
   type ReactNode,
 } from "react";
 import { Wordmark } from "./components/Chrome";
+import {
+  CARD,
+  ToastContext,
+  relativeTime,
+  useToast,
+  type ToastVariant,
+} from "./dashboard-shared";
 
 /* /dashboard — Google-login-gated shell. Talks to the same-origin /auth/*
    endpoints (vite proxy in dev, vercel rewrite in prod), so every request
@@ -31,10 +36,7 @@ type AuthState =
   | { status: "logged-out" }
   | { status: "logged-in"; user: User };
 
-const CARD =
-  "rounded-2xl border border-line bg-surface shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_16px_40px_-26px_rgba(22,24,29,0.4)]";
-
-function GoogleMark({ className }: { className?: string }) {
+export function GoogleMark({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 18 18" aria-hidden="true" className={className}>
       <path
@@ -75,18 +77,9 @@ function CheckMark({ className }: { className?: string }) {
 
 /* ---------- toasts ---------- */
 
-type ToastVariant = "success" | "error" | "info";
 type ToastItem = { id: number; message: string; variant: ToastVariant };
 
-const ToastContext = createContext<
-  (message: string, variant?: ToastVariant) => void
->(() => {});
-
-function useToast() {
-  return useContext(ToastContext);
-}
-
-function ToastProvider({ children }: { children: ReactNode }) {
+export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const nextId = useRef(0);
 
@@ -338,20 +331,6 @@ type SummaryState =
   | { status: "error" }
   | { status: "ready"; summary: DashboardSummary };
 
-/* "4m ago" / "2h ago" / "3d ago"; null/invalid -> null (caller renders nothing). */
-function relativeTime(iso: string | null): string | null {
-  if (!iso) return null;
-  const then = new Date(iso).getTime();
-  if (Number.isNaN(then)) return null;
-  const secs = Math.max(0, Math.round((Date.now() - then) / 1000));
-  if (secs < 60) return `${secs}s ago`;
-  const mins = Math.round(secs / 60);
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.round(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.round(hours / 24)}d ago`;
-}
-
 function ApprovedView({ user }: { user: User }) {
   const firstName = user.name.split(" ")[0] || user.email;
   const [summary, setSummary] = useState<SummaryState>({ status: "loading" });
@@ -396,7 +375,43 @@ function ApprovedView({ user }: { user: User }) {
         <MetricsCard state={summary} />
         <ListsCard state={summary} onImported={loadSummary} />
       </div>
+
+      <LeadsEntryCard state={summary} />
     </>
+  );
+}
+
+/* ---------- all leads entry (full table lives at /dashboard/leads) ---------- */
+
+/* Compact card linking out to the dedicated full-width leads page. Reads the
+   already-loaded summary so it can show the pipeline count without its own
+   request. The link opens the leads page in a new tab. */
+function LeadsEntryCard({ state }: { state: SummaryState }) {
+  const leads = state.status === "ready" ? state.summary.lists.leads : null;
+  const line =
+    leads === null
+      ? "Loading your pipeline…"
+      : leads > 0
+        ? `${plural(leads, "lead", "leads")} in your pipeline`
+        : "No leads yet.";
+
+  return (
+    <div
+      className={`mt-7 ${CARD} flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6`}
+    >
+      <div className="min-w-0">
+        <SectionLabel>All leads</SectionLabel>
+        <p className="m-0 mt-2 text-[14px] font-medium text-ink-soft">{line}</p>
+      </div>
+      <a
+        href="/dashboard/leads"
+        target="_blank"
+        rel="noreferrer"
+        className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-tide px-4.5 py-2.5 text-[14px] font-semibold text-white no-underline shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] transition-all hover:-translate-y-px hover:bg-tide-deep sm:self-auto"
+      >
+        View all leads
+      </a>
+    </div>
   );
 }
 
