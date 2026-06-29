@@ -30,6 +30,7 @@ type LeadRow = {
   linkedin_url: string | null;
   stage: string;
   origin: string;
+  source: string | null;
   demo_idea: string | null;
   demo_artifact_id: string | null;
   created_at: string;
@@ -286,7 +287,7 @@ function LeadsTable() {
                       <th className={TH}>Email</th>
                       <th className={TH}>LinkedIn</th>
                       <th className={TH}>Stage</th>
-                      <th className={TH}>Origin</th>
+                      <th className={TH}>Source</th>
                       <th className={TH}>Demo</th>
                       <th className={TH}>Added</th>
                       <th className={`${TH} text-right`}>
@@ -323,7 +324,7 @@ function LeadsTable() {
                           <td className={TD}>
                             <span className={STAGE_PILL}>{lead.stage}</span>
                           </td>
-                          <td className={TD}>{lead.origin || <Dash />}</td>
+                          <td className={TD}>{lead.source || <Dash />}</td>
                           <td className={TD}>
                             {lead.demo_artifact_id ? (
                               <span className={STAGE_PILL}>Demo</span>
