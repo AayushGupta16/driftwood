@@ -5,6 +5,7 @@ import App from './App.tsx'
 import OgCard from './OgCard.tsx'
 import Dashboard from './Dashboard.tsx'
 import Leads from './Leads.tsx'
+import Companies from './Companies.tsx'
 // Pricing is parked for now; re-enable by restoring the route below.
 // import Pricing from './Pricing.tsx'
 
@@ -16,6 +17,8 @@ const page =
     <OgCard />
   ) : path === '/dashboard/leads' ? (
     <Leads />
+  ) : path === '/dashboard/companies' ? (
+    <Companies />
   ) : path === '/dashboard' ? (
     <Dashboard />
   ) : (

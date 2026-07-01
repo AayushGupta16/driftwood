@@ -382,6 +382,7 @@ function ApprovedView({ user }: { user: User }) {
       </div>
 
       <LeadsEntryCard state={summary} />
+      <CompaniesEntryCard />
     </>
   );
 }
@@ -415,6 +416,35 @@ function LeadsEntryCard({ state }: { state: SummaryState }) {
         className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-tide px-4.5 py-2.5 text-[14px] font-semibold text-white no-underline shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] transition-all hover:-translate-y-px hover:bg-tide-deep sm:self-auto"
       >
         View all leads
+      </a>
+    </div>
+  );
+}
+
+/* ---------- all companies entry (full table lives at /dashboard/companies) ---------- */
+
+/* Same compact card, linking out to the dedicated target-accounts page. The
+   summary doesn't carry a company count (companies aren't a "list" the customer
+   uploads), so the line stays descriptive rather than numeric. */
+function CompaniesEntryCard() {
+  return (
+    <div
+      className={`mt-3.5 ${CARD} flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6`}
+    >
+      <div className="min-w-0">
+        <SectionLabel>All companies</SectionLabel>
+        <p className="m-0 mt-2 text-[14px] font-medium text-ink-soft">
+          The target accounts behind your leads — qualified, unknown, and
+          disqualified.
+        </p>
+      </div>
+      <a
+        href="/dashboard/companies"
+        target="_blank"
+        rel="noreferrer"
+        className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-tide px-4.5 py-2.5 text-[14px] font-semibold text-white no-underline shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] transition-all hover:-translate-y-px hover:bg-tide-deep sm:self-auto"
+      >
+        View all companies
       </a>
     </div>
   );
