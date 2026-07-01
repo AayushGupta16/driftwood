@@ -9,7 +9,7 @@ import Fuse from "fuse.js";
 import { Wordmark } from "./components/Chrome";
 import { ToastProvider } from "./Dashboard";
 import { GodModeButton, ImpersonationBanner } from "./GodMode";
-import { CARD, relativeTime } from "./dashboard-shared";
+import { CARD, relativeTime, useToast } from "./dashboard-shared";
 
 /* /dashboard/companies — the full-width, dedicated "All companies" table.
    Self-contained page: does its own /auth/me gate (an unapproved or logged-out
@@ -168,7 +168,9 @@ function CompaniesView({ user }: { user: User }) {
    The segmented All/Qualified/Unknown/Disqualified control maps to the
    endpoint's server-side `icp_status` param, so picking a segment refetches
    just that group — the server also pre-sorts qualified -> unknown ->
-   disqualified so the accounts worth looking at come back first. */
+   disqualified so the accounts worth looking at come back first. The page
+   opens on Qualified: the disqualified group is mostly the agent's negative
+   cache (thousands of rows), so customers opt into it via the control. */
 const COMPANIES_PAGE_SIZE = 25; // rows shown per page (display only)
 const FETCH_CHUNK = 100; // server-side limit cap, used for the upfront load
 const FETCH_GUARD = 1000; // hard ceiling on load-all iterations
@@ -212,11 +214,19 @@ function Dash() {
   return <span className="text-ink-faint">—</span>;
 }
 
+function companyLabel(company: CompanyRow): string {
+  return company.name || "this company";
+}
+
 function CompaniesTable() {
   const [state, setState] = useState<CompaniesState>({ status: "loading" });
-  const [filter, setFilter] = useState<IcpFilter>("all");
+  // Qualified by default — the actionable segment; "all" pulls in the
+  // disqualified graveyard, which customers opt into via the control.
+  const [filter, setFilter] = useState<IcpFilter>("qualified");
+  const [removingId, setRemovingId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(0);
+  const toast = useToast();
 
   // Pull the selected segment once via a paged loop against the 100-cap
   // endpoint. Re-runs whenever the segment changes (state resets to loading).
@@ -247,6 +257,42 @@ function CompaniesTable() {
       await loadAll(filter);
     })();
   }, [loadAll, filter]);
+
+  async function handleRemove(company: CompanyRow) {
+    const label = companyLabel(company);
+    if (
+      !window.confirm(
+        `Remove ${label}? The company and its leads will be deleted and their contacts added to your blacklist so we never contact them again.`,
+      )
+    )
+      return;
+
+    setRemovingId(company.id);
+    try {
+      const res = await fetch(`/api/v1/dashboard/companies/${company.id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("request failed");
+      toast(
+        `Removed ${label} and added its contacts to your blacklist.`,
+        "success",
+      );
+      // Drop it from the in-memory list — no refetch. Pagination clamps below.
+      setState((prev) =>
+        prev.status === "ready"
+          ? {
+              status: "ready",
+              companies: prev.companies.filter((c) => c.id !== company.id),
+            }
+          : prev,
+      );
+    } catch {
+      toast(`Couldn't remove ${label}. Please try again.`, "error");
+    } finally {
+      setRemovingId(null);
+    }
+  }
 
   const allCompanies = useMemo(
     () => (state.status === "ready" ? state.companies : NO_COMPANIES),
@@ -418,6 +464,9 @@ function CompaniesTable() {
                           <th className={TH}>QA headcount</th>
                           <th className={TH}>Leads</th>
                           <th className={TH}>Last verified</th>
+                          <th className={`${TH} text-right`}>
+                            <span className="sr-only">Actions</span>
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
@@ -425,6 +474,7 @@ function CompaniesTable() {
                           const verified = relativeTime(
                             company.last_verified_at,
                           );
+                          const removing = removingId === company.id;
                           return (
                             <tr
                               key={company.id}
@@ -476,6 +526,22 @@ function CompaniesTable() {
                               </td>
                               <td className={`${TD} tabular-nums`}>
                                 {verified || <Dash />}
+                              </td>
+                              <td className={`${TD} text-right`}>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemove(company)}
+                                  disabled={removing}
+                                  className="inline-flex items-center gap-2 rounded-lg border border-line bg-surface px-3 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-red-600/40 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                  {removing && (
+                                    <span
+                                      aria-hidden="true"
+                                      className="size-3.5 animate-spin rounded-full border-[1.5px] border-red-600/30 border-t-red-600"
+                                    />
+                                  )}
+                                  {removing ? "Removing…" : "Remove"}
+                                </button>
                               </td>
                             </tr>
                           );
