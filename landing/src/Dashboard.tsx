@@ -323,12 +323,18 @@ type Lists = {
   leads: number;
   blacklist: number;
 };
+type Companies = {
+  qualified: number;
+  screened_out: number;
+  unknown: number;
+};
 type DashboardSummary = {
   linkedin_connected: boolean;
   sending: Sending | null;
   funnel: Funnel;
   results: Results;
   lists: Lists;
+  companies: Companies;
 };
 
 type SummaryState =
@@ -336,12 +342,45 @@ type SummaryState =
   | { status: "error" }
   | { status: "ready"; summary: DashboardSummary };
 
+/* ---------- recent activity (GET /api/v1/dashboard/activity) ---------- */
+
+type ActivityEvent = {
+  at: string;
+  kind: "stage" | "sent" | "reply";
+  lead_id: string | null;
+  lead_name: string | null;
+  company_name: string | null;
+  detail: string | null;
+};
+
+type ActivityState =
+  | { status: "loading" }
+  | { status: "error" }
+  | { status: "ready"; events: ActivityEvent[] };
+
 function ApprovedView({ user }: { user: User }) {
   const firstName = user.name.split(" ")[0] || user.email;
   const [summary, setSummary] = useState<SummaryState>({ status: "loading" });
+  const [activity, setActivity] = useState<ActivityState>({ status: "loading" });
+
+  const loadActivity = useCallback(async () => {
+    try {
+      const res = await fetch("/api/v1/dashboard/activity?limit=3", {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("request failed");
+      const data = (await res.json()) as { events: ActivityEvent[] };
+      setActivity({ status: "ready", events: data.events });
+    } catch {
+      // Keep whatever loaded before; MetricsCard hides the section on error.
+      setActivity((prev) => (prev.status === "ready" ? prev : { status: "error" }));
+    }
+  }, []);
 
   // Reusable so a successful import can refresh the counts + funnel in place.
+  // Kicks the activity feed too so "Latest" stays in step with the summary.
   const loadSummary = useCallback(async () => {
+    void loadActivity();
     try {
       const res = await fetch("/api/v1/dashboard/summary", {
         credentials: "include",
@@ -353,7 +392,7 @@ function ApprovedView({ user }: { user: User }) {
       // Don't blank out an already-loaded summary if a refresh fails.
       setSummary((prev) => (prev.status === "ready" ? prev : { status: "error" }));
     }
-  }, []);
+  }, [loadActivity]);
 
   useEffect(() => {
     void (async () => {
@@ -377,12 +416,12 @@ function ApprovedView({ user }: { user: User }) {
 
       {/* two equal-height columns: metrics left, lists right. */}
       <div className="mt-3.5 grid grid-cols-1 items-stretch gap-3.5 lg:grid-cols-[1.45fr_1fr]">
-        <MetricsCard state={summary} />
+        <MetricsCard state={summary} activity={activity} />
         <ListsCard state={summary} onImported={loadSummary} />
       </div>
 
       <LeadsEntryCard state={summary} />
-      <CompaniesEntryCard />
+      <CompaniesEntryCard state={summary} />
     </>
   );
 }
@@ -423,20 +462,25 @@ function LeadsEntryCard({ state }: { state: SummaryState }) {
 
 /* ---------- all companies entry (full table lives at /dashboard/companies) ---------- */
 
-/* Same compact card, linking out to the dedicated target-accounts page. The
-   summary doesn't carry a company count (companies aren't a "list" the customer
-   uploads), so the line stays descriptive rather than numeric. */
-function CompaniesEntryCard() {
+/* Same compact card, linking out to the dedicated target-accounts page. Reads
+   the summary's company rollup so the line can show qualified vs screened-out
+   counts without its own request. */
+function CompaniesEntryCard({ state }: { state: SummaryState }) {
+  const companies = state.status === "ready" ? state.summary.companies : null;
+  const line =
+    companies === null
+      ? "Loading your accounts…"
+      : companies.qualified || companies.screened_out || companies.unknown
+        ? `${companies.qualified.toLocaleString()} qualified accounts · ${companies.screened_out.toLocaleString()} screened out by your AE`
+        : "No target accounts yet.";
+
   return (
     <div
       className={`mt-3.5 ${CARD} flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6`}
     >
       <div className="min-w-0">
         <SectionLabel>All companies</SectionLabel>
-        <p className="m-0 mt-2 text-[14px] font-medium text-ink-soft">
-          The target accounts behind your leads — qualified, unknown, and
-          disqualified.
-        </p>
+        <p className="m-0 mt-2 text-[14px] font-medium text-ink-soft">{line}</p>
       </div>
       <a
         href="/dashboard/companies"
@@ -540,9 +584,16 @@ function SectionLabel({ children }: { children: string }) {
   );
 }
 
-/* left column — Results (inline) + Pipeline funnel in one card. Owns the
-   summary's loading/error/ready states so the grid stays stable. */
-function MetricsCard({ state }: { state: SummaryState }) {
+/* left column — Results (inline) + Pipeline funnel + Latest activity in one
+   card. Owns the summary's loading/error/ready states so the grid stays
+   stable; the Latest section simply stays hidden until its own fetch lands. */
+function MetricsCard({
+  state,
+  activity,
+}: {
+  state: SummaryState;
+  activity: ActivityState;
+}) {
   return (
     <div className={`${CARD} flex flex-col p-5 sm:p-6`}>
       {state.status === "loading" && (
@@ -566,7 +617,62 @@ function MetricsCard({ state }: { state: SummaryState }) {
           <div className="my-4 h-px bg-line/70" />
           <SectionLabel>Pipeline</SectionLabel>
           <FunnelBars funnel={state.summary.funnel} />
+          {activity.status === "ready" && (
+            <>
+              <div className="my-4 h-px bg-line/70" />
+              <SectionLabel>Latest</SectionLabel>
+              {activity.events.length > 0 ? (
+                activity.events
+                  .slice(0, 3)
+                  .map((event, i) => <ActivityLine key={i} event={event} />)
+              ) : (
+                <p className="m-0 pt-1.5 text-[12.5px] text-ink-faint">
+                  No activity yet.
+                </p>
+              )}
+            </>
+          )}
         </>
+      )}
+    </div>
+  );
+}
+
+/* One "Latest" line — copy composed client-side from the event's kind +
+   detail; lead name bold ink, company in parens, mono timestamp on the right. */
+function ActivityLine({ event }: { event: ActivityEvent }) {
+  const who = event.lead_name && (
+    <>
+      <span className="font-semibold text-ink">{event.lead_name}</span>
+      {event.company_name && <> ({event.company_name})</>}
+    </>
+  );
+
+  let body: ReactNode;
+  if (event.kind === "reply") {
+    body = who ? <>{who} replied</> : "New LinkedIn reply";
+  } else if (event.kind === "sent") {
+    const verb =
+      event.detail === "message" ? "Message sent" : "Connection sent";
+    body = who ? (
+      <>
+        {verb} to {who}
+      </>
+    ) : (
+      verb
+    );
+  } else {
+    body = who ? <>{who} moved to {event.detail}</> : <>Moved to {event.detail}</>;
+  }
+
+  const rel = relativeTime(event.at);
+  return (
+    <div className="flex gap-2.5 pt-1.5 text-[12.5px] text-ink-soft">
+      <span className="min-w-0">{body}</span>
+      {rel && (
+        <span className="ml-auto flex-none font-mono text-[10px] text-ink-faint">
+          {rel}
+        </span>
       )}
     </div>
   );

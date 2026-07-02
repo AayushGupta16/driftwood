@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dashboard — full page, minimal delta (draft v2)</title>
+<style>
+  :root {
+    --paper: #f7f4ec; --surface: #fffdf8; --ink: #16181d; --ink-soft: #494e5b;
+    --ink-faint: #8a8e9b; --tide: #15557e; --tide-deep: #0d3c5b; --tide-wash: #e2ecf3;
+    --sand: #e8dfcc; --line: #e2dccb;
+    --sans: "Instrument Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; color: var(--ink); font-family: var(--sans);
+    background:
+      radial-gradient(900px 480px at 82% -120px, rgba(21,85,126,.085), transparent 62%),
+      radial-gradient(760px 520px at -120px 36%, rgba(232,223,204,.75), transparent 64%),
+      var(--paper);
+  }
+  .microlabel { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); }
+  .card { border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: inset 0 1px 0 rgba(255,255,255,.85), 0 24px 60px -26px rgba(13,60,91,.18), 0 4px 16px -8px rgba(22,24,29,.08); }
+  .newtag { font-family: var(--mono); font-size: 9.5px; letter-spacing: .08em; text-transform: uppercase; color: #8a5a12; background: #f6ead2; border: 1px solid #e8d5ab; border-radius: 999px; padding: 1px 7px; vertical-align: 2px; margin-left: 8px; }
+
+  /* header */
+  header { position: sticky; top: 0; z-index: 40; border-bottom: 1px solid rgba(226,220,203,.7); background: rgba(247,244,236,.85); backdrop-filter: blur(12px); }
+  header nav { max-width: 1024px; margin: 0 auto; height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 32px; }
+  .wordmark { font-family: "Nasalization", var(--sans); font-size: 18px; letter-spacing: .02em; }
+  .navright { display: flex; align-items: center; gap: 12px; }
+  .avatar { width: 32px; height: 32px; border-radius: 999px; background: var(--tide); color: #fff; font-family: var(--mono); font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; }
+  .uname { font-size: 14px; font-weight: 500; }
+  .logout { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 8px 14px; font-size: 13.5px; font-weight: 500; color: var(--ink-soft); }
+
+  main { max-width: 1024px; margin: 0 auto; padding: 56px 32px 90px; }
+  h1 { margin: 0; font-size: clamp(1.9rem, 4.4vw, 2.5rem); font-weight: 600; letter-spacing: -.015em; line-height: 1.08; }
+
+  /* status strip */
+  .strip { margin-top: 28px; padding: 16px; display: flex; align-items: center; gap: 12px; }
+  .stripico { width: 32px; height: 32px; border-radius: 10px; border: 1px solid rgba(5,150,105,.25); background: rgba(16,185,129,.1); color: #047857; display: inline-flex; align-items: center; justify-content: center; font-size: 15px; }
+  .striptitle { font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
+  .stripline { margin-top: 4px; font-size: 12.5px; color: var(--ink-soft); }
+  .stripline .ok { color: #047857; font-weight: 500; }
+  .disconnect { margin-left: auto; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 7px 12px; font-size: 12.5px; color: var(--ink-soft); }
+
+  /* metrics + lists grid */
+  .grid { margin-top: 14px; display: grid; grid-template-columns: 1.45fr 1fr; gap: 14px; align-items: stretch; }
+  .pad { padding: 22px 24px; }
+  .results { display: flex; gap: 30px; margin: 10px 0 2px; }
+  .results .n { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .results .l { font-size: 12px; color: var(--ink-faint); }
+  .divider { height: 1px; background: rgba(226,220,203,.7); margin: 16px 0; }
+  .bar { display: grid; grid-template-columns: 74px 1fr auto; gap: 12px; align-items: center; margin-top: 8px; }
+  .bar .l { font-size: 12.5px; color: var(--ink-soft); }
+  .bar .track { height: 18px; border-radius: 6px; background: var(--tide-wash); overflow: hidden; }
+  .bar .fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, var(--tide), var(--tide-deep)); }
+  .bar .n { font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  /* NEW: latest lines inside the metrics card */
+  .event { display: flex; gap: 10px; padding: 6px 0 0; font-size: 12.5px; color: var(--ink-soft); }
+  .event b { color: var(--ink); font-weight: 600; }
+  .event .when { margin-left: auto; flex: none; font-family: var(--mono); font-size: 10px; color: var(--ink-faint); }
+
+  /* lists card */
+  .explain { margin: 8px 0 0; font-size: 13px; line-height: 1.5; color: var(--ink-soft); }
+  .upload { margin-top: 14px; border: 1px dashed var(--line); border-radius: 12px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; }
+  .upload .t { font-size: 13.5px; font-weight: 500; }
+  .upload .s { margin-top: 2px; font-size: 12px; color: var(--ink-faint); }
+  .upbtn { border: 1px solid var(--line); background: var(--paper); border-radius: 10px; padding: 7px 12px; font-size: 12.5px; font-weight: 500; color: var(--ink-soft); }
+
+  /* entry cards */
+  .entry { margin-top: 28px; padding: 22px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .entry.second { margin-top: 14px; }
+  .entry p { margin: 8px 0 0; font-size: 14px; font-weight: 500; color: var(--ink-soft); }
+  .btn { background: var(--tide); color: #fff; border-radius: 12px; padding: 10px 18px; font-size: 14px; font-weight: 600; text-decoration: none; box-shadow: 0 3px 12px -5px rgba(22,24,29,.45); flex: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <nav>
+    <span class="wordmark">driftwood</span>
+    <span class="navright">
+      <span class="avatar">Y</span>
+      <span class="uname">Yuvan</span>
+      <button class="logout">Log out</button>
+    </span>
+  </nav>
+</header>
+
+<main>
+  <h1>Welcome back, Yuvan.</h1>
+
+  <!-- status strip (unchanged) -->
+  <div class="card strip">
+    <span class="stripico">✓</span>
+    <div>
+      <div class="striptitle">LinkedIn connected &amp; sending</div>
+      <div class="stripline"><span style="font-variant-numeric:tabular-nums">2/20</span> invites · <span style="font-variant-numeric:tabular-nums">1/25</span> messages today · <span class="ok">within safe limits</span> · last action 3h ago</div>
+    </div>
+    <button class="disconnect">Disconnect</button>
+  </div>
+
+  <div class="grid">
+    <!-- metrics card: Results + Pipeline unchanged; "Latest" section is the ONLY addition -->
+    <div class="card pad">
+      <div class="microlabel">Results</div>
+      <div class="results">
+        <div><div class="n">15</div><div class="l">sent</div></div>
+        <div><div class="n">2</div><div class="l">replies</div></div>
+        <div><div class="n">1</div><div class="l">meetings</div></div>
+      </div>
+      <div class="divider"></div>
+      <div class="microlabel">Pipeline</div>
+      <div class="bar"><span class="l">Active</span><div class="track"><div class="fill" style="width:100%"></div></div><span class="n">30</span></div>
+      <div class="bar"><span class="l">Contacted</span><div class="track"><div class="fill" style="width:47%"></div></div><span class="n">14</span></div>
+      <div class="bar"><span class="l">Replied</span><div class="track"><div class="fill" style="width:7%"></div></div><span class="n">2</span></div>
+      <div class="bar"><span class="l">Meeting</span><div class="track"><div class="fill" style="width:4%"></div></div><span class="n">1</span></div>
+
+      <div class="divider"></div>
+      <div class="microlabel">Latest<span class="newtag">new</span></div>
+      <div class="event"><span><b>Trevor Abbott</b> (Northwestern) replied</span><span class="when">3h</span></div>
+      <div class="event"><span>Connection sent to <b>Dana Fleur</b> (Our Place)</span><span class="when">3h</span></div>
+      <div class="event"><span>26 qualified accounts added from sourcing</span><span class="when">1d</span></div>
+    </div>
+
+    <!-- lists card (unchanged) -->
+    <div class="card pad">
+      <div class="microlabel">Your lists</div>
+      <p class="explain">Optional — we source leads for you either way. Add your own contacts, or a blacklist we should never touch.</p>
+      <div class="upload">
+        <div><div class="t">Leads CSV</div><div class="s">30 leads in your pipeline</div></div>
+        <button class="upbtn">Upload</button>
+      </div>
+      <div class="upload">
+        <div><div class="t">Blacklist CSV</div><div class="s">10 entries on your blacklist</div></div>
+        <button class="upbtn">Upload</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- leads entry (unchanged) -->
+  <div class="card entry">
+    <div>
+      <div class="microlabel">All leads</div>
+      <p>30 leads in your pipeline</p>
+    </div>
+    <a class="btn" href="#">View all leads</a>
+  </div>
+
+  <!-- companies entry: ONLY the description line changes -->
+  <div class="card entry second">
+    <div>
+      <div class="microlabel">All companies<span class="newtag">updated line</span></div>
+      <p>798 qualified accounts · 4,048 screened out by your AE</p>
+    </div>
+    <a class="btn" href="#">View all companies</a>
+  </div>
+</main>
+
+</body>
+</html>
