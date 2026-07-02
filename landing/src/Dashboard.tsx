@@ -365,7 +365,7 @@ function ApprovedView({ user }: { user: User }) {
 
   const loadActivity = useCallback(async () => {
     try {
-      const res = await fetch("/api/v1/dashboard/activity?limit=3", {
+      const res = await fetch("/api/v1/dashboard/activity?limit=8", {
         credentials: "include",
       });
       if (!res.ok) throw new Error("request failed");
@@ -623,7 +623,7 @@ function MetricsCard({
               <SectionLabel>Latest</SectionLabel>
               {activity.events.length > 0 ? (
                 activity.events
-                  .slice(0, 3)
+                  .slice(0, 8)
                   .map((event, i) => <ActivityLine key={i} event={event} />)
               ) : (
                 <p className="m-0 pt-1.5 text-[12.5px] text-ink-faint">
