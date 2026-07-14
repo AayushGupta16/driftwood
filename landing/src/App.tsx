@@ -8,35 +8,6 @@ import HelmMark from "./components/HelmMark";
 /* style={{ "--i": n }} helper for the thread stagger delays */
 const iv = (n: number) => ({ "--i": n } as CSSProperties);
 
-/* the reply dot grids (1-in-100 vs 1-in-7 shown as 14-in-100). The tide
-   grid's hits ride a sine across the 20 columns so the replies read as a
-   swell, not a pattern. */
-function Dots({ total, hits, us }: { total: number; hits: number; us?: boolean }) {
-  const cols = 20;
-  const hitIdx = new Set<number>();
-  if (us && hits > 1) {
-    for (let k = 0; k < hits; k++) {
-      const col = Math.round((k * (cols - 1)) / (hits - 1));
-      const row = Math.max(0, Math.min(total / cols - 1, Math.round(2 + 1.9 * Math.sin(col * 0.55 + 0.9))));
-      hitIdx.add(row * cols + col);
-    }
-  } else {
-    for (let k = 0; k < hits; k++) hitIdx.add(Math.round(((k + 0.5) * total) / hits) - 1);
-  }
-  let d = 0;
-  return (
-    <div className={us ? "dots us" : "dots"} aria-hidden="true">
-      {Array.from({ length: total }, (_, i) =>
-        hitIdx.has(i) ? (
-          <i key={i} className="hit" style={{ "--d": d++ } as CSSProperties} />
-        ) : (
-          <i key={i} />
-        ),
-      )}
-    </div>
-  );
-}
-
 function Wordmark({ label = true }: { label?: boolean }) {
   return (
     <>
@@ -145,10 +116,8 @@ export default function App() {
       /* static stack on mobile / reduced motion via CSS */
     }
 
-    // slop vs. real: one scrub drives the arrow across the cards, the reply
-    // grids under each card, and the demo credit at the clip
-    const beforeHits = [...root.querySelectorAll(".dots:not(.us) i.hit")];
-    const usHits = [...root.querySelectorAll(".dots.us i.hit")];
+    // slop vs. real: one scrub drives the arrow across the cards and the
+    // demo credit at the clip
     const note = root.querySelector(".clip-note") as HTMLElement | null;
     const notePath = note?.querySelector("path:nth-of-type(1)") as SVGPathElement | null;
     const noteHead = note?.querySelector("path:nth-of-type(2)") as SVGPathElement | null;
@@ -178,14 +147,8 @@ export default function App() {
         const draw = Math.min(1, Math.max(0, (p - 0.06) / 0.4));
         arrowPath.style.strokeDashoffset = `${arrowLen * (1 - draw)}`;
         arrowHead.style.opacity = draw > 0.97 ? "1" : "0";
-        beforeHits.forEach((d) => d.classList.toggle("lit", p > 0.3));
-        const n = Math.min(
-          usHits.length,
-          Math.max(0, Math.floor(((p - 0.42) / 0.38) * usHits.length)),
-        );
-        usHits.forEach((d, i) => d.classList.toggle("lit", i < n));
-        // the payoff: after the grid fills, credit the demo
-        const np = Math.min(1, Math.max(0, (p - 0.82) / 0.14));
+        // the payoff: credit the demo
+        const np = Math.min(1, Math.max(0, (p - 0.55) / 0.3));
         if (notePath) notePath.style.strokeDashoffset = `${noteLen * (1 - np)}`;
         if (noteHead) noteHead.style.opacity = np > 0.96 ? "1" : "0";
         if (noteEm) noteEm.style.opacity = `${np}`;
@@ -201,10 +164,8 @@ export default function App() {
       updateC();
     } else if (!reduceMotion) {
       // touch: un-pinned, the same choreography rides the viewport — the
-      // arrow draws, the grids fill, each thread message scrubs in
+      // arrow draws, each thread message scrubs in
       const svgEl = arrowPath.ownerSVGElement;
-      const beforeBlock = root.querySelector(".dots:not(.us)");
-      const usBlock = root.querySelector(".dots.us");
       const msgs = [...root.querySelectorAll(".stagger .msg, .stagger .divider")] as HTMLElement[];
       let rafM = 0;
       const updateM = () => {
@@ -215,19 +176,6 @@ export default function App() {
           const p = Math.min(1, Math.max(0, (vh - r.top - 30) / (vh * 0.4)));
           arrowPath.style.strokeDashoffset = `${arrowLen * (1 - p)}`;
           arrowHead.style.opacity = p > 0.95 ? "1" : "0";
-        }
-        if (beforeBlock) {
-          const r = beforeBlock.getBoundingClientRect();
-          beforeHits.forEach((d) => d.classList.toggle("lit", vh - r.top > vh * 0.35));
-        }
-        if (usBlock) {
-          const r = usBlock.getBoundingClientRect();
-          const p = Math.min(1, Math.max(0, (vh - r.top) / (vh * 0.55)));
-          const n = Math.min(
-            usHits.length,
-            Math.max(0, Math.floor(((p - 0.25) / 0.6) * usHits.length)),
-          );
-          usHits.forEach((d, i) => d.classList.toggle("lit", i < n));
         }
         msgs.forEach((el) => {
           const r = el.getBoundingClientRect();
@@ -253,7 +201,6 @@ export default function App() {
       });
       updateM();
     } else {
-      beforeHits.concat(usHits).forEach((d) => d.classList.add("lit"));
       arrowPath.style.strokeDashoffset = "0";
       arrowHead.style.opacity = "1";
       /* the note stays fully visible under reduced motion */
@@ -380,7 +327,7 @@ export default function App() {
             const v = wave(c, r, t, phase); // -1..1
             const idx = Math.max(
               0,
-              Math.min(CHARS.length - 1, Math.round((v + 1.16) * 0.5 * (CHARS.length - 2) + (strip ? 0.7 : (r / rows) * 1.6 - 0.05) - 0.35)),
+              Math.min(CHARS.length - 1, Math.round((v + 1.16) * 0.5 * (CHARS.length - 2) + (strip ? 0.85 : (r / rows) * 1.7 + 0.1) - 0.35)),
             );
             if (idx === 0) continue;
             if (v > 0.82) {
@@ -570,13 +517,6 @@ export default function App() {
                         </p>
                       </div>
                     </div>
-                    <div className="dots-block">
-                      <div className="dots-label">
-                        <span>4 months of this &middot; no reply</span>
-                        <b>&lt;1 in 100</b>
-                      </div>
-                      <Dots total={100} hits={1} />
-                    </div>
                   </div>
                   <div>
                     <p className="compare-label us">what driftwood sent</p>
@@ -694,13 +634,6 @@ export default function App() {
                         <span className="li-input">Write a message&hellip;</span>
                         <span className="li-send">Send</span>
                       </div>
-                    </div>
-                    <div className="dots-block">
-                      <div className="dots-label">
-                        <span>with driftwood &middot; week one at Autosana</span>
-                        <b>1 in 7</b>
-                      </div>
-                      <Dots total={100} hits={14} us />
                     </div>
                   </div>
                 </div>
