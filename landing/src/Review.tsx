@@ -34,9 +34,19 @@ type ReviewLeadContext = {
   name: string | null;
   title: string | null;
   company: string | null;
+  linkedin_url: string | null;
   stage: string;
   prior_sends: number;
   last_sent_at: string | null;
+};
+
+/* Per-kind ScheduledSend runway (approved but not yet delivered). */
+type QueueStats = {
+  kind: string; // "message" | "connection_request"
+  queued: number;
+  sent_24h: number;
+  cap: number;
+  runs_through: string | null; // ISO date; null when nothing is queued
 };
 
 /* bug_validation's structured evidence — required at submission by the
@@ -71,6 +81,7 @@ type ReviewsPageData = {
   total_pending: number;
   limit: number;
   offset: number;
+  queue_stats?: QueueStats[]; // optional: tolerate a backend that predates it
 };
 
 type DecideItem = {
@@ -234,7 +245,7 @@ const FETCH_GUARD = 100; // hard ceiling on load-all iterations
 type QueueState =
   | { status: "loading" }
   | { status: "error" }
-  | { status: "ready"; items: ReviewItemRow[] };
+  | { status: "ready"; items: ReviewItemRow[]; stats: QueueStats[] };
 
 type DecideError = { message: string; itemId: string | null };
 
@@ -295,11 +306,21 @@ function ReviewQueue() {
   const [deny, setDeny] = useState<{ id: string; reason: string } | null>(null);
   const [busyIds, setBusyIds] = useState<ReadonlySet<string>>(EMPTY_SET);
   const [decideError, setDecideError] = useState<DecideError | null>(null);
+  const [confirmAll, setConfirmAll] = useState(false);
   const toast = useToast();
+
+  /* An armed "Approve all" disarms itself after a beat — no stale confirm
+     button waiting to be fat-fingered minutes later. */
+  useEffect(() => {
+    if (!confirmAll) return;
+    const t = window.setTimeout(() => setConfirmAll(false), 5000);
+    return () => window.clearTimeout(t);
+  }, [confirmAll]);
 
   const loadAll = useCallback(async () => {
     try {
       const all: ReviewItemRow[] = [];
+      let stats: QueueStats[] = [];
       for (let i = 0; i < FETCH_GUARD; i++) {
         const res = await fetch(
           `/api/v1/dashboard/reviews?limit=${FETCH_CHUNK}&offset=${all.length}`,
@@ -307,11 +328,12 @@ function ReviewQueue() {
         );
         if (!res.ok) throw new Error("request failed");
         const page = (await res.json()) as ReviewsPageData;
+        if (i === 0) stats = page.queue_stats ?? [];
         all.push(...page.pending);
         if (page.pending.length === 0 || all.length >= page.total_pending)
           break;
       }
-      setState({ status: "ready", items: all });
+      setState({ status: "ready", items: all, stats });
     } catch {
       setState((prev) => (prev.status === "ready" ? prev : { status: "error" }));
     }
@@ -322,6 +344,27 @@ function ReviewQueue() {
       await loadAll();
     })();
   }, [loadAll]);
+
+  /* Re-pull just the stats strip after a decide — approvals turn into
+     ScheduledSend rows server-side, so "queued" moves immediately. Items are
+     already reconciled locally; a failure here just leaves the strip one
+     decide stale. */
+  const refreshStats = useCallback(async () => {
+    try {
+      const res = await fetch("/api/v1/dashboard/reviews?limit=1", {
+        credentials: "include",
+      });
+      if (!res.ok) return;
+      const page = (await res.json()) as ReviewsPageData;
+      const stats = page.queue_stats;
+      if (stats)
+        setState((prev) =>
+          prev.status === "ready" ? { ...prev, stats } : prev,
+        );
+    } catch {
+      // stale strip is fine — the next full load refreshes it
+    }
+  }, []);
 
   /* One decide POST per user action (bulk decisions arrive as one call, so an
      approve-all session is one agent wake). On success the decided items
@@ -347,7 +390,7 @@ function ReviewQueue() {
         setState((prev) =>
           prev.status === "ready"
             ? {
-                status: "ready",
+                ...prev,
                 items: prev.items.filter((item) => !done.has(item.id)),
               }
             : prev,
@@ -355,6 +398,7 @@ function ReviewQueue() {
         setSelected((prev) => new Set([...prev].filter((id) => !done.has(id))));
         setDeny((prev) => (prev && done.has(prev.id) ? null : prev));
         toast(summarizeDecide(result), "success");
+        void refreshStats();
       } catch (err) {
         setDecideError({
           message: err instanceof Error && err.message ? err.message : DECIDE_FALLBACK,
@@ -364,7 +408,7 @@ function ReviewQueue() {
         setBusyIds(EMPTY_SET);
       }
     },
-    [toast],
+    [toast, refreshStats],
   );
 
   const items = state.status === "ready" ? state.items : [];
@@ -390,6 +434,21 @@ function ReviewQueue() {
     );
   }
 
+  /* First tap arms the button ("Approve all N? Confirm"); the second submits
+     every pending item as one decide POST. Real outreach gets queued on
+     approve — never off a single click. */
+  function handleApproveAll() {
+    if (!confirmAll) {
+      setConfirmAll(true);
+      return;
+    }
+    setConfirmAll(false);
+    void decide(
+      items.map((item) => ({ item_id: item.id, decision: "approve" as const })),
+      null,
+    );
+  }
+
   return (
     <>
       <div className="mt-4 flex items-end justify-between gap-3">
@@ -405,6 +464,8 @@ function ReviewQueue() {
       <p className="m-0 mt-2 text-[13px] leading-[1.5] text-ink-soft">
         Decisions your AE is waiting on &mdash; oldest first.
       </p>
+
+      {state.status === "ready" && <QueueStatsStrip stats={state.stats} />}
 
       {state.status === "loading" && (
         <div className="flex items-center justify-center py-16">
@@ -427,7 +488,7 @@ function ReviewQueue() {
           <EmptyQueue />
         ) : (
           <>
-            <div className="mx-0.5 mb-2.5 mt-[18px] flex items-center gap-2.5">
+            <div className="mx-0.5 mb-2.5 mt-[18px] flex flex-wrap items-center gap-2.5">
               <label className="inline-flex cursor-pointer items-center gap-[9px] text-[13.5px] font-medium text-ink-soft">
                 <input
                   type="checkbox"
@@ -454,6 +515,20 @@ function ReviewQueue() {
                   Approve selected ({selected.size})
                 </button>
               )}
+              <button
+                type="button"
+                onClick={handleApproveAll}
+                disabled={busy}
+                className={`min-h-9 cursor-pointer rounded-[10px] px-3.5 py-2 text-[13px] transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+                  confirmAll
+                    ? "bg-tide font-semibold text-white shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] hover:bg-tide-deep"
+                    : "border border-line bg-surface font-medium text-ink-soft hover:border-ink-faint hover:text-ink"
+                }`}
+              >
+                {confirmAll
+                  ? `Approve all ${items.length}? Confirm`
+                  : "Approve all"}
+              </button>
               <span className="ml-auto shrink-0 font-mono text-[11px] tracking-[0.06em] text-ink-faint tabular-nums">
                 {items.length} pending
               </span>
@@ -511,6 +586,60 @@ function ReviewQueue() {
           </>
         ))}
     </>
+  );
+}
+
+/* ---------- queue-state strip (per-kind send runway) ---------- */
+
+const STATS_KIND_LABEL: Record<string, string> = {
+  message: "messages",
+  connection_request: "connection requests",
+};
+
+const STATS_MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+/* "2026-07-20" -> "Jul 20" without a Date round-trip (a bare date string
+   parses as UTC midnight and can render a day early in local time). */
+function statsDate(iso: string): string {
+  const [, m, d] = iso.split("-").map(Number);
+  return m >= 1 && m <= 12 && d ? `${STATS_MONTHS[m - 1]} ${d}` : iso;
+}
+
+/* "connection requests: 34 queued · 12/20 sent in last 24h · runs through
+   ~Jul 20" — one line per send kind; kinds with nothing queued and nothing
+   sent are noise, not news, so they're skipped (nothing at all renders when
+   both are quiet). */
+function QueueStatsStrip({ stats }: { stats: QueueStats[] }) {
+  const live = stats.filter((s) => s.queued > 0 || s.sent_24h > 0);
+  if (live.length === 0) return null;
+  return (
+    <div className="mt-4 grid gap-1.5 rounded-[10px] border border-line bg-paper px-3.5 py-2.5">
+      {live.map((s) => (
+        <p
+          key={s.kind}
+          className="m-0 font-mono text-[11.5px] leading-[1.6] text-ink-soft tabular-nums"
+        >
+          <span className="text-ink">{STATS_KIND_LABEL[s.kind] ?? s.kind}:</span>{" "}
+          {s.queued} queued &middot; {s.sent_24h}/{s.cap} sent in last 24h
+          {s.runs_through !== null && (
+            <> &middot; runs through ~{statsDate(s.runs_through)}</>
+          )}
+        </p>
+      ))}
+    </div>
   );
 }
 
@@ -685,10 +814,11 @@ function ItemCard({
   );
 }
 
-/* "Maya Reston — VP Engineering, Loomi · [new] · no prior sends" */
+/* "Maya Reston — VP Engineering, Loomi · [new] · no prior sends"; the name
+   links out to the lead's LinkedIn profile when we have one (tide + hover
+   underline, the Leads-table affordance) — no more hand-searching names. */
 function LeadLine({ lead }: { lead: ReviewLeadContext }) {
   const role = [lead.title, lead.company].filter(Boolean).join(", ");
-  const who = [lead.name, role].filter(Boolean).join(" — ");
   const prior =
     lead.prior_sends === 0
       ? "no prior sends"
@@ -696,7 +826,25 @@ function LeadLine({ lead }: { lead: ReviewLeadContext }) {
 
   return (
     <p className="m-0 mb-3 mt-[3px] text-[13px] leading-[1.5] text-ink-soft">
-      {who && <>{who} &middot; </>}
+      {lead.name &&
+        (lead.linkedin_url ? (
+          <a
+            href={lead.linkedin_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-tide no-underline hover:underline"
+          >
+            {lead.name}
+            <span aria-hidden="true" className="text-[11px]">
+              {" "}
+              ↗
+            </span>
+          </a>
+        ) : (
+          lead.name
+        ))}
+      {lead.name && role ? ` — ${role}` : role}
+      {(lead.name || role) && <> &middot; </>}
       <span className={STAGE_PILL}>{lead.stage}</span> &middot; {prior}
     </p>
   );
