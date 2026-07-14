@@ -544,6 +544,7 @@ export default function App() {
                           <span className="fake-link">grab time here</span>.
                         </p>
                       </div>
+                      <p className="email-fate">Left on opened.</p>
                     </div>
                   </div>
                   <div>
@@ -685,25 +686,21 @@ export default function App() {
                       <span>01</span>
                       <div>
                         Researches the prospect
-                        <p className="rail-sub">
-                          Uses all publicly available information to understand the prospect.
-                        </p>
+                        <p className="rail-sub">Reads everything public about them.</p>
                       </div>
                     </li>
                     <li data-step="1">
                       <span>02</span>
                       <div>
                         Builds them a custom demo
-                        <p className="rail-sub">
-                          Agents show them what using your product would actually look like.
-                        </p>
+                        <p className="rail-sub">Shows what your product does for them.</p>
                       </div>
                     </li>
                     <li data-step="2">
                       <span>03</span>
                       <div>
                         Sends it from your account
-                        <p className="rail-sub">Every message is human reviewed before it sends.</p>
+                        <p className="rail-sub">Human reviewed before it sends.</p>
                       </div>
                     </li>
                   </ol>

@@ -481,6 +481,7 @@ body {
 .landing .compare-grid { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: clamp(1.5rem, 3vw, 2.5rem); margin-top: 2.75rem; align-items: stretch; }
 /* both artifacts shorter via tighter spacing — the type stays full size */
 .landing .compare-grid .email { padding: 1.2rem 1.4rem; }
+.landing .email-fate { margin: auto 0 0; padding-top: 1.5rem; font-size: 0.85rem; color: var(--gray-light); }
 .landing .compare-grid .email-body p + p { margin-top: 0.65rem; }
 .landing .compare-grid .li-body { padding: 0.4rem 1rem 0.7rem; }
 .landing .compare-grid .msg { padding-block: 0.35rem; }
