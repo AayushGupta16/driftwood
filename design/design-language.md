@@ -53,8 +53,11 @@ inside their artifact window and never leak into page chrome.)
 - **Buttons**: pills (`border-radius: 999px`). Primary action = tide
   background, white text, hover tide-deep. There are no black buttons.
   Secondary = outlined/ghost. This applies to the dashboard too.
-- **Labels** (`.compare-label`, `.artifact-bar`, `.dots-label`): 0.85rem,
-  gray-light, sentence case, no pills, no uppercase, no mono.
+- **Labels** (`.compare-label`, `.artifact-bar`, `.label`): 0.85rem,
+  **gray** (not gray-light — labels carry real information and gray-light
+  on white is ~2.7:1, under the 4.5:1 AA floor at this size), sentence
+  case, no pills, no uppercase, no mono. Gray-light survives only for
+  truly decorative deemphasis.
 - **Redaction language**: identity we withhold = `.redact` gray bar
   (`#d4d9de`, 2px radius). Used consistently: names, companies, addresses.
 
@@ -117,5 +120,9 @@ The signature. ASCII character sea on 2D canvas — never rendered 3D.
   mocked dashboard (`?mock=1`). If the mock or dashboard styling changes,
   RE-SHOOT them in the same commit — a stale bake is a style bug (see the
   black "View all leads" that outlived the button restyle).
+- Baked assets ship as WebP (`cwebp -q 85 -m 6 -sharp_yuv`, keep ~2× display
+  size for retina); only the OG card stays PNG (link-preview compatibility).
+  Below-the-fold `<img>`s get `loading="lazy" decoding="async"`; the hero
+  window image gets `fetchPriority="high"`.
 - When adding a token/pattern, add it here; when deviating, say why in the
   commit message.

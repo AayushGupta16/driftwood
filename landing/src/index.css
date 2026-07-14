@@ -1,13 +1,5 @@
 @import "tailwindcss";
 
-@font-face {
-  font-family: "Nasalization";
-  src: url("/nasalization-rg.woff2") format("woff2");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
 @theme {
   /* dashboard tokens, aligned with the landing system (design/landing-draft-v7.html):
      pure white ground, gray ink scale, hairline #e9ebee, one tide accent,
@@ -69,49 +61,6 @@ body {
   transform: none;
 }
 
-/* ---------- scroll story stage ---------- */
-/* log line tick-in */
-.log-line {
-  opacity: 0;
-  transform: translateY(6px);
-  animation: log-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
-@keyframes log-in {
-  to { opacity: 1; transform: none; }
-}
-
-/* demo thumbnail materialize */
-.materialize {
-  animation: materialize 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-@keyframes materialize {
-  0% { opacity: 0; transform: scale(0.92); filter: blur(6px); }
-  100% { opacity: 1; transform: none; filter: blur(0); }
-}
-
-/* email body blocks sliding into the compose window */
-.block-in {
-  animation: block-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-@keyframes block-in {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: none; }
-}
-
-/* demo card drop into email */
-.pop-in {
-  animation: pop-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-@keyframes pop-in {
-  0% { opacity: 0; transform: translateY(-16px) scale(0.95); }
-  70% { opacity: 1; transform: translateY(2px) scale(1.005); }
-  100% { opacity: 1; transform: none; }
-}
-
 /* reply toast */
 .toast-in {
   animation: toast-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -142,41 +91,15 @@ body {
   100% { transform: translateX(420%); }
 }
 
-/* progress fill on send button */
-.send-fill {
-  animation: send-fill 0.4s ease-out both;
-}
-
-@keyframes send-fill {
-  from { transform: scale(0.96); }
-  to { transform: none; }
-}
-
-/* soft pulsing ring around the driftwood email in the compare beat */
-.tide-ring-pulse {
-  animation: tide-ring 2.4s ease-in-out infinite;
-}
-
-@keyframes tide-ring {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(21, 85, 126, 0); }
-  50% { box-shadow: 0 0 0 6px rgba(21, 85, 126, 0.16); }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .reveal {
     opacity: 1;
     transform: none;
     transition: none;
   }
-  .log-line,
-  .block-in,
-  .materialize,
-  .pop-in,
   .toast-in,
   .pulse-dot,
-  .progress-indeterminate,
-  .send-fill,
-  .tide-ring-pulse {
+  .progress-indeterminate {
     animation: none;
     opacity: 1;
     transform: none;
@@ -208,8 +131,10 @@ body {
   overflow-x: clip;
   min-height: 100vh;
 }
-/* one label voice, used everywhere a small caption appears */
-.landing .label { font-size: 0.85rem; color: var(--gray-light); }
+/* one label voice, used everywhere a small caption appears.
+   gray, not gray-light: labels carry real information and #9aa2ab on
+   white is ~2.7:1 — under the 4.5:1 AA floor at this size */
+.landing .label { font-size: 0.85rem; color: var(--gray); }
 .landing h1, .landing h2 { margin: 0; letter-spacing: -0.014em; text-wrap: balance; }
 /* the draft leans on UA heading defaults, which Tailwind preflight resets */
 .landing h1 { font-size: 2em; font-weight: bold; }
@@ -225,13 +150,14 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
 .landing .wrap { max-width: 68rem; margin-inline: auto; padding-inline: clamp(1.25rem, 4vw, 2.5rem); }
 .landing :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
+/* tide by default — there are no black buttons (design-language §3) */
 .landing .btn {
   display: inline-flex; align-items: center; justify-content: center;
-  background: var(--ink); color: #fff; text-decoration: none;
+  background: var(--accent); color: #fff; text-decoration: none;
   font-weight: 500; font-size: 0.95rem; height: 2.75rem; padding-inline: 1.4rem;
   border-radius: 999px; transition: transform 0.24s var(--ease-settle), background 0.15s;
 }
-.landing .btn:hover { background: #000; transform: translateY(-1px); }
+.landing .btn:hover { background: #0d3c5b; transform: translateY(-1px); }
 .landing .btn-primary { background: var(--accent); height: 3.2rem; padding-inline: 2.1rem; font-size: 1.05rem; font-weight: 600; }
 .landing .btn-primary:hover { background: #0d3c5b; }
 
@@ -318,9 +244,6 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
   .landing .hero-grid .app-window img { width: 100%; height: 100%; object-fit: cover; object-position: left top; }
 }
 
-/* waterline under the hero */
-.landing .hero-wave { height: 28px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='28' viewBox='0 0 180 28'%3E%3Cpath d='M0 14 C 11.25 5.5, 33.75 5.5, 45 14 C 56.25 22.5, 78.75 22.5, 90 14 C 101.25 5.5, 123.75 5.5, 135 14 C 146.25 22.5, 168.75 22.5, 180 14' fill='none' stroke='%2315557e' stroke-width='1.6' stroke-opacity='0.4'/%3E%3C/svg%3E") repeat-x center; }
-
 /* ---------- docked sheets, wave-cut seams ----------
    each section is a flush sheet; its top shoulder is a filled sine wave in
    the sheet's own color, pulled up over the sheet above. Two sheets carry a
@@ -338,54 +261,18 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
 .landing .wash-a::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='28' viewBox='0 0 180 28'%3E%3Cpath d='M0 14 C 11.25 5.5, 33.75 5.5, 45 14 C 56.25 22.5, 78.75 22.5, 90 14 C 101.25 5.5, 123.75 5.5, 135 14 C 146.25 22.5, 168.75 22.5, 180 14 L180 28 L0 28 Z' fill='%23f4f8fb'/%3E%3C/svg%3E"); }
 .landing .wash-b { background: #eaf1f7; }
 .landing .wash-b::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='28' viewBox='0 0 180 28'%3E%3Cpath d='M0 14 C 11.25 5.5, 33.75 5.5, 45 14 C 56.25 22.5, 78.75 22.5, 90 14 C 101.25 5.5, 123.75 5.5, 135 14 C 146.25 22.5, 168.75 22.5, 180 14 L180 28 L0 28 Z' fill='%23eaf1f7'/%3E%3C/svg%3E"); }
-.landing #week-one.sheet::before { content: none; } /* the hero sea is this seam */
 .landing .sea-strip {
   display: none; width: 100%; height: 112px; pointer-events: none;
   -webkit-mask-image: linear-gradient(to bottom, transparent, black 16%, black 84%, transparent);
   mask-image: linear-gradient(to bottom, transparent, black 16%, black 84%, transparent);
 }
 .landing.sea-live .sea-strip { display: block; }
-/* the one surfacing moment: the LinkedIn window rises out of the hero's sea */
-.landing .week-grid > div:last-child { position: relative; z-index: 2; margin-top: -3.5rem; }
-.landing .week-left h2 { margin-bottom: 1.6rem; }
 .landing .sect { padding-block: clamp(2.5rem, 5vw, 4.25rem); }
-.landing .sect h2, .landing .how-grid h2, .landing .week-left h2 { font-size: clamp(2rem, 1.2rem + 2.8vw, 3.2rem); font-weight: 600; line-height: 1.12; max-width: 28ch; }
+.landing .sect h2, .landing .how-grid h2 { font-size: clamp(2rem, 1.2rem + 2.8vw, 3.2rem); font-weight: 600; line-height: 1.12; max-width: 28ch; }
 
-/* ---------- week one: G2 ---------- */
-.landing .week-grid {
-  display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-  gap: clamp(2rem, 4vw, 3.5rem); align-items: start; margin-top: 2.5rem;
-}
-.landing .week-left > p { color: var(--gray); line-height: 1.6; max-width: 38ch; }
-.landing .week-left b { color: var(--ink); font-weight: 600; }
-
-/* the number, shown not told: one reply per N messages, as dots */
-.landing .sect-sub { margin-top: 0.9rem; font-size: 1.1rem; color: var(--gray); max-width: 52ch; }
-.landing .rate-viz { margin-top: 0; }
-.landing .rate-scope { font-size: 0.85rem; color: var(--gray-light); margin-bottom: 0.4rem; }
-.landing .compare-label, .landing .dots-label span, .landing .artifact-bar { font-size: 0.85rem; color: var(--gray-light); }
-.landing .rate-mult { font-size: 1.25rem; font-weight: 500; color: var(--gray); }
-.landing .rate-mult em { color: var(--accent); font-style: normal; font-weight: 700; }
-.landing .dots-block { margin-top: 1.9rem; }
-.landing .dots-label { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.9rem; color: var(--gray); margin-bottom: 0.7rem; max-width: 26.5rem; }
-.landing .dots-label b { color: var(--ink); font-weight: 600; }
-.landing .dots { display: grid; grid-template-columns: repeat(20, 0.72rem); gap: 0.38rem; }
-.landing .dots i {
-  width: 0.72rem; height: 0.72rem; border-radius: 50%; background: #e4e9ed;
-  transform: scale(1); transition: background 0.3s, transform 0.3s cubic-bezier(0.16,1,0.3,1);
-}
-.landing .dots i.hit.lit { background: #a9b1b9; animation: dot-pop 0.35s cubic-bezier(0.16,1,0.3,1) both; }
-.landing .dots.us i.hit.lit { background: var(--accent); }
-@keyframes dot-pop { 0% { transform: scale(0.3); } 70% { transform: scale(1.35); } 100% { transform: scale(1); } }
-.landing .founder {
-  margin-top: 2.25rem; padding-top: 1.75rem;
-  display: flex; gap: 1.1rem; align-items: center;
-  border-top: 1px solid var(--line); max-width: 26rem;
-}
-.landing .founder img { width: 4.5rem; height: 4.5rem; border-radius: 12px; object-fit: cover; }
-.landing .founder-quote { font-size: 1.05rem; font-weight: 500; }
-.landing .founder-attr { margin-top: 0.25rem; font-size: 0.85rem; color: var(--gray); }
-.landing .founder-attr b { color: var(--ink); font-weight: 600; }
+/* labels: gray, not gray-light — they carry real information ("what
+   everyone else sends") and gray-light fails AA contrast at this size */
+.landing .compare-label, .landing .artifact-bar { font-size: 0.85rem; color: var(--gray); }
 
 /* the thread, styled like a real LinkedIn message window */
 .landing .thread {
@@ -436,9 +323,6 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
 .landing .clip::after { content: "0:19"; position: absolute; right: 0.55rem; bottom: 0.5rem; background: rgba(22,24,27,0.75); color: #fff; font-size: 0.7rem; padding: 0.1rem 0.4rem; border-radius: 4px; }
 .landing .play { position: absolute; inset: 0; margin: auto; width: 2.6rem; height: 2.6rem; background: rgba(22,24,27,0.62); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 .landing .play::after { content: ""; border-style: solid; border-width: 0.45rem 0 0.45rem 0.8rem; border-color: transparent transparent transparent #fff; margin-left: 0.18rem; }
-.landing .thread-foot { border-top: 1px solid var(--line); margin-top: 1.4rem; padding-top: 1.1rem; display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
-.landing .thread-foot b { font-size: 0.95rem; }
-.landing .thread-foot span { font-size: 0.8rem; color: var(--gray-light); }
 .landing .stagger .msg, .landing .stagger .divider { opacity: 0; transform: translateY(10px); }
 .landing .stagger.seen .msg, .landing .stagger.seen .divider {
   animation: rise 0.45s cubic-bezier(0.16,1,0.3,1) both;
@@ -447,10 +331,6 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
 
 /* ---------- how it works: G3 pinned scrub ---------- */
 .landing .pin-wrap { height: 155vh; }
-.landing .week-pin-wrap { height: 140vh; }
-.landing .week-pin-wrap .pin { align-items: flex-start; padding-top: 4rem; }
-.landing .pin-open { overflow: visible; }
-.landing .week-sect { padding-block: 2rem; width: 100%; }
 .landing .pin { position: sticky; top: 0; height: 100vh; display: flex; align-items: center; overflow: hidden; }
 .landing .how-grid { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: clamp(2.5rem, 5vw, 5rem); align-items: center; width: 100%; }
 /* the deck bleeds toward the right viewport edge on desktop: the rail keeps
@@ -491,25 +371,8 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
   border: 1px solid var(--line); border-radius: var(--r-win); background: #fff; overflow: hidden;
   box-shadow: var(--shadow-win);
 }
-.landing .artifact-bar { display: flex; align-items: center; gap: 0.4rem; padding: 0.7rem 1rem; border-bottom: 1px solid var(--line); font-size: 0.8rem; color: var(--gray-light); }
+.landing .artifact-bar { display: flex; align-items: center; gap: 0.4rem; padding: 0.7rem 1rem; border-bottom: 1px solid var(--line); font-size: 0.8rem; color: var(--gray); }
 .landing .artifact > img { width: 100%; display: block; }
-.landing .artifact-body { padding: 2rem 2.2rem 2.2rem; }
-.landing .work { font-size: 1.05rem; line-height: 2.5; color: #3c434a; }
-.landing .work .done::before { content: "✓"; color: var(--accent); margin-right: 0.55rem; font-weight: 600; }
-.landing .work .doing::before { content: "●"; color: var(--accent); margin-right: 0.55rem; font-size: 0.6rem; vertical-align: 1px; }
-.landing .work .doing { color: var(--gray-light); }
-
-.landing .demo-rows { display: flex; flex-direction: column; gap: 0.6rem; }
-.landing .demo-row { display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--line); border-radius: 8px; padding: 0.6rem 0.75rem; background: #f7f9fb; }
-.landing .demo-cta { margin-top: 0.8rem; background: var(--ink); color: #fff; text-align: center; border-radius: 999px; padding: 0.55rem; font-size: 0.85rem; font-weight: 600; position: relative; }
-.landing .cursor-pill {
-  position: absolute; right: -0.7rem; bottom: -0.7rem;
-  display: inline-flex; align-items: center;
-  background: var(--accent); color: #fff; border-radius: 999px;
-  padding: 0.25rem 0.65rem; font-size: 0.72rem; font-weight: 600;
-  box-shadow: 0 6px 16px -6px rgba(21,85,126,0.5);
-}
-.landing .send .msg-body { max-width: none; }
 
 /* ---------- compare: G4, the favorite section, restyled ---------- */
 .landing .compare-head { text-align: center; }
@@ -526,7 +389,7 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
 .landing .compare-grid { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: clamp(1.5rem, 3vw, 2.5rem); margin-top: 5.25rem; align-items: stretch; }
 /* both artifacts shorter via tighter spacing — the type stays full size */
 .landing .compare-grid .email { padding: 1.2rem 1.4rem; }
-.landing .email-fate { margin: auto 0 0; padding-top: 1.5rem; font-size: 0.85rem; color: var(--gray-light); }
+.landing .email-fate { margin: auto 0 0; padding-top: 1.5rem; font-size: 0.85rem; color: var(--gray); }
 .landing .compare-grid .email-body p + p { margin-top: 0.65rem; }
 .landing .compare-grid .li-body { padding: 0.4rem 1rem 0.7rem; }
 .landing .compare-grid .msg { padding-block: 0.35rem; }
@@ -555,16 +418,7 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
 .landing .email-body p + p { margin-top: 0.9rem; }
 .landing .email-body ul { list-style: disc; margin: 0.7rem 0 0 1.35rem; padding: 0; }
 .landing .email-body li { margin-top: 0.3rem; }
-.landing .order-demo { margin-top: 1.2rem; max-width: 20rem; }
 .landing .email-body .fake-link { color: #1a0dab; text-decoration: underline; }
-.landing .order-card { margin-top: 1.2rem; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; max-width: 24rem; }
-.landing .order-bar { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.7rem; border-bottom: 1px solid var(--line); font-size: 0.72rem; color: var(--gray-light); }
-.landing .order-live { margin-left: auto; display: inline-flex; align-items: center; gap: 0.3rem; font-weight: 600; color: #2a7d4f; }
-.landing .order-live::before { content: ""; width: 0.45rem; height: 0.45rem; border-radius: 50%; background: #2a9d5c; }
-.landing .order-body { padding: 0.9rem; }
-.landing .order-row { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 0.5rem 0.65rem; border: 1px solid var(--line); border-radius: 7px; }
-.landing .order-row + .order-row { margin-top: 0.5rem; }
-.landing .order-check { margin-top: 0.7rem; display: flex; justify-content: space-between; align-items: center; background: var(--ink); color: #fff; border-radius: 7px; padding: 0.55rem 0.75rem; font-size: 0.82rem; font-weight: 600; }
 
 /* ---------- close ---------- */
 .landing .close-sect { text-align: center; }
@@ -588,7 +442,7 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
 .landing .foot a:hover { color: #fff; }
 
 @media (max-width: 52rem) {
-  .landing .hero-grid, .landing .week-grid, .landing .how-grid, .landing .compare-grid { grid-template-columns: 1fr; }
+  .landing .hero-grid, .landing .how-grid, .landing .compare-grid { grid-template-columns: 1fr; }
   /* the text column dissolves into grid items so the proof can move below
      the window — onto the water, where the sea draws its island (the same
      canvas runs on phones; only reduced-motion goes without) */
@@ -605,18 +459,14 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
     font-size: 0.85rem; padding: 0.8rem 1.2rem 0.8rem 0.85rem;
   }
   .landing .hero-proof p { max-width: 22ch; }
-  .landing .week-grid > div:last-child { margin-top: 0; }
   /* the hand-drawn arrow moves between the stacked cards, pointing at ours */
   .landing .compare-grid > div:nth-of-type(1) { order: 1; }
   .landing .compare-arrow { position: static; order: 2; width: 6rem; margin: 0.4rem auto; transform: rotate(64deg); }
   .landing .compare-grid > div:nth-of-type(2) { order: 3; }
-  /* week + compare flow statically (their content is taller than a phone
-     screen), but their scroll-linked animations still run un-pinned */
-  .landing .week-pin-wrap, .landing .compare-pin-wrap { height: auto; }
-  .landing .week-pin-wrap .pin, .landing .compare-pin-wrap .pin { position: static; height: auto; overflow: visible; }
-  .landing .week-pin-wrap .pin { padding-top: 1.5rem; }
-  .landing .week-grid { margin-top: 1.5rem; }
-  .landing .compare-pin-wrap .pin { padding-top: 2.5rem; padding-bottom: 1.5rem; }
+  /* compare flows statically (its content is taller than a phone screen),
+     but its scroll-linked animations still run un-pinned */
+  .landing .compare-pin-wrap { height: auto; }
+  .landing .compare-pin-wrap .pin { position: static; height: auto; overflow: visible; padding-top: 2.5rem; padding-bottom: 1.5rem; }
   /* the how deck keeps its scroll-scrub on phones: a compact pinned scene.
      svh, not vh — iOS toolbar collapse makes vh pins jump mid-scrub */
   .landing #how .pin-wrap { height: 200vh; height: 200svh; }
@@ -641,10 +491,10 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
   .landing .app-window { position: relative; z-index: 2; }
 }
 /* desktop-width touch devices (tablets): the how deck scrubs fine, but the
-   week/compare pins hold content taller than makes sense to freeze on touch */
+   compare pin holds content taller than makes sense to freeze on touch */
 @media (pointer: coarse) and (min-width: 52rem) {
-  .landing .week-pin-wrap, .landing .compare-pin-wrap { height: auto; }
-  .landing .week-pin-wrap .pin, .landing .compare-pin-wrap .pin { position: static; height: auto; overflow: visible; padding-top: 2.5rem; }
+  .landing .compare-pin-wrap { height: auto; }
+  .landing .compare-pin-wrap .pin { position: static; height: auto; overflow: visible; padding-top: 2.5rem; }
 }
 @media (prefers-reduced-motion: reduce) {
   .landing * { animation-duration: 0.01ms !important; animation-delay: 0ms !important; transition-duration: 0.01ms !important; }
