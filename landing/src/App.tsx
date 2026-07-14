@@ -307,8 +307,8 @@ export default function App() {
             isl = {
               cx: (pr.left + pr.width / 2 - cr.left) / CELL_W,
               cy: (pr.top + pr.height / 2 - cr.top) / CELL_H,
-              rx: pr.width / 2 / CELL_W + 2.5,
-              ry: pr.height / 2 / CELL_H + 1.3,
+              rx: pr.width / 2 / CELL_W + 4.5,
+              ry: pr.height / 2 / CELL_H + 2,
             };
           }
         }
