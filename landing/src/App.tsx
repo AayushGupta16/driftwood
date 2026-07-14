@@ -105,7 +105,13 @@ export default function App() {
           el.style.zIndex = `${10 + i}`;
         });
         const step = Math.min(cards.length - 1, Math.max(0, Math.round(prog)));
-        items.forEach((li, i) => li.classList.toggle("active", i === step));
+        items.forEach((li, i) => {
+          const el = li as HTMLElement;
+          const d = Math.min(1, Math.abs(i - prog));
+          el.style.transform = `translateX(${(1 - d) * 10}px) scale(${1 + (1 - d) * 0.14})`;
+          el.style.opacity = `${1 - d * 0.55}`;
+          li.classList.toggle("active", i === step);
+        });
       };
       const onScroll = () => {
         if (!raf) raf = requestAnimationFrame(update);
