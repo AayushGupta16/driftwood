@@ -37,3 +37,11 @@ Promote a known-good prior deployment instead of guessing:
 - `landing/api/` — Vercel serverless functions (e.g. `waitlist.ts`).
 - `landing/vercel.json` — rewrites (`/api/*`, `/auth/*`, `/d/*` proxy to the
   backend; SPA catch-all to `index.html`).
+
+## Design language
+
+**Before any UI change (landing OR dashboard), read
+`design/design-language.md`** — tokens, type, buttons, the ASCII sea rules,
+motion gates, copy rules, and the baked-asset re-shoot rule. It is the
+source of truth; if your change disagrees with it, update the doc in the
+same commit or don't make the change.

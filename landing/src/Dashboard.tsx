@@ -454,7 +454,7 @@ function LeadsEntryCard({ state }: { state: SummaryState }) {
         href="/dashboard/leads"
         target="_blank"
         rel="noreferrer"
-        className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-full bg-ink px-4.5 py-2.5 text-[14px] font-medium text-white no-underline transition-all hover:-translate-y-px hover:bg-black sm:self-auto"
+        className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-full bg-tide px-4.5 py-2.5 text-[14px] font-medium text-white no-underline transition-all hover:-translate-y-px hover:bg-tide-deep sm:self-auto"
       >
         View all leads
       </a>
@@ -488,7 +488,7 @@ function CompaniesEntryCard({ state }: { state: SummaryState }) {
         href="/dashboard/companies"
         target="_blank"
         rel="noreferrer"
-        className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-full bg-ink px-4.5 py-2.5 text-[14px] font-medium text-white no-underline transition-all hover:-translate-y-px hover:bg-black sm:self-auto"
+        className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-full bg-tide px-4.5 py-2.5 text-[14px] font-medium text-white no-underline transition-all hover:-translate-y-px hover:bg-tide-deep sm:self-auto"
       >
         View all companies
       </a>
@@ -523,7 +523,7 @@ function ReviewEntryCard({ state }: { state: SummaryState }) {
         href="/dashboard/review"
         target="_blank"
         rel="noreferrer"
-        className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-full bg-ink px-4.5 py-2.5 text-[14px] font-medium text-white no-underline transition-all hover:-translate-y-px hover:bg-black sm:self-auto"
+        className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-full bg-tide px-4.5 py-2.5 text-[14px] font-medium text-white no-underline transition-all hover:-translate-y-px hover:bg-tide-deep sm:self-auto"
       >
         Open review queue
       </a>

@@ -217,6 +217,8 @@ export default function App() {
       phase: number;
       cols: number;
       rows: number;
+      w: number;
+      h: number;
       visible: boolean;
     };
     const mounts: Mount[] = [];
@@ -231,6 +233,8 @@ export default function App() {
         phase: (canvas.getBoundingClientRect().top + scrollY) * 0.02,
         cols: 0,
         rows: 0,
+        w: 0,
+        h: 0,
         visible: false,
       };
       const io = new IntersectionObserver((es) => {
@@ -274,6 +278,8 @@ export default function App() {
       m.ctx.textBaseline = "middle";
       m.cols = Math.ceil(w / CELL_W);
       m.rows = Math.ceil(h / CELL_H);
+      m.w = w;
+      m.h = h;
       m.phase = (m.canvas.getBoundingClientRect().top + scrollY) * 0.02;
     };
     resize();
@@ -295,6 +301,7 @@ export default function App() {
         if (!m.visible) continue;
         if (!m.cols) sizeMount(m); // strips are display:none until sea-live commits
         if (!m.cols) continue;
+        if (m.canvas.clientWidth !== m.w || m.canvas.clientHeight !== m.h) sizeMount(m);
         const { ctx, cols, rows, strip, phase } = m;
         ctx.clearRect(0, 0, m.canvas.clientWidth, m.canvas.clientHeight);
         // the proof island: the hero sea reserves ground under the quote and
@@ -366,6 +373,15 @@ export default function App() {
               }
             }
           }
+          // one tree on the upper-right shoulder of the island
+          const tx = (isl.cx + isl.rx * 0.58) * CELL_W;
+          const ty = (isl.cy - isl.ry * 0.52) * CELL_H;
+          ctx.fillStyle = "rgba(74, 103, 65, 0.92)";
+          ctx.fillText("▲", tx, ty - CELL_H * 1.6);
+          ctx.fillText("▲", tx - CELL_W * 0.5, ty - CELL_H * 0.7);
+          ctx.fillText("▲", tx + CELL_W * 0.5, ty - CELL_H * 0.7);
+          ctx.fillStyle = "rgba(121, 85, 52, 0.95)";
+          ctx.fillText("▌", tx + CELL_W * 0.2, ty + CELL_H * 0.25);
         }
         const duck = (seed: number, rowF: number, dir: number) => {
           const span = cols + 16;

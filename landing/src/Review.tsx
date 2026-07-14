@@ -797,7 +797,7 @@ function ItemCard({
               type="button"
               onClick={onConfirmDeny}
               disabled={busy}
-              className="min-h-10 cursor-pointer rounded-[10px] bg-ink px-[18px] py-2 text-[13.5px] font-semibold text-white transition-colors hover:bg-[#2a2e38] disabled:cursor-not-allowed disabled:opacity-60"
+              className="min-h-10 cursor-pointer rounded-[10px] bg-tide px-[18px] py-2 text-[13.5px] font-semibold text-white transition-colors hover:bg-tide-deep disabled:cursor-not-allowed disabled:opacity-60"
             >
               {denyLabel}
             </button>

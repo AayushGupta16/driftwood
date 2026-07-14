@@ -287,6 +287,8 @@ body {
   box-shadow: var(--shadow-win);
   background: #fff;
 }
+/* the hero window sits a touch right of its column */
+.landing .hero-grid .app-window { margin-right: -2.5rem; }
 .landing .enter-window { animation: rise 0.65s var(--ease-settle) both 0.1s, bob 7s ease-in-out 2.6s infinite; }
 .landing .thread { animation: bob 7.6s ease-in-out 1.3s infinite; }
 .landing .email { animation: bob 8.2s ease-in-out 0.6s infinite; }
@@ -547,6 +549,7 @@ body {
 @media (max-width: 52rem) {
   .landing .hero-grid, .landing .week-grid, .landing .how-grid, .landing .compare-grid { grid-template-columns: 1fr; }
   .landing .hero-grid > div:first-child { padding-top: 0; }
+  .landing .hero-grid .app-window { margin-right: 0; }
   /* no sea island on the stacked layout: a plain card carries the quote */
   .landing .hero-proof { margin-top: 1.6rem; background: #fff; border: 1px solid var(--line); border-radius: 14px; color: var(--gray); }
   .landing .week-grid > div:last-child { margin-top: 0; }
