@@ -272,7 +272,9 @@ body {
   display: flex; align-items: center; gap: 0.8rem;
   margin-top: auto; margin-bottom: 2.4rem;
   padding: 1rem 1.7rem 1rem 1rem;
-  font-size: 0.92rem; color: #55503f;
+  font-size: 0.92rem; color: #46412f;
+  /* a feathered clearing on the island so the quote reads; no hard edges */
+  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.6) 60%, rgba(255, 255, 255, 0) 100%);
 }
 .landing .hero-proof img { width: 2.3rem; height: 2.3rem; border-radius: 50%; object-fit: cover; box-shadow: 0 1px 3px rgba(60, 50, 30, 0.3); }
 .landing .hero-proof p { margin: 0; max-width: 40ch; line-height: 1.4; }

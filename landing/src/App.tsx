@@ -358,11 +358,11 @@ export default function App() {
               const e = islE(c, r);
               if (e > 1) continue;
               if (e > 0.62) {
-                ctx.fillStyle = "rgba(121, 108, 84, 0.42)";
+                ctx.fillStyle = "rgba(121, 108, 84, 0.34)";
                 ctx.fillText("▒", c * CELL_W, y); // ▒ beach
               } else {
-                ctx.fillStyle = "rgba(150, 137, 110, 0.26)";
-                ctx.fillText("█", c * CELL_W, y); // █ inland, light under the text
+                ctx.fillStyle = "rgba(150, 137, 110, 0.15)";
+                ctx.fillText("█", c * CELL_W, y); // █ inland, faint under the text
               }
             }
           }
@@ -703,9 +703,7 @@ export default function App() {
                       <span>03</span>
                       <div>
                         Sends it from your account
-                        <p className="rail-sub">
-                          <b>Every message is human reviewed</b> before it sends.
-                        </p>
+                        <p className="rail-sub">Every message is human reviewed before it sends.</p>
                       </div>
                     </li>
                   </ol>
