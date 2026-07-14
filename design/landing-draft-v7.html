@@ -112,16 +112,16 @@
 
   /* the number, shown not told: one reply per N messages, as dots */
   .sect-sub { margin-top: 0.9rem; font-size: 1.1rem; color: var(--gray); max-width: 52ch; }
-  .rate-viz { margin-top: 2rem; }
-  .rate-mult { font-size: 2rem; font-weight: 600; }
+  .rate-viz { margin-top: 0.5rem; }
+  .rate-scope { font-size: 0.85rem; color: var(--gray-light); margin-bottom: 0.4rem; }
+  .rate-mult { font-size: 2.1rem; font-weight: 600; }
   .rate-mult em { color: var(--accent); font-style: normal; }
-  .dots-block { margin-top: 1.4rem; }
-  .dots-block + .dots-block { margin-top: 1.5rem; }
-  .dots-label { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.85rem; color: var(--gray); margin-bottom: 0.6rem; max-width: 24rem; }
+  .dots-block { margin-top: 1.9rem; }
+  .dots-label { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.9rem; color: var(--gray); margin-bottom: 0.7rem; max-width: 26.5rem; }
   .dots-label b { color: var(--ink); font-weight: 600; }
-  .dots { display: grid; grid-template-columns: repeat(20, 0.55rem); gap: 0.3rem; }
+  .dots { display: grid; grid-template-columns: repeat(20, 0.72rem); gap: 0.38rem; }
   .dots i {
-    width: 0.55rem; height: 0.55rem; border-radius: 50%; background: #e4e9ed;
+    width: 0.72rem; height: 0.72rem; border-radius: 50%; background: #e4e9ed;
     transform: scale(1); transition: background 0.3s, transform 0.3s cubic-bezier(0.16,1,0.3,1);
   }
   .dots i.hit { background: #c6ccd2; }
@@ -170,6 +170,8 @@
   .divider { display: flex; align-items: center; gap: 0.8rem; margin-block: 0.6rem; }
   .divider hr { flex: 1; border: 0; border-top: 1px solid #e8e8e8; margin: 0; }
   .divider span { font-size: 0.72rem; color: #767676; text-transform: uppercase; letter-spacing: 0.06em; }
+  .divider.win span { color: var(--accent); font-weight: 700; }
+  .divider.win hr { border-top-color: rgba(21,85,126,0.3); }
   .li-compose {
     display: flex; align-items: center; gap: 0.8rem;
     border-top: 1px solid #e8e8e8; padding: 0.75rem 1rem;
@@ -342,20 +344,17 @@
   <section id="week-one">
     <div class="wrap sect">
       <h2>Be <em class="voice">undeniable</em> to your leads.</h2>
-      <p class="sect-sub">
-        Week one at Autosana: four months of pitching Superhuman's CTO got
-        silence. One driftwood demo got a reply in twelve hours, and a booked call.
-      </p>
       <div class="week-grid">
         <div class="week-left">
           <div class="rate-viz" aria-label="Reply rate: about 1 in 100 before driftwood, 1 in 7 with driftwood">
-            <p class="rate-mult"><em>14&times;</em> the replies.</p>
+            <p class="rate-scope">week one at Autosana</p>
+            <p class="rate-mult">Same leads. <em>14&times;</em> the replies.</p>
             <div class="dots-block">
-              <div class="dots-label"><span>before driftwood</span><b>&lt;1 reply per 100 messages</b></div>
+              <div class="dots-label"><span>before</span><b>&lt;1 in 100</b></div>
               <div class="dots" data-total="100" data-hits="1" aria-hidden="true"></div>
             </div>
             <div class="dots-block">
-              <div class="dots-label"><span>with driftwood</span><b>1 reply per 7 messages</b></div>
+              <div class="dots-label"><span>with driftwood</span><b>1 in 7</b></div>
               <div class="dots us" data-total="100" data-hits="14" aria-hidden="true"></div>
             </div>
           </div>
@@ -400,6 +399,7 @@
                   <p class="msg-body">send me a blurb + demos to <span class="redact" role="img" aria-label="address redacted"></span>@superhuman.com and I'll forward to my team - best</p>
                 </div>
               </div>
+              <div class="divider win" role="separator" style="--i:5"><hr/><span>Call booked · Jul 12</span><hr/></div>
             </div>
             <div class="li-compose" aria-hidden="true">
               <span class="li-input">Write a message&hellip;</span>
