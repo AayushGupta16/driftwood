@@ -184,9 +184,9 @@ export default function App() {
     }
 
     const cleanups: (() => void)[] = [];
-    const CHARS = [" ", "\u00b7", "-", "~", "\u2248"]; // · - ~ ≈ by wave height
-    const CELL_W = 11;
-    const CELL_H = 15;
+    const CHARS = [" ", "\u00b7", "-", "~", "\u2248", "\u224b"]; // · - ~ ≈ ≋ by wave height
+    const CELL_W = 9;
+    const CELL_H = 13;
     const WOOD = "\u2582\u2584\u2586\u2584\u2582"; // ▂▄▆▄▂ a drifting log
 
     type Mount = {
@@ -249,7 +249,7 @@ export default function App() {
       m.canvas.width = w * dpr;
       m.canvas.height = h * dpr;
       m.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      m.ctx.font = '12px ui-monospace, "SF Mono", Menlo, monospace';
+      m.ctx.font = '11px ui-monospace, "SF Mono", Menlo, monospace';
       m.ctx.textBaseline = "middle";
       m.cols = Math.ceil(w / CELL_W);
       m.rows = Math.ceil(h / CELL_H);
@@ -257,15 +257,16 @@ export default function App() {
     resize();
 
     const wave = (x: number, y: number, t: number, phase: number) =>
-      Math.sin(x * 0.42 + t * 0.7 + phase) * 0.5 +
-      Math.sin(y * 0.9 + t * 0.5 + phase) * 0.3 +
-      Math.sin((x + y) * 0.23 + t * 0.9 + phase * 0.6) * 0.2;
+      Math.sin(x * 0.42 + t * 1.05 + phase) * 0.42 +
+      Math.sin(y * 0.9 + t * 0.7 + phase) * 0.24 +
+      Math.sin((x + y) * 0.23 + t * 1.3 + phase * 0.6) * 0.16 +
+      Math.sin(x * 0.07 - t * 1.1 + phase) * 0.34; // the rolling swell
 
     let last = 0;
     let rafId = 0;
     const tick = (ms: number) => {
       rafId = requestAnimationFrame(tick);
-      if (ms - last < 90) return; // ~11fps: water at terminal cadence
+      if (ms - last < 66) return; // ~15fps: water at terminal cadence
       last = ms;
       const t = ms / 1000;
       for (const m of mounts) {
@@ -276,17 +277,23 @@ export default function App() {
         ctx.clearRect(0, 0, m.canvas.clientWidth, m.canvas.clientHeight);
         for (let r = 0; r < rows; r++) {
           // hero: sparse at the horizon, denser toward the bottom
-          const depth = strip ? 0.7 : 0.38 + (r / rows) * 0.5;
+          const depth = strip ? 0.78 : 0.45 + (r / rows) * 0.45;
           ctx.fillStyle = `rgba(21, 85, 126, ${depth * 0.82})`;
           const y = r * CELL_H + CELL_H / 2;
           for (let c = 0; c < cols; c++) {
             const v = wave(c, r, t, phase); // -1..1
             const idx = Math.max(
               0,
-              Math.min(CHARS.length - 1, Math.round((v + 1) * 0.5 * (CHARS.length - 1) + (strip ? 0.35 : (r / rows) * 1.3) - 0.45)),
+              Math.min(CHARS.length - 1, Math.round((v + 1.16) * 0.5 * (CHARS.length - 2) + (strip ? 0.55 : (r / rows) * 1.5) - 0.35)),
             );
             if (idx === 0) continue;
-            ctx.fillText(CHARS[idx], c * CELL_W, y);
+            if (v > 0.82) {
+              ctx.fillStyle = `rgba(21, 85, 126, ${Math.min(0.9, depth * 1.15)})`;
+              ctx.fillText(CHARS[5], c * CELL_W, y);
+              ctx.fillStyle = `rgba(21, 85, 126, ${depth * 0.82})`;
+            } else {
+              ctx.fillText(CHARS[idx], c * CELL_W, y);
+            }
           }
         }
         if (!strip) {
