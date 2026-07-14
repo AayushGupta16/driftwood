@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>driftwood — landing draft v4</title>
+<!-- DRAFT v4, built against design/ref-study-d.md.
+     Dashboard-as-hero (cal.com/default fold-crop), LinkedIn thread in a light
+     "week one" section (corgi single-story register), no dark band, walkthrough
+     cut, italic-serif accent phrase instead of gray second sentence, hairline
+     rails, motion = hero entrance + toast pop + thread stagger only. -->
+<style>
+  :root {
+    --bg: #ffffff;
+    --ink: #16181b;
+    --gray: #6a737d;
+    --gray-light: #9aa2ab;
+    --line: #e9ebee;
+    --accent: #15557e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 16px; line-height: 1.5; -webkit-font-smoothing: antialiased;
+  }
+  h1, h2 { margin: 0; letter-spacing: -0.014em; text-wrap: balance; }
+  p { margin: 0; }
+  img { display: block; max-width: 100%; }
+  a { color: inherit; }
+  em.voice { font-family: Georgia, "Times New Roman", serif; font-style: italic; color: var(--accent); letter-spacing: 0; }
+  .wrap { max-width: 68rem; margin-inline: auto; padding-inline: clamp(1.25rem, 4vw, 2.5rem); position: relative; }
+  /* hairline rails framing the content column */
+  @media (min-width: 76rem) {
+    .rails { border-inline: 1px solid var(--line); }
+  }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--ink); color: #fff; text-decoration: none;
+    font-weight: 500; font-size: 0.95rem; height: 2.75rem; padding-inline: 1.4rem;
+    border-radius: 999px; transition: transform 0.15s cubic-bezier(0.16,1,0.3,1), background 0.15s;
+  }
+  .btn:hover { background: #000; transform: translateY(-1px); }
+  .link { color: var(--accent); text-decoration: none; font-weight: 500; }
+  .link:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+  header { border-bottom: 1px solid var(--line); }
+  .nav { display: flex; align-items: center; justify-content: space-between; height: 4rem; }
+  .wordmark { display: inline-flex; align-items: center; gap: 0.55rem; text-decoration: none; font-weight: 600; font-size: 1.05rem; }
+  .wordmark svg { width: 1.4rem; height: 1.4rem; }
+  .nav-right { display: flex; align-items: center; gap: 1.6rem; }
+  .nav-login { font-size: 0.9rem; color: var(--gray); text-decoration: none; }
+  .nav-login:hover { color: var(--ink); }
+  .nav .btn { height: 2.25rem; font-size: 0.875rem; }
+
+  /* ---------- hero: claim, then the real app cut by the fold ---------- */
+  .hero { padding-top: clamp(3.5rem, 7vw, 5.5rem); }
+  .hero-pill {
+    display: inline-flex; align-items: center; gap: 0.45rem;
+    border: 1px solid var(--line); border-radius: 999px;
+    padding: 0.3rem 0.85rem; font-size: 0.8rem; color: var(--gray);
+  }
+  .hero-pill b { color: var(--ink); font-weight: 600; }
+  .hero h1 {
+    margin-top: 1.4rem;
+    font-size: clamp(2rem, 1.2rem + 2.8vw, 3.1rem);
+    font-weight: 600; line-height: 1.14; max-width: 24ch;
+  }
+  .hero-sub { margin-top: 1.1rem; font-size: 1.15rem; color: var(--gray); max-width: 42ch; }
+  .hero-actions { display: flex; align-items: center; gap: 1.5rem; margin-top: 1.8rem; }
+
+  .fold {
+    margin-top: clamp(2.75rem, 5vw, 4rem);
+    position: relative;
+    height: clamp(20rem, 38vw, 33rem);
+    padding-top: 1.2rem; /* room for the toast straddling the window's top edge */
+    overflow: hidden;
+  }
+  .fold::after { /* fade the cut so the crop reads intentional */
+    content: ""; position: absolute; inset: auto 0 0 0; height: 6rem;
+    background: linear-gradient(to bottom, transparent, #fff);
+  }
+  .app-window {
+    max-width: 62rem; margin-inline: auto;
+    border: 1px solid var(--line); border-radius: 14px 14px 0 0; overflow: hidden;
+    box-shadow: 0 2px 4px rgba(22,24,27,0.04), 0 32px 80px -32px rgba(22,24,27,0.22);
+    background: #fff;
+  }
+  .app-window img { width: 100%; }
+  .stage-in { position: relative; max-width: 62rem; margin-inline: auto; }
+  .toast {
+    position: absolute; z-index: 2; top: -1rem; right: clamp(1rem, 4vw, 3rem);
+    background: #fff; border: 1px solid var(--line); border-radius: 999px;
+    padding: 0.55rem 1rem; font-size: 0.85rem; font-weight: 600;
+    box-shadow: 0 12px 28px -12px rgba(22,24,27,0.3);
+    display: inline-flex; align-items: center; gap: 0.5rem;
+  }
+  .toast::before { content: ""; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: #2a9d5c; }
+
+  /* the one entrance */
+  .enter-window { animation: rise 0.65s cubic-bezier(0.16,1,0.3,1) both 0.1s; }
+  .enter-toast { animation: pop 0.4s cubic-bezier(0.16,1,0.3,1) both 0.55s; }
+  @keyframes rise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+  @keyframes pop { from { opacity: 0; transform: translateY(8px) scale(0.96); } to { opacity: 1; transform: none; } }
+
+  /* ---------- week one ---------- */
+  section { border-top: 1px solid var(--line); }
+  .sect { padding-block: clamp(4rem, 8vw, 6.5rem); }
+  .sect h2 { font-size: clamp(1.6rem, 1rem + 1.9vw, 2.3rem); font-weight: 600; line-height: 1.18; max-width: 28ch; }
+  .sect-sub { margin-top: 1rem; font-size: 1.1rem; color: var(--gray); max-width: 52ch; }
+
+  .week-grid {
+    display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: clamp(2.5rem, 5vw, 4.5rem); align-items: start; margin-top: 3rem;
+  }
+  .week-story p { color: var(--gray); line-height: 1.65; }
+  .week-story p + p { margin-top: 1rem; }
+  .week-story b { color: var(--ink); font-weight: 600; }
+  .week-caption { margin-top: 1.75rem; padding-top: 1.1rem; border-top: 1px solid var(--line); font-size: 0.9rem; color: var(--gray-light); line-height: 1.7; }
+  .week-caption b { color: var(--ink); font-weight: 600; }
+
+  .thread {
+    border: 1px solid var(--line); border-radius: 14px; background: #fff;
+    box-shadow: 0 2px 4px rgba(22,24,27,0.04), 0 24px 56px -28px rgba(22,24,27,0.18);
+    overflow: hidden;
+  }
+  .thread-bar { display: flex; align-items: center; gap: 0.4rem; padding: 0.65rem 0.9rem; border-bottom: 1px solid var(--line); }
+  .dot { width: 0.62rem; height: 0.62rem; border-radius: 50%; }
+  .dot:nth-child(1) { background: #f6635a; } .dot:nth-child(2) { background: #f5bd4f; } .dot:nth-child(3) { background: #62c454; }
+  .thread-url { flex: 1; text-align: center; font-size: 0.75rem; color: var(--gray-light); }
+  .thread-body { padding: 1.4rem 1.5rem 1.5rem; }
+  .msg { display: grid; grid-template-columns: 2.4rem minmax(0, 1fr); gap: 0.8rem; }
+  .msg + .msg { margin-top: 1.3rem; }
+  .avatar { width: 2.4rem; height: 2.4rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.85rem; color: #fff; }
+  .avatar.y { background: #4a6274; } .avatar.s { background: #1d2a35; }
+  .msg-head { display: flex; align-items: baseline; gap: 0.55rem; font-size: 0.9rem; }
+  .msg-head .who { font-weight: 600; }
+  .msg-head .when { color: var(--gray-light); font-size: 0.8rem; }
+  .msg-body { margin-top: 0.25rem; font-size: 0.92rem; color: #3c434a; max-width: 52ch; }
+  .divider { display: flex; align-items: center; gap: 0.8rem; margin-block: 1.3rem; }
+  .divider hr { flex: 1; border: 0; border-top: 1px solid var(--line); margin: 0; }
+  .divider span { font-size: 0.78rem; color: var(--gray-light); }
+  .redact { display: inline-block; background: #d4d9de; border-radius: 2px; width: 2.5em; height: 0.78em; }
+  .clip { margin-top: 0.7rem; position: relative; width: min(19rem, 100%); border-radius: 10px; overflow: hidden; border: 1px solid var(--line); }
+  .clip img { width: 100%; }
+  .clip::after { content: "0:19"; position: absolute; right: 0.55rem; bottom: 0.5rem; background: rgba(22,24,27,0.75); color: #fff; font-size: 0.7rem; padding: 0.1rem 0.4rem; border-radius: 4px; }
+  .play { position: absolute; inset: 0; margin: auto; width: 2.6rem; height: 2.6rem; background: rgba(22,24,27,0.62); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  .play::after { content: ""; border-style: solid; border-width: 0.45rem 0 0.45rem 0.8rem; border-color: transparent transparent transparent #fff; margin-left: 0.18rem; }
+  .thread-foot { border-top: 1px solid var(--line); margin-top: 1.4rem; padding-top: 1.1rem; display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
+  .thread-foot b { font-size: 0.95rem; }
+  .thread-foot span { font-size: 0.8rem; color: var(--gray-light); }
+
+  /* thread bubbles stagger in once, on first view */
+  .stagger .msg, .stagger .divider { opacity: 0; transform: translateY(10px); }
+  .stagger.seen .msg, .stagger.seen .divider {
+    animation: rise 0.45s cubic-bezier(0.16,1,0.3,1) both;
+    animation-delay: calc(var(--i) * 110ms);
+  }
+
+  /* ---------- quote, no chrome ---------- */
+  .quote-sect { text-align: center; }
+  .quote { font-size: clamp(1.5rem, 1rem + 2vw, 2.4rem); font-weight: 500; line-height: 1.3; max-width: 24ch; margin-inline: auto; letter-spacing: -0.01em; }
+  .quote-attr { margin-top: 1.5rem; font-size: 0.95rem; }
+  .quote-attr b { font-weight: 600; }
+  .quote-attr span { color: var(--gray); }
+
+  /* ---------- giant close ---------- */
+  .close-sect { text-align: center; }
+  .close-sect .sect { padding-block: clamp(5rem, 10vw, 8.5rem); }
+  .close-sect h2 { font-size: clamp(2.5rem, 1.3rem + 4.8vw, 4.8rem); font-weight: 600; line-height: 1.05; letter-spacing: -0.02em; margin-inline: auto; max-width: 16ch; }
+  .close-sect .btn { margin-top: 2.5rem; height: 3.1rem; padding-inline: 1.9rem; font-size: 1.05rem; }
+  .close-note { margin-top: 1.1rem; font-size: 0.9rem; color: var(--gray-light); }
+
+  footer { border-top: 1px solid var(--line); }
+  .foot { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-block: 1.9rem; flex-wrap: wrap; font-size: 0.85rem; color: var(--gray); }
+  .foot a { color: var(--gray); text-decoration: none; }
+  .foot a:hover { color: var(--ink); }
+
+  @media (max-width: 52rem) {
+    .week-grid { grid-template-columns: 1fr; }
+    .toast { top: 1rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.01ms !important; animation-delay: 0ms !important; transition-duration: 0.01ms !important; }
+    .stagger .msg, .stagger .divider { opacity: 1; transform: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="wordmark" href="#top" aria-label="driftwood home">
+      <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <circle cx="16" cy="16" r="9"/><circle cx="16" cy="16" r="3.5"/>
+        <path d="M16 2v5M16 25v5M2 16h5M25 16h5M6.1 6.1l3.5 3.5M22.4 22.4l3.5 3.5M25.9 6.1l-3.5 3.5M9.6 22.4l-3.5 3.5"/>
+      </svg>
+      driftwood
+    </a>
+    <nav class="nav-right" aria-label="primary">
+      <a class="nav-login" href="/dashboard">Log in</a>
+      <a class="btn" href="https://cal.com/aayush-gupta-qyilz6/30min">Book a demo</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top" class="rails">
+
+  <!-- hero -->
+  <div class="hero">
+    <div class="wrap">
+      <span class="hero-pill">Now running outbound for <b>Autosana</b> · <a class="link" href="#week-one" style="font-size:inherit">see week one</a></span>
+      <h1>Cold outbound that ships <em class="voice">a working demo</em> to every prospect.</h1>
+      <p class="hero-sub">driftwood researches each company, builds the demo, and sends the message for you.</p>
+      <div class="hero-actions">
+        <a class="btn" href="https://cal.com/aayush-gupta-qyilz6/30min">Book a demo</a>
+      </div>
+    </div>
+    <div class="fold">
+      <div class="stage-in">
+        <span class="toast enter-toast">Meeting booked · this week</span>
+        <div class="app-window enter-window">
+          <img src="assets/dw-demo-dashboard.png"
+            alt="The driftwood dashboard: LinkedIn connected and sending, one meeting booked this week, one reply, pipeline of 67 leads" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- week one -->
+  <section id="week-one">
+    <div class="wrap sect">
+      <h2>Week one at Autosana: from under 1% replies to <em class="voice">14.3%.</em></h2>
+      <div class="week-grid">
+        <div class="week-story">
+          <p>
+            Autosana's founder had been pitching the CTO of Superhuman since
+            February. Four months, no reply.
+          </p>
+          <p>
+            driftwood's agent read superhuman.com, caught a real bug on the
+            pricing page, and recorded a 19 second demo of Autosana catching
+            it. <b>The reply came back in twelve hours. The call is booked.</b>
+          </p>
+          <p class="week-caption">
+            First wave: 7 demo messages · <b>14.3% reply rate</b> · 1 call
+            booked. Their own outbound before driftwood: under 1%,
+            self reported.
+          </p>
+        </div>
+        <div>
+          <div class="thread">
+            <div class="thread-bar" aria-hidden="true">
+              <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+              <span class="thread-url">linkedin.com/messaging</span>
+            </div>
+            <div class="thread-body stagger">
+              <div class="msg" style="--i:0">
+                <span class="avatar y" aria-hidden="true">Y</span>
+                <div>
+                  <div class="msg-head"><span class="who">Yuvan Sundrani</span><span class="when">Feb 26</span></div>
+                  <p class="msg-body">You invested in us via the CTO Fund!</p>
+                </div>
+              </div>
+              <div class="divider" role="separator" style="--i:1"><hr/><span>4 months, no reply</span><hr/></div>
+              <div class="msg" style="--i:2">
+                <span class="avatar y" aria-hidden="true">Y</span>
+                <div>
+                  <div class="msg-head"><span class="who">Yuvan Sundrani</span><span class="when">Jul 9 · sent by driftwood</span></div>
+                  <p class="msg-body">hey <span class="redact" role="img" aria-label="name redacted"></span>, found a bug on superhuman.
+                    our agents caught your pricing page still promising early access for features lower tiers already have&hellip;</p>
+                  <div class="clip">
+                    <img src="assets/superhuman-demo-still.png" alt="19 second demo video of Autosana's agent catching the pricing bug on superhuman.com" />
+                    <span class="play" aria-hidden="true"></span>
+                  </div>
+                </div>
+              </div>
+              <div class="msg" style="--i:3">
+                <span class="avatar s" aria-hidden="true">S</span>
+                <div>
+                  <div class="msg-head"><span class="who">CTO, Superhuman</span><span class="when">Jul 10 · 12 hours later</span></div>
+                  <p class="msg-body">send me a blurb + demos to <span class="redact" role="img" aria-label="address redacted"></span>@superhuman.com and I'll forward to my team - best</p>
+                </div>
+              </div>
+              <div class="thread-foot">
+                <b>Call booked.</b>
+                <span>Real thread. Only the name is redacted.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- the customer's words, no chrome -->
+  <section class="quote-sect">
+    <div class="wrap sect">
+      <p class="quote">&ldquo;amazing stuff, love the demo&rdquo;</p>
+      <p class="quote-attr"><b>Yuvan Sundrani</b> <span>· Founder, Autosana · in Slack, day 26</span></p>
+    </div>
+  </section>
+
+  <!-- giant close -->
+  <section class="close-sect">
+    <div class="wrap sect">
+      <h2>See what we'd send <em class="voice">your</em> prospects.</h2>
+      <a class="btn" href="https://cal.com/aayush-gupta-qyilz6/30min">Book a demo</a>
+      <p class="close-note">30 minutes. We build one live on the call.</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <span>driftwood</span>
+    <div><a href="mailto:aayush@driftwood.sh">aayush@driftwood.sh</a><span> · © 2026</span></div>
+  </div>
+</footer>
+
+<script>
+  // thread stagger: fire once when the thread first scrolls into view
+  const t = document.querySelector(".stagger");
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) if (e.isIntersecting) { t.classList.add("seen"); io.disconnect(); }
+  }, { threshold: 0.25 });
+  io.observe(t);
+</script>
+</body>
+</html>
