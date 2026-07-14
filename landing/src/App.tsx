@@ -512,10 +512,7 @@ export default function App() {
               <h1>
                 Ship <em className="voice">a custom demo</em> in every cold message.
               </h1>
-              <p className="hero-sub">
-                The agent researches each prospect, builds them a custom demo, and sends the
-                message for you.
-              </p>
+              <p className="hero-sub">Grow your revenue with cold outbound that converts.</p>
               <div className="hero-actions">
                 <a className="btn btn-primary" href={CAL_URL}>
                   Book a demo
