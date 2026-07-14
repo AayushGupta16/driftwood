@@ -24,7 +24,12 @@
     --gray-light: #9aa2ab;
     --line: #e9ebee;
     --accent: #15557e;
+    /* the one window system: every artifact on the page wears this chrome */
+    --r-win: 12px;
+    --shadow-win: 0 1px 2px rgba(22,24,27,0.05), 0 24px 48px -24px rgba(22,24,27,0.18);
   }
+  /* one label voice, used everywhere a small caption appears */
+  .label { font-size: 0.85rem; color: var(--gray-light); }
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   body {
@@ -49,7 +54,7 @@
   }
   .btn:hover { background: #000; transform: translateY(-1px); }
 
-  header { border-bottom: 1px solid var(--line); }
+  header { position: sticky; top: 0; z-index: 20; background: rgba(255,255,255,0.94); border-bottom: 1px solid var(--line); }
   .nav { display: flex; align-items: center; justify-content: space-between; height: 4rem; }
   .wordmark { display: inline-flex; align-items: center; gap: 0.55rem; text-decoration: none; font-weight: 600; font-size: 1.05rem; }
   .wordmark svg { width: 1.4rem; height: 1.4rem; color: var(--accent); }
@@ -82,8 +87,8 @@
   .hero-sub { margin-top: 1.1rem; font-size: 1.1rem; color: var(--gray); max-width: 38ch; }
   .hero-actions { margin-top: 1.8rem; }
   .app-window {
-    border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
-    box-shadow: 0 2px 4px rgba(22,24,27,0.04), 0 32px 80px -32px rgba(22,24,27,0.2);
+    border: 1px solid var(--line); border-radius: var(--r-win); overflow: hidden;
+    box-shadow: var(--shadow-win);
     background: #fff;
   }
   .enter-window { animation: rise 0.65s cubic-bezier(0.16,1,0.3,1) both 0.1s; }
@@ -114,6 +119,7 @@
   .sect-sub { margin-top: 0.9rem; font-size: 1.1rem; color: var(--gray); max-width: 52ch; }
   .rate-viz { margin-top: 0.5rem; }
   .rate-scope { font-size: 0.85rem; color: var(--gray-light); margin-bottom: 0.4rem; }
+  .compare-label, .dots-label span, .artifact-bar { font-size: 0.85rem; color: var(--gray-light); }
   .rate-mult { font-size: 2.1rem; font-weight: 600; }
   .rate-mult em { color: var(--accent); font-style: normal; }
   .dots-block { margin-top: 1.9rem; }
@@ -140,8 +146,8 @@
 
   /* the thread, styled like a real LinkedIn message window */
   .thread {
-    border: 1px solid #dfdfdf; border-radius: 10px; background: #fff;
-    box-shadow: 0 2px 4px rgba(22,24,27,0.05), 0 24px 56px -28px rgba(22,24,27,0.2);
+    border: 1px solid var(--line); border-radius: var(--r-win); background: #fff;
+    box-shadow: var(--shadow-win);
     overflow: hidden;
     font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
   }
@@ -214,8 +220,8 @@
   .stage-card.on { opacity: 1; transform: none; pointer-events: auto; }
 
   .artifact {
-    border: 1px solid var(--line); border-radius: 14px; background: #fff; overflow: hidden;
-    box-shadow: 0 2px 4px rgba(22,24,27,0.04), 0 16px 40px -24px rgba(22,24,27,0.16);
+    border: 1px solid var(--line); border-radius: var(--r-win); background: #fff; overflow: hidden;
+    box-shadow: var(--shadow-win);
   }
   .artifact-bar { display: flex; align-items: center; gap: 0.4rem; padding: 0.7rem 1rem; border-bottom: 1px solid var(--line); font-size: 0.8rem; color: var(--gray-light); }
   .artifact-body { padding: 2rem 2.2rem 2.2rem; }
@@ -244,15 +250,15 @@
     position: absolute; top: -3.4rem; left: 50%; transform: translateX(-50%);
     width: 15rem; z-index: 2; pointer-events: none;
   }
-  .compare-label { font-size: 0.85rem; color: var(--gray-light); margin-bottom: 0.8rem; }
+  .compare-label { margin-bottom: 0.8rem; }
   .compare-label.us { color: var(--accent); font-weight: 600; }
   .email {
     display: flex; flex-direction: column; height: 100%;
-    border: 1px solid var(--line); border-radius: 14px; background: #fff;
-    box-shadow: 0 2px 4px rgba(22,24,27,0.04), 0 16px 40px -24px rgba(22,24,27,0.14);
+    border: 1px solid var(--line); border-radius: var(--r-win); background: #fff;
+    box-shadow: var(--shadow-win);
     padding: 1.4rem 1.5rem;
   }
-  .email.us { border-color: rgba(21,85,126,0.4); box-shadow: 0 2px 4px rgba(22,24,27,0.04), 0 24px 56px -26px rgba(21,85,126,0.35); }
+  .email.us { border-color: rgba(21,85,126,0.4); box-shadow: 0 1px 2px rgba(22,24,27,0.05), 0 24px 48px -24px rgba(21,85,126,0.32); }
   .email-subject { font-weight: 600; font-size: 1rem; padding-bottom: 0.9rem; border-bottom: 1px solid var(--line); }
   .email-body { margin-top: 1rem; font-size: 0.92rem; color: #3c434a; line-height: 1.55; }
   .email-body p + p { margin-top: 0.9rem; }
