@@ -232,21 +232,23 @@ body {
 .landing .btn-primary:hover { background: #0d3c5b; }
 
 .landing header { position: sticky; top: 0; z-index: 20; background: rgba(255,255,255,0.94); border-bottom: 1px solid var(--line); }
+/* the logo shares the hero's left edge (the hero wrap runs wider) */
+.landing header .wrap { max-width: 82rem; }
 .landing .nav { display: flex; align-items: center; justify-content: space-between; height: 4rem; }
 .landing .wordmark { display: inline-flex; align-items: center; gap: 0.6rem; text-decoration: none; font-family: "Source Serif 4", Georgia, serif; font-weight: 600; font-size: 1.18rem; letter-spacing: 0.005em; }
 .landing .wordmark svg { width: 1.65rem; height: 1.65rem; }
 .landing .nav-right { display: flex; align-items: center; gap: 1.6rem; }
 .landing .nav-login { font-size: 0.9rem; color: var(--gray); text-decoration: none; }
 .landing .nav-login:hover { color: var(--ink); }
-.landing .nav .btn { height: 2.25rem; font-size: 0.875rem; }
+.landing .nav .btn { height: 2.25rem; font-size: 0.875rem; padding-inline: 1.4rem; font-weight: 500; }
 
 /* ---------- hero: G1 + H1 (the sea) ---------- */
 .landing .hero { position: relative; overflow: clip; }
 .landing #sea {
-  position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 50%;
+  position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 62%;
   display: block; pointer-events: none;
-  -webkit-mask-image: linear-gradient(to bottom, transparent, black 42%);
-  mask-image: linear-gradient(to bottom, transparent, black 42%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, black 48%);
+  mask-image: linear-gradient(to bottom, transparent, black 48%);
 }
 .landing .hero-grid {
   position: relative; z-index: 1;

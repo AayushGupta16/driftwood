@@ -134,9 +134,9 @@ export default function App() {
           const over = Math.max(0, cmpPin.scrollHeight - cmpPin.clientHeight);
           cmpInner.style.transform = `translateY(${-over * Math.min(1, p * 1.2)}px)`;
         }
-        const draw = Math.min(1, Math.max(0, (p - 0.06) / 0.4));
+        const draw = Math.min(1, Math.max(0, (p - 0.03) / 0.22));
         arrowPath.style.strokeDashoffset = `${arrowLen * (1 - draw)}`;
-        arrowHead.style.opacity = draw > 0.97 ? "1" : "0";
+        arrowHead.style.opacity = draw > 0.95 ? "1" : "0";
       };
       const onScroll2 = () => {
         if (!raf2) raf2 = requestAnimationFrame(updateC);
@@ -158,9 +158,9 @@ export default function App() {
         const vh = innerHeight;
         if (svgEl) {
           const r = svgEl.getBoundingClientRect();
-          const p = Math.min(1, Math.max(0, (vh - r.top - 30) / (vh * 0.4)));
+          const p = Math.min(1, Math.max(0, (vh - r.top - 30) / (vh * 0.28)));
           arrowPath.style.strokeDashoffset = `${arrowLen * (1 - p)}`;
-          arrowHead.style.opacity = p > 0.95 ? "1" : "0";
+          arrowHead.style.opacity = p > 0.93 ? "1" : "0";
         }
         msgs.forEach((el) => {
           const r = el.getBoundingClientRect();
@@ -447,7 +447,7 @@ export default function App() {
             <a className="nav-login" href="/dashboard">
               Log in
             </a>
-            <a className="btn" href={CAL_URL}>
+            <a className="btn btn-primary" href={CAL_URL}>
               Book a demo
             </a>
           </nav>
@@ -506,7 +506,7 @@ export default function App() {
                       d="M 14 70 C 40 36, 72 20, 102 28 C 130 36, 132 64, 112 62 C 92 60, 98 32, 128 28 C 166 23, 208 36, 234 58"
                       fill="none"
                       stroke="var(--accent)"
-                      strokeWidth="2.5"
+                      strokeWidth="3"
                       strokeLinecap="round"
                     />
                     <path
@@ -514,7 +514,7 @@ export default function App() {
                       d="M 234 58 l -15 -2 M 234 58 l -3 -14.5"
                       fill="none"
                       stroke="var(--accent)"
-                      strokeWidth="2.5"
+                      strokeWidth="3"
                       strokeLinecap="round"
                       style={{ opacity: 0, transition: "opacity 0.3s" }}
                     />
