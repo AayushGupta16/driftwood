@@ -1,7 +1,8 @@
 /* Landing page — production port of design/landing-draft-v7.html.
    The markup, CSS (scoped under .landing in index.css), scroll scrubs, and
-   the three.js sea are ported 1:1 from the approved draft. */
+   the 2D-canvas ASCII sea are ported 1:1 from the approved draft. */
 import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { track } from "@vercel/analytics";
 import { CAL_URL } from "./components/BookDemo";
 import HelmMark from "./components/HelmMark";
 
@@ -254,21 +255,6 @@ export default function App() {
     setSeaLive(true);
 
     const dpr = Math.min(devicePixelRatio, 2);
-    const resize = () =>
-      mounts.forEach((m) => {
-        const w = m.canvas.clientWidth,
-          h = m.canvas.clientHeight;
-        if (!w || !h) return;
-        m.canvas.width = w * dpr;
-        m.canvas.height = h * dpr;
-        m.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        m.ctx.font = '12px ui-monospace, "SF Mono", Menlo, monospace';
-        m.ctx.textBaseline = "middle";
-        m.cols = Math.ceil(w / CELL_W);
-        m.rows = Math.ceil(h / CELL_H);
-      });
-    addEventListener("resize", resize);
-    cleanups.push(() => removeEventListener("resize", resize));
     const sizeMount = (m: Mount) => {
       const w = m.canvas.clientWidth,
         h = m.canvas.clientHeight;
@@ -276,7 +262,8 @@ export default function App() {
       m.canvas.width = w * dpr;
       m.canvas.height = h * dpr;
       m.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      m.ctx.font = '11px ui-monospace, "SF Mono", Menlo, monospace';
+      // strips run a size down: their 112px bands read denser that way
+      m.ctx.font = `${m.strip ? 11 : 12}px ui-monospace, "SF Mono", Menlo, monospace`;
       m.ctx.textBaseline = "middle";
       m.cols = Math.ceil(w / CELL_W);
       m.rows = Math.ceil(h / CELL_H);
@@ -284,6 +271,9 @@ export default function App() {
       m.h = h;
       m.phase = (m.canvas.getBoundingClientRect().top + scrollY) * 0.02;
     };
+    const resize = () => mounts.forEach(sizeMount);
+    addEventListener("resize", resize);
+    cleanups.push(() => removeEventListener("resize", resize));
     resize();
 
     const wave = (x: number, y: number, t: number, phase: number) =>
@@ -514,7 +504,11 @@ export default function App() {
             <a className="nav-login" href="/dashboard">
               Log in
             </a>
-            <a className="btn btn-primary" href={CAL_URL}>
+            <a
+              className="btn btn-primary"
+              href={CAL_URL}
+              onClick={() => track("book_demo", { placement: "nav" })}
+            >
               Book a demo
             </a>
           </nav>
@@ -532,12 +526,16 @@ export default function App() {
               </h1>
               <p className="hero-sub">Grow your revenue with cold outbound that converts.</p>
               <div className="hero-actions">
-                <a className="btn btn-primary" href={CAL_URL}>
+                <a
+                  className="btn btn-primary"
+                  href={CAL_URL}
+                  onClick={() => track("book_demo", { placement: "hero" })}
+                >
                   Book a demo
                 </a>
               </div>
               <div className="hero-proof">
-                <img src="/yuvan.png" alt="Yuvan Sundrani, founder of Autosana" />
+                <img src="/yuvan.webp" alt="Yuvan Sundrani, founder of Autosana" />
                 <p>
                   &ldquo;amazing stuff, love the demo&rdquo; <b>Yuvan Sundrani</b> &middot;
                   Founder, Autosana (YC S25)
@@ -546,7 +544,8 @@ export default function App() {
             </div>
             <div className="app-window enter-window">
               <img
-                src="/dw-demo-dashboard-hero.png"
+                src="/dw-demo-dashboard-hero.webp"
+                fetchPriority="high"
                 alt="The driftwood dashboard: LinkedIn connected and sending, 4 meetings booked, 7 replies, pipeline of 124 leads"
               />
             </div>
@@ -654,7 +653,7 @@ export default function App() {
                         </div>
                         <div className="msg" style={iv(2)}>
                           <span className="avatar">
-                            <img src="/yuvan.png" alt="" />
+                            <img src="/yuvan.webp" alt="" loading="lazy" decoding="async" />
                           </span>
                           <div>
                             <div className="msg-head">
@@ -681,7 +680,9 @@ export default function App() {
                             </p>
                             <div className="clip">
                               <img
-                                src="/demo-still.png"
+                                src="/demo-still.webp"
+                                loading="lazy"
+                                decoding="async"
                                 alt="19 second demo video of Autosana's agent catching a pricing bug on the prospect's site"
                               />
                               <span className="play" aria-hidden="true"></span>
@@ -794,7 +795,9 @@ export default function App() {
                         #driftwood-sh &middot; the agent at work
                       </div>
                       <img
-                        src="/slack-trace.png"
+                        src="/slack-trace.webp"
+                        loading="lazy"
+                        decoding="async"
                         alt="The driftwood agent in Slack: asked for a Brex demo, it reads its build skill and spawns research subagents for Brex and Ramp"
                       />
                     </div>
@@ -805,7 +808,9 @@ export default function App() {
                         the demo it built &middot; a live page for Brex
                       </div>
                       <img
-                        src="/brex-demo.png"
+                        src="/brex-demo.webp"
+                        loading="lazy"
+                        decoding="async"
                         alt="The demo the agent built: a Brex-branded pitch page it could send Notion's finance team"
                       />
                     </div>
@@ -816,7 +821,9 @@ export default function App() {
                         your review queue &middot; nothing sends without you
                       </div>
                       <img
-                        src="/review-queue.png"
+                        src="/review-queue.webp"
+                        loading="lazy"
+                        decoding="async"
                         alt="The driftwood review queue: each outbound message waiting for your approve or deny"
                       />
                     </div>
@@ -834,7 +841,11 @@ export default function App() {
             <h2>
               See what we'd send <em className="voice">your</em> prospects.
             </h2>
-            <a className="btn btn-primary" href={CAL_URL}>
+            <a
+              className="btn btn-primary"
+              href={CAL_URL}
+              onClick={() => track("book_demo", { placement: "close" })}
+            >
               Book a demo
             </a>
           </div>
