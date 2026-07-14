@@ -218,6 +218,10 @@ body {
 .landing img { display: block; max-width: 100%; }
 .landing a { color: inherit; }
 .landing em.voice { font-family: Georgia, "Times New Roman", serif; font-style: italic; color: var(--accent); letter-spacing: 0; }
+/* the whole landing is rem-based, so scaling the root scales the design
+   proportionally: 16px up to ~1512w (MacBook), growing to 21px on wide
+   monitors so sections fill instead of floating in white */
+html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
 .landing .wrap { max-width: 68rem; margin-inline: auto; padding-inline: clamp(1.25rem, 4vw, 2.5rem); }
 .landing :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
@@ -498,8 +502,12 @@ body {
 .landing .compare-grid .divider { margin-block: 0.45rem; }
 .landing .compare-grid .clip { width: min(14rem, 100%); }
 .landing .compare-arrow {
-  position: absolute; top: -4.6rem; left: 50%; transform: translateX(-50%);
-  width: 20rem; z-index: 2; pointer-events: none;
+  position: absolute; top: -3.6rem; left: 50%; transform: translateX(-58%);
+  width: 24rem; z-index: 2; pointer-events: none;
+}
+.landing .compare-arrow path:last-of-type {
+  transform-box: fill-box; transform-origin: center;
+  transition: opacity 0.25s, transform 0.45s var(--ease-settle);
 }
 .landing .compare-label { margin-bottom: 0.8rem; }
 .landing .compare-label.us { color: var(--accent); font-weight: 600; }

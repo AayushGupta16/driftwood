@@ -137,6 +137,7 @@ export default function App() {
         const draw = Math.min(1, Math.max(0, (p - 0.03) / 0.22));
         arrowPath.style.strokeDashoffset = `${arrowLen * (1 - draw)}`;
         arrowHead.style.opacity = draw > 0.95 ? "1" : "0";
+        arrowHead.style.transform = draw > 0.95 ? "scale(1)" : "scale(0.3)";
       };
       const onScroll2 = () => {
         if (!raf2) raf2 = requestAnimationFrame(updateC);
@@ -161,6 +162,7 @@ export default function App() {
           const p = Math.min(1, Math.max(0, (vh - r.top - 30) / (vh * 0.28)));
           arrowPath.style.strokeDashoffset = `${arrowLen * (1 - p)}`;
           arrowHead.style.opacity = p > 0.93 ? "1" : "0";
+          arrowHead.style.transform = p > 0.93 ? "scale(1)" : "scale(0.3)";
         }
         msgs.forEach((el) => {
           const r = el.getBoundingClientRect();
@@ -373,10 +375,10 @@ export default function App() {
               }
             }
           }
-          // a palm on the upper-right shoulder of the island: five fronds
-          // fanning from the crown, a coconut, a gently curved trunk
-          const tx = (isl.cx + isl.rx * 0.58) * CELL_W;
-          const ty = (isl.cy - isl.ry * 0.35) * CELL_H;
+          // the palm stands out on the island's far right shoulder: five
+          // fronds fanning from the crown, a coconut, a curved trunk
+          const tx = (isl.cx + isl.rx * 0.82) * CELL_W;
+          const ty = (isl.cy - isl.ry * 0.28) * CELL_H;
           const prevFont = ctx.font;
           ctx.font = "15px ui-monospace, Menlo, monospace";
           ctx.fillStyle = "rgba(56, 122, 70, 0.95)";
@@ -536,7 +538,7 @@ export default function App() {
                       d="M 14 70 C 40 36, 72 20, 102 28 C 130 36, 132 64, 112 62 C 92 60, 98 32, 128 28 C 166 23, 208 36, 234 58"
                       fill="none"
                       stroke="var(--accent)"
-                      strokeWidth="3"
+                      strokeWidth="3.75"
                       strokeLinecap="round"
                     />
                     <path
@@ -544,7 +546,7 @@ export default function App() {
                       d="M 234 58 l -15 -2 M 234 58 l -3 -14.5"
                       fill="none"
                       stroke="var(--accent)"
-                      strokeWidth="3"
+                      strokeWidth="3.75"
                       strokeLinecap="round"
                       style={{ opacity: 0, transition: "opacity 0.3s" }}
                     />
