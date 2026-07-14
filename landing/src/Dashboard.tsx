@@ -335,6 +335,7 @@ type DashboardSummary = {
   results: Results;
   lists: Lists;
   companies: Companies;
+  pending_reviews: number;
 };
 
 type SummaryState =
@@ -422,6 +423,7 @@ function ApprovedView({ user }: { user: User }) {
 
       <LeadsEntryCard state={summary} />
       <CompaniesEntryCard state={summary} />
+      <ReviewEntryCard state={summary} />
     </>
   );
 }
@@ -489,6 +491,41 @@ function CompaniesEntryCard({ state }: { state: SummaryState }) {
         className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-tide px-4.5 py-2.5 text-[14px] font-semibold text-white no-underline shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] transition-all hover:-translate-y-px hover:bg-tide-deep sm:self-auto"
       >
         View all companies
+      </a>
+    </div>
+  );
+}
+
+/* ---------- approval queue entry (queue lives at /dashboard/review) ---------- */
+
+/* Same compact card, linking out to the review queue. Reads the summary's
+   pending_reviews count so the line can say how many decisions are waiting
+   without its own request. */
+function ReviewEntryCard({ state }: { state: SummaryState }) {
+  const pending =
+    state.status === "ready" ? state.summary.pending_reviews : null;
+  const line =
+    pending === null
+      ? "Loading your queue…"
+      : pending > 0
+        ? `${plural(pending, "decision", "decisions")} waiting on you`
+        : "Queue is clear — nothing needs a decision.";
+
+  return (
+    <div
+      className={`mt-3.5 ${CARD} flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6`}
+    >
+      <div className="min-w-0">
+        <SectionLabel>Approval queue</SectionLabel>
+        <p className="m-0 mt-2 text-[14px] font-medium text-ink-soft">{line}</p>
+      </div>
+      <a
+        href="/dashboard/review"
+        target="_blank"
+        rel="noreferrer"
+        className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-tide px-4.5 py-2.5 text-[14px] font-semibold text-white no-underline shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] transition-all hover:-translate-y-px hover:bg-tide-deep sm:self-auto"
+      >
+        Open review queue
       </a>
     </div>
   );

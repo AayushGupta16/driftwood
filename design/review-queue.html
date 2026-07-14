@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Review queue — design draft</title>
+<!--
+  DESIGN DRAFT — /dashboard/review ("Review queue")
+  Source spec: backend/docs/review-queue-plan.md (decisions 6, 9, 10, 11 + evidence
+  requirement under MCP tools). Static HTML only; the React page (src/Review.tsx)
+  comes after sign-off, per the draft-first rule.
+
+  MOBILE-FIRST: the base stylesheet IS the phone layout — the founder usually
+  arrives by tapping a Slack magic link one-handed. Single column (~640px cap),
+  44px touch targets. The ≥700px media query only adds air and right-aligns
+  actions — desktop is the enhancement, not the design target. Resize this
+  page to ~390px to judge it.
+
+  STATES DEMONSTRATED INLINE (amber tags mark each):
+  - Deny tapped: item 2 shows the inline reason input (no modal).
+  - Bulk selection: items 1 and 3 are checked; "Approve selected" sits inline
+    in the queue header (no floating bar).
+  - Empty queue: the "Queue is clear" card at the bottom (alt state).
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap" />
+<style>
+  :root {
+    --paper: #f7f4ec; --surface: #fffdf8; --ink: #16181d; --ink-soft: #494e5b;
+    --ink-faint: #8a8e9b; --tide: #15557e; --tide-deep: #0d3c5b; --tide-wash: #e2ecf3;
+    --line: #e6e0d0; --ok: #2a7d4f; --warn: #7a5e12;
+    --sans: "Instrument Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; color: var(--ink); font-family: var(--sans); font-size: 14px;
+    background:
+      radial-gradient(900px 480px at 82% -120px, rgba(21,85,126,.085), transparent 62%),
+      radial-gradient(760px 520px at -120px 36%, rgba(232,223,204,.75), transparent 64%),
+      var(--paper);
+  }
+  .microlabel { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); }
+  .card { border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: inset 0 1px 0 rgba(255,255,255,.85), 0 24px 60px -26px rgba(13,60,91,.18), 0 4px 16px -8px rgba(22,24,29,.08); }
+  /* annotation tags — draft chrome, not product UI (same treatment as draft v2) */
+  .note { font-family: var(--mono); font-size: 9.5px; letter-spacing: .08em; text-transform: uppercase; color: #8a5a12; background: #f6ead2; border: 1px solid #e8d5ab; border-radius: 999px; padding: 1px 7px; vertical-align: 2px; margin-left: 8px; }
+  button { cursor: pointer; font-family: var(--sans); }
+  :focus-visible { outline: 2px solid var(--tide); outline-offset: 2px; }
+  a { color: inherit; }
+
+  /* ---------- header chrome (matches /dashboard + /dashboard/leads) ---------- */
+  header { position: sticky; top: 0; z-index: 40; border-bottom: 1px solid rgba(230,224,208,.7); background: rgba(247,244,236,.85); backdrop-filter: blur(12px); }
+  header nav { max-width: 1024px; margin: 0 auto; height: 60px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; }
+  .wordmark { font-family: "Nasalization", var(--sans); font-size: 17px; letter-spacing: .09em; text-transform: lowercase; }
+  .navright { display: flex; align-items: center; gap: 10px; }
+  .avatar { width: 32px; height: 32px; border-radius: 999px; background: var(--tide); color: #fff; font-family: var(--mono); font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+  .uname { display: none; font-size: 14px; font-weight: 500; }
+  .logout { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 8px 14px; font-size: 13.5px; font-weight: 500; color: var(--ink-soft); }
+  .logout:hover { border-color: var(--ink-faint); color: var(--ink); }
+
+  /* ---------- page column: narrow triage column, not an app shell ---------- */
+  main { max-width: 640px; margin: 0 auto; padding: 20px 16px 110px; }
+  .back { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 500; color: var(--ink-soft); text-decoration: none; }
+  .back:hover { color: var(--ink); }
+  .titlerow { margin-top: 16px; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+  h1 { margin: 0; font-size: clamp(1.65rem, 6vw, 2.1rem); font-weight: 600; letter-spacing: -.015em; line-height: 1.08; }
+  .pcount { flex: none; margin-bottom: 5px; font-family: var(--mono); font-size: 11px; letter-spacing: .06em; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+  .explain { margin: 8px 0 0; font-size: 13px; line-height: 1.5; color: var(--ink-soft); }
+
+  /* ---------- queue header: select-all + count ---------- */
+  .qhead { margin: 18px 2px 10px; display: flex; align-items: center; gap: 10px; }
+  .qhead label { display: inline-flex; align-items: center; gap: 9px; font-size: 13.5px; font-weight: 500; color: var(--ink-soft); }
+  .qmeta { margin-left: auto; font-family: var(--mono); font-size: 11px; letter-spacing: .06em; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+  .qapprove { border: 0; border-radius: 10px; background: var(--tide); color: #fff; font-size: 13px; font-weight: 600; padding: 8px 14px; min-height: 36px; box-shadow: 0 3px 12px -5px rgba(22,24,29,.45); }
+  .qapprove:hover { background: var(--tide-deep); }
+  input[type="checkbox"] { width: 20px; height: 20px; margin: 0; accent-color: var(--tide); flex: none; }
+
+  /* ---------- item cards ---------- */
+  .queue { display: grid; gap: 14px; }
+  .item { padding: 16px; }
+  .meta { display: flex; align-items: center; gap: 8px; }
+  .kind { font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); border: 1px solid var(--line); background: var(--paper); border-radius: 999px; padding: 2px 8px; }
+  .age { margin-left: auto; flex: none; font-family: var(--mono); font-size: 10.5px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+  .ititle { margin: 12px 0 3px; font-size: 15.5px; font-weight: 600; letter-spacing: -.01em; line-height: 1.3; }
+  .lead { margin: 0 0 12px; font-size: 13px; line-height: 1.5; color: var(--ink-soft); }
+  .stagepill { display: inline-flex; align-items: center; border: 1px solid var(--line); background: var(--paper); border-radius: 999px; padding: 0 8px; font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); }
+  .copylabel { display: block; margin: 0 0 6px; }
+
+  /* the exact outgoing copy — legibility is a hard requirement, so: primary
+     ink, generous leading, mono (the "which copy is live" complaint) */
+  .copy { margin: 0 0 14px; padding: 13px 14px; border: 1px solid var(--line); background: var(--paper); border-radius: 10px; font-family: var(--mono); font-size: 12.75px; line-height: 1.65; color: var(--ink); white-space: pre-wrap; word-wrap: break-word; }
+
+  /* video embed — real page uses <video controls src="/d/{slug}">; framed
+     placeholder here so the draft stays self-contained */
+  .video { position: relative; aspect-ratio: 16 / 9; border-radius: 12px; background: linear-gradient(150deg, #23303e, #101820); display: flex; align-items: center; justify-content: center; margin: 0 0 6px; }
+  .vplay { width: 46px; height: 46px; border-radius: 999px; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.35); color: #fff; font-size: 15px; display: flex; align-items: center; justify-content: center; padding-left: 3px; }
+  .vdur { position: absolute; right: 10px; bottom: 10px; font-family: var(--mono); font-size: 10.5px; color: #fff; background: rgba(0,0,0,.45); border-radius: 6px; padding: 2px 7px; font-variant-numeric: tabular-nums; }
+  .vmeta { margin: 0 0 14px; font-family: var(--mono); font-size: 10.5px; color: var(--ink-faint); }
+
+  /* bug_validation: claim, then evidence, then video — evidence ABOVE the
+     video is the spec's hard ordering (validate without hand-reproducing) */
+  .claim { margin: 0 0 12px; font-size: 13.5px; line-height: 1.55; color: var(--ink); }
+  .evidence { margin: 0 0 14px; padding: 13px 14px; border: 1px solid var(--line); background: var(--paper); border-radius: 10px; display: grid; gap: 10px; }
+  .ev { display: grid; grid-template-columns: 64px 1fr; gap: 10px; }
+  .ev-l { padding-top: 2px; }
+  .ev-v { font-size: 13px; line-height: 1.55; color: var(--ink); }
+  .ev-v.mono { font-family: var(--mono); font-size: 12px; word-break: break-all; }
+  .ev-v a { color: var(--tide); text-decoration: none; }
+  .ev-v a:hover { text-decoration: underline; }
+  .ev ol { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 13px; line-height: 1.55; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+  /* ---------- per-item actions: 44px targets, thumb-splittable ---------- */
+  .actions { display: flex; gap: 10px; }
+  .approve { flex: 1.4; min-height: 44px; border: 0; border-radius: 12px; background: var(--tide); color: #fff; font-size: 14px; font-weight: 600; padding: 10px 18px; box-shadow: 0 3px 12px -5px rgba(22,24,29,.45); transition: background .15s; }
+  .approve:hover { background: var(--tide-deep); }
+  .deny { flex: 1; min-height: 44px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink-soft); font-size: 14px; font-weight: 500; padding: 10px 16px; transition: border-color .15s, color .15s; }
+  .deny:hover, .deny.active { border-color: var(--ink-faint); color: var(--ink); }
+
+  /* deny reveals an inline reason input — no modal; reason = regeneration feedback */
+  .denybox { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); }
+  .reason { width: 100%; min-height: 44px; border: 1px solid var(--line); background: var(--paper); border-radius: 10px; padding: 11px 12px; font-family: var(--sans); font-size: 14px; color: var(--ink); }
+  .reason::placeholder { color: var(--ink-faint); }
+  .reason:focus { outline: none; border-color: var(--tide); }
+  .denycap { margin: 6px 0 10px; font-size: 12px; line-height: 1.5; color: var(--ink-faint); }
+  .denyrow { display: flex; align-items: center; gap: 12px; }
+  .confirmdeny { min-height: 40px; border: 0; border-radius: 10px; background: var(--ink); color: #fff; font-size: 13.5px; font-weight: 600; padding: 8px 18px; }
+  .confirmdeny:hover { background: #2a2e38; }
+  .cancel { border: 0; background: none; color: var(--ink-faint); font-size: 13.5px; font-weight: 500; padding: 8px 4px; }
+  .cancel:hover { color: var(--ink); }
+
+  /* ---------- alt state: empty queue ---------- */
+  .altstate { margin-top: 48px; }
+  .empty { margin-top: 12px; padding: 44px 24px; text-align: center; }
+  .empty svg { display: block; margin: 0 auto; }
+  .empty h2 { margin: 14px 0 6px; font-size: 17px; font-weight: 600; letter-spacing: -.01em; }
+  .empty p { margin: 0 auto; max-width: 350px; font-size: 13px; line-height: 1.55; color: var(--ink-soft); }
+
+  /* ---------- draft notes (annotation chrome, not product UI) ---------- */
+  .draftnotes { margin-top: 40px; border: 1px dashed var(--line); border-radius: 12px; padding: 14px 16px; background: rgba(255,253,248,.6); }
+  .draftnotes ul { margin: 8px 0 0; padding-left: 16px; display: grid; gap: 5px; font-size: 12.5px; line-height: 1.55; color: var(--ink-soft); }
+
+  /* ---------- desktop is the enhancement: air + natural-width actions ---------- */
+  @media (min-width: 480px) {
+    .uname { display: inline; }
+  }
+  @media (min-width: 700px) {
+    header nav { height: 64px; padding: 0 32px; }
+    main { padding: 44px 32px 120px; }
+    .item { padding: 20px 22px; }
+    .actions { justify-content: flex-end; }
+    .approve, .deny { flex: 0 0 auto; min-width: 130px; }
+    .denyrow { justify-content: flex-end; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <nav>
+    <span class="wordmark">driftwood</span>
+    <span class="navright">
+      <span class="avatar">B</span>
+      <span class="uname">Bryan</span>
+      <button class="logout">Log out</button>
+    </span>
+  </nav>
+</header>
+
+<main>
+  <a class="back" href="#"><span aria-hidden="true">&larr;</span> Back to dashboard</a>
+
+  <!-- page title + pending count, same pattern as /dashboard/leads ("N total") -->
+  <div class="titlerow">
+    <h1>Review queue</h1>
+    <span class="pcount">6 pending</span>
+  </div>
+  <p class="explain">Decisions your AE is waiting on &mdash; oldest first.</p>
+
+  <!-- select-all: one flat queue, so one checkbox rules them all (batches are
+       invisible to the founder, per decision 10). Bulk approve lives HERE,
+       inline — no floating bar. It replaces the count only while ≥1 item is
+       selected; approve is the only bulk action (deny needs a per-item reason),
+       and it's safe because sends pace automatically (~20/day, decision 4). -->
+  <div class="qhead">
+    <label><input type="checkbox" aria-label="Select all items" /> Select all</label>
+    <button class="qapprove">Approve selected (2)</button>
+    <span class="note">shown while &ge;1 selected</span>
+    <span class="qmeta">6 pending</span>
+  </div>
+
+  <div class="queue">
+
+    <!-- 1 · send_connection · 2d · CHECKED (bulk-selection demo) -->
+    <article class="item card">
+      <div class="meta">
+        <input type="checkbox" checked aria-label="Select: Loomi — Maya Reston" />
+        <span class="kind">connection</span>
+        <span class="age">2d</span>
+      </div>
+      <h2 class="ititle">Loomi &mdash; Maya Reston</h2>
+      <p class="lead">Maya Reston &mdash; VP Engineering, Loomi &middot; <span class="stagepill">new</span> &middot; no prior sends</p>
+      <span class="microlabel copylabel">Connection note &mdash; sends exactly as shown</span>
+      <pre class="copy">Hi Maya — we build AI QA agents for consumer mobile teams. Ran Loomi's journal-save flow through ours this week and it flagged something your team will want before the next release. Happy to share the clip.</pre>
+      <div class="actions">
+        <button class="approve">Approve</button>
+        <button class="deny">Deny</button>
+      </div>
+    </article>
+
+    <!-- 2 · send_message + video · 2d · DENY-TAPPED STATE -->
+    <article class="item card">
+      <div class="meta">
+        <input type="checkbox" aria-label="Select: Strida — Daniel Okafor" />
+        <span class="kind">message</span>
+        <span class="age">2d</span>
+      </div>
+      <h2 class="ititle">Strida &mdash; Daniel Okafor</h2>
+      <p class="lead">Daniel Okafor &mdash; Head of Mobile Engineering, Strida &middot; <span class="stagepill">contacted</span> &middot; 1 prior send</p>
+      <span class="microlabel copylabel">Outgoing message &mdash; sends exactly as shown</span>
+      <pre class="copy">Hi Daniel — ran Strida 3.2.0 through our QA agent after your ship last week. It hit a reproducible onboarding crash (Health permissions → Skip → back swipe) on a clean install. None of your public reviews mention it yet.
+
+38-second clip attached — real device, no emulator.
+
+If it's useful, we'll run your next release candidate through the full suite. First pass is free; worst case you get a second set of eyes before launch.</pre>
+      <div class="video" role="img" aria-label="Demo video: Strida onboarding crash">
+        <span class="vplay" aria-hidden="true">&#9654;</span>
+        <span class="vdur">0:38</span>
+      </div>
+      <p class="vmeta">d/strida-onboarding-4f2a &middot; 0:38 &middot; attached to this message</p>
+      <div class="actions">
+        <button class="approve">Approve</button>
+        <button class="deny active">Deny</button>
+      </div>
+      <div class="denybox">
+        <input class="reason" type="text" placeholder="what should change?" aria-label="Deny reason" />
+        <p class="denycap">Optional &mdash; goes to your AE as feedback; the revised copy comes back here for review.
+          <span class="note">state: after tapping Deny &mdash; inline, no modal</span></p>
+        <div class="denyrow">
+          <button class="cancel">Cancel</button>
+          <button class="confirmdeny">Deny</button>
+        </div>
+      </div>
+    </article>
+
+    <!-- 3 · bug_validation · 1d · CHECKED. Evidence sits ABOVE the
+         video (spec ordering); decisions read Real / Not real, not Approve/Deny -->
+    <article class="item card">
+      <div class="meta">
+        <input type="checkbox" checked aria-label="Select: Wandr bug" />
+        <span class="kind">bug</span>
+        <span class="age">1d</span>
+      </div>
+      <h2 class="ititle">Wandr &mdash; stale trip total after removing a booking</h2>
+      <p class="claim">Cost summary keeps a removed booking&rsquo;s price in the trip total until the app is killed and relaunched. Reproduced 3 of 3 on a clean install; the stale total survives navigation but not restart.</p>
+      <span class="microlabel copylabel">Evidence <span class="note">required at submission &mdash; always above the video</span></span>
+      <div class="evidence">
+        <div class="ev">
+          <span class="microlabel ev-l">Repro</span>
+          <ol>
+            <li>Install Wandr 2.4.1 from the App Store, sign in with a fresh account</li>
+            <li>Create a trip, add two paid activity bookings ($64 + $38)</li>
+            <li>Remove the $38 booking from the cost summary screen</li>
+            <li>Total still shows $102 &mdash; persists across tabs until app restart</li>
+          </ol>
+        </div>
+        <div class="ev">
+          <span class="microlabel ev-l">Target</span>
+          <span class="ev-v mono"><a href="#">apps.apple.com/us/app/wandr-trip-planner/id6473209981</a></span>
+        </div>
+        <div class="ev">
+          <span class="microlabel ev-l">Device</span>
+          <span class="ev-v">iPhone 15 Pro &middot; iOS 18.5 &middot; 393&times;852</span>
+        </div>
+        <div class="ev">
+          <span class="microlabel ev-l">In video</span>
+          <span class="ev-v">bug visible at 0:42</span>
+        </div>
+      </div>
+      <div class="video" role="img" aria-label="Bug video: Wandr stale trip total">
+        <span class="vplay" aria-hidden="true">&#9654;</span>
+        <span class="vdur">1:04</span>
+      </div>
+      <p class="vmeta">d/wandr-cart-total-7b19 &middot; 1:04</p>
+      <div class="actions">
+        <button class="approve">Real</button>
+        <button class="deny">Not real</button>
+      </div>
+    </article>
+
+    <!-- 4 · send_message + video · 7h -->
+    <article class="item card">
+      <div class="meta">
+        <input type="checkbox" aria-label="Select: Casaway — Priya Anand" />
+        <span class="kind">message</span>
+        <span class="age">7h</span>
+      </div>
+      <h2 class="ititle">Casaway &mdash; Priya Anand</h2>
+      <p class="lead">Priya Anand &mdash; Co-founder &amp; CTO, Casaway &middot; <span class="stagepill">contacted</span> &middot; 2 prior sends</p>
+      <span class="microlabel copylabel">Outgoing message &mdash; sends exactly as shown</span>
+      <pre class="copy">Hi Priya — following up with the clip I mentioned. Our agent booked and cancelled a stay in Casaway's sandbox and hit a double-charge path on the Apple Pay retry (0:52 in the video). Real device, iOS 18.5.
+
+Happy to walk your team through the repro, or just send the full trace — whichever is faster for you.</pre>
+      <div class="video" role="img" aria-label="Demo video: Casaway Apple Pay double charge">
+        <span class="vplay" aria-hidden="true">&#9654;</span>
+        <span class="vdur">1:12</span>
+      </div>
+      <p class="vmeta">d/casaway-applepay-2ce8 &middot; 1:12 &middot; attached to this message</p>
+      <div class="actions">
+        <button class="approve">Approve</button>
+        <button class="deny">Deny</button>
+      </div>
+    </article>
+
+    <!-- 5 · send_connection · 7h -->
+    <article class="item card">
+      <div class="meta">
+        <input type="checkbox" aria-label="Select: Forkful — Tom Delgado" />
+        <span class="kind">connection</span>
+        <span class="age">7h</span>
+      </div>
+      <h2 class="ititle">Forkful &mdash; Tom Delgado</h2>
+      <p class="lead">Tom Delgado &mdash; Director of Engineering, Forkful &middot; <span class="stagepill">new</span> &middot; no prior sends</p>
+      <span class="microlabel copylabel">Connection note &mdash; sends exactly as shown</span>
+      <pre class="copy">Hi Tom — we run autonomous QA for consumer mobile teams that don't have one in-house. Our agent surfaced two reproducible sync bugs in Forkful 5.1's grocery list. Glad to send the clips over — no strings.</pre>
+      <div class="actions">
+        <button class="approve">Approve</button>
+        <button class="deny">Deny</button>
+      </div>
+    </article>
+
+    <!-- 6 · bug_validation · 3h -->
+    <article class="item card">
+      <div class="meta">
+        <input type="checkbox" aria-label="Select: Perch bug" />
+        <span class="kind">bug</span>
+        <span class="age">3h</span>
+      </div>
+      <h2 class="ititle">Perch &mdash; photo upload marked complete while still uploading</h2>
+      <p class="claim">Killing the app right after the &ldquo;Uploaded&rdquo; toast loses the photo &mdash; the toast fires before the upload finishes. Reproduced 4 of 4 on LTE; does not reproduce on Wi&#8209;Fi.</p>
+      <span class="microlabel copylabel">Evidence</span>
+      <div class="evidence">
+        <div class="ev">
+          <span class="microlabel ev-l">Repro</span>
+          <ol>
+            <li>Open Perch 2.9.0 on LTE (Wi&#8209;Fi off), create a new sighting with a photo</li>
+            <li>Tap Post &mdash; an &ldquo;Uploaded&rdquo; toast appears within ~1s</li>
+            <li>Force-quit the app within 5 seconds of the toast</li>
+            <li>Reopen &mdash; the sighting exists with no photo attached</li>
+          </ol>
+        </div>
+        <div class="ev">
+          <span class="microlabel ev-l">Target</span>
+          <span class="ev-v mono"><a href="#">apps.apple.com/us/app/perch-birding/id6459118234</a></span>
+        </div>
+        <div class="ev">
+          <span class="microlabel ev-l">Device</span>
+          <span class="ev-v">iPhone 14 &middot; iOS 18.5 &middot; 390&times;844 &middot; LTE</span>
+        </div>
+        <div class="ev">
+          <span class="microlabel ev-l">In video</span>
+          <span class="ev-v">bug visible at 1:07</span>
+        </div>
+      </div>
+      <div class="video" role="img" aria-label="Bug video: Perch photo upload race">
+        <span class="vplay" aria-hidden="true">&#9654;</span>
+        <span class="vdur">1:26</span>
+      </div>
+      <p class="vmeta">d/perch-upload-race-31c4 &middot; 1:26</p>
+      <div class="actions">
+        <button class="approve">Real</button>
+        <button class="deny">Not real</button>
+      </div>
+    </article>
+
+  </div>
+
+  <!-- ALT STATE: nothing pending. Direction, not mood; the one wave-mark use
+       on the page (Chanel rule) -->
+  <section class="altstate">
+    <span class="microlabel">Alt state <span class="note">rendered when nothing is pending</span></span>
+    <div class="card empty">
+      <svg width="60" height="17" viewBox="0 0 60 17" fill="none" aria-hidden="true">
+        <path d="M2 5q7 -6 14 0t14 0t14 0t14 0" stroke="#15557e" stroke-width="1.6" stroke-linecap="round" opacity=".9"/>
+        <path d="M2 12q7 -6 14 0t14 0t14 0t14 0" stroke="#15557e" stroke-width="1.6" stroke-linecap="round" opacity=".4"/>
+      </svg>
+      <h2>Queue is clear</h2>
+      <p>Nothing needs a decision right now. When your AE submits new work, it lands here and you get a Slack ping with the link.</p>
+    </div>
+  </section>
+
+  <!-- draft-only notes: rationale summary for review, removed in the React build -->
+  <div class="draftnotes">
+    <span class="microlabel">Draft notes &mdash; not product UI</span>
+    <ul>
+      <li>Mobile-first: base CSS is the phone layout (Slack magic link &rarr; one-handed triage). Single 640px column, 44px targets; bulk approve sits inline in the queue header (no floating bar). &ge;700px only adds air and right-aligns actions.</li>
+      <li>One flat queue, oldest first (decision 10). Batches are invisible &mdash; no tags, no grouping, no link state; kind + age are the whole meta line (the agent name is redundant — one agent per customer).</li>
+      <li>Copy legibility: the exact frozen payload in Plex Mono on paper, primary ink &mdash; no truncation, no expanders. What you read is byte-for-byte what sends (decision 6: no approve-with-edits).</li>
+      <li>Bug items: claim &rarr; evidence (repro / target / device / timestamp) &rarr; video, in that order; decisions are Real / Not real.</li>
+      <li>Deny opens an inline reason input (no modal); reason is optional regeneration feedback, and the revision returns via a superseding batch.</li>
+      <li>Approve is the only bulk action (deny needs a per-item reason); select-all is safe because sends pace automatically at ~20/day (decision 4).</li>
+      <li>Tide is spent on approve buttons only. Kind chips and stage pills stay gray structure (60/30/10).</li>
+    </ul>
+  </div>
+</main>
+
+</body>
+</html>
