@@ -16,11 +16,14 @@
      D5  CTA supporting line ("30 minutes. We build one live...") removed;
          thread footnote shortened to "Real thread · name redacted" (kept —
          it is the verifiability claim; kill entirely if still too much).
-     D6  NEW walkthrough section: research → demo → LinkedIn send, shown as
-         three artifacts (agent trace, built demo, sent message) — no numbers,
-         no icons, per anti-slop-notes. Joe's Pizza worked example (Square's
-         prospect; ordering exists but converts poorly — standing note), with
-         one honest caption pointing at the real thread above. -->
+     D6  NEW walkthrough section: research → demo → LinkedIn send, as three
+         artifacts (notes, built demo, sent message) — no numbers, no icons,
+         no mono/terminal treatment, no em dashes; Square's-prospect Joe's
+         Pizza framing (ordering exists, converts poorly — standing note);
+         one honest caption pointing at the real thread. STATIC PLACEHOLDER:
+         the locked treatment for this section is the screen-recording
+         walkthrough (~/Downloads/driftwood-build-walkthrough.html) with the
+         final beat changed Gmail → LinkedIn. -->
 <style>
   :root {
     --bg: #ffffff;
@@ -178,10 +181,11 @@
   .artifact-bar .dot { width: 0.5rem; height: 0.5rem; }
   .artifact-body { padding: 1rem 1.1rem 1.15rem; }
 
-  /* artifact 1: the agent's research trace */
-  .trace { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.78rem; line-height: 1.9; color: #3c434a; }
-  .trace .t-dim { color: var(--gray-light); }
-  .trace .t-hit { color: var(--accent); font-weight: 600; }
+  /* artifact 1: the agent's notes — plain sans, no terminal/mono treatment
+     (mono + terminal-log styling are on the documented reject list) */
+  .notes { font-size: 0.85rem; line-height: 1.85; color: #3c434a; }
+  .notes .n-dim { color: var(--gray-light); }
+  .notes .n-hit { color: var(--accent); font-weight: 600; }
 
   /* artifact 2: the built demo, mini browser */
   .mini-url { flex: 1; text-align: center; }
@@ -340,24 +344,23 @@
         <div>
           <p class="walk-label">The agent reads their site <span>· takes notes</span></p>
           <div class="artifact">
-            <div class="artifact-bar" aria-hidden="true">agent · research</div>
+            <div class="artifact-bar" aria-hidden="true">notes · joespizza.com</div>
             <div class="artifact-body">
-              <div class="trace">
-                <div><span class="t-dim">reading</span> joespizza.com</div>
-                <div>ordering lives in a third-party widget</div>
-                <div>menu &rarr; checkout takes <span class="t-hit">4 taps</span></div>
-                <div><span class="t-dim">yelp</span> 4.5&#9733; · 212 reviews</div>
-                <div><span class="t-hit">&rarr; demo: one-tap ordering, their domain</span></div>
+              <div class="notes">
+                <div>Online ordering is a third-party widget.</div>
+                <div>Menu to checkout: <span class="n-hit">four taps</span>.</div>
+                <div><span class="n-dim">Yelp:</span> 4.5&#9733;, 212 reviews.</div>
+                <div>Demo idea: <span class="n-hit">their menu, one-tap ordering</span>.</div>
               </div>
             </div>
           </div>
         </div>
         <div>
-          <p class="walk-label">Builds them a working demo <span>· hosted, live</span></p>
+          <p class="walk-label">Builds them a working demo <span>· live, hosted</span></p>
           <div class="artifact">
             <div class="artifact-bar">
               <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-              <span class="mini-url">joespizza.driftwood.sh/demo</span>
+              <span class="mini-url">joes-pizza.square.site</span>
             </div>
             <div class="artifact-body">
               <div class="demo-menu">
@@ -365,7 +368,7 @@
                 <div class="demo-row"><span>Pepperoni 16&Prime;</span><span>$22</span></div>
                 <div class="demo-row"><span>Garlic knots</span><span>$8</span></div>
               </div>
-              <div class="demo-cta">Order — one tap</div>
+              <div class="demo-cta">Order in one tap</div>
             </div>
           </div>
         </div>
@@ -378,9 +381,10 @@
                 <span class="avatar y" aria-hidden="true">S</span>
                 <div>
                   <div class="msg-head"><span class="who">You</span><span class="when">sent by driftwood</span></div>
-                  <p class="msg-body">hey joe, i made you a demo — your menu with
-                    one-tap ordering on your own site:
-                    <a class="demo-link" href="#how" onclick="return false">joespizza.driftwood.sh/demo</a>
+                  <p class="msg-body">hey joe, i made you a demo. your menu with
+                    one-tap ordering:
+                    <a class="demo-link" href="#how" onclick="return false">joes-pizza.square.site</a>.
+                    worth 15 minutes?
                   </p>
                 </div>
               </div>
@@ -388,7 +392,7 @@
           </div>
         </div>
       </div>
-      <p class="walk-caption">Worked example. The Superhuman thread above is <a href="#week-one">the real one</a>.</p>
+      <p class="walk-caption">Worked example: Square's prospect, Joe's Pizza. The Superhuman thread above is <a href="#week-one">the real one</a>.</p>
     </div>
   </section>
 

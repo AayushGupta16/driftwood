@@ -1,92 +1,91 @@
-# Brand theme directions — giving driftwood an identity
+# Brand cohesion brief — identity without costume
 
-*2026-07-13, from Aayush's feedback: "there is no brand or theme that we really
-have like all the other cool websites do." References he rates: browserbase.com,
-agentmail.to, greypointindustries.ca, saved.gg (his own past project).
-Companion to `DESIGN.md` (tokens) and `anti-slop-notes.md` (credibility rules).*
+*2026-07-13. Aayush: "there is no brand or theme that we really have like all
+the other cool websites do" — references browserbase.com, agentmail.to,
+greypointindustries.ca, saved.gg. REWRITTEN after checking the day's design
+history: the first version of this note recommended a nautical "chart room"
+theme, which re-ran the already-REJECTED admiralty-chart draft
+(landing-admiralty-draft.html) — killed. This version works inside the
+documented constraint set.*
 
-## What the reference sites share
+## The tension to resolve (this is the actual brief)
 
-Studied browserbase + agentmail + saved.gg (greypoint blocks fetches). The
-common property is not a style — it's commitment:
+- **v1 admiralty (this morning): rejected hard** — "bad AI-generated."
+  Documented tells: decorative hero art, characterful fonts, mono anywhere,
+  all-caps anywhere, subtext under buttons, multi-color themes, word count.
+  Distilled lesson: personality through restraint + real product artifacts,
+  never through fonts/palette/decoration.
+- **v4 (live now, built to that lesson): reads anonymous to Aayush today** —
+  "no brand or theme like the cool websites have."
 
-1. **One ownable identity device, repeated everywhere.** Browserbase: the
-   browser-window motif and grid — the product IS the brand mark. AgentMail:
-   the inbox/mail metaphor personified ("give every agent its own inbox") in
-   both copy and visuals. The device shows up in every section, not once.
-2. **The theme is derived from the name/product metaphor**, not decoration
-   applied afterward. That's why it feels inevitable rather than styled.
-3. **Copy voice matches the visual voice.** Browserbase writes infrastructure
-   declaratives; AgentMail writes agent-first personification. The words and
-   the pixels are the same brand.
-4. **A committed typographic stance** — not system-default everything. One
-   display voice you'd recognize out of context.
+So: v1 was costume, v4 is beige. The v6 brief is **cohesion without
+costume** — the identity must come from carriers that are NOT the banned ones.
 
-Our current site is *tasteful default*: white, system sans, one blue accent,
-serif-italic accent word, hairlines. Clean — and anonymous. Every rule in
-anti-slop-notes is satisfied, but nothing is *ours*. That's the gap Aayush is
-naming.
+## What the reference sites actually do (fetched browserbase/agentmail/saved.gg; greypoint blocks bots)
 
-## What driftwood already owns (unused equity)
+The cohesion never comes from decoration. It comes from:
 
-- The name: driftwood — sea, tide, weathered wood, things that arrive on shore.
-- The logo: a ship's helm / compass.
-- The palette name in DESIGN.md is literally **paper + tide**.
-- The product story: agents that go out, do real work, and come back with
-  something (a demo, a booked call). Expedition-shaped.
+1. **One product-true device, repeated everywhere.** Browserbase = browser
+   windows, because the product is browsers. AgentMail = inboxes, because the
+   product is inboxes. The device is the product photographed from different
+   angles — which is why it doesn't read as theme-ing.
+2. **A committed typographic stance** — one recognizable voice, not a
+   characterful font. (Browserbase is basically one sans used with total
+   conviction.)
+3. **Copy voice that matches the visual voice** — the words and pixels are
+   the same brand.
 
-The nautical theme isn't a stretch; it's sitting there unclaimed.
+## Driftwood's product-true device (recommended direction)
 
-## Direction A — The chart room (recommended)
+Driftwood's product is **artifacts of real work**: threads, demos,
+dashboards, booked calls. v4 already renders everything as flat product
+windows (thread card, dashboard, walkthrough artifacts) — accidentally. The
+move is to commit to it as THE device:
 
-Navigation charts + ship's log. Precise, instrumental, quietly maritime —
-never pirate-kitsch.
+- **Everything visual on the page is a window from the product's world.**
+  One standardized window chrome (bar, radius, shadow, hairline) used with
+  total consistency — the wordmark's world is "real receipts."
+- **One signature accent behavior**: the tide blue appears ONLY at the
+  payoff moment — the reply, the booked call, the serif-italic voice word.
+  Scarcity is what makes an accent read as identity instead of palette.
+  (The admiralty draft's one surviving good idea: an accent reserved for
+  THE reply signal.)
+- **One motion signature**: things *arrive* — the toast pops, the thread
+  staggers in, the demo window rises. Same easing, same direction,
+  everywhere. Motion-as-brand passes every tell (it's behavior, not
+  decoration).
+- **Voice**: the copy already leans lowercase-message-real ("hey joe, i made
+  you a demo"). Systematize: product artifacts speak in the agent's casual
+  register; the page speaks in short declaratives. Two registers, used
+  strictly.
 
-Devices:
-- **Chart grid**: the hairline rails grow faint coordinate ticks/graticule in
-  the margins; section numbers rendered like chart soundings.
-- **Compass rose** as the single decorative mark (we already have the helm);
-  buoy-dot status markers (the green toast dot becomes a brand element).
-- **Type**: a display serif with instrument character for headlines (the
-  existing Georgia italic accent graduates into a real display voice);
-  monospace for agent traces, styled as **ship's-log entries** ("Jul 9 —
-  read superhuman.com. found the bug. built the demo.").
-- **Copy voice**: log-entry cadence for proof sections; declaratives
-  elsewhere. "Week one" already wants to be a logbook page.
-- **The dashboard** frames as an instrument panel; the walkthrough artifacts
-  become chart annotations.
-- Palette stays paper + tide (deepen tide slightly; add one weathered-brass
-  neutral for hairline accents).
+This is Browserbase's playbook (device = the product) executed at
+Linear/Mintlify restraint — the documented bar.
 
-Why it wins: derived from the name (rule 2), one device everywhere (rule 1),
-log-voice copy (rule 3), ownable — no outbound/sales tool looks like this.
-Compatible with every anti-slop rule (paper, hairlines, no gradients).
+## What I need from Aayush before v6
 
-Risk to manage: literalism. No waves, no anchors, no rope borders. The
-nautical layer is structural (grids, logs, instruments), never illustrative.
+1. **Which carriers reopen, if any?** The v1 rejection banned type
+   character, palette, and decoration as personality carriers. Today's ask
+   pulls the other way. Options: (a) device + motion + voice only (fully
+   inside the bar — my recommendation above), (b) also reopen TYPE (one
+   distinctive-but-quiet display face, chosen from real catalogs per the
+   brand-register process, never mono), (c) also reopen COLOR (a committed,
+   named color story beyond paper+tide). Greypoint/saved.gg read like
+   type+color plays, so if those are the feeling he's chasing, (b)/(c) may
+   be required — his call, made explicitly this time.
+2. **Three brand-voice words** (the impeccable brand-register process his
+   other thread set up needs them — physical words, e.g. "machined",
+   "weathered", "unhurried").
+3. Reaction to the device direction above.
 
-## Direction B — The boatyard / workshop
+## Walkthrough section (today's other ask)
 
-Artifacts pinned to paper: demos as "builds", rubber stamps (SENT · REPLIED ·
-BOOKED), pencil annotations (the old landing's hand-drawn arrow was this),
-masking-tape corners. Warm, crafty, human.
-
-Wins: matches "the agent builds you a thing" better than any theme; stamps are
-a great status language. Risk: twee/scrapbook if overdone; harder to keep
-credible for a tool that touches your LinkedIn account.
-
-## Direction C — The instrument panel (Browserbase-adjacent)
-
-Full technical: mono labels, visible grid, terminal traces, status LEDs.
-Wins: easiest to execute, familiar. Risk: least ownable — half the dev-tool
-landscape lives here, and driftwood sells to founders, not developers. This
-is the direction most likely to still feel like "someone else's site".
-
-## Recommendation
-
-**A, seasoned with B's stamps**: chart-room structure and type, log-entry
-copy voice, rubber-stamp status marks (BOOKED across the thread foot). One
-device per section, always the same family. Ship as `landing-draft-v6.html`
-once Aayush picks; v5's structural fixes (centered hero, trimmed copy, no
-pill, walkthrough) carry over unchanged — the theme layers onto that
-skeleton.
+Aayush wants back a section showing research → demo → send-on-LinkedIn. A
+LOCKED direction for exactly this already exists from the June iteration: the
+screen-recording-style walkthrough of the agent driving a browser (leads list
+→ search → listing → menu → builds the Square ordering page → sends), with a
+working prototype at `~/Downloads/driftwood-build-walkthrough.html` (31KB,
+Jun 23). Plan: revive that prototype, change the final beat from Gmail to
+LinkedIn, restyle to current tokens. v5's static three-artifact strip is a
+composition placeholder until then, now fixed to the standing conventions
+(Square's prospect framing, no mono, no em dashes).
