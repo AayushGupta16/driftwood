@@ -162,9 +162,8 @@
     width: 0.72rem; height: 0.72rem; border-radius: 50%; background: #e4e9ed;
     transform: scale(1); transition: background 0.3s, transform 0.3s cubic-bezier(0.16,1,0.3,1);
   }
-  .dots i.hit { background: #c6ccd2; }
-  .dots.us i.hit { background: var(--accent); }
-  .rate-viz.go .dots i.hit { animation: dot-pop 0.35s cubic-bezier(0.16,1,0.3,1) both; animation-delay: calc(var(--d) * 60ms); }
+  .dots i.hit.lit { background: #a9b1b9; animation: dot-pop 0.35s cubic-bezier(0.16,1,0.3,1) both; }
+  .dots.us i.hit.lit { background: var(--accent); }
   @keyframes dot-pop { 0% { transform: scale(0.3); } 70% { transform: scale(1.35); } 100% { transform: scale(1); } }
   .founder {
     margin-top: 2.25rem; padding-top: 1.75rem;
@@ -232,9 +231,13 @@
   }
 
   /* ---------- how it works: G3 pinned scrub ---------- */
-  .pin-wrap { height: 200vh; }
+  .pin-wrap { height: 180vh; }
+  .week-pin-wrap { height: 170vh; }
+  .pin-open { overflow: visible; }
+  .week-sect { padding-block: 2rem; width: 100%; }
   .pin { position: sticky; top: 0; height: 100vh; display: flex; align-items: center; overflow: hidden; }
   .how-grid { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: clamp(2.5rem, 5vw, 5rem); align-items: center; width: 100%; }
+  .stage-card .artifact img { width: 100%; height: min(26rem, 56vh); object-fit: cover; object-position: left top; }
   .rail-list { list-style: none; margin: 2rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 1.1rem; }
   .rail-list li { display: flex; gap: 0.8rem; align-items: baseline; font-size: 1.05rem; color: var(--gray-light); font-weight: 500; transition: color 0.25s; }
   .rail-list li span { font-size: 0.8rem; }
@@ -336,7 +339,7 @@
     .hero-grid, .week-grid, .how-grid, .compare-grid { grid-template-columns: 1fr; }
     .week-grid > div:last-child { margin-top: 0; }
     .compare-arrow { display: none; }
-    .pin-wrap { height: auto; }
+    .pin-wrap, .week-pin-wrap { height: auto; }
     .pin { position: static; height: auto; overflow: visible; }
     .stage { min-height: 0; }
     .stage-card { position: static; opacity: 1; transform: none; pointer-events: auto; }
@@ -391,7 +394,9 @@
 
   <!-- week one + the founder -->
   <section id="week-one" class="sheet sheet-white">
-    <div class="wrap sect">
+    <div class="pin-wrap week-pin-wrap">
+      <div class="pin pin-open">
+        <div class="wrap week-sect">
       <div class="week-grid">
         <div class="week-left">
           <h2>Be <em class="voice">undeniable</em> to your leads.</h2>
@@ -456,6 +461,8 @@
           </div>
         </div>
       </div>
+        </div>
+      </div>
     </div>
     <canvas class="sea-strip" aria-hidden="true"></canvas>
   </section>
@@ -493,10 +500,10 @@
                 <img src="assets/review-queue.png" alt="The driftwood review queue: each outbound message waiting for your approve or deny" />
               </div>
             </div>
+          </div>
         </div>
       </div>
     </div>
-    <canvas class="sea-strip" aria-hidden="true"></canvas>
   </section>
 
   <!-- the favorite: don't send out AI slop — pinned, the arrow draws as you scroll -->
@@ -598,18 +605,13 @@
     }
   });
 
-  // dots pop on first view
-  const rv = document.querySelector(".rate-viz");
-  const rvIo = new IntersectionObserver((entries) => {
-    for (const e of entries) if (e.isIntersecting) { rv.classList.add("go"); rvIo.disconnect(); }
-  }, { threshold: 0.5 });
-  rvIo.observe(rv);
+  // dots populate with the week-one scrub (see pinned scrub below)
 
-  // pinned scrub: scroll position cycles the stage, rail highlights follow
-  const pinWrap = document.querySelector(".pin-wrap");
+  // pinned scrub: scroll cycles the stage while the rail highlights
+  const scrubOk = matchMedia("(min-width: 52rem)").matches && !matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const pinWrap = document.querySelector("#how .pin-wrap");
   const cards = [...document.querySelectorAll(".stage-card")];
   const items = [...document.querySelectorAll(".rail-list li")];
-  const scrubOk = matchMedia("(min-width: 52rem)").matches && !matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (scrubOk) {
     let raf = 0;
     const update = () => {
@@ -625,6 +627,27 @@
     update();
   } else {
     cards.forEach((c) => c.classList.add("on"));
+  }
+
+  // week-one: scroll populates the reply dots
+  const weekWrap = document.querySelector(".week-pin-wrap");
+  const beforeHits = [...document.querySelectorAll(".dots:not(.us) i.hit")];
+  const usHits = [...document.querySelectorAll(".dots.us i.hit")];
+  if (scrubOk) {
+    let rafW = 0;
+    const updateW = () => {
+      rafW = 0;
+      const total = weekWrap.offsetHeight - innerHeight;
+      if (total <= 0) return;
+      const p = Math.min(1, Math.max(0, -weekWrap.getBoundingClientRect().top / total));
+      beforeHits.forEach((d) => d.classList.toggle("lit", p > 0.16));
+      const n = Math.min(usHits.length, Math.max(0, Math.floor(((p - 0.26) / 0.6) * usHits.length)));
+      usHits.forEach((d, i) => d.classList.toggle("lit", i < n));
+    };
+    addEventListener("scroll", () => { if (!rafW) rafW = requestAnimationFrame(updateW); }, { passive: true });
+    updateW();
+  } else {
+    beforeHits.concat(usHits).forEach((d) => d.classList.add("lit"));
   }
 
   // compare: the hand-drawn arrow scrubs with the pinned scroll (from the live site)
