@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>driftwood — landing draft: admiralty chart</title>
+<!--
+  DRAFT: full-page redesign, "admiralty chart" lane.
+  Named reference: NOAA nautical chart. White water, fine blue soundings
+  linework, magenta reserved for signals (real charts use magenta for lights
+  and cautions; here it marks exactly one thing: the reply).
+  Type: Schibsted Grotesk (display + body, weight contrast) and Fragment Mono
+  (data and timestamps only). Replaces Instrument Sans/Serif + IBM Plex Mono,
+  all on impeccable's reflex-reject list. Cream --paper ground is gone.
+  Sections: hero -> walkthrough -> receipts (drenched) -> dashboard -> CTA.
+  The fictional compare/examples/Slack-card sections are cut.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400..900;1,400..900&family=Fragment+Mono&display=swap" />
+<style>
+  :root {
+    /* NOAA chart palette */
+    --ground: #fcfdfe;        /* white water, whisper of the brand's cool hue */
+    --ink: #101720;           /* soundings black-blue */
+    --ink-soft: #3d4a58;
+    --ink-faint: #5f6d7c;     /* >= 4.5:1 on ground */
+    --tide: #15557e;          /* the brand accent survives; cream did not */
+    --tide-deep: #0d3c5b;
+    --deep: #0a2e47;          /* drench section: deep water */
+    --deep-ink: #eef4f9;      /* body text on deep */
+    --deep-soft: #b9cfdf;     /* secondary on deep */
+    --chart: #c3d7e5;         /* fine linework on white */
+    --chart-strong: #8fb3ca;
+    --hairline: #dfe8ef;
+    --signal: #b21e5b;        /* chart magenta: one job, the reply */
+    --signal-on-deep: #ff6ea4;
+    --card: #ffffff;
+
+    --font-sans: "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
+    --font-mono: "Fragment Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+    /* type ramp, ~1.3 ratio off 17px */
+    --text-caption: 0.8125rem;   /* 13 */
+    --text-small: 0.9375rem;     /* 15 */
+    --text-body: 1.0625rem;      /* 17 */
+    --text-lead: 1.375rem;       /* 22 */
+    --text-h3: 1.75rem;          /* 28 */
+    --text-h2: clamp(2rem, 1.2rem + 2.6vw, 3rem);
+    --text-hero: clamp(2.7rem, 1.6rem + 4.6vw, 4.6rem);
+
+    /* 4pt-base spacing */
+    --s-2: 0.5rem; --s-3: 0.75rem; --s-4: 1rem; --s-6: 1.5rem;
+    --s-8: 2rem; --s-12: 3rem; --s-16: 4rem; --s-24: 6rem;
+    --section: clamp(4rem, 2.5rem + 5vw, 7.5rem);
+
+    --r-sm: 5px; --r-md: 10px;   /* instrument radii, not rounded-2xl */
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: 1.55;
+    font-kerning: normal;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection { background: var(--tide); color: #fff; }
+  h1, h2, h3 { text-wrap: balance; margin: 0; }
+  p { margin: 0; }
+  a { color: inherit; }
+  img { display: block; max-width: 100%; }
+  .mono { font-family: var(--font-mono); }
+
+  .wrap { max-width: 74rem; margin-inline: auto; padding-inline: clamp(1.25rem, 4vw, 2.5rem); }
+
+  :focus-visible { outline: 2px solid var(--tide); outline-offset: 2px; border-radius: 2px; }
+
+  /* ---------- nav ---------- */
+  header {
+    position: sticky; top: 0; z-index: 20;
+    background: color-mix(in srgb, var(--ground) 92%, transparent);
+    border-bottom: 1px solid var(--hairline);
+  }
+  @supports (backdrop-filter: blur(4px)) {
+    header { backdrop-filter: blur(8px); }
+  }
+  .nav { display: flex; align-items: center; justify-content: space-between; height: 4rem; }
+  .wordmark { display: inline-flex; align-items: center; gap: 0.65rem; text-decoration: none; }
+  .wordmark svg { width: 1.7rem; height: 1.7rem; }
+  .wordmark span { font-weight: 700; font-size: 1.2rem; letter-spacing: 0.02em; }
+  .nav-right { display: flex; align-items: center; gap: var(--s-6); }
+  .nav-login { font-size: var(--text-small); font-weight: 500; color: var(--ink-soft); text-decoration: none; padding: 0.6rem 0.25rem; }
+  .nav-login:hover { color: var(--ink); }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--tide); color: #fff; text-decoration: none;
+    font-weight: 600; font-size: var(--text-small);
+    padding: 0.72rem 1.3rem; border-radius: var(--r-sm);
+    transition: background 0.15s ease-out;
+  }
+  .btn:hover { background: var(--tide-deep); }
+  .btn:active { transform: translateY(1px); }
+  .btn-lg { font-size: var(--text-body); padding: 0.95rem 1.75rem; }
+
+  /* ---------- hero ---------- */
+  .hero { position: relative; overflow: clip; }
+  .hero-grid {
+    display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    gap: var(--s-8); align-items: center;
+    padding-block: var(--section) calc(var(--section) * 0.8);
+  }
+  .hero h1 {
+    font-size: var(--text-hero);
+    font-weight: 800;
+    line-height: 1.02;
+    letter-spacing: -0.025em;
+    max-width: 13ch;
+  }
+  .hero-sub {
+    margin-top: var(--s-6);
+    font-size: var(--text-lead);
+    line-height: 1.45;
+    color: var(--ink-soft);
+    max-width: 34ch;
+  }
+  .hero-stat {
+    margin-top: var(--s-8);
+    display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap;
+    font-family: var(--font-mono); font-size: var(--text-small); color: var(--ink-faint);
+  }
+  .hero-stat b { color: var(--ink); font-weight: 400; font-size: var(--text-lead); }
+  .hero-stat .up { color: var(--tide); }
+  .hero-cta { margin-top: var(--s-8); display: flex; align-items: center; gap: var(--s-6); flex-wrap: wrap; }
+  .hero-alt { font-size: var(--text-small); color: var(--ink-faint); }
+  .hero-alt a { color: var(--ink-soft); text-decoration-color: var(--chart-strong); text-underline-offset: 3px; }
+  .hero-alt a:hover { color: var(--ink); }
+
+  /* the chart field */
+  .chart-field { position: relative; min-height: 24rem; }
+  .chart-field svg { width: 100%; height: auto; display: block; }
+  .sounding { font-family: var(--font-mono); font-size: 11px; fill: var(--chart-strong); }
+  .chart-label { font-family: var(--font-mono); font-size: 10.5px; fill: var(--ink-faint); letter-spacing: 0.08em; }
+  .route { stroke: var(--tide); stroke-width: 1.6; stroke-dasharray: 5 6; fill: none; }
+  .route-anim { stroke-dashoffset: 0; animation: route-draw 2.4s cubic-bezier(0.33, 1, 0.68, 1) both 0.3s; }
+  @keyframes route-draw { from { stroke-dashoffset: 460; } to { stroke-dashoffset: 0; } }
+  .hero-enter { animation: rise-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .hero-enter.d1 { animation-delay: 0.08s; } .hero-enter.d2 { animation-delay: 0.16s; } .hero-enter.d3 { animation-delay: 0.24s; }
+  @keyframes rise-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+  /* ---------- shared section chrome ---------- */
+  section { border-top: 1px solid var(--hairline); }
+  .sect { padding-block: var(--section); }
+  .sect-head { max-width: 44rem; }
+  .sect-head h2 { font-size: var(--text-h2); font-weight: 800; letter-spacing: -0.02em; line-height: 1.08; }
+  .sect-head p { margin-top: var(--s-4); font-size: var(--text-lead); line-height: 1.5; color: var(--ink-soft); max-width: 58ch; }
+
+  /* ---------- walkthrough ---------- */
+  .walk-frame { margin-top: var(--s-12); margin-inline: auto; max-width: 912px; }
+  .walk-frame iframe { width: 100%; border: 0; display: block; background: transparent; }
+
+  /* ---------- receipts (drenched) ---------- */
+  .receipts { background: var(--deep); color: var(--deep-ink); border-top: none; }
+  .receipts .sect-head h2 { color: #fff; }
+  .receipts .sect-head p { color: var(--deep-soft); }
+  /* light-on-dark compensation: looser leading, whisper of tracking */
+  .receipts p { line-height: 1.62; letter-spacing: 0.011em; }
+  .receipts-grid {
+    display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    gap: clamp(2rem, 5vw, 5rem); align-items: start; margin-top: var(--s-12);
+  }
+  .story p + p { margin-top: var(--s-4); }
+  .story .kicker { color: #fff; font-weight: 700; }
+  .stat-row {
+    margin-top: var(--s-8); padding-top: var(--s-6);
+    border-top: 1px solid color-mix(in srgb, var(--deep-soft) 28%, transparent);
+    display: grid; grid-template-columns: repeat(3, auto); gap: var(--s-8);
+    justify-content: start;
+  }
+  .stat b { display: block; font-family: var(--font-mono); font-weight: 400; font-size: 1.9rem; color: #fff; }
+  .stat span { display: block; margin-top: 0.3rem; font-size: var(--text-caption); color: var(--deep-soft); max-width: 15ch; line-height: 1.4; }
+  .stat-fine { margin-top: var(--s-6); font-family: var(--font-mono); font-size: 0.75rem; color: color-mix(in srgb, var(--deep-soft) 75%, transparent); line-height: 1.7; }
+
+  /* the thread */
+  .thread {
+    background: var(--card); color: var(--ink);
+    border-radius: var(--r-md);
+    box-shadow: 0 30px 70px -30px rgba(2, 12, 22, 0.65);
+    padding: clamp(1.25rem, 2.5vw, 2rem);
+  }
+  .thread p { line-height: 1.55; letter-spacing: 0; }
+  .msg { display: grid; grid-template-columns: 2.4rem minmax(0, 1fr); gap: 0.85rem; }
+  .msg + .gap { margin-block: var(--s-6); display: flex; align-items: center; gap: 0.85rem; }
+  .gap hr { flex: 1; border: 0; border-top: 1px dashed var(--chart-strong); margin: 0; }
+  .gap span { font-family: var(--font-mono); font-size: 0.75rem; color: var(--ink-faint); white-space: nowrap; }
+  .gap + .msg { margin-top: 0; }
+  .msg + .msg { margin-top: var(--s-6); }
+  .avatar {
+    width: 2.4rem; height: 2.4rem; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.95rem; color: #fff; background: var(--tide);
+  }
+  .avatar.them { background: var(--ink-soft); }
+  .msg-meta { display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; }
+  .msg-meta .who { font-weight: 700; font-size: var(--text-small); }
+  .msg-meta .when { font-family: var(--font-mono); font-size: 0.75rem; color: var(--ink-faint); }
+  .msg-body { margin-top: 0.35rem; font-size: var(--text-small); color: var(--ink-soft); max-width: 52ch; }
+  .redact {
+    display: inline-block; background: var(--ink); border-radius: 2px;
+    width: 3.2em; height: 0.85em; vertical-align: baseline; transform: translateY(0.06em);
+  }
+  .redact.sm { width: 2.4em; }
+  .attach {
+    margin-top: 0.7rem; display: inline-flex; align-items: center; gap: 0.6rem;
+    border: 1px solid var(--hairline); border-radius: var(--r-sm);
+    padding: 0.5rem 0.8rem; font-family: var(--font-mono); font-size: 0.75rem; color: var(--ink-soft);
+  }
+  .attach svg { width: 1rem; height: 1rem; stroke: var(--tide); }
+  .signal-pin {
+    display: inline-flex; align-items: center; gap: 0.45rem;
+    font-family: var(--font-mono); font-size: 0.75rem; color: var(--signal);
+  }
+  .signal-pin::before { content: ""; width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--signal); }
+  .thread-foot {
+    margin-top: var(--s-6); padding-top: var(--s-4); border-top: 1px solid var(--hairline);
+    display: flex; justify-content: space-between; align-items: baseline; gap: var(--s-4); flex-wrap: wrap;
+    font-family: var(--font-mono); font-size: 0.75rem; color: var(--ink-faint);
+  }
+  .thread-foot .booked { color: var(--ink); }
+  .thread-caption { margin-top: var(--s-4); font-size: var(--text-caption); color: var(--deep-soft); }
+
+  /* ---------- dashboard ---------- */
+  .dash-grid {
+    display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr);
+    gap: clamp(2rem, 4vw, 4.5rem); align-items: start; margin-top: var(--s-12);
+  }
+  .dash-copy p + p { margin-top: var(--s-4); }
+  .dash-copy p { color: var(--ink-soft); max-width: 44ch; }
+  .dash-copy .lede { color: var(--ink); font-weight: 500; }
+  .dash-shot {
+    border: 1px solid var(--hairline); border-radius: var(--r-md); overflow: hidden;
+    box-shadow: 0 24px 60px -34px rgba(13, 60, 91, 0.4);
+    /* crop ends below the funnel: results + pipeline show, the activity
+       feed (which names the Superhuman CTO) does not */
+    aspect-ratio: 16 / 6.3; position: relative;
+  }
+  .dash-shot img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+  .dash-caption { margin-top: var(--s-3); font-family: var(--font-mono); font-size: 0.75rem; color: var(--ink-faint); }
+
+  /* ---------- cta ---------- */
+  .cta { text-align: left; }
+  .cta-grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); gap: var(--s-8); align-items: center; }
+  .cta h2 { font-size: var(--text-h2); font-weight: 800; letter-spacing: -0.02em; max-width: 18ch; }
+  .cta p { margin-top: var(--s-4); font-size: var(--text-lead); color: var(--ink-soft); max-width: 44ch; }
+  .cta-side { justify-self: end; display: flex; flex-direction: column; gap: var(--s-4); align-items: flex-start; }
+  .founder-note { font-size: var(--text-small); color: var(--ink-faint); max-width: 26ch; line-height: 1.55; }
+  .founder-note a { color: var(--ink-soft); text-decoration-color: var(--chart-strong); text-underline-offset: 3px; }
+
+  footer { border-top: 1px solid var(--hairline); }
+  .foot { display: flex; align-items: center; justify-content: space-between; gap: var(--s-4); padding-block: var(--s-8); flex-wrap: wrap; }
+  .foot .mono { font-size: 0.75rem; color: var(--ink-faint); display: flex; gap: var(--s-6); }
+  .foot a { color: var(--ink-faint); text-decoration: none; }
+  .foot a:hover { color: var(--ink); }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 56rem) {
+    .hero-grid { grid-template-columns: 1fr; padding-block: var(--s-16) var(--s-12); }
+    .chart-field { min-height: 0; max-width: 30rem; }
+    .receipts-grid, .dash-grid, .cta-grid { grid-template-columns: 1fr; }
+    .cta-side { justify-self: start; }
+    .stat-row { gap: var(--s-6); grid-template-columns: repeat(auto-fit, minmax(8rem, auto)); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-enter, .route-anim { animation: none; }
+    html { scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="wordmark" href="#top" aria-label="driftwood home">
+      <!-- helm mark, simplified -->
+      <svg viewBox="0 0 32 32" fill="none" stroke="var(--tide)" stroke-width="2" aria-hidden="true">
+        <circle cx="16" cy="16" r="9"/><circle cx="16" cy="16" r="3.5"/>
+        <path d="M16 2v5M16 25v5M2 16h5M25 16h5M6.1 6.1l3.5 3.5M22.4 22.4l3.5 3.5M25.9 6.1l-3.5 3.5M9.6 22.4l-3.5 3.5"/>
+      </svg>
+      <span>driftwood</span>
+    </a>
+    <nav class="nav-right" aria-label="primary">
+      <a class="nav-login" href="/dashboard">Log in</a>
+      <a class="btn" href="https://cal.com/aayush-gupta-qyilz6/30min">Book a demo</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- hero -->
+  <div class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <h1 class="hero-enter">Ship a custom demo in every cold message.</h1>
+        <p class="hero-sub hero-enter d1">
+          driftwood researches each prospect, finds something real to fix,
+          and builds them a working demo before the first message goes out.
+        </p>
+        <div class="hero-stat hero-enter d2" aria-label="reply rate result">
+          <span>reply rate</span>
+          <b>&lt;1%</b>
+          <span aria-hidden="true">&rarr;</span>
+          <b class="up">14.3%</b>
+          <span>in our first client's first wave</span>
+        </div>
+        <div class="hero-cta hero-enter d3">
+          <a class="btn btn-lg" href="https://cal.com/aayush-gupta-qyilz6/30min">Book a demo</a>
+          <p class="hero-alt">30 minutes. We build a sample demo for one of your prospects, live on the call.</p>
+        </div>
+      </div>
+
+      <!-- chart field: contours, soundings, a route to the signal -->
+      <div class="chart-field" aria-hidden="true">
+        <svg viewBox="0 0 460 420">
+          <g fill="none" stroke="var(--chart)" stroke-width="1.2">
+            <path d="M230 30 C 330 38 418 108 428 215 C 437 305 368 398 254 415 C 148 430 48 358 40 252 C 33 154 122 34 230 30 Z"/>
+            <path d="M230 70 C 306 74 380 132 390 220 C 398 292 342 366 246 382 C 158 396 78 336 72 252 C 66 172 142 72 230 70 Z"/>
+            <path d="M230 112 C 290 116 340 158 350 226 C 358 280 314 334 242 348 C 172 360 118 314 112 250 C 106 190 166 112 230 112 Z"/>
+            <path d="M230 156 C 274 160 302 190 310 234 C 316 274 284 306 236 314 C 188 320 152 290 148 246 C 144 204 184 156 230 156 Z"/>
+            <path d="M230 200 C 258 202 268 220 272 242 C 276 266 258 282 234 285 C 208 288 190 272 188 248 C 186 224 202 200 230 200 Z"/>
+          </g>
+          <!-- soundings -->
+          <text class="sounding" x="86" y="120">17</text>
+          <text class="sounding" x="358" y="96">9</text>
+          <text class="sounding" x="404" y="264">23</text>
+          <text class="sounding" x="70" y="330">12</text>
+          <text class="sounding" x="208" y="52">6</text>
+          <text class="sounding" x="296" y="396">31</text>
+          <text class="sounding" x="160" y="176">14</text>
+          <text class="sounding" x="300" y="212">8</text>
+          <!-- route from open water to the mark -->
+          <path class="route route-anim" d="M 24 396 C 100 340 96 268 158 240 C 204 220 218 246 232 243" pathLength="460"/>
+          <g transform="translate(238 242)">
+            <circle r="5" fill="var(--signal)"/>
+            <circle r="10" fill="none" stroke="var(--signal)" stroke-width="1.2" opacity="0.45"/>
+          </g>
+          <text class="chart-label" x="252" y="236">REPLIED +12H</text>
+          <text class="chart-label" x="18" y="414">DEMO SENT</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- walkthrough -->
+  <section id="build">
+    <div class="wrap sect">
+      <div class="sect-head">
+        <h2>The agent does the whole job.</h2>
+        <p>
+          It reads the prospect's site, finds the gap, builds the demo,
+          and drafts the message. Watch one run end to end.
+        </p>
+      </div>
+      <div class="walk-frame">
+        <iframe id="awh" src="https://driftwood.sh/agent-walkthrough.html"
+          title="A driftwood agent researches a prospect and builds a custom demo"
+          loading="lazy" scrolling="no" style="height:700px"></iframe>
+      </div>
+    </div>
+  </section>
+
+  <!-- receipts -->
+  <section class="receipts" id="receipts">
+    <div class="wrap sect">
+      <div class="sect-head">
+        <h2>Week one with our first client.</h2>
+        <p>
+          Autosana builds AI agents that test mobile apps.
+          We run their outbound. This is what the first week produced.
+        </p>
+      </div>
+      <div class="receipts-grid">
+        <div class="story">
+          <p class="kicker">Their founder had been pitching the CTO of Superhuman since February. Four and a half months, no reply.</p>
+          <p>
+            Our agent read superhuman.com, caught a real bug on the pricing
+            page, verified it, and recorded a 19 second demo of Autosana
+            catching it. Then it sent the message from the founder's own
+            account.
+          </p>
+          <p>The reply came back in twelve hours. The call is booked.</p>
+          <div class="stat-row">
+            <div class="stat"><b>&lt;1%</b><span>their reply rate before, self reported</span></div>
+            <div class="stat"><b>14.3%</b><span>reply rate on the first driftwood wave</span></div>
+            <div class="stat"><b>12h</b><span>to a reply from Superhuman's CTO</span></div>
+          </div>
+          <p class="stat-fine">
+            first wave: 7 demo messages, 1 reply, 1 booked call. july 2026.<br/>
+            counts from the driftwood send ledger.
+          </p>
+        </div>
+
+        <div>
+          <div class="thread">
+            <div class="msg">
+              <span class="avatar" aria-hidden="true">Y</span>
+              <div>
+                <div class="msg-meta"><span class="who">Yuvan, founder of Autosana</span><span class="when">Feb 26</span></div>
+                <p class="msg-body">You invested in us via the CTO Fund!</p>
+              </div>
+            </div>
+            <div class="gap" role="separator" aria-label="four and a half months with no reply">
+              <hr/><span>4.5 months, no reply</span><hr/>
+            </div>
+            <div class="msg">
+              <span class="avatar" aria-hidden="true">Y</span>
+              <div>
+                <div class="msg-meta"><span class="who">Yuvan, via driftwood</span><span class="when">Jul 9, 6:57 PM</span></div>
+                <p class="msg-body">
+                  hey <span class="redact sm" role="img" aria-label="name redacted"></span>, found a bug on superhuman.
+                  our agents compared every plan on your pricing page, and caught
+                  the enterprise column still promising &ldquo;early access opens
+                  february 2026&rdquo; on features lower tiers already show as
+                  unlimited (attached below)&hellip;
+                </p>
+                <span class="attach">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 4h10l4 4v12H5z"/><path d="M9 12l3 2.5L9 17z"/></svg>
+                  superhuman-demo.mp4 &middot; 0:19
+                </span>
+              </div>
+            </div>
+            <div class="msg">
+              <span class="avatar them" aria-hidden="true">S</span>
+              <div>
+                <div class="msg-meta">
+                  <span class="who">CTO, Superhuman</span>
+                  <span class="when">Jul 10, 7:18 AM</span>
+                  <span class="signal-pin">replied +12h</span>
+                </div>
+                <p class="msg-body">
+                  send me a blurb + demos to
+                  <span class="redact sm" role="img" aria-label="address redacted"></span>@superhuman.com
+                  and I'll forward to my team - best
+                </p>
+              </div>
+            </div>
+            <div class="thread-foot">
+              <span class="booked">lead moved to booked</span>
+              <span>driftwood send ledger &middot; jul 2026</span>
+            </div>
+          </div>
+          <p class="thread-caption">
+            Real thread, sent from the founder's LinkedIn. Only the name is redacted.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- dashboard -->
+  <section id="dashboard">
+    <div class="wrap sect">
+      <div class="sect-head">
+        <h2>You watch it all from one page.</h2>
+      </div>
+      <div class="dash-grid">
+        <div class="dash-copy">
+          <p class="lede">
+            Replies, booked meetings, and every account the agent qualified
+            or screened out, live.
+          </p>
+          <p>
+            A person reviews every message before it sends. Sending stays
+            inside the platform's safe limits. When a reply lands, the agent
+            drafts the follow up and waits for a human yes.
+          </p>
+          <p>
+            No exports, no weekly deck. The dashboard is the report.
+          </p>
+        </div>
+        <div>
+          <div class="dash-shot">
+            <img src="assets/dw-demo-dashboard.png"
+              alt="The Autosana dashboard: one meeting booked this week, one reply, pipeline of 67 leads, 126 qualified accounts" />
+          </div>
+          <p class="dash-caption">the Autosana dashboard, july 2026</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- cta -->
+  <section class="cta" id="join">
+    <div class="wrap sect">
+      <div class="cta-grid">
+        <div>
+          <h2>See what we'd send your prospects.</h2>
+          <p>
+            We're onboarding a few design partners. Book 30 minutes and
+            we'll build a sample demo for one of your prospects, live on
+            the call.
+          </p>
+        </div>
+        <div class="cta-side">
+          <a class="btn btn-lg" href="https://cal.com/aayush-gupta-qyilz6/30min">Book a demo</a>
+          <p class="founder-note">
+            Or just write to
+            <a href="mailto:aayush@driftwood.sh">aayush@driftwood.sh</a>.
+            A founder reads every reply.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <a class="wordmark" href="#top" aria-label="back to top">
+      <svg viewBox="0 0 32 32" fill="none" stroke="var(--tide)" stroke-width="2" aria-hidden="true" style="width:1.1rem;height:1.1rem">
+        <circle cx="16" cy="16" r="9"/><circle cx="16" cy="16" r="3.5"/>
+        <path d="M16 2v5M16 25v5M2 16h5M25 16h5M6.1 6.1l3.5 3.5M22.4 22.4l3.5 3.5M25.9 6.1l-3.5 3.5M9.6 22.4l-3.5 3.5"/>
+      </svg>
+      <span style="font-size:0.95rem">driftwood</span>
+    </a>
+    <div class="mono">
+      <a href="mailto:aayush@driftwood.sh">aayush@driftwood.sh</a>
+      <span>&copy; 2026 driftwood</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // walkthrough iframe reports its own height (same contract as the live site)
+  window.addEventListener("message", (e) => {
+    const d = e.data;
+    if (d && d.t === "awh" && typeof d.h === "number") {
+      document.getElementById("awh").style.height = d.h + "px";
+    }
+  });
+</script>
+</body>
+</html>
