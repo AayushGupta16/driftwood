@@ -46,6 +46,10 @@ inside their artifact window and never leak into page chrome.)
 - **Windows** (`.app-window`, `.artifact`, `.email`, `.thread`): white,
   1px `line` border, radius `--r-win` (12px), shadow `--shadow-win`.
   Artifacts are pixel-real: real chrome, real screenshots, no illustration.
+- **The hero fits the fold**: hero height comes from the viewport
+  (clamped 38–64rem), never from the dashboard screenshot — the window
+  crops from its bottom edge and the waterline lands at the fold. The
+  stacked (phone) hero centers headline / sub / CTA on the page axis.
 - **Buttons**: pills (`border-radius: 999px`). Primary action = tide
   background, white text, hover tide-deep. There are no black buttons.
   Secondary = outlined/ghost. This applies to the dashboard too.
@@ -67,6 +71,8 @@ The signature. ASCII character sea on 2D canvas — never rendered 3D.
   strips — the sail blurs into a blob), islands (static while water moves).
 - The proof island: drawn BY the sea from the `.hero-proof` rect — dithered
   `▒` beach, faint `█` interior, surf piling at the coast. Never a CSS shape.
+  It lives on phones too: the stacked hero moves the proof below the window,
+  onto the water. Only reduced-motion goes without it.
 - Canvases self-heal: every frame checks CSS size vs sized-for size
   (layout can grow after images/fonts load; a stale buffer stretches).
 

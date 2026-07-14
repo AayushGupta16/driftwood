@@ -492,7 +492,8 @@ export default function App() {
           <div className="wrap hero-grid">
             <div>
               <h1>
-                Ship <em className="voice">a custom demo</em> in every cold message.
+                Ship a <em className="voice">custom demo</em>
+                <br className="h1-br" /> in every cold message.
               </h1>
               <p className="hero-sub">Grow your revenue with cold outbound that converts.</p>
               <div className="hero-actions">

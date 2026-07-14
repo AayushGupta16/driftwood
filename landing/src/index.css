@@ -256,7 +256,7 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
 }
 .landing .hero-grid {
   position: relative; z-index: 1;
-  display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+  display: grid; grid-template-columns: minmax(0, 4.5fr) minmax(0, 7.5fr);
   align-items: stretch; gap: clamp(2rem, 4vw, 3.5rem);
   padding-block: clamp(3.5rem, 6vw, 5rem);
   min-height: min(90vh, 60rem);
@@ -264,14 +264,22 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
 }
 .landing .hero h1 {
   margin: 0;
-  font-size: clamp(1.9rem, 1.1rem + 2.4vw, 2.75rem);
+  font-size: clamp(1.9rem, 1.1rem + 2.4vw, 2.6rem);
   font-weight: 600; line-height: 1.16; max-width: 19ch;
+}
+/* the headline's two-line break only engages where both halves fit the
+   column on one line each; narrower widths wrap naturally */
+.landing .h1-br { display: none; }
+@media (min-width: 78rem) {
+  .landing .h1-br { display: inline; }
+  .landing .hero h1 { max-width: none; }
+  .landing .hero h1 em.voice { white-space: nowrap; }
 }
 /* text rides high against the tall window (the offset drops the headline
    just below the window's chrome); the proof floats at the bottom, on the
    water, like a little island — solid ground so the waves stop at its edge */
 .landing .hero-grid > div:first-child { display: flex; flex-direction: column; align-items: flex-start; padding-top: clamp(2.5rem, 9vh, 8rem); }
-.landing .hero-sub { margin-top: 1.1rem; font-size: 1.1rem; color: var(--gray); max-width: 38ch; }
+.landing .hero-sub { margin-top: 1.1rem; font-size: 1.1rem; color: var(--gray); max-width: 30ch; text-wrap: balance; }
 /* the proof stands on an island the sea itself draws (see the canvas code:
    block-char mound under this element, foam lapping at its coast) */
 .landing .hero-proof {
@@ -299,6 +307,16 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
 .landing .email.us { animation-delay: 2.1s; }
 @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1.5px); } }
 @keyframes rise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+
+/* the hero fits the fold: its height comes from the viewport, never from the
+   dashboard screenshot (whose near-square aspect would otherwise set it —
+   min-height is only a floor, so on wide screens the window grew taller than
+   the viewport and pushed the waterline below the fold). The window crops
+   from the bottom instead of growing; the waterline lands at the fold. */
+@media (min-width: 52rem) {
+  .landing .hero-grid { height: clamp(38rem, 100svh - 4rem, 64rem); }
+  .landing .hero-grid .app-window img { width: 100%; height: 100%; object-fit: cover; object-position: left top; }
+}
 
 /* waterline under the hero */
 .landing .hero-wave { height: 28px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='28' viewBox='0 0 180 28'%3E%3Cpath d='M0 14 C 11.25 5.5, 33.75 5.5, 45 14 C 56.25 22.5, 78.75 22.5, 90 14 C 101.25 5.5, 123.75 5.5, 135 14 C 146.25 22.5, 168.75 22.5, 180 14' fill='none' stroke='%2315557e' stroke-width='1.6' stroke-opacity='0.4'/%3E%3C/svg%3E") repeat-x center; }
@@ -435,7 +453,10 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
 .landing .week-sect { padding-block: 2rem; width: 100%; }
 .landing .pin { position: sticky; top: 0; height: 100vh; display: flex; align-items: center; overflow: hidden; }
 .landing .how-grid { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: clamp(2.5rem, 5vw, 5rem); align-items: center; width: 100%; }
-.landing .stage-card .artifact img { width: 100%; height: auto; max-height: 74vh; object-fit: contain; object-position: top center; }
+/* the deck runs at the hero's width so it fills the pinned viewport
+   instead of floating in it (68rem left big top/bottom bands on monitors) */
+.landing #how .how-grid { max-width: 82rem; }
+.landing .stage-card .artifact img { width: 100%; height: auto; max-height: 80vh; object-fit: contain; object-position: top center; }
 .landing .rail-list { list-style: none; margin: 2.4rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 1.6rem; }
 .landing .rail-list li { display: flex; gap: 0.9rem; align-items: baseline; font-size: 1.45rem; color: var(--gray-light); font-weight: 500; transition: color 0.25s; transform-origin: left center; will-change: transform, opacity; }
 .landing .rail-list li span { font-size: 1rem; }
@@ -450,7 +471,7 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
 .landing .rail-list li:not(.active) .rail-sub { max-height: 0; opacity: 0; margin-top: 0; }
 .landing .rail-sub b { color: var(--ink); font-weight: 600; }
 
-.landing .stage { position: relative; min-height: min(42rem, 76vh); }
+.landing .stage { position: relative; min-height: min(46rem, 80vh); }
 .landing .stage-card {
   position: absolute; inset: 0; margin: auto; height: fit-content;
   will-change: transform, opacity;
@@ -558,10 +579,22 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
 
 @media (max-width: 52rem) {
   .landing .hero-grid, .landing .week-grid, .landing .how-grid, .landing .compare-grid { grid-template-columns: 1fr; }
-  .landing .hero-grid > div:first-child { padding-top: 0; }
-  .landing .hero-grid .app-window { margin-right: 0; }
-  /* no sea island on the stacked layout: a plain card carries the quote */
-  .landing .hero-proof { margin-top: 1.6rem; background: #fff; border: 1px solid var(--line); border-radius: 14px; color: var(--gray); }
+  /* the text column dissolves into grid items so the proof can move below
+     the window — onto the water, where the sea draws its island (the same
+     canvas runs on phones; only reduced-motion goes without) */
+  .landing .hero-grid { gap: 0; }
+  .landing .hero-grid > div:first-child { display: contents; }
+  /* the stacked hero reads centered: headline, sub, CTA on the page axis */
+  .landing .hero h1 { max-width: 22ch; text-wrap: balance; }
+  .landing .hero h1, .landing .hero-sub { text-align: center; justify-self: center; }
+  .landing .hero-actions { justify-self: center; }
+  .landing .hero-grid .app-window { margin-right: 0; margin-top: 2.2rem; }
+  .landing .hero-proof {
+    order: 9; width: fit-content; justify-self: center;
+    margin: 4rem 0 1.2rem;
+    font-size: 0.85rem; padding: 0.8rem 1.2rem 0.8rem 0.85rem;
+  }
+  .landing .hero-proof p { max-width: 22ch; }
   .landing .week-grid > div:last-child { margin-top: 0; }
   /* the hand-drawn arrow moves between the stacked cards, pointing at ours */
   .landing .compare-grid > div:nth-of-type(1) { order: 1; }
