@@ -386,6 +386,9 @@ body {
 .landing .li-send { color: #a8a8a8; font-weight: 700; font-size: 0.9rem; }
 .landing .redact { display: inline-block; background: #d4d9de; border-radius: 2px; width: 2.5em; height: 0.78em; }
 .landing .clip { margin-top: 0.7rem; position: relative; width: min(19rem, 100%); border-radius: 10px; overflow: hidden; border: 1px solid var(--line); }
+.landing .clip-note { display: flex; align-items: flex-end; gap: 0.35rem; margin: 0.5rem 0 0 0.5rem; }
+.landing .clip-note svg { width: 2.1rem; flex: none; }
+.landing .clip-note em { font-family: Georgia, "Times New Roman", serif; font-style: italic; color: var(--accent); font-size: 0.95rem; line-height: 1; }
 .landing .clip img { width: 100%; }
 .landing .clip::after { content: "0:19"; position: absolute; right: 0.55rem; bottom: 0.5rem; background: rgba(22,24,27,0.75); color: #fff; font-size: 0.7rem; padding: 0.1rem 0.4rem; border-radius: 4px; }
 .landing .play { position: absolute; inset: 0; margin: auto; width: 2.6rem; height: 2.6rem; background: rgba(22,24,27,0.62); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
