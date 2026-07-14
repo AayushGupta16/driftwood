@@ -6,8 +6,7 @@ import { createContext, useContext } from "react";
    only-export-components rule (that rule only fires on files exporting
    components). The <ToastProvider> component itself lives in Dashboard.tsx. */
 
-export const CARD =
-  "rounded-2xl border border-line bg-surface shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_16px_40px_-26px_rgba(22,24,29,0.4)]";
+export const CARD = "rounded-xl border border-line bg-surface shadow-win";
 
 /* "4m ago" / "2h ago" / "3d ago"; null/invalid -> null (caller renders nothing). */
 export function relativeTime(iso: string | null): string | null {

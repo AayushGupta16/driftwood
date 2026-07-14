@@ -28,7 +28,7 @@ export function GodModeButton() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-tide/40 bg-surface px-3.5 py-2 text-[13.5px] font-medium text-tide transition-colors hover:border-tide hover:bg-tide-wash"
+        className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-tide/40 bg-surface px-3.5 py-2 text-[13.5px] font-medium text-tide transition-colors hover:border-tide hover:bg-tide-wash"
       >
         <span aria-hidden="true">⚡</span>
         God mode
@@ -110,7 +110,7 @@ function ImpersonateModal({ onClose }: { onClose: () => void }) {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search by name or email…"
-          className="mt-4 w-full rounded-xl border border-line bg-paper/60 px-3.5 py-2.5 text-[14px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-tide/60"
+          className="mt-4 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[14px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-tide/60"
         />
 
         <div className="mt-4 min-h-0 flex-1 overflow-auto">
@@ -175,7 +175,7 @@ function UserRow({
   }
 
   return (
-    <li className="flex items-center gap-3 rounded-xl border border-line bg-paper/40 px-3 py-2.5">
+    <li className="flex items-center gap-3 rounded-xl border border-line bg-surface px-3 py-2.5">
       {user.avatar_url ? (
         <img
           src={user.avatar_url}
@@ -184,7 +184,7 @@ function UserRow({
           referrerPolicy="no-referrer"
         />
       ) : (
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-tide font-mono text-[13px] font-semibold text-white">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-tide text-[13px] font-semibold text-white">
           {displayName[0]?.toUpperCase()}
         </span>
       )}
@@ -204,7 +204,7 @@ function UserRow({
         type="button"
         onClick={handleImpersonate}
         disabled={disabled}
-        className="inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl bg-tide px-3.5 py-2 text-[13px] font-semibold text-white no-underline shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] transition-all hover:-translate-y-px hover:bg-tide-deep disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+        className="inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full bg-ink px-3.5 py-2 text-[13px] font-medium text-white no-underline transition-all hover:-translate-y-px hover:bg-black disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {pending && (
           <span
@@ -220,7 +220,7 @@ function UserRow({
 
 function Badge({ children }: { children: string }) {
   return (
-    <span className="inline-flex shrink-0 items-center rounded-full border border-line bg-surface px-1.5 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.06em] text-ink-faint">
+    <span className="inline-flex shrink-0 items-center rounded-full border border-line bg-sand/60 px-1.5 py-0.5 text-[10.5px] text-ink-faint">
       {children}
     </span>
   );
@@ -257,7 +257,7 @@ export function ImpersonationBanner({ email }: { email: string }) {
           type="button"
           onClick={handleExit}
           disabled={exiting}
-          className="shrink-0 cursor-pointer rounded-xl border border-amber-600/40 bg-amber-500/10 px-3.5 py-1.5 text-[13px] font-medium text-amber-800 transition-colors hover:bg-amber-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+          className="shrink-0 cursor-pointer rounded-full border border-amber-600/40 bg-amber-500/10 px-3.5 py-1.5 text-[13px] font-medium text-amber-800 transition-colors hover:bg-amber-500/20 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {exiting ? "Exiting…" : "Exit god mode"}
         </button>

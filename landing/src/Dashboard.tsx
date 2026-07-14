@@ -116,7 +116,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
 const TOAST_STYLE: Record<ToastVariant, { ring: string; glyph: string; tint: string }> =
   {
-    success: { ring: "border-emerald-600/30", glyph: "✓", tint: "text-emerald-600" },
+    success: { ring: "border-ok/30", glyph: "✓", tint: "text-ok" },
     error: { ring: "border-red-600/30", glyph: "✕", tint: "text-red-600" },
     info: { ring: "border-tide/30", glyph: "•", tint: "text-tide" },
   };
@@ -127,7 +127,7 @@ function Toast({ toast, onDismiss }: { toast: ToastItem; onDismiss: () => void }
     <div
       role="status"
       onClick={onDismiss}
-      className={`toast-in pointer-events-auto flex w-full max-w-sm cursor-pointer items-start gap-2.5 rounded-xl border bg-surface px-4 py-3 text-[13.5px] font-medium text-ink shadow-[0_18px_40px_-20px_rgba(22,24,29,0.55)] ${s.ring}`}
+      className={`toast-in pointer-events-auto flex w-full max-w-sm cursor-pointer items-start gap-2.5 rounded-xl border bg-surface px-4 py-3 text-[13.5px] font-medium text-ink shadow-win ${s.ring}`}
     >
       <span aria-hidden="true" className={`mt-px shrink-0 text-[15px] leading-none ${s.tint}`}>
         {s.glyph}
@@ -171,7 +171,7 @@ export default function Dashboard() {
 
   return (
     <ToastProvider>
-      <div className="grain relative flex min-h-screen flex-col overflow-x-clip">
+      <div className="relative flex min-h-screen flex-col overflow-x-clip">
         {auth.status === "loading" && <LoadingView />}
         {auth.status === "logged-out" && <LoggedOutView />}
         {auth.status === "logged-in" && (
@@ -197,7 +197,7 @@ function LoadingView() {
 function LoggedOutView() {
   return (
     <main className="flex flex-1 items-center justify-center px-5 py-16 sm:px-8">
-      <div className="w-full max-w-sm rounded-3xl border border-line bg-surface p-8 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_24px_60px_-26px_rgba(13,60,91,0.42),0_4px_16px_-8px_rgba(22,24,29,0.1)]">
+      <div className="w-full max-w-sm rounded-xl border border-line bg-surface p-8 text-center shadow-win">
         <a href="/" className="inline-flex justify-center text-ink no-underline">
           <Wordmark markSize="size-8" className="text-[18px]" />
         </a>
@@ -209,12 +209,12 @@ function LoggedOutView() {
         </p>
         <a
           href="/auth/login"
-          className="mt-6 inline-flex w-full items-center justify-center gap-3 rounded-xl border border-line bg-paper px-4.5 py-3 text-[14.5px] font-semibold text-ink no-underline shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] transition-all hover:-translate-y-px hover:border-ink-faint/50"
+          className="mt-6 inline-flex w-full items-center justify-center gap-3 rounded-full border border-line bg-paper px-4.5 py-3 text-[14.5px] font-medium text-ink no-underline transition-all hover:-translate-y-px hover:border-ink-faint/50"
         >
           <GoogleMark className="size-4.5 shrink-0" />
           Continue with Google
         </a>
-        <p className="m-0 mt-4.5 font-mono text-[11.5px] tracking-[0.04em] text-ink-faint">
+        <p className="m-0 mt-4.5 text-[12.5px] text-ink-faint">
           Invite-only · approved accounts
         </p>
       </div>
@@ -230,7 +230,7 @@ function LoggedInView({ user, onLogout }: { user: User; onLogout: () => void }) 
   return (
     <>
       {user.impersonating && <ImpersonationBanner email={user.email} />}
-      <header className="sticky top-0 z-40 border-b border-line/70 bg-paper/85 shadow-[0_10px_28px_-24px_rgba(22,24,29,0.5)] backdrop-blur-md">
+      <header className="sticky top-0 z-40 border-b border-line bg-paper/95 backdrop-blur-md">
         <nav className="mx-auto flex h-16 max-w-5xl items-center justify-between px-5 sm:px-8">
           <a href="/" className="text-[18px] text-ink no-underline">
             <Wordmark markSize="size-8" />
@@ -244,7 +244,7 @@ function LoggedInView({ user, onLogout }: { user: User; onLogout: () => void }) 
                 referrerPolicy="no-referrer"
               />
             ) : (
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-tide font-mono text-[13px] font-semibold text-white">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-tide text-[13px] font-semibold text-white">
                 {displayName[0]?.toUpperCase()}
               </span>
             )}
@@ -255,7 +255,7 @@ function LoggedInView({ user, onLogout }: { user: User; onLogout: () => void }) 
             <button
               type="button"
               onClick={onLogout}
-              className="cursor-pointer rounded-xl border border-line bg-surface px-3.5 py-2 text-[13.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink"
+              className="cursor-pointer rounded-full border border-line bg-surface px-3.5 py-2 text-[13.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink"
             >
               Log out
             </button>
@@ -454,7 +454,7 @@ function LeadsEntryCard({ state }: { state: SummaryState }) {
         href="/dashboard/leads"
         target="_blank"
         rel="noreferrer"
-        className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-tide px-4.5 py-2.5 text-[14px] font-semibold text-white no-underline shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] transition-all hover:-translate-y-px hover:bg-tide-deep sm:self-auto"
+        className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-full bg-ink px-4.5 py-2.5 text-[14px] font-medium text-white no-underline transition-all hover:-translate-y-px hover:bg-black sm:self-auto"
       >
         View all leads
       </a>
@@ -488,7 +488,7 @@ function CompaniesEntryCard({ state }: { state: SummaryState }) {
         href="/dashboard/companies"
         target="_blank"
         rel="noreferrer"
-        className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-tide px-4.5 py-2.5 text-[14px] font-semibold text-white no-underline shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] transition-all hover:-translate-y-px hover:bg-tide-deep sm:self-auto"
+        className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-full bg-ink px-4.5 py-2.5 text-[14px] font-medium text-white no-underline transition-all hover:-translate-y-px hover:bg-black sm:self-auto"
       >
         View all companies
       </a>
@@ -523,7 +523,7 @@ function ReviewEntryCard({ state }: { state: SummaryState }) {
         href="/dashboard/review"
         target="_blank"
         rel="noreferrer"
-        className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-tide px-4.5 py-2.5 text-[14px] font-semibold text-white no-underline shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] transition-all hover:-translate-y-px hover:bg-tide-deep sm:self-auto"
+        className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-full bg-ink px-4.5 py-2.5 text-[14px] font-medium text-white no-underline transition-all hover:-translate-y-px hover:bg-black sm:self-auto"
       >
         Open review queue
       </a>
@@ -564,7 +564,7 @@ function StatusStrip({ sending }: { sending: Sending }) {
     <div className={`mt-7 ${CARD} p-4`}>
       <div className="flex items-center gap-3">
         <span
-          className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-emerald-600/25 bg-emerald-500/10 text-emerald-700"
+          className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-ok/25 bg-ok/10 text-ok"
           aria-hidden="true"
         >
           <CheckMark className="size-[18px]" />
@@ -585,7 +585,7 @@ function StatusStrip({ sending }: { sending: Sending }) {
             <span
               className={
                 sending.within_limits
-                  ? "font-medium text-emerald-700"
+                  ? "font-medium text-ok"
                   : "font-medium text-amber-700"
               }
             >
@@ -598,7 +598,7 @@ function StatusStrip({ sending }: { sending: Sending }) {
           type="button"
           onClick={disconnect}
           disabled={pending}
-          className="ml-auto shrink-0 cursor-pointer rounded-lg border border-line bg-surface px-3 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
+          className="ml-auto shrink-0 cursor-pointer rounded-full border border-line bg-surface px-3 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
         >
           {pending ? "Disconnecting…" : "Disconnect"}
         </button>
@@ -615,7 +615,7 @@ function StatusStrip({ sending }: { sending: Sending }) {
 /* small section eyebrow shared by the metrics + lists cards. */
 function SectionLabel({ children }: { children: string }) {
   return (
-    <div className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-faint">
+    <div className="text-[0.85rem] text-ink-faint">
       {children}
     </div>
   );
@@ -707,7 +707,7 @@ function ActivityLine({ event }: { event: ActivityEvent }) {
     <div className="flex gap-2.5 pt-1.5 text-[12.5px] text-ink-soft">
       <span className="min-w-0">{body}</span>
       {rel && (
-        <span className="ml-auto flex-none font-mono text-[10px] text-ink-faint">
+        <span className="ml-auto flex-none text-[11px] text-ink-faint tabular-nums">
           {rel}
         </span>
       )}
@@ -726,7 +726,7 @@ function InlineResults({ results }: { results: Results }) {
           {results.meetings}
         </div>
         {results.meetings_delta_7d > 0 && (
-          <div className="mt-1.5 text-[11px] font-semibold text-emerald-700 tabular-nums">
+          <div className="mt-1.5 text-[11px] font-semibold text-tide tabular-nums">
             ↑ {results.meetings_delta_7d} this week
           </div>
         )}
@@ -737,7 +737,7 @@ function InlineResults({ results }: { results: Results }) {
           {results.replies}
         </div>
         {results.replies_delta_7d > 0 && (
-          <div className="mt-1.5 text-[11px] font-semibold text-emerald-700 tabular-nums">
+          <div className="mt-1.5 text-[11px] font-semibold text-tide tabular-nums">
             ↑ {results.replies_delta_7d} this week
           </div>
         )}
@@ -772,9 +772,9 @@ function FunnelBars({ funnel }: { funnel: Funnel }) {
             className="grid grid-cols-[74px_1fr_auto] items-center gap-3"
           >
             <span className="text-[12.5px] text-ink-soft">{row.name}</span>
-            <div className="h-[18px] overflow-hidden rounded-md bg-tide-wash">
+            <div className="h-[18px] overflow-hidden rounded-md bg-sand">
               <div
-                className="h-full rounded-md bg-gradient-to-r from-tide to-tide-deep"
+                className="h-full rounded-md bg-tide"
                 style={{ width: `max(3px, ${pct}%)` }}
               />
             </div>
@@ -822,8 +822,8 @@ function LinkedInCard({ connected }: { connected: boolean }) {
         <span
           className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${
             connected
-              ? "bg-emerald-500/10 text-emerald-700"
-              : "bg-[#0A66C2]/10 text-[#0A66C2]"
+              ? "bg-ok/10 text-ok"
+              : "bg-tide/10 text-tide"
           }`}
           aria-hidden="true"
         >
@@ -848,7 +848,7 @@ function LinkedInCard({ connected }: { connected: boolean }) {
               type="button"
               onClick={handleDisconnect}
               disabled={pending}
-              className="mt-5 cursor-pointer rounded-xl border border-line bg-surface px-3.5 py-2 text-[13.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-5 cursor-pointer rounded-full border border-line bg-surface px-3.5 py-2 text-[13.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
             >
               {pending ? "Disconnecting…" : "Disconnect"}
             </button>
@@ -857,7 +857,7 @@ function LinkedInCard({ connected }: { connected: boolean }) {
               type="button"
               onClick={handleConnect}
               disabled={pending}
-              className="mt-5 inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-xl bg-[#0A66C2] px-4.5 py-2.5 text-[14.5px] font-semibold text-white shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] transition-all hover:-translate-y-px hover:bg-[#095196] disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-5 inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-full bg-tide px-4.5 py-2.5 text-[14.5px] font-semibold text-white transition-all hover:-translate-y-px hover:bg-tide-deep disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <LinkedInMark className="size-4.5 shrink-0" />
               {pending ? "Connecting…" : "Connect LinkedIn"}
@@ -1068,12 +1068,12 @@ function UploadField<T>({
   const showClear = Boolean(clearEndpoint) && clearCount > 0;
 
   return (
-    <div className={`rounded-xl border border-line bg-paper/40 p-4 ${className}`}>
+    <div className={`rounded-xl border border-line bg-surface p-4 shadow-win-sm ${className}`}>
       <h3 className="m-0 text-[15px] font-semibold">{title}</h3>
       <p className="m-0 mt-1.5 text-[13px] leading-relaxed text-ink-faint">{hint}</p>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <label
-          className={`inline-flex items-center gap-2 rounded-lg border border-tide/40 bg-surface px-3.5 py-2 text-[13px] font-semibold text-tide transition-colors hover:border-tide hover:bg-tide-wash ${
+          className={`inline-flex items-center gap-2 rounded-full border border-tide/40 bg-surface px-3.5 py-2 text-[13px] font-medium text-tide transition-colors hover:border-tide hover:bg-tide-wash ${
             busy ? "pointer-events-none opacity-60" : "cursor-pointer"
           }`}
         >
@@ -1097,7 +1097,7 @@ function UploadField<T>({
             type="button"
             onClick={handleClear}
             disabled={busy}
-            className="inline-flex items-center gap-2 rounded-lg border border-line bg-surface px-3.5 py-2 text-[13px] font-medium text-ink-soft transition-colors hover:border-red-600/40 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3.5 py-2 text-[13px] font-medium text-ink-soft transition-colors hover:border-red-600/40 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {clearing && (
               <span
@@ -1137,7 +1137,7 @@ function LinkedInBanner() {
       role="status"
       className={`mb-7 flex items-center gap-2.5 rounded-xl border px-4 py-3 text-[14px] font-medium ${
         connected
-          ? "border-emerald-600/25 bg-emerald-500/10 text-emerald-800"
+          ? "border-ok/25 bg-ok/10 text-ok"
           : "border-red-600/25 bg-red-500/10 text-red-800"
       }`}
     >

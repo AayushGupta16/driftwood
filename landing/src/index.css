@@ -9,18 +9,24 @@
 }
 
 @theme {
-  --color-paper: #f7f4ec;
-  --color-surface: #fffdf8;
-  --color-ink: #16181d;
-  --color-ink-soft: #494e5b;
-  --color-ink-faint: #8a8e9b;
+  /* dashboard tokens, aligned with the landing system (design/landing-draft-v7.html):
+     pure white ground, gray ink scale, hairline #e9ebee, one tide accent,
+     green reserved for live/ok status. */
+  --color-paper: #ffffff;
+  --color-surface: #ffffff;
+  --color-ink: #16181b;
+  --color-ink-soft: #6a737d;
+  --color-ink-faint: #9aa2ab;
   --color-tide: #15557e;
   --color-tide-deep: #0d3c5b;
-  --color-tide-wash: #e2ecf3;
-  --color-sand: #e8dfcc;
-  --color-line: #e2dccb;
-  --font-brand: "Nasalization", "Instrument Sans", sans-serif;
-  --font-sans: "Instrument Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --color-tide-wash: #eaf1f7;
+  --color-sand: #eef2f5;
+  --color-line: #e9ebee;
+  --color-ok: #2a9d5c;
+  --shadow-win: 0 1px 2px rgba(22, 24, 27, 0.05), 0 24px 48px -24px rgba(22, 24, 27, 0.18);
+  --shadow-win-sm: 0 1px 2px rgba(22, 24, 27, 0.04), 0 10px 20px -14px rgba(22, 24, 27, 0.12);
+  --font-brand: "Nasalization", "Public Sans", sans-serif;
+  --font-sans: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
 
@@ -30,17 +36,18 @@ html {
 
 body {
   margin: 0;
-  background:
-    radial-gradient(900px 480px at 82% -120px, rgba(21, 85, 126, 0.085), transparent 62%),
-    radial-gradient(760px 520px at -120px 36%, rgba(232, 223, 204, 0.75), transparent 64%),
-    radial-gradient(1100px 640px at 110% 72%, rgba(21, 85, 126, 0.05), transparent 60%),
-    radial-gradient(900px 560px at -80px 104%, rgba(232, 223, 204, 0.65), transparent 62%),
-    var(--color-paper);
+  background: var(--color-paper);
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+}
+
+/* dashboard pages get the same focus voice as the landing */
+:focus-visible {
+  outline: 2px solid var(--color-tide);
+  outline-offset: 2px;
 }
 
 ::selection {

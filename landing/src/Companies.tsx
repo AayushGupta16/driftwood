@@ -82,7 +82,7 @@ export default function Companies() {
 
   return (
     <ToastProvider>
-      <div className="grain relative flex min-h-screen flex-col overflow-x-clip">
+      <div className="relative flex min-h-screen flex-col overflow-x-clip">
         {user ? <CompaniesView user={user} /> : <LoadingView />}
       </div>
     </ToastProvider>
@@ -115,7 +115,7 @@ function CompaniesView({ user }: { user: User }) {
   return (
     <>
       {user.impersonating && <ImpersonationBanner email={user.email} />}
-      <header className="sticky top-0 z-40 border-b border-line/70 bg-paper/85 shadow-[0_10px_28px_-24px_rgba(22,24,29,0.5)] backdrop-blur-md">
+      <header className="sticky top-0 z-40 border-b border-line bg-paper/95 backdrop-blur-md">
         <nav className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-5 sm:px-8">
           <a href="/" className="text-[18px] text-ink no-underline">
             <Wordmark markSize="size-8" />
@@ -129,7 +129,7 @@ function CompaniesView({ user }: { user: User }) {
                 referrerPolicy="no-referrer"
               />
             ) : (
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-tide font-mono text-[13px] font-semibold text-white">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-tide text-[13px] font-semibold text-white">
                 {displayName[0]?.toUpperCase()}
               </span>
             )}
@@ -140,7 +140,7 @@ function CompaniesView({ user }: { user: User }) {
             <button
               type="button"
               onClick={handleLogout}
-              className="cursor-pointer rounded-xl border border-line bg-surface px-3.5 py-2 text-[13.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink"
+              className="cursor-pointer rounded-full border border-line bg-surface px-3.5 py-2 text-[13.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink"
             >
               Log out
             </button>
@@ -198,16 +198,16 @@ const NO_COMPANIES: CompanyRow[] = [];
 /* Status chip variants: qualified pops green, disqualified reads muted-red,
    unknown stays neutral (same base pill as the leads table's stage pill). */
 const CHIP_BASE =
-  "inline-flex items-center rounded-full border px-2 py-0.5 font-mono text-[10.5px] uppercase tracking-[0.06em]";
+  "inline-flex items-center rounded-full border px-2 py-0.5 text-[11px]";
 const ICP_CHIP: Record<string, string> = {
-  qualified: `${CHIP_BASE} border-emerald-600/25 bg-emerald-500/10 text-emerald-700`,
+  qualified: `${CHIP_BASE} border-ok/25 bg-ok/10 text-ok`,
   disqualified: `${CHIP_BASE} border-red-600/25 bg-red-500/5 text-red-700/80`,
-  unknown: `${CHIP_BASE} border-line bg-paper text-ink-soft`,
+  unknown: `${CHIP_BASE} border-line bg-sand/60 text-ink-soft`,
 };
 /* Sticky header: opaque bg so scrolling rows don't bleed through, bottom border
    travels with the cell since border-collapse drops the row border when stuck. */
 const TH =
-  "sticky top-0 z-10 border-b border-line bg-surface whitespace-nowrap px-3 py-2.5 text-left font-mono text-[10.5px] font-medium uppercase tracking-[0.1em] text-ink-faint";
+  "sticky top-0 z-10 border-b border-line bg-surface whitespace-nowrap px-3 py-2.5 text-left text-[12.5px] font-medium text-ink-faint";
 const TD = "whitespace-nowrap px-3 py-2.5 align-middle text-ink-soft";
 
 function Dash() {
@@ -341,7 +341,7 @@ function CompaniesTable() {
           All companies
         </h1>
         {state.status === "ready" && allCount > 0 && (
-          <span className="shrink-0 font-mono text-[11px] tracking-[0.06em] text-ink-faint tabular-nums">
+          <span className="shrink-0 text-[12.5px] text-ink-faint tabular-nums">
             {allCount.toLocaleString()} {filter === "all" ? "total" : filter}
           </span>
         )}
@@ -364,7 +364,7 @@ function CompaniesTable() {
                 setFilter(f);
                 setPage(0); // jump back to page 1 of the new segment
               }}
-              className={`cursor-pointer rounded-lg border px-3 py-1.5 text-[12.5px] font-medium capitalize transition-colors ${
+              className={`cursor-pointer rounded-full border px-3 py-1.5 text-[12.5px] font-medium capitalize transition-colors ${
                 f === filter
                   ? "border-tide/40 bg-tide-wash/60 text-ink"
                   : "border-line bg-surface text-ink-soft hover:border-ink-faint/50 hover:text-ink"
@@ -485,7 +485,7 @@ function CompaniesTable() {
                                   {company.name}
                                 </span>
                                 {company.domain && (
-                                  <span className="block font-mono text-[11px] text-ink-faint">
+                                  <span className="block text-[11.5px] text-ink-faint">
                                     {company.domain}
                                   </span>
                                 )}
@@ -532,7 +532,7 @@ function CompaniesTable() {
                                   type="button"
                                   onClick={() => handleRemove(company)}
                                   disabled={removing}
-                                  className="inline-flex items-center gap-2 rounded-lg border border-line bg-surface px-3 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-red-600/40 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                  className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-red-600/40 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-60"
                                 >
                                   {removing && (
                                     <span
@@ -561,7 +561,7 @@ function CompaniesTable() {
                         type="button"
                         onClick={() => setPage(Math.max(0, safePage - 1))}
                         disabled={safePage === 0}
-                        className="cursor-pointer rounded-lg border border-line bg-surface px-3 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
+                        className="cursor-pointer rounded-full border border-line bg-surface px-3 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         Prev
                       </button>
@@ -571,7 +571,7 @@ function CompaniesTable() {
                           setPage(Math.min(pageCount - 1, safePage + 1))
                         }
                         disabled={safePage >= pageCount - 1}
-                        className="cursor-pointer rounded-lg border border-line bg-surface px-3 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
+                        className="cursor-pointer rounded-full border border-line bg-surface px-3 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         Next
                       </button>

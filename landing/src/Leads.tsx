@@ -80,7 +80,7 @@ export default function Leads() {
 
   return (
     <ToastProvider>
-      <div className="grain relative flex min-h-screen flex-col overflow-x-clip">
+      <div className="relative flex min-h-screen flex-col overflow-x-clip">
         {user ? <LeadsView user={user} /> : <LoadingView />}
       </div>
     </ToastProvider>
@@ -113,7 +113,7 @@ function LeadsView({ user }: { user: User }) {
   return (
     <>
       {user.impersonating && <ImpersonationBanner email={user.email} />}
-      <header className="sticky top-0 z-40 border-b border-line/70 bg-paper/85 shadow-[0_10px_28px_-24px_rgba(22,24,29,0.5)] backdrop-blur-md">
+      <header className="sticky top-0 z-40 border-b border-line bg-paper/95 backdrop-blur-md">
         <nav className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-5 sm:px-8">
           <a href="/" className="text-[18px] text-ink no-underline">
             <Wordmark markSize="size-8" />
@@ -127,7 +127,7 @@ function LeadsView({ user }: { user: User }) {
                 referrerPolicy="no-referrer"
               />
             ) : (
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-tide font-mono text-[13px] font-semibold text-white">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-tide text-[13px] font-semibold text-white">
                 {displayName[0]?.toUpperCase()}
               </span>
             )}
@@ -138,7 +138,7 @@ function LeadsView({ user }: { user: User }) {
             <button
               type="button"
               onClick={handleLogout}
-              className="cursor-pointer rounded-xl border border-line bg-surface px-3.5 py-2 text-[13.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink"
+              className="cursor-pointer rounded-full border border-line bg-surface px-3.5 py-2 text-[13.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink"
             >
               Log out
             </button>
@@ -189,11 +189,11 @@ type LeadsState =
 const NO_LEADS: LeadRow[] = [];
 
 const STAGE_PILL =
-  "inline-flex items-center rounded-full border border-line bg-paper px-2 py-0.5 font-mono text-[10.5px] uppercase tracking-[0.06em] text-ink-soft";
+  "inline-flex items-center rounded-full border border-line bg-sand/60 px-2 py-0.5 text-[11px] text-ink-soft";
 /* Sticky header: opaque bg so scrolling rows don't bleed through, bottom border
    travels with the cell since border-collapse drops the row border when stuck. */
 const TH =
-  "sticky top-0 z-10 border-b border-line bg-surface whitespace-nowrap px-3 py-2.5 text-left font-mono text-[10.5px] font-medium uppercase tracking-[0.1em] text-ink-faint";
+  "sticky top-0 z-10 border-b border-line bg-surface whitespace-nowrap px-3 py-2.5 text-left text-[12.5px] font-medium text-ink-faint";
 const TD = "whitespace-nowrap px-3 py-2.5 align-middle text-ink-soft";
 
 function leadLabel(lead: LeadRow): string {
@@ -320,7 +320,7 @@ function LeadsTable() {
           All leads
         </h1>
         {allCount > 0 && (
-          <span className="shrink-0 font-mono text-[11px] tracking-[0.06em] text-ink-faint tabular-nums">
+          <span className="shrink-0 text-[12.5px] text-ink-faint tabular-nums">
             {allCount.toLocaleString()} total
           </span>
         )}
@@ -469,7 +469,7 @@ function LeadsTable() {
                                   type="button"
                                   onClick={() => handleRemove(lead)}
                                   disabled={removing}
-                                  className="inline-flex items-center gap-2 rounded-lg border border-line bg-surface px-3 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-red-600/40 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                  className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-red-600/40 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-60"
                                 >
                                   {removing && (
                                     <span
@@ -498,7 +498,7 @@ function LeadsTable() {
                         type="button"
                         onClick={() => setPage(Math.max(0, safePage - 1))}
                         disabled={safePage === 0}
-                        className="cursor-pointer rounded-lg border border-line bg-surface px-3 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
+                        className="cursor-pointer rounded-full border border-line bg-surface px-3 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         Prev
                       </button>
@@ -508,7 +508,7 @@ function LeadsTable() {
                           setPage(Math.min(pageCount - 1, safePage + 1))
                         }
                         disabled={safePage >= pageCount - 1}
-                        className="cursor-pointer rounded-lg border border-line bg-surface px-3 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
+                        className="cursor-pointer rounded-full border border-line bg-surface px-3 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         Next
                       </button>
