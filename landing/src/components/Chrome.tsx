@@ -5,7 +5,7 @@ export function Wordmark({ className, markSize = "size-7" }: { className?: strin
   return (
     <span className={`inline-flex items-center gap-3 ${className ?? ""}`}>
       <HelmMark className={`${markSize} shrink-0`} />
-      <span className="font-brand lowercase leading-none tracking-[0.09em]">driftwood</span>
+      <span className="font-brand font-semibold leading-none">driftwood</span>
     </span>
   );
 }
