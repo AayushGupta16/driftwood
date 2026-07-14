@@ -537,7 +537,7 @@ export default function App() {
                 <div className="week-grid">
                   <div className="week-left">
                     <h2>
-                      Be <em className="voice">undeniable</em> to your leads.
+                      Send something <em className="voice">worth a reply.</em>
                     </h2>
                     <div
                       className="rate-viz"
