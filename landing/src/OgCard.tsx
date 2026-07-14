@@ -1,52 +1,75 @@
-import { OrderDemoCard } from "./components/AgentDemo";
+import { useEffect, useRef } from "react";
 import { Wordmark } from "./components/Chrome";
 
-/* Social share card, rendered at /og and screenshotted to public/og-2.png
+/* Social share card, rendered at /og and screenshotted to public/og-5.png
    (bump the filename + the og:image metas in index.html on every regen so
    link scrapers re-fetch). Regenerate with: playwright screenshot of /og
-   at 1200x630. */
+   at 1200x630, deviceScaleFactor 2. */
 export default function OgCard() {
+  const seaRef = useRef<HTMLCanvasElement>(null);
+
+  // one still frame of the landing page's ASCII sea, duck captaining the log
+  useEffect(() => {
+    const cv = seaRef.current;
+    const ctx = cv?.getContext("2d");
+    if (!cv || !ctx) return;
+    ctx.clearRect(0, 0, cv.width, cv.height); // StrictMode runs effects twice
+    const CW = 12;
+    const CH = 17;
+    const COLS = Math.ceil(1200 / CW);
+    const ROWS = Math.ceil(150 / CH);
+    const CHARS = [" ", "·", "-", "~", "≈", "≋"];
+    ctx.font = "15px ui-monospace, Menlo, monospace";
+    ctx.textBaseline = "middle";
+    const t = 2.0;
+    for (let r = 0; r < ROWS; r++) {
+      const depth = r / (ROWS - 1);
+      for (let c = 0; c < COLS; c++) {
+        const v =
+          0.5 +
+          0.26 * Math.sin(c * 0.13 + t + r * 0.7) +
+          0.2 * Math.sin(c * 0.07 - t * 1.1) +
+          0.12 * Math.sin(c * 0.23 + t * 0.6 + r);
+        const level = Math.max(0, Math.min(0.999, v * (0.35 + depth * 0.85)));
+        const ch = CHARS[Math.floor(level * CHARS.length)];
+        if (ch === " ") continue;
+        ctx.fillStyle = `rgba(21,85,126,${0.16 + depth * 0.5})`;
+        ctx.fillText(ch, c * CW, r * CH + CH / 2);
+      }
+    }
+    // the log + its captain, drawn a size up so they read at preview scale
+    ctx.font = "21px ui-monospace, Menlo, monospace";
+    const wx = 16;
+    const wr = 3.1;
+    ctx.fillStyle = "rgba(121,85,52,0.95)";
+    ctx.fillText("▗▄▄▄▄▄▄▖", wx * CW, wr * CH + CH / 2);
+    const cy = (wr - 0.72) * CH + CH / 2;
+    ctx.fillStyle = "rgba(240,195,60,0.98)";
+    ctx.fillText("▆▆", (wx + 2.4) * CW, cy);
+    ctx.fillText("▝", (wx + 3.95) * CW, cy - CH * 0.52);
+    ctx.fillStyle = "rgba(224,138,46,0.98)";
+    ctx.fillText("‣", (wx + 4.75) * CW, cy - CH * 0.45);
+    // a distant ship, starboard
+    ctx.fillStyle = "rgba(21,85,126,0.4)";
+    ctx.fillText("▟▌", 78 * CW, 1.4 * CH + CH / 2);
+    ctx.fillText("▀▀▀▀", 77.2 * CW, 2.3 * CH + CH / 2);
+  }, []);
+
   return (
-    <div className="relative flex h-[630px] w-[1200px] flex-col overflow-hidden bg-paper px-18 py-14">
-      {/* faint sea-chart contours, echoing the hero */}
-      <svg
-        viewBox="0 0 600 600"
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-36 -top-40 size-150 text-tide opacity-[0.07]"
-      >
-        <g fill="none" stroke="currentColor" strokeWidth="1.3">
-          <path d="M300 40 C 420 50 540 140 555 280 C 568 400 480 530 330 555 C 190 575 60 480 45 340 C 32 210 150 55 300 40 Z" />
-          <path d="M300 90 C 400 95 495 170 508 285 C 518 380 445 480 320 502 C 205 520 100 440 90 330 C 80 225 180 92 300 90 Z" />
-          <path d="M300 140 C 380 145 445 200 458 290 C 468 360 410 432 315 450 C 222 465 150 405 140 320 C 132 240 215 142 300 140 Z" />
-          <path d="M300 190 C 360 195 398 235 408 295 C 416 348 372 392 308 402 C 245 412 198 372 192 312 C 186 255 240 192 300 190 Z" />
-        </g>
-      </svg>
-
-      <div className="text-[26px] text-ink">
-        <Wordmark markSize="size-10" />
+    <div className="relative h-[630px] w-[1200px] overflow-hidden bg-white">
+      <div className="absolute left-16 top-14 text-[36px] text-ink">
+        <Wordmark markSize="size-14" />
       </div>
 
-      <div className="flex flex-1 items-center gap-14">
-        <div className="min-w-0 flex-1">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-tide-wash px-4 py-1.5 font-mono text-[17px] font-medium text-tide ring-1 ring-tide/25 -rotate-1">
-            a live ordering page, built this morning
-          </span>
-          <h1 className="mb-0 mt-6 text-[64px] font-semibold leading-[1.08] tracking-[-0.02em] text-ink">
-            Ship a custom
-            <br />
-            demo in every
-            <br />
-            cold message.
-          </h1>
-        </div>
-        <div className="w-105 shrink-0 scale-110 origin-center">
-          <div className="rounded-2xl shadow-[0_36px_80px_-36px_rgba(13,60,91,0.45)]">
-            <OrderDemoCard />
-          </div>
-        </div>
-      </div>
+      <h1 className="absolute left-16 top-[200px] m-0 w-[900px] text-[84px] font-semibold leading-[1.12] tracking-[-0.015em] text-ink">
+        Ship{" "}
+        <em className="font-medium text-tide" style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontStyle: "italic" }}>
+          a custom demo
+        </em>{" "}
+        in every cold message.
+      </h1>
 
-      <p className="m-0 font-mono text-[15px] text-ink-faint">driftwood.sh</p>
+      <canvas ref={seaRef} width={1200} height={150} className="absolute bottom-0 left-0" />
     </div>
   );
 }

@@ -13,7 +13,7 @@ import Review from './Review.tsx'
 
 const path = window.location.pathname.replace(/\/+$/, '')
 // const page = path === '/pricing' ? <Pricing /> : <App />
-// /og renders the social card; screenshot it at 1200x630 to refresh public/og.png
+// /og renders the social card; screenshot it at 1200x630 (dpr 2) to refresh public/og-5.png
 const page =
   path === '/og' ? (
     <OgCard />
