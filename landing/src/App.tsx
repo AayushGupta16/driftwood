@@ -85,23 +85,28 @@ export default function App() {
     const arrowHead = arrowHeadRef.current;
     if (!root || !pinWrap || !weekWrap || !cmpWrap || !arrowPath || !arrowHead) return;
 
-    // scroll-scrubs only where they feel right: big screens with a mouse or
-    // trackpad. Touch devices (phones AND desktop-width tablets) get the
-    // static layout — scrubbing against touch momentum feels broken.
+    const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // full pinned scrubs on big pointer screens; the week/compare pins hold
+    // content taller than a phone screen, so those two go scroll-linked
+    // (un-pinned) on touch instead
     const scrubOk =
       matchMedia("(min-width: 52rem)").matches &&
       matchMedia("(pointer: fine)").matches &&
-      !matchMedia("(prefers-reduced-motion: reduce)").matches;
+      !reduceMotion;
     const cleanups: (() => void)[] = [];
 
-    // pinned scrub: scroll cycles the stage while the rail highlights
+    // pinned scrub: scroll cycles the stage while the rail highlights.
+    // This one fits a phone screen, so it scrubs everywhere motion is on.
     const cards = [...root.querySelectorAll(".stage-card")];
     const items = [...root.querySelectorAll(".rail-list li")];
-    if (scrubOk) {
+    const howPin = pinWrap.querySelector(".pin") as HTMLElement | null;
+    if (!reduceMotion) {
       let raf = 0;
       const update = () => {
         raf = 0;
-        const total = pinWrap.offsetHeight - innerHeight;
+        // measure the pin, not innerHeight — iOS toolbar collapse changes
+        // innerHeight mid-scroll and would make the scrub jump
+        const total = pinWrap.offsetHeight - (howPin?.offsetHeight ?? innerHeight);
         if (total <= 0) return;
         const p = Math.min(0.999, Math.max(0, -pinWrap.getBoundingClientRect().top / total));
         // one artifact at a time: a scrubbed crossfade, each photo fully visible
@@ -145,12 +150,12 @@ export default function App() {
     const notePath = note?.querySelector("path:nth-of-type(1)") as SVGPathElement | null;
     const noteHead = note?.querySelector("path:nth-of-type(2)") as SVGPathElement | null;
     const noteEm = note?.querySelector("em") as HTMLElement | null;
+    let noteLen = 0;
+    if (notePath && !reduceMotion) {
+      noteLen = notePath.getTotalLength();
+      notePath.style.strokeDasharray = `${noteLen}`;
+    }
     if (scrubOk) {
-      let noteLen = 0;
-      if (notePath) {
-        noteLen = notePath.getTotalLength();
-        notePath.style.strokeDasharray = `${noteLen}`;
-      }
       let rafW = 0;
       const updateW = () => {
         rafW = 0;
@@ -178,9 +183,44 @@ export default function App() {
         if (rafW) cancelAnimationFrame(rafW);
       });
       updateW();
+    } else if (!reduceMotion) {
+      // touch: no pin, but the same choreography rides the viewport — the
+      // grids fill as they scroll up, then the arrow draws at the clip
+      const rateViz = root.querySelector(".rate-viz");
+      let rafM = 0;
+      const updateM = () => {
+        rafM = 0;
+        const vh = innerHeight;
+        if (rateViz) {
+          const r = rateViz.getBoundingClientRect();
+          const p = Math.min(1, Math.max(0, (vh - r.top) / (vh * 0.85)));
+          beforeHits.forEach((d) => d.classList.toggle("lit", p > 0.3));
+          const n = Math.min(
+            usHits.length,
+            Math.max(0, Math.floor(((p - 0.38) / 0.5) * usHits.length)),
+          );
+          usHits.forEach((d, i) => d.classList.toggle("lit", i < n));
+        }
+        if (note && notePath && noteEm) {
+          const nr = note.getBoundingClientRect();
+          const np = Math.min(1, Math.max(0, (vh - nr.top) / (vh * 0.45)));
+          notePath.style.strokeDashoffset = `${noteLen * (1 - np)}`;
+          if (noteHead) noteHead.style.opacity = np > 0.96 ? "1" : "0";
+          noteEm.style.opacity = `${np}`;
+        }
+      };
+      const onScrollM = () => {
+        if (!rafM) rafM = requestAnimationFrame(updateM);
+      };
+      addEventListener("scroll", onScrollM, { passive: true });
+      cleanups.push(() => {
+        removeEventListener("scroll", onScrollM);
+        if (rafM) cancelAnimationFrame(rafM);
+      });
+      updateM();
     } else {
       beforeHits.concat(usHits).forEach((d) => d.classList.add("lit"));
-      /* the note stays fully visible where there is no scrub */
+      /* the note stays fully visible under reduced motion */
     }
 
     // compare: the hand-drawn arrow scrubs with the pinned scroll

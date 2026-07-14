@@ -513,41 +513,38 @@ body {
   .landing .hero-grid, .landing .week-grid, .landing .how-grid, .landing .compare-grid { grid-template-columns: 1fr; }
   .landing .week-grid > div:last-child { margin-top: 0; }
   .landing .compare-arrow { display: none; }
-  .landing .pin-wrap, .landing .week-pin-wrap { height: auto; }
-  .landing .pin { position: static; height: auto; overflow: visible; }
-  .landing .stage { min-height: 0; }
-  .landing .stage-card { position: static; opacity: 1; transform: none; pointer-events: auto; }
-  .landing .stage-card + .stage-card { margin-top: 1.5rem; }
-  /* no scrub on mobile: every step reads at full strength */
-  .landing .rail-list li { color: var(--ink); font-weight: 600; }
-  .landing .rail-list li span { color: var(--accent); }
+  /* week + compare flow statically (their content is taller than a phone
+     screen), but their scroll-linked animations still run un-pinned */
+  .landing .week-pin-wrap, .landing .compare-pin-wrap { height: auto; }
+  .landing .week-pin-wrap .pin, .landing .compare-pin-wrap .pin { position: static; height: auto; overflow: visible; }
   .landing .week-pin-wrap .pin { padding-top: 1.5rem; }
   .landing .week-grid { margin-top: 1.5rem; }
   .landing .compare-pin-wrap .pin { padding-top: 2.5rem; padding-bottom: 1.5rem; }
+  /* the how deck keeps its scroll-scrub on phones: a compact pinned scene.
+     svh, not vh — iOS toolbar collapse makes vh pins jump mid-scrub */
+  .landing #how .pin-wrap { height: 200vh; height: 200svh; }
+  .landing #how .pin { height: 100vh; height: 100svh; align-items: flex-start; padding-top: 4.5rem; }
+  .landing .how-grid { gap: 0.9rem; }
+  .landing .how-grid h2 { font-size: 1.55rem; }
+  .landing .rail-list { margin-top: 0.8rem; gap: 0.6rem; }
+  .landing .rail-list li { font-size: 1rem; }
+  .landing .rail-sub { font-size: 0.8rem; line-height: 1.35; margin-top: 0.1rem; }
+  .landing .stage { min-height: 18.5rem; }
   /* artifacts: legible zoomed crops instead of shrunken full screenshots */
   .landing .stage-card .artifact img { max-height: none; object-fit: cover; }
-  .landing .stage-card:nth-of-type(1) .artifact img { height: 22rem; object-position: left top; }
-  .landing .stage-card:nth-of-type(2) .artifact img { height: 20rem; object-position: 18% top; }
-  .landing .stage-card:nth-of-type(3) .artifact img { height: 21rem; object-position: center top; }
+  .landing .stage-card:nth-of-type(1) .artifact img { height: 16rem; object-position: left top; }
+  .landing .stage-card:nth-of-type(2) .artifact img { height: 15rem; object-position: 18% top; }
+  .landing .stage-card:nth-of-type(3) .artifact img { height: 15.5rem; object-position: center top; }
   .landing .app-window img { width: 165%; max-width: none; height: 19rem; object-fit: cover; object-position: left top; }
   /* the shorter window ends inside the hero sea; keep the waves behind it */
   .landing .app-window { position: relative; z-index: 2; }
-  /* calm: no entrance choreography on phones — everything simply present */
-  .landing .enter-window, .landing .thread, .landing .email { animation: none; }
-  .landing .stagger .msg, .landing .stagger .divider { opacity: 1; transform: none; animation: none; }
-  .landing .dots i.hit.lit { animation: none; }
 }
-/* desktop-width touch devices (tablets): scrubbing against touch momentum
-   feels broken, so pins go static there too — mirrors the JS pointer gate */
+/* desktop-width touch devices (tablets): the how deck scrubs fine, but the
+   week/compare pins hold content taller than makes sense to freeze on touch */
 @media (pointer: coarse) and (min-width: 52rem) {
-  .landing .pin-wrap, .landing .week-pin-wrap, .landing .compare-pin-wrap { height: auto; }
-  .landing .pin { position: static; height: auto; overflow: visible; padding-top: 2.5rem; }
-  .landing .stage { min-height: 0; }
-  .landing .stage-card { position: static; opacity: 1; transform: none; pointer-events: auto; }
-  .landing .stage-card + .stage-card { margin-top: 1.5rem; }
+  .landing .week-pin-wrap, .landing .compare-pin-wrap { height: auto; }
+  .landing .week-pin-wrap .pin, .landing .compare-pin-wrap .pin { position: static; height: auto; overflow: visible; padding-top: 2.5rem; }
   .landing .compare-arrow { display: none; }
-  .landing .rail-list li { color: var(--ink); font-weight: 600; }
-  .landing .rail-list li span { color: var(--accent); }
 }
 @media (prefers-reduced-motion: reduce) {
   .landing * { animation-duration: 0.01ms !important; animation-delay: 0ms !important; transition-duration: 0.01ms !important; }
@@ -559,6 +556,9 @@ body {
   .landing .stage-card + .stage-card { margin-top: 1.5rem; }
   .landing .rail-list li { color: var(--ink); font-weight: 600; }
   .landing .rail-list li span { color: var(--accent); }
+  /* the ID-scoped mobile pin rules would otherwise out-rank this block */
+  .landing #how .pin-wrap { height: auto; }
+  .landing #how .pin { position: static; height: auto; }
   html { scroll-behavior: auto; }
 }
 
