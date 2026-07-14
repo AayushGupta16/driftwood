@@ -308,13 +308,18 @@
   .close-sect h2 { font-size: clamp(2.4rem, 1.3rem + 4.6vw, 4.6rem); font-weight: 600; line-height: 1.05; letter-spacing: -0.02em; margin-inline: auto; max-width: 16ch; }
   .close-sect .btn { margin-top: 2.5rem; height: 3.1rem; padding-inline: 1.9rem; font-size: 1.05rem; }
 
-  footer { background: var(--accent); color: #fff; }
+  /* footer encore: the deepest sheet — docks with the same wave-cut
+     shoulder as every sheet above, then deepens toward the sea floor */
+  footer { background: linear-gradient(var(--accent), #0d3c5b); color: #fff; }
   footer::before {
-    content: ""; display: block; height: 28px;
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='28' viewBox='0 0 180 28'%3E%3Cpath d='M0 14 C 11.25 5.5, 33.75 5.5, 45 14 C 56.25 22.5, 78.75 22.5, 90 14 C 101.25 5.5, 123.75 5.5, 135 14 C 146.25 22.5, 168.75 22.5, 180 14' fill='none' stroke='%23ffffff' stroke-width='1.6' stroke-opacity='0.5'/%3E%3C/svg%3E") repeat-x center;
+    content: ""; display: block; height: 28px; margin-top: -28px;
+    position: relative; z-index: 1;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='28' viewBox='0 0 180 28'%3E%3Cpath d='M0 14 C 11.25 5.5, 33.75 5.5, 45 14 C 56.25 22.5, 78.75 22.5, 90 14 C 101.25 5.5, 123.75 5.5, 135 14 C 146.25 22.5, 168.75 22.5, 180 14 L180 28 L0 28 Z' fill='%2315557e'/%3E%3C/svg%3E") repeat-x bottom;
   }
-  .foot { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-block: 2.2rem; flex-wrap: wrap; font-size: 0.9rem; color: rgba(255,255,255,0.8); }
-  .foot .wordmark, .foot .wordmark svg { color: #fff; }
+  .foot { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; padding-block: 4.5rem 3rem; }
+  .foot .wordmark { color: #fff; font-size: 1.35rem; gap: 0.85rem; }
+  .foot .wordmark svg { width: 2.4rem; height: 2.4rem; }
+  .foot-line { display: flex; gap: 1.5rem; font-size: 0.9rem; color: rgba(255,255,255,0.75); }
   .foot a { color: inherit; text-decoration: none; }
   .foot a:hover { color: #fff; }
 
@@ -590,7 +595,10 @@
       <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#15557e"/><g transform="translate(32 32) scale(0.88)" fill="none" stroke="#f7f4ec" stroke-linecap="round"><circle r="22.5" stroke-width="3.4"/><g stroke-width="3.6"><line y1="-22.5" y2="-27.5"/><g transform="rotate(45)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(90)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(135)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(180)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(225)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(270)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(315)"><line y1="-22.5" y2="-27.5"/></g></g><g stroke-width="2.5"><line y1="-8.5" y2="-19.5"/><g transform="rotate(45)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(90)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(135)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(180)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(225)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(270)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(315)"><line y1="-8.5" y2="-19.5"/></g></g><circle r="7.5" stroke-width="2.6" fill="#15557e"/><circle r="2.8" fill="#f7f4ec" stroke="none"/></g></svg>
       driftwood
     </a>
-    <div><a href="mailto:aayush@driftwood.sh">aayush@driftwood.sh</a><span> · © 2026</span></div>
+    <div class="foot-line">
+      <a href="mailto:aayush@driftwood.sh">aayush@driftwood.sh</a>
+      <span>© 2026 driftwood</span>
+    </div>
   </div>
 </footer>
 
