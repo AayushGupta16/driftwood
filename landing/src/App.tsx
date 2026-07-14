@@ -367,11 +367,11 @@ export default function App() {
               const e = islE(c, r);
               if (e > 1) continue;
               if (e > 0.62) {
-                ctx.fillStyle = "rgba(121, 108, 84, 0.34)";
-                ctx.fillText("▒", c * CELL_W, y); // ▒ beach
+                ctx.fillStyle = "rgba(184, 148, 82, 0.5)";
+                ctx.fillText("▒", c * CELL_W, y); // ▒ beach, wet sand
               } else {
-                ctx.fillStyle = "rgba(150, 137, 110, 0.15)";
-                ctx.fillText("█", c * CELL_W, y); // █ inland, faint under the text
+                ctx.fillStyle = "rgba(209, 182, 120, 0.3)";
+                ctx.fillText("█", c * CELL_W, y); // █ dry sand, faint under the text
               }
             }
           }

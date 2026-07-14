@@ -492,7 +492,7 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
 .landing .compare-pin-wrap .pin { align-items: flex-start; padding-top: clamp(4.5rem, 7vh, 5.5rem); }
 .landing .compare-sub { margin: 0.9rem auto 0; text-align: center; color: var(--gray); font-size: 1.08rem; }
 .landing .compare-sub b { color: var(--accent); }
-.landing .compare-grid { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: clamp(1.5rem, 3vw, 2.5rem); margin-top: 2.75rem; align-items: stretch; }
+.landing .compare-grid { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: clamp(1.5rem, 3vw, 2.5rem); margin-top: 5.25rem; align-items: stretch; }
 /* both artifacts shorter via tighter spacing — the type stays full size */
 .landing .compare-grid .email { padding: 1.2rem 1.4rem; }
 .landing .email-fate { margin: auto 0 0; padding-top: 1.5rem; font-size: 0.85rem; color: var(--gray-light); }
@@ -502,8 +502,8 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
 .landing .compare-grid .divider { margin-block: 0.45rem; }
 .landing .compare-grid .clip { width: min(14rem, 100%); }
 .landing .compare-arrow {
-  position: absolute; top: -3.6rem; left: 50%; transform: translateX(-58%);
-  width: 24rem; z-index: 2; pointer-events: none;
+  position: absolute; top: -4.9rem; left: 50%; transform: translateX(-58%);
+  width: 20rem; z-index: 2; pointer-events: none;
 }
 .landing .compare-arrow path:last-of-type {
   transform-box: fill-box; transform-origin: center;
