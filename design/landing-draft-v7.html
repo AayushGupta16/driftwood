@@ -58,12 +58,20 @@
   .nav-login:hover { color: var(--ink); }
   .nav .btn { height: 2.25rem; font-size: 0.875rem; }
 
-  /* ---------- hero: G1 ---------- */
+  /* ---------- hero: G1 + H1 (the sea) ---------- */
+  .hero { position: relative; overflow: clip; }
+  #sea {
+    position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 38%;
+    display: block; pointer-events: none;
+    -webkit-mask-image: linear-gradient(to bottom, transparent, black 55%);
+    mask-image: linear-gradient(to bottom, transparent, black 55%);
+  }
   .hero-grid {
+    position: relative; z-index: 1;
     display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
     align-items: center; gap: clamp(2rem, 4vw, 3.5rem);
-    padding-block: clamp(4.5rem, 9vw, 8rem);
-    min-height: min(82vh, 52rem);
+    padding-block: clamp(4rem, 8vw, 6.5rem);
+    min-height: min(86vh, 56rem);
   }
   .hero h1 {
     margin: 0;
@@ -100,8 +108,22 @@
   }
   .week-left > p { color: var(--gray); line-height: 1.6; max-width: 38ch; }
   .week-left b { color: var(--ink); font-weight: 600; }
-  .week-caption { margin-top: 1.1rem; font-size: 0.9rem; color: var(--gray-light); }
-  .week-caption b { color: var(--ink); font-weight: 600; }
+
+  /* the number, shown not told: replies per message sent */
+  .rate-viz { margin-top: 2rem; }
+  .rate-row { display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 1rem; }
+  .rate-row + .rate-row { margin-top: 1.4rem; }
+  .rate-label { font-size: 0.85rem; color: var(--gray); }
+  .rate-row b { font-size: 1.4rem; font-weight: 600; color: var(--gray); }
+  .rate-row.us b { color: var(--accent); font-size: 1.7rem; }
+  .rate-bar { grid-column: 1 / -1; height: 0.7rem; border-radius: 999px; background: #eef2f5; overflow: hidden; margin-top: 0.35rem; }
+  .rate-bar i {
+    display: block; height: 100%; border-radius: 999px; background: #c6ccd2;
+    width: 0; transition: width 1s cubic-bezier(0.16,1,0.3,1) 0.15s;
+  }
+  .rate-row.us .rate-bar i { background: var(--accent); transition-delay: 0.35s; }
+  .rate-viz.go .rate-bar i { width: var(--w); }
+  .rate-sub { margin-top: 1rem; font-size: 0.8rem; color: var(--gray-light); }
   .founder {
     margin-top: 2.25rem; padding-top: 1.75rem;
     display: flex; gap: 1.1rem; align-items: center;
@@ -160,7 +182,7 @@
   .rail-note { margin-top: 2rem; font-size: 0.9rem; color: var(--gray); max-width: 24ch; }
   .rail-note b { color: var(--ink); font-weight: 600; }
 
-  .stage { position: relative; min-height: 24rem; }
+  .stage { position: relative; min-height: 30rem; }
   .stage-card {
     position: absolute; inset: 0; margin: auto; height: fit-content;
     opacity: 0; transform: translateY(18px); pointer-events: none;
@@ -172,9 +194,9 @@
     border: 1px solid var(--line); border-radius: 14px; background: #fff; overflow: hidden;
     box-shadow: 0 2px 4px rgba(22,24,27,0.04), 0 16px 40px -24px rgba(22,24,27,0.16);
   }
-  .artifact-bar { display: flex; align-items: center; gap: 0.4rem; padding: 0.55rem 0.8rem; border-bottom: 1px solid var(--line); font-size: 0.75rem; color: var(--gray-light); }
-  .artifact-body { padding: 1.3rem 1.4rem 1.4rem; }
-  .work { font-size: 0.95rem; line-height: 2.2; color: #3c434a; }
+  .artifact-bar { display: flex; align-items: center; gap: 0.4rem; padding: 0.7rem 1rem; border-bottom: 1px solid var(--line); font-size: 0.8rem; color: var(--gray-light); }
+  .artifact-body { padding: 2rem 2.2rem 2.2rem; }
+  .work { font-size: 1.05rem; line-height: 2.5; color: #3c434a; }
   .work .done::before { content: "✓"; color: var(--accent); margin-right: 0.55rem; font-weight: 600; }
   .work .doing::before { content: "●"; color: var(--accent); margin-right: 0.55rem; font-size: 0.6rem; vertical-align: 1px; }
   .work .doing { color: var(--gray-light); }
@@ -278,7 +300,8 @@
 <main id="top">
 
   <!-- hero -->
-  <div class="wrap hero-grid hero">
+  <div class="hero">
+  <div class="wrap hero-grid">
     <div>
       <h1>Cold outbound that ships <em class="voice">a working demo</em> to every prospect.</h1>
       <p class="hero-sub">driftwood researches each company, builds the demo, and sends the message for you.</p>
@@ -287,11 +310,12 @@
       </div>
     </div>
     <div class="app-window enter-window">
-      <img src="assets/dw-demo-dashboard-redacted.png"
+      <img src="assets/dw-demo-dashboard-hero.png"
         alt="The driftwood dashboard: LinkedIn connected and sending, one meeting booked this week, one reply, pipeline of 67 leads" />
     </div>
   </div>
-  <div class="hero-wave" aria-hidden="true"></div>
+  <canvas id="sea" aria-hidden="true"></canvas>
+  </div>
 
   <!-- week one + the founder -->
   <section id="week-one">
@@ -303,7 +327,17 @@
             Four months of pitching Superhuman's CTO, no reply. One driftwood
             demo later: <b>a reply in twelve hours, and a booked call.</b>
           </p>
-          <p class="week-caption">First wave: 7 messages · <b>14.3% replies</b> · before driftwood: under 1%.</p>
+          <div class="rate-viz" aria-label="Reply rate: under 1 percent before driftwood, 14.3 percent in week one">
+            <div class="rate-row">
+              <span class="rate-label">replies before driftwood</span><b>&lt;1%</b>
+              <div class="rate-bar"><i style="--w:6%"></i></div>
+            </div>
+            <div class="rate-row us">
+              <span class="rate-label">replies in week one</span><b>14.3%</b>
+              <div class="rate-bar"><i style="--w:100%"></i></div>
+            </div>
+            <p class="rate-sub">per message sent · first wave of 7</p>
+          </div>
           <div class="founder">
             <img src="assets/yuvan.png" alt="Yuvan Sundrani, founder of Autosana, speaking on stage" />
             <div>
@@ -379,6 +413,7 @@
                   <div class="work">
                     <div class="done">Read their site, docs, and changelog</div>
                     <div class="done">Read 212 customer reviews</div>
+                    <div class="done">Walked their signup and pricing pages</div>
                     <div class="done">Found the gap worth a demo</div>
                     <div class="doing">Drafting the build plan&hellip;</div>
                   </div>
@@ -396,6 +431,7 @@
                     <div class="demo-row"><span class="redact" style="width:6em"></span><span class="redact" style="width:2em"></span></div>
                     <div class="demo-row"><span class="redact" style="width:7.5em"></span><span class="redact" style="width:2em"></span></div>
                     <div class="demo-row"><span class="redact" style="width:5em"></span><span class="redact" style="width:2em"></span></div>
+                    <div class="demo-row"><span class="redact" style="width:6.5em"></span><span class="redact" style="width:2em"></span></div>
                   </div>
                   <div class="demo-cta">Built for them, working
                     <span class="cursor-pill">driftwood</span>
@@ -511,6 +547,13 @@
   }, { threshold: 0.25 });
   io.observe(t);
 
+  // rate bars fill on first view
+  const rv = document.querySelector(".rate-viz");
+  const rvIo = new IntersectionObserver((entries) => {
+    for (const e of entries) if (e.isIntersecting) { rv.classList.add("go"); rvIo.disconnect(); }
+  }, { threshold: 0.5 });
+  rvIo.observe(rv);
+
   // pinned scrub: scroll position cycles the stage, rail highlights follow
   const pinWrap = document.querySelector(".pin-wrap");
   const cards = [...document.querySelectorAll(".stage-card")];
@@ -555,6 +598,66 @@
   } else {
     arrowPath.style.strokeDashoffset = "0";
     arrowHead.style.opacity = "1";
+  }
+</script>
+<script type="module">
+  // the sea: a calm low-poly water surface under the hero (three.js).
+  // Static page on mobile / reduced motion / load failure.
+  const canvas = document.getElementById("sea");
+  const motionOk = matchMedia("(prefers-reduced-motion: no-preference)").matches
+    && matchMedia("(min-width: 52rem)").matches;
+  if (!motionOk) { canvas.remove(); }
+  else {
+    try {
+      const THREE = await import("https://unpkg.com/three@0.160.0/build/three.module.js");
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+      const scene = new THREE.Scene();
+      scene.fog = new THREE.Fog(0xffffff, 4, 22);
+      const camera = new THREE.PerspectiveCamera(34, 2, 0.1, 100);
+      camera.position.set(0, 2.8, 9);
+      camera.lookAt(0, -0.4, -8);
+
+      const geo = new THREE.PlaneGeometry(90, 44, 150, 74);
+      geo.rotateX(-Math.PI / 2);
+      const mat = new THREE.MeshPhongMaterial({
+        color: 0x4b87ae, shininess: 70, specular: 0xcfe3f0, flatShading: true,
+      });
+      const sea = new THREE.Mesh(geo, mat);
+      scene.add(sea);
+      scene.add(new THREE.AmbientLight(0xdfe9f1, 0.85));
+      const sun = new THREE.DirectionalLight(0xffffff, 1.1);
+      sun.position.set(-4, 6, -6);
+      scene.add(sun);
+
+      const pos = geo.attributes.position;
+      const base = pos.array.slice();
+      const resize = () => {
+        const w = canvas.clientWidth, h = canvas.clientHeight;
+        renderer.setSize(w, h, false);
+        camera.aspect = w / h; camera.updateProjectionMatrix();
+      };
+      addEventListener("resize", resize); resize();
+
+      let last = 0;
+      const tick = (ms) => {
+        requestAnimationFrame(tick);
+        if (ms - last < 33) return; // ~30fps is plenty for calm water
+        last = ms;
+        const t = ms / 1000;
+        for (let i = 0; i < pos.count; i++) {
+          const x = base[i * 3], z = base[i * 3 + 2];
+          pos.array[i * 3 + 1] =
+            Math.sin(x * 0.35 + t * 0.7) * 0.14 +
+            Math.sin(z * 0.5 + t * 0.5) * 0.12 +
+            Math.sin((x + z) * 0.22 + t * 0.9) * 0.08;
+        }
+        pos.needsUpdate = true;
+        geo.computeVertexNormals();
+        renderer.render(scene, camera);
+      };
+      requestAnimationFrame(tick);
+    } catch { canvas.remove(); }
   }
 </script>
 </body>
