@@ -433,7 +433,13 @@ body {
 .landing .rail-list li span { font-size: 1rem; }
 .landing .rail-list li.active { color: var(--ink); font-weight: 600; }
 .landing .rail-list li.active span { color: var(--accent); }
-.landing .rail-sub { margin: 0.4rem 0 0; font-size: 0.98rem; line-height: 1.55; color: var(--gray); font-weight: 400; max-width: 30ch; }
+.landing .rail-sub {
+  margin: 0.4rem 0 0; font-size: 0.98rem; line-height: 1.55; color: var(--gray); font-weight: 400; max-width: 30ch;
+  max-height: 3.4rem; overflow: hidden;
+  transition: max-height 0.35s ease, opacity 0.35s ease, margin-top 0.35s ease;
+}
+/* the sub belongs to the focused step only */
+.landing .rail-list li:not(.active) .rail-sub { max-height: 0; opacity: 0; margin-top: 0; }
 .landing .rail-sub b { color: var(--ink); font-weight: 600; }
 
 .landing .stage { position: relative; min-height: min(42rem, 76vh); }
@@ -592,6 +598,8 @@ body {
   .landing .stage-card + .stage-card { margin-top: 1.5rem; }
   .landing .rail-list li { color: var(--ink); font-weight: 600; }
   .landing .rail-list li span { color: var(--accent); }
+  /* no scrub, no focus: every step keeps its sub */
+  .landing .rail-list li:not(.active) .rail-sub { max-height: 3.4rem; opacity: 1; margin-top: 0.4rem; }
   /* the ID-scoped mobile pin rules would otherwise out-rank this block */
   .landing #how .pin-wrap { height: auto; }
   .landing #how .pin { position: static; height: auto; }
