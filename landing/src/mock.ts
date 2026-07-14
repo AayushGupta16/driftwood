@@ -38,7 +38,7 @@ if (params.has("mock")) {
   };
   const activity = {
     events: [
-      { at: hoursAgo(2), kind: "stage", lead_id: "m1", lead_name: "CTO", company_name: "Superhuman", detail: "booked" },
+      { at: hoursAgo(2), kind: "stage", lead_id: "m1", lead_name: "Dana Whitfield", company_name: "Meridian", detail: "booked" },
       { at: hoursAgo(2.4), kind: "reply", lead_id: null, lead_name: null, company_name: null, detail: null },
       { at: hoursAgo(5), kind: "reply", lead_id: null, lead_name: null, company_name: null, detail: null },
       { at: hoursAgo(6), kind: "sent", lead_id: null, lead_name: null, company_name: null, detail: "message" },
@@ -54,10 +54,10 @@ if (params.has("mock")) {
   const reviews = {
     pending: [
       {
-        id: "r1", batch_id: "b1", agent_id: "demo", kind: "send_connection",
-        title: "Harborlight \u2014 Maya Chen (connect)",
-        body: "loved your launch post. building something adjacent, would love to connect!",
-        lead: lead("Maya Chen", "Cofounder & CEO", "Harborlight"),
+        id: "r1", batch_id: "b1", agent_id: "demo", kind: "send_message",
+        title: "Brex \u2014 Jordan Reyes (message)",
+        body: "hey jordan, notion is one of ramp's flagship case studies. built the one-pager brex could send notion's finance team to flip it: entity-by-entity rollout, the yield math, live page linked below. worth a look?",
+        lead: lead("Jordan Reyes", "Head of Growth", "Brex"),
         attachment_slug: null, evidence: null, status: "pending",
         decision_reason: null, decided_at: null, scheduled_batch_id: null,
         created_at: hoursAgo(0.15),

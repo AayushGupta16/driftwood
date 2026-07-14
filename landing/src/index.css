@@ -407,16 +407,16 @@ body {
 .landing .week-sect { padding-block: 2rem; width: 100%; }
 .landing .pin { position: sticky; top: 0; height: 100vh; display: flex; align-items: center; overflow: hidden; }
 .landing .how-grid { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: clamp(2.5rem, 5vw, 5rem); align-items: center; width: 100%; }
-.landing .stage-card .artifact img { width: 100%; height: min(26rem, 56vh); object-fit: cover; object-position: left top; }
-.landing .rail-list { list-style: none; margin: 2.4rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 1.5rem; }
+.landing .stage-card .artifact img { width: 100%; height: auto; max-height: 74vh; object-fit: contain; object-position: top center; }
+.landing .rail-list { list-style: none; margin: 2.4rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 1.6rem; }
 .landing .rail-list li { display: flex; gap: 0.9rem; align-items: baseline; font-size: 1.45rem; color: var(--gray-light); font-weight: 500; transition: color 0.25s; transform-origin: left center; will-change: transform, opacity; }
 .landing .rail-list li span { font-size: 1rem; }
 .landing .rail-list li.active { color: var(--ink); font-weight: 600; }
 .landing .rail-list li.active span { color: var(--accent); }
-.landing .rail-note { margin-top: 2.6rem; font-size: 1rem; color: var(--gray); max-width: 24ch; }
-.landing .rail-note b { color: var(--ink); font-weight: 600; }
+.landing .rail-sub { margin: 0.4rem 0 0; font-size: 0.98rem; line-height: 1.55; color: var(--gray); font-weight: 400; max-width: 30ch; }
+.landing .rail-sub b { color: var(--ink); font-weight: 600; }
 
-.landing .stage { position: relative; min-height: 30rem; }
+.landing .stage { position: relative; min-height: min(42rem, 76vh); }
 .landing .stage-card {
   position: absolute; inset: 0; margin: auto; height: fit-content;
   will-change: transform, opacity;
@@ -455,6 +455,7 @@ body {
 .landing .compare-grid > div:first-child .email-subject,
 .landing .compare-grid > div:first-child .email-body { opacity: 0.62; }
 .landing .compare-pin-wrap { height: 230vh; }
+.landing .compare-pin-wrap .pin { align-items: flex-start; padding-top: clamp(2.5rem, 6vh, 4.5rem); }
 .landing .compare-grid { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: clamp(1.5rem, 3vw, 2.5rem); margin-top: 3.5rem; align-items: stretch; }
 .landing .compare-arrow {
   position: absolute; top: -3.4rem; left: 50%; transform: translateX(-50%);

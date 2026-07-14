@@ -90,19 +90,16 @@ export default function App() {
         const total = pinWrap.offsetHeight - innerHeight;
         if (total <= 0) return;
         const p = Math.min(0.999, Math.max(0, -pinWrap.getBoundingClientRect().top / total));
-        // a scrubbed deck: the next card slides up over the last, 1:1 with scroll
+        // one artifact at a time: a scrubbed crossfade, each photo fully visible
         const prog = p * (cards.length - 1) * 1.18 - 0.09; // small dwell at both ends
         cards.forEach((c, i) => {
           const el = c as HTMLElement;
           const d = i - Math.min(cards.length - 1, Math.max(0, prog));
-          if (d >= 0) {
-            el.style.transform = `translateY(${d * 84}%) rotate(${Math.min(d, 1) * 2.2}deg) scale(${1 - Math.min(d, 1) * 0.02})`;
-            el.style.opacity = `${1 - Math.max(0, d - 1) * 0.85}`;
-          } else {
-            el.style.transform = `translateY(${d * 30}px) scale(${1 + d * 0.055})`;
-            el.style.opacity = `${Math.max(0.3, 1 + d * 0.5)}`;
-          }
-          el.style.zIndex = `${10 + i}`;
+          const a = Math.max(0, 1 - Math.abs(d));
+          el.style.opacity = `${a}`;
+          el.style.transform = `translateY(${d * 46}px) scale(${1 - Math.abs(d) * 0.015})`;
+          el.style.zIndex = `${10 + Math.round(a * 10)}`;
+          el.style.pointerEvents = a > 0.5 ? "auto" : "none";
         });
         const step = Math.min(cards.length - 1, Math.max(0, Math.round(prog)));
         items.forEach((li, i) => {
@@ -422,7 +419,7 @@ export default function App() {
             <div className="app-window enter-window">
               <img
                 src="/dw-demo-dashboard-hero.png"
-                alt="The driftwood dashboard: LinkedIn connected and sending, one meeting booked this week, one reply, pipeline of 67 leads"
+                alt="The driftwood dashboard: LinkedIn connected and sending, 4 meetings booked, 7 replies, pipeline of 124 leads"
               />
             </div>
           </div>
@@ -477,7 +474,9 @@ export default function App() {
                   <div>
                     <div className="thread">
                       <div className="li-head">
-                        <span className="li-name">CTO @ Superhuman</span>
+                        <span className="li-name">
+                          CTO @ <span className="redact" role="img" aria-label="company withheld"></span>
+                        </span>
                         <span className="li-presence" aria-hidden="true"></span>
                         <span className="li-icons" aria-hidden="true">
                           &#8943;&nbsp;&nbsp;&#10530;&nbsp;&nbsp;&#10005;
@@ -516,13 +515,15 @@ export default function App() {
                             </div>
                             <p className="msg-body">
                               hey <span className="redact" role="img" aria-label="name redacted"></span>,
-                              found a bug on superhuman. our agents caught your pricing page still
-                              promising early access for features lower tiers already have&hellip;
+                              found a bug on{" "}
+                              <span className="redact" role="img" aria-label="company withheld"></span>.
+                              our agents caught your pricing page still promising early access for
+                              features lower tiers already have&hellip;
                             </p>
                             <div className="clip">
                               <img
-                                src="/superhuman-demo-still.png"
-                                alt="19 second demo video of Autosana's agent catching the pricing bug on superhuman.com"
+                                src="/demo-still.png"
+                                alt="19 second demo video of Autosana's agent catching a pricing bug on the prospect's site"
                               />
                               <span className="play" aria-hidden="true"></span>
                             </div>
@@ -541,13 +542,18 @@ export default function App() {
                           </span>
                           <div>
                             <div className="msg-head">
-                              <span className="who">CTO, Superhuman</span>
+                              <span className="who">CTO</span>
                               <span className="when">&middot; 7:18 AM</span>
                             </div>
                             <p className="msg-body">
                               send me a blurb + demos to{" "}
-                              <span className="redact" role="img" aria-label="address redacted"></span>
-                              @superhuman.com and I'll forward to my team - best
+                              <span
+                                className="redact"
+                                role="img"
+                                aria-label="address redacted"
+                                style={{ width: "6.5em" }}
+                              ></span>{" "}
+                              and I'll forward to my team - best
                             </p>
                           </div>
                         </div>
@@ -581,18 +587,33 @@ export default function App() {
                   </h2>
                   <ol className="rail-list">
                     <li data-step="0" className="active">
-                      <span>01</span> Researches the company
+                      <span>01</span>
+                      <div>
+                        Researches the prospect
+                        <p className="rail-sub">
+                          Uses all publicly available information to understand the prospect.
+                        </p>
+                      </div>
                     </li>
                     <li data-step="1">
-                      <span>02</span> Builds them a working demo
+                      <span>02</span>
+                      <div>
+                        Builds them a custom demo
+                        <p className="rail-sub">
+                          Agents show them what using your product would actually look like.
+                        </p>
+                      </div>
                     </li>
                     <li data-step="2">
-                      <span>03</span> Sends it from your account
+                      <span>03</span>
+                      <div>
+                        Sends it from your account
+                        <p className="rail-sub">
+                          <b>Every message is human reviewed</b> before it sends.
+                        </p>
+                      </div>
                     </li>
                   </ol>
-                  <p className="rail-note">
-                    <b>Every message is human reviewed</b> before it sends.
-                  </p>
                 </div>
                 <div className="stage">
                   <div className="stage-card on">
@@ -609,11 +630,11 @@ export default function App() {
                   <div className="stage-card">
                     <div className="artifact">
                       <div className="artifact-bar" aria-hidden="true">
-                        the demo it built &middot; 0:19
+                        the demo it built &middot; a live page for Brex
                       </div>
                       <img
-                        src="/superhuman-demo-still.png"
-                        alt="A finished demo video: Autosana's agent catching the pricing bug on superhuman.com"
+                        src="/brex-demo.png"
+                        alt="The demo the agent built: a Brex-branded pitch page it could send Notion's finance team"
                       />
                     </div>
                   </div>
