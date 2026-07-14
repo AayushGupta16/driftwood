@@ -398,20 +398,20 @@ export default function App() {
         ctx.clearRect(0, 0, m.canvas.clientWidth, m.canvas.clientHeight);
         for (let r = 0; r < rows; r++) {
           // hero: sparse at the horizon, denser toward the bottom
-          const depth = strip ? 0.78 : 0.45 + (r / rows) * 0.45;
-          ctx.fillStyle = `rgba(21, 85, 126, ${depth * 0.82})`;
+          const depth = strip ? 0.85 : 0.5 + (r / rows) * 0.45;
+          ctx.fillStyle = `rgba(21, 85, 126, ${depth * 0.88})`;
           const y = r * CELL_H + CELL_H / 2;
           for (let c = 0; c < cols; c++) {
             const v = wave(c, r, t, phase); // -1..1
             const idx = Math.max(
               0,
-              Math.min(CHARS.length - 1, Math.round((v + 1.16) * 0.5 * (CHARS.length - 2) + (strip ? 0.55 : (r / rows) * 1.5) - 0.35)),
+              Math.min(CHARS.length - 1, Math.round((v + 1.16) * 0.5 * (CHARS.length - 2) + (strip ? 0.7 : (r / rows) * 1.6 - 0.05) - 0.35)),
             );
             if (idx === 0) continue;
             if (v > 0.82) {
-              ctx.fillStyle = `rgba(21, 85, 126, ${Math.min(0.9, depth * 1.15)})`;
+              ctx.fillStyle = `rgba(21, 85, 126, ${Math.min(0.95, depth * 1.15)})`;
               ctx.fillText(CHARS[5], c * CELL_W, y);
-              ctx.fillStyle = `rgba(21, 85, 126, ${depth * 0.82})`;
+              ctx.fillStyle = `rgba(21, 85, 126, ${depth * 0.88})`;
             } else {
               ctx.fillText(CHARS[idx], c * CELL_W, y);
             }
