@@ -6,8 +6,8 @@ if (params.has("mock")) {
   const hoursAgo = (h: number) => new Date(Date.now() - h * 3600e3).toISOString();
   const me = {
     id: "mock",
-    email: "yuvan@autosana.ai",
-    name: "Yuvan Sundrani",
+    email: "grace@hopperlabs.dev",
+    name: "Grace Hopper",
     avatar_url: null,
     is_approved: true,
     linkedin_connected: true,
@@ -24,15 +24,15 @@ if (params.has("mock")) {
       within_limits: true,
       last_action_at: hoursAgo(3),
     },
-    funnel: { active: 67, contacted: 34, replied: 1, meetings: 1 },
+    funnel: { active: 124, contacted: 77, replied: 7, meetings: 4 },
     results: {
-      meetings: 1,
-      meetings_delta_7d: 1,
-      replies: 1,
-      replies_delta_7d: 1,
-      reply_rate: 0.0294,
+      meetings: 4,
+      meetings_delta_7d: 2,
+      replies: 7,
+      replies_delta_7d: 3,
+      reply_rate: 0.091,
     },
-    lists: { leads: 67, blacklist: 2 },
+    lists: { leads: 124, blacklist: 2 },
     companies: { qualified: 126, screened_out: 844, unknown: 130 },
     pending_reviews: 3,
   };
@@ -48,7 +48,43 @@ if (params.has("mock")) {
       { at: hoursAgo(21), kind: "reply", lead_id: null, lead_name: null, company_name: null, detail: null },
     ],
   };
+  const lead = (name: string, title: string, company: string) => ({
+    lead_id: name, name, title, company, stage: "new", prior_sends: 0, last_sent_at: null,
+  });
+  const reviews = {
+    pending: [
+      {
+        id: "r1", batch_id: "b1", agent_id: "demo", kind: "send_connection",
+        title: "Harborlight \u2014 Maya Chen (connect)",
+        body: "loved your launch post. building something adjacent, would love to connect!",
+        lead: lead("Maya Chen", "Cofounder & CEO", "Harborlight"),
+        attachment_slug: null, evidence: null, status: "pending",
+        decision_reason: null, decided_at: null, scheduled_batch_id: null,
+        created_at: hoursAgo(0.15),
+      },
+      {
+        id: "r2", batch_id: "b1", agent_id: "demo", kind: "send_message",
+        title: "Northstar \u2014 Priya Patel (message)",
+        body: "hey priya, found a dead link on northstar's pricing page. built you a working demo of the fix, 19 seconds, link below. worth a look?",
+        lead: lead("Priya Patel", "Head of Growth", "Northstar"),
+        attachment_slug: null, evidence: null, status: "pending",
+        decision_reason: null, decided_at: null, scheduled_batch_id: null,
+        created_at: hoursAgo(0.4),
+      },
+      {
+        id: "r3", batch_id: "b2", agent_id: "demo", kind: "send_connection",
+        title: "Ledgerline \u2014 Sam Okafor (connect)",
+        body: "fellow yc founder! building in the fintech tooling space too.",
+        lead: lead("Sam Okafor", "CTO", "Ledgerline"),
+        attachment_slug: null, evidence: null, status: "pending",
+        decision_reason: null, decided_at: null, scheduled_batch_id: null,
+        created_at: hoursAgo(1.1),
+      },
+    ],
+    decided: [], total_pending: 3, limit: 25, offset: 0,
+  };
   const routes: [string, unknown][] = [
+    ["/api/v1/dashboard/reviews", reviews],
     ["/auth/me", me],
     ["/api/v1/dashboard/summary", summary],
     ["/api/v1/dashboard/activity", activity],

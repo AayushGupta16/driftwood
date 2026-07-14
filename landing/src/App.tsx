@@ -188,6 +188,9 @@ export default function App() {
     const CELL_W = 9;
     const CELL_H = 13;
     const WOOD = "\u2597\u2584\u2584\u2584\u2584\u2584\u2584\u2596"; // ▗▄▄▄▄▄▄▖ a drifting log
+    const SAIL = "\u259f\u258c"; // ▟▌
+    const HULL = "\u2580\u2580\u2580\u2580"; // ▀▀▀▀
+    const ISLE = "\u2581\u2582\u2583\u2584\u2583\u2582\u2581"; // ▁▂▃▄▃▂▁
 
     type Mount = {
       canvas: HTMLCanvasElement;
@@ -253,6 +256,7 @@ export default function App() {
       m.ctx.textBaseline = "middle";
       m.cols = Math.ceil(w / CELL_W);
       m.rows = Math.ceil(h / CELL_H);
+      m.phase = (m.canvas.getBoundingClientRect().top + scrollY) * 0.02;
     };
     resize();
 
@@ -296,12 +300,30 @@ export default function App() {
             }
           }
         }
+        if (strip) {
+          const sceneKind = Math.round(phase * 10) % 2; // varies per strip
+          if (sceneKind === 0) {
+            // a small ship on the horizon, under sail
+            const span = cols + 30;
+            const sx = -10 + ((t * 2.2 + phase * 8 + 60) % span);
+            const sy = rows * 0.58 + wave(sx, rows * 0.58, t, phase) * 0.7;
+            ctx.fillStyle = "rgba(13, 60, 91, 0.95)";
+            ctx.fillText(SAIL, (sx + 1) * CELL_W, (sy - 1) * CELL_H + CELL_H / 2);
+            ctx.fillText(HULL, sx * CELL_W, sy * CELL_H + CELL_H / 2);
+          } else {
+            // an island, holding still while the water moves
+            const ix = 6 + (Math.abs(Math.round(phase * 53)) % Math.max(8, cols - 20));
+            const iy = rows * 0.55;
+            ctx.fillStyle = "rgba(110, 100, 80, 0.9)";
+            ctx.fillText(ISLE, ix * CELL_W, iy * CELL_H + CELL_H / 2);
+          }
+        }
         if (!strip) {
-          // the driftwood: adrift right-to-left, riding the swell
+          // the driftwood: adrift, riding the swell
           const span = cols + WOOD.length + 20;
           const wx = -WOOD.length - 8 + ((t * 1.7 + 6) % span); // west to east
           const wr = rows * 0.45 + wave(wx, rows * 0.45, t, phase) * 1.6;
-          ctx.fillStyle = "rgba(58, 66, 74, 0.95)";
+          ctx.fillStyle = "rgba(121, 85, 52, 0.95)"; // driftwood-brown
           ctx.font = 'bold 13px ui-monospace, "SF Mono", Menlo, monospace';
           ctx.fillText(WOOD, wx * CELL_W, wr * CELL_H + CELL_H / 2);
           ctx.font = '12px ui-monospace, "SF Mono", Menlo, monospace';
