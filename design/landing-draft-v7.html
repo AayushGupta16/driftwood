@@ -31,6 +31,7 @@
     --accent: #15557e;
     /* the one window system: every artifact on the page wears this chrome */
     --r-win: 12px;
+    --ease-settle: linear(0, 0.201 4.5%, 0.634 11.7%, 0.868 17.4%, 0.981 23%, 1.028 29.5%, 1.031 36.4%, 1.003 55.6%, 1);
     --shadow-win: 0 1px 2px rgba(22,24,27,0.05), 0 24px 48px -24px rgba(22,24,27,0.18);
   }
   /* one label voice, used everywhere a small caption appears */
@@ -55,7 +56,7 @@
     display: inline-flex; align-items: center; justify-content: center;
     background: var(--ink); color: #fff; text-decoration: none;
     font-weight: 500; font-size: 0.95rem; height: 2.75rem; padding-inline: 1.4rem;
-    border-radius: 999px; transition: transform 0.15s cubic-bezier(0.16,1,0.3,1), background 0.15s;
+    border-radius: 999px; transition: transform 0.24s var(--ease-settle), background 0.15s;
   }
   .btn:hover { background: #000; transform: translateY(-1px); }
 
@@ -96,7 +97,11 @@
     box-shadow: var(--shadow-win);
     background: #fff;
   }
-  .enter-window { animation: rise 0.65s cubic-bezier(0.16,1,0.3,1) both 0.1s; }
+  .enter-window { animation: rise 0.65s var(--ease-settle) both 0.1s, bob 7s ease-in-out 2.6s infinite; }
+  .thread { animation: bob 7.6s ease-in-out 1.3s infinite; }
+  .email { animation: bob 8.2s ease-in-out 0.6s infinite; }
+  .email.us { animation-delay: 2.1s; }
+  @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1.5px); } }
   @keyframes rise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
 
   /* waterline under the hero */
@@ -108,7 +113,14 @@
     content: ""; display: block; height: 28px;
     background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='28' viewBox='0 0 180 28'%3E%3Cpath d='M0 14 C 11.25 5.5, 33.75 5.5, 45 14 C 56.25 22.5, 78.75 22.5, 90 14 C 101.25 5.5, 123.75 5.5, 135 14 C 146.25 22.5, 168.75 22.5, 180 14' fill='none' stroke='%2315557e' stroke-width='1.4' stroke-opacity='0.26'/%3E%3C/svg%3E") repeat-x center;
   }
-  #week-one::before { content: none; } /* the hero-wave already divides */
+  #week-one::before { content: none; } /* the hero sea already divides */
+  .sea-strip {
+    display: none; width: 100%; height: 96px; pointer-events: none;
+    -webkit-mask-image: linear-gradient(to bottom, transparent, black 30%, black 70%, transparent);
+    mask-image: linear-gradient(to bottom, transparent, black 30%, black 70%, transparent);
+  }
+  body.sea-live .sea-strip { display: block; }
+  body.sea-live section::before { content: none; }
   .sect { padding-block: clamp(3.5rem, 7vw, 6rem); }
   .sect h2 { font-size: clamp(1.6rem, 1rem + 1.9vw, 2.3rem); font-weight: 600; line-height: 1.18; max-width: 28ch; }
 
@@ -220,7 +232,7 @@
   .stage-card {
     position: absolute; inset: 0; margin: auto; height: fit-content;
     opacity: 0; transform: translateY(18px); pointer-events: none;
-    transition: opacity 0.45s cubic-bezier(0.16,1,0.3,1), transform 0.45s cubic-bezier(0.16,1,0.3,1);
+    transition: opacity 0.45s cubic-bezier(0.16,1,0.3,1), transform 0.5s var(--ease-settle);
   }
   .stage-card.on { opacity: 1; transform: none; pointer-events: auto; }
 
@@ -305,6 +317,7 @@
   @media (prefers-reduced-motion: reduce) {
     * { animation-duration: 0.01ms !important; animation-delay: 0ms !important; transition-duration: 0.01ms !important; }
     .stagger .msg, .stagger .divider { opacity: 1; transform: none; }
+    .enter-window, .thread, .email { animation: none; }
     .pin-wrap { height: auto; }
     .pin { position: static; height: auto; }
     .stage-card { position: static; opacity: 1; transform: none; }
@@ -421,6 +434,7 @@
 
   <!-- how it works: pinned scrub -->
   <section id="how">
+    <canvas class="sea-strip" aria-hidden="true"></canvas>
     <div class="pin-wrap">
       <div class="pin">
         <div class="wrap how-grid">
@@ -492,6 +506,7 @@
 
   <!-- the favorite: don't send out AI slop — pinned, the arrow draws as you scroll -->
   <section id="compare">
+    <canvas class="sea-strip" aria-hidden="true"></canvas>
     <div class="pin-wrap compare-pin-wrap">
       <div class="pin">
         <div class="wrap" style="width:100%">
@@ -547,6 +562,7 @@
 
   <!-- close -->
   <section class="close-sect">
+    <canvas class="sea-strip" aria-hidden="true"></canvas>
     <div class="wrap sect">
       <h2>See what we'd send <em class="voice">your</em> prospects.</h2>
       <a class="btn" href="https://cal.com/aayush-gupta-qyilz6/30min">Book a demo</a>
@@ -639,63 +655,88 @@
   }
 </script>
 <script type="module">
-  // the sea: a calm low-poly water surface under the hero (three.js).
-  // Static page on mobile / reduced motion / load failure.
-  const canvas = document.getElementById("sea");
+  // one body of water, surfacing across the page: the hero sea + thin live
+  // divider strips share a renderer setup and a global clock; each mount is
+  // phase-seeded by its document position. Static SVG waves are the fallback.
   const motionOk = matchMedia("(prefers-reduced-motion: no-preference)").matches
     && matchMedia("(min-width: 52rem)").matches;
-  if (!motionOk) { canvas.remove(); }
+  const heroCanvas = document.getElementById("sea");
+  if (!motionOk) { heroCanvas?.remove(); }
   else {
     try {
       const THREE = await import("https://unpkg.com/three@0.160.0/build/three.module.js");
-      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-      const scene = new THREE.Scene();
-      scene.fog = new THREE.Fog(0xffffff, 4, 22);
-      const camera = new THREE.PerspectiveCamera(34, 2, 0.1, 100);
-      camera.position.set(0, 2.8, 9);
-      camera.lookAt(0, -0.4, -8);
+      const mounts = [];
 
-      const geo = new THREE.PlaneGeometry(90, 44, 150, 74);
-      geo.rotateX(-Math.PI / 2);
-      const mat = new THREE.MeshPhongMaterial({
-        color: 0x4b87ae, shininess: 70, specular: 0xcfe3f0, flatShading: true,
+      function mountSea(canvas, strip) {
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+        renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.Fog(0xffffff, strip ? 3 : 4, strip ? 15 : 22);
+        const camera = new THREE.PerspectiveCamera(34, 2, 0.1, 100);
+        camera.position.set(0, strip ? 1.15 : 2.8, 9);
+        camera.lookAt(0, strip ? 0.3 : -0.4, -8);
+        const geo = new THREE.PlaneGeometry(90, 44, 150, 74);
+        geo.rotateX(-Math.PI / 2);
+        scene.add(new THREE.Mesh(geo, new THREE.MeshPhongMaterial({
+          color: 0x4b87ae, shininess: 70, specular: 0xcfe3f0, flatShading: true,
+        })));
+        scene.add(new THREE.AmbientLight(0xdfe9f1, 0.85));
+        const sun = new THREE.DirectionalLight(0xffffff, 1.1);
+        sun.position.set(-4, 6, -6);
+        scene.add(sun);
+        const pos = geo.attributes.position;
+        const m = {
+          canvas, renderer, scene, camera, geo, pos,
+          base: pos.array.slice(),
+          phase: (canvas.getBoundingClientRect().top + scrollY) * 0.0045,
+          visible: false,
+        };
+        new IntersectionObserver((es) => {
+          for (const e of es) m.visible = e.isIntersecting;
+        }).observe(canvas);
+        mounts.push(m);
+      }
+
+      mountSea(heroCanvas, false);
+      document.querySelectorAll(".sea-strip").forEach((c) => mountSea(c, true));
+      document.body.classList.add("sea-live");
+
+      const resize = () => mounts.forEach((m) => {
+        const w = m.canvas.clientWidth, h = m.canvas.clientHeight;
+        if (!w || !h) return;
+        m.renderer.setSize(w, h, false);
+        m.camera.aspect = w / h;
+        m.camera.updateProjectionMatrix();
       });
-      const sea = new THREE.Mesh(geo, mat);
-      scene.add(sea);
-      scene.add(new THREE.AmbientLight(0xdfe9f1, 0.85));
-      const sun = new THREE.DirectionalLight(0xffffff, 1.1);
-      sun.position.set(-4, 6, -6);
-      scene.add(sun);
-
-      const pos = geo.attributes.position;
-      const base = pos.array.slice();
-      const resize = () => {
-        const w = canvas.clientWidth, h = canvas.clientHeight;
-        renderer.setSize(w, h, false);
-        camera.aspect = w / h; camera.updateProjectionMatrix();
-      };
-      addEventListener("resize", resize); resize();
+      addEventListener("resize", resize);
+      resize();
 
       let last = 0;
       const tick = (ms) => {
         requestAnimationFrame(tick);
-        if (ms - last < 33) return; // ~30fps is plenty for calm water
+        if (ms - last < 33) return; // calm water is fine at ~30fps
         last = ms;
         const t = ms / 1000;
-        for (let i = 0; i < pos.count; i++) {
-          const x = base[i * 3], z = base[i * 3 + 2];
-          pos.array[i * 3 + 1] =
-            Math.sin(x * 0.35 + t * 0.7) * 0.14 +
-            Math.sin(z * 0.5 + t * 0.5) * 0.12 +
-            Math.sin((x + z) * 0.22 + t * 0.9) * 0.08;
+        for (const m of mounts) {
+          if (!m.visible) continue;
+          const { pos, base, phase } = m;
+          for (let i = 0; i < pos.count; i++) {
+            const x = base[i * 3], z = base[i * 3 + 2];
+            pos.array[i * 3 + 1] =
+              Math.sin(x * 0.35 + t * 0.7 + phase) * 0.14 +
+              Math.sin(z * 0.5 + t * 0.5 + phase) * 0.12 +
+              Math.sin((x + z) * 0.22 + t * 0.9 + phase * 0.6) * 0.08;
+          }
+          pos.needsUpdate = true;
+          m.geo.computeVertexNormals();
+          m.renderer.render(m.scene, m.camera);
         }
-        pos.needsUpdate = true;
-        geo.computeVertexNormals();
-        renderer.render(scene, camera);
       };
       requestAnimationFrame(tick);
-    } catch { canvas.remove(); }
+    } catch {
+      heroCanvas?.remove();
+      document.querySelectorAll(".sea-strip").forEach((c) => c.remove());
+    }
   }
 </script>
 </body>
