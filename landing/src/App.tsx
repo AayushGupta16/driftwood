@@ -594,11 +594,11 @@ export default function App() {
                   <div className="stage-card on">
                     <div className="artifact">
                       <div className="artifact-bar" aria-hidden="true">
-                        #autosana-ai &middot; the agent at work
+                        #driftwood-sh &middot; the agent at work
                       </div>
                       <img
                         src="/slack-trace.png"
-                        alt="The driftwood agent working in Slack: running checks against a prospect's product and reporting what it found"
+                        alt="The driftwood agent in Slack: asked for a Brex demo, it reads its build skill and spawns research subagents for Brex and Ramp"
                       />
                     </div>
                   </div>
@@ -628,6 +628,7 @@ export default function App() {
               </div>
             </div>
           </div>
+          <canvas className="sea-strip" aria-hidden="true" />
         </section>
 
         {/* the favorite: don't send out AI slop — pinned, the arrow draws as you scroll */}

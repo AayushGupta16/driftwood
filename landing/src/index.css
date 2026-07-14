@@ -400,8 +400,9 @@ body {
 }
 
 /* ---------- how it works: G3 pinned scrub ---------- */
-.landing .pin-wrap { height: 180vh; }
-.landing .week-pin-wrap { height: 170vh; }
+.landing .pin-wrap { height: 165vh; }
+.landing .week-pin-wrap { height: 145vh; }
+.landing .week-pin-wrap .pin { align-items: flex-start; padding-top: 5rem; }
 .landing .pin-open { overflow: visible; }
 .landing .week-sect { padding-block: 2rem; width: 100%; }
 .landing .pin { position: sticky; top: 0; height: 100vh; display: flex; align-items: center; overflow: hidden; }
