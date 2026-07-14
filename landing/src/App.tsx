@@ -336,7 +336,10 @@ export default function App() {
           ctx.fillText(dir > 0 ? "\u2023" : "\u2039", (dir > 0 ? dx + 2.35 : dx - 1.15) * CELL_W, y - CELL_H * 0.45); // beak
         };
         if (strip) {
-          const sceneKind = Math.round(phase * 10) % 3; // varies per strip
+          // varies per strip; phone-width strips swap the ship for a duck —
+          // at that scale the near-opaque sail reads as an ink blob
+          const raw = Math.round(phase * 10) % 3;
+          const sceneKind = cols < 70 && raw === 0 ? 2 : raw;
           if (sceneKind === 0) {
             // a small ship on the horizon, under sail
             const span = cols + 30;
