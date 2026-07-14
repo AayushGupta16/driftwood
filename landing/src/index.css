@@ -453,10 +453,20 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
 .landing .week-sect { padding-block: 2rem; width: 100%; }
 .landing .pin { position: sticky; top: 0; height: 100vh; display: flex; align-items: center; overflow: hidden; }
 .landing .how-grid { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: clamp(2.5rem, 5vw, 5rem); align-items: center; width: 100%; }
-/* the deck runs at the hero's width so it fills the pinned viewport
-   instead of floating in it (68rem left big top/bottom bands on monitors) */
-.landing #how .how-grid { max-width: 82rem; }
-.landing .stage-card .artifact img { width: 100%; height: auto; max-height: 80vh; object-fit: contain; object-position: top center; }
+/* the deck bleeds toward the right viewport edge on desktop: the rail keeps
+   the hero's 82rem left margin, the artifacts take the rest of the width.
+   Taller source crops + a bottom cover-crop (never letterboxed) fill the
+   pinned viewport instead of floating in it. */
+@media (min-width: 52rem) {
+  .landing #how .how-grid {
+    max-width: none;
+    grid-template-columns: minmax(0, 26rem) minmax(0, 1fr);
+    padding-left: max(clamp(1.25rem, 4vw, 2.5rem), calc((100vw - 82rem) / 2 + 2.5rem));
+    padding-right: clamp(1.25rem, 2vw, 2rem);
+  }
+  .landing #how .stage { height: 80vh; min-height: 0; }
+}
+.landing .stage-card .artifact img { width: 100%; height: auto; max-height: 80vh; object-fit: cover; object-position: top center; }
 .landing .rail-list { list-style: none; margin: 2.4rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 1.6rem; }
 .landing .rail-list li { display: flex; gap: 0.9rem; align-items: baseline; font-size: 1.45rem; color: var(--gray-light); font-weight: 500; transition: color 0.25s; transform-origin: left center; will-change: transform, opacity; }
 .landing .rail-list li span { font-size: 1rem; }

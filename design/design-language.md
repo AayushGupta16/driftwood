@@ -66,9 +66,15 @@ The signature. ASCII character sea on 2D canvas — never rendered 3D.
   wave height, ~15fps (terminal cadence), tide-blue rgba by depth.
 - Placement: hero (bottom 62%, top-masked) + thin strips at section seams.
   Sheets dock onto water with filled-sine wave shoulders.
-- Scenery is earned, not decorated: the driftwood log (brown, west→east),
-  the duck (yellow, may captain the log), ships (never on phone-width
-  strips — the sail blurs into a blob), islands (static while water moves).
+- Scenery is earned, not decorated: the driftwood log (brown, west→east)
+  with its duck captain, one free-swimming duck, ships (never on
+  phone-width strips — the sail blurs into a blob), islands (static while
+  water moves), red buoys bobbing on station, the odd fish arcing clear of
+  the swell, and the proof island's palm. The log's lane clamps above the
+  proof island (never runs aground, never hides behind it); the free
+  swimmer may paddle behind it. Wide strips may hold two scenes.
+  (A crab was tried and axed 2026-07-14 — block-char crabs read as
+  red staples at cell scale; don't re-add without a better sprite.)
 - The proof island: drawn BY the sea from the `.hero-proof` rect — dithered
   `▒` beach, faint `█` interior, surf piling at the coast. Never a CSS shape.
   It lives on phones too: the stacked hero moves the proof below the window,

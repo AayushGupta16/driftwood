@@ -367,10 +367,10 @@ export default function App() {
               const e = islE(c, r);
               if (e > 1) continue;
               if (e > 0.62) {
-                ctx.fillStyle = "rgba(184, 148, 82, 0.5)";
+                ctx.fillStyle = "rgba(203, 168, 66, 0.5)";
                 ctx.fillText("▒", c * CELL_W, y); // ▒ beach, wet sand
               } else {
-                ctx.fillStyle = "rgba(209, 182, 120, 0.3)";
+                ctx.fillStyle = "rgba(226, 202, 104, 0.32)";
                 ctx.fillText("█", c * CELL_W, y); // █ dry sand, faint under the text
               }
             }
@@ -403,6 +403,7 @@ export default function App() {
           const span = cols + 16;
           const dx = -8 + ((((t * 1.15 * dir + seed) % span) + span) % span);
           const dy = rowF * rows + wave(dx, rowF * rows, t, phase) * 1.9;
+          if (islE(dx + 0.8, dy) <= 1.3) return; // ducks paddle behind the island
           const y = dy * CELL_H + CELL_H / 2;
           ctx.fillStyle = "rgba(240, 195, 60, 0.95)";
           ctx.fillText("\u2586\u2586", dx * CELL_W, y); // body
@@ -432,6 +433,37 @@ export default function App() {
           } else {
             duck(Math.abs(Math.round(phase * 7)), 0.55, 1);
           }
+          // wide strips hold a second scene: an island for the ship to pass,
+          // or a ship for the island to watch
+          if (cols >= 110) {
+            if (sceneKind === 1) {
+              const span = cols + 30;
+              const sx = -10 + ((t * 1.8 + phase * 5 + 20) % span);
+              const sy = rows * 0.5 + wave(sx, rows * 0.5, t, phase) * 0.7;
+              ctx.fillStyle = "rgba(13, 60, 91, 0.95)";
+              ctx.fillText(SAIL, (sx + 1) * CELL_W, (sy - 1) * CELL_H + CELL_H / 2);
+              ctx.fillText(HULL, sx * CELL_W, sy * CELL_H + CELL_H / 2);
+            } else {
+              const ix = 6 + (Math.abs(Math.round(phase * 29)) % Math.max(8, cols - 20));
+              ctx.fillStyle = "rgba(110, 100, 80, 0.9)";
+              ctx.fillText(ISLE, ix * CELL_W, rows * 0.5 * CELL_H + CELL_H / 2);
+            }
+          }
+          // a red buoy holds station while the water moves under it
+          const bx = 4 + (Math.abs(Math.round(phase * 37)) % Math.max(6, cols - 8));
+          const by = rows * 0.5 + wave(bx, rows * 0.5, t, phase) * 1.6;
+          ctx.fillStyle = "rgba(190, 70, 52, 0.9)";
+          ctx.fillText("▀", bx * CELL_W, by * CELL_H + CELL_H / 2);
+          ctx.fillText("▘", (bx + 0.18) * CELL_W, (by - 0.75) * CELL_H + CELL_H / 2);
+          // now and then a fish arcs clear of the swell
+          const cyc = (t * 0.9 + phase * 5) % 9;
+          if (cyc < 1.1) {
+            const fp = cyc / 1.1;
+            const fx = cols * 0.25 + (Math.abs(Math.round(phase * 23)) % Math.max(4, Math.floor(cols * 0.5))) + fp * 4;
+            const fy = rows * 0.62 - Math.sin(fp * Math.PI) * 2.4;
+            ctx.fillStyle = "rgba(90, 130, 160, 0.9)";
+            ctx.fillText(fp < 0.5 ? "▞" : "▚", fx * CELL_W, fy * CELL_H + CELL_H / 2);
+          }
         }
         if (!strip) {
           // a distant ship on the horizon, half in the haze
@@ -440,12 +472,15 @@ export default function App() {
           ctx.fillStyle = "rgba(13, 60, 91, 0.45)";
           ctx.fillText(SAIL, (shx + 1) * CELL_W, (shy - 1) * CELL_H + CELL_H / 2);
           ctx.fillText(HULL, shx * CELL_W, shy * CELL_H + CELL_H / 2);
-          // one free swimmer
-          duck(70, 0.78, -1);
-          // the driftwood: adrift, riding the swell
+          // one free swimmer, keeping its distance from the log's lane
+          duck(70, 0.8, -1);
+          // the driftwood: adrift, riding the swell. Its lane stays clear of
+          // the island \u2014 clamped above the beach so log and captain never
+          // run aground (or vanish behind it)
           const span = cols + WOOD.length + 20;
           const wx = -WOOD.length - 8 + ((t * 1.7 + 6) % span); // west to east
-          const wr = rows * 0.45 + wave(wx, rows * 0.45, t, phase) * 1.6;
+          const lane = isl ? Math.max(3, Math.min(rows * 0.45, isl.cy - isl.ry - 3.2)) : rows * 0.45;
+          const wr = lane + wave(wx, lane, t, phase) * 1.6;
           ctx.fillStyle = "rgba(121, 85, 52, 0.95)"; // driftwood-brown
           ctx.font = 'bold 13px ui-monospace, "SF Mono", Menlo, monospace';
           ctx.fillText(WOOD, wx * CELL_W, wr * CELL_H + CELL_H / 2);
