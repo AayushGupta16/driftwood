@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>driftwood — landing draft v6</title>
+<!-- V6 deltas on v5: F1 font = Public Sans (USWDS lineage: professional,
+     zero vibe-coding association); F2 hero split text-left / dashboard-right,
+     window bleeds off the viewport edge, zoom-crop keeps names out of frame;
+     F3 walkthrough generalized (no Joe's) as a Linq-style sticky rail +
+     Spur-style agent artifacts with redaction bars; F4 quote upgraded to a
+     founder feature with Yuvan's real photo. -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400..700;1,400..700&display=swap" />
+<!-- DRAFT v5 = v4 + Aayush's 2026-07-13 feedback. Deltas (each tagged inline):
+     D1  hero centered over the app window (v4 was left-text over a centered
+         window — the unbalanced right half read as odd). Not the sparkle
+         stack: one button, no arrow, real flat screenshot, real-fact pill.
+     D2  toast lifted fully ABOVE the window edge (v4 straddled the edge and
+         covered the account chip in the dashboard image).
+     D3  fold fade deepened + taller crop so the cut lands softer, not mid-row.
+     D4  week-one story cut to one paragraph + tighter stat caption (~55%
+         fewer words).
+     D5  CTA supporting line ("30 minutes. We build one live...") removed;
+         thread footnote shortened to "Real thread · name redacted" (kept —
+         it is the verifiability claim; kill entirely if still too much).
+     D6  NEW walkthrough section: research → demo → LinkedIn send, as three
+         artifacts (notes, built demo, sent message) — no numbers, no icons,
+         no mono/terminal treatment, no em dashes; Square's-prospect Joe's
+         Pizza framing (ordering exists, converts poorly — standing note);
+         one honest caption pointing at the real thread. STATIC PLACEHOLDER:
+         the locked treatment for this section is the screen-recording
+         walkthrough (~/Downloads/driftwood-build-walkthrough.html) with the
+         final beat changed Gmail → LinkedIn. -->
+<style>
+  :root {
+    --bg: #ffffff;
+    --ink: #16181b;
+    --gray: #6a737d;
+    --gray-light: #9aa2ab;
+    --line: #e9ebee;
+    --accent: #15557e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; /* F1 */
+    font-size: 16px; line-height: 1.5; -webkit-font-smoothing: antialiased;
+  }
+  h1, h2 { margin: 0; letter-spacing: -0.014em; text-wrap: balance; }
+  p { margin: 0; }
+  img { display: block; max-width: 100%; }
+  a { color: inherit; }
+  em.voice { font-family: Georgia, "Times New Roman", serif; font-style: italic; color: var(--accent); letter-spacing: 0; }
+  .wrap { max-width: 68rem; margin-inline: auto; padding-inline: clamp(1.25rem, 4vw, 2.5rem); position: relative; }
+  @media (min-width: 76rem) {
+    .rails { border-inline: 1px solid var(--line); }
+  }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--ink); color: #fff; text-decoration: none;
+    font-weight: 500; font-size: 0.95rem; height: 2.75rem; padding-inline: 1.4rem;
+    border-radius: 999px; transition: transform 0.15s cubic-bezier(0.16,1,0.3,1), background 0.15s;
+  }
+  .btn:hover { background: #000; transform: translateY(-1px); }
+  .link { color: var(--accent); text-decoration: none; font-weight: 500; }
+  .link:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+  /* T1 (theme: the waterline) — one tide-blue wave as the page's recurring
+     mark: it cuts the hero fold, divides every section, and thickens into
+     the footer. Product-true rationale: it's the brand's existing tide
+     signature made structural (a rule), not scenery. */
+  .fold-wave {
+    position: absolute; left: 0; right: 0; bottom: 0.55rem; height: 28px; z-index: 2;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='28' viewBox='0 0 180 28'%3E%3Cpath d='M0 14 C 15 6, 30 22, 45 14 S 75 6, 90 14 S 120 22, 135 14 S 165 6, 180 14' fill='none' stroke='%2315557e' stroke-width='1.6' stroke-opacity='0.45'/%3E%3C/svg%3E") repeat-x center;
+  }
+
+  header { border-bottom: 1px solid var(--line); }
+  .nav { display: flex; align-items: center; justify-content: space-between; height: 4rem; }
+  .wordmark { display: inline-flex; align-items: center; gap: 0.55rem; text-decoration: none; font-weight: 600; font-size: 1.05rem; }
+  .wordmark svg { width: 1.4rem; height: 1.4rem; color: var(--accent); } /* T4: helm in tide */
+  footer .wordmark svg { color: #fff; }
+  .nav-right { display: flex; align-items: center; gap: 1.6rem; }
+  .nav-login { font-size: 0.9rem; color: var(--gray); text-decoration: none; }
+  .nav-login:hover { color: var(--ink); }
+  .nav .btn { height: 2.25rem; font-size: 0.875rem; }
+
+  /* ---------- hero: F2 — text left, the real app right, bleeding off-edge ---------- */
+  .hero-grid {
+    display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    align-items: center; gap: clamp(2rem, 4vw, 3.5rem);
+    padding-block: clamp(3.5rem, 7vw, 6rem);
+  }
+  .hero h1 {
+    margin: 0;
+    font-size: clamp(1.9rem, 1.1rem + 2.4vw, 2.75rem);
+    font-weight: 600; line-height: 1.16; max-width: 19ch;
+  }
+  .hero-sub { margin-top: 1.1rem; font-size: 1.1rem; color: var(--gray); max-width: 38ch; }
+  .hero-actions { display: flex; align-items: center; gap: 1.5rem; margin-top: 1.8rem; }
+
+  .hero-shot { position: relative; margin-right: calc(50% - 50vw); } /* bleed to viewport edge */
+  .hero-shot .app-window {
+    border-radius: 14px 0 0 14px; border-right: 0;
+    aspect-ratio: 16 / 10; overflow: hidden;
+  }
+  /* zoom-crop: left metrics column fills the frame; the activity feed
+     (which names people) stays out of frame */
+  .hero-shot .app-window img { width: 160%; max-width: none; }
+
+  /* D2/D3: toast sits fully above the window; deeper fade, slightly taller crop. */
+  .fold {
+    margin-top: clamp(2.25rem, 4.5vw, 3.25rem);
+    position: relative;
+    height: clamp(22rem, 40vw, 35rem);
+    padding-top: 3.1rem; /* room for the toast resting above the window edge */
+    overflow: hidden;
+  }
+  .fold::after {
+    content: ""; position: absolute; inset: auto 0 0 0; height: 9rem;
+    background: linear-gradient(to bottom, transparent, #fff);
+  }
+  .app-window {
+    max-width: 62rem; margin-inline: auto;
+    border: 1px solid var(--line); border-radius: 14px 14px 0 0; overflow: hidden;
+    box-shadow: 0 2px 4px rgba(22,24,27,0.04), 0 32px 80px -32px rgba(22,24,27,0.22);
+    background: #fff;
+  }
+  .app-window img { width: 100%; }
+  .stage-in { position: relative; max-width: 62rem; margin-inline: auto; }
+  .toast {
+    position: absolute; z-index: 2; top: -2.7rem; right: 0;
+    background: #fff; border: 1px solid var(--line); border-radius: 999px;
+    padding: 0.55rem 1rem; font-size: 0.85rem; font-weight: 600;
+    box-shadow: 0 12px 28px -12px rgba(22,24,27,0.3);
+    display: inline-flex; align-items: center; gap: 0.5rem;
+  }
+  .toast::before { content: ""; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: #2a9d5c; }
+
+  .enter-window { animation: rise 0.65s cubic-bezier(0.16,1,0.3,1) both 0.1s; }
+  .enter-toast { animation: pop 0.4s cubic-bezier(0.16,1,0.3,1) both 0.55s; }
+  @keyframes rise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+  @keyframes pop { from { opacity: 0; transform: translateY(8px) scale(0.96); } to { opacity: 1; transform: none; } }
+
+  /* ---------- week one ---------- */
+  /* T2: sections divide on the waterline instead of a hairline */
+  section { border-top: 0; }
+  section::before {
+    content: ""; display: block; height: 28px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='28' viewBox='0 0 180 28'%3E%3Cpath d='M0 14 C 15 6, 30 22, 45 14 S 75 6, 90 14 S 120 22, 135 14 S 165 6, 180 14' fill='none' stroke='%2315557e' stroke-width='1.4' stroke-opacity='0.26'/%3E%3C/svg%3E") repeat-x center;
+  }
+  .sect { padding-block: clamp(4rem, 8vw, 6.5rem); }
+  .sect h2 { font-size: clamp(1.6rem, 1rem + 1.9vw, 2.3rem); font-weight: 600; line-height: 1.18; max-width: 28ch; }
+  .sect-sub { margin-top: 1rem; font-size: 1.1rem; color: var(--gray); max-width: 52ch; }
+
+  .week-grid {
+    display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: clamp(2.5rem, 5vw, 4.5rem); align-items: start; margin-top: 3rem;
+  }
+  .week-story p { color: var(--gray); line-height: 1.65; }
+  .week-story b { color: var(--ink); font-weight: 600; }
+  .week-caption { margin-top: 1.75rem; padding-top: 1.1rem; border-top: 1px solid var(--line); font-size: 0.9rem; color: var(--gray-light); line-height: 1.7; }
+  .week-caption b { color: var(--ink); font-weight: 600; }
+
+  .thread {
+    border: 1px solid var(--line); border-radius: 14px; background: #fff;
+    box-shadow: 0 2px 4px rgba(22,24,27,0.04), 0 24px 56px -28px rgba(22,24,27,0.18);
+    overflow: hidden;
+  }
+  .thread-bar { display: flex; align-items: center; gap: 0.4rem; padding: 0.65rem 0.9rem; border-bottom: 1px solid var(--line); }
+  .dot { width: 0.62rem; height: 0.62rem; border-radius: 50%; }
+  .dot:nth-child(1) { background: #f6635a; } .dot:nth-child(2) { background: #f5bd4f; } .dot:nth-child(3) { background: #62c454; }
+  .thread-url { flex: 1; text-align: center; font-size: 0.75rem; color: var(--gray-light); }
+  .thread-body { padding: 1.4rem 1.5rem 1.5rem; }
+  .msg { display: grid; grid-template-columns: 2.4rem minmax(0, 1fr); gap: 0.8rem; }
+  .msg + .msg { margin-top: 1.3rem; }
+  .avatar { width: 2.4rem; height: 2.4rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.85rem; color: #fff; }
+  .avatar.y { background: #4a6274; } .avatar.s { background: #1d2a35; }
+  .msg-head { display: flex; align-items: baseline; gap: 0.55rem; font-size: 0.9rem; }
+  .msg-head .who { font-weight: 600; }
+  .msg-head .when { color: var(--gray-light); font-size: 0.8rem; }
+  .msg-body { margin-top: 0.25rem; font-size: 0.92rem; color: #3c434a; max-width: 52ch; }
+  .divider { display: flex; align-items: center; gap: 0.8rem; margin-block: 1.3rem; }
+  .divider hr { flex: 1; border: 0; border-top: 1px solid var(--line); margin: 0; }
+  .divider span { font-size: 0.78rem; color: var(--gray-light); }
+  .redact { display: inline-block; background: #d4d9de; border-radius: 2px; width: 2.5em; height: 0.78em; }
+  .clip { margin-top: 0.7rem; position: relative; width: min(19rem, 100%); border-radius: 10px; overflow: hidden; border: 1px solid var(--line); }
+  .clip img { width: 100%; }
+  .clip::after { content: "0:19"; position: absolute; right: 0.55rem; bottom: 0.5rem; background: rgba(22,24,27,0.75); color: #fff; font-size: 0.7rem; padding: 0.1rem 0.4rem; border-radius: 4px; }
+  .play { position: absolute; inset: 0; margin: auto; width: 2.6rem; height: 2.6rem; background: rgba(22,24,27,0.62); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  .play::after { content: ""; border-style: solid; border-width: 0.45rem 0 0.45rem 0.8rem; border-color: transparent transparent transparent #fff; margin-left: 0.18rem; }
+  .thread-foot { border-top: 1px solid var(--line); margin-top: 1.4rem; padding-top: 1.1rem; display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
+  .thread-foot b { font-size: 0.95rem; }
+  .thread-foot span { font-size: 0.8rem; color: var(--gray-light); }
+
+  .stagger .msg, .stagger .divider { opacity: 0; transform: translateY(10px); }
+  .stagger.seen .msg, .stagger.seen .divider {
+    animation: rise 0.45s cubic-bezier(0.16,1,0.3,1) both;
+    animation-delay: calc(var(--i) * 110ms);
+  }
+
+  /* ---------- D6: the walkthrough — three artifacts, no numbers, no icons ---------- */
+  .walk-grid {
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(1.25rem, 2.5vw, 2rem); margin-top: 3rem; align-items: start;
+  }
+  .walk-label { font-size: 0.9rem; font-weight: 600; margin-bottom: 0.8rem; }
+  .walk-label span { color: var(--gray-light); font-weight: 500; }
+  .artifact {
+    border: 1px solid var(--line); border-radius: 14px; background: #fff; overflow: hidden;
+    box-shadow: 0 2px 4px rgba(22,24,27,0.04), 0 16px 40px -24px rgba(22,24,27,0.16);
+  }
+  .artifact-bar { display: flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--line); font-size: 0.72rem; color: var(--gray-light); }
+  .artifact-bar .dot { width: 0.5rem; height: 0.5rem; }
+  .artifact-body { padding: 1rem 1.1rem 1.15rem; }
+
+  /* artifact 1: the agent's notes — plain sans, no terminal/mono treatment
+     (mono + terminal-log styling are on the documented reject list) */
+  .notes { font-size: 0.85rem; line-height: 1.85; color: #3c434a; }
+  .notes .n-dim { color: var(--gray-light); }
+  .notes .n-hit { color: var(--accent); font-weight: 600; }
+
+  /* artifact 2: the built demo, mini browser */
+  .mini-url { flex: 1; text-align: center; }
+  .demo-menu { display: flex; flex-direction: column; gap: 0.55rem; }
+  .demo-row { display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--line); border-radius: 8px; padding: 0.5rem 0.65rem; font-size: 0.8rem; }
+  .demo-row span:last-child { color: var(--gray); }
+  .demo-cta { margin-top: 0.7rem; background: var(--ink); color: #fff; text-align: center; border-radius: 999px; padding: 0.5rem; font-size: 0.8rem; font-weight: 600; }
+
+  /* artifact 3: the sent message */
+  .send .msg-body { max-width: none; }
+  .send .demo-link { display: inline-block; margin-top: 0.45rem; color: var(--accent); font-weight: 500; font-size: 0.85rem; text-decoration: underline; text-underline-offset: 3px; }
+
+  .walk-caption { margin-top: 2.25rem; font-size: 0.9rem; color: var(--gray-light); }
+  .walk-caption a { color: var(--gray); }
+
+  /* F2: toast placement in the split hero */
+  .hero-shot .toast { top: -1.4rem; left: 1.5rem; right: auto; }
+
+  /* F3: generalized walkthrough — sticky rail left, artifacts right */
+  .how-grid { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: clamp(2.5rem, 5vw, 5rem); margin-top: 0; }
+  .how-rail { position: sticky; top: 5.5rem; align-self: start; }
+  .rail-list { list-style: none; margin: 2rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 1.1rem; }
+  .rail-list li { display: flex; gap: 0.8rem; align-items: baseline; font-size: 1.05rem; color: var(--gray-light); font-weight: 500; transition: color 0.25s; }
+  .rail-list li span { font-size: 0.8rem; }
+  .rail-list li.active { color: var(--ink); font-weight: 600; }
+  .rail-list li.active span { color: var(--accent); }
+  .how-cards { display: flex; flex-direction: column; gap: clamp(1.75rem, 3vw, 2.75rem); }
+  .work { font-size: 0.9rem; line-height: 2.1; color: #3c434a; }
+  .work .done::before { content: "✓"; color: var(--accent); margin-right: 0.55rem; font-weight: 600; }
+  .work .doing::before { content: "●"; color: var(--accent); margin-right: 0.55rem; font-size: 0.6rem; vertical-align: 1px; }
+  .work .doing { color: var(--gray-light); }
+  .cursor-pill {
+    position: absolute; right: 1.2rem; bottom: 1.1rem;
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    background: var(--accent); color: #fff; border-radius: 999px;
+    padding: 0.25rem 0.65rem; font-size: 0.72rem; font-weight: 600;
+    box-shadow: 0 6px 16px -6px rgba(21,85,126,0.5);
+  }
+  .cursor-pill::before { content: ""; width: 0; height: 0; border: 5px solid transparent; border-right-color: var(--accent); margin-left: -0.8rem; }
+
+  /* F4: founder feature */
+  .quote-grid { display: grid; grid-template-columns: minmax(0, 320px) minmax(0, 1fr); gap: clamp(2rem, 5vw, 4rem); align-items: center; text-align: left; }
+  .founder-photo { border-radius: 14px; width: 100%; }
+  .quote-grid .quote { margin-inline: 0; max-width: 18ch; }
+  .quote-grid .quote-attr { margin-top: 1.2rem; }
+
+  /* ---------- quote, no chrome ---------- */
+  .quote-sect { text-align: center; }
+  .quote { font-size: clamp(1.5rem, 1rem + 2vw, 2.4rem); font-weight: 500; line-height: 1.3; max-width: 24ch; margin-inline: auto; letter-spacing: -0.01em; }
+  .quote-attr { margin-top: 1.5rem; font-size: 0.95rem; }
+  .quote-attr b { font-weight: 600; }
+  .quote-attr span { color: var(--gray); }
+
+  /* ---------- giant close (D5: no supporting note) ---------- */
+  .close-sect { text-align: center; }
+  .close-sect .sect { padding-block: clamp(5rem, 10vw, 8.5rem); }
+  .close-sect h2 { font-size: clamp(2.5rem, 1.3rem + 4.8vw, 4.8rem); font-weight: 600; line-height: 1.05; letter-spacing: -0.02em; margin-inline: auto; max-width: 16ch; }
+  .close-sect .btn { margin-top: 2.5rem; height: 3.1rem; padding-inline: 1.9rem; font-size: 1.05rem; }
+
+  /* T3: footer encore — the tide, full color, white waterline on its edge */
+  footer { background: var(--accent); color: #fff; }
+  footer::before {
+    content: ""; display: block; height: 28px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='28' viewBox='0 0 180 28'%3E%3Cpath d='M0 14 C 15 6, 30 22, 45 14 S 75 6, 90 14 S 120 22, 135 14 S 165 6, 180 14' fill='none' stroke='%23ffffff' stroke-width='1.6' stroke-opacity='0.5'/%3E%3C/svg%3E") repeat-x center;
+  }
+  .foot { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-block: 2.2rem; flex-wrap: wrap; font-size: 0.9rem; color: rgba(255,255,255,0.8); }
+  .foot .wordmark { color: #fff; }
+  .foot a { color: inherit; text-decoration: none; }
+  .foot a:hover { color: #fff; }
+
+  @media (max-width: 52rem) {
+    .week-grid, .walk-grid, .hero-grid, .how-grid, .quote-grid { grid-template-columns: 1fr; }
+    .hero-shot { margin-right: 0; }
+    .hero-shot .app-window { border-radius: 14px; border-right: 1px solid var(--line); }
+    .how-rail { position: static; }
+    .founder-photo { max-width: 320px; }
+    .toast { top: -2.7rem; right: 0.5rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.01ms !important; animation-delay: 0ms !important; transition-duration: 0.01ms !important; }
+    .stagger .msg, .stagger .divider { opacity: 1; transform: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="wordmark" href="#top" aria-label="driftwood home">
+      <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <circle cx="16" cy="16" r="9"/><circle cx="16" cy="16" r="3.5"/>
+        <path d="M16 2v5M16 25v5M2 16h5M25 16h5M6.1 6.1l3.5 3.5M22.4 22.4l3.5 3.5M25.9 6.1l-3.5 3.5M9.6 22.4l-3.5 3.5"/>
+      </svg>
+      driftwood
+    </a>
+    <nav class="nav-right" aria-label="primary">
+      <a class="nav-login" href="/dashboard">Log in</a>
+      <a class="btn" href="https://cal.com/aayush-gupta-qyilz6/30min">Book a demo</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top" class="rails">
+
+  <!-- hero — F2 split: claim left, the real app right -->
+  <div class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <h1>Cold outbound that ships <em class="voice">a working demo</em> to every prospect.</h1>
+        <p class="hero-sub">driftwood researches each company, builds the demo, and sends the message for you.</p>
+        <div class="hero-actions">
+          <a class="btn" href="https://cal.com/aayush-gupta-qyilz6/30min">Book a demo</a>
+        </div>
+      </div>
+      <div class="hero-shot">
+        <span class="toast enter-toast">Meeting booked · this week</span>
+        <div class="app-window enter-window">
+          <img src="assets/dw-demo-dashboard.png"
+            alt="The driftwood dashboard: LinkedIn connected and sending, one meeting booked this week, one reply, pipeline of 67 leads" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- week one — D4 story cut to one paragraph -->
+  <section id="week-one">
+    <div class="wrap sect">
+      <h2>Week one at Autosana: from under 1% replies to <em class="voice">14.3%.</em></h2>
+      <div class="week-grid">
+        <div class="week-story">
+          <p>
+            Four months of pitching Superhuman's CTO, no reply. driftwood's
+            agent read superhuman.com, caught a real bug on the pricing page,
+            and sent a 19&#8209;second demo of Autosana catching it.
+            <b>Reply in twelve hours. Call booked.</b>
+          </p>
+          <p class="week-caption">
+            First wave: 7 messages · <b>14.3% replies</b> · 1 call booked ·
+            prior outbound: under 1%.
+          </p>
+        </div>
+        <div>
+          <div class="thread">
+            <div class="thread-bar" aria-hidden="true">
+              <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+              <span class="thread-url">linkedin.com/messaging</span>
+            </div>
+            <div class="thread-body stagger">
+              <div class="msg" style="--i:0">
+                <span class="avatar y" aria-hidden="true">Y</span>
+                <div>
+                  <div class="msg-head"><span class="who">Yuvan Sundrani</span><span class="when">Feb 26</span></div>
+                  <p class="msg-body">You invested in us via the CTO Fund!</p>
+                </div>
+              </div>
+              <div class="divider" role="separator" style="--i:1"><hr/><span>4 months, no reply</span><hr/></div>
+              <div class="msg" style="--i:2">
+                <span class="avatar y" aria-hidden="true">Y</span>
+                <div>
+                  <div class="msg-head"><span class="who">Yuvan Sundrani</span><span class="when">Jul 9 · sent by driftwood</span></div>
+                  <p class="msg-body">hey <span class="redact" role="img" aria-label="name redacted"></span>, found a bug on superhuman.
+                    our agents caught your pricing page still promising early access for features lower tiers already have&hellip;</p>
+                  <div class="clip">
+                    <img src="assets/superhuman-demo-still.png" alt="19 second demo video of Autosana's agent catching the pricing bug on superhuman.com" />
+                    <span class="play" aria-hidden="true"></span>
+                  </div>
+                </div>
+              </div>
+              <div class="msg" style="--i:3">
+                <span class="avatar s" aria-hidden="true">S</span>
+                <div>
+                  <div class="msg-head"><span class="who">CTO, Superhuman</span><span class="when">Jul 10 · 12 hours later</span></div>
+                  <p class="msg-body">send me a blurb + demos to <span class="redact" role="img" aria-label="address redacted"></span>@superhuman.com and I'll forward to my team - best</p>
+                </div>
+              </div>
+              <div class="thread-foot">
+                <b>Call booked.</b>
+                <!-- D5: shortened; delete the span entirely if still too much -->
+                <span>Real thread · name redacted</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- F3: walkthrough, generalized — sticky rail + agent artifacts -->
+  <section id="how">
+    <div class="wrap sect how-grid">
+      <div class="how-rail">
+        <h2>The agent does the <em class="voice">whole job.</em></h2>
+        <ol class="rail-list">
+          <li data-step="1" class="active"><span>01</span> Researches the company</li>
+          <li data-step="2"><span>02</span> Builds them a working demo</li>
+          <li data-step="3"><span>03</span> Sends it from your account</li>
+        </ol>
+      </div>
+      <div class="how-cards">
+        <div class="artifact" data-card="1">
+          <div class="artifact-bar" aria-hidden="true">research</div>
+          <div class="artifact-body">
+            <div class="work">
+              <div class="done">Read their site, docs, and changelog</div>
+              <div class="done">Read 212 customer reviews</div>
+              <div class="done">Found the gap worth a demo</div>
+              <div class="doing">Drafting the build plan&hellip;</div>
+            </div>
+          </div>
+        </div>
+        <div class="artifact" data-card="2" style="position:relative">
+          <div class="artifact-bar">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            <span class="mini-url"><span class="redact" style="width:4.5em"></span>&nbsp;.demo.driftwood.sh</span>
+          </div>
+          <div class="artifact-body">
+            <div class="demo-menu">
+              <div class="demo-row"><span><span class="redact" style="width:5em"></span></span><span><span class="redact" style="width:2em"></span></span></div>
+              <div class="demo-row"><span><span class="redact" style="width:6.5em"></span></span><span><span class="redact" style="width:2em"></span></span></div>
+              <div class="demo-row"><span><span class="redact" style="width:4em"></span></span><span><span class="redact" style="width:2em"></span></span></div>
+            </div>
+            <div class="demo-cta">Built for them, working</div>
+          </div>
+          <span class="cursor-pill">driftwood</span>
+        </div>
+        <div class="artifact" data-card="3">
+          <div class="artifact-bar" aria-hidden="true">linkedin.com/messaging</div>
+          <div class="artifact-body">
+            <div class="msg send">
+              <span class="avatar y" aria-hidden="true">Y</span>
+              <div>
+                <div class="msg-head"><span class="who">You</span><span class="when">reviewed by a human, sent by driftwood</span></div>
+                <p class="msg-body">hey <span class="redact"></span>, built you a demo of
+                  <span class="redact" style="width:4em"></span> with the fix. link below.
+                  worth 15 minutes?
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="wrap"><p class="walk-caption" style="margin-top:0.5rem">The Superhuman thread above is <a href="#week-one">the real one</a>.</p></div>
+  </section>
+
+  <!-- the customer's words, no chrome -->
+  <section class="quote-sect">
+    <div class="wrap sect quote-grid">
+      <img class="founder-photo" src="assets/yuvan.png"
+        alt="Yuvan Sundrani, founder of Autosana, speaking on stage" />
+      <div>
+        <p class="quote">&ldquo;amazing stuff, love the demo&rdquo;</p>
+        <p class="quote-attr"><b>Yuvan Sundrani</b> <span>· Founder, Autosana</span></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- giant close — D5: button stands alone -->
+  <section class="close-sect">
+    <div class="wrap sect">
+      <h2>See what we'd send <em class="voice">your</em> prospects.</h2>
+      <a class="btn" href="https://cal.com/aayush-gupta-qyilz6/30min">Book a demo</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <span>driftwood</span>
+    <div><a href="mailto:aayush@driftwood.sh">aayush@driftwood.sh</a><span> · © 2026</span></div>
+  </div>
+</footer>
+
+<script>
+  const t = document.querySelector(".stagger");
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) if (e.isIntersecting) { t.classList.add("seen"); io.disconnect(); }
+  }, { threshold: 0.25 });
+  io.observe(t);
+
+  // F3: rail item highlights while its artifact card is in view
+  const rail = document.querySelectorAll(".rail-list li");
+  const cardIo = new IntersectionObserver((entries) => {
+    for (const e of entries) if (e.isIntersecting) {
+      rail.forEach((li) => li.classList.toggle("active", li.dataset.step === e.target.dataset.card));
+    }
+  }, { rootMargin: "-40% 0px -40% 0px" });
+  document.querySelectorAll(".how-cards .artifact").forEach((c) => cardIo.observe(c));
+</script>
+</body>
+</html>
