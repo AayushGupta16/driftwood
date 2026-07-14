@@ -1,487 +1,689 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import BookDemo from "./components/BookDemo";
-import { Nav, Footer } from "./components/Chrome";
-import { useReveal } from "./components/useReveal";
-import { OrderDemoCard } from "./components/AgentDemo";
-import { StorySlackCard } from "./components/story/StorySlackCard";
-import { MintlifyAskMock } from "./components/examples/MintlifyMock";
-import { RunwayAdMock } from "./components/examples/RunwayMock";
-import { RampSpendMock } from "./components/examples/RampMock";
-import { ShopifyRebuildMock } from "./components/examples/ShopifyMock";
-import { SquareOrderMock } from "./components/examples/SquareMock";
+/* Landing page — production port of design/landing-draft-v7.html.
+   The markup, CSS (scoped under .landing in index.css), scroll scrubs, and
+   the three.js sea are ported 1:1 from the approved draft. */
+import { useEffect, useRef, useState, type CSSProperties } from "react";
+import type * as ThreeNS from "three";
+import { CAL_URL } from "./components/BookDemo";
+import HelmMark from "./components/HelmMark";
 
-/* ---------- the core: the agent builds a custom demo ----------
-   embeds the standalone animated walkthrough (public/agent-walkthrough.html)
-   at its 912x698 design size, scaled to fit the column width. */
+/* style={{ "--i": n }} helper for the thread stagger delays */
+const iv = (n: number) => ({ "--i": n } as CSSProperties);
 
-function BuildSpeedSection() {
-  const [h, setH] = useState(700);
-  useEffect(() => {
-    const onMsg = (e: MessageEvent) => {
-      const d = e.data as { t?: string; h?: number } | null;
-      if (d && d.t === "awh" && typeof d.h === "number") setH(d.h);
-    };
-    window.addEventListener("message", onMsg);
-    return () => window.removeEventListener("message", onMsg);
-  }, []);
+/* the reply dot grids: same hit-index spread as the draft
+   (1-in-100 vs 1-in-7 shown as 14-in-100) */
+function Dots({ total, hits, us }: { total: number; hits: number; us?: boolean }) {
+  const hitIdx = new Set<number>();
+  for (let k = 0; k < hits; k++) hitIdx.add(Math.round(((k + 0.5) * total) / hits) - 1);
+  let d = 0;
   return (
-    <section id="build" className="scroll-mt-20 border-t border-line py-12 sm:py-16">
-      <h2 className="sr-only">How an agent builds each prospect a custom demo</h2>
-      <div className="reveal mx-auto w-full" style={{ maxWidth: 912 }}>
-        <iframe
-          src="/agent-walkthrough.html"
-          title="How driftwood builds each prospect a custom demo"
-          loading="lazy"
-          scrolling="no"
-          style={{ width: "100%", height: h, border: 0, background: "transparent", display: "block" }}
-        />
-      </div>
-    </section>
-  );
-}
-
-/* ---------- done-for-you: we run the whole channel ----------
-   one idea: driftwood operates the outbound and reports back. supporting
-   points on the left, the weekly Slack readout as the proof on the right. */
-
-const RUN_POINTS: [string, string][] = [
-  ["Every channel", "Inboxes and accounts on email, LinkedIn, and X, warmed and managed."],
-  ["Human-reviewed", "A person reads every message before it sends. Nothing goes out off-brand."],
-  ["You see what works", "A weekly readout on which demos are getting replies, and what's next."],
-];
-
-function RunSection() {
-  return (
-    <section id="run" className="scroll-mt-20 border-t border-line py-14 sm:py-18">
-      <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[1fr_minmax(0,520px)] lg:gap-14">
-        {/* left: the one idea + supporting points */}
-        <div className="reveal max-w-xl">
-          <h2 className="m-0 text-[clamp(1.9rem,4vw,2.7rem)] font-semibold leading-[1.1] tracking-[-0.015em]">
-            We run the whole channel for you.
-          </h2>
-          <dl className="mt-7 space-y-5">
-            {RUN_POINTS.map(([term, def]) => (
-              <div key={term} className="flex gap-3.5">
-                <span
-                  className="mt-1 flex size-5 shrink-0 items-center justify-center rounded-full bg-tide-wash"
-                  aria-hidden="true"
-                >
-                  <svg viewBox="0 0 24 24" className="size-3 stroke-tide" fill="none" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 12.5l4.5 4.5L19 7.5" />
-                  </svg>
-                </span>
-                <div>
-                  <dt className="text-[17px] font-semibold text-ink">{term}</dt>
-                  <dd className="m-0 mt-1 text-[16px] leading-relaxed text-ink-soft">{def}</dd>
-                </div>
-              </div>
-            ))}
-          </dl>
-        </div>
-
-        {/* right: the weekly readout, the one unique proof visual */}
-        <div className="reveal">
-          <StorySlackCard rows={3} />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ---------- the contrast: slop vs a custom demo ---------- */
-
-/* gmail-style frame shared by the two compare emails */
-function EmailFrame({
-  subject,
-  highlight,
-  children,
-}: {
-  subject: string;
-  highlight?: boolean;
-  children: ReactNode;
-}) {
-  return (
-    <div
-      className={`flex flex-1 flex-col rounded-2xl border bg-white p-5 ${
-        highlight
-          ? "border-tide/35 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_24px_56px_-26px_rgba(13,60,91,0.48)]"
-          : "border-line shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_16px_40px_-26px_rgba(22,24,29,0.4)]"
-      }`}
-    >
-      <p className="m-0 border-b border-[#eceef1] pb-3 text-[17px] font-semibold text-[#202124]">{subject}</p>
-      <div className="mt-4 text-[14.5px] leading-[1.55] text-[#202124] [font-family:Arial,Helvetica,sans-serif]">
-        {children}
-      </div>
+    <div className={us ? "dots us" : "dots"} aria-hidden="true">
+      {Array.from({ length: total }, (_, i) =>
+        hitIdx.has(i) ? (
+          <i key={i} className="hit" style={{ "--d": d++ } as CSSProperties} />
+        ) : (
+          <i key={i} />
+        ),
+      )}
     </div>
   );
 }
 
-function UsualEmail() {
-  return (
-    <EmailFrame subject="Joe — quick question (Square x Joe's Pizza)">
-      <p className="m-0">Hey Joe,</p>
-      <p className="m-0 mt-4">
-        Huge fan of what you're building at Joe's Pizza — a true NYC institution. Incredible legacy.
-      </p>
-      <p className="m-0 mt-4">
-        I'm with Square, the <strong>all-in-one platform to run and grow your business</strong>. We power
-        millions of merchants and are growing <strong>40% year over year</strong> — businesses like yours
-        are seeing huge results.
-      </p>
-      <p className="m-0 mt-4">
-        Would love to connect and show you what we offer. Any chance you have 15 minutes this week? You
-        can <span className="cursor-pointer text-[#1a0dab] underline">grab time here</span>.
-      </p>
-    </EmailFrame>
-  );
-}
-
-function DriftwoodEmail() {
-  return (
-    <EmailFrame subject="Joe's doesn't take online orders, so we built it" highlight>
-      <p className="m-0">Hi Joe,</p>
-      <p className="m-0 mt-4">
-        We turned your menu into a <strong>live ordering page on Square</strong> this morning, then placed
-        a test order to make sure it works. The link is below.
-      </p>
-      <p className="m-0 mt-4">We already run online ordering for hundreds of local spots like yours.</p>
-      <p className="m-0 mt-4">Open to a quick call this week?</p>
-      <div className="mt-4 max-w-xs">
-        <OrderDemoCard compact />
-      </div>
-    </EmailFrame>
-  );
-}
-
-const ARROW_PATH = "M 14 70 C 40 36, 72 20, 102 28 C 130 36, 132 64, 112 62 C 92 60, 98 32, 128 28 C 166 23, 208 36, 234 58";
-const ARROW_HEAD = "M 234 58 l -15 -2 M 234 58 l -3 -14.5";
-
-function CompareEmails() {
+function Wordmark({ label = true }: { label?: boolean }) {
   return (
     <>
-      <div className="flex h-full flex-col">
-        <p className="mb-3 ml-1 font-mono text-[14px] tracking-[0.02em] text-ink-soft">what everyone else sends</p>
-        <UsualEmail />
-      </div>
-      <div className="flex h-full flex-col">
-        <p className="mb-3 ml-1 font-mono text-[14px] tracking-[0.02em] text-tide">what driftwood sent</p>
-        <div className="tide-ring-pulse flex flex-1 flex-col rounded-2xl">
-          <DriftwoodEmail />
-        </div>
-      </div>
+      <HelmMark />
+      {label ? <span style={{ color: "var(--ink)" }}>driftwood</span> : "driftwood"}
     </>
   );
 }
 
-function CompareSection() {
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const pathRef = useRef<SVGPathElement>(null);
-  const headRef = useRef<SVGPathElement>(null);
+export default function App() {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const seaRef = useRef<HTMLCanvasElement>(null);
+  const weekWrapRef = useRef<HTMLDivElement>(null);
+  const howWrapRef = useRef<HTMLDivElement>(null);
+  const cmpWrapRef = useRef<HTMLDivElement>(null);
+  const arrowPathRef = useRef<SVGPathElement>(null);
+  const arrowHeadRef = useRef<SVGPathElement>(null);
+  // sea state: null = trying, true = live (strips shown), false = fallback (canvases removed)
+  const [seaLive, setSeaLive] = useState<boolean | null>(null);
 
-  /* pinned like the story: the screen holds while scroll scrubs the arrow,
-     with a beat of hold time before it starts and after it lands */
+  /* thread stagger, fire once */
   useEffect(() => {
-    const wrap = wrapRef.current;
-    const path = pathRef.current;
-    const head = headRef.current;
-    if (!wrap || !path || !head) return;
-    const length = path.getTotalLength();
-    path.style.strokeDasharray = `${length}`;
-    let raf = 0;
-    const update = () => {
-      raf = 0;
-      const total = wrap.offsetHeight - window.innerHeight;
-      if (total <= 0) return;
-      const p = Math.min(1, Math.max(0, -wrap.getBoundingClientRect().top / total));
-      const draw = Math.min(1, Math.max(0, (p - 0.14) / 0.62));
-      path.style.strokeDashoffset = `${length * (1 - draw)}`;
-      head.style.opacity = draw > 0.97 ? "1" : "0";
-    };
-    const onScroll = () => {
-      if (!raf) raf = requestAnimationFrame(update);
-    };
-    update();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
+    const t = rootRef.current?.querySelector(".stagger");
+    if (!t) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries)
+          if (e.isIntersecting) {
+            t.classList.add("seen");
+            io.disconnect();
+          }
+      },
+      { threshold: 0.25 },
+    );
+    io.observe(t);
+    return () => io.disconnect();
+  }, []);
+
+  /* the three pinned scrubs: week dots, how stage, compare arrow */
+  useEffect(() => {
+    const root = rootRef.current;
+    const pinWrap = howWrapRef.current;
+    const weekWrap = weekWrapRef.current;
+    const cmpWrap = cmpWrapRef.current;
+    const arrowPath = arrowPathRef.current;
+    const arrowHead = arrowHeadRef.current;
+    if (!root || !pinWrap || !weekWrap || !cmpWrap || !arrowPath || !arrowHead) return;
+
+    const scrubOk =
+      matchMedia("(min-width: 52rem)").matches &&
+      !matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const cleanups: (() => void)[] = [];
+
+    // pinned scrub: scroll cycles the stage while the rail highlights
+    const cards = [...root.querySelectorAll(".stage-card")];
+    const items = [...root.querySelectorAll(".rail-list li")];
+    if (scrubOk) {
+      let raf = 0;
+      const update = () => {
+        raf = 0;
+        const total = pinWrap.offsetHeight - innerHeight;
+        if (total <= 0) return;
+        const p = Math.min(0.999, Math.max(0, -pinWrap.getBoundingClientRect().top / total));
+        const step = Math.floor(p * 3);
+        cards.forEach((c, i) => c.classList.toggle("on", i === step));
+        items.forEach((li, i) => li.classList.toggle("active", i === step));
+      };
+      const onScroll = () => {
+        if (!raf) raf = requestAnimationFrame(update);
+      };
+      addEventListener("scroll", onScroll, { passive: true });
+      cleanups.push(() => {
+        removeEventListener("scroll", onScroll);
+        if (raf) cancelAnimationFrame(raf);
+      });
+      update();
+    } else {
+      cards.forEach((c) => c.classList.add("on"));
+    }
+
+    // week-one: scroll populates the reply dots
+    const beforeHits = [...root.querySelectorAll(".dots:not(.us) i.hit")];
+    const usHits = [...root.querySelectorAll(".dots.us i.hit")];
+    if (scrubOk) {
+      let rafW = 0;
+      const updateW = () => {
+        rafW = 0;
+        const total = weekWrap.offsetHeight - innerHeight;
+        if (total <= 0) return;
+        const p = Math.min(1, Math.max(0, -weekWrap.getBoundingClientRect().top / total));
+        beforeHits.forEach((d) => d.classList.toggle("lit", p > 0.16));
+        const n = Math.min(
+          usHits.length,
+          Math.max(0, Math.floor(((p - 0.26) / 0.6) * usHits.length)),
+        );
+        usHits.forEach((d, i) => d.classList.toggle("lit", i < n));
+      };
+      const onScrollW = () => {
+        if (!rafW) rafW = requestAnimationFrame(updateW);
+      };
+      addEventListener("scroll", onScrollW, { passive: true });
+      cleanups.push(() => {
+        removeEventListener("scroll", onScrollW);
+        if (rafW) cancelAnimationFrame(rafW);
+      });
+      updateW();
+    } else {
+      beforeHits.concat(usHits).forEach((d) => d.classList.add("lit"));
+    }
+
+    // compare: the hand-drawn arrow scrubs with the pinned scroll
+    const arrowLen = arrowPath.getTotalLength();
+    arrowPath.style.strokeDasharray = `${arrowLen}`;
+    if (scrubOk) {
+      let raf2 = 0;
+      const drawArrow = () => {
+        raf2 = 0;
+        const total = cmpWrap.offsetHeight - innerHeight;
+        if (total <= 0) return;
+        const p = Math.min(1, Math.max(0, -cmpWrap.getBoundingClientRect().top / total));
+        const draw = Math.min(1, Math.max(0, (p - 0.14) / 0.62));
+        arrowPath.style.strokeDashoffset = `${arrowLen * (1 - draw)}`;
+        arrowHead.style.opacity = draw > 0.97 ? "1" : "0";
+      };
+      const onScroll2 = () => {
+        if (!raf2) raf2 = requestAnimationFrame(drawArrow);
+      };
+      addEventListener("scroll", onScroll2, { passive: true });
+      cleanups.push(() => {
+        removeEventListener("scroll", onScroll2);
+        if (raf2) cancelAnimationFrame(raf2);
+      });
+      drawArrow();
+    } else {
+      arrowPath.style.strokeDashoffset = "0";
+      arrowHead.style.opacity = "1";
+    }
+
+    return () => cleanups.forEach((fn) => fn());
+  }, []);
+
+  /* one body of water, surfacing across the page: the hero sea + thin live
+     divider strips share a renderer setup and a global clock; each mount is
+     phase-seeded by its document position. Static wave-cut seams are the
+     fallback on mobile / reduced motion / WebGL failure. */
+  useEffect(() => {
+    const root = rootRef.current;
+    const heroCanvas = seaRef.current;
+    const motionOk =
+      matchMedia("(prefers-reduced-motion: no-preference)").matches &&
+      matchMedia("(min-width: 52rem)").matches;
+    if (!root || !heroCanvas || !motionOk) {
+      setSeaLive(false);
+      return;
+    }
+
+    let disposed = false;
+    const cleanups: (() => void)[] = [];
+
+    (async () => {
+      try {
+        const THREE = await import("three");
+        if (disposed) return;
+
+        type Mount = {
+          canvas: HTMLCanvasElement;
+          renderer: ThreeNS.WebGLRenderer;
+          scene: ThreeNS.Scene;
+          camera: ThreeNS.PerspectiveCamera;
+          geo: ThreeNS.PlaneGeometry;
+          pos: ThreeNS.BufferAttribute | ThreeNS.InterleavedBufferAttribute;
+          base: ArrayLike<number>;
+          phase: number;
+          visible: boolean;
+        };
+        const mounts: Mount[] = [];
+
+        function mountSea(canvas: HTMLCanvasElement, strip: boolean) {
+          const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+          renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+          const scene = new THREE.Scene();
+          scene.fog = new THREE.Fog(0xffffff, strip ? 3 : 4, strip ? 15 : 22);
+          const camera = new THREE.PerspectiveCamera(34, 2, 0.1, 100);
+          camera.position.set(0, strip ? 1.15 : 2.8, 9);
+          camera.lookAt(0, strip ? 0.3 : -0.4, -8);
+          const geo = new THREE.PlaneGeometry(90, 44, 150, 74);
+          geo.rotateX(-Math.PI / 2);
+          const material = new THREE.MeshPhongMaterial({
+            color: 0x4b87ae,
+            shininess: 70,
+            specular: 0xcfe3f0,
+            flatShading: true,
+          });
+          scene.add(new THREE.Mesh(geo, material));
+          scene.add(new THREE.AmbientLight(0xdfe9f1, 0.85));
+          const sun = new THREE.DirectionalLight(0xffffff, 1.1);
+          sun.position.set(-4, 6, -6);
+          scene.add(sun);
+          const pos = geo.attributes.position;
+          const m: Mount = {
+            canvas,
+            renderer,
+            scene,
+            camera,
+            geo,
+            pos,
+            base: (pos.array as Float32Array).slice(),
+            phase: (canvas.getBoundingClientRect().top + scrollY) * 0.0045,
+            visible: false,
+          };
+          const io = new IntersectionObserver((es) => {
+            for (const e of es) m.visible = e.isIntersecting;
+          });
+          io.observe(canvas);
+          cleanups.push(() => {
+            io.disconnect();
+            geo.dispose();
+            material.dispose();
+            renderer.dispose();
+          });
+          mounts.push(m);
+        }
+
+        mountSea(heroCanvas, false);
+        root.querySelectorAll<HTMLCanvasElement>(".sea-strip").forEach((c) => mountSea(c, true));
+        setSeaLive(true);
+
+        const resize = () =>
+          mounts.forEach((m) => {
+            const w = m.canvas.clientWidth,
+              h = m.canvas.clientHeight;
+            if (!w || !h) return;
+            m.renderer.setSize(w, h, false);
+            m.camera.aspect = w / h;
+            m.camera.updateProjectionMatrix();
+          });
+        addEventListener("resize", resize);
+        cleanups.push(() => removeEventListener("resize", resize));
+        resize();
+        // the strips are display:none until sea-live lands; size them next frame
+        requestAnimationFrame(resize);
+
+        let last = 0;
+        let rafId = 0;
+        const tick = (ms: number) => {
+          rafId = requestAnimationFrame(tick);
+          if (ms - last < 33) return; // calm water is fine at ~30fps
+          last = ms;
+          const t = ms / 1000;
+          for (const m of mounts) {
+            if (!m.visible) continue;
+            const { pos, base, phase } = m;
+            const arr = pos.array as Float32Array;
+            for (let i = 0; i < pos.count; i++) {
+              const x = base[i * 3],
+                z = base[i * 3 + 2];
+              arr[i * 3 + 1] =
+                Math.sin(x * 0.35 + t * 0.7 + phase) * 0.14 +
+                Math.sin(z * 0.5 + t * 0.5 + phase) * 0.12 +
+                Math.sin((x + z) * 0.22 + t * 0.9 + phase * 0.6) * 0.08;
+            }
+            pos.needsUpdate = true;
+            m.geo.computeVertexNormals();
+            m.renderer.render(m.scene, m.camera);
+          }
+        };
+        rafId = requestAnimationFrame(tick);
+        cleanups.push(() => cancelAnimationFrame(rafId));
+      } catch {
+        if (!disposed) setSeaLive(false);
+      }
+    })();
+
     return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-      if (raf) cancelAnimationFrame(raf);
+      disposed = true;
+      cleanups.forEach((fn) => fn());
     };
   }, []);
 
-  return (
-    <section id="compare" className="scroll-mt-20 border-t border-line">
-      {/* pinned walkthrough (desktop, motion ok) */}
-      <div ref={wrapRef} className="relative hidden h-[230vh] lg:motion-safe:block">
-        <div className="sticky top-0 isolate flex h-screen flex-col justify-center overflow-hidden">
-          <HeroContours className="pointer-events-none absolute -bottom-52 -right-44 -z-10 size-155 text-tide opacity-[0.05]" />
-          <div className="mx-auto max-w-150 text-center">
-            <h2 className="m-0 text-[clamp(1.9rem,4vw,2.7rem)] font-semibold leading-tight tracking-[-0.015em]">
-              Don't send out AI slop
-            </h2>
-          </div>
-          <div className="relative mx-auto mt-16 grid w-full max-w-5xl grid-cols-2 items-stretch gap-8 lg:gap-12">
-            {/* hand-drawn arrow with a loop, scrubbed by the pinned scroll */}
-            <svg
-              viewBox="0 0 260 100"
-              aria-hidden="true"
-              className="pointer-events-none absolute -top-17 left-1/2 z-10 w-65 -translate-x-1/2 text-tide"
-            >
-              <path ref={pathRef} d={ARROW_PATH} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-              <path
-                ref={headRef}
-                className="transition-opacity duration-300"
-                d={ARROW_HEAD}
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                style={{ opacity: 0 }}
-              />
-            </svg>
-            <CompareEmails />
-          </div>
-        </div>
-      </div>
-
-      {/* stacked fallback (mobile + reduced motion) — arrow pre-drawn */}
-      <div className="py-14 sm:py-18 lg:motion-safe:hidden">
-        <div className="reveal mx-auto max-w-150 text-center">
-          <h2 className="m-0 text-[clamp(1.9rem,4vw,2.7rem)] font-semibold leading-tight tracking-[-0.015em]">
-            Don't send out AI slop
-          </h2>
-        </div>
-        <div className="reveal relative mx-auto mt-16 grid w-full max-w-5xl grid-cols-1 items-stretch gap-8 sm:grid-cols-2 lg:gap-12">
-          <svg
-            viewBox="0 0 260 100"
-            aria-hidden="true"
-            className="pointer-events-none absolute -top-17 left-1/2 z-10 hidden w-65 -translate-x-1/2 text-tide sm:block"
-          >
-            <path d={ARROW_PATH} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-            <path d={ARROW_HEAD} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-          </svg>
-          <CompareEmails />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ---------- examples carousel: a product you know pitching a company you know ---------- */
-
-const SLIDES = [
-  {
-    key: "shopify",
-    company: "Shopify",
-    domain: "commerce",
-    prospect: "Patagonia",
-    to: "web@patagonia.com",
-    time: "7:48 AM",
-    subject: "we rebuilt patagonia.com overnight",
-    body: "All 412 products imported, checkout cut from 6 clicks to 2. Live preview below.",
-    art: ShopifyRebuildMock,
-  },
-  {
-    key: "ramp",
-    company: "Ramp",
-    domain: "spend management",
-    prospect: "Notion",
-    to: "finance@notion.so",
-    time: "9:02 AM",
-    subject: "is Notion paying list price for Salesforce?",
-    body: "We priced the 63 tools Notion runs against what companies their size pay. Salesforce alone looks 28% over. Benchmark below.",
-    art: RampSpendMock,
-  },
-  {
-    key: "mintlify",
-    company: "Mintlify",
-    domain: "developer docs",
-    prospect: "Supabase",
-    to: "docs@supabase.com",
-    time: "8:32 AM",
-    subject: "your Discord answers the same questions every week",
-    body: "We built a docs page that answers your most-asked Discord questions. Live below.",
-    art: MintlifyAskMock,
-  },
-  {
-    key: "runway",
-    company: "Runway",
-    domain: "AI video",
-    prospect: "Liquid Death",
-    to: "marketing@liquiddeath.com",
-    time: "10:14 AM",
-    subject: "we made Liquid Death a 15-second ad",
-    body: "Built from your Instagram assets this morning. Cut below.",
-    art: RunwayAdMock,
-  },
-  {
-    key: "square",
-    company: "Square",
-    domain: "local commerce",
-    prospect: "Joe's Pizza",
-    to: "joe@joespizza.nyc",
-    time: "6:51 PM",
-    subject: "Joe's doesn't take online orders, so we built it",
-    body: "Your full menu, live on a Square ordering page. We placed a test order. Receipt below.",
-    art: SquareOrderMock,
-  },
-];
-
-function ExamplesSection() {
-  const [index, setIndex] = useState(0);
-  const slide = SLIDES[index];
+  const seaGone = seaLive === false;
 
   return (
-    <section id="examples" className="scroll-mt-20 border-t border-line py-14 sm:py-18">
-      <div className="reveal max-w-160">
-        <h2 className="m-0 text-[clamp(1.9rem,4vw,2.7rem)] font-semibold leading-tight tracking-[-0.015em]">
-          What we'd build for companies you know
-        </h2>
-      </div>
-
-      <div className="reveal mt-8 grid grid-cols-1 items-start gap-5 lg:mt-10 lg:grid-cols-[250px_minmax(0,1fr)] lg:gap-9">
-        {/* company picker */}
-        <div className="flex flex-row flex-wrap gap-2 lg:flex-col lg:gap-2.5">
-          {SLIDES.map((s, i) => (
-            <button
-              key={s.key}
-              type="button"
-              aria-current={i === index}
-              onClick={() => setIndex(i)}
-              className={`cursor-pointer rounded-xl border px-4 py-2.5 text-left transition-colors lg:py-3.5 ${
-                i === index
-                  ? "border-tide/40 bg-tide-wash/60"
-                  : "border-line bg-surface hover:border-ink-faint/50"
-              }`}
-            >
-              <span className={`block text-[16.5px] ${i === index ? "font-semibold text-ink" : "font-medium text-ink-soft"}`}>
-                {s.company}
-              </span>
-              <span className="mt-0.5 block font-mono text-[13px] text-ink-faint">
-                pitching <span className={i === index ? "text-tide" : "text-ink-soft"}>{s.prospect}</span>
-              </span>
-            </button>
-          ))}
+    <div ref={rootRef} className={`landing${seaLive ? " sea-live" : ""}`}>
+      <header>
+        <div className="wrap nav">
+          <a className="wordmark" href="#top" aria-label="driftwood home">
+            <Wordmark />
+          </a>
+          <nav className="nav-right" aria-label="primary">
+            <a className="nav-login" href="/dashboard">
+              Log in
+            </a>
+            <a className="btn" href={CAL_URL}>
+              Book a demo
+            </a>
+          </nav>
         </div>
+      </header>
 
-        {/* the email the prospect receives, artifact inside */}
-        <div className="min-w-0">
-          <div
-            key={slide.key}
-            className="materialize flex flex-col rounded-2xl border border-line bg-surface shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_24px_60px_-26px_rgba(13,60,91,0.42),0_4px_16px_-8px_rgba(22,24,29,0.1)]"
-          >
-            {/* thread header: the subject is the pitch */}
-            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-line px-4 py-4 sm:px-5">
-              <p className="m-0 min-w-0 text-[17.5px] font-semibold leading-snug text-ink">{slide.subject}</p>
-              <span className="shrink-0 rounded-full bg-paper px-2.5 py-0.5 font-mono text-[12.5px] text-ink-faint ring-1 ring-line">
-                Inbox
-              </span>
+      <main id="top">
+        {/* hero */}
+        <div className="hero">
+          <div className="wrap hero-grid">
+            <div>
+              <h1>
+                Ship <em className="voice">a custom demo</em> in every cold message.
+              </h1>
+              <p className="hero-sub">
+                The agent researches each prospect, builds them a custom demo, and sends the
+                message for you.
+              </p>
+              <div className="hero-actions">
+                <a className="btn btn-primary" href={CAL_URL}>
+                  Book a demo
+                </a>
+              </div>
             </div>
-            <div className="px-4 py-4 sm:px-5 sm:pb-5">
-              {/* sender row */}
-              <div className="flex items-start gap-3">
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-tide font-mono text-[13px] font-semibold text-white">
-                  {slide.company[0]}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
-                    <p className="m-0 text-[15.5px] font-semibold text-ink">{slide.company}</p>
-                    <span className="font-mono text-[13px] text-ink-faint">via driftwood</span>
-                    <span className="ml-auto font-mono text-[13px] text-ink-faint">{slide.time}</span>
+            <div className="app-window enter-window">
+              <img
+                src="/dw-demo-dashboard-hero.png"
+                alt="The driftwood dashboard: LinkedIn connected and sending, one meeting booked this week, one reply, pipeline of 67 leads"
+              />
+            </div>
+          </div>
+          {!seaGone && <canvas id="sea" ref={seaRef} aria-hidden="true" />}
+        </div>
+
+        {/* week one + the founder */}
+        <section id="week-one" className="sheet sheet-white">
+          <div className="pin-wrap week-pin-wrap" ref={weekWrapRef}>
+            <div className="pin pin-open">
+              <div className="wrap week-sect">
+                <div className="week-grid">
+                  <div className="week-left">
+                    <h2>
+                      Be <em className="voice">undeniable</em> to your leads.
+                    </h2>
+                    <div
+                      className="rate-viz"
+                      aria-label="Reply rate: about 1 in 100 before driftwood, 1 in 7 with driftwood"
+                    >
+                      <p className="rate-mult">
+                        Same leads. <em>14&times;</em> the replies.
+                      </p>
+                      <div className="dots-block">
+                        <div className="dots-label">
+                          <span>before</span>
+                          <b>&lt;1 in 100</b>
+                        </div>
+                        <Dots total={100} hits={1} />
+                      </div>
+                      <div className="dots-block">
+                        <div className="dots-label">
+                          <span>with driftwood &middot; week one at Autosana</span>
+                          <b>1 in 7</b>
+                        </div>
+                        <Dots total={100} hits={14} us />
+                      </div>
+                    </div>
+                    <div className="founder">
+                      <img
+                        src="/yuvan.png"
+                        alt="Yuvan Sundrani, founder of Autosana, speaking on stage"
+                      />
+                      <div>
+                        <p className="founder-quote">&ldquo;amazing stuff, love the demo&rdquo;</p>
+                        <p className="founder-attr">
+                          <b>Yuvan Sundrani</b> &middot; Founder, Autosana
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <p className="m-0 mt-0.5 font-mono text-[13px] text-ink-faint">to {slide.to}</p>
+                  <div>
+                    <div className="thread">
+                      <div className="li-head">
+                        <span className="li-name">CTO @ Superhuman</span>
+                        <span className="li-presence" aria-hidden="true"></span>
+                        <span className="li-icons" aria-hidden="true">
+                          &#8943;&nbsp;&nbsp;&#10530;&nbsp;&nbsp;&#10005;
+                        </span>
+                      </div>
+                      <div className="li-body stagger">
+                        <div className="divider" role="separator" style={iv(0)}>
+                          <hr />
+                          <span>4 months of outreach, no reply</span>
+                          <hr />
+                        </div>
+                        <div className="divider" role="separator" style={iv(1)}>
+                          <hr />
+                          <span>Jul 9</span>
+                          <hr />
+                        </div>
+                        <div className="msg" style={iv(2)}>
+                          <span className="avatar">
+                            <img src="/yuvan.png" alt="" />
+                          </span>
+                          <div>
+                            <div className="msg-head">
+                              <span className="who">Yuvan Sundrani</span>
+                              <span className="when">&middot; 6:57 PM &middot; sent by driftwood</span>
+                              <span className="seen" aria-label="seen">
+                                <svg viewBox="0 0 16 16" fill="currentColor">
+                                  <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" />
+                                  <path
+                                    d="M4.5 8.2l2.3 2.3 4.7-4.8"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="1.4"
+                                  />
+                                </svg>
+                              </span>
+                            </div>
+                            <p className="msg-body">
+                              hey <span className="redact" role="img" aria-label="name redacted"></span>,
+                              found a bug on superhuman. our agents caught your pricing page still
+                              promising early access for features lower tiers already have&hellip;
+                            </p>
+                            <div className="clip">
+                              <img
+                                src="/superhuman-demo-still.png"
+                                alt="19 second demo video of Autosana's agent catching the pricing bug on superhuman.com"
+                              />
+                              <span className="play" aria-hidden="true"></span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="divider" role="separator" style={iv(3)}>
+                          <hr />
+                          <span>Jul 10 &middot; 12 hours later</span>
+                          <hr />
+                        </div>
+                        <div className="msg" style={iv(4)}>
+                          <span className="avatar" aria-hidden="true">
+                            <svg viewBox="0 0 24 24">
+                              <path d="M12 12c2.8 0 5-2.2 5-5s-2.2-5-5-5-5 2.2-5 5 2.2 5 5 5zm0 2c-4.4 0-9 2.2-9 6.5V24h18v-3.5c0-4.3-4.6-6.5-9-6.5z" />
+                            </svg>
+                          </span>
+                          <div>
+                            <div className="msg-head">
+                              <span className="who">CTO, Superhuman</span>
+                              <span className="when">&middot; 7:18 AM</span>
+                            </div>
+                            <p className="msg-body">
+                              send me a blurb + demos to{" "}
+                              <span className="redact" role="img" aria-label="address redacted"></span>
+                              @superhuman.com and I'll forward to my team - best
+                            </p>
+                          </div>
+                        </div>
+                        <div className="divider win" role="separator" style={iv(5)}>
+                          <hr />
+                          <span>Call booked &middot; Jul 12</span>
+                          <hr />
+                        </div>
+                      </div>
+                      <div className="li-compose" aria-hidden="true">
+                        <span className="li-input">Write a message&hellip;</span>
+                        <span className="li-send">Send</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-              {/* body, as the inbox renders it */}
-              <p className="m-0 mt-4 text-[14.5px] leading-[1.55] text-[#202124] [font-family:Arial,Helvetica,sans-serif]">
-                {slide.body}
-              </p>
-              <div className="mt-7 flex flex-col">
-                <slide.art />
-              </div>
             </div>
           </div>
-          <p className="mb-0 mt-4 text-center font-mono text-[13.5px] text-ink-faint">
-            made-up examples, not customers
-          </p>
-        </div>
-      </div>
-    </section>
-  );
-}
+          {!seaGone && <canvas className="sea-strip" aria-hidden="true" />}
+        </section>
 
-/* faint sea-chart contour lines — the hero's motif, reused for depth on pinned screens */
-function HeroContours({
-  className = "pointer-events-none absolute -right-44 -top-48 -z-10 hidden size-155 text-tide opacity-[0.06] lg:block",
-}: {
-  className?: string;
-}) {
-  return (
-    <svg viewBox="0 0 600 600" aria-hidden="true" className={className}>
-      <g fill="none" stroke="currentColor" strokeWidth="1.3">
-        <path d="M300 40 C 420 50 540 140 555 280 C 568 400 480 530 330 555 C 190 575 60 480 45 340 C 32 210 150 55 300 40 Z" />
-        <path d="M300 90 C 400 95 495 170 508 285 C 518 380 445 480 320 502 C 205 520 100 440 90 330 C 80 225 180 92 300 90 Z" />
-        <path d="M300 140 C 380 145 445 200 458 290 C 468 360 410 432 315 450 C 222 465 150 405 140 320 C 132 240 215 142 300 140 Z" />
-        <path d="M300 190 C 360 195 398 235 408 295 C 416 348 372 392 308 402 C 245 412 198 372 192 312 C 186 255 240 192 300 190 Z" />
-        <path d="M300 240 C 340 243 352 268 358 298 C 363 332 338 352 305 356 C 270 360 246 340 243 308 C 240 275 262 240 300 240 Z" />
-      </g>
-    </svg>
-  );
-}
-
-export default function App() {
-  useReveal();
-
-  return (
-    <div className="grain relative min-h-screen overflow-x-clip">
-      <Nav />
-
-      <main id="top" className="mx-auto max-w-6xl px-5 sm:px-8">
-        {/* hero */}
-        <section className="relative isolate flex flex-col items-center pb-8 pt-14 text-center sm:pt-16 lg:pt-20">
-          <HeroContours />
-          <h1 className="m-0 max-w-5xl text-[clamp(2.9rem,6.5vw,4.9rem)] font-semibold leading-[1.05] tracking-[-0.02em]">
-            Ship a custom demo in every cold message.
-          </h1>
-          <p className="mx-auto mt-6 max-w-135 text-[19px] leading-relaxed text-ink-soft sm:text-[20px]">
-            Grow your revenue with cold outbound that converts.
-          </p>
-          <div className="relative mt-8 flex justify-center">
-            <BookDemo />
+        {/* how it works: pinned scrub */}
+        <section id="how" className="sheet wash-a">
+          <div className="pin-wrap" ref={howWrapRef}>
+            <div className="pin">
+              <div className="wrap how-grid">
+                <div>
+                  <h2>
+                    The agent does the <em className="voice">whole job.</em>
+                  </h2>
+                  <ol className="rail-list">
+                    <li data-step="0" className="active">
+                      <span>01</span> Researches the company
+                    </li>
+                    <li data-step="1">
+                      <span>02</span> Builds them a working demo
+                    </li>
+                    <li data-step="2">
+                      <span>03</span> Sends it from your account
+                    </li>
+                  </ol>
+                  <p className="rail-note">
+                    <b>Every message is human reviewed</b> before it sends.
+                  </p>
+                </div>
+                <div className="stage">
+                  <div className="stage-card on">
+                    <div className="artifact">
+                      <div className="artifact-bar" aria-hidden="true">
+                        #autosana-ai &middot; the agent at work
+                      </div>
+                      <img
+                        src="/slack-trace.png"
+                        alt="The driftwood agent working in Slack: running checks against a prospect's product and reporting what it found"
+                      />
+                    </div>
+                  </div>
+                  <div className="stage-card">
+                    <div className="artifact">
+                      <div className="artifact-bar" aria-hidden="true">
+                        the demo it built &middot; 0:19
+                      </div>
+                      <img
+                        src="/superhuman-demo-still.png"
+                        alt="A finished demo video: Autosana's agent catching the pricing bug on superhuman.com"
+                      />
+                    </div>
+                  </div>
+                  <div className="stage-card">
+                    <div className="artifact">
+                      <div className="artifact-bar" aria-hidden="true">
+                        your review queue &middot; nothing sends without you
+                      </div>
+                      <img
+                        src="/review-queue.png"
+                        alt="The driftwood review queue: each outbound message waiting for your approve or deny"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
-        {/* the core: an agent builds a custom demo, fast */}
-        <BuildSpeedSection />
-
-        {/* done-for-you: we run the whole channel */}
-        <RunSection />
-
-        {/* the contrast */}
-        <CompareSection />
-
-        {/* familiar-company examples */}
-        <ExamplesSection />
-
-        {/* final cta */}
-        <section id="join" className="scroll-mt-20 border-t border-line py-16 sm:py-20">
-          <div className="reveal mx-auto max-w-150 text-center">
-            <h2 className="m-0 text-[clamp(2rem,4.6vw,3rem)] font-semibold leading-tight tracking-[-0.015em]">
-              See what we'd send your prospects.
-            </h2>
-            <p className="mt-4 text-[18.5px] leading-relaxed text-ink-soft">
-              We're onboarding a few design partners. Book 30 minutes and we'll build you a sample demo,
-              live on the call.
-            </p>
-            <div className="relative mt-8 flex justify-center">
-              <BookDemo />
+        {/* the favorite: don't send out AI slop — pinned, the arrow draws as you scroll */}
+        <section id="compare" className="sheet sheet-white">
+          <div className="pin-wrap compare-pin-wrap" ref={cmpWrapRef}>
+            <div className="pin">
+              <div className="wrap" style={{ width: "100%" }}>
+                <div className="compare-head">
+                  <h2 style={{ marginInline: "auto" }}>
+                    Don't send out <em className="voice">AI slop.</em>
+                  </h2>
+                </div>
+                <div className="compare-grid">
+                  <svg className="compare-arrow" viewBox="0 0 260 100" aria-hidden="true">
+                    <path
+                      ref={arrowPathRef}
+                      d="M 14 70 C 40 36, 72 20, 102 28 C 130 36, 132 64, 112 62 C 92 60, 98 32, 128 28 C 166 23, 208 36, 234 58"
+                      fill="none"
+                      stroke="var(--accent)"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      ref={arrowHeadRef}
+                      d="M 234 58 l -15 -2 M 234 58 l -3 -14.5"
+                      fill="none"
+                      stroke="var(--accent)"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      style={{ opacity: 0, transition: "opacity 0.3s" }}
+                    />
+                  </svg>
+                  <div>
+                    <p className="compare-label">what everyone else sends</p>
+                    <div className="email">
+                      <p className="email-subject">Joe, quick question (Square x Joe's Pizza)</p>
+                      <div className="email-body">
+                        <p>Hey Joe,</p>
+                        <p>
+                          Huge fan of what you're building at Joe's Pizza, a true NYC institution.
+                          Incredible legacy.
+                        </p>
+                        <p>
+                          I'm with Square, the <b>all-in-one platform to run and grow your business</b>.
+                          We power millions of merchants, and businesses like yours are seeing huge
+                          results.
+                        </p>
+                        <p>
+                          Any chance you have 15 minutes this week? You can{" "}
+                          <span className="fake-link">grab time here</span>.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="compare-label us">what driftwood sent</p>
+                    <div className="email us">
+                      <p className="email-subject">Joe's ordering page loses orders, so we rebuilt it</p>
+                      <div className="email-body">
+                        <p>Hi Joe,</p>
+                        <p>
+                          We turned your menu into a <b>live ordering page on Square</b> this morning,
+                          then placed a test order to make sure it works. The link is below.
+                        </p>
+                        <p>Open to a quick call this week?</p>
+                      </div>
+                      <div className="order-card">
+                        <div className="order-bar" aria-hidden="true">
+                          <span className="dot"></span>
+                          <span className="dot"></span>
+                          <span className="dot"></span>
+                          joespizza.nyc/order
+                          <span className="order-live">live</span>
+                        </div>
+                        <div className="order-body">
+                          <div className="order-row">
+                            <span>cheese slice</span>
+                            <span>$3.50</span>
+                          </div>
+                          <div className="order-row">
+                            <span>pepperoni slice</span>
+                            <span>$4.75</span>
+                          </div>
+                          <div className="order-row">
+                            <span>garlic knots (4)</span>
+                            <span>$4.00</span>
+                          </div>
+                          <div className="order-check">
+                            <span>2 slices &middot; $8.25</span>
+                            <span>Checkout &rarr;</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
+          </div>
+          {!seaGone && <canvas className="sea-strip" aria-hidden="true" />}
+        </section>
+
+        {/* close */}
+        <section className="close-sect sheet wash-b">
+          <div className="wrap sect">
+            <h2>
+              See what we'd send <em className="voice">your</em> prospects.
+            </h2>
+            <a className="btn btn-primary" href={CAL_URL}>
+              Book a demo
+            </a>
           </div>
         </section>
       </main>
 
-      <Footer />
+      <footer>
+        <div className="wrap foot">
+          <a className="wordmark" href="#top" aria-label="back to top">
+            <Wordmark label={false} />
+          </a>
+          <div className="foot-line">
+            <a href="mailto:aayush@driftwood.sh">aayush@driftwood.sh</a>
+            <span>&copy; 2026 driftwood</span>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
