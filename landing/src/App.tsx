@@ -49,7 +49,6 @@ function Wordmark({ label = true }: { label?: boolean }) {
 export default function App() {
   const rootRef = useRef<HTMLDivElement>(null);
   const seaRef = useRef<HTMLCanvasElement>(null);
-  const weekWrapRef = useRef<HTMLDivElement>(null);
   const howWrapRef = useRef<HTMLDivElement>(null);
   const cmpWrapRef = useRef<HTMLDivElement>(null);
   const arrowPathRef = useRef<SVGPathElement>(null);
@@ -80,15 +79,14 @@ export default function App() {
     return () => io.disconnect();
   }, []);
 
-  /* the three pinned scrubs: week dots, how stage, compare arrow */
+  /* the two pinned scrubs: the slop-vs-real section, the how stage */
   useEffect(() => {
     const root = rootRef.current;
     const pinWrap = howWrapRef.current;
-    const weekWrap = weekWrapRef.current;
     const cmpWrap = cmpWrapRef.current;
     const arrowPath = arrowPathRef.current;
     const arrowHead = arrowHeadRef.current;
-    if (!root || !pinWrap || !weekWrap || !cmpWrap || !arrowPath || !arrowHead) return;
+    if (!root || !pinWrap || !cmpWrap || !arrowPath || !arrowHead) return;
 
     const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
     // full pinned scrubs on big pointer screens; the week/compare pins hold
@@ -147,8 +145,8 @@ export default function App() {
       /* static stack on mobile / reduced motion via CSS */
     }
 
-    // week-one: scroll populates the reply dots, then the attribution arrow
-    // draws itself at the video clip as the payoff
+    // slop vs. real: one scrub drives the arrow across the cards, the reply
+    // grids under each card, and the demo credit at the clip
     const beforeHits = [...root.querySelectorAll(".dots:not(.us) i.hit")];
     const usHits = [...root.querySelectorAll(".dots.us i.hit")];
     const note = root.querySelector(".clip-note") as HTMLElement | null;
@@ -160,50 +158,74 @@ export default function App() {
       noteLen = notePath.getTotalLength();
       notePath.style.strokeDasharray = `${noteLen}`;
     }
+    const arrowLen = arrowPath.getTotalLength();
+    arrowPath.style.strokeDasharray = `${arrowLen}`;
     if (scrubOk) {
-      let rafW = 0;
-      const updateW = () => {
-        rafW = 0;
-        const total = weekWrap.offsetHeight - innerHeight;
+      const cmpPin = cmpWrap.querySelector(".pin") as HTMLElement | null;
+      const cmpInner = cmpPin?.querySelector(".wrap") as HTMLElement | null;
+      let raf2 = 0;
+      const updateC = () => {
+        raf2 = 0;
+        const total = cmpWrap.offsetHeight - innerHeight;
         if (total <= 0) return;
-        const p = Math.min(1, Math.max(0, -weekWrap.getBoundingClientRect().top / total));
-        beforeHits.forEach((d) => d.classList.toggle("lit", p > 0.14));
+        const p = Math.min(1, Math.max(0, -cmpWrap.getBoundingClientRect().top / total));
+        // content taller than the pin drifts up as the scrub advances, so
+        // the reply grids surface for the payoff (no-op on tall screens)
+        if (cmpPin && cmpInner) {
+          const over = Math.max(0, cmpPin.scrollHeight - cmpPin.clientHeight);
+          cmpInner.style.transform = `translateY(${-over * Math.min(1, p * 1.2)}px)`;
+        }
+        const draw = Math.min(1, Math.max(0, (p - 0.06) / 0.4));
+        arrowPath.style.strokeDashoffset = `${arrowLen * (1 - draw)}`;
+        arrowHead.style.opacity = draw > 0.97 ? "1" : "0";
+        beforeHits.forEach((d) => d.classList.toggle("lit", p > 0.3));
         const n = Math.min(
           usHits.length,
-          Math.max(0, Math.floor(((p - 0.22) / 0.46) * usHits.length)),
+          Math.max(0, Math.floor(((p - 0.42) / 0.38) * usHits.length)),
         );
         usHits.forEach((d, i) => d.classList.toggle("lit", i < n));
         // the payoff: after the grid fills, credit the demo
-        const np = Math.min(1, Math.max(0, (p - 0.72) / 0.2));
+        const np = Math.min(1, Math.max(0, (p - 0.82) / 0.14));
         if (notePath) notePath.style.strokeDashoffset = `${noteLen * (1 - np)}`;
         if (noteHead) noteHead.style.opacity = np > 0.96 ? "1" : "0";
         if (noteEm) noteEm.style.opacity = `${np}`;
       };
-      const onScrollW = () => {
-        if (!rafW) rafW = requestAnimationFrame(updateW);
+      const onScroll2 = () => {
+        if (!raf2) raf2 = requestAnimationFrame(updateC);
       };
-      addEventListener("scroll", onScrollW, { passive: true });
+      addEventListener("scroll", onScroll2, { passive: true });
       cleanups.push(() => {
-        removeEventListener("scroll", onScrollW);
-        if (rafW) cancelAnimationFrame(rafW);
+        removeEventListener("scroll", onScroll2);
+        if (raf2) cancelAnimationFrame(raf2);
       });
-      updateW();
+      updateC();
     } else if (!reduceMotion) {
-      // touch: no pin, but the same choreography rides the viewport — the
-      // grids fill, each thread message scrubs in, then the arrow draws
-      const rateViz = root.querySelector(".rate-viz");
+      // touch: un-pinned, the same choreography rides the viewport — the
+      // arrow draws, the grids fill, each thread message scrubs in
+      const svgEl = arrowPath.ownerSVGElement;
+      const beforeBlock = root.querySelector(".dots:not(.us)");
+      const usBlock = root.querySelector(".dots.us");
       const msgs = [...root.querySelectorAll(".stagger .msg, .stagger .divider")] as HTMLElement[];
       let rafM = 0;
       const updateM = () => {
         rafM = 0;
         const vh = innerHeight;
-        if (rateViz) {
-          const r = rateViz.getBoundingClientRect();
-          const p = Math.min(1, Math.max(0, (vh - r.top) / (vh * 0.85)));
-          beforeHits.forEach((d) => d.classList.toggle("lit", p > 0.3));
+        if (svgEl) {
+          const r = svgEl.getBoundingClientRect();
+          const p = Math.min(1, Math.max(0, (vh - r.top - 30) / (vh * 0.4)));
+          arrowPath.style.strokeDashoffset = `${arrowLen * (1 - p)}`;
+          arrowHead.style.opacity = p > 0.95 ? "1" : "0";
+        }
+        if (beforeBlock) {
+          const r = beforeBlock.getBoundingClientRect();
+          beforeHits.forEach((d) => d.classList.toggle("lit", vh - r.top > vh * 0.35));
+        }
+        if (usBlock) {
+          const r = usBlock.getBoundingClientRect();
+          const p = Math.min(1, Math.max(0, (vh - r.top) / (vh * 0.55)));
           const n = Math.min(
             usHits.length,
-            Math.max(0, Math.floor(((p - 0.38) / 0.5) * usHits.length)),
+            Math.max(0, Math.floor(((p - 0.25) / 0.6) * usHits.length)),
           );
           usHits.forEach((d, i) => d.classList.toggle("lit", i < n));
         }
@@ -232,56 +254,9 @@ export default function App() {
       updateM();
     } else {
       beforeHits.concat(usHits).forEach((d) => d.classList.add("lit"));
-      /* the note stays fully visible under reduced motion */
-    }
-
-    // compare: the hand-drawn arrow scrubs with the pinned scroll
-    const arrowLen = arrowPath.getTotalLength();
-    arrowPath.style.strokeDasharray = `${arrowLen}`;
-    if (scrubOk) {
-      let raf2 = 0;
-      const drawArrow = () => {
-        raf2 = 0;
-        const total = cmpWrap.offsetHeight - innerHeight;
-        if (total <= 0) return;
-        const p = Math.min(1, Math.max(0, -cmpWrap.getBoundingClientRect().top / total));
-        const draw = Math.min(1, Math.max(0, (p - 0.14) / 0.62));
-        arrowPath.style.strokeDashoffset = `${arrowLen * (1 - draw)}`;
-        arrowHead.style.opacity = draw > 0.97 ? "1" : "0";
-      };
-      const onScroll2 = () => {
-        if (!raf2) raf2 = requestAnimationFrame(drawArrow);
-      };
-      addEventListener("scroll", onScroll2, { passive: true });
-      cleanups.push(() => {
-        removeEventListener("scroll", onScroll2);
-        if (raf2) cancelAnimationFrame(raf2);
-      });
-      drawArrow();
-    } else if (!reduceMotion) {
-      // touch: the arrow draws as it rides up the viewport, un-pinned
-      const svgEl = arrowPath.ownerSVGElement;
-      let raf3 = 0;
-      const drawM = () => {
-        raf3 = 0;
-        if (!svgEl) return;
-        const r = svgEl.getBoundingClientRect();
-        const p = Math.min(1, Math.max(0, (innerHeight - r.top - 30) / (innerHeight * 0.4)));
-        arrowPath.style.strokeDashoffset = `${arrowLen * (1 - p)}`;
-        arrowHead.style.opacity = p > 0.95 ? "1" : "0";
-      };
-      const onScroll3 = () => {
-        if (!raf3) raf3 = requestAnimationFrame(drawM);
-      };
-      addEventListener("scroll", onScroll3, { passive: true });
-      cleanups.push(() => {
-        removeEventListener("scroll", onScroll3);
-        if (raf3) cancelAnimationFrame(raf3);
-      });
-      drawM();
-    } else {
       arrowPath.style.strokeDashoffset = "0";
       arrowHead.style.opacity = "1";
+      /* the note stays fully visible under reduced motion */
     }
 
     return () => cleanups.forEach((fn) => fn());
@@ -518,6 +493,13 @@ export default function App() {
                   Book a demo
                 </a>
               </div>
+              <div className="hero-proof">
+                <img src="/yuvan.png" alt="Yuvan Sundrani, founder of Autosana" />
+                <p>
+                  &ldquo;amazing stuff, love the demo&rdquo; <b>Yuvan Sundrani</b> &middot;
+                  Founder, Autosana (YC S25)
+                </p>
+              </div>
             </div>
             <div className="app-window enter-window">
               <img
@@ -529,52 +511,75 @@ export default function App() {
           {!seaGone && <canvas id="sea" ref={seaRef} aria-hidden="true" />}
         </div>
 
-        {/* week one + the founder */}
-        <section id="week-one" className="sheet sheet-white">
-          <div className="pin-wrap week-pin-wrap" ref={weekWrapRef}>
-            <div className="pin pin-open">
-              <div className="wrap week-sect">
-                <div className="week-grid">
-                  <div className="week-left">
-                    <h2>
-                      Send something <em className="voice">worth a reply.</em>
-                    </h2>
-                    <div
-                      className="rate-viz"
-                      aria-label="Reply rate: about 1 in 100 before driftwood, 1 in 7 with driftwood"
-                    >
-                      <p className="rate-mult">
-                        Same leads. <em>14&times;</em> the replies.
+        {/* the favorite: don't send out AI slop — pinned, the arrow draws as you scroll */}
+        <section id="compare" className="sheet sheet-white">
+          <div className="pin-wrap compare-pin-wrap" ref={cmpWrapRef}>
+            <div className="pin">
+              <div className="wrap" style={{ width: "100%" }}>
+                <div className="compare-head">
+                  <h2 style={{ marginInline: "auto" }}>
+                    Don't send out <em className="voice">AI slop.</em>
+                  </h2>
+                  <p className="compare-sub">
+                    Send something worth a reply. Same leads, <b>14&times;</b> the replies.
+                  </p>
+                </div>
+                <div className="compare-grid">
+                  <svg className="compare-arrow" viewBox="0 0 260 100" aria-hidden="true">
+                    <path
+                      ref={arrowPathRef}
+                      d="M 14 70 C 40 36, 72 20, 102 28 C 130 36, 132 64, 112 62 C 92 60, 98 32, 128 28 C 166 23, 208 36, 234 58"
+                      fill="none"
+                      stroke="var(--accent)"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      ref={arrowHeadRef}
+                      d="M 234 58 l -15 -2 M 234 58 l -3 -14.5"
+                      fill="none"
+                      stroke="var(--accent)"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      style={{ opacity: 0, transition: "opacity 0.3s" }}
+                    />
+                  </svg>
+                  <div>
+                    <p className="compare-label">what everyone else sends</p>
+                    <div className="email">
+                      <p className="email-subject">
+                        <span className="redact" role="img" aria-label="name redacted"></span>{" "}
+                        &mdash; quick question
                       </p>
-                      <div className="dots-block">
-                        <div className="dots-label">
-                          <span>before</span>
-                          <b>&lt;1 in 100</b>
-                        </div>
-                        <Dots total={100} hits={1} />
-                      </div>
-                      <div className="dots-block">
-                        <div className="dots-label">
-                          <span>with driftwood &middot; week one at Autosana</span>
-                          <b>1 in 7</b>
-                        </div>
-                        <Dots total={100} hits={14} us />
-                      </div>
-                    </div>
-                    <div className="founder">
-                      <img
-                        src="/yuvan.png"
-                        alt="Yuvan Sundrani, founder of Autosana, speaking on stage"
-                      />
-                      <div>
-                        <p className="founder-quote">&ldquo;amazing stuff, love the demo&rdquo;</p>
-                        <p className="founder-attr">
-                          <b>Yuvan Sundrani</b> &middot; Founder, Autosana (YC S25)
+                      <div className="email-body">
+                        <p>
+                          Hey <span className="redact" role="img" aria-label="name redacted"></span>,
+                        </p>
+                        <p>
+                          Hope you're doing well! Huge fan of what you're building &mdash; truly
+                          impressive momentum.
+                        </p>
+                        <p>
+                          I'm with an AI-powered QA platform, the{" "}
+                          <b>all-in-one way to ship faster with confidence</b>. Teams like yours
+                          are seeing <b>huge results</b> &mdash; we'd love to show you how.
+                        </p>
+                        <p>
+                          Any chance you have 15 minutes this week? You can{" "}
+                          <span className="fake-link">grab time here</span>.
                         </p>
                       </div>
                     </div>
+                    <div className="dots-block">
+                      <div className="dots-label">
+                        <span>4 months of this &middot; no reply</span>
+                        <b>&lt;1 in 100</b>
+                      </div>
+                      <Dots total={100} hits={1} />
+                    </div>
                   </div>
                   <div>
+                    <p className="compare-label us">what driftwood sent</p>
                     <div className="thread">
                       <div className="li-head">
                         <span className="li-name">
@@ -690,6 +695,13 @@ export default function App() {
                         <span className="li-send">Send</span>
                       </div>
                     </div>
+                    <div className="dots-block">
+                      <div className="dots-label">
+                        <span>with driftwood &middot; week one at Autosana</span>
+                        <b>1 in 7</b>
+                      </div>
+                      <Dots total={100} hits={14} us />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -776,146 +788,6 @@ export default function App() {
             </div>
           </div>
           <canvas className="sea-strip" aria-hidden="true" />
-        </section>
-
-        {/* the favorite: don't send out AI slop — pinned, the arrow draws as you scroll */}
-        <section id="compare" className="sheet sheet-white">
-          <div className="pin-wrap compare-pin-wrap" ref={cmpWrapRef}>
-            <div className="pin">
-              <div className="wrap" style={{ width: "100%" }}>
-                <div className="compare-head">
-                  <h2 style={{ marginInline: "auto" }}>
-                    Don't send out <em className="voice">AI slop.</em>
-                  </h2>
-                </div>
-                <div className="compare-grid">
-                  <svg className="compare-arrow" viewBox="0 0 260 100" aria-hidden="true">
-                    <path
-                      ref={arrowPathRef}
-                      d="M 14 70 C 40 36, 72 20, 102 28 C 130 36, 132 64, 112 62 C 92 60, 98 32, 128 28 C 166 23, 208 36, 234 58"
-                      fill="none"
-                      stroke="var(--accent)"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      ref={arrowHeadRef}
-                      d="M 234 58 l -15 -2 M 234 58 l -3 -14.5"
-                      fill="none"
-                      stroke="var(--accent)"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      style={{ opacity: 0, transition: "opacity 0.3s" }}
-                    />
-                  </svg>
-                  <div>
-                    <p className="compare-label">what everyone else sends</p>
-                    <div className="email">
-                      <p className="email-subject">Joe &mdash; quick question (Square x Joe's Pizza)</p>
-                      <div className="email-body">
-                        <p>Hey Joe,</p>
-                        <p>
-                          Huge fan of what you're building at Joe's Pizza &mdash; a true NYC
-                          institution. Incredible legacy.
-                        </p>
-                        <p>
-                          I'm with Square, the <b>all-in-one platform to run and grow your business</b>.
-                          We power millions of merchants and are growing <b>40% year over year</b>{" "}
-                          &mdash; businesses like yours are seeing huge results.
-                        </p>
-                        <p>
-                          Would love to connect and show you what we offer. Any chance you have 15
-                          minutes this week? You can <span className="fake-link">grab time here</span>.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="compare-label us">what driftwood sent</p>
-                    <div className="email us">
-                      <p className="email-subject">Joe's doesn't take online orders, so we built it</p>
-                      <div className="email-body">
-                        <p>Hi Joe,</p>
-                        <p>
-                          We turned your menu into a <b>live ordering page on Square</b> this morning,
-                          then placed a test order to make sure it works. The link is below.
-                        </p>
-                        <p>We already run online ordering for hundreds of local spots like yours.</p>
-                        <p>Open to a quick call this week?</p>
-                      </div>
-                      <div className="order-demo">
-                        <div className="overflow-hidden rounded-xl border border-line bg-white">
-                          <div className="relative bg-[#eef0f3] p-2.5 pb-0">
-                            <div className="overflow-hidden rounded-t-lg border border-b-0 border-[#d8dce2] bg-white shadow-sm">
-                              <div className="flex items-center gap-1.5 border-b border-[#e8eaee] bg-[#f6f7f9] px-2.5 py-1.5">
-                                <span className="size-1.5 rounded-full bg-[#d9dde3]" />
-                                <span className="size-1.5 rounded-full bg-[#d9dde3]" />
-                                <span className="size-1.5 rounded-full bg-[#d9dde3]" />
-                                <span className="ml-1.5 rounded bg-white px-2 py-0.5 font-mono text-[10.5px] text-[#7a8190] ring-1 ring-[#e8eaee]">
-                                  joespizza.nyc/order
-                                </span>
-                              </div>
-                              <div className="px-3 py-2">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-[12px] font-bold text-ink">Joe's Pizza</span>
-                                  <span className="rounded-full bg-tide-wash px-1.5 py-0.5 font-mono text-[9px] font-medium text-tide">
-                                    order online
-                                  </span>
-                                </div>
-                                <div className="mt-1.5 space-y-1">
-                                  {[
-                                    { name: "cheese slice", price: "$3.50" },
-                                    { name: "pepperoni slice", price: "$4.75" },
-                                    { name: "garlic knots (4)", price: "$4.00" },
-                                  ].map((it) => (
-                                    <div
-                                      key={it.name}
-                                      className="flex items-center justify-between rounded-md bg-[#f1f3f6] px-2 py-1 ring-1 ring-[#e6e9ee]"
-                                    >
-                                      <span className="font-mono text-[10px] font-medium text-[#3c424e]">{it.name}</span>
-                                      <span className="flex items-center gap-1.5">
-                                        <span className="font-mono text-[10px] text-[#7a8190]">{it.price}</span>
-                                        <span className="flex size-3.5 items-center justify-center rounded-full bg-white font-mono text-[11px] leading-none text-tide ring-1 ring-[#e6e9ee]">
-                                          +
-                                        </span>
-                                      </span>
-                                    </div>
-                                  ))}
-                                </div>
-                                <div className="mt-1.5 flex items-center justify-between rounded-md bg-[#16181d] px-2 py-1">
-                                  <span className="font-mono text-[9.5px] text-white/70">2 slices &middot; $8.25</span>
-                                  <span className="text-[9.5px] font-semibold text-white">Checkout &rarr;</span>
-                                </div>
-                              </div>
-                            </div>
-                            <span className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-black/70 py-0.5 pl-1.5 pr-2 font-mono text-[10.5px] font-medium text-white">
-                              <span className="size-1.5 rounded-full bg-[#3fb98a]" />
-                              LIVE
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between gap-2 border-t border-line px-3 py-2">
-                            <div className="flex min-w-0 items-center gap-2">
-                              <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-tide">
-                                <svg viewBox="0 0 24 24" className="size-3 stroke-white" fill="none" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                                  <path d="M7 17 17 7M9 7h8v8" />
-                                </svg>
-                              </div>
-                              <div className="min-w-0">
-                                <p className="m-0 truncate text-[13.5px] font-semibold leading-tight text-ink">joespizza.nyc, live ordering page</p>
-                                <p className="m-0 truncate text-[11.5px] leading-tight text-ink-faint">built from their menu, on Square</p>
-                              </div>
-                            </div>
-                            <span className="shrink-0 rounded-full bg-tide-wash px-2 py-0.5 font-mono text-[10.5px] font-medium text-tide">live</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          {!seaGone && <canvas className="sea-strip" aria-hidden="true" />}
         </section>
 
         {/* close */}

@@ -265,6 +265,10 @@ body {
    below the window's chrome so the corner never reads empty */
 .landing .hero-grid > div:first-child { padding-top: clamp(2.5rem, 9vh, 8rem); }
 .landing .hero-sub { margin-top: 1.1rem; font-size: 1.1rem; color: var(--gray); max-width: 38ch; }
+.landing .hero-proof { display: flex; align-items: center; gap: 0.7rem; margin-top: 1.8rem; font-size: 0.95rem; color: var(--gray); }
+.landing .hero-proof img { width: 2.2rem; height: 2.2rem; border-radius: 50%; object-fit: cover; }
+.landing .hero-proof p { margin: 0; max-width: 36ch; line-height: 1.45; }
+.landing .hero-proof b { color: var(--ink); font-weight: 600; }
 .landing .hero-actions { margin-top: 1.8rem; }
 .landing .app-window {
   border: 1px solid var(--line); border-radius: var(--r-win); overflow: hidden;
@@ -461,8 +465,15 @@ body {
 .landing .compare-grid > div:first-child .email-subject,
 .landing .compare-grid > div:first-child .email-body { opacity: 0.62; }
 .landing .compare-pin-wrap { height: 200vh; }
-.landing .compare-pin-wrap .pin { align-items: flex-start; padding-top: clamp(5.5rem, 9vh, 7rem); }
-.landing .compare-grid { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: clamp(1.5rem, 3vw, 2.5rem); margin-top: 3.5rem; align-items: stretch; }
+.landing .compare-pin-wrap .pin { align-items: flex-start; padding-top: clamp(4.5rem, 7vh, 5.5rem); }
+.landing .compare-sub { margin: 0.9rem auto 0; text-align: center; color: var(--gray); font-size: 1.08rem; }
+.landing .compare-sub b { color: var(--accent); }
+.landing .compare-grid { position: relative; display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(1.5rem, 3vw, 2.5rem); margin-top: 2.75rem; align-items: start; }
+/* compact grids under each card: message above, its yield below */
+.landing .compare-grid .dots { grid-template-columns: repeat(20, 0.6rem); gap: 0.3rem; }
+.landing .compare-grid .dots i { width: 0.6rem; height: 0.6rem; }
+.landing .compare-grid .dots-block { margin-top: 1.5rem; }
+.landing .compare-grid .clip { width: min(16.5rem, 100%); }
 .landing .compare-arrow {
   position: absolute; top: -3.4rem; left: 50%; transform: translateX(-50%);
   width: 15rem; z-index: 2; pointer-events: none;
