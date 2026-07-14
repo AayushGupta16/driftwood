@@ -373,16 +373,29 @@ export default function App() {
               }
             }
           }
-          // a palm on the upper-right shoulder of the island
+          // a palm on the upper-right shoulder of the island: five fronds
+          // fanning from the crown, a coconut, a gently curved trunk
           const tx = (isl.cx + isl.rx * 0.58) * CELL_W;
-          const ty = (isl.cy - isl.ry * 0.52) * CELL_H;
+          const ty = (isl.cy - isl.ry * 0.35) * CELL_H;
+          const prevFont = ctx.font;
+          ctx.font = "15px ui-monospace, Menlo, monospace";
           ctx.fillStyle = "rgba(56, 122, 70, 0.95)";
-          ctx.fillText("▞▀▚", tx - CELL_W * 1.4, ty - CELL_H * 2.1); // fronds arch
-          ctx.fillText("▘", tx - CELL_W * 1.9, ty - CELL_H * 1.45); // and droop
-          ctx.fillText("▝", tx + CELL_W * 1.7, ty - CELL_H * 1.45);
+          ctx.fillText("▂", tx - 3, ty - 52);
+          ctx.fillText("▚", tx - 16, ty - 46);
+          ctx.fillText("▞", tx + 8, ty - 46);
+          ctx.fillText("▄", tx - 26, ty - 40);
+          ctx.fillText("▄", tx + 20, ty - 40);
+          ctx.fillText("▖", tx - 30, ty - 32);
+          ctx.fillText("▗", tx + 26, ty - 32);
+          ctx.fillStyle = "rgba(224, 138, 46, 0.95)";
+          ctx.font = "10px ui-monospace, Menlo, monospace";
+          ctx.fillText("●", tx - 4, ty - 36);
           ctx.fillStyle = "rgba(121, 85, 52, 0.95)";
-          ctx.fillText("▐", tx - CELL_W * 0.15, ty - CELL_H * 1.0); // leaning trunk
-          ctx.fillText("▌", tx + CELL_W * 0.15, ty);
+          ctx.font = "15px ui-monospace, Menlo, monospace";
+          ctx.fillText("▐", tx - 4, ty - 26);
+          ctx.fillText("▐", tx - 1, ty - 14);
+          ctx.fillText("▌", tx + 2, ty - 2);
+          ctx.font = prevFont;
         }
         const duck = (seed: number, rowF: number, dir: number) => {
           const span = cols + 16;

@@ -498,8 +498,8 @@ body {
 .landing .compare-grid .divider { margin-block: 0.45rem; }
 .landing .compare-grid .clip { width: min(14rem, 100%); }
 .landing .compare-arrow {
-  position: absolute; top: -3.4rem; left: 50%; transform: translateX(-50%);
-  width: 15rem; z-index: 2; pointer-events: none;
+  position: absolute; top: -4.6rem; left: 50%; transform: translateX(-50%);
+  width: 20rem; z-index: 2; pointer-events: none;
 }
 .landing .compare-label { margin-bottom: 0.8rem; }
 .landing .compare-label.us { color: var(--accent); font-weight: 600; }
