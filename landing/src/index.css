@@ -404,7 +404,7 @@ body {
 
 /* ---------- how it works: G3 pinned scrub ---------- */
 .landing .pin-wrap { height: 155vh; }
-.landing .week-pin-wrap { height: 130vh; }
+.landing .week-pin-wrap { height: 140vh; }
 .landing .week-pin-wrap .pin { align-items: flex-start; padding-top: 4rem; }
 .landing .pin-open { overflow: visible; }
 .landing .week-sect { padding-block: 2rem; width: 100%; }
@@ -532,6 +532,22 @@ body {
   .landing .app-window img { width: 165%; max-width: none; height: 19rem; object-fit: cover; object-position: left top; }
   /* the shorter window ends inside the hero sea; keep the waves behind it */
   .landing .app-window { position: relative; z-index: 2; }
+  /* calm: no entrance choreography on phones — everything simply present */
+  .landing .enter-window, .landing .thread, .landing .email { animation: none; }
+  .landing .stagger .msg, .landing .stagger .divider { opacity: 1; transform: none; animation: none; }
+  .landing .dots i.hit.lit { animation: none; }
+}
+/* desktop-width touch devices (tablets): scrubbing against touch momentum
+   feels broken, so pins go static there too — mirrors the JS pointer gate */
+@media (pointer: coarse) and (min-width: 52rem) {
+  .landing .pin-wrap, .landing .week-pin-wrap, .landing .compare-pin-wrap { height: auto; }
+  .landing .pin { position: static; height: auto; overflow: visible; padding-top: 2.5rem; }
+  .landing .stage { min-height: 0; }
+  .landing .stage-card { position: static; opacity: 1; transform: none; pointer-events: auto; }
+  .landing .stage-card + .stage-card { margin-top: 1.5rem; }
+  .landing .compare-arrow { display: none; }
+  .landing .rail-list li { color: var(--ink); font-weight: 600; }
+  .landing .rail-list li span { color: var(--accent); }
 }
 @media (prefers-reduced-motion: reduce) {
   .landing * { animation-duration: 0.01ms !important; animation-delay: 0ms !important; transition-duration: 0.01ms !important; }

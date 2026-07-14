@@ -85,8 +85,12 @@ export default function App() {
     const arrowHead = arrowHeadRef.current;
     if (!root || !pinWrap || !weekWrap || !cmpWrap || !arrowPath || !arrowHead) return;
 
+    // scroll-scrubs only where they feel right: big screens with a mouse or
+    // trackpad. Touch devices (phones AND desktop-width tablets) get the
+    // static layout — scrubbing against touch momentum feels broken.
     const scrubOk =
       matchMedia("(min-width: 52rem)").matches &&
+      matchMedia("(pointer: fine)").matches &&
       !matchMedia("(prefers-reduced-motion: reduce)").matches;
     const cleanups: (() => void)[] = [];
 
@@ -133,22 +137,37 @@ export default function App() {
       /* static stack on mobile / reduced motion via CSS */
     }
 
-    // week-one: scroll populates the reply dots
+    // week-one: scroll populates the reply dots, then the attribution arrow
+    // draws itself at the video clip as the payoff
     const beforeHits = [...root.querySelectorAll(".dots:not(.us) i.hit")];
     const usHits = [...root.querySelectorAll(".dots.us i.hit")];
+    const note = root.querySelector(".clip-note") as HTMLElement | null;
+    const notePath = note?.querySelector("path:nth-of-type(1)") as SVGPathElement | null;
+    const noteHead = note?.querySelector("path:nth-of-type(2)") as SVGPathElement | null;
+    const noteEm = note?.querySelector("em") as HTMLElement | null;
     if (scrubOk) {
+      let noteLen = 0;
+      if (notePath) {
+        noteLen = notePath.getTotalLength();
+        notePath.style.strokeDasharray = `${noteLen}`;
+      }
       let rafW = 0;
       const updateW = () => {
         rafW = 0;
         const total = weekWrap.offsetHeight - innerHeight;
         if (total <= 0) return;
         const p = Math.min(1, Math.max(0, -weekWrap.getBoundingClientRect().top / total));
-        beforeHits.forEach((d) => d.classList.toggle("lit", p > 0.16));
+        beforeHits.forEach((d) => d.classList.toggle("lit", p > 0.14));
         const n = Math.min(
           usHits.length,
-          Math.max(0, Math.floor(((p - 0.26) / 0.6) * usHits.length)),
+          Math.max(0, Math.floor(((p - 0.22) / 0.46) * usHits.length)),
         );
         usHits.forEach((d, i) => d.classList.toggle("lit", i < n));
+        // the payoff: after the grid fills, credit the demo
+        const np = Math.min(1, Math.max(0, (p - 0.72) / 0.2));
+        if (notePath) notePath.style.strokeDashoffset = `${noteLen * (1 - np)}`;
+        if (noteHead) noteHead.style.opacity = np > 0.96 ? "1" : "0";
+        if (noteEm) noteEm.style.opacity = `${np}`;
       };
       const onScrollW = () => {
         if (!rafW) rafW = requestAnimationFrame(updateW);
@@ -161,6 +180,7 @@ export default function App() {
       updateW();
     } else {
       beforeHits.concat(usHits).forEach((d) => d.classList.add("lit"));
+      /* the note stays fully visible where there is no scrub */
     }
 
     // compare: the hand-drawn arrow scrubs with the pinned scroll
@@ -721,17 +741,17 @@ export default function App() {
                   <div>
                     <p className="compare-label">what everyone else sends</p>
                     <div className="email">
-                      <p className="email-subject">Jordan &mdash; quick question (outbound at Brex)</p>
+                      <p className="email-subject">Joe &mdash; quick question (Square x Joe's Pizza)</p>
                       <div className="email-body">
-                        <p>Hey Jordan,</p>
+                        <p>Hey Joe,</p>
                         <p>
-                          Huge fan of what you're building at Brex &mdash; truly redefining how
-                          modern companies spend. Incredible momentum.
+                          Huge fan of what you're building at Joe's Pizza &mdash; a true NYC
+                          institution. Incredible legacy.
                         </p>
                         <p>
-                          I'm with an AI-powered sales platform. We help teams book 3&times; more
-                          meetings with <b>hyper-personalized outreach at scale</b> &mdash; companies
-                          like yours are seeing huge results.
+                          I'm with Square, the <b>all-in-one platform to run and grow your business</b>.
+                          We power millions of merchants and are growing <b>40% year over year</b>{" "}
+                          &mdash; businesses like yours are seeing huge results.
                         </p>
                         <p>
                           Would love to connect and show you what we offer. Any chance you have 15
@@ -743,15 +763,14 @@ export default function App() {
                   <div>
                     <p className="compare-label us">what driftwood sent</p>
                     <div className="email us">
-                      <p className="email-subject">Notion runs on Ramp, so we built the pitch</p>
+                      <p className="email-subject">Joe's doesn't take online orders, so we built it</p>
                       <div className="email-body">
-                        <p>Hi Jordan,</p>
+                        <p>Hi Joe,</p>
                         <p>
-                          Notion is one of Ramp's flagship case studies. This morning our agent{" "}
-                          <b>built the one-pager Brex could send Notion's finance team</b> to flip
-                          it: the entity-by-entity rollout, the yield math, live on a page. The
-                          link is below.
+                          We turned your menu into a <b>live ordering page on Square</b> this morning,
+                          then placed a test order to make sure it works. The link is below.
                         </p>
+                        <p>We already run online ordering for hundreds of local spots like yours.</p>
                         <p>Open to a quick call this week?</p>
                       </div>
                       <div className="order-demo">
@@ -763,34 +782,39 @@ export default function App() {
                                 <span className="size-1.5 rounded-full bg-[#d9dde3]" />
                                 <span className="size-1.5 rounded-full bg-[#d9dde3]" />
                                 <span className="ml-1.5 rounded bg-white px-2 py-0.5 font-mono text-[10.5px] text-[#7a8190] ring-1 ring-[#e8eaee]">
-                                  driftwood.sh/d/notion-on-brex
+                                  joespizza.nyc/order
                                 </span>
                               </div>
-                              <div className="px-3 py-2.5">
+                              <div className="px-3 py-2">
                                 <div className="flex items-center justify-between">
-                                  <span className="text-[12px] font-bold tracking-tight text-[#16181b]">Brex</span>
-                                  <span className="font-mono text-[8.5px] font-medium uppercase tracking-wider text-[#f05a28]">
-                                    global spend. one platform.
+                                  <span className="text-[12px] font-bold text-ink">Joe's Pizza</span>
+                                  <span className="rounded-full bg-tide-wash px-1.5 py-0.5 font-mono text-[9px] font-medium text-tide">
+                                    order online
                                   </span>
                                 </div>
-                                <p
-                                  className="mb-0 mt-1.5 text-[14.5px] leading-snug text-ink"
-                                  style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
-                                >
-                                  The workspace behind 100M people deserves finance that{" "}
-                                  <em className="text-[#f05a28]">earns</em> while it runs.
-                                </p>
-                                <div className="mt-2 grid grid-cols-3 gap-1">
+                                <div className="mt-1.5 space-y-1">
                                   {[
-                                    { n: "4.36%", c: "on idle cash" },
-                                    { n: "71%", c: "spend automated" },
-                                    { n: "756 hrs", c: "saved yearly" },
-                                  ].map((s) => (
-                                    <div key={s.n} className="rounded-md bg-[#faf7f5] px-1.5 py-1 ring-1 ring-[#f0e8e3]">
-                                      <p className="m-0 text-[11px] font-semibold leading-tight text-[#f05a28]">{s.n}</p>
-                                      <p className="m-0 text-[8.5px] leading-tight text-[#7a8190]">{s.c}</p>
+                                    { name: "cheese slice", price: "$3.50" },
+                                    { name: "pepperoni slice", price: "$4.75" },
+                                    { name: "garlic knots (4)", price: "$4.00" },
+                                  ].map((it) => (
+                                    <div
+                                      key={it.name}
+                                      className="flex items-center justify-between rounded-md bg-[#f1f3f6] px-2 py-1 ring-1 ring-[#e6e9ee]"
+                                    >
+                                      <span className="font-mono text-[10px] font-medium text-[#3c424e]">{it.name}</span>
+                                      <span className="flex items-center gap-1.5">
+                                        <span className="font-mono text-[10px] text-[#7a8190]">{it.price}</span>
+                                        <span className="flex size-3.5 items-center justify-center rounded-full bg-white font-mono text-[11px] leading-none text-tide ring-1 ring-[#e6e9ee]">
+                                          +
+                                        </span>
+                                      </span>
                                     </div>
                                   ))}
+                                </div>
+                                <div className="mt-1.5 flex items-center justify-between rounded-md bg-[#16181d] px-2 py-1">
+                                  <span className="font-mono text-[9.5px] text-white/70">2 slices &middot; $8.25</span>
+                                  <span className="text-[9.5px] font-semibold text-white">Checkout &rarr;</span>
                                 </div>
                               </div>
                             </div>
@@ -807,8 +831,8 @@ export default function App() {
                                 </svg>
                               </div>
                               <div className="min-w-0">
-                                <p className="m-0 truncate text-[13.5px] font-semibold leading-tight text-ink">notion-on-brex, live pitch page</p>
-                                <p className="m-0 truncate text-[11.5px] leading-tight text-ink-faint">built from Ramp's public case study, in Brex's brand</p>
+                                <p className="m-0 truncate text-[13.5px] font-semibold leading-tight text-ink">joespizza.nyc, live ordering page</p>
+                                <p className="m-0 truncate text-[11.5px] leading-tight text-ink-faint">built from their menu, on Square</p>
                               </div>
                             </div>
                             <span className="shrink-0 rounded-full bg-tide-wash px-2 py-0.5 font-mono text-[10.5px] font-medium text-tide">live</span>
