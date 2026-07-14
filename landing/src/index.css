@@ -297,15 +297,15 @@ body {
 .landing .wash-b::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='28' viewBox='0 0 180 28'%3E%3Cpath d='M0 14 C 11.25 5.5, 33.75 5.5, 45 14 C 56.25 22.5, 78.75 22.5, 90 14 C 101.25 5.5, 123.75 5.5, 135 14 C 146.25 22.5, 168.75 22.5, 180 14 L180 28 L0 28 Z' fill='%23eaf1f7'/%3E%3C/svg%3E"); }
 .landing #week-one.sheet::before { content: none; } /* the hero sea is this seam */
 .landing .sea-strip {
-  display: none; width: 100%; height: 96px; pointer-events: none;
-  -webkit-mask-image: linear-gradient(to bottom, transparent, black 30%, black 70%, transparent);
-  mask-image: linear-gradient(to bottom, transparent, black 30%, black 70%, transparent);
+  display: none; width: 100%; height: 80px; pointer-events: none;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, black 22%, black 78%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, black 22%, black 78%, transparent);
 }
 .landing.sea-live .sea-strip { display: block; }
 /* the one surfacing moment: the LinkedIn window rises out of the hero's sea */
 .landing .week-grid > div:last-child { position: relative; z-index: 2; margin-top: -3.5rem; }
 .landing .week-left h2 { margin-bottom: 1.6rem; }
-.landing .sect { padding-block: clamp(3.5rem, 7vw, 6rem); }
+.landing .sect { padding-block: clamp(2.5rem, 5vw, 4.25rem); }
 .landing .sect h2, .landing .how-grid h2, .landing .week-left h2 { font-size: clamp(2rem, 1.2rem + 2.8vw, 3.2rem); font-weight: 600; line-height: 1.12; max-width: 28ch; }
 
 /* ---------- week one: G2 ---------- */
@@ -400,9 +400,9 @@ body {
 }
 
 /* ---------- how it works: G3 pinned scrub ---------- */
-.landing .pin-wrap { height: 165vh; }
-.landing .week-pin-wrap { height: 145vh; }
-.landing .week-pin-wrap .pin { align-items: flex-start; padding-top: 5rem; }
+.landing .pin-wrap { height: 155vh; }
+.landing .week-pin-wrap { height: 130vh; }
+.landing .week-pin-wrap .pin { align-items: flex-start; padding-top: 4rem; }
 .landing .pin-open { overflow: visible; }
 .landing .week-sect { padding-block: 2rem; width: 100%; }
 .landing .pin { position: sticky; top: 0; height: 100vh; display: flex; align-items: center; overflow: hidden; }
@@ -454,8 +454,8 @@ body {
 }
 .landing .compare-grid > div:first-child .email-subject,
 .landing .compare-grid > div:first-child .email-body { opacity: 0.62; }
-.landing .compare-pin-wrap { height: 230vh; }
-.landing .compare-pin-wrap .pin { align-items: flex-start; padding-top: clamp(2.5rem, 6vh, 4.5rem); }
+.landing .compare-pin-wrap { height: 200vh; }
+.landing .compare-pin-wrap .pin { align-items: flex-start; padding-top: clamp(5.5rem, 9vh, 7rem); }
 .landing .compare-grid { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: clamp(1.5rem, 3vw, 2.5rem); margin-top: 3.5rem; align-items: stretch; }
 .landing .compare-arrow {
   position: absolute; top: -3.4rem; left: 50%; transform: translateX(-50%);
@@ -486,7 +486,7 @@ body {
 
 /* ---------- close ---------- */
 .landing .close-sect { text-align: center; }
-.landing .close-sect .sect { padding-block: clamp(5rem, 9vw, 7.5rem); }
+.landing .close-sect .sect { padding-block: clamp(4rem, 7vw, 5.5rem); }
 .landing .close-sect h2 { font-size: clamp(2.4rem, 1.3rem + 4.6vw, 4.6rem); font-weight: 600; line-height: 1.05; letter-spacing: -0.02em; margin-inline: auto; max-width: 16ch; }
 .landing .close-sect .btn { margin-top: 2.5rem; height: 3.1rem; padding-inline: 1.9rem; font-size: 1.05rem; }
 
