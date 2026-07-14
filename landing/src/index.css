@@ -472,6 +472,7 @@ body {
 .landing .email-subject { font-weight: 600; font-size: 1rem; padding-bottom: 0.9rem; border-bottom: 1px solid var(--line); }
 .landing .email-body { margin-top: 1rem; font-size: 0.92rem; color: #3c434a; line-height: 1.55; }
 .landing .email-body p + p { margin-top: 0.9rem; }
+.landing .order-demo { margin-top: 1.2rem; max-width: 20rem; }
 .landing .email-body .fake-link { color: #1a0dab; text-decoration: underline; }
 .landing .order-card { margin-top: 1.2rem; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; max-width: 24rem; }
 .landing .order-bar { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.7rem; border-bottom: 1px solid var(--line); font-size: 0.72rem; color: var(--gray-light); }
