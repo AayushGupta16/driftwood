@@ -116,17 +116,7 @@ export default function App() {
       /* static stack on mobile / reduced motion via CSS */
     }
 
-    // slop vs. real: one scrub drives the arrow across the cards and the
-    // demo credit at the clip
-    const note = root.querySelector(".clip-note") as HTMLElement | null;
-    const notePath = note?.querySelector("path:nth-of-type(1)") as SVGPathElement | null;
-    const noteHead = note?.querySelector("path:nth-of-type(2)") as SVGPathElement | null;
-    const noteEm = note?.querySelector("em") as HTMLElement | null;
-    let noteLen = 0;
-    if (notePath && !reduceMotion) {
-      noteLen = notePath.getTotalLength();
-      notePath.style.strokeDasharray = `${noteLen}`;
-    }
+    // slop vs. real: the scrub drives the arrow across the cards
     const arrowLen = arrowPath.getTotalLength();
     arrowPath.style.strokeDasharray = `${arrowLen}`;
     if (scrubOk) {
@@ -147,11 +137,6 @@ export default function App() {
         const draw = Math.min(1, Math.max(0, (p - 0.06) / 0.4));
         arrowPath.style.strokeDashoffset = `${arrowLen * (1 - draw)}`;
         arrowHead.style.opacity = draw > 0.97 ? "1" : "0";
-        // the payoff: credit the demo
-        const np = Math.min(1, Math.max(0, (p - 0.55) / 0.3));
-        if (notePath) notePath.style.strokeDashoffset = `${noteLen * (1 - np)}`;
-        if (noteHead) noteHead.style.opacity = np > 0.96 ? "1" : "0";
-        if (noteEm) noteEm.style.opacity = `${np}`;
       };
       const onScroll2 = () => {
         if (!raf2) raf2 = requestAnimationFrame(updateC);
@@ -183,13 +168,6 @@ export default function App() {
           el.style.opacity = `${q}`;
           el.style.transform = `translateY(${(1 - q) * 12}px)`;
         });
-        if (note && notePath && noteEm) {
-          const nr = note.getBoundingClientRect();
-          const np = Math.min(1, Math.max(0, (vh - nr.top) / (vh * 0.45)));
-          notePath.style.strokeDashoffset = `${noteLen * (1 - np)}`;
-          if (noteHead) noteHead.style.opacity = np > 0.96 ? "1" : "0";
-          noteEm.style.opacity = `${np}`;
-        }
       };
       const onScrollM = () => {
         if (!rafM) rafM = requestAnimationFrame(updateM);
@@ -223,9 +201,10 @@ export default function App() {
     }
 
     const cleanups: (() => void)[] = [];
+    const proofEl = root.querySelector(".hero-proof") as HTMLElement | null;
     const CHARS = [" ", "\u00b7", "-", "~", "\u2248", "\u224b"]; // · - ~ ≈ ≋ by wave height
-    const CELL_W = 9;
-    const CELL_H = 13;
+    const CELL_W = 8;
+    const CELL_H = 10.5;
     const WOOD = "\u2597\u2584\u2584\u2584\u2584\u2584\u2584\u2596"; // ▗▄▄▄▄▄▄▖ a drifting log
     const SAIL = "\u259f\u258c"; // ▟▌
     const HULL = "\u2580\u2580\u2580\u2580"; // ▀▀▀▀
@@ -318,13 +297,41 @@ export default function App() {
         if (!m.cols) continue;
         const { ctx, cols, rows, strip, phase } = m;
         ctx.clearRect(0, 0, m.canvas.clientWidth, m.canvas.clientHeight);
+        // the proof island: the hero sea reserves ground under the quote and
+        // draws it in the same character grid, waves lapping at the coast
+        let isl: { cx: number; cy: number; rx: number; ry: number } | null = null;
+        if (!strip && proofEl) {
+          const pr = proofEl.getBoundingClientRect();
+          const cr = m.canvas.getBoundingClientRect();
+          if (pr.width > 0 && pr.bottom > cr.top + 6 && pr.top < cr.bottom) {
+            isl = {
+              cx: (pr.left + pr.width / 2 - cr.left) / CELL_W,
+              cy: (pr.top + pr.height / 2 - cr.top) / CELL_H,
+              rx: pr.width / 2 / CELL_W + 2.5,
+              ry: pr.height / 2 / CELL_H + 1.3,
+            };
+          }
+        }
+        const islE = (c: number, r: number) =>
+          isl ? ((c - isl.cx) / isl.rx) ** 2 + ((r - isl.cy) / isl.ry) ** 2 : 99;
         for (let r = 0; r < rows; r++) {
           // hero: sparse at the horizon, denser toward the bottom
           const depth = strip ? 0.85 : 0.5 + (r / rows) * 0.45;
           ctx.fillStyle = `rgba(21, 85, 126, ${depth * 0.88})`;
           const y = r * CELL_H + CELL_H / 2;
           for (let c = 0; c < cols; c++) {
+            const e = islE(c, r);
+            if (e <= 1) continue; // dry land: the island is drawn below
             const v = wave(c, r, t, phase); // -1..1
+            if (e <= 1.5) {
+              // surf: water piles up against the coastline
+              if (v > -0.2) {
+                ctx.fillStyle = `rgba(21, 85, 126, ${Math.min(0.9, depth * (0.7 + v * 0.4))}`.concat(")");
+                ctx.fillText(v > 0.5 ? CHARS[5] : CHARS[4], c * CELL_W, y);
+                ctx.fillStyle = `rgba(21, 85, 126, ${depth * 0.88})`;
+              }
+              continue;
+            }
             const idx = Math.max(
               0,
               Math.min(CHARS.length - 1, Math.round((v + 1.16) * 0.5 * (CHARS.length - 2) + (strip ? 0.85 : (r / rows) * 1.7 + 0.1) - 0.35)),
@@ -336,6 +343,27 @@ export default function App() {
               ctx.fillStyle = `rgba(21, 85, 126, ${depth * 0.88})`;
             } else {
               ctx.fillText(CHARS[idx], c * CELL_W, y);
+            }
+          }
+        }
+        if (isl) {
+          // dry land in the same grid: solid blocks inland, dithered beach
+          const r0 = Math.max(0, Math.floor(isl.cy - isl.ry)),
+            r1 = Math.min(rows, Math.ceil(isl.cy + isl.ry) + 1);
+          const c0 = Math.max(0, Math.floor(isl.cx - isl.rx)),
+            c1 = Math.min(cols, Math.ceil(isl.cx + isl.rx) + 1);
+          for (let r = r0; r < r1; r++) {
+            const y = r * CELL_H + CELL_H / 2;
+            for (let c = c0; c < c1; c++) {
+              const e = islE(c, r);
+              if (e > 1) continue;
+              if (e > 0.62) {
+                ctx.fillStyle = "rgba(121, 108, 84, 0.42)";
+                ctx.fillText("▒", c * CELL_W, y); // ▒ beach
+              } else {
+                ctx.fillStyle = "rgba(150, 137, 110, 0.26)";
+                ctx.fillText("█", c * CELL_W, y); // █ inland, light under the text
+              }
             }
           }
         }
@@ -468,7 +496,7 @@ export default function App() {
                     Don't send out <em className="voice">AI slop.</em>
                   </h2>
                   <p className="compare-sub">
-                    Send something worth a reply. Same leads, <b>14&times;</b> the replies.
+                    Same leads, <b>14&times;</b> the replies.
                   </p>
                 </div>
                 <div className="compare-grid">
