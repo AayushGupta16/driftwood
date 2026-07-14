@@ -187,7 +187,7 @@ export default function App() {
     const CHARS = [" ", "\u00b7", "-", "~", "\u2248", "\u224b"]; // · - ~ ≈ ≋ by wave height
     const CELL_W = 9;
     const CELL_H = 13;
-    const WOOD = "\u2582\u2584\u2586\u2584\u2582"; // ▂▄▆▄▂ a drifting log
+    const WOOD = "\u2597\u2584\u2584\u2584\u2584\u2584\u2584\u2596"; // ▗▄▄▄▄▄▄▖ a drifting log
 
     type Mount = {
       canvas: HTMLCanvasElement;
@@ -299,7 +299,7 @@ export default function App() {
         if (!strip) {
           // the driftwood: adrift right-to-left, riding the swell
           const span = cols + WOOD.length + 20;
-          const wx = cols + 10 - ((t * 1.6 + 12) % span);
+          const wx = -WOOD.length - 8 + ((t * 1.7 + 6) % span); // west to east
           const wr = rows * 0.45 + wave(wx, rows * 0.45, t, phase) * 1.6;
           ctx.fillStyle = "rgba(58, 66, 74, 0.95)";
           ctx.font = 'bold 13px ui-monospace, "SF Mono", Menlo, monospace';
