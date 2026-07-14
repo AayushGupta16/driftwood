@@ -95,13 +95,13 @@
   @keyframes rise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
 
   /* waterline under the hero */
-  .hero-wave { height: 28px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='28' viewBox='0 0 180 28'%3E%3Cpath d='M0 14 C 15 6, 30 22, 45 14 S 75 6, 90 14 S 120 22, 135 14 S 165 6, 180 14' fill='none' stroke='%2315557e' stroke-width='1.6' stroke-opacity='0.4'/%3E%3C/svg%3E") repeat-x center; }
+  .hero-wave { height: 28px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='28' viewBox='0 0 180 28'%3E%3Cpath d='M0 14 C 11.25 5.5, 33.75 5.5, 45 14 C 56.25 22.5, 78.75 22.5, 90 14 C 101.25 5.5, 123.75 5.5, 135 14 C 146.25 22.5, 168.75 22.5, 180 14' fill='none' stroke='%2315557e' stroke-width='1.6' stroke-opacity='0.4'/%3E%3C/svg%3E") repeat-x center; }
 
   /* ---------- sections divide on the waterline ---------- */
   section { border-top: 0; }
   section::before {
     content: ""; display: block; height: 28px;
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='28' viewBox='0 0 180 28'%3E%3Cpath d='M0 14 C 15 6, 30 22, 45 14 S 75 6, 90 14 S 120 22, 135 14 S 165 6, 180 14' fill='none' stroke='%2315557e' stroke-width='1.4' stroke-opacity='0.26'/%3E%3C/svg%3E") repeat-x center;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='28' viewBox='0 0 180 28'%3E%3Cpath d='M0 14 C 11.25 5.5, 33.75 5.5, 45 14 C 56.25 22.5, 78.75 22.5, 90 14 C 101.25 5.5, 123.75 5.5, 135 14 C 146.25 22.5, 168.75 22.5, 180 14' fill='none' stroke='%2315557e' stroke-width='1.4' stroke-opacity='0.26'/%3E%3C/svg%3E") repeat-x center;
   }
   #week-one::before { content: none; } /* the hero-wave already divides */
   .sect { padding-block: clamp(3.5rem, 7vw, 6rem); }
@@ -281,7 +281,7 @@
   footer { background: var(--accent); color: #fff; }
   footer::before {
     content: ""; display: block; height: 28px;
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='28' viewBox='0 0 180 28'%3E%3Cpath d='M0 14 C 15 6, 30 22, 45 14 S 75 6, 90 14 S 120 22, 135 14 S 165 6, 180 14' fill='none' stroke='%23ffffff' stroke-width='1.6' stroke-opacity='0.5'/%3E%3C/svg%3E") repeat-x center;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='28' viewBox='0 0 180 28'%3E%3Cpath d='M0 14 C 11.25 5.5, 33.75 5.5, 45 14 C 56.25 22.5, 78.75 22.5, 90 14 C 101.25 5.5, 123.75 5.5, 135 14 C 146.25 22.5, 168.75 22.5, 180 14' fill='none' stroke='%23ffffff' stroke-width='1.6' stroke-opacity='0.5'/%3E%3C/svg%3E") repeat-x center;
   }
   .foot { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-block: 2.2rem; flex-wrap: wrap; font-size: 0.9rem; color: rgba(255,255,255,0.8); }
   .foot .wordmark, .foot .wordmark svg { color: #fff; }
