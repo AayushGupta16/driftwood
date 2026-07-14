@@ -68,10 +68,11 @@
   }
   .hero-grid {
     position: relative; z-index: 1;
-    display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
     align-items: center; gap: clamp(2rem, 4vw, 3.5rem);
-    padding-block: clamp(4rem, 8vw, 6.5rem);
-    min-height: min(86vh, 56rem);
+    padding-block: clamp(3.5rem, 6vw, 5rem);
+    min-height: min(90vh, 60rem);
+    max-width: 82rem; /* the hero runs wider than the rest of the page */
   }
   .hero h1 {
     margin: 0;
