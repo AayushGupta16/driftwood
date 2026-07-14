@@ -463,8 +463,9 @@ body {
 }
 .landing .compare-label { margin-bottom: 0.8rem; }
 .landing .compare-label.us { color: var(--accent); font-weight: 600; }
+.landing .compare-grid > div { display: flex; flex-direction: column; }
 .landing .email {
-  display: flex; flex-direction: column; height: 100%;
+  display: flex; flex-direction: column; flex: 1;
   border: 1px solid var(--line); border-radius: var(--r-win); background: #fff;
   box-shadow: var(--shadow-win);
   padding: 1.4rem 1.5rem;
@@ -514,6 +515,12 @@ body {
   .landing .stage { min-height: 0; }
   .landing .stage-card { position: static; opacity: 1; transform: none; pointer-events: auto; }
   .landing .stage-card + .stage-card { margin-top: 1.5rem; }
+  /* no scrub on mobile: every step reads at full strength */
+  .landing .rail-list li { color: var(--ink); font-weight: 600; }
+  .landing .rail-list li span { color: var(--accent); }
+  .landing .week-pin-wrap .pin { padding-top: 1.5rem; }
+  .landing .week-grid { margin-top: 1.5rem; }
+  .landing .compare-pin-wrap .pin { padding-top: 2.5rem; padding-bottom: 1.5rem; }
 }
 @media (prefers-reduced-motion: reduce) {
   .landing * { animation-duration: 0.01ms !important; animation-delay: 0ms !important; transition-duration: 0.01ms !important; }
@@ -523,6 +530,8 @@ body {
   .landing .pin { position: static; height: auto; }
   .landing .stage-card { position: static; opacity: 1; transform: none; }
   .landing .stage-card + .stage-card { margin-top: 1.5rem; }
+  .landing .rail-list li { color: var(--ink); font-weight: 600; }
+  .landing .rail-list li span { color: var(--accent); }
   html { scroll-behavior: auto; }
 }
 

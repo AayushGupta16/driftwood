@@ -8,11 +8,21 @@ import HelmMark from "./components/HelmMark";
 /* style={{ "--i": n }} helper for the thread stagger delays */
 const iv = (n: number) => ({ "--i": n } as CSSProperties);
 
-/* the reply dot grids: same hit-index spread as the draft
-   (1-in-100 vs 1-in-7 shown as 14-in-100) */
+/* the reply dot grids (1-in-100 vs 1-in-7 shown as 14-in-100). The tide
+   grid's hits ride a sine across the 20 columns so the replies read as a
+   swell, not a pattern. */
 function Dots({ total, hits, us }: { total: number; hits: number; us?: boolean }) {
+  const cols = 20;
   const hitIdx = new Set<number>();
-  for (let k = 0; k < hits; k++) hitIdx.add(Math.round(((k + 0.5) * total) / hits) - 1);
+  if (us && hits > 1) {
+    for (let k = 0; k < hits; k++) {
+      const col = Math.round((k * (cols - 1)) / (hits - 1));
+      const row = Math.max(0, Math.min(total / cols - 1, Math.round(2 + 1.9 * Math.sin(col * 0.55 + 0.9))));
+      hitIdx.add(row * cols + col);
+    }
+  } else {
+    for (let k = 0; k < hits; k++) hitIdx.add(Math.round(((k + 0.5) * total) / hits) - 1);
+  }
   let d = 0;
   return (
     <div className={us ? "dots us" : "dots"} aria-hidden="true">
