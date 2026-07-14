@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>driftwood — wordmark font specimens</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bitter:wght@500;600&family=Zilla+Slab:wght@500;600&family=Crete+Round&family=Arvo:wght@400;700&family=Bricolage+Grotesque:wght@500;600&family=Josefin+Sans:wght@500;600&family=Karla:wght@600;700&family=Source+Serif+4:wght@500;600&family=Public+Sans:wght@600;700&display=swap" />
+<style>
+  body { margin: 0; background: #fff; color: #16181b; font-family: "Public Sans", sans-serif; padding: 3rem clamp(1.5rem, 6vw, 5rem); }
+  h1 { font-size: 1rem; font-weight: 600; color: #6a737d; margin: 0 0 2.5rem; }
+  .row { display: grid; grid-template-columns: 11rem 1fr 1.6fr; align-items: center; gap: 2.5rem; padding: 1.4rem 0; border-bottom: 1px solid #e9ebee; }
+  .meta { font-size: 0.85rem; color: #9aa2ab; }
+  .meta b { display: block; color: #16181b; font-weight: 600; font-size: 0.95rem; }
+  .mark { display: inline-flex; align-items: center; gap: 0.6rem; }
+  .mark svg { width: 26px; height: 26px; }
+  .mark.big svg { width: 44px; height: 44px; }
+  .mark span { font-size: 1.15rem; }
+  .mark.big span { font-size: 2.2rem; }
+</style>
+</head>
+<body>
+<h1>wordmark candidates — nav size and display size</h1>
+<div id="rows"></div>
+<script>
+const helm = `<svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#15557e"/><g transform="translate(32 32) scale(0.88)" fill="none" stroke="#f7f4ec" stroke-linecap="round"><circle r="22.5" stroke-width="3.4"/><g stroke-width="3.6"><line y1="-22.5" y2="-27.5"/><g transform="rotate(45)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(90)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(135)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(180)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(225)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(270)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(315)"><line y1="-22.5" y2="-27.5"/></g></g><g stroke-width="2.5"><line y1="-8.5" y2="-19.5"/><g transform="rotate(45)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(90)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(135)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(180)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(225)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(270)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(315)"><line y1="-8.5" y2="-19.5"/></g></g><circle r="7.5" stroke-width="2.6" fill="#15557e"/><circle r="2.8" fill="#f7f4ec" stroke="none"/></g></svg>`;
+const fonts = [
+  ["Bitter", "600", "slab serif — sturdy, timber"],
+  ["Zilla Slab", "600", "slab serif — technical warmth"],
+  ["Crete Round", "400", "rounded slab — worn smooth, driftwood-y"],
+  ["Arvo", "700", "geometric slab — heavy, anchored"],
+  ["Bricolage Grotesque", "600", "characterful grotesk — contemporary"],
+  ["Josefin Sans", "500", "geometric — elegant, vintage maritime"],
+  ["Karla", "700", "quirky humanist sans — friendly, plain-spoken"],
+  ["Source Serif 4", "600", "bookish serif — trustworthy, editorial"],
+  ["Public Sans", "700", "current — the site's own face"],
+];
+document.getElementById("rows").innerHTML = fonts.map(([f, w, note]) => `
+  <div class="row">
+    <div class="meta"><b>${f} ${w}</b>${note}</div>
+    <span class="mark" style="font-family:'${f}';font-weight:${w}">${helm}<span>driftwood</span></span>
+    <span class="mark big" style="font-family:'${f}';font-weight:${w}">${helm}<span>driftwood</span></span>
+  </div>`).join("");
+</script>
+</body>
+</html>
