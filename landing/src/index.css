@@ -272,7 +272,7 @@ body {
    block-char mound under this element, foam lapping at its coast) */
 .landing .hero-proof {
   display: flex; align-items: center; gap: 0.8rem;
-  margin-top: auto; margin-bottom: 2.4rem;
+  margin-top: auto; margin-bottom: 6rem;
   padding: 1rem 1.7rem 1rem 1rem;
   font-size: 0.92rem; color: #46412f;
   /* a feathered clearing on the island so the quote reads; no hard edges */
@@ -514,6 +514,8 @@ body {
 .landing .email-subject { font-weight: 600; font-size: 1rem; padding-bottom: 0.9rem; border-bottom: 1px solid var(--line); }
 .landing .email-body { margin-top: 1rem; font-size: 0.92rem; color: #3c434a; line-height: 1.55; }
 .landing .email-body p + p { margin-top: 0.9rem; }
+.landing .email-body ul { list-style: disc; margin: 0.7rem 0 0 1.35rem; padding: 0; }
+.landing .email-body li { margin-top: 0.3rem; }
 .landing .order-demo { margin-top: 1.2rem; max-width: 20rem; }
 .landing .email-body .fake-link { color: #1a0dab; text-decoration: underline; }
 .landing .order-card { margin-top: 1.2rem; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; max-width: 24rem; }

@@ -373,15 +373,16 @@ export default function App() {
               }
             }
           }
-          // one tree on the upper-right shoulder of the island
+          // a palm on the upper-right shoulder of the island
           const tx = (isl.cx + isl.rx * 0.58) * CELL_W;
           const ty = (isl.cy - isl.ry * 0.52) * CELL_H;
-          ctx.fillStyle = "rgba(74, 103, 65, 0.92)";
-          ctx.fillText("▲", tx, ty - CELL_H * 1.6);
-          ctx.fillText("▲", tx - CELL_W * 0.5, ty - CELL_H * 0.7);
-          ctx.fillText("▲", tx + CELL_W * 0.5, ty - CELL_H * 0.7);
+          ctx.fillStyle = "rgba(56, 122, 70, 0.95)";
+          ctx.fillText("▞▀▚", tx - CELL_W * 1.4, ty - CELL_H * 2.1); // fronds arch
+          ctx.fillText("▘", tx - CELL_W * 1.9, ty - CELL_H * 1.45); // and droop
+          ctx.fillText("▝", tx + CELL_W * 1.7, ty - CELL_H * 1.45);
           ctx.fillStyle = "rgba(121, 85, 52, 0.95)";
-          ctx.fillText("▌", tx + CELL_W * 0.2, ty + CELL_H * 0.25);
+          ctx.fillText("▐", tx - CELL_W * 0.15, ty - CELL_H * 1.0); // leaning trunk
+          ctx.fillText("▌", tx + CELL_W * 0.15, ty);
         }
         const duck = (seed: number, rowF: number, dir: number) => {
           const span = cols + 16;
@@ -555,10 +556,24 @@ export default function App() {
                           <b>all-in-one way to ship faster with confidence</b>. Teams like yours
                           are seeing <b>huge results</b> &mdash; we'd love to show you how.
                         </p>
+                        <p>A few things teams love:</p>
+                        <ul>
+                          <li>Cut regression time by up to 90%</li>
+                          <li>Seamless integration with your existing stack</li>
+                          <li>Enterprise-grade security (SOC 2 Type II)</li>
+                        </ul>
                         <p>
                           Any chance you have 15 minutes this week? You can{" "}
                           <span className="fake-link">grab time here</span>.
                         </p>
+                        <p>
+                          Best,
+                          <br />
+                          <span className="redact" role="img" aria-label="name redacted"></span>
+                          <br />
+                          SDR @ <span className="redact" role="img" aria-label="company redacted"></span>
+                        </p>
+                        <p>P.S. Happy to send over a case study if that's easier!</p>
                       </div>
                       <p className="email-fate">Left on opened.</p>
                     </div>
