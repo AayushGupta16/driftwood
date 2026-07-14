@@ -313,8 +313,19 @@ export default function App() {
             }
           }
         }
+        const duck = (seed: number, rowF: number, dir: number) => {
+          const span = cols + 16;
+          const dx = -8 + ((((t * 1.15 * dir + seed) % span) + span) % span);
+          const dy = rowF * rows + wave(dx, rowF * rows, t, phase) * 1.9;
+          const y = dy * CELL_H + CELL_H / 2;
+          ctx.fillStyle = "rgba(240, 195, 60, 0.95)";
+          ctx.fillText("\u2586\u2586", dx * CELL_W, y); // body
+          ctx.fillText(dir > 0 ? "\u259d" : "\u2598", (dir > 0 ? dx + 1.55 : dx - 0.55) * CELL_W, y - CELL_H * 0.52); // head
+          ctx.fillStyle = "rgba(224, 138, 46, 0.95)";
+          ctx.fillText(dir > 0 ? "\u2023" : "\u2039", (dir > 0 ? dx + 2.35 : dx - 1.15) * CELL_W, y - CELL_H * 0.45); // beak
+        };
         if (strip) {
-          const sceneKind = Math.round(phase * 10) % 2; // varies per strip
+          const sceneKind = Math.round(phase * 10) % 3; // varies per strip
           if (sceneKind === 0) {
             // a small ship on the horizon, under sail
             const span = cols + 30;
@@ -323,15 +334,26 @@ export default function App() {
             ctx.fillStyle = "rgba(13, 60, 91, 0.95)";
             ctx.fillText(SAIL, (sx + 1) * CELL_W, (sy - 1) * CELL_H + CELL_H / 2);
             ctx.fillText(HULL, sx * CELL_W, sy * CELL_H + CELL_H / 2);
-          } else {
+          } else if (sceneKind === 1) {
             // an island, holding still while the water moves
             const ix = 6 + (Math.abs(Math.round(phase * 53)) % Math.max(8, cols - 20));
             const iy = rows * 0.55;
             ctx.fillStyle = "rgba(110, 100, 80, 0.9)";
             ctx.fillText(ISLE, ix * CELL_W, iy * CELL_H + CELL_H / 2);
+          } else {
+            duck(Math.abs(Math.round(phase * 7)), 0.55, 1);
           }
         }
         if (!strip) {
+          // a distant ship on the horizon, half in the haze
+          const shx = -8 + ((t * 1.1 + 30) % (cols + 20));
+          const shy = rows * 0.2 + wave(shx, rows * 0.2, t, phase) * 0.4;
+          ctx.fillStyle = "rgba(13, 60, 91, 0.45)";
+          ctx.fillText(SAIL, (shx + 1) * CELL_W, (shy - 1) * CELL_H + CELL_H / 2);
+          ctx.fillText(HULL, shx * CELL_W, shy * CELL_H + CELL_H / 2);
+          // the ducks
+          duck(24, 0.6, 1);
+          duck(70, 0.8, -1);
           // the driftwood: adrift, riding the swell
           const span = cols + WOOD.length + 20;
           const wx = -WOOD.length - 8 + ((t * 1.7 + 6) % span); // west to east
