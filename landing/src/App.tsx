@@ -2,7 +2,6 @@
    The markup, CSS (scoped under .landing in index.css), scroll scrubs, and
    the three.js sea are ported 1:1 from the approved draft. */
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import type * as ThreeNS from "three";
 import { CAL_URL } from "./components/BookDemo";
 import HelmMark from "./components/HelmMark";
 
@@ -169,10 +168,10 @@ export default function App() {
     return () => cleanups.forEach((fn) => fn());
   }, []);
 
-  /* one body of water, surfacing across the page: the hero sea + thin live
-     divider strips share a renderer setup and a global clock; each mount is
-     phase-seeded by its document position. Static wave-cut seams are the
-     fallback on mobile / reduced motion / WebGL failure. */
+  /* one body of water, drawn as ASCII: the hero sea and the thin divider
+     strips are character grids animated by a shared wave field, phase-seeded
+     by document position. A lone piece of driftwood bobs across the hero.
+     Static wave-cut seams remain the fallback on mobile / reduced motion. */
   useEffect(() => {
     const root = rootRef.current;
     const heroCanvas = seaRef.current;
@@ -184,127 +183,128 @@ export default function App() {
       return;
     }
 
-    let disposed = false;
     const cleanups: (() => void)[] = [];
+    const CHARS = [" ", "\u00b7", "-", "~", "\u2248"]; // · - ~ ≈ by wave height
+    const CELL_W = 11;
+    const CELL_H = 15;
+    const WOOD = "\u2582\u2584\u2586\u2584\u2582"; // ▂▄▆▄▂ a drifting log
 
-    (async () => {
-      try {
-        const THREE = await import("three");
-        if (disposed) return;
-
-        type Mount = {
-          canvas: HTMLCanvasElement;
-          renderer: ThreeNS.WebGLRenderer;
-          scene: ThreeNS.Scene;
-          camera: ThreeNS.PerspectiveCamera;
-          geo: ThreeNS.PlaneGeometry;
-          pos: ThreeNS.BufferAttribute | ThreeNS.InterleavedBufferAttribute;
-          base: ArrayLike<number>;
-          phase: number;
-          visible: boolean;
-        };
-        const mounts: Mount[] = [];
-
-        function mountSea(canvas: HTMLCanvasElement, strip: boolean) {
-          const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-          renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-          const scene = new THREE.Scene();
-          scene.fog = new THREE.Fog(0xffffff, strip ? 3 : 4, strip ? 15 : 22);
-          const camera = new THREE.PerspectiveCamera(34, 2, 0.1, 100);
-          camera.position.set(0, strip ? 1.15 : 2.8, 9);
-          camera.lookAt(0, strip ? 0.3 : -0.4, -8);
-          const geo = new THREE.PlaneGeometry(90, 44, 150, 74);
-          geo.rotateX(-Math.PI / 2);
-          const material = new THREE.MeshPhongMaterial({
-            color: 0x4b87ae,
-            shininess: 70,
-            specular: 0xcfe3f0,
-            flatShading: true,
-          });
-          scene.add(new THREE.Mesh(geo, material));
-          scene.add(new THREE.AmbientLight(0xdfe9f1, 0.85));
-          const sun = new THREE.DirectionalLight(0xffffff, 1.1);
-          sun.position.set(-4, 6, -6);
-          scene.add(sun);
-          const pos = geo.attributes.position;
-          const m: Mount = {
-            canvas,
-            renderer,
-            scene,
-            camera,
-            geo,
-            pos,
-            base: (pos.array as Float32Array).slice(),
-            phase: (canvas.getBoundingClientRect().top + scrollY) * 0.0045,
-            visible: false,
-          };
-          const io = new IntersectionObserver((es) => {
-            for (const e of es) m.visible = e.isIntersecting;
-          });
-          io.observe(canvas);
-          cleanups.push(() => {
-            io.disconnect();
-            geo.dispose();
-            material.dispose();
-            renderer.dispose();
-          });
-          mounts.push(m);
-        }
-
-        mountSea(heroCanvas, false);
-        root.querySelectorAll<HTMLCanvasElement>(".sea-strip").forEach((c) => mountSea(c, true));
-        setSeaLive(true);
-
-        const resize = () =>
-          mounts.forEach((m) => {
-            const w = m.canvas.clientWidth,
-              h = m.canvas.clientHeight;
-            if (!w || !h) return;
-            m.renderer.setSize(w, h, false);
-            m.camera.aspect = w / h;
-            m.camera.updateProjectionMatrix();
-          });
-        addEventListener("resize", resize);
-        cleanups.push(() => removeEventListener("resize", resize));
-        resize();
-        // the strips are display:none until sea-live lands; size them next frame
-        requestAnimationFrame(resize);
-
-        let last = 0;
-        let rafId = 0;
-        const tick = (ms: number) => {
-          rafId = requestAnimationFrame(tick);
-          if (ms - last < 33) return; // calm water is fine at ~30fps
-          last = ms;
-          const t = ms / 1000;
-          for (const m of mounts) {
-            if (!m.visible) continue;
-            const { pos, base, phase } = m;
-            const arr = pos.array as Float32Array;
-            for (let i = 0; i < pos.count; i++) {
-              const x = base[i * 3],
-                z = base[i * 3 + 2];
-              arr[i * 3 + 1] =
-                Math.sin(x * 0.35 + t * 0.7 + phase) * 0.14 +
-                Math.sin(z * 0.5 + t * 0.5 + phase) * 0.12 +
-                Math.sin((x + z) * 0.22 + t * 0.9 + phase * 0.6) * 0.08;
-            }
-            pos.needsUpdate = true;
-            m.geo.computeVertexNormals();
-            m.renderer.render(m.scene, m.camera);
-          }
-        };
-        rafId = requestAnimationFrame(tick);
-        cleanups.push(() => cancelAnimationFrame(rafId));
-      } catch {
-        if (!disposed) setSeaLive(false);
-      }
-    })();
-
-    return () => {
-      disposed = true;
-      cleanups.forEach((fn) => fn());
+    type Mount = {
+      canvas: HTMLCanvasElement;
+      ctx: CanvasRenderingContext2D;
+      strip: boolean;
+      phase: number;
+      cols: number;
+      rows: number;
+      visible: boolean;
     };
+    const mounts: Mount[] = [];
+
+    function mountSea(canvas: HTMLCanvasElement, strip: boolean) {
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      const m: Mount = {
+        canvas,
+        ctx,
+        strip,
+        phase: (canvas.getBoundingClientRect().top + scrollY) * 0.02,
+        cols: 0,
+        rows: 0,
+        visible: false,
+      };
+      const io = new IntersectionObserver((es) => {
+        for (const e of es) m.visible = e.isIntersecting;
+      });
+      io.observe(canvas);
+      cleanups.push(() => io.disconnect());
+      mounts.push(m);
+    }
+
+    mountSea(heroCanvas, false);
+    root
+      .querySelectorAll<HTMLCanvasElement>(".sea-strip")
+      .forEach((c) => mountSea(c, true));
+    setSeaLive(true);
+
+    const dpr = Math.min(devicePixelRatio, 2);
+    const resize = () =>
+      mounts.forEach((m) => {
+        const w = m.canvas.clientWidth,
+          h = m.canvas.clientHeight;
+        if (!w || !h) return;
+        m.canvas.width = w * dpr;
+        m.canvas.height = h * dpr;
+        m.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        m.ctx.font = '12px ui-monospace, "SF Mono", Menlo, monospace';
+        m.ctx.textBaseline = "middle";
+        m.cols = Math.ceil(w / CELL_W);
+        m.rows = Math.ceil(h / CELL_H);
+      });
+    addEventListener("resize", resize);
+    cleanups.push(() => removeEventListener("resize", resize));
+    const sizeMount = (m: Mount) => {
+      const w = m.canvas.clientWidth,
+        h = m.canvas.clientHeight;
+      if (!w || !h) return;
+      m.canvas.width = w * dpr;
+      m.canvas.height = h * dpr;
+      m.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      m.ctx.font = '12px ui-monospace, "SF Mono", Menlo, monospace';
+      m.ctx.textBaseline = "middle";
+      m.cols = Math.ceil(w / CELL_W);
+      m.rows = Math.ceil(h / CELL_H);
+    };
+    resize();
+
+    const wave = (x: number, y: number, t: number, phase: number) =>
+      Math.sin(x * 0.42 + t * 0.7 + phase) * 0.5 +
+      Math.sin(y * 0.9 + t * 0.5 + phase) * 0.3 +
+      Math.sin((x + y) * 0.23 + t * 0.9 + phase * 0.6) * 0.2;
+
+    let last = 0;
+    let rafId = 0;
+    const tick = (ms: number) => {
+      rafId = requestAnimationFrame(tick);
+      if (ms - last < 90) return; // ~11fps: water at terminal cadence
+      last = ms;
+      const t = ms / 1000;
+      for (const m of mounts) {
+        if (!m.visible) continue;
+        if (!m.cols) sizeMount(m); // strips are display:none until sea-live commits
+        if (!m.cols) continue;
+        const { ctx, cols, rows, strip, phase } = m;
+        ctx.clearRect(0, 0, m.canvas.clientWidth, m.canvas.clientHeight);
+        for (let r = 0; r < rows; r++) {
+          // hero: sparse at the horizon, denser toward the bottom
+          const depth = strip ? 0.7 : 0.38 + (r / rows) * 0.5;
+          ctx.fillStyle = `rgba(21, 85, 126, ${depth * 0.82})`;
+          const y = r * CELL_H + CELL_H / 2;
+          for (let c = 0; c < cols; c++) {
+            const v = wave(c, r, t, phase); // -1..1
+            const idx = Math.max(
+              0,
+              Math.min(CHARS.length - 1, Math.round((v + 1) * 0.5 * (CHARS.length - 1) + (strip ? 0.35 : (r / rows) * 1.3) - 0.45)),
+            );
+            if (idx === 0) continue;
+            ctx.fillText(CHARS[idx], c * CELL_W, y);
+          }
+        }
+        if (!strip) {
+          // the driftwood: adrift right-to-left, riding the swell
+          const span = cols + WOOD.length + 20;
+          const wx = cols + 10 - ((t * 1.6 + 12) % span);
+          const wr = rows * 0.45 + wave(wx, rows * 0.45, t, phase) * 1.6;
+          ctx.fillStyle = "rgba(58, 66, 74, 0.95)";
+          ctx.font = 'bold 13px ui-monospace, "SF Mono", Menlo, monospace';
+          ctx.fillText(WOOD, wx * CELL_W, wr * CELL_H + CELL_H / 2);
+          ctx.font = '12px ui-monospace, "SF Mono", Menlo, monospace';
+        }
+      }
+    };
+    rafId = requestAnimationFrame(tick);
+    cleanups.push(() => cancelAnimationFrame(rafId));
+
+    return () => cleanups.forEach((fn) => fn());
   }, []);
 
   const seaGone = seaLive === false;
