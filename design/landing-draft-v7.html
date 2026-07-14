@@ -59,6 +59,8 @@
     border-radius: 999px; transition: transform 0.24s var(--ease-settle), background 0.15s;
   }
   .btn:hover { background: #000; transform: translateY(-1px); }
+  .btn-primary { background: var(--accent); height: 3.2rem; padding-inline: 2.1rem; font-size: 1.05rem; font-weight: 600; }
+  .btn-primary:hover { background: #0d3c5b; }
 
   header { position: sticky; top: 0; z-index: 20; background: rgba(255,255,255,0.94); border-bottom: 1px solid var(--line); }
   .nav { display: flex; align-items: center; justify-content: space-between; height: 4rem; }
@@ -150,8 +152,8 @@
   .rate-viz { margin-top: 0; }
   .rate-scope { font-size: 0.85rem; color: var(--gray-light); margin-bottom: 0.4rem; }
   .compare-label, .dots-label span, .artifact-bar { font-size: 0.85rem; color: var(--gray-light); }
-  .rate-mult { font-size: 2.1rem; font-weight: 600; }
-  .rate-mult em { color: var(--accent); font-style: normal; }
+  .rate-mult { font-size: 1.25rem; font-weight: 500; color: var(--gray); }
+  .rate-mult em { color: var(--accent); font-style: normal; font-weight: 700; }
   .dots-block { margin-top: 1.9rem; }
   .dots-label { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.9rem; color: var(--gray); margin-bottom: 0.7rem; max-width: 26.5rem; }
   .dots-label b { color: var(--ink); font-weight: 600; }
@@ -230,7 +232,7 @@
   }
 
   /* ---------- how it works: G3 pinned scrub ---------- */
-  .pin-wrap { height: 280vh; }
+  .pin-wrap { height: 200vh; }
   .pin { position: sticky; top: 0; height: 100vh; display: flex; align-items: center; overflow: hidden; }
   .how-grid { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: clamp(2.5rem, 5vw, 5rem); align-items: center; width: 100%; }
   .rail-list { list-style: none; margin: 2rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 1.1rem; }
@@ -254,6 +256,7 @@
     box-shadow: var(--shadow-win);
   }
   .artifact-bar { display: flex; align-items: center; gap: 0.4rem; padding: 0.7rem 1rem; border-bottom: 1px solid var(--line); font-size: 0.8rem; color: var(--gray-light); }
+  .artifact > img { width: 100%; display: block; }
   .artifact-body { padding: 2rem 2.2rem 2.2rem; }
   .work { font-size: 1.05rem; line-height: 2.5; color: #3c434a; }
   .work .done::before { content: "✓"; color: var(--accent); margin-right: 0.55rem; font-weight: 600; }
@@ -274,6 +277,12 @@
 
   /* ---------- compare: G4, the favorite section, restyled ---------- */
   .compare-head { text-align: center; }
+  .compare-head h2 { font-size: clamp(2rem, 1.2rem + 2.8vw, 3.2rem); max-width: none; }
+  .compare-grid > div:first-child .email {
+    background: #f6f7f8; box-shadow: none;
+  }
+  .compare-grid > div:first-child .email-subject,
+  .compare-grid > div:first-child .email-body { opacity: 0.62; }
   .compare-pin-wrap { height: 230vh; }
   .compare-grid { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: clamp(1.5rem, 3vw, 2.5rem); margin-top: 3.5rem; align-items: stretch; }
   .compare-arrow {
@@ -288,7 +297,7 @@
     box-shadow: var(--shadow-win);
     padding: 1.4rem 1.5rem;
   }
-  .email.us { border-color: rgba(21,85,126,0.4); box-shadow: 0 1px 2px rgba(22,24,27,0.05), 0 24px 48px -24px rgba(21,85,126,0.32); }
+  .email.us { border: 2px solid rgba(21,85,126,0.45); box-shadow: 0 2px 4px rgba(22,24,27,0.05), 0 32px 64px -28px rgba(21,85,126,0.42); transform: translateY(-8px); }
   .email-subject { font-weight: 600; font-size: 1rem; padding-bottom: 0.9rem; border-bottom: 1px solid var(--line); }
   .email-body { margin-top: 1rem; font-size: 0.92rem; color: #3c434a; line-height: 1.55; }
   .email-body p + p { margin-top: 0.9rem; }
@@ -366,10 +375,10 @@
   <div class="hero">
   <div class="wrap hero-grid">
     <div>
-      <h1>Cold outbound that ships <em class="voice">a working demo</em> to every prospect.</h1>
-      <p class="hero-sub">driftwood researches each company, builds the demo, and sends the message for you.</p>
+      <h1>Ship <em class="voice">a custom demo</em> in every cold message.</h1>
+      <p class="hero-sub">The agent researches each prospect, builds them a custom demo, and sends the message for you.</p>
       <div class="hero-actions">
-        <a class="btn" href="https://cal.com/aayush-gupta-qyilz6/30min">Book a demo</a>
+        <a class="btn btn-primary" href="https://cal.com/aayush-gupta-qyilz6/30min">Book a demo</a>
       </div>
     </div>
     <div class="app-window enter-window">
@@ -387,14 +396,13 @@
         <div class="week-left">
           <h2>Be <em class="voice">undeniable</em> to your leads.</h2>
           <div class="rate-viz" aria-label="Reply rate: about 1 in 100 before driftwood, 1 in 7 with driftwood">
-            <p class="rate-scope">week one at Autosana</p>
             <p class="rate-mult">Same leads. <em>14&times;</em> the replies.</p>
             <div class="dots-block">
               <div class="dots-label"><span>before</span><b>&lt;1 in 100</b></div>
               <div class="dots" data-total="100" data-hits="1" aria-hidden="true"></div>
             </div>
             <div class="dots-block">
-              <div class="dots-label"><span>with driftwood</span><b>1 in 7</b></div>
+              <div class="dots-label"><span>with driftwood · week one at Autosana</span><b>1 in 7</b></div>
               <div class="dots us" data-total="100" data-hits="14" aria-hidden="true"></div>
             </div>
           </div>
@@ -469,55 +477,22 @@
           <div class="stage">
             <div class="stage-card on">
               <div class="artifact">
-                <div class="artifact-bar" aria-hidden="true">research</div>
-                <div class="artifact-body">
-                  <div class="work">
-                    <div class="done">Read their site, docs, and changelog</div>
-                    <div class="done">Read 212 customer reviews</div>
-                    <div class="done">Walked their signup and pricing pages</div>
-                    <div class="done">Found the gap worth a demo</div>
-                    <div class="doing">Drafting the build plan&hellip;</div>
-                  </div>
-                </div>
+                <div class="artifact-bar" aria-hidden="true">#autosana-ai · the agent at work</div>
+                <img src="assets/slack-trace.png" alt="The driftwood agent working in Slack: running checks against a prospect's product and reporting what it found" />
               </div>
             </div>
             <div class="stage-card">
               <div class="artifact">
-                <div class="artifact-bar">
-                  <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-                  <span class="thread-url"><span class="redact" style="width:4.5em"></span>&nbsp;.demo.driftwood.sh</span>
-                </div>
-                <div class="artifact-body">
-                  <div class="demo-rows">
-                    <div class="demo-row"><span class="redact" style="width:6em"></span><span class="redact" style="width:2em"></span></div>
-                    <div class="demo-row"><span class="redact" style="width:7.5em"></span><span class="redact" style="width:2em"></span></div>
-                    <div class="demo-row"><span class="redact" style="width:5em"></span><span class="redact" style="width:2em"></span></div>
-                    <div class="demo-row"><span class="redact" style="width:6.5em"></span><span class="redact" style="width:2em"></span></div>
-                  </div>
-                  <div class="demo-cta">Built for them, working
-                    <span class="cursor-pill">driftwood</span>
-                  </div>
-                </div>
+                <div class="artifact-bar" aria-hidden="true">the demo it built · 0:19</div>
+                <img src="assets/superhuman-demo-still.png" alt="A finished demo video: Autosana's agent catching the pricing bug on superhuman.com" />
               </div>
             </div>
             <div class="stage-card">
               <div class="artifact">
-                <div class="artifact-bar" aria-hidden="true">linkedin.com/messaging</div>
-                <div class="artifact-body">
-                  <div class="msg send">
-                    <span class="avatar y" aria-hidden="true">Y</span>
-                    <div>
-                      <div class="msg-head"><span class="who">You</span><span class="when">reviewed by a human, sent by driftwood</span></div>
-                      <p class="msg-body">hey <span class="redact"></span>, built you a demo of
-                        <span class="redact" style="width:4em"></span> with the fix. link below.
-                        worth 15 minutes?
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                <div class="artifact-bar" aria-hidden="true">your review queue · nothing sends without you</div>
+                <img src="assets/review-queue.png" alt="The driftwood review queue: each outbound message waiting for your approve or deny" />
               </div>
             </div>
-          </div>
         </div>
       </div>
     </div>
@@ -584,7 +559,7 @@
   <section class="close-sect sheet wash-b">
     <div class="wrap sect">
       <h2>See what we'd send <em class="voice">your</em> prospects.</h2>
-      <a class="btn" href="https://cal.com/aayush-gupta-qyilz6/30min">Book a demo</a>
+      <a class="btn btn-primary" href="https://cal.com/aayush-gupta-qyilz6/30min">Book a demo</a>
     </div>
   </section>
 </main>
