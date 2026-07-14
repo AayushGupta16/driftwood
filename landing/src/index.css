@@ -512,7 +512,10 @@ body {
 @media (max-width: 52rem) {
   .landing .hero-grid, .landing .week-grid, .landing .how-grid, .landing .compare-grid { grid-template-columns: 1fr; }
   .landing .week-grid > div:last-child { margin-top: 0; }
-  .landing .compare-arrow { display: none; }
+  /* the hand-drawn arrow moves between the stacked cards, pointing at ours */
+  .landing .compare-grid > div:nth-of-type(1) { order: 1; }
+  .landing .compare-arrow { position: static; order: 2; width: 6rem; margin: 0.4rem auto; transform: rotate(64deg); }
+  .landing .compare-grid > div:nth-of-type(2) { order: 3; }
   /* week + compare flow statically (their content is taller than a phone
      screen), but their scroll-linked animations still run un-pinned */
   .landing .week-pin-wrap, .landing .compare-pin-wrap { height: auto; }
@@ -530,12 +533,15 @@ body {
   .landing .rail-list li { font-size: 1rem; }
   .landing .rail-sub { font-size: 0.8rem; line-height: 1.35; margin-top: 0.1rem; }
   .landing .stage { min-height: 18.5rem; }
-  /* artifacts: legible zoomed crops instead of shrunken full screenshots */
-  .landing .stage-card .artifact img { max-height: none; object-fit: cover; }
-  .landing .stage-card:nth-of-type(1) .artifact img { height: 16rem; object-position: left top; }
-  .landing .stage-card:nth-of-type(2) .artifact img { height: 15rem; object-position: 18% top; }
-  .landing .stage-card:nth-of-type(3) .artifact img { height: 15.5rem; object-position: center top; }
-  .landing .app-window img { width: 165%; max-width: none; height: 19rem; object-fit: cover; object-position: left top; }
+  /* artifacts: legible zoomed crops instead of shrunken full screenshots.
+     Short heights alone can't zoom (cover math), so each card inflates its
+     width to set the zoom and crops at a clean content boundary. */
+  .landing .stage-card .artifact img { max-height: none; max-width: none; object-fit: cover; object-position: left top; }
+  .landing .stage-card:nth-of-type(1) .artifact img { width: 170%; height: 15rem; }
+  .landing .stage-card:nth-of-type(2) .artifact img { width: 110%; height: 15rem; }
+  .landing .stage-card:nth-of-type(3) .artifact img { width: 155%; height: 15.5rem; margin-left: -30%; }
+  /* 178% puts the hero's right cut in the gutter between dashboard columns */
+  .landing .app-window img { width: 178%; max-width: none; height: 19rem; object-fit: cover; object-position: left top; }
   /* the shorter window ends inside the hero sea; keep the waves behind it */
   .landing .app-window { position: relative; z-index: 2; }
 }
@@ -544,7 +550,6 @@ body {
 @media (pointer: coarse) and (min-width: 52rem) {
   .landing .week-pin-wrap, .landing .compare-pin-wrap { height: auto; }
   .landing .week-pin-wrap .pin, .landing .compare-pin-wrap .pin { position: static; height: auto; overflow: visible; padding-top: 2.5rem; }
-  .landing .compare-arrow { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .landing * { animation-duration: 0.01ms !important; animation-delay: 0ms !important; transition-duration: 0.01ms !important; }

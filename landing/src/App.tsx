@@ -57,10 +57,15 @@ export default function App() {
   // sea state: null = trying, true = live (strips shown), false = fallback (canvases removed)
   const [seaLive, setSeaLive] = useState<boolean | null>(null);
 
-  /* thread stagger, fire once */
+  /* thread stagger, fire once — desktop only; on touch the scroll-link
+     scrubs each message in 1:1 with the finger instead */
   useEffect(() => {
     const t = rootRef.current?.querySelector(".stagger");
     if (!t) return;
+    const touchScrubbed =
+      !(matchMedia("(min-width: 52rem)").matches && matchMedia("(pointer: fine)").matches) &&
+      !matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (touchScrubbed) return;
     const io = new IntersectionObserver(
       (entries) => {
         for (const e of entries)
@@ -185,8 +190,9 @@ export default function App() {
       updateW();
     } else if (!reduceMotion) {
       // touch: no pin, but the same choreography rides the viewport — the
-      // grids fill as they scroll up, then the arrow draws at the clip
+      // grids fill, each thread message scrubs in, then the arrow draws
       const rateViz = root.querySelector(".rate-viz");
+      const msgs = [...root.querySelectorAll(".stagger .msg, .stagger .divider")] as HTMLElement[];
       let rafM = 0;
       const updateM = () => {
         rafM = 0;
@@ -201,6 +207,12 @@ export default function App() {
           );
           usHits.forEach((d, i) => d.classList.toggle("lit", i < n));
         }
+        msgs.forEach((el) => {
+          const r = el.getBoundingClientRect();
+          const q = Math.min(1, Math.max(0, (vh - r.top - 30) / (vh * 0.22)));
+          el.style.opacity = `${q}`;
+          el.style.transform = `translateY(${(1 - q) * 12}px)`;
+        });
         if (note && notePath && noteEm) {
           const nr = note.getBoundingClientRect();
           const np = Math.min(1, Math.max(0, (vh - nr.top) / (vh * 0.45)));
@@ -246,6 +258,27 @@ export default function App() {
         if (raf2) cancelAnimationFrame(raf2);
       });
       drawArrow();
+    } else if (!reduceMotion) {
+      // touch: the arrow draws as it rides up the viewport, un-pinned
+      const svgEl = arrowPath.ownerSVGElement;
+      let raf3 = 0;
+      const drawM = () => {
+        raf3 = 0;
+        if (!svgEl) return;
+        const r = svgEl.getBoundingClientRect();
+        const p = Math.min(1, Math.max(0, (innerHeight - r.top - 30) / (innerHeight * 0.4)));
+        arrowPath.style.strokeDashoffset = `${arrowLen * (1 - p)}`;
+        arrowHead.style.opacity = p > 0.95 ? "1" : "0";
+      };
+      const onScroll3 = () => {
+        if (!raf3) raf3 = requestAnimationFrame(drawM);
+      };
+      addEventListener("scroll", onScroll3, { passive: true });
+      cleanups.push(() => {
+        removeEventListener("scroll", onScroll3);
+        if (raf3) cancelAnimationFrame(raf3);
+      });
+      drawM();
     } else {
       arrowPath.style.strokeDashoffset = "0";
       arrowHead.style.opacity = "1";
