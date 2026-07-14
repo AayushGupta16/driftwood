@@ -233,7 +233,7 @@ body {
 
 .landing header { position: sticky; top: 0; z-index: 20; background: rgba(255,255,255,0.94); border-bottom: 1px solid var(--line); }
 .landing .nav { display: flex; align-items: center; justify-content: space-between; height: 4rem; }
-.landing .wordmark { display: inline-flex; align-items: center; gap: 0.6rem; text-decoration: none; font-family: "Public Sans", sans-serif; font-weight: 700; font-size: 1.08rem; letter-spacing: 0.015em; }
+.landing .wordmark { display: inline-flex; align-items: center; gap: 0.6rem; text-decoration: none; font-family: "Source Serif 4", Georgia, serif; font-weight: 600; font-size: 1.18rem; letter-spacing: 0.005em; }
 .landing .wordmark svg { width: 1.65rem; height: 1.65rem; }
 .landing .nav-right { display: flex; align-items: center; gap: 1.6rem; }
 .landing .nav-login { font-size: 0.9rem; color: var(--gray); text-decoration: none; }
@@ -418,10 +418,8 @@ body {
 .landing .stage { position: relative; min-height: 30rem; }
 .landing .stage-card {
   position: absolute; inset: 0; margin: auto; height: fit-content;
-  opacity: 0; transform: translateY(18px); pointer-events: none;
-  transition: opacity 0.45s cubic-bezier(0.16,1,0.3,1), transform 0.5s var(--ease-settle);
+  will-change: transform, opacity;
 }
-.landing .stage-card.on { opacity: 1; transform: none; pointer-events: auto; }
 
 .landing .artifact {
   border: 1px solid var(--line); border-radius: var(--r-win); background: #fff; overflow: hidden;

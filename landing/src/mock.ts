@@ -6,8 +6,8 @@ if (params.has("mock")) {
   const hoursAgo = (h: number) => new Date(Date.now() - h * 3600e3).toISOString();
   const me = {
     id: "mock",
-    email: "grace@hopperlabs.dev",
-    name: "Grace Hopper",
+    email: "marc@a16z.com",
+    name: "Marc Andreessen",
     avatar_url: null,
     is_approved: true,
     linkedin_connected: true,

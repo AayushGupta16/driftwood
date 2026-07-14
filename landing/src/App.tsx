@@ -90,8 +90,21 @@ export default function App() {
         const total = pinWrap.offsetHeight - innerHeight;
         if (total <= 0) return;
         const p = Math.min(0.999, Math.max(0, -pinWrap.getBoundingClientRect().top / total));
-        const step = Math.floor(p * 3);
-        cards.forEach((c, i) => c.classList.toggle("on", i === step));
+        // a scrubbed deck: the next card slides up over the last, 1:1 with scroll
+        const prog = p * (cards.length - 1) * 1.18 - 0.09; // small dwell at both ends
+        cards.forEach((c, i) => {
+          const el = c as HTMLElement;
+          const d = i - Math.min(cards.length - 1, Math.max(0, prog));
+          if (d >= 0) {
+            el.style.transform = `translateY(${d * 84}%) rotate(${Math.min(d, 1) * 2.2}deg) scale(${1 - Math.min(d, 1) * 0.02})`;
+            el.style.opacity = `${1 - Math.max(0, d - 1) * 0.85}`;
+          } else {
+            el.style.transform = `translateY(${d * 30}px) scale(${1 + d * 0.055})`;
+            el.style.opacity = `${Math.max(0.3, 1 + d * 0.5)}`;
+          }
+          el.style.zIndex = `${10 + i}`;
+        });
+        const step = Math.min(cards.length - 1, Math.max(0, Math.round(prog)));
         items.forEach((li, i) => li.classList.toggle("active", i === step));
       };
       const onScroll = () => {
@@ -104,7 +117,7 @@ export default function App() {
       });
       update();
     } else {
-      cards.forEach((c) => c.classList.add("on"));
+      /* static stack on mobile / reduced motion via CSS */
     }
 
     // week-one: scroll populates the reply dots
@@ -424,7 +437,7 @@ export default function App() {
                       <div>
                         <p className="founder-quote">&ldquo;amazing stuff, love the demo&rdquo;</p>
                         <p className="founder-attr">
-                          <b>Yuvan Sundrani</b> &middot; Founder, Autosana
+                          <b>Yuvan Sundrani</b> &middot; Founder, Autosana (YC S25)
                         </p>
                       </div>
                     </div>
@@ -526,7 +539,7 @@ export default function App() {
         </section>
 
         {/* how it works: pinned scrub */}
-        <section id="how" className="sheet wash-a">
+        <section id="how" className="sheet sheet-white">
           <div className="pin-wrap" ref={howWrapRef}>
             <div className="pin">
               <div className="wrap how-grid">
