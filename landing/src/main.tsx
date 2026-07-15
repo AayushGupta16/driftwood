@@ -3,6 +3,7 @@ import './mock'
 import { StrictMode, Suspense, lazy } from 'react'
 import { createRoot, hydrateRoot } from 'react-dom/client'
 import { Analytics } from '@vercel/analytics/react'
+import posthog from 'posthog-js'
 import './index.css'
 import App from './App.tsx'
 // dashboard pages are code-split: landing visitors only download the landing
@@ -33,6 +34,19 @@ const page =
   )
 
 const isLanding = !(path === '/og' || path === '/dashboard' || path.startsWith('/dashboard/'))
+
+// PostHog: landing pages only (dashboard is internal use — keep prospect
+// analytics clean). Ingestion rides the first-party /ingest proxy in
+// vercel.json, so ad-blockers don't eat events and the CSP stays 'self'.
+// The project key is public by design (client-side token).
+if (isLanding) {
+  posthog.init('phc_zJTpnFWJ5h9YAE3y55jmXEbSCcffw96EYPnLRhMtGJGm', {
+    api_host: '/ingest',
+    ui_host: 'https://us.posthog.com',
+    person_profiles: 'identified_only',
+  })
+}
+
 const root = document.getElementById('root')!
 const tree = (
   <StrictMode>

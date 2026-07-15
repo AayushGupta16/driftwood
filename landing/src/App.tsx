@@ -2,7 +2,7 @@
    The markup, CSS (scoped under .landing in index.css), scroll scrubs, and
    the 2D-canvas ASCII sea are ported 1:1 from the approved draft. */
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { track } from "@vercel/analytics";
+import { trackCta } from "./track";
 import { CAL_URL } from "./components/BookDemo";
 import HelmMark from "./components/HelmMark";
 
@@ -528,7 +528,7 @@ export default function App() {
             <a
               className="btn btn-primary"
               href={CAL_URL}
-              onClick={() => track("book_demo", { placement: "nav" })}
+              onClick={() => trackCta("nav")}
             >
               Book a demo
             </a>
@@ -550,7 +550,7 @@ export default function App() {
                 <a
                   className="btn btn-primary"
                   href={CAL_URL}
-                  onClick={() => track("book_demo", { placement: "hero" })}
+                  onClick={() => trackCta("hero")}
                 >
                   Book a demo
                 </a>
@@ -877,7 +877,7 @@ export default function App() {
             <a
               className="btn btn-primary"
               href={CAL_URL}
-              onClick={() => track("book_demo", { placement: "close" })}
+              onClick={() => trackCta("close")}
             >
               Book a demo
             </a>
