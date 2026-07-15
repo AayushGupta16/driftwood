@@ -17,12 +17,12 @@
       "destination": "https://driftwood-backend-767736087356.us-central1.run.app/api/:path*"
     },
     {
-      "source": "/ingest/static/:path*",
-      "destination": "https://us-assets.i.posthog.com/static/:path*"
+      "source": "/ingest/static/(?<ppath>.*)",
+      "destination": "https://us-assets.i.posthog.com/static/:ppath"
     },
     {
-      "source": "/ingest/:path*",
-      "destination": "https://us.i.posthog.com/:path*"
+      "source": "/ingest/(?<ppath>.*)",
+      "destination": "https://us.i.posthog.com/:ppath"
     },
     { "source": "/((?!_vercel/|ingest/).*)", "destination": "/index.html" }
   ],

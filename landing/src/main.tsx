@@ -43,6 +43,7 @@ if (isLanding) {
   posthog.init('phc_zJTpnFWJ5h9YAE3y55jmXEbSCcffw96EYPnLRhMtGJGm', {
     api_host: '/ingest',
     ui_host: 'https://us.posthog.com',
+    defaults: '2025-05-24',
     person_profiles: 'identified_only',
   })
 }
