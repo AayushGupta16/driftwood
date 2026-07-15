@@ -76,14 +76,16 @@ The signature. ASCII character sea on 2D canvas — never rendered 3D.
   clear of the swell, and the proof island's palm. The log's lane clamps
   above the proof island (never runs aground, never hides behind it); the
   free swimmer may paddle behind it. Wide strips may hold two scenes.
-- **Scenery palette is cold-coast, not tropical** (2026-07-14, after "the
-  island doesn't match the site's tone" feedback): sand is bleached greige
-  (`141,130,109` wet ▒ / `170,160,140` dry █), the palm is sea-glass
-  (`101,125,106`), birds are gulls (`158,166,172` gray, never duck-yellow),
-  and ONE terracotta (`178,94,66`) covers every warm pop — crab, buoys,
-  coconut, beaks. The rule: tide blue + one bleached-neutral family + one
-  terracotta accent. No golds, no tropical greens, no reds. The brand is
-  driftwood — weathered and desaturated, not a postcard.
+- **Scenery palette is weathered-coast, not postcard** (settled 2026-07-14
+  over two rounds of Aayush feedback): sand is warm ivory, not gold and not
+  greige (`176,149,106` wet ▒ / `206,186,146` dry █ — the full-greige
+  version "felt depressing", the gold original clashed); the palm is
+  sea-glass (`101,125,106`); ONE terracotta (`178,94,66`) covers crab,
+  buoys, and coconut. No tropical greens, no reds.
+  **Protected exception: the ducks are rubber-duck yellow
+  (`240,195,60` + `224,138,46` beak), always.** They are the debugging
+  duck — the one deliberate CS in-joke on the page. A gray gull was tried
+  2026-07-14 and rejected; never neutralize them for palette purity.
   A crab skitters sideways along the proof island's beach (v2 sprite,
   re-added 2026-07-14 on Aayush's ask: ∩ pincers + low ▄▄ body + ʌ leg
   ticks + lateral scuttle — v1's bare block read as a red staple; the

@@ -217,15 +217,15 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
   display: flex; align-items: center; gap: 0.8rem;
   margin-top: auto; margin-bottom: 6rem;
   padding: 1rem 1.7rem 1rem 1rem;
-  font-size: 0.92rem; color: #3f3c34;
+  font-size: 0.92rem; color: #46412f;
   /* a feathered clearing on the island so the quote reads; no hard edges */
   background: radial-gradient(closest-side, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.6) 60%, rgba(255, 255, 255, 0) 100%);
 }
 .landing .hero-proof img { width: 2.9rem; height: 2.9rem; border-radius: 50%; object-fit: cover; box-shadow: 0 1px 3px rgba(60, 50, 30, 0.3); }
 /* quote over attribution, two clear sizes — not one same-size run-on line */
 .landing .proof-quote { font-size: 1rem; font-weight: 600; line-height: 1.35; max-width: 30ch; }
-.landing .proof-attr { margin-top: 0.2rem; font-size: 0.82rem; line-height: 1.4; color: #6e685c; }
-.landing .proof-attr b { color: #3f3c34; font-weight: 600; }
+.landing .proof-attr { margin-top: 0.2rem; font-size: 0.82rem; line-height: 1.4; color: #6f6852; }
+.landing .proof-attr b { color: #46412f; font-weight: 600; }
 .landing .hero-actions { margin-top: 1.8rem; }
 .landing .app-window {
   border: 1px solid var(--line); border-radius: var(--r-win); overflow: hidden;
