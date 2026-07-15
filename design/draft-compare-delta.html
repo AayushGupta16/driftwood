@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Compare section delta: labeled arrow, slop grayed, 14x rehomed (draft)</title>
+<!--
+  DRAFT: the "Don't send out AI slop" section, reworked from the 07-15
+  feedback round (arrow not landing, "sent by driftwood" invisible, left and
+  right cards read the same, 14x floating). Six tagged deltas, section-only;
+  nothing else on the homepage moves.
+
+  D1  the drawn arrow gets a job. The loopy flourish that floated between the
+      heading and the cards is gone. In its place: an annotation arrow that
+      starts OUTSIDE the driftwood card, carries the label "driftwood built
+      this demo for them" (Georgia italic, tide), and dives across the card
+      border to point at the demo clip. Same scroll-draw mechanic as today
+      (path draws, head pops at the end) with one path swap; the tiny
+      curly clip-note arrow inside the card is deleted (D6) because this
+      replaces it. The thing being drawn is now the thing we want noticed.
+
+  D2  the slop email is visibly the loser: content opacity 0.62 -> 0.5,
+      the card shrinks a touch (scale 0.985), and the whole column desaturates.
+      It stays legible (the parody is half the fun) but at a glance the eye
+      reads gray vs white-and-blue.
+
+  D3  the driftwood card pops: asymmetric grid (the winner's column is wider,
+      0.94fr / 1.06fr), stronger tide border, deeper tide-tinted shadow, and
+      the LinkedIn header bar gets a whisper of tide wash. Both "gray the
+      left" and "pop the right" camps get served, each at half volume so the
+      section doesn't shout.
+
+  D4  "sent by driftwood" becomes a chip. It was 0.78rem gray metadata inside
+      the timestamp line; now it's a tide-wash pill next to the timestamp.
+      Still quiet, but scannable.
+
+  D5  the 14x stat moves to the payoff position. The centered compare-sub
+      under the H2 is deleted; the stat becomes the fate line under the
+      winning card, mirroring the slop card's "Left on opened." It gains the
+      before-rate for credibility (anti-slop-notes: never a naked multiplier)
+      and links the case study page shipped in the GEO round.
+        left fate  (unchanged): "Left on opened."
+        right fate (new):       "Same leads, week one: 14x the replies."
+                                + "Four months of templates never broke a 1%
+                                   reply rate. Read the case study ->"
+
+  D6  clip-note (curly arrow + "driftwood built this demo") deleted,
+      superseded by D1.
+
+  Open questions for Aayush:
+  - D5 drops "Week one at Autosana" from under the H2, so the heading stands
+    alone. If the head feels bare, the sub could return as just "Same story,
+    week one at Autosana." with the numbers staying below. Which do you want?
+  - D1's label copy: "driftwood built this demo for them" vs the shorter
+    "driftwood built this demo". Drafted with the longer one; the "for them"
+    is half the pitch.
+  - Phone layout: the annotation label keeps its spot above the card but the
+    arrow shortens to a straight diagonal (the S-curve needs the gutter).
+    Fine to lose the flourish there?
+
+  Assets + fonts are draft-local (Google Fonts, assets/); prod self-hosts.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400..700&family=Source+Serif+4:wght@600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink: #16181b; --gray: #6a737d; --gray-light: #9aa2ab; --line: #e9ebee;
+    --accent: #15557e; --tide-wash: #eaf1f7;
+    --r-win: 12px;
+    --shadow-win: 0 1px 2px rgba(22,24,27,0.05), 0 24px 48px -24px rgba(22,24,27,0.18);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #fff; color: var(--ink); font-family: "Public Sans", system-ui, sans-serif; font-size: 16px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  p { margin: 0; }
+  img { display: block; max-width: 100%; }
+  a { color: inherit; }
+  em.voice { font-family: Georgia, "Times New Roman", serif; font-style: italic; color: var(--accent); letter-spacing: 0; }
+  .wrap { max-width: 68rem; margin-inline: auto; padding-inline: clamp(1.25rem, 4vw, 2.5rem); }
+  .draft-label { font-size: 0.85rem; color: var(--gray); max-width: 44rem; margin: 2.5rem auto 0.75rem; padding: 0 1.5rem; }
+  .draft-label b { color: var(--ink); font-weight: 600; }
+
+  .compare-head { text-align: center; padding-top: 4.5rem; }
+  .compare-head h2 { margin: 0; font-size: clamp(2rem, 1.2rem + 2.8vw, 3.2rem); font-weight: 600; letter-spacing: -0.014em; }
+  /* D5: compare-sub deleted; the stat now lives under the winning card */
+
+  /* D3: asymmetric grid, the winner's column is wider */
+  .compare-grid { position: relative; display: grid; grid-template-columns: 0.94fr 1.06fr; gap: clamp(1.5rem, 3vw, 2.5rem); margin-top: 3.4rem; align-items: stretch; }
+  .compare-grid > div { display: flex; flex-direction: column; }
+  .compare-label { font-size: 0.85rem; color: var(--gray); margin-bottom: 0.8rem; }
+  /* D1a: the right label carries more weight than a caption */
+  .compare-label.us { color: var(--accent); font-weight: 700; font-size: 0.95rem; }
+
+  /* ---- left: the slop email (D2: grayed harder) ---- */
+  .email {
+    display: flex; flex-direction: column; flex: 1;
+    border: 1px solid var(--line); border-radius: var(--r-win);
+    background: #f6f7f8; box-shadow: none;
+    padding: 1.2rem 1.4rem;
+    transform: scale(0.985); transform-origin: top center;
+    filter: saturate(0.55);
+  }
+  .email-subject { font-weight: 600; font-size: 1rem; padding-bottom: 0.9rem; border-bottom: 1px solid var(--line); opacity: 0.5; }
+  .email-body { margin-top: 1rem; font-size: 0.92rem; color: #3c434a; line-height: 1.55; opacity: 0.5; }
+  .email-body p + p { margin-top: 0.65rem; }
+  .email-body ul { list-style: disc; margin: 0.7rem 0 0 1.35rem; padding: 0; }
+  .email-body li { margin-top: 0.3rem; }
+  .email-body .fake-link { color: #1a0dab; text-decoration: underline; }
+  .email-fate { margin: auto 0 0; padding-top: 1.5rem; font-size: 0.85rem; color: var(--gray); }
+  .redact { display: inline-block; background: #d4d9de; border-radius: 2px; width: 2.5em; height: 0.78em; }
+
+  /* ---- right: the thread (D3: pops) ---- */
+  .thread {
+    border: 2px solid rgba(21,85,126,0.55); border-radius: var(--r-win); background: #fff;
+    box-shadow: 0 2px 4px rgba(22,24,27,0.05), 0 36px 68px -26px rgba(21,85,126,0.5);
+    overflow: hidden;
+    font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  .li-head { display: flex; align-items: center; gap: 0.7rem; padding: 0.7rem 1rem; border-bottom: 1px solid #e8e8e8; background: linear-gradient(rgba(234,241,247,0.55), rgba(234,241,247,0.25)); }
+  .li-head .li-name { font-weight: 700; font-size: 0.95rem; color: #191919; }
+  .li-presence { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: #01754f; }
+  .li-icons { margin-left: auto; display: flex; gap: 0.9rem; color: #666; font-size: 1rem; letter-spacing: 0.05em; }
+  .li-body { padding: 0.4rem 1rem 0.7rem; }
+  .msg { display: grid; grid-template-columns: 2.6rem minmax(0,1fr); gap: 0.7rem; padding-block: 0.35rem; }
+  .avatar { width: 2.6rem; height: 2.6rem; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #dce6f1; color: #56687a; }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .avatar svg { width: 70%; height: 70%; margin-top: 22%; fill: #8ba0b5; }
+  .msg-head { display: flex; align-items: baseline; gap: 0.5rem; font-size: 0.9rem; flex-wrap: wrap; }
+  .msg-head .who { font-weight: 700; color: #191919; }
+  .msg-head .when { color: #767676; font-size: 0.78rem; }
+  .msg-head .seen { margin-left: auto; color: #767676; }
+  .msg-head .seen svg { width: 0.85rem; height: 0.85rem; }
+  /* D4: the send attribution is a chip, not timestamp metadata */
+  .sent-chip {
+    display: inline-flex; align-items: center;
+    background: var(--tide-wash); color: var(--accent);
+    font-size: 0.7rem; font-weight: 600; letter-spacing: 0.01em;
+    padding: 0.12em 0.6em; border-radius: 999px;
+    font-family: "Public Sans", system-ui, sans-serif;
+  }
+  .msg-body { margin-top: 0.2rem; font-size: 0.9rem; color: #191919; line-height: 1.45; max-width: 52ch; }
+  .divider { display: flex; align-items: center; gap: 0.8rem; margin-block: 0.45rem; }
+  .divider hr { flex: 1; border: 0; border-top: 1px solid #e8e8e8; margin: 0; }
+  .divider span { font-size: 0.72rem; color: #767676; text-transform: uppercase; letter-spacing: 0.06em; }
+  .divider.win span { color: var(--accent); font-weight: 700; }
+  .divider.win hr { border-top-color: rgba(21,85,126,0.3); }
+  .li-compose { display: flex; align-items: center; gap: 0.8rem; border-top: 1px solid #e8e8e8; padding: 0.75rem 1rem; }
+  .li-input { flex: 1; background: #f2f2f2; border-radius: 999px; padding: 0.55rem 1rem; font-size: 0.85rem; color: #767676; }
+  .li-send { color: #a8a8a8; font-weight: 700; font-size: 0.9rem; }
+  .clip { margin-top: 0.7rem; position: relative; width: min(14rem, 100%); border-radius: 10px; overflow: hidden; border: 1px solid var(--line); }
+  .clip img { width: 100%; }
+  .clip::after { content: "0:19"; position: absolute; right: 0.55rem; bottom: 0.5rem; background: rgba(22,24,27,0.75); color: #fff; font-size: 0.7rem; padding: 0.1rem 0.4rem; border-radius: 4px; }
+  .play { position: absolute; inset: 0; margin: auto; width: 2.6rem; height: 2.6rem; background: rgba(22,24,27,0.62); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  .play::after { content: ""; border-style: solid; border-width: 0.45rem 0 0.45rem 0.8rem; border-color: transparent transparent transparent #fff; margin-left: 0.18rem; }
+  /* D6: .clip-note (curly arrow + caption) deleted — superseded by D1 */
+
+  /* D1: the annotation arrow. The label sits in the old arrow band between
+     the heading and the cards; the path threads the column gap, crosses the
+     winner's left border, and lands on the demo clip (the lane below the
+     avatar is whitespace, so it never runs over text). In prod the path
+     draws on scroll exactly like the old loop did, label fading in first. */
+  .demo-callout { position: absolute; inset: -4.1rem 0 auto 0; height: 30rem; pointer-events: none; z-index: 3; }
+  .demo-callout .callout-label {
+    position: absolute; top: 0.45rem; left: 32%;
+    font-family: Georgia, "Times New Roman", serif; font-style: italic;
+    color: var(--accent); font-size: 1.1rem; white-space: nowrap;
+  }
+  .demo-callout svg { display: block; width: 100%; height: 100%; }
+
+  /* D5: the payoff line under the winning card */
+  .thread-fate { margin-top: 1.05rem; padding-left: 0.25rem; font-size: 0.95rem; }
+  .thread-fate b { color: var(--accent); font-weight: 700; }
+  .thread-fate .fate-detail { display: block; margin-top: 0.2rem; font-size: 0.85rem; color: var(--gray); }
+  .thread-fate .fate-detail a { color: var(--accent); text-decoration: none; font-weight: 600; }
+
+  @media (max-width: 52rem) {
+    .compare-grid { grid-template-columns: 1fr; }
+    .compare-grid > div:nth-of-type(2) { order: 1; margin-top: 3.6rem; }
+    .compare-grid > div:nth-of-type(3) { order: 2; }
+    .demo-callout { width: 100%; top: -3.2rem; }
+  }
+</style>
+</head>
+<body>
+
+<p class="draft-label"><b>Draft: the compare section, reworked.</b> Deltas: D1 labeled
+annotation arrow (outside the card, pointing at the demo) replaces the floating loop;
+D2 slop email grayed harder; D3 driftwood card wider + stronger pop; D4 "sent by
+driftwood" chip; D5 the 14&times; stat moves under the winning card with its
+before-rate and a case-study link; D6 the old curly clip-note is gone. The arrow
+below is shown fully drawn; in prod it draws on scroll like today.</p>
+
+<section class="wrap" style="padding-bottom: 6rem;">
+  <div class="compare-head">
+    <h2>Don't send out <em class="voice">AI slop.</em></h2>
+  </div>
+  <div class="compare-grid">
+    <!-- D1: the annotation arrow, spanning the grid -->
+    <div class="demo-callout" aria-hidden="true">
+      <span class="callout-label">driftwood built this demo for them</span>
+      <svg viewBox="0 0 1100 480" preserveAspectRatio="none">
+        <path d="M 505 42 C 488 124, 490 240, 535 322 C 556 352, 580 371, 604 379"
+              fill="none" stroke="#15557e" stroke-width="3.25" stroke-linecap="round" />
+        <path d="M 604 379 l -16 -3.5 M 604 379 l -8.5 14"
+              fill="none" stroke="#15557e" stroke-width="3.25" stroke-linecap="round" />
+      </svg>
+    </div>
+    <div>
+      <p class="compare-label">what everyone else sends</p>
+      <div class="email">
+        <p class="email-subject"><span class="redact"></span> &mdash; quick question</p>
+        <div class="email-body">
+          <p>Hey <span class="redact"></span>,</p>
+          <p>Hope you're doing well! Huge fan of what you're building &mdash; truly impressive momentum.</p>
+          <p>I'm with an AI-powered QA platform, the <b>all-in-one way to ship faster with confidence</b>. Teams like yours are seeing <b>huge results</b> &mdash; we'd love to show you how.</p>
+          <p>A few things teams love:</p>
+          <ul>
+            <li>Cut regression time by up to 90%</li>
+            <li>Seamless integration with your existing stack</li>
+            <li>Enterprise-grade security (SOC 2 Type II)</li>
+          </ul>
+          <p>Any chance you have 15 minutes this week? You can <span class="fake-link">grab time here</span>.</p>
+          <p>Best,<br /><span class="redact"></span><br />SDR @ <span class="redact"></span></p>
+          <p>P.S. Happy to send over a case study if that's easier!</p>
+        </div>
+        <p class="email-fate">Left on opened.</p>
+      </div>
+    </div>
+    <div>
+      <p class="compare-label us">what driftwood sent</p>
+      <div class="thread">
+        <div class="li-head">
+          <span class="li-name">CTO @ <span class="redact"></span></span>
+          <span class="li-presence"></span>
+          <span class="li-icons">&#8943;&nbsp;&nbsp;&#10530;&nbsp;&nbsp;&#10005;</span>
+        </div>
+        <div class="li-body">
+          <div class="divider"><hr /><span>4 months of outreach, no reply</span><hr /></div>
+          <div class="divider"><hr /><span>Jul 9</span><hr /></div>
+          <div class="msg">
+            <span class="avatar"><img src="assets/yuvan.png" alt="" /></span>
+            <div>
+              <div class="msg-head">
+                <span class="who">Yuvan Sundrani</span>
+                <span class="when">&middot; 6:57 PM</span>
+                <span class="sent-chip">sent by driftwood</span>
+                <span class="seen"><svg viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" /><path d="M4.5 8.2l2.3 2.3 4.7-4.8" fill="none" stroke="currentColor" stroke-width="1.4" /></svg></span>
+              </div>
+              <p class="msg-body">hey <span class="redact"></span>, found a bug on <span class="redact"></span>. our agents caught your pricing page still promising early access for features lower tiers already have&hellip;</p>
+              <div class="clip">
+                <img src="assets/superhuman-demo-still.png" alt="19 second demo video" />
+                <span class="play"></span>
+              </div>
+            </div>
+          </div>
+          <div class="divider"><hr /><span>Jul 10 &middot; 12 hours later</span><hr /></div>
+          <div class="msg">
+            <span class="avatar"><svg viewBox="0 0 24 24"><path d="M12 12c2.8 0 5-2.2 5-5s-2.2-5-5-5-5 2.2-5 5 2.2 5 5 5zm0 2c-4.4 0-9 2.2-9 6.5V24h18v-3.5c0-4.3-4.6-6.5-9-6.5z" /></svg></span>
+            <div>
+              <div class="msg-head"><span class="who">CTO</span><span class="when">&middot; 7:18 AM</span></div>
+              <p class="msg-body">send me a blurb + demos to <span class="redact" style="width: 6.5em;"></span> and I'll forward to my team - best</p>
+            </div>
+          </div>
+          <div class="divider win"><hr /><span>Call booked &middot; Jul 12</span><hr /></div>
+        </div>
+        <div class="li-compose"><span class="li-input">Write a message&hellip;</span><span class="li-send">Send</span></div>
+      </div>
+      <!-- D5: the stat lands with its evidence -->
+      <p class="thread-fate">
+        <b>Same leads, week one: 14&times; the replies.</b>
+        <span class="fate-detail">Four months of templates never broke a 1% reply rate.
+        <a href="/customers/autosana">Read the case study &rarr;</a></span>
+      </p>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

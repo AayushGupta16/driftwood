@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Brex demo artifact v2: the product doing the job, not a pitch page (draft)</title>
+<!--
+  DRAFT: replacement for brex-demo.webp (how-it-works step 02, "Builds them
+  a custom demo"). Aayush 07-15: the current artifact "is the definition of
+  slop and needs to be changed completely."
+
+  Diagnosis of v1: the top half is a vendor brochure — marketing headline
+  with a serif-italic accent word ("finance that *earns* while it runs"),
+  a stat banner ("Up to 4.36%", "71%", "756 hrs"), benefit copy. It's
+  exactly the pattern the section above it rails against; the page says
+  "don't send AI slop" and then showcases slop as the thing we build.
+
+  v2 principle (from anti-slop-notes: show the product, moment of value,
+  believable non-round data): the demo artifact is BREX'S PRODUCT with
+  NOTION'S WORLD already inside it — "your instance, already set up" —
+  not a page about Brex. What a Notion finance lead would actually lean
+  in for: their entities, their currencies, their close, live in a Brex
+  dashboard. No claims, no stats banner; data instead of adjectives.
+
+  Composition (one screen, 1280w, crops from the bottom in the stage pin):
+    top bar     Brex chrome, "Notion" as the active org, demo badge
+    left rail   Brex nav (Home / Accounts / Cards / Expenses / Bill Pay...)
+    main        "Good morning, Notion finance" + global cash strip across
+                four entities/currencies, then the two payoff surfaces:
+                expenses auto-coding themselves in local currency, and the
+                month-end close checklist with Tokyo nearly done
+    the point   every row is Notion-specific (Dublin, Tokyo, Hyderabad,
+                team names, vendors like AWS/Figma/Vercel), nothing generic
+
+  Notes:
+  - Brex orange stays INSIDE the artifact window (design-language token
+    exception). Numbers are non-round on purpose.
+  - This drafts the *page* the agent built. The 07-14 review's agreed end
+    state for step 02 is a muted 6-8s Remotion loop of a demo video; this
+    v2 page is both the interim static bake and the scene the video pans.
+  - If approved: bake to webp at 2x, swap landing/public/brex-demo.webp,
+    update the alt text + artifact-bar caption ("the demo it built - Brex,
+    if Notion ran on it"), same commit (stale-bake rule).
+  - Universe rule intact: this is still "what the agent built for the
+    step-01 ask" — same story, better artifact.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400..700&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #3c3f44; font-family: "Public Sans", -apple-system, system-ui, sans-serif; }
+  .draft-label { color: #cfd3d8; font-size: 0.85rem; max-width: 46rem; margin: 2rem auto 1rem; padding: 0 1.5rem; }
+  .draft-label b { color: #fff; }
+
+  /* ---- the artifact: a Brex dashboard wearing Notion's world ---- */
+  .shot { width: 1280px; margin: 0 auto 3rem; background: #faf9f7; color: #1f2023; border-radius: 10px; overflow: hidden; box-shadow: 0 30px 80px rgba(0,0,0,0.45); }
+  .brex-top { display: flex; align-items: center; gap: 1rem; padding: 0.8rem 1.4rem; background: #17181a; color: #f5f2ee; }
+  .brex-logo { font-weight: 700; font-size: 1.15rem; letter-spacing: 0.02em; }
+  .brex-org { display: flex; align-items: center; gap: 0.5rem; font-size: 0.88rem; background: #26282b; padding: 0.32rem 0.8rem; border-radius: 7px; }
+  .brex-org .notion-mark { width: 1.05rem; height: 1.05rem; background: #fff; color: #000; border-radius: 3px; font-weight: 700; font-size: 0.78rem; display: inline-flex; align-items: center; justify-content: center; }
+  .brex-org .caret { color: #9aa0a6; font-size: 0.7rem; }
+  .demo-badge { margin-left: auto; font-size: 0.78rem; color: #ffb59a; border: 1px solid rgba(244,106,53,0.55); background: rgba(244,106,53,0.12); padding: 0.22rem 0.7rem; border-radius: 999px; }
+  .brex-search { color: #9aa0a6; font-size: 0.85rem; }
+
+  .frame { display: grid; grid-template-columns: 216px 1fr; }
+  .rail { background: #f1efeb; border-right: 1px solid #e5e2dc; padding: 1.1rem 0; min-height: 760px; }
+  .rail a { display: block; padding: 0.52rem 1.4rem; font-size: 0.9rem; color: #55575c; text-decoration: none; }
+  .rail a.on { color: #1f2023; font-weight: 600; background: #e9e5de; border-right: 2.5px solid #f0500a; }
+
+  .main { padding: 1.7rem 2.1rem 2rem; }
+  .hello { display: flex; align-items: baseline; gap: 0.9rem; }
+  .hello h1 { margin: 0; font-size: 1.45rem; font-weight: 600; letter-spacing: -0.01em; }
+  .hello .sub { font-size: 0.88rem; color: #77797e; }
+
+  /* the global cash strip: four entities, four currencies, one view */
+  .entities { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.9rem; margin-top: 1.35rem; }
+  .ent { background: #fff; border: 1px solid #e7e4de; border-radius: 9px; padding: 0.95rem 1.05rem; }
+  .ent .flag { font-size: 0.78rem; color: #77797e; display: flex; justify-content: space-between; }
+  .ent .amt { font-size: 1.22rem; font-weight: 650; margin-top: 0.3rem; letter-spacing: -0.01em; }
+  .ent .meta { font-size: 0.76rem; color: #77797e; margin-top: 0.25rem; }
+  .ent .meta b { color: #0a7a43; font-weight: 600; }
+  .ent.total { background: #17181a; color: #f5f2ee; border-color: #17181a; }
+  .ent.total .flag, .ent.total .meta { color: #b9bcc1; }
+  .ent.total .meta b { color: #7fd7a6; }
+
+  .grid2 { display: grid; grid-template-columns: 1.55fr 1fr; gap: 1.1rem; margin-top: 1.2rem; }
+  .panel { background: #fff; border: 1px solid #e7e4de; border-radius: 9px; overflow: hidden; }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; padding: 0.8rem 1.1rem; border-bottom: 1px solid #eeece7; }
+  .panel-head h2 { margin: 0; font-size: 0.95rem; font-weight: 600; }
+  .panel-head .hint { font-size: 0.76rem; color: #77797e; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+  th { text-align: left; font-weight: 600; color: #77797e; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.55rem 1.1rem; border-bottom: 1px solid #eeece7; }
+  td { padding: 0.62rem 1.1rem; border-bottom: 1px solid #f4f2ee; vertical-align: middle; }
+  tr:last-child td { border-bottom: 0; }
+  .who { display: flex; align-items: center; gap: 0.55rem; }
+  .pfp { width: 1.5rem; height: 1.5rem; border-radius: 50%; background: #dce6f1; color: #4a6076; font-size: 0.62rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
+  .gl { color: #77797e; }
+  .st { font-size: 0.74rem; font-weight: 600; padding: 0.14rem 0.55rem; border-radius: 999px; white-space: nowrap; }
+  .st.ok { background: #e5f4eb; color: #0a7a43; }
+  .st.auto { background: #eef0f3; color: #55575c; }
+  .st.flag { background: #fdeee6; color: #c2410c; }
+
+  .close-list { padding: 0.4rem 0; }
+  .close-item { display: flex; align-items: center; gap: 0.7rem; padding: 0.55rem 1.1rem; font-size: 0.86rem; }
+  .tick { width: 1.05rem; height: 1.05rem; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.66rem; font-weight: 700; }
+  .tick.done { background: #0a7a43; color: #fff; }
+  .tick.todo { border: 1.5px solid #c9c6bf; color: transparent; }
+  .close-item .ent-tag { margin-left: auto; font-size: 0.72rem; color: #77797e; }
+  .close-foot { padding: 0.75rem 1.1rem 0.95rem; border-top: 1px solid #eeece7; font-size: 0.8rem; color: #55575c; }
+  .close-foot b { color: #0a7a43; }
+  .bar { height: 5px; background: #eeece7; border-radius: 999px; margin-top: 0.5rem; overflow: hidden; }
+  .bar span { display: block; height: 100%; width: 87%; background: #f0500a; border-radius: 999px; }
+</style>
+</head>
+<body>
+
+<p class="draft-label"><b>Draft: Brex artifact v2.</b> The demo the agent built is now
+Brex's product with Notion's world inside it (entities, currencies, close), not a
+brochure about Brex. If approved: bake to webp, swap
+<code>landing/public/brex-demo.webp</code>, caption becomes "the demo it built &middot;
+Brex, if Notion ran on it". End state per the 07-14 review stays a Remotion video loop
+of this same scene.</p>
+
+<div class="shot">
+  <div class="brex-top">
+    <span class="brex-logo">brex</span>
+    <span class="brex-org"><span class="notion-mark">N</span> Notion <span class="caret">&#9662;</span></span>
+    <span class="brex-search">&#8981; Search</span>
+    <span class="demo-badge">demo &middot; built for Notion by Autosana's driftwood agent</span>
+  </div>
+  <div class="frame">
+    <nav class="rail">
+      <a class="on" href="#">Home</a>
+      <a href="#">Accounts</a>
+      <a href="#">Cards</a>
+      <a href="#">Expenses</a>
+      <a href="#">Bill Pay</a>
+      <a href="#">Travel</a>
+      <a href="#">Reimbursements</a>
+      <a href="#">Reporting</a>
+      <a href="#">Integrations</a>
+    </nav>
+    <main class="main">
+      <div class="hello">
+        <h1>Good morning, Notion finance</h1>
+        <span class="sub">Thursday &middot; 4 entities &middot; 3 currencies &middot; books close in 2 days</span>
+      </div>
+
+      <div class="entities">
+        <div class="ent total">
+          <p class="flag">Global cash <span>consolidated</span></p>
+          <p class="amt">$41,286,904</p>
+          <p class="meta">idle balance in treasury &middot; <b>earned $4,207 yesterday</b></p>
+        </div>
+        <div class="ent">
+          <p class="flag">Notion Labs, Inc. <span>USD</span></p>
+          <p class="amt">$28,411,220</p>
+          <p class="meta">San Francisco &middot; 214 cards</p>
+        </div>
+        <div class="ent">
+          <p class="flag">Notion Ireland Ltd <span>EUR</span></p>
+          <p class="amt">&euro;6,082,341</p>
+          <p class="meta">Dublin &middot; local IBAN, no FX sweep</p>
+        </div>
+        <div class="ent">
+          <p class="flag">Notion K.K. <span>JPY</span></p>
+          <p class="amt">&yen;689,412,800</p>
+          <p class="meta">Tokyo &middot; cards issue in yen</p>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Expenses, coding themselves</h2>
+            <span class="hint">last hour &middot; 3 continents</span>
+          </div>
+          <table>
+            <thead><tr><th>Who</th><th>Vendor</th><th>Amount</th><th>GL code</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><span class="who"><span class="pfp">MK</span> M. Kobayashi</span></td>
+                <td>JR East &middot; Tokyo</td><td>&yen;14,280</td><td class="gl">6220 Travel</td>
+                <td><span class="st auto">auto-coded</span></td>
+              </tr>
+              <tr>
+                <td><span class="who"><span class="pfp">SO</span> S. O'Brien</span></td>
+                <td>AWS &middot; Dublin</td><td>&euro;41,118.09</td><td class="gl">6410 Cloud</td>
+                <td><span class="st ok">in policy</span></td>
+              </tr>
+              <tr>
+                <td><span class="who"><span class="pfp">DL</span> D. Lee</span></td>
+                <td>Figma renewal</td><td>$118,400</td><td class="gl">6510 Software</td>
+                <td><span class="st flag">flagged for approval</span></td>
+              </tr>
+              <tr>
+                <td><span class="who"><span class="pfp">AR</span> A. Ramaswamy</span></td>
+                <td>WeWork Hyderabad</td><td>&#8377;2,84,900</td><td class="gl">6110 Facilities</td>
+                <td><span class="st auto">auto-coded</span></td>
+              </tr>
+              <tr>
+                <td><span class="who"><span class="pfp">JP</span> J. Park</span></td>
+                <td>Vercel</td><td>$3,220.00</td><td class="gl">6410 Cloud</td>
+                <td><span class="st ok">in policy</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h2>March close</h2>
+            <span class="hint">2 items left</span>
+          </div>
+          <div class="close-list">
+            <div class="close-item"><span class="tick done">&#10003;</span> Card statements reconciled <span class="ent-tag">all entities</span></div>
+            <div class="close-item"><span class="tick done">&#10003;</span> FX gains/losses posted <span class="ent-tag">Dublin</span></div>
+            <div class="close-item"><span class="tick done">&#10003;</span> Receipts matched &middot; 1,412 of 1,431 <span class="ent-tag">global</span></div>
+            <div class="close-item"><span class="tick todo"></span> Consumption-tax summary <span class="ent-tag">Tokyo</span></div>
+            <div class="close-item"><span class="tick todo"></span> Figma renewal approval <span class="ent-tag">SF</span></div>
+          </div>
+          <div class="close-foot">
+            <b>87% done</b> &middot; two days ahead of last quarter
+            <div class="bar"><span></span></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+</body>
+</html>
