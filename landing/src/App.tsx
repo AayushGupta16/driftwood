@@ -205,6 +205,7 @@ export default function App() {
 
     const cleanups: (() => void)[] = [];
     const proofEl = root.querySelector(".hero-proof") as HTMLElement | null;
+    const winEl = root.querySelector(".app-window") as HTMLElement | null;
     const CHARS = [" ", "\u00b7", "-", "~", "\u2248", "\u224b"]; // · - ~ ≈ ≋ by wave height
     const CELL_W = 8;
     const CELL_H = 10.5;
@@ -323,6 +324,26 @@ export default function App() {
         }
         const islE = (c: number, r: number) =>
           isl ? ((c - isl.cx) / isl.rx) ** 2 + ((r - isl.cy) / isl.ry) ** 2 : 99;
+        // the dashboard window sails over the sea's right side on desktop.
+        // A mover whose lane passes behind it must turn around at the
+        // window's edge, not the canvas edge — patrolling the full width
+        // means vanishing behind the window for most of every lap
+        let openCols = cols;
+        let winBottomRow = -1;
+        if (!strip && winEl) {
+          const wr2 = winEl.getBoundingClientRect();
+          const cr2 = m.canvas.getBoundingClientRect();
+          if (wr2.bottom > cr2.top + CELL_H && wr2.left > cr2.left && wr2.left < cr2.right) {
+            const leftCols = (wr2.left - cr2.left) / CELL_W - 1;
+            if (leftCols > 40) {
+              // enough open water to be worth confining the patrol to
+              openCols = leftCols;
+              winBottomRow = (wr2.bottom - cr2.top) / CELL_H;
+            }
+          }
+        }
+        const laneMax = (laneRow: number, span: number) =>
+          Math.max(6, (laneRow < winBottomRow ? openCols : cols) - span);
         for (let r = 0; r < rows; r++) {
           // hero: sparse at the horizon, denser toward the bottom
           const depth = strip ? 0.85 : 0.5 + (r / rows) * 0.45;
@@ -412,11 +433,11 @@ export default function App() {
           ctx.fillText("ʌʌʌ", crx - 4.5, cry + 2); // legs, tucked under the body
           ctx.font = prevFont;
         }
-        const duck = (seed: number, rowF: number) => {
+        const duck = (seed: number, rowF: number, max = cols - 3.5) => {
           // the rubber duck stays rubber-duck yellow \u2014 it's the debugging
           // duck, the one deliberate in-joke; a gray gull was tried and
           // rejected (the yellow IS the point)
-          const { x: dx, dir } = patrol(t, 1.15, seed, 1, cols - 3.5);
+          const { x: dx, dir } = patrol(t, 1.15, seed, 1, max);
           const dy = rowF * rows + wave(dx, rowF * rows, t, phase) * 1.9;
           if (islE(dx + 0.8, dy) <= 1.3) return; // ducks paddle behind the island
           const y = dy * CELL_H + CELL_H / 2;
@@ -424,10 +445,12 @@ export default function App() {
           ctx.fillText("\u2586\u2586", dx * CELL_W, y); // body
           ctx.fillText(dir > 0 ? "\u259d" : "\u2598", (dir > 0 ? dx + 1.55 : dx - 0.55) * CELL_W, y - CELL_H * 0.52); // head
           ctx.fillStyle = "rgba(224, 138, 46, 0.95)";
-          ctx.fillText(dir > 0 ? "\u2023" : "\u2039", (dir > 0 ? dx + 2.35 : dx - 1.15) * CELL_W, y - CELL_H * 0.45); // beak
+          // mirrored solid triangles \u2014 the old \u2023/\u2039 pair gave the
+          // eastbound duck a filled beak and the westbound one a thin chevron
+          ctx.fillText(dir > 0 ? "\u25b8" : "\u25c2", (dir > 0 ? dx + 2.3 : dx - 1.3) * CELL_W, y - CELL_H * 0.45); // beak
         };
-        const ship = (speed: number, seed: number, rowF: number, alpha: number, amp: number) => {
-          const { x: sx, dir } = patrol(t, speed, seed, 1, cols - 6);
+        const ship = (speed: number, seed: number, rowF: number, alpha: number, amp: number, max = cols - 6) => {
+          const { x: sx, dir } = patrol(t, speed, seed, 1, max);
           const sy = rowF * rows + wave(sx, rowF * rows, t, phase) * amp;
           ctx.fillStyle = `rgba(13, 60, 91, ${alpha})`;
           // the sail flips to face the way she's headed
@@ -481,14 +504,14 @@ export default function App() {
         }
         if (!strip) {
           // a distant ship on the horizon, half in the haze
-          ship(1.1, 30, 0.2, 0.45, 0.4);
+          ship(1.1, 30, 0.2, 0.45, 0.4, laneMax(rows * 0.2, 6));
           // one free swimmer, keeping its distance from the log's lane
-          duck(70, 0.8);
+          duck(70, 0.8, laneMax(rows * 0.8, 3.5));
           // the driftwood: adrift, riding the swell, tacking back and forth.
           // Its lane stays clear of the island \u2014 clamped above the beach so
           // log and captain never run aground (or vanish behind it)
-          const { x: wx, dir: wdir } = patrol(t, 1.7, 6, 1, Math.max(6, cols - WOOD.length - 1));
           const lane = isl ? Math.max(3, Math.min(rows * 0.45, isl.cy - isl.ry - 3.2)) : rows * 0.45;
+          const { x: wx, dir: wdir } = patrol(t, 1.7, 6, 1, laneMax(lane, WOOD.length + 1));
           const wr = lane + wave(wx, lane, t, phase) * 1.6;
           ctx.fillStyle = "rgba(121, 85, 52, 0.95)"; // driftwood-brown
           ctx.font = 'bold 13px ui-monospace, "SF Mono", Menlo, monospace';
@@ -501,7 +524,7 @@ export default function App() {
           ctx.fillText("\u2586\u2586", bx * CELL_W, cy);
           ctx.fillText(wdir > 0 ? "\u259d" : "\u2598", (wdir > 0 ? bx + 1.55 : bx - 0.55) * CELL_W, cy - CELL_H * 0.52);
           ctx.fillStyle = "rgba(224, 138, 46, 0.98)";
-          ctx.fillText(wdir > 0 ? "\u2023" : "\u2039", (wdir > 0 ? bx + 2.35 : bx - 1.15) * CELL_W, cy - CELL_H * 0.45);
+          ctx.fillText(wdir > 0 ? "\u25b8" : "\u25c2", (wdir > 0 ? bx + 2.3 : bx - 1.3) * CELL_W, cy - CELL_H * 0.45);
           ctx.font = '12px ui-monospace, "SF Mono", Menlo, monospace';
         }
       }

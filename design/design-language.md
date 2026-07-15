@@ -80,7 +80,15 @@ The signature. ASCII character sea on 2D canvas — never rendered 3D.
   cruise back and forth across the visible span (`patrol()` triangle
   wave) instead of sliding off one edge and teleporting in from the
   other — nothing disappears, it turns around. Sprites face their
-  heading (duck head/beak mirror; SAIL eastbound, SAILW westbound).
+  heading (duck head/beak mirror — beaks are the ▸/◂ triangle pair,
+  never asymmetric glyphs; SAIL eastbound, SAILW westbound).
+- **"Visible span" means visible water** (2026-07-15): the hero
+  dashboard window overlays the sea's right side on desktop, so hero
+  movers whose lane passes behind it turn around at the window's left
+  edge, not the canvas edge — full-canvas patrols meant vanishing
+  behind the window for most of every lap ("the duck swam off and never
+  came back"). Falls back to the full span when the open water is under
+  ~40 cells (stacked/phone hero, where the window doesn't occlude).
 - **Every sea strip carries a yellow duck**, always — the ship/island
   silhouettes are company, not stand-ins for the duck.
 - **Scenery palette is weathered-coast, not postcard** (settled 2026-07-14
