@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The best AI SDR tools in 2026, ranked · driftwood</title>
+<meta name="description" content="A ranked comparison of AI SDR tools in 2026: autonomous agents, signal-driven platforms, and copilots. Written by the driftwood team, with an honest note on when to pick a competitor over us." />
+<link rel="canonical" href="https://driftwood.sh/best-ai-sdr-tools" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<meta name="theme-color" content="#15557e" />
+<meta property="og:title" content="The best AI SDR tools in 2026, ranked · driftwood" />
+<meta property="og:description" content="A ranked comparison of AI SDR tools in 2026: autonomous agents, signal-driven platforms, and copilots. Written by the driftwood team, with an honest note on when to pick a competitor over us." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://driftwood.sh/best-ai-sdr-tools" />
+<meta property="og:image" content="https://driftwood.sh/og-5.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://driftwood.sh/og-5.png" />
+<link rel="preload" href="/fonts/public-sans-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  "name": "The best AI SDR tools in 2026",
+  "url": "https://driftwood.sh/best-ai-sdr-tools",
+  "itemListOrder": "https://schema.org/ItemListOrderAscending",
+  "numberOfItems": 10,
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "driftwood", "url": "https://driftwood.sh" },
+    { "@type": "ListItem", "position": 2, "name": "11x (Alice)", "url": "https://11x.ai" },
+    { "@type": "ListItem", "position": 3, "name": "Artisan (Ava)", "url": "https://artisan.co" },
+    { "@type": "ListItem", "position": 4, "name": "AiSDR", "url": "https://aisdr.com" },
+    { "@type": "ListItem", "position": 5, "name": "Topo", "url": "https://topo.io" },
+    { "@type": "ListItem", "position": 6, "name": "Unify", "url": "https://unifygtm.com" },
+    { "@type": "ListItem", "position": 7, "name": "Clay", "url": "https://clay.com" },
+    { "@type": "ListItem", "position": 8, "name": "Amplemarket", "url": "https://amplemarket.com" },
+    { "@type": "ListItem", "position": 9, "name": "Regie.ai", "url": "https://regie.ai" },
+    { "@type": "ListItem", "position": 10, "name": "Autobound", "url": "https://autobound.ai" }
+  ]
+}
+</script>
+
+<style>
+  @font-face {
+    font-family: "Public Sans";
+    src: url("/fonts/public-sans-latin-wght-normal.woff2") format("woff2-variations");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Source Serif 4";
+    src: url("/fonts/source-serif-4-latin-600-normal.woff2") format("woff2");
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  :root {
+    --ink: #16181b;
+    --gray: #6a737d;
+    --gray-light: #9aa2ab;
+    --line: #e9ebee;
+    --tide: #15557e;
+    --tide-deep: #0d3c5b;
+    --tide-wash: #eaf1f7;
+    --bg: #ffffff;
+    --r-win: 12px;
+    --shadow-win: 0 1px 2px rgba(22,24,27,0.05), 0 24px 48px -24px rgba(22,24,27,0.18);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 16px; line-height: 1.55; -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 { margin: 0; letter-spacing: -0.014em; text-wrap: balance; }
+  p { margin: 0; }
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid var(--tide); outline-offset: 2px; }
+
+  em.voice {
+    font-family: Georgia, "Times New Roman", serif;
+    font-style: italic; color: var(--tide); letter-spacing: 0;
+  }
+
+  .wrap { max-width: 46rem; margin-inline: auto; padding-inline: clamp(1.25rem, 4vw, 2rem); }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--tide); color: #fff; text-decoration: none;
+    font-weight: 600; font-size: 0.95rem; height: 2.75rem; padding-inline: 1.5rem;
+    border-radius: 999px; transition: background 0.15s ease;
+  }
+  .btn:hover { background: var(--tide-deep); }
+
+  /* ---------- chrome ---------- */
+  header.site {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(255,255,255,0.94); border-bottom: 1px solid var(--line);
+    backdrop-filter: blur(6px);
+  }
+  .nav {
+    max-width: 68rem; margin-inline: auto;
+    padding-inline: clamp(1.25rem, 4vw, 2rem);
+    display: flex; align-items: center; justify-content: space-between; height: 4rem;
+  }
+  .wordmark {
+    display: inline-flex; align-items: center; gap: 0.55rem;
+    font-family: "Source Serif 4", Georgia, serif; font-weight: 600;
+    font-size: 1.2rem; text-decoration: none; color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .wordmark .helm { width: 1.9rem; height: 1.9rem; display: block; flex-shrink: 0; }
+  .nav .btn { height: 2.35rem; font-size: 0.875rem; padding-inline: 1.2rem; }
+
+  /* ---------- article ---------- */
+  .article-head { padding-block: clamp(3rem, 7vw, 5rem) 0; }
+  h1 {
+    font-size: clamp(1.9rem, 1.2rem + 2vw, 2.6rem);
+    font-weight: 600; line-height: 1.18;
+  }
+  .byline { margin-top: 0.9rem; font-size: 0.9rem; color: var(--gray-light); }
+  .updated { margin-top: 0.35rem; font-size: 0.85rem; color: var(--gray); }
+
+  .disclosure {
+    margin-top: 2rem; padding: 1.1rem 1.3rem;
+    background: var(--tide-wash); border-radius: var(--r-win);
+    color: var(--ink); font-size: 0.98rem;
+  }
+  .disclosure strong { font-weight: 600; }
+
+  .prose { margin-top: 1.5rem; color: var(--gray); font-size: 1.02rem; }
+  .prose + .prose { margin-top: 1rem; }
+
+  h2 { margin-top: 3.2rem; font-size: 1.45rem; font-weight: 600; }
+
+  /* segments */
+  .segment { margin-top: 1.6rem; padding-top: 1.4rem; border-top: 1px solid var(--line); }
+  .segment:first-of-type { border-top: 0; padding-top: 0; }
+  .segment h3 { font-size: 1.05rem; font-weight: 600; }
+  .segment p { margin-top: 0.45rem; color: var(--gray); }
+
+  /* ranked entries */
+  .entries { margin-top: 1.2rem; }
+  .entry {
+    display: grid; grid-template-columns: 2.9rem 1fr; gap: 0 0.6rem;
+    padding-block: 1.7rem;
+  }
+  .entry + .entry { border-top: 1px solid var(--line); }
+  .entry-num {
+    font-size: 1.35rem; font-weight: 600; color: var(--gray);
+    line-height: 1.3; font-variant-numeric: tabular-nums;
+  }
+  .entry h3 { font-size: 1.15rem; font-weight: 600; line-height: 1.3; }
+  .entry h3 a { text-decoration: none; }
+  .entry h3 a:hover { color: var(--tide); }
+  .entry p { margin-top: 0.55rem; color: var(--gray); }
+  .entry p a {
+    color: var(--tide); text-decoration: underline;
+    text-underline-offset: 3px; text-decoration-thickness: 1px;
+  }
+  .entry p a:hover { color: var(--tide-deep); }
+  .bestfor { margin-top: 0.75rem; font-size: 0.92rem; }
+  .bestfor strong { font-weight: 600; color: var(--ink); }
+  .bestfor span { color: var(--gray); }
+
+  .chip {
+    display: inline-block; vertical-align: 0.12em; margin-left: 0.55rem;
+    background: var(--tide-wash); color: var(--tide);
+    font-size: 0.78rem; font-weight: 500; line-height: 1;
+    padding: 0.28rem 0.55rem; border-radius: 6px;
+  }
+
+  /* the driftwood entry sits in a card; the rest are hairline rows */
+  .entry-card {
+    background: #fff; border: 1px solid var(--line);
+    border-radius: var(--r-win); box-shadow: var(--shadow-win);
+    padding: 1.7rem 1.5rem; margin-bottom: 0.6rem;
+  }
+  .entry-card + .entry { border-top: 0; }
+
+  /* CTA */
+  .cta {
+    margin-top: 3.5rem; padding: 2.4rem 1.5rem 2.6rem;
+    border: 1px solid var(--line); border-radius: var(--r-win);
+    box-shadow: var(--shadow-win); text-align: center;
+  }
+  .cta h2 { margin-top: 0; font-size: 1.35rem; }
+  .cta p { margin-top: 0.6rem; color: var(--gray); }
+  .cta .btn { margin-top: 1.4rem; height: 3rem; padding-inline: 2rem; font-size: 1rem; }
+
+  /* footer */
+  footer.site {
+    margin-top: 4.5rem;
+    background: linear-gradient(#15557e, #0d3c5b);
+    color: #fff;
+  }
+  footer.site::before {
+    content: "";
+    display: block;
+    height: 28px;
+    margin-top: -28px;
+    position: relative;
+    z-index: 1;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='28' viewBox='0 0 180 28'%3E%3Cpath d='M0 14 C 11.25 5.5, 33.75 5.5, 45 14 C 56.25 22.5, 78.75 22.5, 90 14 C 101.25 5.5, 123.75 5.5, 135 14 C 146.25 22.5, 168.75 22.5, 180 14 L180 28 L0 28 Z' fill='%2315557e'/%3E%3C/svg%3E") repeat-x bottom;
+  }
+  .foot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1.5rem;
+    padding: 4.5rem 1.5rem 3rem;
+  }
+  .foot .wordmark { color: #fff; font-size: 1.35rem; }
+  .foot .wordmark .helm { width: 2.4rem; height: 2.4rem; }
+  .foot-def {
+    margin: 0;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.75);
+    max-width: 56ch;
+  }
+  .foot-links,
+  .foot-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.5rem;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.75);
+  }
+  footer.site a { color: inherit; text-decoration: none; }
+  footer.site a:hover { color: #fff; }
+
+  @media (max-width: 40rem) {
+    .entry { grid-template-columns: 2.4rem 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <nav class="nav" aria-label="Main">
+    <a class="wordmark" href="/"><svg viewBox="0 0 64 64" class="helm" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#15557e"/><g transform="translate(32 32) scale(0.88)" fill="none" stroke="#f7f4ec" stroke-linecap="round" stroke-linejoin="round"><circle r="22.5" stroke-width="3.4"/><g stroke-width="3.6"><line y1="-22.5" y2="-27.5"/><g transform="rotate(45)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(90)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(135)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(180)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(225)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(270)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(315)"><line y1="-22.5" y2="-27.5"/></g></g><g stroke-width="2.5"><line y1="-8.5" y2="-19.5"/><g transform="rotate(45)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(90)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(135)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(180)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(225)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(270)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(315)"><line y1="-8.5" y2="-19.5"/></g></g><circle r="7.5" stroke-width="2.6" fill="#15557e"/><circle r="2.8" fill="#f7f4ec" stroke="none"/></g></svg>driftwood</a>
+    <a class="btn" href="https://cal.com/aayush-gupta-qyilz6/30min">Book a demo</a>
+  </nav>
+</header>
+
+<main class="wrap">
+
+  <div class="article-head">
+    <h1>The best AI SDR tools in 2026, <em class="voice">ranked</em></h1>
+    <p class="byline">By the driftwood team · July 2026</p>
+    <p class="updated">Updated July 2026</p>
+
+    <div class="disclosure">
+      <strong>The disclosure, first.</strong> We build driftwood, and we ranked it
+      first. Judge this list accordingly. To make it worth your time anyway, every
+      entry below says what the tool is genuinely good at and who should pick it
+      over us, including the cases where we are the wrong choice.
+    </div>
+
+    <p class="prose">
+      The category is crowded and the names blur: AI SDR, GTM agent, revenue
+      agent. Underneath the labels there are three different motions, and knowing
+      which one you are buying matters more than any ranking.
+    </p>
+  </div>
+
+  <h2>Three kinds of tool, three different bets</h2>
+
+  <div class="segment">
+    <h3>Autonomous AI SDR agents</h3>
+    <p>
+      11x's Alice, Artisan's Ava, AiSDR, and Topo run outbound end to end: they
+      source prospects, write and send sequences, handle follow-up, and book
+      meetings at a volume no human team matches. You buy one the way you would
+      hire, to replace or avoid SDR headcount. Topo is the partial exception:
+      its agent works beside your reps, trained on your playbook, rather than
+      replacing them.
+    </p>
+  </div>
+
+  <div class="segment">
+    <h3>Signal-driven outbound platforms</h3>
+    <p>
+      Unify, Clay, and Amplemarket put signals and data in charge of targeting:
+      job changes, website visits, and funding rounds decide who gets contacted
+      and when, and AI personalizes copy at scale. Humans still run the motion;
+      the platform decides where to point it.
+    </p>
+  </div>
+
+  <div class="segment">
+    <h3>Engagement platforms and copilots</h3>
+    <p>
+      Regie.ai has repositioned from pure copilot to an AI sales engagement
+      platform: AI agents and human reps share one workflow, with the agents on
+      the busywork and the reps on the conversations. The right pick when the
+      team is the asset and the tooling is the lever.
+    </p>
+  </div>
+
+  <h2>The ranking</h2>
+
+  <div class="entries">
+
+    <article class="entry entry-card">
+      <div class="entry-num" aria-hidden="true">1</div>
+      <div>
+        <h3><a href="https://driftwood.sh">driftwood</a><span class="chip">our tool</span></h3>
+        <p>
+          driftwood is a GTM agent built around one idea:
+          <a href="/demo-led-outbound">demo-led outbound</a>. It is
+          the only tool on this list where every message carries a working demo of
+          your product, built for that prospect's business, every send is human
+          approved, and sending happens from your own account. In week one at
+          Autosana (YC S25), that approach got 14× the replies on the same lead
+          list, against a baseline the team self-reported at under 1%.
+        </p>
+        <p>
+          The honest fit: driftwood is early, and it trades volume for depth. It
+          is built for founders and small teams who want each prospect to receive
+          proof, not a template. If you want thousands of touches a month on
+          autopilot, pick one of the autonomous agents below.
+        </p>
+        <p class="bestfor"><strong>Best for:</strong> <span>founders and lean teams
+        selling a product that demos well, who want a human hand on every
+        send.</span></p>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-num" aria-hidden="true">2</div>
+      <div>
+        <h3><a href="https://11x.ai" rel="noopener">11x (Alice)</a></h3>
+        <p>
+          11x sells digital workers, and Alice, its AI SDR, is still the
+          flagship, with Julian covering the phone. Alice runs sourcing,
+          multi-channel sequencing, and follow-up with little day-to-day
+          steering. The positioning leans enterprise, with no public pricing. It
+          is the clearest expression of the opposite bet from ours, and for raw
+          volume it is a strong one.
+        </p>
+        <p class="bestfor"><strong>Best for:</strong> <span>larger sales orgs
+        replacing or avoiding outbound headcount at scale.</span></p>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-num" aria-hidden="true">3</div>
+      <div>
+        <h3><a href="https://artisan.co" rel="noopener">Artisan (Ava)</a></h3>
+        <p>
+          Artisan sells Ava, an autonomous AI BDR, inside a broader vision of AI
+          employees that take over whole roles. Ava covers the outbound cycle
+          from lead discovery through follow-up, with a polished product around
+          it. Since the Ava 2.0 relaunch in 2026 it is self-serve, with entry
+          pricing from $250 a month, so it now serves very small teams too.
+        </p>
+        <p class="bestfor"><strong>Best for:</strong> <span>teams that want one
+        autonomous outbound hire, from solo founders up.</span></p>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-num" aria-hidden="true">4</div>
+      <div>
+        <h3><a href="https://aisdr.com" rel="noopener">AiSDR</a></h3>
+        <p>
+          AiSDR is an autonomous agent with a reputation for fast setup: most
+          customers are live within a week. The current pitch is lead quality
+          over volume, fewer sends with better research behind each one. Entry
+          pricing around $900 a month puts it closer to mid-market than budget
+          SMB.
+        </p>
+        <p class="bestfor"><strong>Best for:</strong> <span>lean sales teams with
+        proven product-market fit that want an agent live quickly.</span></p>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-num" aria-hidden="true">5</div>
+      <div>
+        <h3><a href="https://topo.io" rel="noopener">Topo</a></h3>
+        <p>
+          Topo, a YC-backed company, is an all-in-one AI outbound platform whose
+          agent works beside your reps rather than replacing them: it is trained
+          on your ICP, your playbook, and your call transcripts, with human
+          approval modes to set how much it does alone. That makes it a fit when
+          you already know what works and want an agent to execute it
+          faithfully.
+        </p>
+        <p class="bestfor"><strong>Best for:</strong> <span>teams with a proven
+        outbound playbook to hand off.</span></p>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-num" aria-hidden="true">6</div>
+      <div>
+        <h3><a href="https://unifygtm.com" rel="noopener">Unify</a></h3>
+        <p>
+          Unify made its name on warm outbound: buying signals such as
+          deanonymized website visitors, job changes, and product usage trigger
+          plays that decide who gets contacted and what they hear. If your
+          funnel throws off real intent data, Unify is built to act on it.
+        </p>
+        <p class="bestfor"><strong>Best for:</strong> <span>teams with strong
+        intent signals, especially product-led companies.</span></p>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-num" aria-hidden="true">7</div>
+      <div>
+        <h3><a href="https://clay.com" rel="noopener">Clay</a></h3>
+        <p>
+          Clay is less an SDR and more a data and GTM workbench: enrichment
+          across waterfall data providers, flexible tables, and AI research
+          columns that power personalized campaigns. Plenty of teams run their
+          whole outbound motion on it, and plenty of tools on this list stand on
+          the kind of data work Clay makes possible.
+        </p>
+        <p class="bestfor"><strong>Best for:</strong> <span>GTM engineers and ops
+        teams who want to build their own motion from the data up.</span></p>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-num" aria-hidden="true">8</div>
+      <div>
+        <h3><a href="https://amplemarket.com" rel="noopener">Amplemarket</a></h3>
+        <p>
+          Amplemarket is an all-in-one sales platform: contact data, engagement,
+          deliverability tooling, with an AI copilot named Duo threaded through
+          the workflow, surfacing signals, researching accounts, and turning
+          both into one-click multichannel outreach. The appeal is
+          consolidation, one platform instead of a stitched-together stack.
+        </p>
+        <p class="bestfor"><strong>Best for:</strong> <span>teams that want the
+        whole outbound stack from a single vendor.</span></p>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-num" aria-hidden="true">9</div>
+      <div>
+        <h3><a href="https://regie.ai" rel="noopener">Regie.ai</a></h3>
+        <p>
+          Regie.ai sells RegieOne, an AI sales engagement platform that pairs AI
+          agents with human reps in one workflow: the agents handle sourcing,
+          enrichment, drafting, and sequencing, and the reps keep the
+          conversations. It makes an existing SDR team faster rather than trying
+          to replace it.
+        </p>
+        <p class="bestfor"><strong>Best for:</strong> <span>teams that want AI
+        leverage inside a classic sales engagement motion rather than a
+        standalone agent.</span></p>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-num" aria-hidden="true">10</div>
+      <div>
+        <h3><a href="https://autobound.ai" rel="noopener">Autobound</a></h3>
+        <p>
+          Autobound has shifted from an email personalization app to a signal
+          data layer for B2B go-to-market: 700+ buying signals from 35+ sources,
+          covering 250M+ contacts and 50M+ companies, delivered by API, file
+          export, or OEM licensing. Its embedded API still generates
+          personalized outreach from those signals, so the buyer is a team or
+          platform that wants signal-timed copy inside its own product or
+          pipeline rather than another rep-facing app.
+        </p>
+        <p class="bestfor"><strong>Best for:</strong> <span>GTM engineers and
+        product teams that want signals and AI personalization as an API, not
+        another seat-based tool.</span></p>
+      </div>
+    </article>
+
+  </div>
+
+  <h2>How to choose</h2>
+  <p class="prose">
+    Pick by motion, not by feature list. If you want maximum touches with minimum
+    operator time, buy an autonomous agent: 11x, Artisan, AiSDR, or Topo. If your
+    edge is data and timing, buy signal-driven: Unify, Clay, or Amplemarket. If
+    your team is good and just needs speed, buy AI inside a sales engagement
+    platform: Regie.ai. If you want signals and personalization as an API inside
+    your own pipeline, that is Autobound. And if you would rather send fewer,
+    deeper messages, where every prospect gets a working demo of your product,
+    built for their business, and a human approves every send, that is the motion
+    we built driftwood for.
+  </p>
+
+  <section class="cta">
+    <h2>See a demo built for <em class="voice">your</em> business</h2>
+    <p>Twenty minutes. We will show you what your prospects would see.</p>
+    <a class="btn" href="https://cal.com/aayush-gupta-qyilz6/30min">Book a demo</a>
+  </section>
+
+</main>
+
+<footer class="site">
+  <div class="foot">
+    <a class="wordmark" href="/"><svg viewBox="0 0 64 64" class="helm" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#15557e"/><g transform="translate(32 32) scale(0.88)" fill="none" stroke="#f7f4ec" stroke-linecap="round" stroke-linejoin="round"><circle r="22.5" stroke-width="3.4"/><g stroke-width="3.6"><line y1="-22.5" y2="-27.5"/><g transform="rotate(45)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(90)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(135)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(180)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(225)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(270)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(315)"><line y1="-22.5" y2="-27.5"/></g></g><g stroke-width="2.5"><line y1="-8.5" y2="-19.5"/><g transform="rotate(45)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(90)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(135)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(180)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(225)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(270)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(315)"><line y1="-8.5" y2="-19.5"/></g></g><circle r="7.5" stroke-width="2.6" fill="#15557e"/><circle r="2.8" fill="#f7f4ec" stroke="none"/></g></svg>driftwood</a>
+    <p class="foot-def">driftwood is an AI sales agent for demo-led outbound: it researches each prospect, builds a working demo of your product for their business, and sends from your account after human review.</p>
+    <nav class="foot-links" aria-label="site">
+      <a href="/customers/autosana">customers</a>
+      <a href="/demo-led-outbound">demo-led outbound</a>
+      <a href="/faq">faq</a>
+      <a href="/best-ai-sdr-tools">compare AI SDR tools</a>
+    </nav>
+    <div class="foot-meta">
+      <a href="mailto:aayush@driftwood.sh">aayush@driftwood.sh</a>
+      <span>&copy; 2026 driftwood</span>
+    </div>
+  </div>
+</footer>
+
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

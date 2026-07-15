@@ -16,6 +16,13 @@ Generic AI-written outreach ("AI slop") gets ignored. A message that opens with 
 
 B2B founders and teams who do cold outbound (email or LinkedIn) and want every message to carry a personalized, working demo instead of generic copy. Relevant if you're evaluating AI SDR tools, AI sales agents, or sales outreach automation and don't want templated sequences.
 
+## Pages
+
+- What is demo-led outbound (definition): https://driftwood.sh/demo-led-outbound
+- Customer story, Autosana (YC S25), 14× the replies in week one: https://driftwood.sh/customers/autosana
+- FAQ (what driftwood is, how it works, pricing): https://driftwood.sh/faq
+- The best AI SDR tools in 2026, ranked: https://driftwood.sh/best-ai-sdr-tools
+
 ## Contact
 
 - Site: https://driftwood.sh

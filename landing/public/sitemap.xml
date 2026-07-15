@@ -2,6 +2,22 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://driftwood.sh/</loc>
-    <lastmod>2026-07-14</lastmod>
+    <lastmod>2026-07-15</lastmod>
+  </url>
+  <url>
+    <loc>https://driftwood.sh/customers/autosana</loc>
+    <lastmod>2026-07-15</lastmod>
+  </url>
+  <url>
+    <loc>https://driftwood.sh/demo-led-outbound</loc>
+    <lastmod>2026-07-15</lastmod>
+  </url>
+  <url>
+    <loc>https://driftwood.sh/faq</loc>
+    <lastmod>2026-07-15</lastmod>
+  </url>
+  <url>
+    <loc>https://driftwood.sh/best-ai-sdr-tools</loc>
+    <lastmod>2026-07-15</lastmod>
   </url>
 </urlset>

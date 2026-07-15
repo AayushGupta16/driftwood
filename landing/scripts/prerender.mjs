@@ -23,7 +23,7 @@ console.log(`prerendered landing into dist/index.html (+${(html.length / 1024).t
    public/sitemap.xml rots silently otherwise. */
 const sitemap = new URL("../dist/sitemap.xml", import.meta.url);
 const stamped = readFileSync(sitemap, "utf8").replace(
-  /<lastmod>[^<]*<\/lastmod>/,
+  /<lastmod>[^<]*<\/lastmod>/g,
   `<lastmod>${new Date().toISOString().slice(0, 10)}</lastmod>`,
 );
 writeFileSync(sitemap, stamped);
