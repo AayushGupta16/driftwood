@@ -387,6 +387,19 @@ export default function App() {
           ctx.fillText("▐", tx - 4, ty - 26);
           ctx.fillText("▐", tx - 1, ty - 14);
           ctx.fillText("▌", tx + 2, ty - 2);
+          // the crab, v2 (v1's bare block read as a red staple): round ∩
+          // pincers over a low body, skittering sideways along the beach
+          const scut = Math.sin(t * 0.45 + 1.3) * isl.rx * 0.45 + Math.sin(t * 5.2) * 0.22;
+          const crx = (isl.cx + scut) * CELL_W;
+          const cry = (isl.cy + isl.ry * 0.74) * CELL_H;
+          ctx.fillStyle = "rgba(196, 74, 48, 0.95)";
+          ctx.font = "bold 9px ui-monospace, Menlo, monospace";
+          ctx.fillText("∩", crx - 6.5, cry - 7.5);
+          ctx.fillText("∩", crx + 3, cry - 7.5);
+          ctx.font = "bold 11px ui-monospace, Menlo, monospace";
+          ctx.fillText("▄▄", crx - 6, cry - 3);
+          ctx.font = "7px ui-monospace, Menlo, monospace";
+          ctx.fillText("ʌʌʌ", crx - 4.5, cry + 2); // legs, tucked under the body
           ctx.font = prevFont;
         }
         const duck = (seed: number, rowF: number, dir: number) => {
@@ -536,10 +549,12 @@ export default function App() {
               </div>
               <div className="hero-proof">
                 <img src="/yuvan.webp" alt="Yuvan Sundrani, founder of Autosana" />
-                <p>
-                  &ldquo;amazing stuff, love the demo&rdquo; <b>Yuvan Sundrani</b> &middot;
-                  Founder, Autosana (YC S25)
-                </p>
+                <div>
+                  <p className="proof-quote">&ldquo;amazing stuff, love the demo&rdquo;</p>
+                  <p className="proof-attr">
+                    <b>Yuvan Sundrani</b> &middot; Founder, Autosana (YC S25)
+                  </p>
+                </div>
               </div>
             </div>
             <div className="app-window enter-window">
@@ -563,7 +578,7 @@ export default function App() {
                     Don't send out <em className="voice">AI slop.</em>
                   </h2>
                   <p className="compare-sub">
-                    Same leads, <b>14&times;</b> the replies.
+                    Same leads, <b>14&times;</b> the replies. Week one at Autosana.
                   </p>
                 </div>
                 <div className="compare-grid">

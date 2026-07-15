@@ -1,16 +1,18 @@
+/* eslint-disable react-refresh/only-export-components -- entry file, never hot-refreshed */
 import './mock'
-import { StrictMode } from 'react'
+import { StrictMode, Suspense, lazy } from 'react'
 import { createRoot } from 'react-dom/client'
 import { Analytics } from '@vercel/analytics/react'
 import './index.css'
 import App from './App.tsx'
-import OgCard from './OgCard.tsx'
-import Dashboard from './Dashboard.tsx'
-import Leads from './Leads.tsx'
-import Companies from './Companies.tsx'
-import Review from './Review.tsx'
+// dashboard pages are code-split: landing visitors only download the landing
+const OgCard = lazy(() => import('./OgCard.tsx'))
+const Dashboard = lazy(() => import('./Dashboard.tsx'))
+const Leads = lazy(() => import('./Leads.tsx'))
+const Companies = lazy(() => import('./Companies.tsx'))
+const Review = lazy(() => import('./Review.tsx'))
 // Pricing is parked for now; re-enable by restoring the route below.
-// import Pricing from './Pricing.tsx'
+// const Pricing = lazy(() => import('./Pricing.tsx'))
 
 const path = window.location.pathname.replace(/\/+$/, '')
 // const page = path === '/pricing' ? <Pricing /> : <App />
@@ -32,7 +34,7 @@ const page =
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    {page}
+    <Suspense fallback={null}>{page}</Suspense>
     <Analytics />
   </StrictMode>,
 )
