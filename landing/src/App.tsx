@@ -910,23 +910,27 @@ export default function App() {
 
       <footer>
         <div className="wrap foot">
-          <a className="wordmark" href="#top" aria-label="back to top">
-            <Wordmark label={false} />
-          </a>
-          <p className="foot-def">
-            driftwood is an AI sales agent for demo-led outbound: it researches each prospect,
-            builds a working demo of your product for their business, and sends from your account
-            after human review.
-          </p>
-          <nav className="foot-links" aria-label="site">
-            <a href="/customers/autosana">customers</a>
-            <a href="/demo-led-outbound">demo-led outbound</a>
-            <a href="/faq">faq</a>
-            <a href="/best-ai-sdr-tools">compare AI SDR tools</a>
-          </nav>
-          <div className="foot-line">
-            <a href="mailto:aayush@driftwood.sh">aayush@driftwood.sh</a>
-            <span>&copy; 2026 driftwood</span>
+          <div className="foot-top">
+            <a className="wordmark" href="#top" aria-label="back to top">
+              <Wordmark label={false} />
+            </a>
+            <nav className="foot-links" aria-label="site">
+              <a href="/customers/autosana">Customers</a>
+              <a href="/demo-led-outbound">Demo-led outbound</a>
+              <a href="/faq">FAQ</a>
+              <a href="/best-ai-sdr-tools">Compare AI SDR tools</a>
+            </nav>
+          </div>
+          <div className="foot-bottom">
+            <p className="foot-def">
+              driftwood is an AI sales agent for demo-led outbound: it researches each prospect,
+              builds a working demo of your product for their business, and sends from your account
+              after human review.
+            </p>
+            <div className="foot-line">
+              <a href="mailto:aayush@driftwood.sh">aayush@driftwood.sh</a>
+              <span>&copy; 2026 driftwood</span>
+            </div>
           </div>
         </div>
       </footer>
