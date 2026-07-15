@@ -357,11 +357,11 @@ export default function App() {
               const e = islE(c, r);
               if (e > 1) continue;
               if (e > 0.62) {
-                ctx.fillStyle = "rgba(203, 168, 66, 0.5)";
-                ctx.fillText("▒", c * CELL_W, y); // ▒ beach, wet sand
+                ctx.fillStyle = "rgba(141, 130, 109, 0.5)";
+                ctx.fillText("▒", c * CELL_W, y); // ▒ beach, wet sand — bleached taupe
               } else {
-                ctx.fillStyle = "rgba(226, 202, 104, 0.32)";
-                ctx.fillText("█", c * CELL_W, y); // █ dry sand, faint under the text
+                ctx.fillStyle = "rgba(170, 160, 140, 0.3)";
+                ctx.fillText("█", c * CELL_W, y); // █ dry sand, greige, faint under the text
               }
             }
           }
@@ -371,7 +371,7 @@ export default function App() {
           const ty = (isl.cy - isl.ry * 0.28) * CELL_H;
           const prevFont = ctx.font;
           ctx.font = "15px ui-monospace, Menlo, monospace";
-          ctx.fillStyle = "rgba(56, 122, 70, 0.95)";
+          ctx.fillStyle = "rgba(101, 125, 106, 0.92)"; // sea-glass, not tropical green
           ctx.fillText("▂", tx - 3, ty - 52);
           ctx.fillText("▚", tx - 16, ty - 46);
           ctx.fillText("▞", tx + 8, ty - 46);
@@ -379,7 +379,7 @@ export default function App() {
           ctx.fillText("▄", tx + 20, ty - 40);
           ctx.fillText("▖", tx - 30, ty - 32);
           ctx.fillText("▗", tx + 26, ty - 32);
-          ctx.fillStyle = "rgba(224, 138, 46, 0.95)";
+          ctx.fillStyle = "rgba(178, 94, 66, 0.92)"; // coconut joins the terracotta family
           ctx.font = "10px ui-monospace, Menlo, monospace";
           ctx.fillText("●", tx - 4, ty - 36);
           ctx.fillStyle = "rgba(121, 85, 52, 0.95)";
@@ -392,7 +392,7 @@ export default function App() {
           const scut = Math.sin(t * 0.45 + 1.3) * isl.rx * 0.45 + Math.sin(t * 5.2) * 0.22;
           const crx = (isl.cx + scut) * CELL_W;
           const cry = (isl.cy + isl.ry * 0.74) * CELL_H;
-          ctx.fillStyle = "rgba(196, 74, 48, 0.95)";
+          ctx.fillStyle = "rgba(178, 94, 66, 0.95)"; // terracotta, the one warm accent
           ctx.font = "bold 9px ui-monospace, Menlo, monospace";
           ctx.fillText("∩", crx - 6.5, cry - 7.5);
           ctx.fillText("∩", crx + 3, cry - 7.5);
@@ -403,15 +403,17 @@ export default function App() {
           ctx.font = prevFont;
         }
         const duck = (seed: number, rowF: number, dir: number) => {
+          // a gull, not a rubber duck: cool gray body, terracotta beak \u2014
+          // the birds live inside the page's palette
           const span = cols + 16;
           const dx = -8 + ((((t * 1.15 * dir + seed) % span) + span) % span);
           const dy = rowF * rows + wave(dx, rowF * rows, t, phase) * 1.9;
-          if (islE(dx + 0.8, dy) <= 1.3) return; // ducks paddle behind the island
+          if (islE(dx + 0.8, dy) <= 1.3) return; // gulls paddle behind the island
           const y = dy * CELL_H + CELL_H / 2;
-          ctx.fillStyle = "rgba(240, 195, 60, 0.95)";
+          ctx.fillStyle = "rgba(158, 166, 172, 0.95)";
           ctx.fillText("\u2586\u2586", dx * CELL_W, y); // body
           ctx.fillText(dir > 0 ? "\u259d" : "\u2598", (dir > 0 ? dx + 1.55 : dx - 0.55) * CELL_W, y - CELL_H * 0.52); // head
-          ctx.fillStyle = "rgba(224, 138, 46, 0.95)";
+          ctx.fillStyle = "rgba(178, 94, 66, 0.95)";
           ctx.fillText(dir > 0 ? "\u2023" : "\u2039", (dir > 0 ? dx + 2.35 : dx - 1.15) * CELL_W, y - CELL_H * 0.45); // beak
         };
         if (strip) {
@@ -452,10 +454,10 @@ export default function App() {
               ctx.fillText(ISLE, ix * CELL_W, rows * 0.5 * CELL_H + CELL_H / 2);
             }
           }
-          // a red buoy holds station while the water moves under it
+          // a terracotta buoy holds station while the water moves under it
           const bx = 4 + (Math.abs(Math.round(phase * 37)) % Math.max(6, cols - 8));
           const by = rows * 0.5 + wave(bx, rows * 0.5, t, phase) * 1.6;
-          ctx.fillStyle = "rgba(190, 70, 52, 0.9)";
+          ctx.fillStyle = "rgba(178, 94, 66, 0.9)";
           ctx.fillText("▀", bx * CELL_W, by * CELL_H + CELL_H / 2);
           ctx.fillText("▘", (bx + 0.18) * CELL_W, (by - 0.75) * CELL_H + CELL_H / 2);
           // now and then a fish arcs clear of the swell
@@ -487,12 +489,12 @@ export default function App() {
           ctx.fillStyle = "rgba(121, 85, 52, 0.95)"; // driftwood-brown
           ctx.font = 'bold 13px ui-monospace, "SF Mono", Menlo, monospace';
           ctx.fillText(WOOD, wx * CELL_W, wr * CELL_H + CELL_H / 2);
-          // and its captain: the duck rides the driftwood
+          // and its captain: the gull rides the driftwood
           const cy = (wr - 0.72) * CELL_H + CELL_H / 2;
-          ctx.fillStyle = "rgba(240, 195, 60, 0.98)";
+          ctx.fillStyle = "rgba(158, 166, 172, 0.98)";
           ctx.fillText("\u2586\u2586", (wx + 2.4) * CELL_W, cy);
           ctx.fillText("\u259d", (wx + 3.95) * CELL_W, cy - CELL_H * 0.52);
-          ctx.fillStyle = "rgba(224, 138, 46, 0.98)";
+          ctx.fillStyle = "rgba(178, 94, 66, 0.98)";
           ctx.fillText("\u2023", (wx + 4.75) * CELL_W, cy - CELL_H * 0.45);
           ctx.font = '12px ui-monospace, "SF Mono", Menlo, monospace';
         }

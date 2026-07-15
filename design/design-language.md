@@ -70,12 +70,20 @@ The signature. ASCII character sea on 2D canvas — never rendered 3D.
 - Placement: hero (bottom 62%, top-masked) + thin strips at section seams.
   Sheets dock onto water with filled-sine wave shoulders.
 - Scenery is earned, not decorated: the driftwood log (brown, west→east)
-  with its duck captain, one free-swimming duck, ships (never on
+  with its gull captain, one free-swimming gull, ships (never on
   phone-width strips — the sail blurs into a blob), islands (static while
-  water moves), red buoys bobbing on station, the odd fish arcing clear of
-  the swell, and the proof island's palm. The log's lane clamps above the
-  proof island (never runs aground, never hides behind it); the free
-  swimmer may paddle behind it. Wide strips may hold two scenes.
+  water moves), terracotta buoys bobbing on station, the odd fish arcing
+  clear of the swell, and the proof island's palm. The log's lane clamps
+  above the proof island (never runs aground, never hides behind it); the
+  free swimmer may paddle behind it. Wide strips may hold two scenes.
+- **Scenery palette is cold-coast, not tropical** (2026-07-14, after "the
+  island doesn't match the site's tone" feedback): sand is bleached greige
+  (`141,130,109` wet ▒ / `170,160,140` dry █), the palm is sea-glass
+  (`101,125,106`), birds are gulls (`158,166,172` gray, never duck-yellow),
+  and ONE terracotta (`178,94,66`) covers every warm pop — crab, buoys,
+  coconut, beaks. The rule: tide blue + one bleached-neutral family + one
+  terracotta accent. No golds, no tropical greens, no reds. The brand is
+  driftwood — weathered and desaturated, not a postcard.
   A crab skitters sideways along the proof island's beach (v2 sprite,
   re-added 2026-07-14 on Aayush's ask: ∩ pincers + low ▄▄ body + ʌ leg
   ticks + lateral scuttle — v1's bare block read as a red staple; the
