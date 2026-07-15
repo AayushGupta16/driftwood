@@ -69,13 +69,20 @@ The signature. ASCII character sea on 2D canvas — never rendered 3D.
   wave height, ~15fps (terminal cadence), tide-blue rgba by depth.
 - Placement: hero (bottom 62%, top-masked) + thin strips at section seams.
   Sheets dock onto water with filled-sine wave shoulders.
-- Scenery is earned, not decorated: the driftwood log (brown, west→east)
-  with its gull captain, one free-swimming gull, ships (never on
-  phone-width strips — the sail blurs into a blob), islands (static while
-  water moves), terracotta buoys bobbing on station, the odd fish arcing
-  clear of the swell, and the proof island's palm. The log's lane clamps
-  above the proof island (never runs aground, never hides behind it); the
-  free swimmer may paddle behind it. Wide strips may hold two scenes.
+- Scenery is earned, not decorated: the driftwood log with its duck
+  captain, one free-swimming duck, ships (never on phone-width strips —
+  the sail blurs into a blob), islands (static while water moves),
+  terracotta buoys bobbing on station, the odd fish arcing clear of the
+  swell, and the proof island's palm. The log's lane clamps above the
+  proof island (never runs aground, never hides behind it); the free
+  swimmer may paddle behind it. Wide strips may hold two scenes.
+- **Movers patrol, never wrap** (2026-07-14): ducks, ships, and the log
+  cruise back and forth across the visible span (`patrol()` triangle
+  wave) instead of sliding off one edge and teleporting in from the
+  other — nothing disappears, it turns around. Sprites face their
+  heading (duck head/beak mirror; SAIL eastbound, SAILW westbound).
+- **Every sea strip carries a yellow duck**, always — the ship/island
+  silhouettes are company, not stand-ins for the duck.
 - **Scenery palette is weathered-coast, not postcard** (settled 2026-07-14
   over two rounds of Aayush feedback): sand is warm ivory, not gold and not
   greige (`176,149,106` wet ▒ / `206,186,146` dry █ — the full-greige

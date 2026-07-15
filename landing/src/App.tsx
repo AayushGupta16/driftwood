@@ -210,6 +210,7 @@ export default function App() {
     const CELL_H = 10.5;
     const WOOD = "\u2597\u2584\u2584\u2584\u2584\u2584\u2584\u2596"; // ▗▄▄▄▄▄▄▖ a drifting log
     const SAIL = "\u259f\u258c"; // ▟▌
+    const SAILW = "\u2590\u2599"; // ▐▙ westbound (mirrored)
     const HULL = "\u2580\u2580\u2580\u2580"; // ▀▀▀▀
     const ISLE = "\u2581\u2582\u2583\u2584\u2583\u2582\u2581"; // ▁▂▃▄▃▂▁
 
@@ -281,6 +282,15 @@ export default function App() {
       Math.sin(y * 0.9 + t * 0.7 + phase) * 0.24 +
       Math.sin((x + y) * 0.23 + t * 1.3 + phase * 0.6) * 0.16 +
       Math.sin(x * 0.07 - t * 1.1 + phase) * 0.34; // the rolling swell
+
+    // patrol: movers cruise back and forth across the visible span instead
+    // of sliding off one edge and teleporting in from the other — nothing
+    // in the scene ever disappears, it just turns around
+    const patrol = (tt: number, speed: number, seed: number, min: number, max: number) => {
+      const L = Math.max(4, max - min);
+      const c = (((tt * speed + seed) % (2 * L)) + 2 * L) % (2 * L);
+      return c < L ? { x: min + c, dir: 1 } : { x: min + 2 * L - c, dir: -1 };
+    };
 
     let last = 0;
     let rafId = 0;
@@ -402,12 +412,11 @@ export default function App() {
           ctx.fillText("ʌʌʌ", crx - 4.5, cry + 2); // legs, tucked under the body
           ctx.font = prevFont;
         }
-        const duck = (seed: number, rowF: number, dir: number) => {
+        const duck = (seed: number, rowF: number) => {
           // the rubber duck stays rubber-duck yellow \u2014 it's the debugging
           // duck, the one deliberate in-joke; a gray gull was tried and
           // rejected (the yellow IS the point)
-          const span = cols + 16;
-          const dx = -8 + ((((t * 1.15 * dir + seed) % span) + span) % span);
+          const { x: dx, dir } = patrol(t, 1.15, seed, 1, cols - 3.5);
           const dy = rowF * rows + wave(dx, rowF * rows, t, phase) * 1.9;
           if (islE(dx + 0.8, dy) <= 1.3) return; // ducks paddle behind the island
           const y = dy * CELL_H + CELL_H / 2;
@@ -417,38 +426,37 @@ export default function App() {
           ctx.fillStyle = "rgba(224, 138, 46, 0.95)";
           ctx.fillText(dir > 0 ? "\u2023" : "\u2039", (dir > 0 ? dx + 2.35 : dx - 1.15) * CELL_W, y - CELL_H * 0.45); // beak
         };
+        const ship = (speed: number, seed: number, rowF: number, alpha: number, amp: number) => {
+          const { x: sx, dir } = patrol(t, speed, seed, 1, cols - 6);
+          const sy = rowF * rows + wave(sx, rowF * rows, t, phase) * amp;
+          ctx.fillStyle = `rgba(13, 60, 91, ${alpha})`;
+          // the sail flips to face the way she's headed
+          ctx.fillText(dir > 0 ? SAIL : SAILW, (sx + 1) * CELL_W, (sy - 1) * CELL_H + CELL_H / 2);
+          ctx.fillText(HULL, sx * CELL_W, sy * CELL_H + CELL_H / 2);
+        };
         if (strip) {
-          // varies per strip; phone-width strips swap the ship for a duck —
-          // at that scale the near-opaque sail reads as an ink blob
+          // every strip keeps a yellow duck on patrol — the silhouettes
+          // (ship, island) are company, not stand-ins
+          duck(Math.abs(Math.round(phase * 7)), 0.36);
+          // scenes vary per strip; phone-width strips skip the ship — at
+          // that scale the near-opaque sail reads as an ink blob
           const raw = Math.round(phase * 10) % 3;
           const sceneKind = cols < 70 && raw === 0 ? 2 : raw;
           if (sceneKind === 0) {
-            // a small ship on the horizon, under sail
-            const span = cols + 30;
-            const sx = -10 + ((t * 2.2 + phase * 8 + 60) % span);
-            const sy = rows * 0.58 + wave(sx, rows * 0.58, t, phase) * 0.7;
-            ctx.fillStyle = "rgba(13, 60, 91, 0.95)";
-            ctx.fillText(SAIL, (sx + 1) * CELL_W, (sy - 1) * CELL_H + CELL_H / 2);
-            ctx.fillText(HULL, sx * CELL_W, sy * CELL_H + CELL_H / 2);
+            // a small ship tacking back and forth along the horizon
+            ship(2.2, phase * 8 + 60, 0.58, 0.95, 0.7);
           } else if (sceneKind === 1) {
             // an island, holding still while the water moves
             const ix = 6 + (Math.abs(Math.round(phase * 53)) % Math.max(8, cols - 20));
             const iy = rows * 0.55;
             ctx.fillStyle = "rgba(110, 100, 80, 0.9)";
             ctx.fillText(ISLE, ix * CELL_W, iy * CELL_H + CELL_H / 2);
-          } else {
-            duck(Math.abs(Math.round(phase * 7)), 0.55, 1);
           }
           // wide strips hold a second scene: an island for the ship to pass,
           // or a ship for the island to watch
           if (cols >= 110) {
             if (sceneKind === 1) {
-              const span = cols + 30;
-              const sx = -10 + ((t * 1.8 + phase * 5 + 20) % span);
-              const sy = rows * 0.5 + wave(sx, rows * 0.5, t, phase) * 0.7;
-              ctx.fillStyle = "rgba(13, 60, 91, 0.95)";
-              ctx.fillText(SAIL, (sx + 1) * CELL_W, (sy - 1) * CELL_H + CELL_H / 2);
-              ctx.fillText(HULL, sx * CELL_W, sy * CELL_H + CELL_H / 2);
+              ship(1.8, phase * 5 + 20, 0.5, 0.95, 0.7);
             } else {
               const ix = 6 + (Math.abs(Math.round(phase * 29)) % Math.max(8, cols - 20));
               ctx.fillStyle = "rgba(110, 100, 80, 0.9)";
@@ -473,30 +481,27 @@ export default function App() {
         }
         if (!strip) {
           // a distant ship on the horizon, half in the haze
-          const shx = -8 + ((t * 1.1 + 30) % (cols + 20));
-          const shy = rows * 0.2 + wave(shx, rows * 0.2, t, phase) * 0.4;
-          ctx.fillStyle = "rgba(13, 60, 91, 0.45)";
-          ctx.fillText(SAIL, (shx + 1) * CELL_W, (shy - 1) * CELL_H + CELL_H / 2);
-          ctx.fillText(HULL, shx * CELL_W, shy * CELL_H + CELL_H / 2);
+          ship(1.1, 30, 0.2, 0.45, 0.4);
           // one free swimmer, keeping its distance from the log's lane
-          duck(70, 0.8, -1);
-          // the driftwood: adrift, riding the swell. Its lane stays clear of
-          // the island \u2014 clamped above the beach so log and captain never
-          // run aground (or vanish behind it)
-          const span = cols + WOOD.length + 20;
-          const wx = -WOOD.length - 8 + ((t * 1.7 + 6) % span); // west to east
+          duck(70, 0.8);
+          // the driftwood: adrift, riding the swell, tacking back and forth.
+          // Its lane stays clear of the island \u2014 clamped above the beach so
+          // log and captain never run aground (or vanish behind it)
+          const { x: wx, dir: wdir } = patrol(t, 1.7, 6, 1, Math.max(6, cols - WOOD.length - 1));
           const lane = isl ? Math.max(3, Math.min(rows * 0.45, isl.cy - isl.ry - 3.2)) : rows * 0.45;
           const wr = lane + wave(wx, lane, t, phase) * 1.6;
           ctx.fillStyle = "rgba(121, 85, 52, 0.95)"; // driftwood-brown
           ctx.font = 'bold 13px ui-monospace, "SF Mono", Menlo, monospace';
           ctx.fillText(WOOD, wx * CELL_W, wr * CELL_H + CELL_H / 2);
-          // and its captain: the debugging duck rides the driftwood
+          // and its captain: the debugging duck rides the driftwood, facing
+          // wherever the log is headed
+          const bx = wx + 2.7;
           const cy = (wr - 0.72) * CELL_H + CELL_H / 2;
           ctx.fillStyle = "rgba(240, 195, 60, 0.98)";
-          ctx.fillText("\u2586\u2586", (wx + 2.4) * CELL_W, cy);
-          ctx.fillText("\u259d", (wx + 3.95) * CELL_W, cy - CELL_H * 0.52);
+          ctx.fillText("\u2586\u2586", bx * CELL_W, cy);
+          ctx.fillText(wdir > 0 ? "\u259d" : "\u2598", (wdir > 0 ? bx + 1.55 : bx - 0.55) * CELL_W, cy - CELL_H * 0.52);
           ctx.fillStyle = "rgba(224, 138, 46, 0.98)";
-          ctx.fillText("\u2023", (wx + 4.75) * CELL_W, cy - CELL_H * 0.45);
+          ctx.fillText(wdir > 0 ? "\u2023" : "\u2039", (wdir > 0 ? bx + 2.35 : bx - 1.15) * CELL_W, cy - CELL_H * 0.45);
           ctx.font = '12px ui-monospace, "SF Mono", Menlo, monospace';
         }
       }
