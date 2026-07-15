@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<!--
+  DRAFT: FAQ page for driftwood.sh
+  Proposed URL: /faq
+  Proposed title tag: driftwood FAQ: the AI SDR that ships working demos
+  Proposed meta description: Answers about driftwood, the AI SDR that ships a
+  working demo of your product in every cold message: human review, sending
+  from your own account, and results so far.
+
+  Open questions for Aayush:
+  1. Pricing has no question of its own; it is folded into "How do I get
+     started?". Worth a tenth question ("What does it cost?") for the answer
+     engines, or does that overpromise before pricing is settled?
+  2. /demo-led-outbound is linked as the canonical term page but does not
+     exist yet. Ship order: does the FAQ wait for it, or link it dark?
+  3. The results answer keeps the CTO anecdote alongside the 14x number.
+     Keep both, or is one proof point enough on a reference page?
+  4. Does /faq get a thin ASCII sea strip above the footer like the landing
+     page, or stay dry as a reference page? Drafted dry.
+  5. Header CTA points at #book on this page. On prod, should it reuse the
+     BookDemo cal.com flow from the landing page instead? Drafted with the
+     cal.com link on the bottom CTA.
+-->
+<title>driftwood FAQ: the AI SDR that ships working demos</title>
+<meta name="description" content="Answers about driftwood, the AI SDR that ships a working demo of your product in every cold message: human review, sending from your own account, and results so far." />
+<!-- Draft only: prod self-hosts these fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400..700&family=Source+Serif+4:wght@600&display=swap" />
+<style>
+  :root {
+    --bg: #ffffff;
+    --ink: #16181b;
+    --gray: #6a737d;
+    --gray-light: #9aa2ab;
+    --line: #e9ebee;
+    --tide: #15557e;
+    --tide-deep: #0d3c5b;
+    --tide-wash: #eaf1f7;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 16px; line-height: 1.5; -webkit-font-smoothing: antialiased;
+  }
+  h1, h2 { margin: 0; letter-spacing: -0.014em; text-wrap: balance; }
+  p { margin: 0; }
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid var(--tide); outline-offset: 2px; }
+  em.voice { font-family: Georgia, "Times New Roman", serif; font-style: italic; color: var(--tide); letter-spacing: 0; }
+
+  .wrap { max-width: 42rem; margin-inline: auto; padding-inline: clamp(1.25rem, 4vw, 2rem); }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--tide); color: #fff; text-decoration: none;
+    font-weight: 600; font-size: 0.95rem; height: 2.75rem; padding-inline: 1.5rem;
+    border-radius: 999px; transition: background 0.15s;
+  }
+  .btn:hover { background: var(--tide-deep); }
+
+  /* chrome */
+  header { border-bottom: 1px solid var(--line); background: var(--bg); }
+  .nav { display: flex; align-items: center; justify-content: space-between; height: 4rem; }
+  .wordmark {
+    display: inline-flex; align-items: center; gap: 0.6rem; text-decoration: none;
+    font-family: "Source Serif 4", Georgia, serif; font-weight: 600; font-size: 1.1rem;
+    color: var(--ink);
+  }
+  .wordmark svg { width: 1.65rem; height: 1.65rem; }
+  .nav .btn { height: 2.25rem; font-size: 0.875rem; padding-inline: 1.2rem; }
+
+  /* page head */
+  .page-head { padding-block: clamp(3rem, 7vw, 5rem) clamp(1.5rem, 3vw, 2.25rem); }
+  h1 { font-size: clamp(1.9rem, 1.2rem + 2vw, 2.6rem); font-weight: 600; line-height: 1.15; }
+  .page-sub { margin-top: 0.9rem; font-size: 1.05rem; color: var(--gray); max-width: 52ch; }
+  .page-sub a, .qa a { color: var(--tide); text-decoration: underline; text-decoration-color: rgba(21,85,126,0.35); text-underline-offset: 3px; }
+  .page-sub a:hover, .qa a:hover { color: var(--tide-deep); text-decoration-color: currentColor; }
+
+  /* the Q&A list */
+  .faq { padding-bottom: clamp(2rem, 5vw, 3.5rem); }
+  .qa { padding-block: clamp(1.75rem, 3.5vw, 2.5rem); border-top: 1px solid var(--line); }
+  .qa:first-child { border-top: 0; }
+  .qa h2 { font-size: 1.3rem; font-weight: 600; line-height: 1.3; }
+  .qa p { margin-top: 0.8rem; color: var(--gray); line-height: 1.65; max-width: 62ch; }
+
+  /* closing CTA */
+  .book { border-top: 1px solid var(--line); padding-block: clamp(3rem, 7vw, 4.5rem); text-align: center; }
+  .book h2 { font-size: clamp(1.5rem, 1rem + 1.6vw, 2rem); font-weight: 600; }
+  .book p { margin-top: 0.8rem; color: var(--gray); }
+  .book .btn { margin-top: 1.6rem; height: 3.1rem; padding-inline: 2rem; font-size: 1.02rem; }
+
+  /* footer */
+  footer { border-top: 1px solid var(--line); }
+  .foot { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding-block: 1.75rem; }
+  .foot-line { display: flex; align-items: center; gap: 1.4rem; font-size: 0.9rem; color: var(--gray); }
+  .foot-line a { text-decoration: none; }
+  .foot-line a:hover { color: var(--tide); }
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is driftwood?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "driftwood is an AI sales agent that runs demo-led outbound. It researches each prospect, builds a working demo of your product for their business, and sends the message from your own LinkedIn or email account. A human reviews every message before it goes out."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is demo-led outbound?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Demo-led outbound is cold outreach where every message carries a working demo of your product, built for the specific prospect. The message does not argue that your product would help; it shows the product already working on something the prospect owns. There is a longer explanation on the demo-led outbound page."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What does the demo actually look like?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "It is a working demo of your product, applied to the prospect's own business. One example: at Autosana, the agent found a real bug on a prospect's own site and sent a 19-second demo video of Autosana's product catching it. The prospect opens a cold message and watches your product working on their problem."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does driftwood send messages by itself?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. Every message lands in a review queue, and a human approves every single send. Nothing goes out without approval."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What accounts does it send from?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Your own accounts. You connect your LinkedIn or email, and messages go out under your name rather than from a bot inbox. Replies come back to the same account, so the conversation stays yours."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How is driftwood different from AI SDR tools like 11x or Artisan?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Tools like 11x, Artisan, or AiSDR automate the volume and personalization of the copy. driftwood personalizes the proof: every message ships a working demo of your product, built for that prospect's business. It also keeps a human approving every send, and it sends from your own account instead of a bot inbox."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What results has it gotten?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "In week one at Autosana (YC S25), driftwood got 14× the replies of prior founder-led outbound on the same lead list, where the founders' self-reported reply rate was under 1%. One CTO who had ignored 4.5 months of outreach replied in about 12 hours and booked a call. That is one company's observed result, not a promise."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Who is driftwood for?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "driftwood is for B2B founders and teams doing cold outbound who want replies from senior people. Senior people skim claims and ignore them; a working demo of your product on their business is harder to ignore. The demo does the convincing."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I get started?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Book a demo and we will walk through the agent on your own product, including pricing, which is not public. You can also email aayush@driftwood.sh directly."
+      }
+    }
+  ]
+}
+</script>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="wordmark" href="/" aria-label="driftwood home">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#15557e"/><g transform="translate(32 32) scale(0.88)" fill="none" stroke="#f7f4ec" stroke-linecap="round"><circle r="22.5" stroke-width="3.4"/><g stroke-width="3.6"><line y1="-22.5" y2="-27.5"/><g transform="rotate(45)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(90)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(135)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(180)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(225)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(270)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(315)"><line y1="-22.5" y2="-27.5"/></g></g><g stroke-width="2.5"><line y1="-8.5" y2="-19.5"/><g transform="rotate(45)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(90)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(135)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(180)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(225)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(270)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(315)"><line y1="-8.5" y2="-19.5"/></g></g><circle r="7.5" stroke-width="2.6" fill="#15557e"/><circle r="2.8" fill="#f7f4ec" stroke="none"/></g></svg>
+      driftwood
+    </a>
+    <a class="btn" href="#book">Book a demo</a>
+  </div>
+</header>
+
+<main>
+  <div class="wrap page-head">
+    <h1>Frequently asked questions</h1>
+    <p class="page-sub">Short answers about driftwood, the AI sales agent that runs <a href="/demo-led-outbound">demo-led outbound</a>. For anything else, email <a href="mailto:aayush@driftwood.sh">aayush@driftwood.sh</a>.</p>
+  </div>
+
+  <div class="wrap faq">
+
+    <section class="qa">
+      <h2>What is driftwood?</h2>
+      <p>driftwood is an AI sales agent that runs demo-led outbound. It researches each prospect, builds a working demo of your product for their business, and sends the message from your own LinkedIn or email account. A human reviews every message before it goes out.</p>
+    </section>
+
+    <section class="qa">
+      <h2>What is demo-led outbound?</h2>
+      <p>Demo-led outbound is cold outreach where every message carries a working demo of your product, built for the specific prospect. The message does not argue that your product would help; it shows the product already working on something the prospect owns. There is a longer explanation on the <a href="/demo-led-outbound">demo-led outbound</a> page.</p>
+    </section>
+
+    <section class="qa">
+      <h2>What does the demo actually look like?</h2>
+      <p>It is a working demo of your product, applied to the prospect's own business. One example: at Autosana, the agent found a real bug on a prospect's own site and sent a 19-second demo video of Autosana's product catching it. The prospect opens a cold message and watches your product working on their problem.</p>
+    </section>
+
+    <section class="qa">
+      <h2>Does driftwood send messages by itself?</h2>
+      <p>No. Every message lands in a review queue, and a human approves every single send. Nothing goes out without approval.</p>
+    </section>
+
+    <section class="qa">
+      <h2>What accounts does it send from?</h2>
+      <p>Your own accounts. You connect your LinkedIn or email, and messages go out under your name rather than from a bot inbox. Replies come back to the same account, so the conversation stays yours.</p>
+    </section>
+
+    <section class="qa">
+      <h2>How is driftwood different from AI SDR tools like 11x or Artisan?</h2>
+      <p>Tools like 11x, Artisan, or AiSDR automate the volume and personalization of the copy. driftwood personalizes the proof: every message ships a working demo of your product, built for that prospect's business. It also keeps a human approving every send, and it sends from your own account instead of a bot inbox.</p>
+    </section>
+
+    <section class="qa">
+      <h2>What results has it gotten?</h2>
+      <p>In week one at Autosana (YC S25), driftwood got 14&times; the replies of prior founder-led outbound on the same lead list, where the founders' self-reported reply rate was under 1%. One CTO who had ignored 4.5 months of outreach replied in about 12 hours and booked a call. That is one company's observed result, not a promise.</p>
+    </section>
+
+    <section class="qa">
+      <h2>Who is driftwood for?</h2>
+      <p>driftwood is for B2B founders and teams doing cold outbound who want replies from senior people. Senior people skim claims and ignore them; a working demo of your product on their business is harder to ignore. The demo does the convincing.</p>
+    </section>
+
+    <section class="qa">
+      <h2>How do I get started?</h2>
+      <p>Book a demo and we will walk through the agent on your own product, including pricing, which is not public. You can also email <a href="mailto:aayush@driftwood.sh">aayush@driftwood.sh</a> directly.</p>
+    </section>
+
+  </div>
+
+  <section class="book" id="book">
+    <div class="wrap">
+      <h2>See it work on <em class="voice">your product</em></h2>
+      <p>Thirty minutes, no deck. We build as we talk.</p>
+      <!-- Draft: prod routes this through the BookDemo component -->
+      <a class="btn" href="https://cal.com/aayush-gupta-qyilz6/30min">Book a demo</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <a class="wordmark" href="/" aria-label="driftwood home">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#15557e"/><g transform="translate(32 32) scale(0.88)" fill="none" stroke="#f7f4ec" stroke-linecap="round"><circle r="22.5" stroke-width="3.4"/><g stroke-width="3.6"><line y1="-22.5" y2="-27.5"/><g transform="rotate(45)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(90)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(135)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(180)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(225)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(270)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(315)"><line y1="-22.5" y2="-27.5"/></g></g><g stroke-width="2.5"><line y1="-8.5" y2="-19.5"/><g transform="rotate(45)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(90)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(135)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(180)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(225)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(270)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(315)"><line y1="-8.5" y2="-19.5"/></g></g><circle r="7.5" stroke-width="2.6" fill="#15557e"/><circle r="2.8" fill="#f7f4ec" stroke="none"/></g></svg>
+      driftwood
+    </a>
+    <div class="foot-line">
+      <a href="mailto:aayush@driftwood.sh">aayush@driftwood.sh</a>
+      <span>&copy; 2026 driftwood</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

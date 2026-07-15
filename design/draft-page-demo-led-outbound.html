@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+<!--
+  DRAFT: canonical definition page for "demo-led outbound" (term driftwood is coining).
+
+  Proposed URL:    https://driftwood.sh/demo-led-outbound
+  Proposed title:  Demo-led outbound: definition and how it works · driftwood
+  Proposed meta:   Demo-led outbound: cold outreach where every message carries a working
+                   demo of your product, built for the prospect receiving it. Definition
+                   and how it runs.
+
+  Open questions for review:
+  1. URL shape: flat /demo-led-outbound, or /glossary/demo-led-outbound if we expect
+     more term pages later. Flat reads more canonical for a term we own.
+  2. "Book a demo" href is #book placeholder; wire to the landing page's real booking
+     target on prod.
+  3. The Article JSON-LD references publisher https://driftwood.sh/#org. Confirm the
+     landing page actually emits an Organization node with that @id; if not, inline
+     one here.
+  4. Proof numbers (14x, sub-1% prior reply rate, 4.5 months ignored, ~12 hour reply,
+     19-second video): confirm Autosana is fine being named with YC S25 attribution.
+  5. Wordmark set in Source Serif 4 600 per design-language.md; landing draft v7 is
+     experimenting with Nasalization. Whichever ships, keep this page consistent.
+  6. Discovery: add this page to the landing footer or nav, sitemap, and llms.txt.
+     Page must join the prerender list (render path is already browser-API-free).
+  7. datePublished in JSON-LD is a placeholder (2026-07-15); set at publish time.
+  8. Should "Unify" link out to unifygtm.com (credits the term, costs a little
+     authority leak)? Linked in this draft.
+-->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Demo-led outbound: definition and how it works · driftwood</title>
+<meta name="description" content="Demo-led outbound: cold outreach where every message carries a working demo of your product, built for the prospect receiving it. Definition and how it runs." />
+<link rel="canonical" href="https://driftwood.sh/demo-led-outbound" />
+
+<!-- Draft only: Google Fonts for preview. Prod self-hosts both families. -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400..700;1,400..700&family=Source+Serif+4:wght@600&display=swap" />
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "DefinedTerm",
+      "@id": "https://driftwood.sh/demo-led-outbound#term",
+      "name": "demo-led outbound",
+      "url": "https://driftwood.sh/demo-led-outbound",
+      "description": "Demo-led outbound is cold outreach where every message carries a working demo of the sender's product, built specifically for the prospect receiving it. Instead of personalizing the copy, you personalize the proof."
+    },
+    {
+      "@type": "Article",
+      "@id": "https://driftwood.sh/demo-led-outbound#article",
+      "headline": "Demo-led outbound: definition and how it works",
+      "url": "https://driftwood.sh/demo-led-outbound",
+      "mainEntityOfPage": "https://driftwood.sh/demo-led-outbound",
+      "about": { "@id": "https://driftwood.sh/demo-led-outbound#term" },
+      "publisher": { "@id": "https://driftwood.sh/#org" },
+      "datePublished": "2026-07-15",
+      "inLanguage": "en"
+    }
+  ]
+}
+</script>
+
+<style>
+  :root {
+    --bg: #ffffff;
+    --ink: #16181b;
+    --gray: #6a737d;
+    --gray-light: #9aa2ab;
+    --line: #e9ebee;
+    --tide: #15557e;
+    --tide-deep: #0d3c5b;
+    --tide-wash: #eaf1f7;
+    --wash-a: #f4f8fb;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  :focus-visible { outline: 2px solid var(--tide); outline-offset: 2px; }
+
+  .wrap {
+    max-width: 68rem;
+    margin-inline: auto;
+    padding-inline: clamp(1.25rem, 4vw, 2.5rem);
+  }
+
+  /* ---------- header ---------- */
+  header { border-bottom: 1px solid var(--line); }
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 4rem;
+  }
+  .wordmark {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.2rem;
+    color: var(--ink);
+    text-decoration: none;
+    letter-spacing: -0.01em;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--tide);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    height: 2.4rem;
+    padding-inline: 1.3rem;
+    border-radius: 999px;
+    transition: background 0.15s;
+  }
+  .btn:hover { background: var(--tide-deep); }
+
+  /* ---------- article ---------- */
+  main { padding-block: clamp(3rem, 7vw, 5rem) clamp(3rem, 6vw, 4.5rem); }
+  article { max-width: 42rem; margin-inline: auto; }
+
+  .label {
+    font-size: 0.85rem;
+    color: var(--gray);
+    margin: 0 0 0.9rem;
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(1.9rem, 1.2rem + 2vw, 2.6rem);
+    font-weight: 600;
+    letter-spacing: -0.014em;
+    line-height: 1.15;
+    text-wrap: balance;
+  }
+  .lede {
+    margin: 1.4rem 0 0;
+    font-size: 1.22rem;
+    line-height: 1.55;
+    color: var(--ink);
+  }
+  .lede strong { font-weight: 600; }
+
+  section {
+    margin-top: 2.75rem;
+    padding-top: 2.25rem;
+    border-top: 1px solid var(--line);
+  }
+  h2 {
+    margin: 0 0 0.85rem;
+    font-size: 1.3rem;
+    font-weight: 600;
+    letter-spacing: -0.014em;
+    line-height: 1.3;
+    text-wrap: balance;
+  }
+  em.voice {
+    font-family: Georgia, "Times New Roman", serif;
+    font-style: italic;
+    color: var(--tide);
+    letter-spacing: 0;
+  }
+  p { margin: 0; color: var(--gray); }
+  p + p { margin-top: 0.9rem; }
+  article a {
+    color: var(--tide);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
+  article a:hover { color: var(--tide-deep); }
+
+  ol.loop {
+    margin: 1rem 0 0;
+    padding-left: 1.4rem;
+    color: var(--gray);
+  }
+  ol.loop li { margin-top: 0.55rem; }
+  ol.loop li::marker { color: var(--tide); font-weight: 600; }
+
+  /* ---------- close panel ---------- */
+  .close {
+    margin-top: 3rem;
+    background: var(--wash-a);
+    border-radius: 12px;
+    padding: clamp(1.5rem, 4vw, 2.25rem);
+  }
+  .close p { color: var(--ink); font-size: 1.05rem; max-width: 34rem; }
+  .close .btn { margin-top: 1.25rem; height: 2.75rem; padding-inline: 1.7rem; font-size: 0.95rem; }
+
+  /* ---------- footer ---------- */
+  footer { border-top: 1px solid var(--line); }
+  .foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding-block: 1.75rem;
+    font-size: 0.9rem;
+    color: var(--gray);
+  }
+  .foot .wordmark { font-size: 1.05rem; }
+  .foot a { color: var(--gray); text-decoration: none; }
+  .foot a:hover { color: var(--ink); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="wordmark" href="/">driftwood</a>
+    <a class="btn" href="#book">Book a demo</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <article>
+    <p class="label">Definition</p>
+    <h1>Demo-led outbound</h1>
+
+    <p class="lede"><strong>Demo-led outbound</strong> is cold outreach where every message carries a working demo of the sender's product, built specifically for the prospect receiving it. Instead of personalizing the copy, you personalize the proof.</p>
+
+    <section>
+      <h2>What it replaces</h2>
+      <p>Most cold outreach is a templated sequence: a first-name merge tag, a "loved your recent post" opener, a paragraph of AI-written flattery. The AI SDR wave made that copy cheaper to produce, and prospects adapted almost immediately. Generic AI-written outreach reads as slop, and it gets ignored.</p>
+      <p>Demo-led outbound exits that arms race. The copy stays short and plain. What changes is what the message carries: a working demo of your product, built for their business.</p>
+    </section>
+
+    <section>
+      <h2>Why it works: a demo is <em class="voice">proof of work</em></h2>
+      <p>Copy can claim anything. A working demo is verifiable: the prospect can open it and check it against their own business in seconds. It shows the sender already understood that business before asking for time, which is the one signal a template cannot fake. Specific and verifiable beats plausible and generic.</p>
+    </section>
+
+    <section>
+      <h2>How it runs</h2>
+      <p>The loop has four steps, whoever runs it.</p>
+      <ol class="loop">
+        <li>Research the prospect: everything public about them and their company.</li>
+        <li>Build a working demo of your product for their business.</li>
+        <li>A human reviews the message before it goes out.</li>
+        <li>It sends from your own account, over LinkedIn or email.</li>
+      </ol>
+      <p>Founders can run this loop by hand, and some do. It is slow, which is why it stayed rare. driftwood runs it as a GTM agent: the agent does the research and the build, you do the review, and the send still comes from you.</p>
+    </section>
+
+    <section>
+      <h2>Demo-led vs product-led outbound</h2>
+      <p>Product-led outbound, a term established by <a href="https://www.unifygtm.com" rel="noopener">Unify</a>, uses product signals (signups, trials, usage) to decide who to contact and when. Demo-led outbound is about what the message carries once you have decided. The two compose: signals can pick the prospect, and the demo earns the reply. A revenue agent can run both halves; the demo is the half the prospect actually sees.</p>
+    </section>
+
+    <section>
+      <h2>Does it work?</h2>
+      <p>In week one at <a href="https://autosana.com" rel="noopener">Autosana</a> (YC S25), demo-led outbound run by driftwood got 14&times; the replies on the same lead list as their prior founder-led outbound, which had a self-reported reply rate under 1%. One reply came from a CTO who had ignored 4.5 months of prior outreach and answered in about 12 hours. That message opened with a real bug driftwood's agent had found on his site, next to a 19-second demo video.</p>
+    </section>
+
+    <div class="close">
+      <p>driftwood (<a href="https://driftwood.sh">driftwood.sh</a>) coined this term. We build driftwood, an AI sales agent that runs demo-led outbound end to end. The term is ours; the loop is yours to copy.</p>
+      <a class="btn" href="#book">Book a demo</a>
+    </div>
+  </article>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <a class="wordmark" href="/">driftwood</a>
+    <a href="mailto:aayush@driftwood.sh">aayush@driftwood.sh</a>
+    <span>&copy; 2026 driftwood</span>
+  </div>
+</footer>
+
+</body>
+</html>

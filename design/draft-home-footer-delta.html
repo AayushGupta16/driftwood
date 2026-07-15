@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Homepage footer delta: quiet links + definitional line (draft)</title>
+<!--
+  DRAFT: minimal homepage delta for the GEO round. Two tagged changes, both
+  inside the existing footer; nothing else on the homepage moves.
+
+  D1  links row: customers / demo-led outbound / faq / compare AI SDR tools.
+      Quiet, same 0.9rem rgba-white treatment as the existing foot-line.
+      These are the only homepage links to the new pages (Aayush 2026-07-15:
+      footer linking approved, homepage body stays untouched).
+  D2  definitional line: one sentence, visible in crawlable text. This closes
+      the audit's top GEO gap (the page never says what driftwood is; answer
+      engines quote visible copy, not meta tags). Placed above the foot-line,
+      max-width 56ch, dimmed white.
+
+  Copy for D2 (no em dashes, per design language):
+  "driftwood is an AI sales agent for demo-led outbound: it researches each
+   prospect, builds a working demo of your product for their business, and
+   sends from your account after human review."
+
+  Open question: D2 could instead sit under the close-CTA heading on white.
+  Footer placement is quieter and keeps the close section a single ask, so
+  this draft proposes footer. Say the word if you want the close-section
+  variant drafted too.
+
+  The wordmark below is a placeholder block; the real footer reuses the
+  Wordmark component (helm tile + Source Serif 4). Fonts via Google Fonts
+  here for preview only; prod self-hosts.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400..700&family=Source+Serif+4:wght@600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink: #16181b; --gray: #6a737d; --line: #e9ebee;
+    --tide: #15557e; --tide-deep: #0d3c5b;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #fff; color: var(--ink); font-family: "Public Sans", system-ui, sans-serif; }
+  .draft-label { font-size: 0.85rem; color: var(--gray); max-width: 40rem; margin: 2.5rem auto 0.75rem; padding: 0 1.5rem; }
+  .draft-label b { color: var(--ink); font-weight: 600; }
+
+  footer { background: linear-gradient(var(--tide), var(--tide-deep)); color: #fff; }
+  .foot { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; padding: 4.5rem 1.5rem 3rem; }
+  .wordmark { display: flex; align-items: center; gap: 0.85rem; color: #fff; text-decoration: none; font-family: "Source Serif 4", Georgia, serif; font-weight: 600; font-size: 1.35rem; }
+  .helm { width: 2.4rem; height: 2.4rem; border: 2px solid rgba(255,255,255,0.9); border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+  .foot-line { display: flex; gap: 1.5rem; font-size: 0.9rem; color: rgba(255,255,255,0.75); flex-wrap: wrap; justify-content: center; }
+  .foot a { color: inherit; text-decoration: none; }
+  .foot a:hover { color: #fff; }
+
+  /* D1: the links row, same visual weight as foot-line */
+  .foot-links { display: flex; gap: 1.5rem; font-size: 0.9rem; color: rgba(255,255,255,0.75); flex-wrap: wrap; justify-content: center; }
+
+  /* D2: the definitional line */
+  .foot-def { font-size: 0.9rem; line-height: 1.6; color: rgba(255,255,255,0.75); max-width: 56ch; text-align: center; margin: 0; }
+</style>
+</head>
+<body>
+
+<p class="draft-label"><b>Current footer</b> (as shipped)</p>
+<footer>
+  <div class="foot">
+    <a class="wordmark" href="#top"><span class="helm">⎈</span></a>
+    <div class="foot-line">
+      <a href="mailto:aayush@driftwood.sh">aayush@driftwood.sh</a>
+      <span>© 2026 driftwood</span>
+    </div>
+  </div>
+</footer>
+
+<p class="draft-label"><b>Proposed footer</b> (D1 links row + D2 definitional line)</p>
+<footer>
+  <div class="foot">
+    <a class="wordmark" href="#top"><span class="helm">⎈</span></a>
+    <!-- D2 -->
+    <p class="foot-def">driftwood is an AI sales agent for demo-led outbound: it researches each prospect, builds a working demo of your product for their business, and sends from your account after human review.</p>
+    <!-- D1 -->
+    <nav class="foot-links" aria-label="site">
+      <a href="#">customers</a>
+      <a href="#">demo-led outbound</a>
+      <a href="#">faq</a>
+      <a href="#">compare AI SDR tools</a>
+    </nav>
+    <div class="foot-line">
+      <a href="mailto:aayush@driftwood.sh">aayush@driftwood.sh</a>
+      <span>© 2026 driftwood</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
