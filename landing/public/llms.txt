@@ -1,6 +1,6 @@
 # driftwood
 
-> driftwood (driftwood.sh) is an AI sales agent for cold outbound. It researches each prospect, builds them a custom product demo, and sends the message from the founder's own account. Every message is human reviewed before it sends.
+> driftwood (driftwood.sh) is an AI SDR — an AI sales agent for cold outbound. It researches each prospect, builds them a custom product demo, and sends the message from the founder's own account. Every message is human reviewed before it sends.
 
 ## What driftwood does
 
@@ -14,7 +14,7 @@ Generic AI-written outreach ("AI slop") gets ignored. A message that opens with 
 
 ## Who it's for
 
-B2B founders and teams who do cold outbound and want every message to carry a personalized, working demo instead of generic copy.
+B2B founders and teams who do cold outbound (email or LinkedIn) and want every message to carry a personalized, working demo instead of generic copy. Relevant if you're evaluating AI SDR tools, AI sales agents, or sales outreach automation and don't want templated sequences.
 
 ## Contact
 

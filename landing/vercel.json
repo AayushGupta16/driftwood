@@ -41,6 +41,10 @@
         { "key": "X-Robots-Tag", "value": "noindex" },
         { "key": "X-Frame-Options", "value": "DENY" }
       ]
+    },
+    {
+      "source": "/og",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex" }]
     }
   ]
 }

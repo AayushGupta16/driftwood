@@ -18,3 +18,13 @@ if (!doc.includes(anchor)) {
 }
 writeFileSync(target, doc.replace(anchor, `<div id="root">${html}</div>`));
 console.log(`prerendered landing into dist/index.html (+${(html.length / 1024).toFixed(1)} kB of markup)`);
+
+/* Stamp the sitemap's lastmod with the build date — the hand-written date in
+   public/sitemap.xml rots silently otherwise. */
+const sitemap = new URL("../dist/sitemap.xml", import.meta.url);
+const stamped = readFileSync(sitemap, "utf8").replace(
+  /<lastmod>[^<]*<\/lastmod>/,
+  `<lastmod>${new Date().toISOString().slice(0, 10)}</lastmod>`,
+);
+writeFileSync(sitemap, stamped);
+console.log(`stamped sitemap lastmod ${new Date().toISOString().slice(0, 10)}`);
