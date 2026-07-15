@@ -71,6 +71,19 @@ Baseline sweep + plan audit: 2026-07-15. Re-run the sweep monthly.
 - **Phase 3, founder content:** LinkedIn company-page posts, 14x story as
   digital PR, Show HN at launch. Aayush's voice; Claude drafts only.
 
+## Maintenance rules
+
+- The comparison page carries an "Updated July 2026" line: refresh it with
+  each monthly sweep (vendor positioning drifts fast; the 2026-07-15
+  fact-check already caught Unify=warm outbound, Regie=RegieOne,
+  Autobound pivoted to a signal data layer).
+- New pages live as landing/public/<route>/index.html, self-contained
+  static HTML served ahead of the SPA rewrite. Adding a page = new dir +
+  sitemap URL + llms.txt line + footer link decision.
+- FAQ publishes the $1k-5k/month range (Claude's call on Aayush's
+  delegation, 2026-07-15). If pricing strategy changes, edit
+  public/faq/index.html (visible copy AND the FAQPage JSON-LD).
+
 ## Status log
 
 - 2026-07-15: mechanical on-site fixes shipped (5a14132, d8ecfa4, 9d98639):
@@ -78,3 +91,9 @@ Baseline sweep + plan audit: 2026-07-15. Re-run the sweep monthly.
   build-stamped sitemap lastmod, sameAs=LinkedIn company page,
   speed-insights removed. GSC + Bing registered (Aayush). Firewall clean
   for AI crawlers. Phase 0 drafts in design/ awaiting review.
+- 2026-07-15 (later): Phase 0 SHIPPED (5b36014). Four pages live
+  (/customers/autosana, /demo-led-outbound, /faq, /best-ai-sdr-tools),
+  competitor copy fact-checked same day, homepage footer gains the
+  definitional line + links row, sitemap at 5 URLs, llms.txt lists the
+  pages. Remaining: Crunchbase + G2 (Aayush), Yuvan G2 review, TAAFT,
+  listicle pitches, prompt-tracking cron, PostHog channel tagging.
