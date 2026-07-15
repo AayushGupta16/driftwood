@@ -207,8 +207,8 @@ export default function App() {
     const proofEl = root.querySelector(".hero-proof") as HTMLElement | null;
     const winEl = root.querySelector(".app-window") as HTMLElement | null;
     const CHARS = [" ", "\u00b7", "-", "~", "\u2248", "\u224b"]; // · - ~ ≈ ≋ by wave height
-    const CELL_W = 8;
-    const CELL_H = 10.5;
+    const CELL_W = 7.5;
+    const CELL_H = 9;
     const WOOD = "\u2597\u2584\u2584\u2584\u2584\u2584\u2584\u2596"; // ▗▄▄▄▄▄▄▖ a drifting log
     const SAIL = "\u259f\u258c"; // ▟▌
     const SAILW = "\u2590\u2599"; // ▐▙ westbound (mirrored)

@@ -65,8 +65,12 @@ inside their artifact window and never leak into page chrome.)
 
 The signature. ASCII character sea on 2D canvas — never rendered 3D.
 
-- Grid: `CELL_W 8`, `CELL_H 10.5`, chars `[' ', '·', '-', '~', '≈', '≋']` by
+- Grid: `CELL_W 7.5`, `CELL_H 9`, chars `[' ', '·', '-', '~', '≈', '≋']` by
   wave height, ~15fps (terminal cadence), tide-blue rgba by depth.
+  (Tightened from 8×10.5 on 2026-07-15 — Aayush wanted denser water with
+  less whitespace, via spacing rather than ink/alpha: an ink-boost pass
+  was tried first and superseded. Sprite anchors derive from rects, so
+  cell size changes texture density only.)
 - Placement: hero (bottom 62%, top-masked) + thin strips at section seams.
   Sheets dock onto water with filled-sine wave shoulders.
 - Scenery is earned, not decorated: the driftwood log with its duck
