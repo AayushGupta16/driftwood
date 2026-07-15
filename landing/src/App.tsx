@@ -556,7 +556,7 @@ export default function App() {
                 </a>
               </div>
               <div className="hero-proof">
-                <img src="/yuvan.webp" alt="Yuvan Sundrani, founder of Autosana" />
+                <img src="/yuvan.webp" width="128" height="128" alt="Yuvan Sundrani, founder of Autosana" />
                 <div>
                   <p className="proof-quote">&ldquo;amazing stuff, love the demo&rdquo;</p>
                   <p className="proof-attr">
@@ -568,6 +568,8 @@ export default function App() {
             <div className="app-window enter-window">
               <img
                 src="/dw-demo-dashboard-hero.webp"
+                width="2000"
+                height="1940"
                 fetchPriority="high"
                 alt="The driftwood dashboard: LinkedIn connected and sending, 4 meetings booked, 7 replies, pipeline of 124 leads"
               />
@@ -676,13 +678,13 @@ export default function App() {
                         </div>
                         <div className="msg" style={iv(2)}>
                           <span className="avatar">
-                            <img src="/yuvan.webp" alt="" loading="lazy" decoding="async" />
+                            <img src="/yuvan.webp" width="128" height="128" alt="" loading="lazy" decoding="async" />
                           </span>
                           <div>
                             <div className="msg-head">
                               <span className="who">Yuvan Sundrani</span>
                               <span className="when">&middot; 6:57 PM &middot; sent by driftwood</span>
-                              <span className="seen" aria-label="seen">
+                              <span className="seen" role="img" aria-label="seen">
                                 <svg viewBox="0 0 16 16" fill="currentColor">
                                   <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" />
                                   <path
@@ -704,6 +706,8 @@ export default function App() {
                             <div className="clip">
                               <img
                                 src="/demo-still.webp"
+                                width="900"
+                                height="508"
                                 loading="lazy"
                                 decoding="async"
                                 alt="19 second demo video of Autosana's agent catching a pricing bug on the prospect's site"
@@ -819,6 +823,8 @@ export default function App() {
                       </div>
                       <img
                         src="/slack-trace.webp"
+                        width="2000"
+                        height="1350"
                         loading="lazy"
                         decoding="async"
                         alt="The driftwood agent in Slack: asked for a Brex demo, it reads its build skill and spawns research subagents for Brex and Ramp"
@@ -832,6 +838,8 @@ export default function App() {
                       </div>
                       <img
                         src="/brex-demo.webp"
+                        width="1280"
+                        height="1420"
                         loading="lazy"
                         decoding="async"
                         alt="The demo the agent built: a Brex-branded pitch page it could send Notion's finance team"
@@ -845,6 +853,8 @@ export default function App() {
                       </div>
                       <img
                         src="/review-queue.webp"
+                        width="2020"
+                        height="2426"
                         loading="lazy"
                         decoding="async"
                         alt="The driftwood review queue: each outbound message waiting for your approve or deny"

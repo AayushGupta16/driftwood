@@ -3,6 +3,7 @@ import './mock'
 import { StrictMode, Suspense, lazy } from 'react'
 import { createRoot, hydrateRoot } from 'react-dom/client'
 import { Analytics } from '@vercel/analytics/react'
+import { SpeedInsights } from '@vercel/speed-insights/react'
 import './index.css'
 import App from './App.tsx'
 // dashboard pages are code-split: landing visitors only download the landing
@@ -38,6 +39,7 @@ const tree = (
   <StrictMode>
     <Suspense fallback={null}>{page}</Suspense>
     <Analytics />
+    <SpeedInsights />
   </StrictMode>
 )
 

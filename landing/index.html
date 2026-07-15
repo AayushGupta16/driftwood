@@ -11,17 +11,15 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="canonical" href="https://driftwood.sh/" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <meta name="theme-color" content="#15557e" />
+    <!-- fonts are self-hosted (public/fonts, declared in index.css);
+         preload the body font so first paint uses the real face -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400..700;1,400..700&family=Source+Serif+4:wght@600&display=swap"
-      rel="stylesheet"
-    />
-    <!-- dashboard pages share Public Sans; IBM Plex Mono remains for the
-         review queue's functional mono bits -->
-    <link
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap"
-      rel="stylesheet"
+      rel="preload"
+      href="/fonts/public-sans-latin-wght-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
     />
     <meta property="og:title" content="driftwood · ship a custom demo in every cold message" />
     <meta
