@@ -581,7 +581,7 @@ export default function App() {
               <div className="hero-proof">
                 <img src="/yuvan.webp" width="128" height="128" alt="Yuvan Sundrani, founder of Autosana" />
                 <div>
-                  <p className="proof-quote">&ldquo;amazing stuff, love the demo&rdquo;</p>
+                  <p className="proof-quote">&ldquo;amazing stuff, the demos are working so well&rdquo;</p>
                   <p className="proof-attr">
                     <b>Yuvan Sundrani</b> &middot; Founder, Autosana (YC S25)
                   </p>
