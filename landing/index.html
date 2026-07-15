@@ -10,6 +10,7 @@
     />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="canonical" href="https://driftwood.sh/" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -35,6 +36,38 @@
     <meta property="og:image:alt" content="driftwood · ship a custom demo in every cold message" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content="https://driftwood.sh/og-5.png" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://driftwood.sh/#org",
+            "name": "driftwood",
+            "url": "https://driftwood.sh/",
+            "logo": "https://driftwood.sh/apple-touch-icon.png",
+            "email": "aayush@driftwood.sh",
+            "description": "driftwood makes AI agents that ship a custom product demo in every cold message."
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://driftwood.sh/#site",
+            "url": "https://driftwood.sh/",
+            "name": "driftwood",
+            "publisher": { "@id": "https://driftwood.sh/#org" }
+          },
+          {
+            "@type": "SoftwareApplication",
+            "name": "driftwood",
+            "url": "https://driftwood.sh/",
+            "applicationCategory": "BusinessApplication",
+            "operatingSystem": "Web",
+            "description": "driftwood is an AI sales agent for cold outbound. It researches each prospect, builds them a custom product demo, and sends the message from your account. Every message is human reviewed before it sends.",
+            "publisher": { "@id": "https://driftwood.sh/#org" }
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

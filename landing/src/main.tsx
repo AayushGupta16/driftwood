@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components -- entry file, never hot-refreshed */
 import './mock'
 import { StrictMode, Suspense, lazy } from 'react'
-import { createRoot } from 'react-dom/client'
+import { createRoot, hydrateRoot } from 'react-dom/client'
 import { Analytics } from '@vercel/analytics/react'
 import './index.css'
 import App from './App.tsx'
@@ -32,9 +32,22 @@ const page =
     <App />
   )
 
-createRoot(document.getElementById('root')!).render(
+const isLanding = !(path === '/og' || path === '/dashboard' || path.startsWith('/dashboard/'))
+const root = document.getElementById('root')!
+const tree = (
   <StrictMode>
     <Suspense fallback={null}>{page}</Suspense>
     <Analytics />
-  </StrictMode>,
+  </StrictMode>
 )
+
+// prod index.html ships with the landing prerendered into #root (AI crawlers
+// don't run JS — scripts/prerender.mjs puts the real content in the HTML).
+// The landing hydrates it; app pages clear it and mount fresh. Dev serves an
+// empty #root and falls through to a plain client render.
+if (isLanding && root.firstElementChild) {
+  hydrateRoot(root, tree)
+} else {
+  if (root.firstElementChild) root.innerHTML = ''
+  createRoot(root).render(tree)
+}

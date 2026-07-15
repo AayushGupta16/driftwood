@@ -1,0 +1,23 @@
+# driftwood
+
+> driftwood (driftwood.sh) is an AI sales agent for cold outbound. It researches each prospect, builds them a custom product demo, and sends the message from the founder's own account. Every message is human reviewed before it sends.
+
+## What driftwood does
+
+- Researches each prospect: reads everything public about them and their company.
+- Builds them a custom demo: a live, personalized artifact that shows what your product does for their specific business — not a template with a first-name merge tag.
+- Sends it from your account (LinkedIn or email), only after a human approves it in a review queue. Nothing sends without sign-off.
+
+## Why it works
+
+Generic AI-written outreach ("AI slop") gets ignored. A message that opens with something real — like a bug the agent actually found on the prospect's own site, with a short demo video of it — earns replies. In week one at Autosana (YC S25), driftwood got 14× the replies on the same lead list, including a CTO who had ignored four months of prior outreach and replied within about 12 hours to book a call.
+
+## Who it's for
+
+B2B founders and teams who do cold outbound and want every message to carry a personalized, working demo instead of generic copy.
+
+## Contact
+
+- Site: https://driftwood.sh
+- Email: aayush@driftwood.sh
+- Book a demo: see the "Book a demo" button on driftwood.sh
