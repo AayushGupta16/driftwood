@@ -89,60 +89,69 @@ if (params.has("mock")) {
     ],
     decided: [], total_pending: 3, limit: 25, offset: 0,
     queue_stats: [
-      { kind: "connection_request", queued: 2, sent_24h: 3, cap: 20, runs_through: dateAhead(2), failed: 1 },
+      { kind: "connection_request", queued: 2, sent_24h: 3, cap: 20, runs_through: dateAhead(2), failed: 2 },
       { kind: "message", queued: 3, sent_24h: 6, cap: 25, runs_through: dateAhead(2), failed: 0 },
     ],
   };
   // Approved-but-undelivered ScheduledSends (the review page's Queued tab),
-  // due_at asc = the send order. One sending, one failed, the rest pending.
+  // due_at asc = the send order. One sending, two failed (one classified,
+  // one pre-classification null), the rest pending.
   const sends = {
     sends: [
       {
         id: "s1", batch_id: "sb1", kind: "connection_request",
         note: "fellow yc founder! building in the fintech tooling space too.",
         attachment_slug: null, lead: lead("Riley Chen", "Cofounder", "Anchorpoint"),
-        status: "failed",
+        status: "failed", error_class: "already_connected",
         error: "Unipile 422 unprocessable_entity: cannot_resend_yet — an invitation was already sent to this recipient recently; provider allows a new invite after the previous one is withdrawn for 3 weeks",
         due_at: hoursAgo(20), projected_date: null, created_at: hoursAgo(26),
+      },
+      {
+        id: "s7", batch_id: "sb1", kind: "connection_request",
+        note: "hey marcus — saw the tidewater incident postmortem on your blog. building agents that do outbound the way founders do it by hand. would love to connect.",
+        attachment_slug: null, lead: lead("Marcus Hale", "Cofounder", "Tidewater"),
+        status: "failed", error_class: null,
+        error: "Unipile 422 unprocessable_entity: provider rejected the invitation (raw error body not captured)",
+        due_at: hoursAgo(18), projected_date: null, created_at: hoursAgo(25),
       },
       {
         id: "s2", batch_id: "sb1", kind: "message",
         note: "hey dana, congrats on the meridian launch. the booking flow demo is live at the link below — 19 seconds, real data. worth a look?",
         attachment_slug: null, lead: lead("Dana Whitfield", "VP Engineering", "Meridian"),
-        status: "sending", error: null,
+        status: "sending", error: null, error_class: null,
         due_at: hoursAgo(0.05), projected_date: dateAhead(0), created_at: hoursAgo(22),
       },
       {
         id: "s3", batch_id: "sb2", kind: "message",
         note: "hey priya, found a dead link on northstar's pricing page. built you a working demo of the fix, 19 seconds, link below. worth a look?",
         attachment_slug: "northstar-pricing-fix", lead: lead("Priya Patel", "Head of Growth", "Northstar"),
-        status: "pending", error: null,
+        status: "pending", error: null, error_class: null,
         due_at: daysAhead(0.2), projected_date: dateAhead(0), created_at: hoursAgo(21),
       },
       {
         id: "s4", batch_id: "sb2", kind: "connection_request",
         note: "hey sam — saw ledgerline's reconciliation launch on hn. we're building agents that do outbound the way founders do it by hand. would love to connect.",
         attachment_slug: null, lead: lead("Sam Okafor", "CTO", "Ledgerline"),
-        status: "pending", error: null,
+        status: "pending", error: null, error_class: null,
         due_at: daysAhead(1), projected_date: dateAhead(1), created_at: hoursAgo(21),
       },
       {
         id: "s5", batch_id: "sb2", kind: "message",
         note: "hey jordan, notion is one of ramp's flagship case studies. built the one-pager brex could send notion's finance team to flip it: entity-by-entity rollout, the yield math against their current sweep setup, and the migration path their controllers would actually sign off on. live page linked below — took a real pass at the numbers, not a template. if it's useful, i can rework it against whatever deck your team already runs with. worth a look?",
         attachment_slug: null, lead: lead("Jordan Reyes", "Head of Growth", "Brex"),
-        status: "pending", error: null,
+        status: "pending", error: null, error_class: null,
         due_at: daysAhead(2), projected_date: dateAhead(2), created_at: hoursAgo(20),
       },
       {
         id: "s6", batch_id: "sb3", kind: "connection_request",
         note: "hey — loved your talk on mobile release trains. building in the qa tooling space, would love to swap notes.",
         attachment_slug: null, lead: null,
-        status: "pending", error: null,
+        status: "pending", error: null, error_class: null,
         due_at: daysAhead(2.5), projected_date: null, created_at: hoursAgo(4),
       },
     ],
-    total: 6, limit: 100, offset: 0,
-    counts: { pending: 4, sending: 1, failed: 1 },
+    total: 7, limit: 100, offset: 0,
+    counts: { pending: 4, sending: 1, failed: 2 },
   };
   // Bodies may be functions of the request init so POST results can echo the
   // request (e.g. cancel reports how many ids it was sent).
@@ -153,6 +162,14 @@ if (params.has("mock")) {
       n = Array.isArray(parsed.send_ids) ? parsed.send_ids.length : 0;
     } catch { /* malformed body — report 0 canceled */ }
     return { canceled: n, skipped: [], agent_woken: true };
+  };
+  const dismissSends = (init?: RequestInit) => {
+    let n = 0;
+    try {
+      const parsed = JSON.parse(typeof init?.body === "string" ? init.body : "{}") as { send_ids?: unknown[] };
+      n = Array.isArray(parsed.send_ids) ? parsed.send_ids.length : 0;
+    } catch { /* malformed body — report 0 dismissed */ }
+    return { dismissed: n, skipped: [] };
   };
   const decideReviews = (init?: RequestInit) => {
     let approved = 0, denied = 0;
@@ -167,10 +184,11 @@ if (params.has("mock")) {
     return { approved, denied, skipped: [], queued: [], agent_woken: true };
   };
   // Matching is startsWith with NO method check, so more-specific paths must
-  // come first — /sends/cancel (POST) would otherwise be swallowed by the
-  // /sends fixture, and /reviews/decide by /reviews.
+  // come first — /sends/cancel and /sends/dismiss (POST) would otherwise be
+  // swallowed by the /sends fixture, and /reviews/decide by /reviews.
   const routes: [string, unknown][] = [
     ["/api/v1/dashboard/sends/cancel", cancelSends],
+    ["/api/v1/dashboard/sends/dismiss", dismissSends],
     ["/api/v1/dashboard/sends", sends],
     ["/api/v1/dashboard/reviews/decide", decideReviews],
     ["/api/v1/dashboard/reviews", reviews],

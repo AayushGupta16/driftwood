@@ -61,6 +61,9 @@ type SendRow = {
   lead: ReviewLeadContext | null;
   status: string; // "pending" | "sending" | "failed"
   error: string | null;
+  // "quota" | "already_connected" | "profile_not_found" | "other";
+  // null = old rows from before failure classification
+  error_class: string | null;
   due_at: string; // ISO; the API orders by this asc (the send order)
   projected_date: string | null; // "YYYY-MM-DD"
   created_at: string;
@@ -78,6 +81,13 @@ type CancelResult = {
   canceled: number;
   skipped: string[]; // ids that already went out
   agent_woken: boolean;
+};
+
+/* POST /dashboard/sends/dismiss — failed rows only; skipped ids weren't
+   failed (or weren't ours), so they stay in the list. */
+type DismissResult = {
+  dismissed: number;
+  skipped: string[];
 };
 
 /* bug_validation's structured evidence — required at submission by the
@@ -289,6 +299,7 @@ const EMPTY_SET: ReadonlySet<string> = new Set();
 
 const DECIDE_FALLBACK = "Couldn't submit that decision. Please try again.";
 const CANCEL_FALLBACK = "Couldn't cancel those sends. Please try again.";
+const DISMISS_FALLBACK = "Couldn't dismiss those sends. Please try again.";
 
 const MICROLABEL =
   "font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-faint";
@@ -319,6 +330,17 @@ function sendKindLabel(kind: string): string {
   if (kind === "connection_request") return "connection";
   return kind;
 }
+
+/* Failure classes → the human tail of the red status line ("failed ·
+   already connected"); null (rows from before classification) renders bare
+   "failed". Quota failures now defer server-side instead of failing, so
+   live failed rows are mostly the other three. */
+const ERROR_CLASS_LABEL: Record<string, string> = {
+  quota: "quota",
+  already_connected: "already connected",
+  profile_not_found: "profile not found",
+  other: "other",
+};
 
 /* Chip order — connections first (the kind that piles up and gets
    bulk-cleared), then messages, then bugs; unknown kinds trail in
@@ -369,6 +391,13 @@ function summarizeCancel(r: CancelResult): string {
   if (r.canceled) parts.push(`${r.canceled} canceled`);
   if (r.skipped.length) parts.push(`${r.skipped.length} already sent`);
   return `${parts.join(" · ") || "Nothing to cancel"}.`;
+}
+
+function summarizeDismiss(r: DismissResult): string {
+  const parts: string[] = [];
+  if (r.dismissed) parts.push(`${r.dismissed} dismissed`);
+  if (r.skipped.length) parts.push(`${r.skipped.length} skipped`);
+  return `${parts.join(" · ") || "Nothing to dismiss"}.`;
 }
 
 type Tab = "review" | "queued";
@@ -968,7 +997,9 @@ function QueueStatsStrip({ stats }: { stats: QueueStats[] }) {
 
 /* ---------- the queued tab (GET /api/v1/dashboard/sends) ---------- */
 
-type CancelError = { message: string; sendId: string | null };
+/* Cancel and dismiss failures share one channel — same render spot, same
+   semantics (`sendId` = the row that was tapped, null = bulk). */
+type ActionError = { message: string; sendId: string | null };
 
 function QueuedList({
   sends,
@@ -981,8 +1012,12 @@ function QueuedList({
 }) {
   const [selected, setSelected] = useState<ReadonlySet<string>>(EMPTY_SET);
   const [busyIds, setBusyIds] = useState<ReadonlySet<string>>(EMPTY_SET);
-  const [cancelError, setCancelError] = useState<CancelError | null>(null);
-  const [confirmAll, setConfirmAll] = useState(false);
+  const [actionError, setActionError] = useState<ActionError | null>(null);
+  /* Which bulk button is armed — only one at a time, so arming Cancel all
+     disarms an armed Dismiss all (and vice versa). */
+  const [confirmAll, setConfirmAll] = useState<"cancel" | "dismiss" | null>(
+    null,
+  );
   const [kindFilter, setKindFilter] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(EMPTY_SET);
   const toast = useToast();
@@ -990,7 +1025,7 @@ function QueuedList({
   /* Same disarm-after-a-beat as the armed Approve all. */
   useEffect(() => {
     if (!confirmAll) return;
-    const t = window.setTimeout(() => setConfirmAll(false), 5000);
+    const t = window.setTimeout(() => setConfirmAll(null), 5000);
     return () => window.clearTimeout(t);
   }, [confirmAll]);
 
@@ -1003,7 +1038,7 @@ function QueuedList({
     async (ids: string[], source: string | null) => {
       if (ids.length === 0) return;
       setBusyIds(new Set(ids));
-      setCancelError(null);
+      setActionError(null);
       try {
         const res = await fetch("/api/v1/dashboard/sends/cancel", {
           method: "POST",
@@ -1020,9 +1055,49 @@ function QueuedList({
         toast(summarizeCancel(result), "success");
         void refreshStats();
       } catch (err) {
-        setCancelError({
+        setActionError({
           message:
             err instanceof Error && err.message ? err.message : CANCEL_FALLBACK,
+          sendId: source,
+        });
+      } finally {
+        setBusyIds(EMPTY_SET);
+      }
+    },
+    [onRemove, refreshStats, toast],
+  );
+
+  /* Dismiss mirrors cancel, with one difference in the reconciliation:
+     a skipped id here means the row WASN'T dismissed (it wasn't failed),
+     so unlike cancel's already-sent skips it stays in the list. Dismissed
+     rows also vanish server-side (GET /sends excludes them), so the
+     optimistic removal and the next full load agree. */
+  const dismiss = useCallback(
+    async (ids: string[], source: string | null) => {
+      if (ids.length === 0) return;
+      setBusyIds(new Set(ids));
+      setActionError(null);
+      try {
+        const res = await fetch("/api/v1/dashboard/sends/dismiss", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ send_ids: ids }),
+        });
+        if (!res.ok)
+          throw new Error(await readErrorDetail(res, DISMISS_FALLBACK));
+        const result = (await res.json()) as DismissResult;
+        const skipped = new Set(result.skipped);
+        onRemove(new Set(ids.filter((id) => !skipped.has(id))));
+        // No selection cleanup: failed rows are never selectable.
+        toast(summarizeDismiss(result), "success");
+        void refreshStats();
+      } catch (err) {
+        setActionError({
+          message:
+            err instanceof Error && err.message
+              ? err.message
+              : DISMISS_FALLBACK,
           sendId: source,
         });
       } finally {
@@ -1048,6 +1123,9 @@ function QueuedList({
   /* Failed rows have nothing left to cancel. Sending rows can still be
      posted — the API reports the ones that beat us as skipped. */
   const cancelable = visible.filter((s) => s.status !== "failed");
+  /* Failed rows get dismissed instead; the bulk button only earns its spot
+     when there's more than one of them under the current filter. */
+  const failedVisible = visible.filter((s) => s.status === "failed");
 
   const busy = busyIds.size > 0;
   const allSelected =
@@ -1056,7 +1134,7 @@ function QueuedList({
   function switchFilter(kind: string | null) {
     setKindFilter(kind);
     setSelected(EMPTY_SET);
-    setConfirmAll(false);
+    setConfirmAll(null);
   }
 
   function toggleSelect(id: string) {
@@ -1088,13 +1166,26 @@ function QueuedList({
   /* First tap arms ("Cancel all N? Confirm"); the second posts every
      visible cancelable send as one call. */
   function handleCancelAll() {
-    if (!confirmAll) {
-      setConfirmAll(true);
+    if (confirmAll !== "cancel") {
+      setConfirmAll("cancel");
       return;
     }
-    setConfirmAll(false);
+    setConfirmAll(null);
     void cancel(
       cancelable.map((s) => s.id),
+      null,
+    );
+  }
+
+  /* Same arm-then-confirm for clearing every visible failed row. */
+  function handleDismissAllFailed() {
+    if (confirmAll !== "dismiss") {
+      setConfirmAll("dismiss");
+      return;
+    }
+    setConfirmAll(null);
+    void dismiss(
+      failedVisible.map((s) => s.id),
       null,
     );
   }
@@ -1155,15 +1246,31 @@ function QueuedList({
           onClick={handleCancelAll}
           disabled={busy || cancelable.length === 0}
           className={`min-h-9 cursor-pointer rounded-[10px] px-3.5 py-2 text-[13px] transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
-            confirmAll
+            confirmAll === "cancel"
               ? "bg-tide font-semibold text-white shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] hover:bg-tide-deep"
               : "border border-line bg-surface font-medium text-ink-soft hover:border-ink-faint hover:text-ink"
           }`}
         >
-          {confirmAll
+          {confirmAll === "cancel"
             ? `Cancel all ${cancelable.length}? Confirm`
             : "Cancel all queued"}
         </button>
+        {failedVisible.length > 1 && (
+          <button
+            type="button"
+            onClick={handleDismissAllFailed}
+            disabled={busy}
+            className={`min-h-9 cursor-pointer rounded-[10px] px-3.5 py-2 text-[13px] transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+              confirmAll === "dismiss"
+                ? "bg-tide font-semibold text-white shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] hover:bg-tide-deep"
+                : "border border-line bg-surface font-medium text-ink-soft hover:border-ink-faint hover:text-ink"
+            }`}
+          >
+            {confirmAll === "dismiss"
+              ? `Dismiss all ${failedVisible.length} failed? Confirm`
+              : `Dismiss all failed (${failedVisible.length})`}
+          </button>
+        )}
         <span className="ml-auto shrink-0 font-mono text-[11px] tracking-[0.06em] text-ink-faint tabular-nums">
           {activeKind === null
             ? `${sends.length} queued`
@@ -1171,12 +1278,12 @@ function QueuedList({
         </span>
       </div>
 
-      {cancelError && cancelError.sendId === null && (
+      {actionError && actionError.sendId === null && (
         <p
           className="m-0 mb-2.5 text-[13.5px] font-medium text-red-700"
           role="alert"
         >
-          {cancelError.message}
+          {actionError.message}
         </p>
       )}
 
@@ -1188,10 +1295,11 @@ function QueuedList({
             checked={selected.has(send.id)}
             busy={busyIds.has(send.id)}
             expanded={expanded.has(send.id)}
-            error={cancelError?.sendId === send.id ? cancelError.message : null}
+            error={actionError?.sendId === send.id ? actionError.message : null}
             onToggleSelect={() => toggleSelect(send.id)}
             onToggleExpand={() => toggleExpand(send.id)}
             onCancel={() => void cancel([send.id], send.id)}
+            onDismiss={() => void dismiss([send.id], send.id)}
           />
         ))}
       </div>
@@ -1212,6 +1320,7 @@ function QueuedRow({
   onToggleSelect,
   onToggleExpand,
   onCancel,
+  onDismiss,
 }: {
   send: SendRow;
   checked: boolean;
@@ -1221,6 +1330,7 @@ function QueuedRow({
   onToggleSelect: () => void;
   onToggleExpand: () => void;
   onCancel: () => void;
+  onDismiss: () => void;
 }) {
   const failed = send.status === "failed";
   return (
@@ -1284,6 +1394,18 @@ function QueuedRow({
             Cancel
           </button>
         )}
+        {/* failed rows swap Cancel for Dismiss — same quiet weight; the
+            send already didn't happen, this just clears the wreckage */}
+        {failed && (
+          <button
+            type="button"
+            onClick={onDismiss}
+            disabled={busy}
+            className="ml-auto cursor-pointer px-1 py-1.5 text-[13px] font-medium text-ink-faint transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Dismiss
+          </button>
+        )}
       </div>
 
       {failed && send.error && (
@@ -1305,8 +1427,9 @@ function QueuedRow({
 }
 
 /* pending → "sends ~Jul 22" (the strip's date form; "queued" when the
-   dispatcher hasn't projected a day); sending → live green; failed → red,
-   with the full error rendered under the row. */
+   dispatcher hasn't projected a day); sending → live green; failed → red
+   with the failure class ("failed · already connected"), the full error
+   rendered under the row. */
 function SendStatus({ send }: { send: SendRow }) {
   if (send.status === "sending")
     return (
@@ -1314,12 +1437,17 @@ function SendStatus({ send }: { send: SendRow }) {
         sending now
       </span>
     );
-  if (send.status === "failed")
+  if (send.status === "failed") {
+    const cls = send.error_class
+      ? (ERROR_CLASS_LABEL[send.error_class] ?? send.error_class)
+      : null;
     return (
       <span className="font-mono text-[11.5px] font-medium tracking-[0.02em] text-red-700">
         failed
+        {cls && <> &middot; {cls}</>}
       </span>
     );
+  }
   return (
     <span className="font-mono text-[11.5px] tracking-[0.02em] text-ink-soft tabular-nums">
       {send.projected_date
