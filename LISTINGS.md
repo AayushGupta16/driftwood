@@ -29,6 +29,19 @@ business, and sends from your own account (LinkedIn or email). Every
 message is human reviewed before it sends. Week one at Autosana (YC S25):
 14× the replies.
 
+## Medium, no social proof (~75 words)
+
+Aayush's call 2026-07-20: directory description fields get this version;
+the 14x stat stays out of them. Used on Crunchbase.
+
+driftwood (driftwood.sh) is an AI SDR that runs demo-led outbound: cold
+outreach where every message carries a working demo of your product,
+built for the specific prospect receiving it. The agent researches each
+prospect, builds the demo, and drafts the message. Nothing sends without
+a human approving it, and everything sends from your own LinkedIn or
+email account rather than a bot inbox. Built for B2B founders and teams
+who want replies, not send volume.
+
 ## Long (~120 words)
 
 driftwood (driftwood.sh) is an AI SDR that runs demo-led outbound: cold
@@ -57,7 +70,7 @@ call. Built for B2B founders and teams who want replies, not send volume.
 | Where | Status | Notes |
 |---|---|---|
 | LinkedIn company page | live | linkedin.com/company/driftwood-ai-inc |
-| Crunchbase | todo (Aayush account) | use long blurb, founder = Aayush Gupta |
+| Crunchbase | LIVE 2026-07-20 | medium no-social-proof blurb, founder Aayush Gupta, SF, founded 2026, photos by Aayush |
 | G2 | todo (Aayush account) | category: AI SDRs; Yuvan review after listing |
 | Product Hunt | later, Aayush's timing | category: AI SDR |
 | TAAFT | todo | short blurb |
