@@ -48,6 +48,36 @@ type QueueStats = {
   sent_24h: number;
   cap: number;
   runs_through: string | null; // ISO date; null when nothing is queued
+  failed?: number; // optional: tolerate a backend that predates it
+};
+
+/* One approved-but-undelivered ScheduledSend (GET /dashboard/sends). */
+type SendRow = {
+  id: string;
+  batch_id: string;
+  kind: string; // "message" | "connection_request"
+  note: string; // the frozen copy — sends exactly as shown
+  attachment_slug: string | null;
+  lead: ReviewLeadContext | null;
+  status: string; // "pending" | "sending" | "failed"
+  error: string | null;
+  due_at: string; // ISO; the API orders by this asc (the send order)
+  projected_date: string | null; // "YYYY-MM-DD"
+  created_at: string;
+};
+
+type SendsPageData = {
+  sends: SendRow[];
+  total: number;
+  limit: number;
+  offset: number;
+  counts: { pending: number; sending: number; failed: number };
+};
+
+type CancelResult = {
+  canceled: number;
+  skipped: string[]; // ids that already went out
+  agent_woken: boolean;
 };
 
 /* bug_validation's structured evidence — required at submission by the
@@ -248,11 +278,17 @@ type QueueState =
   | { status: "error" }
   | { status: "ready"; items: ReviewItemRow[]; stats: QueueStats[] };
 
+type SendsState =
+  | { status: "loading" }
+  | { status: "error" }
+  | { status: "ready"; sends: SendRow[] };
+
 type DecideError = { message: string; itemId: string | null };
 
 const EMPTY_SET: ReadonlySet<string> = new Set();
 
 const DECIDE_FALLBACK = "Couldn't submit that decision. Please try again.";
+const CANCEL_FALLBACK = "Couldn't cancel those sends. Please try again.";
 
 const MICROLABEL =
   "font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-faint";
@@ -276,6 +312,14 @@ function kindLabel(kind: string): string {
   return kind;
 }
 
+/* ScheduledSend kinds use the stats-strip vocabulary, not the review-item
+   one — same human labels either way. */
+function sendKindLabel(kind: string): string {
+  if (kind === "message") return "message";
+  if (kind === "connection_request") return "connection";
+  return kind;
+}
+
 /* Chip order — connections first (the kind that piles up and gets
    bulk-cleared), then messages, then bugs; unknown kinds trail in
    queue order. */
@@ -286,10 +330,19 @@ function kindRank(kind: string): number {
   return i === -1 ? KIND_ORDER.length : i;
 }
 
+/* Same convention for the queued tab's send kinds. */
+const SEND_KIND_ORDER = ["connection_request", "message"];
+
+function sendKindRank(kind: string): number {
+  const i = SEND_KIND_ORDER.indexOf(kind);
+  return i === -1 ? SEND_KIND_ORDER.length : i;
+}
+
 /* Pull the human-readable error out of the backend's envelope
    ({"error": {"code", "detail"}}) — e.g. the 409 linkedin_not_connected
-   message — falling back to a generic line. */
-async function readDecideError(res: Response): Promise<string> {
+   message — falling back to a generic line. Decide and cancel share the
+   envelope, so they share this reader. */
+async function readErrorDetail(res: Response, fallback: string): Promise<string> {
   try {
     const data = (await res.json()) as {
       error?: { code?: string; detail?: unknown };
@@ -299,7 +352,7 @@ async function readDecideError(res: Response): Promise<string> {
   } catch {
     // non-JSON body — use the fallback
   }
-  return DECIDE_FALLBACK;
+  return fallback;
 }
 
 function summarizeDecide(r: DecideResult): string {
@@ -311,6 +364,22 @@ function summarizeDecide(r: DecideResult): string {
   return r.queued.length ? `${head} — ${r.queued.join("; ")}.` : `${head}.`;
 }
 
+function summarizeCancel(r: CancelResult): string {
+  const parts: string[] = [];
+  if (r.canceled) parts.push(`${r.canceled} canceled`);
+  if (r.skipped.length) parts.push(`${r.skipped.length} already sent`);
+  return `${parts.join(" · ") || "Nothing to cancel"}.`;
+}
+
+type Tab = "review" | "queued";
+
+/* `?tab=queued` deep-links the queued view (the digest link's target);
+   anything else lands on needs-review. */
+function tabFromUrl(): Tab {
+  const tab = new URLSearchParams(window.location.search).get("tab");
+  return tab === "queued" ? "queued" : "review";
+}
+
 function ReviewQueue() {
   const [state, setState] = useState<QueueState>({ status: "loading" });
   const [selected, setSelected] = useState<ReadonlySet<string>>(EMPTY_SET);
@@ -319,6 +388,10 @@ function ReviewQueue() {
   const [decideError, setDecideError] = useState<DecideError | null>(null);
   const [confirmAll, setConfirmAll] = useState(false);
   const [kindFilter, setKindFilter] = useState<string | null>(null);
+  const [tab, setTab] = useState<Tab>(tabFromUrl);
+  const [sendsState, setSendsState] = useState<SendsState>({
+    status: "loading",
+  });
   const toast = useToast();
 
   /* An armed "Approve all" disarms itself after a beat — no stale confirm
@@ -351,11 +424,36 @@ function ReviewQueue() {
     }
   }, []);
 
+  /* The queued tab's data loads up front alongside the reviews (its count
+     sits in the tab label, so it can't wait for a tab switch) — same paged
+     loop, same guard, against GET /dashboard/sends (due_at asc = send
+     order; the page keeps that order). */
+  const loadAllSends = useCallback(async () => {
+    try {
+      const all: SendRow[] = [];
+      for (let i = 0; i < FETCH_GUARD; i++) {
+        const res = await fetch(
+          `/api/v1/dashboard/sends?limit=${FETCH_CHUNK}&offset=${all.length}`,
+          { credentials: "include" },
+        );
+        if (!res.ok) throw new Error("request failed");
+        const page = (await res.json()) as SendsPageData;
+        all.push(...page.sends);
+        if (page.sends.length === 0 || all.length >= page.total) break;
+      }
+      setSendsState({ status: "ready", sends: all });
+    } catch {
+      setSendsState((prev) =>
+        prev.status === "ready" ? prev : { status: "error" },
+      );
+    }
+  }, []);
+
   useEffect(() => {
     void (async () => {
-      await loadAll();
+      await Promise.all([loadAll(), loadAllSends()]);
     })();
-  }, [loadAll]);
+  }, [loadAll, loadAllSends]);
 
   /* Re-pull just the stats strip after a decide — approvals turn into
      ScheduledSend rows server-side, so "queued" moves immediately. Items are
@@ -394,7 +492,7 @@ function ReviewQueue() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(decisions),
         });
-        if (!res.ok) throw new Error(await readDecideError(res));
+        if (!res.ok) throw new Error(await readErrorDetail(res, DECIDE_FALLBACK));
         const result = (await res.json()) as DecideResult;
         // Skipped ids were already decided elsewhere — no longer pending
         // either way, so every posted id leaves the queue.
@@ -423,7 +521,36 @@ function ReviewQueue() {
     [toast, refreshStats],
   );
 
+  /* Optimistic reconciliation for cancels — the QueuedList posts, then hands
+     back the ids that are no longer queued (canceled OR already sent). */
+  const removeSends = useCallback((ids: ReadonlySet<string>) => {
+    setSendsState((prev) =>
+      prev.status === "ready"
+        ? { ...prev, sends: prev.sends.filter((s) => !ids.has(s.id)) }
+        : prev,
+    );
+  }, []);
+
+  /* replaceState (not push) keeps the param shareable without growing
+     history — back should leave the page, not unwind tab flips. */
+  function switchTab(next: Tab) {
+    setTab(next);
+    const params = new URLSearchParams(window.location.search);
+    if (next === "queued") params.set("tab", "queued");
+    else params.delete("tab");
+    const qs = params.toString();
+    window.history.replaceState(
+      null,
+      "",
+      window.location.pathname + (qs ? `?${qs}` : "") + window.location.hash,
+    );
+  }
+
   const items = state.status === "ready" ? state.items : [];
+  /* Sends load in full (same guard), so the row list IS
+     counts.pending + counts.sending + counts.failed. */
+  const queuedCount =
+    sendsState.status === "ready" ? sendsState.sends.length : null;
 
   /* Kind filter: chips narrow the list so "select all → approve" can clear
      one send type (e.g. every connection request) without hand-sorting.
@@ -506,9 +633,30 @@ function ReviewQueue() {
         Decisions your AE is waiting on &mdash; oldest first.
       </p>
 
+      {/* Needs review = decisions still owed; Queued = approved sends waiting
+          on the dispatcher. Counts fill in as each list finishes loading. */}
+      <div
+        role="group"
+        aria-label="Queue sections"
+        className="mt-[18px] inline-flex items-center gap-1 rounded-full border border-line bg-sand p-1"
+      >
+        <TabButton
+          label="Needs review"
+          count={state.status === "ready" ? items.length : null}
+          active={tab === "review"}
+          onClick={() => switchTab("review")}
+        />
+        <TabButton
+          label="Queued"
+          count={queuedCount}
+          active={tab === "queued"}
+          onClick={() => switchTab("queued")}
+        />
+      </div>
+
       {state.status === "ready" && <QueueStatsStrip stats={state.stats} />}
 
-      {state.status === "loading" && (
+      {tab === "review" && state.status === "loading" && (
         <div className="flex items-center justify-center py-16">
           <span
             className="size-6 animate-spin rounded-full border-2 border-line border-t-tide"
@@ -518,13 +666,14 @@ function ReviewQueue() {
         </div>
       )}
 
-      {state.status === "error" && (
+      {tab === "review" && state.status === "error" && (
         <p className="m-0 mt-6 text-[14px] font-medium text-red-700" role="alert">
           Couldn&rsquo;t load your review queue. Please refresh.
         </p>
       )}
 
-      {state.status === "ready" &&
+      {tab === "review" &&
+        state.status === "ready" &&
         (items.length === 0 ? (
           <EmptyQueue />
         ) : (
@@ -655,7 +804,66 @@ function ReviewQueue() {
             </div>
           </>
         ))}
+
+      {tab === "queued" && sendsState.status === "loading" && (
+        <div className="flex items-center justify-center py-16">
+          <span
+            className="size-6 animate-spin rounded-full border-2 border-line border-t-tide"
+            role="status"
+            aria-label="Loading queued sends"
+          />
+        </div>
+      )}
+
+      {tab === "queued" && sendsState.status === "error" && (
+        <p className="m-0 mt-6 text-[14px] font-medium text-red-700" role="alert">
+          Couldn&rsquo;t load your queued sends. Please refresh.
+        </p>
+      )}
+
+      {tab === "queued" &&
+        sendsState.status === "ready" &&
+        (sendsState.sends.length === 0 ? (
+          <EmptyQueued />
+        ) : (
+          <QueuedList
+            sends={sendsState.sends}
+            onRemove={removeSends}
+            refreshStats={refreshStats}
+          />
+        ))}
     </>
+  );
+}
+
+/* ---------- tab control ---------- */
+
+/* Quiet segmented control: sand track, the active segment is the white
+   card (surface + small window shadow), pills throughout — no black. */
+function TabButton({
+  label,
+  count,
+  active,
+  onClick,
+}: {
+  label: string;
+  count: number | null; // null while that list is still loading
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`min-h-9 cursor-pointer rounded-full px-4 py-1.5 text-[13.5px] tabular-nums transition-colors ${
+        active
+          ? "bg-surface font-semibold text-ink shadow-win-sm"
+          : "font-medium text-ink-soft hover:text-ink"
+      }`}
+    >
+      {count === null ? label : `${label} (${count})`}
+    </button>
   );
 }
 
@@ -726,11 +934,13 @@ function statsDate(iso: string): string {
 }
 
 /* "connection requests: 34 queued · 12/20 sent in last 24h · runs through
-   ~Jul 20" — one line per send kind; kinds with nothing queued and nothing
-   sent are noise, not news, so they're skipped (nothing at all renders when
-   both are quiet). */
+   ~Jul 20 · 2 failed" — one line per send kind; kinds with nothing queued,
+   nothing sent, and nothing failed are noise, not news, so they're skipped
+   (nothing at all renders when all are quiet). */
 function QueueStatsStrip({ stats }: { stats: QueueStats[] }) {
-  const live = stats.filter((s) => s.queued > 0 || s.sent_24h > 0);
+  const live = stats.filter(
+    (s) => s.queued > 0 || s.sent_24h > 0 || (s.failed ?? 0) > 0,
+  );
   if (live.length === 0) return null;
   return (
     <div className="mt-4 grid gap-1.5 rounded-[10px] border border-line bg-paper px-3.5 py-2.5">
@@ -744,9 +954,378 @@ function QueueStatsStrip({ stats }: { stats: QueueStats[] }) {
           {s.runs_through !== null && (
             <> &middot; runs through ~{statsDate(s.runs_through)}</>
           )}
+          {(s.failed ?? 0) > 0 && (
+            <>
+              {" "}
+              &middot; <span className="text-red-700">{s.failed} failed</span>
+            </>
+          )}
         </p>
       ))}
     </div>
+  );
+}
+
+/* ---------- the queued tab (GET /api/v1/dashboard/sends) ---------- */
+
+type CancelError = { message: string; sendId: string | null };
+
+function QueuedList({
+  sends,
+  onRemove,
+  refreshStats,
+}: {
+  sends: SendRow[];
+  onRemove: (ids: ReadonlySet<string>) => void;
+  refreshStats: () => Promise<void>;
+}) {
+  const [selected, setSelected] = useState<ReadonlySet<string>>(EMPTY_SET);
+  const [busyIds, setBusyIds] = useState<ReadonlySet<string>>(EMPTY_SET);
+  const [cancelError, setCancelError] = useState<CancelError | null>(null);
+  const [confirmAll, setConfirmAll] = useState(false);
+  const [kindFilter, setKindFilter] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<ReadonlySet<string>>(EMPTY_SET);
+  const toast = useToast();
+
+  /* Same disarm-after-a-beat as the armed Approve all. */
+  useEffect(() => {
+    if (!confirmAll) return;
+    const t = window.setTimeout(() => setConfirmAll(false), 5000);
+    return () => window.clearTimeout(t);
+  }, [confirmAll]);
+
+  /* One cancel POST per user action, mirroring decide. On success every
+     posted id leaves the list — skipped ids already went out the door, so
+     they're not queued either way — and the toast says which was which. On
+     failure nothing is removed; the error renders red where the tap
+     happened (`source` = send id, null = bulk). */
+  const cancel = useCallback(
+    async (ids: string[], source: string | null) => {
+      if (ids.length === 0) return;
+      setBusyIds(new Set(ids));
+      setCancelError(null);
+      try {
+        const res = await fetch("/api/v1/dashboard/sends/cancel", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ send_ids: ids }),
+        });
+        if (!res.ok)
+          throw new Error(await readErrorDetail(res, CANCEL_FALLBACK));
+        const result = (await res.json()) as CancelResult;
+        const done = new Set(ids);
+        onRemove(done);
+        setSelected((prev) => new Set([...prev].filter((id) => !done.has(id))));
+        toast(summarizeCancel(result), "success");
+        void refreshStats();
+      } catch (err) {
+        setCancelError({
+          message:
+            err instanceof Error && err.message ? err.message : CANCEL_FALLBACK,
+          sendId: source,
+        });
+      } finally {
+        setBusyIds(EMPTY_SET);
+      }
+    },
+    [onRemove, refreshStats, toast],
+  );
+
+  /* Same chip semantics as the review tab: everything below the chips
+     operates on the FILTERED list; an emptied-out filter falls back to
+     "all" by derivation. */
+  const kindCounts = new Map<string, number>();
+  for (const send of sends)
+    kindCounts.set(send.kind, (kindCounts.get(send.kind) ?? 0) + 1);
+  const chipKinds = [...kindCounts.keys()].sort(
+    (a, b) => sendKindRank(a) - sendKindRank(b),
+  );
+  const activeKind =
+    kindFilter !== null && kindCounts.has(kindFilter) ? kindFilter : null;
+  const visible =
+    activeKind === null ? sends : sends.filter((s) => s.kind === activeKind);
+  /* Failed rows have nothing left to cancel. Sending rows can still be
+     posted — the API reports the ones that beat us as skipped. */
+  const cancelable = visible.filter((s) => s.status !== "failed");
+
+  const busy = busyIds.size > 0;
+  const allSelected =
+    cancelable.length > 0 && selected.size === cancelable.length;
+
+  function switchFilter(kind: string | null) {
+    setKindFilter(kind);
+    setSelected(EMPTY_SET);
+    setConfirmAll(false);
+  }
+
+  function toggleSelect(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleExpand(id: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function handleCancelSelected() {
+    // Preserve queue order in the POST — due first, like the list.
+    void cancel(
+      cancelable.filter((s) => selected.has(s.id)).map((s) => s.id),
+      null,
+    );
+  }
+
+  /* First tap arms ("Cancel all N? Confirm"); the second posts every
+     visible cancelable send as one call. */
+  function handleCancelAll() {
+    if (!confirmAll) {
+      setConfirmAll(true);
+      return;
+    }
+    setConfirmAll(false);
+    void cancel(
+      cancelable.map((s) => s.id),
+      null,
+    );
+  }
+
+  return (
+    <>
+      <div
+        role="group"
+        aria-label="Filter by type"
+        className="mx-0.5 mt-[18px] flex flex-wrap items-center gap-2"
+      >
+        <FilterChip
+          label="all"
+          count={sends.length}
+          active={activeKind === null}
+          onClick={() => switchFilter(null)}
+        />
+        {chipKinds.map((kind) => (
+          <FilterChip
+            key={kind}
+            label={sendKindLabel(kind)}
+            count={kindCounts.get(kind) ?? 0}
+            active={activeKind === kind}
+            onClick={() => switchFilter(activeKind === kind ? null : kind)}
+          />
+        ))}
+      </div>
+
+      <div className="mx-0.5 mb-2.5 mt-[14px] flex flex-wrap items-center gap-2.5">
+        <label className="inline-flex cursor-pointer items-center gap-[9px] text-[13.5px] font-medium text-ink-soft">
+          <input
+            type="checkbox"
+            checked={allSelected}
+            onChange={(e) =>
+              setSelected(
+                e.target.checked
+                  ? new Set(cancelable.map((s) => s.id))
+                  : EMPTY_SET,
+              )
+            }
+            aria-label="Select all queued sends"
+            className="size-5 shrink-0 accent-tide"
+          />
+          Select all
+        </label>
+        {selected.size > 0 && (
+          <button
+            type="button"
+            onClick={handleCancelSelected}
+            disabled={busy}
+            className="min-h-9 cursor-pointer rounded-[10px] bg-tide px-3.5 py-2 text-[13px] font-semibold text-white shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] transition-colors hover:bg-tide-deep disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Cancel selected ({selected.size})
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={handleCancelAll}
+          disabled={busy || cancelable.length === 0}
+          className={`min-h-9 cursor-pointer rounded-[10px] px-3.5 py-2 text-[13px] transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+            confirmAll
+              ? "bg-tide font-semibold text-white shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] hover:bg-tide-deep"
+              : "border border-line bg-surface font-medium text-ink-soft hover:border-ink-faint hover:text-ink"
+          }`}
+        >
+          {confirmAll
+            ? `Cancel all ${cancelable.length}? Confirm`
+            : "Cancel all queued"}
+        </button>
+        <span className="ml-auto shrink-0 font-mono text-[11px] tracking-[0.06em] text-ink-faint tabular-nums">
+          {activeKind === null
+            ? `${sends.length} queued`
+            : `${visible.length} of ${sends.length}`}
+        </span>
+      </div>
+
+      {cancelError && cancelError.sendId === null && (
+        <p
+          className="m-0 mb-2.5 text-[13.5px] font-medium text-red-700"
+          role="alert"
+        >
+          {cancelError.message}
+        </p>
+      )}
+
+      <div className="grid gap-3">
+        {visible.map((send) => (
+          <QueuedRow
+            key={send.id}
+            send={send}
+            checked={selected.has(send.id)}
+            busy={busyIds.has(send.id)}
+            expanded={expanded.has(send.id)}
+            error={cancelError?.sendId === send.id ? cancelError.message : null}
+            onToggleSelect={() => toggleSelect(send.id)}
+            onToggleExpand={() => toggleExpand(send.id)}
+            onCancel={() => void cancel([send.id], send.id)}
+          />
+        ))}
+      </div>
+    </>
+  );
+}
+
+/* ---------- one queued send ---------- */
+
+/* The review card's vocabulary, but lighter — this is a list entry, not a
+   decision card: smaller shadow, tighter padding, no action pair. */
+function QueuedRow({
+  send,
+  checked,
+  busy,
+  expanded,
+  error,
+  onToggleSelect,
+  onToggleExpand,
+  onCancel,
+}: {
+  send: SendRow;
+  checked: boolean;
+  busy: boolean;
+  expanded: boolean;
+  error: string | null;
+  onToggleSelect: () => void;
+  onToggleExpand: () => void;
+  onCancel: () => void;
+}) {
+  const failed = send.status === "failed";
+  return (
+    <article className="rounded-xl border border-line bg-surface p-3.5 shadow-win-sm min-[700px]:px-[18px] min-[700px]:py-4">
+      <div className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={onToggleSelect}
+          disabled={busy || failed}
+          aria-label={`Select send to ${send.lead?.name ?? "lead"}`}
+          className="size-5 shrink-0 accent-tide disabled:cursor-not-allowed"
+        />
+        <span className="rounded-full border border-line bg-paper px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] text-ink-soft">
+          {sendKindLabel(send.kind)}
+        </span>
+        <span className="ml-auto shrink-0 font-mono text-[10.5px] text-ink-faint tabular-nums">
+          {shortAge(send.created_at)}
+        </span>
+      </div>
+
+      {send.lead && <LeadLine lead={send.lead} />}
+
+      {/* the frozen copy — the review card's mono block, clamped to three
+          lines; tapping the block toggles it open (list rows stay short) */}
+      <button
+        type="button"
+        onClick={onToggleExpand}
+        aria-expanded={expanded}
+        aria-label={expanded ? "Collapse note" : "Expand note"}
+        className={`block w-full cursor-pointer rounded-[10px] border border-line bg-paper px-3.5 py-[13px] text-left ${
+          send.lead ? "" : "mt-3"
+        }`}
+      >
+        {/* line-clamp sets its own display (-webkit-box), so `block` only
+            applies to the expanded state — stacking both breaks the clamp */}
+        <span
+          className={`whitespace-pre-wrap break-words font-mono text-[12.75px] leading-[1.65] text-ink ${
+            expanded ? "block" : "line-clamp-3"
+          }`}
+        >
+          {send.note}
+        </span>
+      </button>
+
+      {send.attachment_slug && (
+        <p className="m-0 mt-1.5 font-mono text-[10.5px] text-ink-faint">
+          d/{send.attachment_slug} &middot; attached
+        </p>
+      )}
+
+      <div className="mt-2.5 flex min-h-6 items-center gap-2.5">
+        <SendStatus send={send} />
+        {send.status === "pending" && (
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={busy}
+            className="ml-auto cursor-pointer px-1 py-1.5 text-[13px] font-medium text-ink-faint transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Cancel
+          </button>
+        )}
+      </div>
+
+      {failed && send.error && (
+        <p className="m-0 mt-1 text-[12.5px] leading-[1.55] text-red-700">
+          {send.error}
+        </p>
+      )}
+
+      {error && (
+        <p
+          className="m-0 mt-2 text-[13px] font-medium text-red-700"
+          role="alert"
+        >
+          {error}
+        </p>
+      )}
+    </article>
+  );
+}
+
+/* pending → "sends ~Jul 22" (the strip's date form; "queued" when the
+   dispatcher hasn't projected a day); sending → live green; failed → red,
+   with the full error rendered under the row. */
+function SendStatus({ send }: { send: SendRow }) {
+  if (send.status === "sending")
+    return (
+      <span className="font-mono text-[11.5px] tracking-[0.02em] text-ok">
+        sending now
+      </span>
+    );
+  if (send.status === "failed")
+    return (
+      <span className="font-mono text-[11.5px] font-medium tracking-[0.02em] text-red-700">
+        failed
+      </span>
+    );
+  return (
+    <span className="font-mono text-[11.5px] tracking-[0.02em] text-ink-soft tabular-nums">
+      {send.projected_date
+        ? `sends ~${statsDate(send.projected_date)}`
+        : "queued"}
+    </span>
   );
 }
 
@@ -1067,6 +1646,18 @@ function EmptyQueue() {
       <p className="mx-auto my-0 max-w-[350px] text-[13px] leading-[1.55] text-ink-soft">
         Nothing needs a decision right now. When your AE submits new work, it
         lands here and you get a Slack ping with the link.
+      </p>
+    </div>
+  );
+}
+
+/* ---------- alt state: nothing queued ---------- */
+
+function EmptyQueued() {
+  return (
+    <div className={`${CARD} mt-6 px-6 py-11 text-center`}>
+      <p className="mx-auto my-0 max-w-[350px] text-[13px] leading-[1.55] text-ink-soft">
+        Nothing queued &mdash; approved sends land here until they go out.
       </p>
     </div>
   );
