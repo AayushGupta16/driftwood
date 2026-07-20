@@ -529,31 +529,32 @@ function ReviewQueue() {
           <EmptyQueue />
         ) : (
           <>
-            {kindCounts.size > 1 && (
-              <div
-                role="group"
-                aria-label="Filter by type"
-                className="mx-0.5 mt-[18px] flex flex-wrap items-center gap-2"
-              >
+            {/* Always visible (even single-kind) so the queue's composition
+                is readable at a glance — hiding it read as "the feature is
+                gone" when the queue happened to be all one type. */}
+            <div
+              role="group"
+              aria-label="Filter by type"
+              className="mx-0.5 mt-[18px] flex flex-wrap items-center gap-2"
+            >
+              <FilterChip
+                label="all"
+                count={items.length}
+                active={activeKind === null}
+                onClick={() => switchFilter(null)}
+              />
+              {chipKinds.map((kind) => (
                 <FilterChip
-                  label="all"
-                  count={items.length}
-                  active={activeKind === null}
-                  onClick={() => switchFilter(null)}
+                  key={kind}
+                  label={kindLabel(kind)}
+                  count={kindCounts.get(kind) ?? 0}
+                  active={activeKind === kind}
+                  onClick={() =>
+                    switchFilter(activeKind === kind ? null : kind)
+                  }
                 />
-                {chipKinds.map((kind) => (
-                  <FilterChip
-                    key={kind}
-                    label={kindLabel(kind)}
-                    count={kindCounts.get(kind) ?? 0}
-                    active={activeKind === kind}
-                    onClick={() =>
-                      switchFilter(activeKind === kind ? null : kind)
-                    }
-                  />
-                ))}
-              </div>
-            )}
+              ))}
+            </div>
 
             <div className="mx-0.5 mb-2.5 mt-[14px] flex flex-wrap items-center gap-2.5">
               <label className="inline-flex cursor-pointer items-center gap-[9px] text-[13.5px] font-medium text-ink-soft">
