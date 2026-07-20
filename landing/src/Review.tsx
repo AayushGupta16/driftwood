@@ -6,10 +6,11 @@ import { CARD, useToast } from "./dashboard-shared";
 
 /* /dashboard/review — the founder's review queue: one flat chronological list
    of decisions the AE is waiting on (oldest first), per the signed-off draft
-   in site/design/review-queue.html. Mobile-first: the usual entry point is a
-   Slack magic link tapped on a phone, so the base layout IS the ~640px single
-   column with 44px touch targets; ≥700px only adds air and right-aligns
-   actions.
+   in site/design/review-queue.html, plus kind-filter chips so one send type
+   (e.g. connection requests) can be isolated and bulk-approved. Mobile-first:
+   the usual entry point is a Slack magic link tapped on a phone, so the base
+   layout IS the ~640px single column with 44px touch targets; ≥700px only
+   adds air and right-aligns actions.
 
    Auth: a `?token=` magic link is exchanged for the normal session cookie
    via POST /api/v1/dashboard/reviews/token-login BEFORE the /auth/me gate,
@@ -275,6 +276,16 @@ function kindLabel(kind: string): string {
   return kind;
 }
 
+/* Chip order — connections first (the kind that piles up and gets
+   bulk-cleared), then messages, then bugs; unknown kinds trail in
+   queue order. */
+const KIND_ORDER = ["send_connection", "send_message", "bug_validation"];
+
+function kindRank(kind: string): number {
+  const i = KIND_ORDER.indexOf(kind);
+  return i === -1 ? KIND_ORDER.length : i;
+}
+
 /* Pull the human-readable error out of the backend's envelope
    ({"error": {"code", "detail"}}) — e.g. the 409 linkedin_not_connected
    message — falling back to a generic line. */
@@ -307,6 +318,7 @@ function ReviewQueue() {
   const [busyIds, setBusyIds] = useState<ReadonlySet<string>>(EMPTY_SET);
   const [decideError, setDecideError] = useState<DecideError | null>(null);
   const [confirmAll, setConfirmAll] = useState(false);
+  const [kindFilter, setKindFilter] = useState<string | null>(null);
   const toast = useToast();
 
   /* An armed "Approve all" disarms itself after a beat — no stale confirm
@@ -412,8 +424,37 @@ function ReviewQueue() {
   );
 
   const items = state.status === "ready" ? state.items : [];
+
+  /* Kind filter: chips narrow the list so "select all → approve" can clear
+     one send type (e.g. every connection request) without hand-sorting.
+     Everything below the chips — select-all, Approve selected, Approve all,
+     the cards — operates on the FILTERED list only. A filter whose kind
+     empties out (last item decided) falls back to "all" by derivation, so
+     the list never strands on an empty view. */
+  const kindCounts = new Map<string, number>();
+  for (const item of items)
+    kindCounts.set(item.kind, (kindCounts.get(item.kind) ?? 0) + 1);
+  const chipKinds = [...kindCounts.keys()].sort(
+    (a, b) => kindRank(a) - kindRank(b),
+  );
+  const activeKind =
+    kindFilter !== null && kindCounts.has(kindFilter) ? kindFilter : null;
+  const visible =
+    activeKind === null
+      ? items
+      : items.filter((item) => item.kind === activeKind);
+
   const busy = busyIds.size > 0;
-  const allSelected = items.length > 0 && selected.size === items.length;
+  const allSelected = visible.length > 0 && selected.size === visible.length;
+
+  /* Selection resets on every filter change so a card hidden by the filter
+     can never ride along into a bulk approve; the armed Approve all disarms
+     for the same reason (its count just changed meaning). */
+  function switchFilter(kind: string | null) {
+    setKindFilter(kind);
+    setSelected(EMPTY_SET);
+    setConfirmAll(false);
+  }
 
   function toggleSelect(id: string) {
     setSelected((prev) => {
@@ -427,7 +468,7 @@ function ReviewQueue() {
   function handleBulkApprove() {
     // Preserve queue order in the POST — oldest first, like the page.
     void decide(
-      items
+      visible
         .filter((item) => selected.has(item.id))
         .map((item) => ({ item_id: item.id, decision: "approve" as const })),
       null,
@@ -435,8 +476,8 @@ function ReviewQueue() {
   }
 
   /* First tap arms the button ("Approve all N? Confirm"); the second submits
-     every pending item as one decide POST. Real outreach gets queued on
-     approve — never off a single click. */
+     every visible pending item as one decide POST. Real outreach gets queued
+     on approve — never off a single click. */
   function handleApproveAll() {
     if (!confirmAll) {
       setConfirmAll(true);
@@ -444,7 +485,7 @@ function ReviewQueue() {
     }
     setConfirmAll(false);
     void decide(
-      items.map((item) => ({ item_id: item.id, decision: "approve" as const })),
+      visible.map((item) => ({ item_id: item.id, decision: "approve" as const })),
       null,
     );
   }
@@ -488,7 +529,33 @@ function ReviewQueue() {
           <EmptyQueue />
         ) : (
           <>
-            <div className="mx-0.5 mb-2.5 mt-[18px] flex flex-wrap items-center gap-2.5">
+            {kindCounts.size > 1 && (
+              <div
+                role="group"
+                aria-label="Filter by type"
+                className="mx-0.5 mt-[18px] flex flex-wrap items-center gap-2"
+              >
+                <FilterChip
+                  label="all"
+                  count={items.length}
+                  active={activeKind === null}
+                  onClick={() => switchFilter(null)}
+                />
+                {chipKinds.map((kind) => (
+                  <FilterChip
+                    key={kind}
+                    label={kindLabel(kind)}
+                    count={kindCounts.get(kind) ?? 0}
+                    active={activeKind === kind}
+                    onClick={() =>
+                      switchFilter(activeKind === kind ? null : kind)
+                    }
+                  />
+                ))}
+              </div>
+            )}
+
+            <div className="mx-0.5 mb-2.5 mt-[14px] flex flex-wrap items-center gap-2.5">
               <label className="inline-flex cursor-pointer items-center gap-[9px] text-[13.5px] font-medium text-ink-soft">
                 <input
                   type="checkbox"
@@ -496,7 +563,7 @@ function ReviewQueue() {
                   onChange={(e) =>
                     setSelected(
                       e.target.checked
-                        ? new Set(items.map((item) => item.id))
+                        ? new Set(visible.map((item) => item.id))
                         : EMPTY_SET,
                     )
                   }
@@ -526,11 +593,13 @@ function ReviewQueue() {
                 }`}
               >
                 {confirmAll
-                  ? `Approve all ${items.length}? Confirm`
+                  ? `Approve all ${visible.length}? Confirm`
                   : "Approve all"}
               </button>
               <span className="ml-auto shrink-0 font-mono text-[11px] tracking-[0.06em] text-ink-faint tabular-nums">
-                {items.length} pending
+                {activeKind === null
+                  ? `${items.length} pending`
+                  : `${visible.length} of ${items.length}`}
               </span>
             </div>
 
@@ -544,7 +613,7 @@ function ReviewQueue() {
             )}
 
             <div className="grid gap-3.5">
-              {items.map((item) => (
+              {visible.map((item) => (
                 <ItemCard
                   key={item.id}
                   item={item}
@@ -586,6 +655,43 @@ function ReviewQueue() {
           </>
         ))}
     </>
+  );
+}
+
+/* ---------- kind-filter chip ---------- */
+
+/* Mono-uppercase like the per-card kind badge so the chip visually names the
+   badge it filters on; active = tide-wash fill (design-language tinted chip).
+   min-h-9 keeps it tappable on the phone-first layout. */
+function FilterChip({
+  label,
+  count,
+  active,
+  onClick,
+}: {
+  label: string;
+  count: number;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.08em] transition-colors ${
+        active
+          ? "border-tide/40 bg-tide-wash text-tide"
+          : "border-line bg-paper text-ink-soft hover:border-ink-faint/50 hover:text-ink"
+      }`}
+    >
+      {label}
+      <span
+        className={`tabular-nums ${active ? "text-tide/70" : "text-ink-faint"}`}
+      >
+        {count}
+      </span>
+    </button>
   );
 }
 
