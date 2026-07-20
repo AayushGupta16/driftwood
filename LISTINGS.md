@@ -71,6 +71,6 @@ call. Built for B2B founders and teams who want replies, not send volume.
 |---|---|---|
 | LinkedIn company page | live | linkedin.com/company/driftwood-ai-inc |
 | Crunchbase | LIVE 2026-07-20 | medium no-social-proof blurb, founder Aayush Gupta, SF, founded 2026, photos by Aayush |
-| G2 | todo (Aayush account) | category: AI SDRs; Yuvan review after listing |
+| G2 | APPROVED 2026-07-20 | instant approval; categories being assigned, profile link coming by email; G2 sent Yuvan a review invite (yuvan@autosana.ai); Aayush = profile admin |
 | Product Hunt | later, Aayush's timing | category: AI SDR |
 | TAAFT | todo | short blurb |
