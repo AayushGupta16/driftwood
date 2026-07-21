@@ -1,0 +1,512 @@
+{
+ "version": "v2",
+ "date": "2026-07-21",
+ "tiers": {
+  "1": "must-win now: entity, coinage, winnable SERPs, shipping pages",
+  "2": "near-term: clusters our pages target, question tail, founder/operator how-to",
+  "3": "long-term build-up: head and best-of terms, aspirational categories"
+ },
+ "headline_metric": "tier 1 hit rate; total /100 secondary",
+ "queries": [
+  {
+   "n": 1,
+   "tier": 1,
+   "q": "driftwood AI SDR"
+  },
+  {
+   "n": 2,
+   "tier": 1,
+   "q": "driftwood.sh"
+  },
+  {
+   "n": 3,
+   "tier": 1,
+   "q": "what is driftwood ai sdr"
+  },
+  {
+   "n": 4,
+   "tier": 1,
+   "q": "driftwood ai sdr reviews"
+  },
+  {
+   "n": 5,
+   "tier": 1,
+   "q": "driftwood vs artisan ai sdr"
+  },
+  {
+   "n": 6,
+   "tier": 1,
+   "q": "what is demo-led outbound"
+  },
+  {
+   "n": 7,
+   "tier": 1,
+   "q": "demo-led outbound definition"
+  },
+  {
+   "n": 8,
+   "tier": 1,
+   "q": "human-in-the-loop AI outbound tool approve emails before send"
+  },
+  {
+   "n": 9,
+   "tier": 1,
+   "q": "AI SDR with human approval before sending"
+  },
+  {
+   "n": 10,
+   "tier": 1,
+   "q": "autonomous vs assisted outbound founder-led sales"
+  },
+  {
+   "n": 11,
+   "tier": 1,
+   "q": "autonomous vs assisted AI SDR"
+  },
+  {
+   "n": 12,
+   "tier": 1,
+   "q": "founder-led sales cold outreach playbook early stage"
+  },
+  {
+   "n": 13,
+   "tier": 1,
+   "q": "how to scale founder led sales"
+  },
+  {
+   "n": 14,
+   "tier": 1,
+   "q": "when should a startup hire an SDR"
+  },
+  {
+   "n": 15,
+   "tier": 1,
+   "q": "founder led sales to first sales hire"
+  },
+  {
+   "n": 16,
+   "tier": 1,
+   "q": "cold outbound benchmarks first party data"
+  },
+  {
+   "n": 17,
+   "tier": 1,
+   "q": "cold email reply rate benchmarks 2026"
+  },
+  {
+   "n": 18,
+   "tier": 1,
+   "q": "AI SDR that builds custom demos"
+  },
+  {
+   "n": 19,
+   "tier": 1,
+   "q": "AI SDR sends from your own accounts"
+  },
+  {
+   "n": 20,
+   "tier": 1,
+   "q": "best outbound tools for 3 person startup no sales team"
+  },
+  {
+   "n": 21,
+   "tier": 2,
+   "q": "what is a good cold email reply rate"
+  },
+  {
+   "n": 22,
+   "tier": 2,
+   "q": "average cold email response rate statistics b2b"
+  },
+  {
+   "n": 23,
+   "tier": 2,
+   "q": "average cold email reply rate 2026"
+  },
+  {
+   "n": 24,
+   "tier": 2,
+   "q": "good reply rate for cold emails"
+  },
+  {
+   "n": 25,
+   "tier": 2,
+   "q": "cold email conversion rate benchmarks"
+  },
+  {
+   "n": 26,
+   "tier": 2,
+   "q": "b2b cold email response rates"
+  },
+  {
+   "n": 27,
+   "tier": 2,
+   "q": "cold email success rate"
+  },
+  {
+   "n": 28,
+   "tier": 2,
+   "q": "why cold emails get no replies common causes"
+  },
+  {
+   "n": 29,
+   "tier": 2,
+   "q": "why is my cold email reply rate so low"
+  },
+  {
+   "n": 30,
+   "tier": 2,
+   "q": "how to improve cold email response rate"
+  },
+  {
+   "n": 31,
+   "tier": 2,
+   "q": "how to get more replies to cold emails"
+  },
+  {
+   "n": 32,
+   "tier": 2,
+   "q": "is cold email dead 2026"
+  },
+  {
+   "n": 33,
+   "tier": 2,
+   "q": "do cold emails still work for b2b"
+  },
+  {
+   "n": 34,
+   "tier": 2,
+   "q": "how to write a cold email that gets replies"
+  },
+  {
+   "n": 35,
+   "tier": 2,
+   "q": "cold email tips b2b founders"
+  },
+  {
+   "n": 36,
+   "tier": 2,
+   "q": "how to write a cold email for b2b sales"
+  },
+  {
+   "n": 37,
+   "tier": 2,
+   "q": "cold email personalization impact reply rate research"
+  },
+  {
+   "n": 38,
+   "tier": 2,
+   "q": "cold email personalization at scale"
+  },
+  {
+   "n": 39,
+   "tier": 2,
+   "q": "how many cold emails to book a meeting"
+  },
+  {
+   "n": 40,
+   "tier": 2,
+   "q": "cold email follow up cadence best practices"
+  },
+  {
+   "n": 41,
+   "tier": 2,
+   "q": "how to do cold outreach for B2B SaaS startup"
+  },
+  {
+   "n": 42,
+   "tier": 2,
+   "q": "cold outreach for startups guide"
+  },
+  {
+   "n": 43,
+   "tier": 2,
+   "q": "cold email vs LinkedIn outreach B2B"
+  },
+  {
+   "n": 44,
+   "tier": 2,
+   "q": "how to do cold outreach on linkedin"
+  },
+  {
+   "n": 45,
+   "tier": 2,
+   "q": "linkedin outreach tips founders"
+  },
+  {
+   "n": 46,
+   "tier": 2,
+   "q": "how to book more demos b2b saas"
+  },
+  {
+   "n": 47,
+   "tier": 2,
+   "q": "how to improve demo booking rate"
+  },
+  {
+   "n": 48,
+   "tier": 2,
+   "q": "how to improve sdr conversion rates"
+  },
+  {
+   "n": 49,
+   "tier": 2,
+   "q": "sdr metrics benchmarks"
+  },
+  {
+   "n": 50,
+   "tier": 2,
+   "q": "cold outbound playbook for sdrs"
+  },
+  {
+   "n": 51,
+   "tier": 2,
+   "q": "how to run a cold outbound channel"
+  },
+  {
+   "n": 52,
+   "tier": 2,
+   "q": "how to know if cold outbound is working"
+  },
+  {
+   "n": 53,
+   "tier": 2,
+   "q": "how to get first 10 customers b2b saas"
+  },
+  {
+   "n": 54,
+   "tier": 2,
+   "q": "how to get your first customers startup"
+  },
+  {
+   "n": 55,
+   "tier": 2,
+   "q": "best growth channels for b2b saas"
+  },
+  {
+   "n": 56,
+   "tier": 2,
+   "q": "gtm strategy for seed stage startup"
+  },
+  {
+   "n": 57,
+   "tier": 2,
+   "q": "does cold email work for startups"
+  },
+  {
+   "n": 58,
+   "tier": 2,
+   "q": "founder led sales definition"
+  },
+  {
+   "n": 59,
+   "tier": 2,
+   "q": "hiring your first salesperson startup"
+  },
+  {
+   "n": 60,
+   "tier": 2,
+   "q": "first sales hire startup when"
+  },
+  {
+   "n": 61,
+   "tier": 3,
+   "q": "best AI SDR"
+  },
+  {
+   "n": 62,
+   "tier": 3,
+   "q": "best AI SDR tools 2026"
+  },
+  {
+   "n": 63,
+   "tier": 3,
+   "q": "best AI SDR software"
+  },
+  {
+   "n": 64,
+   "tier": 3,
+   "q": "top AI SDR companies"
+  },
+  {
+   "n": 65,
+   "tier": 3,
+   "q": "AI SDR tools for seed stage startups"
+  },
+  {
+   "n": 66,
+   "tier": 3,
+   "q": "AI SDR"
+  },
+  {
+   "n": 67,
+   "tier": 3,
+   "q": "what is an AI SDR"
+  },
+  {
+   "n": 68,
+   "tier": 3,
+   "q": "AI SDR tool"
+  },
+  {
+   "n": 69,
+   "tier": 3,
+   "q": "AI sales agent"
+  },
+  {
+   "n": 70,
+   "tier": 3,
+   "q": "best AI sales agents 2026"
+  },
+  {
+   "n": 71,
+   "tier": 3,
+   "q": "AI sales rep software"
+  },
+  {
+   "n": 72,
+   "tier": 3,
+   "q": "AI BDR vs AI SDR"
+  },
+  {
+   "n": 73,
+   "tier": 3,
+   "q": "AI SDR vs human SDR"
+  },
+  {
+   "n": 74,
+   "tier": 3,
+   "q": "AI SDR cold email reply rates vs human SDR performance"
+  },
+  {
+   "n": 75,
+   "tier": 3,
+   "q": "do AI SDR tools actually work"
+  },
+  {
+   "n": 76,
+   "tier": 3,
+   "q": "AI SDR pricing comparison"
+  },
+  {
+   "n": 77,
+   "tier": 3,
+   "q": "cheapest AI SDR for startups"
+  },
+  {
+   "n": 78,
+   "tier": 3,
+   "q": "new AI outbound agents 2026 alternatives to 11x Artisan"
+  },
+  {
+   "n": 79,
+   "tier": 3,
+   "q": "11x vs artisan alternatives"
+  },
+  {
+   "n": 80,
+   "tier": 3,
+   "q": "AI SDR vs sales engagement platform comparison"
+  },
+  {
+   "n": 81,
+   "tier": 3,
+   "q": "best AI growth tools"
+  },
+  {
+   "n": 82,
+   "tier": 3,
+   "q": "best AI growth tools for startups"
+  },
+  {
+   "n": 83,
+   "tier": 3,
+   "q": "AI tools for b2b growth"
+  },
+  {
+   "n": 84,
+   "tier": 3,
+   "q": "best AI sales tools 2026"
+  },
+  {
+   "n": 85,
+   "tier": 3,
+   "q": "AI tools for founders"
+  },
+  {
+   "n": 86,
+   "tier": 3,
+   "q": "best AI tools for lead generation"
+  },
+  {
+   "n": 87,
+   "tier": 3,
+   "q": "AI lead generation software"
+  },
+  {
+   "n": 88,
+   "tier": 3,
+   "q": "AI prospecting tools"
+  },
+  {
+   "n": 89,
+   "tier": 3,
+   "q": "best cold email software"
+  },
+  {
+   "n": 90,
+   "tier": 3,
+   "q": "best cold email tools 2026"
+  },
+  {
+   "n": 91,
+   "tier": 3,
+   "q": "cold email automation software"
+  },
+  {
+   "n": 92,
+   "tier": 3,
+   "q": "outsourced SDR vs AI SDR"
+  },
+  {
+   "n": 93,
+   "tier": 3,
+   "q": "outsourced sdr companies cost"
+  },
+  {
+   "n": 94,
+   "tier": 3,
+   "q": "sdr as a service"
+  },
+  {
+   "n": 95,
+   "tier": 3,
+   "q": "ai for sales prospecting"
+  },
+  {
+   "n": 96,
+   "tier": 3,
+   "q": "b2b saas lead generation tools"
+  },
+  {
+   "n": 97,
+   "tier": 3,
+   "q": "best sales automation tools startups"
+  },
+  {
+   "n": 98,
+   "tier": 3,
+   "q": "ai outbound sales tool"
+  },
+  {
+   "n": 99,
+   "tier": 3,
+   "q": "best ai sdr for linkedin outreach"
+  },
+  {
+   "n": 100,
+   "tier": 3,
+   "q": "ai sdr comparison 2026"
+  }
+ ]
+}
