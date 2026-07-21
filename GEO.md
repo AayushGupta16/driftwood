@@ -96,6 +96,22 @@ a draft for Aayush, never a send.
   agentic-query-research-2026-07-21.md), revise the fixed set to
   v-next as a proposal.
 
+## First observed citation (2026-07-21)
+
+Google AI Overview on "driftwood ai sdr" (Aayush's logged-in SERP)
+describes driftwood as demo-led outbound, citing OUR /faq plus a
+r/SaaSMarketing thread (2026-06-01, "has anyone actually gotten
+meetings from ai sdr"); organic #1 = /faq. Six days after Phase 0,
+one day after Crunchbase/G2. Caveats that drove same-day fixes: the
+overview called us an "autonomous SDR platform" and dropped the
+review step (wedge inversion; /faq first answer + JSON-LD recut to
+lead with assisted + approve-before-send), and the collision
+consultancy (driftwood-ai.com) still held organic #2. Channel
+nuance: Google Overviews cite Reddit (licensing) even though
+ChatGPT-class agents cannot reach it; Reddit threads count for
+Google's engine line specifically. Same day, sonar full baseline =
+0/100 named. Engines diverge; never generalize one engine's result.
+
 ## Expectations
 
 Tier-1 hit rate 20% by ~60 days (entity flips first as Crunchbase/G2
