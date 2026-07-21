@@ -76,6 +76,14 @@ five alternative terms; GEO already tracks the pattern (the
 alternatives-to-11x/Artisan queries). The never-bid-on-brands rule is
 an ads rule; organic comparison pages are standard practice.
 
+## Press (deep-researched 2026-07-21)
+
+Full verified strategy in PRESS.md: UMD Founder Stories first
+(verified dofollow .edu link), then the data-led TechCrunch pitch
+(Davis/Mehta, speedrun beat verified) and Axios (top-3 AI-cited
+domain), plus the SOS/Qwoted tracked pilot. Mentions feed GEO ~3x
+more than links per Ahrefs - press serves both strategies.
+
 ## Integration marketplaces - the authority engine (for a future agent)
 
 Documented 2026-07-21 for whoever picks this up. The strongest
