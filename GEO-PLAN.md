@@ -97,3 +97,26 @@ Baseline sweep + plan audit: 2026-07-15. Re-run the sweep monthly.
   definitional line + links row, sitemap at 5 URLs, llms.txt lists the
   pages. Remaining: Crunchbase + G2 (Aayush), Yuvan G2 review, TAAFT,
   listicle pitches, prompt-tracking cron, PostHog channel tagging.
+- 2026-07-20/21 (overnight session): Phase 1 largely DONE via browser
+  automation. Crunchbase live (driftwood (driftwood.sh), founder, SF,
+  2026). G2 approved same-day, Aayush = profile admin, review invite
+  sent to Yuvan through G2's form. TAAFT: now fee-gated, SKIPPED per
+  never-paid rule. alternateName ["driftwood.sh", "Driftwood AI SDR"]
+  added to Organization/WebSite JSON-LD. GSC finding: the site IS
+  indexed; authority, not indexing, is the bottleneck. Inline Cal.com
+  booking shipped to prod (all CTAs anchor to #book; new
+  booking_calendar_open/booking_confirmed events). STAT REFRAMED by
+  Aayush: "replies went from under 1% to over 14% in week one at
+  Autosana (YC S25)" + "including founders who had ignored more than
+  four months of prior outreach" replace the 14x form; LISTINGS.md is
+  canonical. Keyword research done in Keyword Planner (111 terms, 3
+  rounds, ads/research-keyword-volumes-2026-07-20.md): head terms
+  confirmed but STRATEGY PIVOT per Aayush - compete on the long tail in
+  seed/Series-A founder + early-Head-of-Growth vocabulary, keep head
+  pages as destinations. Flagship long-tail find: "founder led sales"
+  (100-1K, Low comp). Money cluster: "outsourced sdr" (100-1K, $36-135
+  CPC). Drafts in flight: /ai-sdr (ready for review),
+  /founder-led-sales, /cold-outbound-benchmarks, /outsourced-sdr,
+  match-audit proposal, outreach pitch drafts. Remaining on Aayush:
+  draft reviews, Autosana cross-link ask, a16z directory ask, sending
+  pitches.
