@@ -88,10 +88,17 @@ a draft for Aayush, never a send.
   Steam game); geo_views ground truth = 0. Winnable SERPs with zero
   AI-SDR competitor presence: approve-before-send/HITL, founder-led
   playbook, when-to-hire-SDR, outsourced-SDR-cost.
-- Layer 2 (open): answer-checking — ask real engines the prompt set,
-  grade whether driftwood is NAMED in answers. Needs engine API
-  spend approval; the probe is the leading indicator, answer-share is
-  the truth.
+- Layer 2 BUILT + BASELINE RUN 2026-07-21: answer-share — asks the
+  100 queries verbatim to real engines (sonar, gpt-5-mini:online,
+  gemini-3.5-flash:online via OpenRouter; GEO_ANSWER_MODELS
+  overridable), grades named_us/named_collision/ambiguous/absent.
+  Spend approved <$100/week (Aayush 2026-07-21). Run: python3
+  site/scripts/geo-answer-probe.py (key from backend/.env; ~$7.5 per
+  full run, $15 hard stop; daily-capable). Baseline tier-1 named_us:
+  gemini 6/20, gpt 2/20, sonar 0/20 (sonar resolves the brand to
+  driftwood-ai.com or Drift); tiers 2-3 zero on all engines; lines
+  comparable only within one engine+model. The probe is the leading
+  indicator, answer-share is the truth.
 - Quarterly: re-run the 4-persona discovery probe (prompts in
   agentic-query-research-2026-07-21.md), revise the fixed set to
   v-next as a proposal.
