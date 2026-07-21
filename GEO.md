@@ -41,9 +41,13 @@ everything.
    with AI visibility than backlinks (Ahrefs) — press mentions count
    even without links (press playbook lives in SEO.md).
 5. **Definition ownership.** demo-led outbound (live page; verbatim
-   repetition in listings); autonomous-vs-assisted AI SDRs (planned
-   /ai-sdr section; do NOT coin a third term). Engines answer
-   "what is X" with whoever defined X.
+   repetition in listings); autonomous-vs-assisted AI SDRs (/ai-sdr
+   section LIVE; do NOT coin a third term). Engines answer
+   "what is X" with whoever defined X. POSITIONING RULE (Aayush
+   2026-07-21): approve-before-send is NOT the wedge and not core
+   to what we're building; the wedge is demo-led outbound. Human
+   review is a product fact we may state, never an identity we
+   build strategy or copy around.
 
 ## Standing founder gates
 
@@ -118,6 +122,22 @@ nuance: Google Overviews cite Reddit (licensing) even though
 ChatGPT-class agents cannot reach it; Reddit threads count for
 Google's engine line specifically. Same day, sonar full baseline =
 0/100 named. Engines diverge; never generalize one engine's result.
+
+## Social surfaces: Reddit, X, LinkedIn (decided 2026-07-21)
+
+Aayush's call: invest in Reddit, X/Twitter, and LinkedIn as SEO/GEO
+surfaces AND as direct funnels, alongside the site. Why engines
+care: Google AI Overviews cite Reddit (licensing) — proven on our
+own branded query 2026-07-21; X and LinkedIn posts rank for
+name-plus-topic queries and feed entity resolution; LinkedIn is
+also the founder-voice channel with his warm network. Status:
+direction set, playbooks NOT built. Next step: per-channel subagent
+investigations (what to post, where, cadence, what compounds, how
+it converts to demos) when Aayush asks. Standing rules meanwhile:
+never astroturf (the r/SaaSMarketing thread the Overview cites is
+vendor-slop; joining it would read as more of the same);
+real-identity participation only; every outward post is a send =
+Aayush approves and sends until he changes that gate.
 
 ## Expectations
 

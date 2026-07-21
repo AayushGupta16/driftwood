@@ -79,6 +79,12 @@ Priority queue with validated targets:
 3. /ai-sdr — SHIPPED 2026-07-21 (head-term destination; autonomous
    vs assisted section live, no third term coined; sitewide footer
    slot = the tail-funnel mechanism; DefinedTerm schema x3).
+   POSITIONING CORRECTION (Aayush 2026-07-21): approve-before-send
+   is NOT our wedge and not core to what we're building; the wedge
+   is demo-led outbound (the demo in every message). Keep
+   autonomous-vs-assisted as honest category taxonomy; at the
+   pattern pass, recut this page's driftwood sections to lead with
+   the demo, and stop framing "who approves the send" as our flag.
 4. /alternatives/<competitor> — ALL FIVE SHIPPED 2026-07-21
    (instantly, clay, 11x, apollo, artisan). Monthly fact-check
    rotation covers all five + /best-ai-sdr-tools + /ai-sdr. First
@@ -115,6 +121,10 @@ benchmarks; CTAs -> /#book.
    monthly reconciliation. Crunchbase slug recorded there
    (organization/driftwood-driftwood-sh, verified indexed); G2 URL
    pending email.
+5. Social surfaces — DECIDED 2026-07-21 (Aayush): invest in Reddit,
+   X/Twitter, and LinkedIn for SEO/GEO and as direct funnels.
+   Playbooks not yet built; per-channel subagent investigations are
+   the next step when he asks. Details + standing rules in GEO.md.
 
 ## Press (folded from PRESS.md; 104-agent verified research 2026-07-21)
 
