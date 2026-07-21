@@ -194,7 +194,7 @@ function LoadingView() {
   );
 }
 
-function LoggedOutView() {
+export function LoggedOutView() {
   return (
     <main className="flex flex-1 items-center justify-center px-5 py-16 sm:px-8">
       <div className="w-full max-w-sm rounded-xl border border-line bg-surface p-8 text-center shadow-win">
@@ -251,7 +251,17 @@ function LoggedInView({ user, onLogout }: { user: User; onLogout: () => void }) 
             <span className="hidden text-[14px] font-medium text-ink sm:inline">
               {displayName}
             </span>
-            {user.is_admin && <GodModeButton />}
+            {user.is_admin && (
+              <>
+                <GodModeButton />
+                <a
+                  href="/dashboard/seo-geo"
+                  className="inline-flex items-center rounded-full border border-tide/40 bg-surface px-3.5 py-2 text-[13.5px] font-medium text-tide no-underline transition-colors hover:border-tide hover:bg-tide-wash"
+                >
+                  SEO / GEO
+                </a>
+              </>
+            )}
             <button
               type="button"
               onClick={onLogout}

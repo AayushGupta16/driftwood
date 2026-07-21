@@ -1,0 +1,539 @@
+{
+ "version": "v4",
+ "date": "2026-07-21",
+ "changelog_v4": "Round-8 alternatives cluster added to tier 2 (switching intent, validated): instantly/clay/11x/apollo-io/artisan alternatives. 105 total.",
+ "changelog_v3": "Aayush's review: cut driftwood-autosana + outsourced/hire cluster + dead terms (ai bdr, sdr ai) + pipeline generation; broad how-to-write-cold-email terms demoted to tier 3 (unqualified traffic); B2B-SaaS-qualified outreach terms added to tier 2; linkedin automation terms KEPT (medium-term lean-in); tool-category heads kept (competing with Amplemarket-class).",
+ "tiers": {
+  "1": "must-win now: entity, coinage, winnable SERPs, shipping pages",
+  "2": "near-term: clusters our pages target, question tail, founder/operator how-to",
+  "3": "long-term build-up: head and best-of terms, aspirational categories"
+ },
+ "headline_metric": "tier 1 hit rate; total /100 secondary",
+ "queries": [
+  {
+   "n": 1,
+   "tier": 1,
+   "q": "driftwood.sh"
+  },
+  {
+   "n": 2,
+   "tier": 1,
+   "q": "driftwood ai sdr"
+  },
+  {
+   "n": 3,
+   "tier": 1,
+   "q": "driftwood ai"
+  },
+  {
+   "n": 4,
+   "tier": 1,
+   "q": "demo-led outbound"
+  },
+  {
+   "n": 5,
+   "tier": 1,
+   "q": "founder led sales"
+  },
+  {
+   "n": 6,
+   "tier": 1,
+   "q": "founder-led sales"
+  },
+  {
+   "n": 7,
+   "tier": 1,
+   "q": "cold outbound benchmarks"
+  },
+  {
+   "n": 8,
+   "tier": 1,
+   "q": "cold email benchmarks"
+  },
+  {
+   "n": 9,
+   "tier": 1,
+   "q": "what is demo-led outbound"
+  },
+  {
+   "n": 10,
+   "tier": 1,
+   "q": "how to scale founder led sales"
+  },
+  {
+   "n": 11,
+   "tier": 1,
+   "q": "when to hire an sdr"
+  },
+  {
+   "n": 12,
+   "tier": 1,
+   "q": "founder led sales playbook"
+  },
+  {
+   "n": 13,
+   "tier": 1,
+   "q": "cold email reply rate benchmark"
+  },
+  {
+   "n": 14,
+   "tier": 1,
+   "q": "what is a good cold email reply rate"
+  },
+  {
+   "n": 15,
+   "tier": 2,
+   "q": "average cold email response rate"
+  },
+  {
+   "n": 16,
+   "tier": 2,
+   "q": "average cold email reply rate"
+  },
+  {
+   "n": 17,
+   "tier": 2,
+   "q": "good reply rate for cold emails"
+  },
+  {
+   "n": 18,
+   "tier": 2,
+   "q": "cold email success rate"
+  },
+  {
+   "n": 19,
+   "tier": 2,
+   "q": "cold email conversion rate"
+  },
+  {
+   "n": 20,
+   "tier": 2,
+   "q": "b2b cold email response rates"
+  },
+  {
+   "n": 21,
+   "tier": 2,
+   "q": "cold email personalization"
+  },
+  {
+   "n": 22,
+   "tier": 2,
+   "q": "personalized cold email examples"
+  },
+  {
+   "n": 23,
+   "tier": 2,
+   "q": "how to improve cold email response rate"
+  },
+  {
+   "n": 24,
+   "tier": 2,
+   "q": "how to get more replies to cold emails"
+  },
+  {
+   "n": 25,
+   "tier": 2,
+   "q": "why is my cold email not working"
+  },
+  {
+   "n": 26,
+   "tier": 2,
+   "q": "do cold emails still work"
+  },
+  {
+   "n": 27,
+   "tier": 2,
+   "q": "is cold email dead"
+  },
+  {
+   "n": 28,
+   "tier": 2,
+   "q": "how many cold emails to book a meeting"
+  },
+  {
+   "n": 29,
+   "tier": 2,
+   "q": "cold email follow up cadence"
+  },
+  {
+   "n": 30,
+   "tier": 2,
+   "q": "how to do cold outreach"
+  },
+  {
+   "n": 31,
+   "tier": 2,
+   "q": "cold outreach tips"
+  },
+  {
+   "n": 32,
+   "tier": 2,
+   "q": "startup cold outreach"
+  },
+  {
+   "n": 33,
+   "tier": 2,
+   "q": "outbound for startups"
+  },
+  {
+   "n": 34,
+   "tier": 2,
+   "q": "cold email vs linkedin outreach"
+  },
+  {
+   "n": 35,
+   "tier": 2,
+   "q": "how to do cold outreach on linkedin"
+  },
+  {
+   "n": 36,
+   "tier": 2,
+   "q": "linkedin outreach tool"
+  },
+  {
+   "n": 37,
+   "tier": 2,
+   "q": "linkedin outreach automation"
+  },
+  {
+   "n": 38,
+   "tier": 2,
+   "q": "how to get first customers"
+  },
+  {
+   "n": 39,
+   "tier": 2,
+   "q": "how to get first customers startup"
+  },
+  {
+   "n": 40,
+   "tier": 2,
+   "q": "hiring your first salesperson"
+  },
+  {
+   "n": 41,
+   "tier": 2,
+   "q": "first sales hire startup"
+  },
+  {
+   "n": 42,
+   "tier": 2,
+   "q": "b2b saas lead generation"
+  },
+  {
+   "n": 43,
+   "tier": 2,
+   "q": "saas lead generation"
+  },
+  {
+   "n": 44,
+   "tier": 2,
+   "q": "saas demand generation"
+  },
+  {
+   "n": 45,
+   "tier": 2,
+   "q": "best growth channels for b2b saas"
+  },
+  {
+   "n": 46,
+   "tier": 2,
+   "q": "gtm strategy for startups"
+  },
+  {
+   "n": 47,
+   "tier": 2,
+   "q": "how to book more demos b2b"
+  },
+  {
+   "n": 48,
+   "tier": 2,
+   "q": "improve demo show rate"
+  },
+  {
+   "n": 49,
+   "tier": 2,
+   "q": "how to improve sdr conversion rates"
+  },
+  {
+   "n": 50,
+   "tier": 2,
+   "q": "sdr metrics benchmarks"
+  },
+  {
+   "n": 51,
+   "tier": 2,
+   "q": "how to validate a sales channel"
+  },
+  {
+   "n": 52,
+   "tier": 2,
+   "q": "do google ads work for b2b saas"
+  },
+  {
+   "n": 53,
+   "tier": 2,
+   "q": "is seo worth it for startups"
+  },
+  {
+   "n": 54,
+   "tier": 2,
+   "q": "how to build a sales pipeline from scratch"
+  },
+  {
+   "n": 55,
+   "tier": 2,
+   "q": "b2b saas outreach"
+  },
+  {
+   "n": 56,
+   "tier": 2,
+   "q": "how to do b2b saas outreach"
+  },
+  {
+   "n": 57,
+   "tier": 2,
+   "q": "b2b saas cold outreach"
+  },
+  {
+   "n": 58,
+   "tier": 2,
+   "q": "b2b saas outbound"
+  },
+  {
+   "n": 59,
+   "tier": 2,
+   "q": "b2b outbound sales strategy"
+  },
+  {
+   "n": 60,
+   "tier": 2,
+   "q": "cold outreach for saas"
+  },
+  {
+   "n": 61,
+   "tier": 2,
+   "q": "saas outbound sales"
+  },
+  {
+   "n": 62,
+   "tier": 2,
+   "q": "b2b saas sales outreach"
+  },
+  {
+   "n": 63,
+   "tier": 2,
+   "q": "instantly alternative"
+  },
+  {
+   "n": 64,
+   "tier": 2,
+   "q": "clay alternative"
+  },
+  {
+   "n": 65,
+   "tier": 2,
+   "q": "11x alternative"
+  },
+  {
+   "n": 66,
+   "tier": 2,
+   "q": "apollo io alternative"
+  },
+  {
+   "n": 67,
+   "tier": 2,
+   "q": "artisan alternatives"
+  },
+  {
+   "n": 68,
+   "tier": 3,
+   "q": "how to write a cold email"
+  },
+  {
+   "n": 69,
+   "tier": 3,
+   "q": "cold email tips"
+  },
+  {
+   "n": 70,
+   "tier": 3,
+   "q": "tips for cold emailing"
+  },
+  {
+   "n": 71,
+   "tier": 3,
+   "q": "how to write a cold email for sales"
+  },
+  {
+   "n": 72,
+   "tier": 3,
+   "q": "how to start a cold email"
+  },
+  {
+   "n": 73,
+   "tier": 3,
+   "q": "ai sdr"
+  },
+  {
+   "n": 74,
+   "tier": 3,
+   "q": "ai sdr tool"
+  },
+  {
+   "n": 75,
+   "tier": 3,
+   "q": "ai sdr tools"
+  },
+  {
+   "n": 76,
+   "tier": 3,
+   "q": "best ai sdr"
+  },
+  {
+   "n": 77,
+   "tier": 3,
+   "q": "best ai sdr tools"
+  },
+  {
+   "n": 78,
+   "tier": 3,
+   "q": "ai sales agent"
+  },
+  {
+   "n": 79,
+   "tier": 3,
+   "q": "ai sales rep"
+  },
+  {
+   "n": 80,
+   "tier": 3,
+   "q": "ai lead generation"
+  },
+  {
+   "n": 81,
+   "tier": 3,
+   "q": "ai for lead generation"
+  },
+  {
+   "n": 82,
+   "tier": 3,
+   "q": "ai lead generator"
+  },
+  {
+   "n": 83,
+   "tier": 3,
+   "q": "ai lead generation software"
+  },
+  {
+   "n": 84,
+   "tier": 3,
+   "q": "ai prospecting tools"
+  },
+  {
+   "n": 85,
+   "tier": 3,
+   "q": "ai for sales prospecting"
+  },
+  {
+   "n": 86,
+   "tier": 3,
+   "q": "best ai growth tools"
+  },
+  {
+   "n": 87,
+   "tier": 3,
+   "q": "ai growth tools"
+  },
+  {
+   "n": 88,
+   "tier": 3,
+   "q": "best ai sales tools"
+  },
+  {
+   "n": 89,
+   "tier": 3,
+   "q": "ai tools for lead generation"
+  },
+  {
+   "n": 90,
+   "tier": 3,
+   "q": "cold email software"
+  },
+  {
+   "n": 91,
+   "tier": 3,
+   "q": "best cold email software"
+  },
+  {
+   "n": 92,
+   "tier": 3,
+   "q": "cold email tools"
+  },
+  {
+   "n": 93,
+   "tier": 3,
+   "q": "cold email platforms"
+  },
+  {
+   "n": 94,
+   "tier": 3,
+   "q": "cold email automation software"
+  },
+  {
+   "n": 95,
+   "tier": 3,
+   "q": "best cold email tools"
+  },
+  {
+   "n": 96,
+   "tier": 3,
+   "q": "sales automation software"
+  },
+  {
+   "n": 97,
+   "tier": 3,
+   "q": "outbound sales automation"
+  },
+  {
+   "n": 98,
+   "tier": 3,
+   "q": "ai appointment setting"
+  },
+  {
+   "n": 99,
+   "tier": 3,
+   "q": "ai sales assistant"
+  },
+  {
+   "n": 100,
+   "tier": 3,
+   "q": "ai outbound"
+  },
+  {
+   "n": 101,
+   "tier": 3,
+   "q": "automated cold outreach"
+  },
+  {
+   "n": 102,
+   "tier": 3,
+   "q": "ai cold email"
+  },
+  {
+   "n": 103,
+   "tier": 3,
+   "q": "ai email outreach"
+  },
+  {
+   "n": 104,
+   "tier": 3,
+   "q": "ai prospecting"
+  },
+  {
+   "n": 105,
+   "tier": 3,
+   "q": "best outbound sales tools"
+  }
+ ]
+}
