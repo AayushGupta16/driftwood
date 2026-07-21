@@ -10,3 +10,11 @@ export function trackCta(placement: "nav" | "hero" | "close") {
   track("book_demo", { placement });
   posthog.capture("book_demo", { placement });
 }
+
+/* the inline booking funnel: calendar_open = the Cal embed mounted (section
+   reached or CTA clicked), confirmed = Cal's bookingSuccessful event — the
+   real conversion, which the old outbound link never gave us */
+export function trackBooking(event: "booking_calendar_open" | "booking_confirmed") {
+  track(event);
+  posthog.capture(event);
+}

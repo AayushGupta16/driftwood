@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>driftwood — inline booking calendar (draft)</title>
+<!--
+  DRAFT: inline booking calendar. One delta, three tagged spots.
+
+  The change: the outbound Cal.com link becomes an inline embedded booking
+  calendar on the page itself. Rationale: every extra hop costs conversions.
+  Today every CTA opens cal.com in a new tab and we lose whoever does not
+  follow the hop. With the embed, the searcher books without leaving the page.
+
+  PLACEMENT DECISION (pick one, per the brief): the calendar lives in the
+  EXISTING close section ("See what we'd send your prospects."), which gets
+  id="book". The nav and hero CTAs become in-page anchors that scroll to it.
+  Why this and not a calendar higher on the page: the hero must fit the fold
+  (design-language, "The hero fits the fold") and a ~620px iframe would push
+  the dashboard window and the waterline off it. The close section is already
+  the page's final ask, so the calendar replaces the button that was there.
+  One booking surface, all three CTAs resolve to it, nothing else moves.
+
+  The tagged spots:
+    DELTA 1  nav CTA href: CAL_URL -> #book. Label and styling unchanged.
+    DELTA 2  hero CTA href: CAL_URL -> #book. Label and styling unchanged.
+    DELTA 3  close section: the "Book a demo" pill is replaced by the inline
+             calendar in standard window chrome, one flat line above it, one
+             fallback line below it. Heading copy unchanged.
+
+  Everything else below is a static representation of current prod
+  (landing-draft-v7 lineage, current shipped copy). The ASCII sea, the ducks,
+  the scenery, and all scroll scrubs are UNTOUCHED in prod and are omitted
+  from this draft (static wave seams shown instead) so the only thing under
+  review is the delta.
+
+  Integration notes (exact vercel.json CSP edits, client-only loading for the
+  prerendered landing, Lighthouse cost + lazy-load gate, PostHog measurement):
+  design/draft-inline-booking-NOTES.md.
+
+  Fonts via Google Fonts here for preview only; prod self-hosts.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400..700;1,400..700&family=Source+Serif+4:wght@600&display=swap" />
+<style>
+  :root {
+    --bg: #ffffff;
+    --ink: #16181b;
+    --gray: #6a737d;
+    --gray-light: #9aa2ab;
+    --line: #e9ebee;
+    --accent: #15557e;
+    --r-win: 12px;
+    --ease-settle: linear(0, 0.201 4.5%, 0.634 11.7%, 0.868 17.4%, 0.981 23%, 1.028 29.5%, 1.031 36.4%, 1.003 55.6%, 1);
+    --shadow-win: 0 1px 2px rgba(22,24,27,0.05), 0 24px 48px -24px rgba(22,24,27,0.18);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 16px; line-height: 1.5; -webkit-font-smoothing: antialiased;
+    overflow-x: clip;
+  }
+  h1, h2 { margin: 0; letter-spacing: -0.014em; text-wrap: balance; }
+  p { margin: 0; }
+  img { display: block; max-width: 100%; }
+  a { color: inherit; }
+  em.voice { font-family: Georgia, "Times New Roman", serif; font-style: italic; color: var(--accent); letter-spacing: 0; }
+  .wrap { max-width: 68rem; margin-inline: auto; padding-inline: clamp(1.25rem, 4vw, 2.5rem); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .label { font-size: 0.85rem; color: var(--gray); }
+
+  /* tide by default — there are no black buttons (design-language, Surfaces) */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--accent); color: #fff; text-decoration: none;
+    font-weight: 500; font-size: 0.95rem; height: 2.75rem; padding-inline: 1.4rem;
+    border-radius: 999px; transition: transform 0.24s var(--ease-settle), background 0.15s;
+  }
+  .btn:hover { background: #0d3c5b; transform: translateY(-1px); }
+  .btn-primary { background: var(--accent); height: 3.2rem; padding-inline: 2.1rem; font-size: 1.05rem; font-weight: 600; }
+  .btn-primary:hover { background: #0d3c5b; }
+
+  header { position: sticky; top: 0; z-index: 20; background: rgba(255,255,255,0.94); border-bottom: 1px solid var(--line); }
+  header .wrap { max-width: 82rem; }
+  .nav { display: flex; align-items: center; justify-content: space-between; height: 4rem; }
+  .wordmark { display: inline-flex; align-items: center; gap: 0.6rem; text-decoration: none; font-family: "Source Serif 4", Georgia, serif; font-weight: 600; font-size: 1.18rem; letter-spacing: 0.005em; }
+  .wordmark svg { width: 1.65rem; height: 1.65rem; }
+  .nav-right { display: flex; align-items: center; gap: 1.6rem; }
+  .nav-login { font-size: 0.9rem; color: var(--gray); text-decoration: none; }
+  .nav-login:hover { color: var(--ink); }
+  .nav .btn { height: 2.25rem; font-size: 0.875rem; padding-inline: 1.4rem; font-weight: 500; }
+
+  /* ---------- hero ---------- */
+  .hero { position: relative; overflow: clip; }
+  .hero-grid {
+    position: relative; z-index: 1;
+    display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+    align-items: center; gap: clamp(2rem, 4vw, 3.5rem);
+    padding-block: clamp(3.5rem, 6vw, 5rem);
+    min-height: min(90vh, 60rem);
+    max-width: 82rem; margin-inline: auto; padding-inline: clamp(1.25rem, 4vw, 2.5rem);
+  }
+  .hero h1 {
+    font-size: clamp(1.9rem, 1.1rem + 2.4vw, 2.75rem);
+    font-weight: 600; line-height: 1.16; max-width: 19ch;
+  }
+  .hero-sub { margin-top: 1.1rem; font-size: 1.1rem; color: var(--gray); max-width: 38ch; }
+  .hero-actions { margin-top: 1.8rem; }
+  .app-window {
+    border: 1px solid var(--line); border-radius: var(--r-win); overflow: hidden;
+    box-shadow: var(--shadow-win); background: #fff;
+  }
+  .hero-proof { margin-top: 2.4rem; display: flex; gap: 1.1rem; align-items: center; max-width: 26rem; }
+  .hero-proof img { width: 4rem; height: 4rem; border-radius: 12px; object-fit: cover; }
+  .proof-quote { font-size: 1rem; font-weight: 500; }
+  .proof-attr { margin-top: 0.25rem; font-size: 0.85rem; color: var(--gray); }
+  .proof-attr b { color: var(--ink); font-weight: 600; }
+  /* static waterline stands in for the live ASCII sea (unchanged in prod) */
+  .hero-wave { height: 28px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='28' viewBox='0 0 180 28'%3E%3Cpath d='M0 14 C 11.25 5.5, 33.75 5.5, 45 14 C 56.25 22.5, 78.75 22.5, 90 14 C 101.25 5.5, 123.75 5.5, 135 14 C 146.25 22.5, 168.75 22.5, 180 14' fill='none' stroke='%2315557e' stroke-width='1.6' stroke-opacity='0.4'/%3E%3C/svg%3E") repeat-x center; }
+
+  /* ---------- docked sheets, wave-cut seams ---------- */
+  section { position: relative; }
+  .sect { padding-block: clamp(3.5rem, 7vw, 6rem); }
+  .sheet::before {
+    content: ""; display: block; height: 28px; margin-top: -28px;
+    position: relative; z-index: 1;
+    background-repeat: repeat-x; background-position: bottom;
+  }
+  .sheet-white { background: #ffffff; }
+  .sheet-white::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='28' viewBox='0 0 180 28'%3E%3Cpath d='M0 14 C 11.25 5.5, 33.75 5.5, 45 14 C 56.25 22.5, 78.75 22.5, 90 14 C 101.25 5.5, 123.75 5.5, 135 14 C 146.25 22.5, 168.75 22.5, 180 14 L180 28 L0 28 Z' fill='%23ffffff'/%3E%3C/svg%3E"); }
+  .wash-b { background: #eaf1f7; }
+  .wash-b::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='28' viewBox='0 0 180 28'%3E%3Cpath d='M0 14 C 11.25 5.5, 33.75 5.5, 45 14 C 56.25 22.5, 78.75 22.5, 90 14 C 101.25 5.5, 123.75 5.5, 135 14 C 146.25 22.5, 168.75 22.5, 180 14 L180 28 L0 28 Z' fill='%23eaf1f7'/%3E%3C/svg%3E"); }
+
+  /* ---------- compare (static in draft; the pinned scrub is unchanged) ---------- */
+  .compare-head { text-align: center; }
+  .compare-head h2 { font-size: clamp(2rem, 1.2rem + 2.8vw, 3.2rem); font-weight: 600; }
+  .compare-sub { margin-top: 0.9rem; font-size: 1.1rem; color: var(--gray); }
+  .compare-sub b { color: var(--ink); font-weight: 700; }
+  .compare-grid { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: clamp(1.5rem, 3vw, 2.5rem); margin-top: 3.5rem; align-items: start; }
+  .compare-arrow { position: absolute; top: -3.4rem; left: 50%; transform: translateX(-50%); width: 15rem; z-index: 2; pointer-events: none; }
+  .compare-label { font-size: 0.85rem; color: var(--gray); margin-bottom: 0.8rem; }
+  .compare-label.us { color: var(--accent); font-weight: 600; }
+  .email {
+    border: 1px solid var(--line); border-radius: var(--r-win); background: #f6f7f8;
+    padding: 1.4rem 1.5rem;
+  }
+  .email-subject { font-weight: 600; font-size: 1rem; padding-bottom: 0.9rem; border-bottom: 1px solid var(--line); opacity: 0.62; }
+  .email-body { margin-top: 1rem; font-size: 0.92rem; color: #3c434a; line-height: 1.55; opacity: 0.62; }
+  .email-body p + p, .email-body ul { margin-top: 0.9rem; }
+  .email-body ul { margin-bottom: 0; padding-left: 1.2rem; }
+  .email-body .fake-link { color: #1a0dab; text-decoration: underline; }
+  .email-fate { margin-top: 1rem; padding-top: 0.9rem; border-top: 1px solid var(--line); font-size: 0.85rem; color: var(--gray-light); }
+  .redact { display: inline-block; background: #d4d9de; border-radius: 2px; width: 2.5em; height: 0.78em; }
+  .thread {
+    border: 1px solid var(--line); border-radius: var(--r-win); background: #fff;
+    box-shadow: var(--shadow-win); overflow: hidden;
+    font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  .li-head { display: flex; align-items: center; gap: 0.7rem; padding: 0.7rem 1rem; border-bottom: 1px solid #e8e8e8; }
+  .li-head .li-name { font-weight: 700; font-size: 0.95rem; color: #191919; }
+  .li-presence { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: #01754f; }
+  .li-icons { margin-left: auto; display: flex; gap: 0.9rem; color: #666; font-size: 1rem; letter-spacing: 0.05em; }
+  .li-body { padding: 0.5rem 1.1rem 0.9rem; }
+  .msg { display: grid; grid-template-columns: 2.6rem minmax(0, 1fr); gap: 0.7rem; padding-block: 0.5rem; }
+  .avatar { width: 2.6rem; height: 2.6rem; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #dce6f1; }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .avatar svg { width: 70%; height: 70%; margin-top: 22%; fill: #8ba0b5; }
+  .msg-head { display: flex; align-items: baseline; gap: 0.5rem; font-size: 0.9rem; }
+  .msg-head .who { font-weight: 700; color: #191919; }
+  .msg-head .when { color: #767676; font-size: 0.78rem; }
+  .msg-head .seen { margin-left: auto; color: #767676; }
+  .msg-head .seen svg { width: 0.85rem; height: 0.85rem; }
+  .msg-body { margin-top: 0.2rem; font-size: 0.9rem; color: #191919; line-height: 1.45; max-width: 52ch; }
+  .divider { display: flex; align-items: center; gap: 0.8rem; margin-block: 0.6rem; }
+  .divider hr { flex: 1; border: 0; border-top: 1px solid #e8e8e8; margin: 0; }
+  .divider span { font-size: 0.72rem; color: #767676; text-transform: uppercase; letter-spacing: 0.06em; }
+  .divider.win span { color: var(--accent); font-weight: 700; }
+  .divider.win hr { border-top-color: rgba(21,85,126,0.3); }
+  .li-compose { display: flex; align-items: center; gap: 0.8rem; border-top: 1px solid #e8e8e8; padding: 0.75rem 1rem; }
+  .li-input { flex: 1; background: #f2f2f2; border-radius: 999px; padding: 0.55rem 1rem; font-size: 0.85rem; color: #767676; }
+  .li-send { color: #a8a8a8; font-weight: 700; font-size: 0.9rem; }
+  .clip { margin-top: 0.7rem; position: relative; width: min(19rem, 100%); border-radius: 10px; overflow: hidden; border: 1px solid var(--line); }
+  .clip img { width: 100%; }
+  .clip::after { content: "0:19"; position: absolute; right: 0.55rem; bottom: 0.5rem; background: rgba(22,24,27,0.75); color: #fff; font-size: 0.7rem; padding: 0.1rem 0.4rem; border-radius: 4px; }
+  .play { position: absolute; inset: 0; margin: auto; width: 2.6rem; height: 2.6rem; background: rgba(22,24,27,0.62); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  .play::after { content: ""; border-style: solid; border-width: 0.45rem 0 0.45rem 0.8rem; border-color: transparent transparent transparent #fff; margin-left: 0.18rem; }
+
+  /* ---------- how it works (static stack in draft; the pinned scrub is unchanged) ---------- */
+  .how-grid { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: clamp(2.5rem, 5vw, 5rem); align-items: start; }
+  .how-grid h2 { font-size: clamp(1.6rem, 1rem + 1.9vw, 2.3rem); font-weight: 600; line-height: 1.18; }
+  .rail-list { list-style: none; margin: 2rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 1.1rem; }
+  .rail-list li { display: flex; gap: 0.8rem; align-items: baseline; font-size: 1.05rem; color: var(--gray-light); font-weight: 500; }
+  .rail-list li span { font-size: 0.8rem; }
+  .rail-list li.active { color: var(--ink); font-weight: 600; }
+  .rail-list li.active span { color: var(--accent); }
+  .rail-sub { font-size: 0.9rem; color: var(--gray); font-weight: 400; margin-top: 0.15rem; }
+  .artifact { border: 1px solid var(--line); border-radius: var(--r-win); background: #fff; overflow: hidden; box-shadow: var(--shadow-win); }
+  .artifact-bar { padding: 0.7rem 1rem; border-bottom: 1px solid var(--line); font-size: 0.85rem; color: var(--gray); }
+  .artifact img { width: 100%; height: min(22rem, 50vh); object-fit: cover; object-position: left top; }
+  .stage-stack { display: flex; flex-direction: column; gap: 1.5rem; }
+
+  /* ---------- DELTA 3 styles: the booking section (was the close section) ----------
+     Everything here reuses the existing system: close-section type scale,
+     window chrome (white, 1px line, r-win, shadow-win), gray support text.
+     No new tokens, no second accent. */
+  .book-sect { text-align: center; }
+  .book-sect .sect { padding-block: clamp(4rem, 7vw, 5.5rem); }
+  .book-sect h2 { font-size: clamp(2.4rem, 1.3rem + 4.6vw, 4.6rem); font-weight: 600; line-height: 1.05; letter-spacing: -0.02em; margin-inline: auto; max-width: 16ch; }
+  .book-sub { margin-top: 1.2rem; font-size: 1.05rem; color: var(--gray); }
+  .cal-window {
+    margin: 2.5rem auto 0; max-width: 58rem;
+    background: #fff; border: 1px solid var(--line); border-radius: var(--r-win);
+    box-shadow: var(--shadow-win);
+    /* reserve the embed's height up front so mounting it causes no layout
+       shift: ~39rem covers the month view with the times column open */
+    min-height: 39rem;
+    text-align: left;
+  }
+  .cal-fallback { margin-top: 1.1rem; font-size: 0.85rem; color: var(--gray); }
+  .cal-fallback a { color: var(--accent); text-decoration: none; }
+  .cal-fallback a:hover { text-decoration: underline; }
+
+  /* placeholder wireframe only — none of this ships; the real embed fills
+     .cal-window edge to edge and manages its own layout */
+  .ph { padding: 1.25rem; display: grid; grid-template-columns: 15rem 1fr 11rem; gap: 1.25rem; min-height: inherit; }
+  .ph-note { grid-column: 1 / -1; border: 1px dashed #c3ccd4; border-radius: 8px; padding: 0.8rem 1rem; font-size: 0.85rem; color: var(--gray); background: #fafbfc; }
+  .ph-note b { color: var(--ink); font-weight: 600; }
+  .ph-pane { border: 1px solid var(--line); border-radius: 8px; padding: 1.1rem; color: var(--gray-light); font-size: 0.85rem; }
+  .ph-pane .ph-name { color: var(--gray); font-weight: 600; font-size: 0.95rem; margin-top: 0.8rem; }
+  .ph-pane .ph-title { color: var(--ink); font-weight: 600; font-size: 1.05rem; margin-top: 0.2rem; }
+  .ph-ava { width: 2.4rem; height: 2.4rem; border-radius: 50%; background: #e4e9ed; }
+  .ph-cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.3rem; margin-top: 0.9rem; }
+  .ph-cal i { aspect-ratio: 1; border: 1px solid var(--line); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-style: normal; font-size: 0.75rem; color: var(--gray-light); }
+  .ph-cal i.on { color: var(--accent); border-color: rgba(21,85,126,0.35); font-weight: 600; }
+  .ph-times { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.9rem; }
+  .ph-times i { border: 1px solid var(--line); border-radius: 6px; padding: 0.5rem; text-align: center; font-style: normal; font-size: 0.8rem; color: var(--gray); }
+
+  /* ---------- footer (as shipped) ---------- */
+  footer { background: linear-gradient(var(--accent), #0d3c5b); color: #fff; }
+  footer::before {
+    content: ""; display: block; height: 28px; margin-top: -28px;
+    position: relative; z-index: 1;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='28' viewBox='0 0 180 28'%3E%3Cpath d='M0 14 C 11.25 5.5, 33.75 5.5, 45 14 C 56.25 22.5, 78.75 22.5, 90 14 C 101.25 5.5, 123.75 5.5, 135 14 C 146.25 22.5, 168.75 22.5, 180 14 L180 28 L0 28 Z' fill='%2315557e'/%3E%3C/svg%3E") repeat-x bottom;
+  }
+  .foot { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; padding-block: 4.5rem 3rem; }
+  .foot .wordmark { color: #fff; font-size: 1.35rem; gap: 0.85rem; }
+  .foot .wordmark svg { width: 2.4rem; height: 2.4rem; }
+  .foot-def { font-size: 0.9rem; line-height: 1.6; color: rgba(255,255,255,0.75); max-width: 56ch; text-align: center; }
+  .foot-links, .foot-line { display: flex; gap: 1.5rem; font-size: 0.9rem; color: rgba(255,255,255,0.75); flex-wrap: wrap; justify-content: center; }
+  .foot a { color: inherit; text-decoration: none; }
+  .foot a:hover { color: #fff; }
+
+  @media (max-width: 52rem) {
+    .hero-grid, .compare-grid, .how-grid { grid-template-columns: 1fr; }
+    .compare-arrow { display: none; }
+    .ph { grid-template-columns: 1fr; }
+    .cal-window { min-height: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="wordmark" href="#top" aria-label="driftwood home">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#15557e"/><g transform="translate(32 32) scale(0.88)" fill="none" stroke="#f7f4ec" stroke-linecap="round"><circle r="22.5" stroke-width="3.4"/><g stroke-width="3.6"><line y1="-22.5" y2="-27.5"/><g transform="rotate(45)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(90)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(135)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(180)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(225)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(270)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(315)"><line y1="-22.5" y2="-27.5"/></g></g><g stroke-width="2.5"><line y1="-8.5" y2="-19.5"/><g transform="rotate(45)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(90)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(135)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(180)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(225)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(270)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(315)"><line y1="-8.5" y2="-19.5"/></g></g><circle r="7.5" stroke-width="2.6" fill="#15557e"/><circle r="2.8" fill="#f7f4ec" stroke="none"/></g></svg>
+      <span style="color:var(--ink)">driftwood</span>
+    </a>
+    <nav class="nav-right" aria-label="primary">
+      <a class="nav-login" href="/dashboard">Log in</a>
+      <!-- DELTA 1: href was https://cal.com/aayush-gupta-qyilz6/30min (CAL_URL).
+           Now an in-page anchor to the booking section. Label, styling, and the
+           trackCta("nav") call are unchanged. -->
+      <a class="btn" href="#book">Book a demo</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- hero: UNCHANGED apart from the CTA href. The live ASCII sea (ducks,
+       log, scenery) mounts here in prod exactly as today; the static
+       waterline below stands in for it in this draft. -->
+  <div class="hero">
+    <div class="hero-grid">
+      <div>
+        <h1>Ship a <em class="voice">custom demo</em><br /> in every cold message.</h1>
+        <p class="hero-sub">Grow your revenue with cold outbound that converts.</p>
+        <div class="hero-actions">
+          <!-- DELTA 2: href was CAL_URL, now #book. Same pill, same label,
+               same trackCta("hero"). The click also starts loading the embed
+               so the calendar is ready when the scroll lands (see NOTES). -->
+          <a class="btn btn-primary" href="#book">Book a demo</a>
+        </div>
+        <div class="hero-proof">
+          <img src="assets/yuvan.png" alt="Yuvan Sundrani, founder of Autosana" />
+          <div>
+            <p class="proof-quote">&ldquo;amazing stuff, the demos are working so well&rdquo;</p>
+            <p class="proof-attr"><b>Yuvan Sundrani</b> &middot; Founder, Autosana (YC S25)</p>
+          </div>
+        </div>
+      </div>
+      <div class="app-window">
+        <img src="assets/dw-demo-dashboard-hero.png"
+          alt="The driftwood dashboard: LinkedIn connected and sending, 4 meetings booked, 7 replies, pipeline of 124 leads" />
+      </div>
+    </div>
+    <div class="hero-wave" aria-hidden="true"></div>
+  </div>
+
+  <!-- compare: UNCHANGED. Shown static here (prod keeps its pinned scrub
+       and the sea strip at the seam). -->
+  <section id="compare" class="sheet sheet-white">
+    <div class="wrap sect">
+      <div class="compare-head">
+        <h2>Don't send out <em class="voice">AI slop.</em></h2>
+        <p class="compare-sub">Same leads, <b>14&times;</b> the replies. Week one at Autosana.</p>
+      </div>
+      <div class="compare-grid">
+        <svg class="compare-arrow" viewBox="0 0 260 100" aria-hidden="true">
+          <path d="M 14 70 C 40 36, 72 20, 102 28 C 130 36, 132 64, 112 62 C 92 60, 98 32, 128 28 C 166 23, 208 36, 234 58" fill="none" stroke="var(--accent)" stroke-width="3.75" stroke-linecap="round"/>
+          <path d="M 234 58 l -15 -2 M 234 58 l -3 -14.5" fill="none" stroke="var(--accent)" stroke-width="3.75" stroke-linecap="round"/>
+        </svg>
+        <div>
+          <p class="compare-label">what everyone else sends</p>
+          <div class="email">
+            <p class="email-subject"><span class="redact" role="img" aria-label="name redacted"></span> &mdash; quick question</p>
+            <div class="email-body">
+              <p>Hey <span class="redact" role="img" aria-label="name redacted"></span>,</p>
+              <p>Hope you're doing well! Huge fan of what you're building &mdash; truly impressive momentum.</p>
+              <p>I'm with an AI-powered QA platform, the <b>all-in-one way to ship faster with confidence</b>. Teams like yours are seeing <b>huge results</b> &mdash; we'd love to show you how.</p>
+              <p>Any chance you have 15 minutes this week? You can <span class="fake-link">grab time here</span>.</p>
+            </div>
+            <p class="email-fate">Left on opened.</p>
+          </div>
+        </div>
+        <div>
+          <p class="compare-label us">what driftwood sent</p>
+          <div class="thread">
+            <div class="li-head">
+              <span class="li-name">CTO @ <span class="redact" role="img" aria-label="company withheld"></span></span>
+              <span class="li-presence" aria-hidden="true"></span>
+              <span class="li-icons" aria-hidden="true">&#8943;&nbsp;&nbsp;&#10530;&nbsp;&nbsp;&#10005;</span>
+            </div>
+            <div class="li-body">
+              <div class="divider" role="separator"><hr /><span>4 months of outreach, no reply</span><hr /></div>
+              <div class="divider" role="separator"><hr /><span>Jul 9</span><hr /></div>
+              <div class="msg">
+                <span class="avatar"><img src="assets/yuvan.png" alt="" /></span>
+                <div>
+                  <div class="msg-head">
+                    <span class="who">Yuvan Sundrani</span><span class="when">&middot; 6:57 PM &middot; sent by driftwood</span>
+                  </div>
+                  <p class="msg-body">hey <span class="redact" role="img" aria-label="name redacted"></span>, found a bug on <span class="redact" role="img" aria-label="company withheld"></span>. our agents caught your pricing page still promising early access for features lower tiers already have&hellip;</p>
+                  <div class="clip">
+                    <img src="assets/superhuman-demo-still.png" alt="19 second demo video built for the prospect" />
+                    <span class="play" aria-hidden="true"></span>
+                  </div>
+                </div>
+              </div>
+              <div class="divider" role="separator"><hr /><span>Jul 10 &middot; 12 hours later</span><hr /></div>
+              <div class="msg">
+                <span class="avatar" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 12c2.8 0 5-2.2 5-5s-2.2-5-5-5-5 2.2-5 5 2.2 5 5 5zm0 2c-4.4 0-9 2.2-9 6.5V24h18v-3.5c0-4.3-4.6-6.5-9-6.5z"/></svg></span>
+                <div>
+                  <div class="msg-head"><span class="who">CTO</span><span class="when">&middot; 7:18 AM</span></div>
+                  <p class="msg-body">send me a blurb + demos to <span class="redact" role="img" aria-label="address redacted" style="width:6.5em"></span> and I'll forward to my team - best</p>
+                </div>
+              </div>
+              <div class="divider win" role="separator"><hr /><span>Call booked &middot; Jul 12</span><hr /></div>
+            </div>
+            <div class="li-compose" aria-hidden="true">
+              <span class="li-input">Write a message&hellip;</span>
+              <span class="li-send">Send</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- how it works: UNCHANGED. Static stack here; prod keeps the pinned
+       scrub and the sea strip at the seam. -->
+  <section id="how" class="sheet sheet-white">
+    <div class="wrap sect how-grid">
+      <div>
+        <h2>The agent does the <em class="voice">whole job.</em></h2>
+        <ol class="rail-list">
+          <li class="active"><span>01</span>
+            <div>Researches the prospect<p class="rail-sub">Reads everything public about them.</p></div>
+          </li>
+          <li><span>02</span>
+            <div>Builds them a custom demo<p class="rail-sub">Shows what your product does for them.</p></div>
+          </li>
+          <li><span>03</span>
+            <div>Sends it from your account<p class="rail-sub">Human reviewed before it sends.</p></div>
+          </li>
+        </ol>
+      </div>
+      <div class="stage-stack">
+        <div class="artifact">
+          <div class="artifact-bar" aria-hidden="true">#driftwood-sh &middot; the agent at work</div>
+          <img src="assets/slack-trace.png" alt="The driftwood agent working in Slack" />
+        </div>
+        <div class="artifact">
+          <div class="artifact-bar" aria-hidden="true">your review queue &middot; nothing sends without you</div>
+          <img src="assets/review-queue.png" alt="The driftwood review queue" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================================
+       DELTA 3: the close section becomes the booking section.
+
+       Was:  <section class="close-sect sheet wash-b"> with an h2 and a
+             "Book a demo" pill linking out to cal.com.
+       Now:  same section, same sheet, same h2, id="book". The pill is
+             replaced by the Cal.com inline embed inside standard window
+             chrome, with one flat line above it and a fallback line below.
+
+       Why here and not the hero: the hero must fit the fold and a ~620px
+       iframe would sink the dashboard window and the waterline below it.
+       This section is already the page's one closing ask, at the moment
+       the visitor has seen the proof. All three CTAs resolve here.
+
+       The box below is a PLACEHOLDER at the embed's real dimensions
+       (month view: fills the container up to ~58rem wide, ~600 to 640px
+       tall on desktop once the times column opens; taller stacked on
+       phones). The real embed replaces the .ph wireframe entirely and
+       manages its own layout inside .cal-window.
+
+       The real embed snippet (loaded CLIENT-ONLY in prod, on scroll-into-
+       view or CTA click, never during prerender — see NOTES):
+
+       <div id="cal-inline" style="width:100%;overflow:auto"></div>
+       <script>
+         (function (C, A, L) { let p = function (a, ar) { a.q.push(ar); };
+           let d = C.document; C.Cal = C.Cal || function () { let cal = C.Cal;
+           let ar = arguments; if (!cal.loaded) { cal.ns = {}; cal.q = cal.q || [];
+           d.head.appendChild(d.createElement("script")).src = A; cal.loaded = true; }
+           if (ar[0] === L) { const api = function () { p(api, arguments); };
+           const namespace = ar[1]; api.q = api.q || [];
+           if (typeof namespace === "string") { cal.ns[namespace] = cal.ns[namespace] || api;
+           p(cal.ns[namespace], ar); p(cal, ["initNamespace", namespace]); }
+           else p(cal, ar); return; } p(cal, ar); };
+         })(window, "https://app.cal.com/embed/embed.js", "init");
+         Cal("init", "30min", { origin: "https://app.cal.com" });
+         Cal.ns["30min"]("inline", {
+           elementOrSelector: "#cal-inline",
+           calLink: "aayush-gupta-qyilz6/30min",
+           config: { layout: "month_view" },
+         });
+         Cal.ns["30min"]("ui", {
+           styles: { branding: { brandColor: "#15557e" } },  // tide, the one accent
+           hideEventTypeDetails: false,
+           layout: "month_view",
+         });
+         Cal.ns["30min"]("on", {
+           action: "bookingSuccessful",
+           callback: () => {} // posthog booking_confirmed, see NOTES
+         });
+       </script>
+       ====================================================================== -->
+  <section id="book" class="book-sect sheet wash-b">
+    <div class="wrap sect">
+      <h2>See what we'd send <em class="voice">your</em> prospects.</h2>
+      <p class="book-sub">Pick a time below. 30 minutes with Aayush, the founder.</p>
+
+      <div class="cal-window">
+        <!-- placeholder wireframe: none of this ships -->
+        <div class="ph" aria-hidden="true">
+          <div class="ph-note"><b>Placeholder.</b> The Cal.com inline embed mounts here: aayush-gupta-qyilz6/30min, month view, brand color #15557e. It fills this window edge to edge, on the embed's own white. Loaded client-only when this section nears the viewport or a CTA is clicked; this box reserves the height so nothing shifts when it mounts.</div>
+          <div class="ph-pane">
+            <div class="ph-ava"></div>
+            <p class="ph-name">Aayush Gupta</p>
+            <p class="ph-title">30 Min Meeting</p>
+            <p style="margin-top:0.6rem">30m &middot; Google Meet</p>
+          </div>
+          <div class="ph-pane">
+            July 2026
+            <div class="ph-cal">
+              <i>M</i><i>T</i><i>W</i><i>T</i><i>F</i><i>S</i><i>S</i>
+              <i></i><i></i><i>1</i><i>2</i><i>3</i><i>4</i><i>5</i>
+              <i>6</i><i>7</i><i>8</i><i>9</i><i>10</i><i>11</i><i>12</i>
+              <i>13</i><i>14</i><i>15</i><i>16</i><i>17</i><i>18</i><i>19</i>
+              <i>20</i><i class="on">21</i><i class="on">22</i><i class="on">23</i><i class="on">24</i><i>25</i><i>26</i>
+              <i class="on">27</i><i class="on">28</i><i class="on">29</i><i class="on">30</i><i class="on">31</i><i></i><i></i>
+            </div>
+          </div>
+          <div class="ph-pane">
+            Tue, Jul 21
+            <div class="ph-times">
+              <i>9:00 am</i><i>9:30 am</i><i>10:00 am</i><i>11:30 am</i><i>1:00 pm</i><i>2:30 pm</i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- the old link survives as the fallback path (embed blocked or slow) -->
+      <p class="cal-fallback">If the calendar does not load, book at <a href="https://cal.com/aayush-gupta-qyilz6/30min">cal.com/aayush-gupta-qyilz6/30min</a> or email <a href="mailto:aayush@driftwood.sh">aayush@driftwood.sh</a>.</p>
+    </div>
+  </section>
+  <!-- end DELTA 3 -->
+
+</main>
+
+<!-- footer: UNCHANGED (as shipped, links + definitional line) -->
+<footer>
+  <div class="wrap foot">
+    <a class="wordmark" href="#top" aria-label="back to top">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#15557e"/><g transform="translate(32 32) scale(0.88)" fill="none" stroke="#f7f4ec" stroke-linecap="round"><circle r="22.5" stroke-width="3.4"/><g stroke-width="3.6"><line y1="-22.5" y2="-27.5"/><g transform="rotate(45)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(90)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(135)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(180)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(225)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(270)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(315)"><line y1="-22.5" y2="-27.5"/></g></g><g stroke-width="2.5"><line y1="-8.5" y2="-19.5"/><g transform="rotate(45)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(90)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(135)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(180)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(225)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(270)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(315)"><line y1="-8.5" y2="-19.5"/></g></g><circle r="7.5" stroke-width="2.6" fill="#15557e"/><circle r="2.8" fill="#f7f4ec" stroke="none"/></g></svg>
+    </a>
+    <p class="foot-def">driftwood is an AI sales agent for demo-led outbound: it researches each prospect, builds a working demo of your product for their business, and sends from your account after human review.</p>
+    <nav class="foot-links" aria-label="site">
+      <a href="/customers/autosana">Customers</a>
+      <a href="/demo-led-outbound">Demo-led outbound</a>
+      <a href="/faq">FAQ</a>
+      <a href="/best-ai-sdr-tools">Compare AI SDR tools</a>
+    </nav>
+    <div class="foot-line">
+      <a href="mailto:aayush@driftwood.sh">aayush@driftwood.sh</a>
+      <span>&copy; 2026 driftwood</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
