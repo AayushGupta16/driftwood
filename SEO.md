@@ -52,6 +52,19 @@ Amplemarket class. Cut outright: driftwood-autosana, the
 outsourced/hire cluster, ai bdr, sdr ai, pipeline generation.
 Guide-page retarget: /b2b-saas-outreach (not /cold-email-guide).
 
+
+## Traffic goal (Aayush, 2026-07-21)
+
+Stated goal: SEO+GEO drive 10,000 impressions/mo with a 1% visitor-to-
+demo rate. Honest calibration against domain physics: ~1,500-3,000/mo
+run-rate is the aggressive-but-real 30-day mark (ship all pages within
+a week + request indexing + alternatives batch); 10k/mo run-rate lands
+day 60-90 as rankings mature. 1% of VISITORS (sessions) booking is the
+right target with qualified traffic + the inline calendar; measured as
+booking_confirmed / sessions in PostHog. Alternatives pages
+(/alternatives/<competitor>) join the page plan - round-8 data in the
+research file; priority: instantly, clay, 11x, apollo, artisan.
+
 ## Validated targets (Keyword Planner, US, 2026-07-20/21, 184 terms)
 
 Full data: ads/research-keyword-volumes-2026-07-20.md (4 rounds).
