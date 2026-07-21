@@ -2,14 +2,27 @@
  "date": "2026-07-21",
  "layer": "answer",
  "queryset_version": "v2",
- "aborted": null,
  "headline": {
   "sonar": {
    "model": "perplexity/sonar",
-   "status": "completed",
    "tier1_named_us": 0,
    "tier1_total": 20,
-   "tier1_named_us_rate": 0.0
+   "tier1_named_us_rate": 0.0,
+   "audited": true
+  },
+  "gpt": {
+   "model": "openai/gpt-5-mini:online",
+   "tier1_named_us": 2,
+   "tier1_total": 20,
+   "tier1_named_us_rate": 0.1,
+   "audited": false
+  },
+  "gemini": {
+   "model": "google/gemini-3.5-flash:online",
+   "tier1_named_us": 6,
+   "tier1_total": 20,
+   "tier1_named_us_rate": 0.3,
+   "audited": false
   }
  },
  "engines": [
@@ -66,9 +79,119 @@
     "Unify": 1,
     "Landbase": 1
    },
-   "cost_usd": 0.542
+   "cost_usd": 0.542,
+   "audited": true
+  },
+  {
+   "engine": "gpt",
+   "model": "openai/gpt-5-mini:online",
+   "status": "completed",
+   "errors": 0,
+   "error_sample": null,
+   "total": 100,
+   "named_us_total": 2,
+   "tier1_named_us": 2,
+   "tier1_total": 20,
+   "tier1_named_us_rate": 0.1,
+   "per_tier": {
+    "1": {
+     "named_us": 2,
+     "named_collision": 1,
+     "ambiguous": 2,
+     "absent": 15,
+     "total": 20,
+     "named_us_rate": 0.1
+    },
+    "2": {
+     "named_us": 0,
+     "named_collision": 0,
+     "ambiguous": 0,
+     "absent": 40,
+     "total": 40,
+     "named_us_rate": 0.0
+    },
+    "3": {
+     "named_us": 0,
+     "named_collision": 0,
+     "ambiguous": 0,
+     "absent": 40,
+     "total": 40,
+     "named_us_rate": 0.0
+    }
+   },
+   "competitor_counts": {
+    "Apollo": 23,
+    "Lemlist": 13,
+    "Instantly": 8,
+    "Artisan": 5,
+    "11x": 4,
+    "Salesforge": 3,
+    "Smartlead": 3,
+    "Clay": 3,
+    "AiSDR": 2,
+    "Amplemarket": 1
+   },
+   "cost_usd": 1.7225,
+   "audited": false
+  },
+  {
+   "engine": "gemini",
+   "model": "google/gemini-3.5-flash:online",
+   "status": "completed",
+   "errors": 0,
+   "error_sample": null,
+   "total": 100,
+   "named_us_total": 6,
+   "tier1_named_us": 6,
+   "tier1_total": 20,
+   "tier1_named_us_rate": 0.3,
+   "per_tier": {
+    "1": {
+     "named_us": 6,
+     "named_collision": 0,
+     "ambiguous": 0,
+     "absent": 14,
+     "total": 20,
+     "named_us_rate": 0.3
+    },
+    "2": {
+     "named_us": 0,
+     "named_collision": 0,
+     "ambiguous": 0,
+     "absent": 40,
+     "total": 40,
+     "named_us_rate": 0.0
+    },
+    "3": {
+     "named_us": 0,
+     "named_collision": 0,
+     "ambiguous": 0,
+     "absent": 40,
+     "total": 40,
+     "named_us_rate": 0.0
+    }
+   },
+   "competitor_counts": {
+    "Clay": 39,
+    "Apollo": 38,
+    "Instantly": 33,
+    "11x": 25,
+    "Artisan": 24,
+    "AiSDR": 23,
+    "Smartlead": 20,
+    "Salesforge": 12,
+    "Lemlist": 11,
+    "Amplemarket": 10,
+    "Saleshandy": 5,
+    "Unify": 5,
+    "Autobound": 4,
+    "Nooks": 3,
+    "Coldreach": 1
+   },
+   "cost_usd": 5.4128,
+   "audited": false
   }
  ],
- "total_cost_usd": 0.542,
- "note": "results comparable only within one engine+model line"
+ "total_cost_usd": 7.68,
+ "note": "results comparable only within one engine+model line. gpt/gemini 2026-07-21 verdicts UNAUDITED: answer excerpts were not persisted (script bug during the credits-exhaustion runs); treat as indicative, re-baseline post-topup with excerpts verified."
 }
