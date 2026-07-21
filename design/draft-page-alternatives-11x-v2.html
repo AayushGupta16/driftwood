@@ -1,0 +1,944 @@
+<!--
+DRAFT v2 exemplar for the comparison-page pattern. Founder review pending; this file does not ship and no live page was touched.
+Base: site/landing/public/alternatives/11x/index.html; every fact carried over unchanged unless the critique flagged it.
+Pattern deltas vs the live page, one line each:
+- Verdict box: new tide-wash TLDR directly under the disclosure; answers "11x or an alternative" in six sentences with driftwood's concession attached.
+- At-a-glance table: new; Tool / What it is / Entry price / What you still need to buy / Best stage; words in cells, never checkmarks; 11x row 1, driftwood last with the chip.
+- Pricing snapshot table: new; verified numbers live once here; Amplemarket and Unify are omitted with the reason stated (no verifiable entry price); corrections-invite line beneath.
+- External source links: TechCrunch, Vendr, and 11x's own worker pages hyperlinked inline where the claims are made (all URLs verified 2026-07-21).
+- 2025 reporting: told once, as a dated timeline with both sides; the FAQ answer now compresses and points instead of retelling it.
+- Intro skeleton killed: no "usually mean one of three things" formula; "six honest options" retired from title and meta; "honest" 0 uses in body copy; "as of July 2026" once per table (2 total, was 8).
+- driftwood entry rewritten per the positioning rule: leads with demo-led outbound, comparative against Alice, human review stated as a fact mid-entry, Autosana stat exactly once on the whole page.
+- "When 11x is the right choice, including over us": prose wall replaced by a paired "Choose 11x if / Choose an alternative if" checklist plus one intro sentence.
+- FAQ: four page-unique questions (pricing opacity, the 2025 record, contract exit, self-serve trial); the recycled reply-rate slot is retired; JSON-LD updated to match.
+- Disclosure rewritten page-specific (states the linked-sources practice and why our bias is smaller here than it looks).
+- Updated line now carries the explicit price-check date (2026-07-21), the monthly fact-check's visible anchor.
+Decisions honored: no competitor screenshots, no G2 citations, no modeled dollar totals (qualitative "what you still need to buy" column), no migration block, published $1,000-$5,000 range in driftwood's pricing row.
+-->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>11x alternatives in 2026, compared by price and stage · driftwood</title>
+<meta name="description" content="11x alternatives compared with sourced pricing, a dated timeline of the 2025 reporting, an at-a-glance table, and a plain answer to when 11x is still the right buy." />
+<link rel="canonical" href="https://driftwood.sh/alternatives/11x" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<meta name="theme-color" content="#15557e" />
+<meta property="og:title" content="11x alternatives in 2026, compared by price and stage · driftwood" />
+<meta property="og:description" content="11x alternatives compared with sourced pricing, a dated timeline of the 2025 reporting, an at-a-glance table, and a plain answer to when 11x is still the right buy." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://driftwood.sh/alternatives/11x" />
+<meta property="og:image" content="https://driftwood.sh/og-5.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://driftwood.sh/og-5.png" />
+<link rel="preload" href="/fonts/public-sans-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "@id": "https://driftwood.sh/alternatives/11x#article",
+      "headline": "11x alternatives in 2026, compared by price and stage",
+      "url": "https://driftwood.sh/alternatives/11x",
+      "mainEntityOfPage": "https://driftwood.sh/alternatives/11x",
+      "datePublished": "2026-07-21",
+      "dateModified": "2026-07-21",
+      "inLanguage": "en"
+    },
+    {
+      "@type": "ItemList",
+      "name": "11x alternatives",
+      "url": "https://driftwood.sh/alternatives/11x",
+      "numberOfItems": 6,
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "driftwood", "url": "https://driftwood.sh" },
+        { "@type": "ListItem", "position": 2, "name": "Artisan (Ava)", "url": "https://artisan.co" },
+        { "@type": "ListItem", "position": 3, "name": "Amplemarket", "url": "https://amplemarket.com" },
+        { "@type": "ListItem", "position": 4, "name": "Unify", "url": "https://unifygtm.com" },
+        { "@type": "ListItem", "position": 5, "name": "Apollo", "url": "https://www.apollo.io" },
+        { "@type": "ListItem", "position": 6, "name": "Clay", "url": "https://clay.com" }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Why does 11x not publish pricing?",
+          "acceptedAnswer": { "@type": "Answer", "text": "11x sells through a sales process: pricing comes on a call, contracts run annual, and implementation is scoped per customer. The public numbers that exist are procurement data from Vendr rather than published prices: roughly $5,000 a month per digital worker, with a median contract value of about $55,050 a year. Treat them as reported rather than official, and confirm with 11x directly." }
+        },
+        {
+          "@type": "Question",
+          "name": "What happened with 11x in 2025?",
+          "acceptedAnswer": { "@type": "Answer", "text": "In March 2025 TechCrunch reported that some companies whose logos appeared on 11x's site said they were not customers, that former employees described early customer churn of 70 to 80 percent, and that reported annual recurring revenue included the full value of contracts with three-month break clauses. 11x disputed the characterization, said its retention at the time was 79 percent, and its investors publicly backed the company. In May 2025 founder Hasan Sukkar stepped down as CEO and CTO Prabhav Jain took over. The practical takeaway is to reference-check current customers rather than trusting logos." }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I get out of an 11x contract if it does not work?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Reported contract structure has historically been 12 months, sometimes with a break clause at three months. A break clause is a negotiation item rather than a given, so raise it before signing and get it in writing." }
+        },
+        {
+          "@type": "Question",
+          "name": "Is there a way to try the autonomous AI SDR model without a sales call?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Yes. Artisan's Ava is the same autonomous category bet, self-serve from $250 a month with no annual contract required. If the real need is plain high-volume cold email rather than an autonomous agent, Instantly starts at $47 a month." }
+        }
+      ]
+    }
+  ]
+}
+</script>
+
+<style>
+  @font-face {
+    font-family: "Public Sans";
+    src: url("/fonts/public-sans-latin-wght-normal.woff2") format("woff2-variations");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Source Serif 4";
+    src: url("/fonts/source-serif-4-latin-600-normal.woff2") format("woff2");
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  :root {
+    --ink: #16181b;
+    --gray: #6a737d;
+    --gray-light: #9aa2ab;
+    --line: #e9ebee;
+    --tide: #15557e;
+    --tide-deep: #0d3c5b;
+    --tide-wash: #eaf1f7;
+    --bg: #ffffff;
+    --r-win: 12px;
+    --shadow-win: 0 1px 2px rgba(22,24,27,0.05), 0 24px 48px -24px rgba(22,24,27,0.18);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 16px; line-height: 1.55; -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 { margin: 0; letter-spacing: -0.014em; text-wrap: balance; }
+  p { margin: 0; }
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid var(--tide); outline-offset: 2px; }
+
+  em.voice {
+    font-family: Georgia, "Times New Roman", serif;
+    font-style: italic; color: var(--tide); letter-spacing: 0;
+  }
+
+  .wrap { max-width: 46rem; margin-inline: auto; padding-inline: clamp(1.25rem, 4vw, 2rem); }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--tide); color: #fff; text-decoration: none;
+    font-weight: 600; font-size: 0.95rem; height: 2.75rem; padding-inline: 1.5rem;
+    border-radius: 999px; transition: background 0.15s ease;
+  }
+  .btn:hover { background: var(--tide-deep); }
+
+  /* ---------- chrome ---------- */
+  header.site {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(255,255,255,0.94); border-bottom: 1px solid var(--line);
+    backdrop-filter: blur(6px);
+  }
+  .nav {
+    max-width: 68rem; margin-inline: auto;
+    padding-inline: clamp(1.25rem, 4vw, 2rem);
+    display: flex; align-items: center; justify-content: space-between; height: 4rem;
+  }
+  .wordmark {
+    display: inline-flex; align-items: center; gap: 0.55rem;
+    font-family: "Source Serif 4", Georgia, serif; font-weight: 600;
+    font-size: 1.2rem; text-decoration: none; color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .wordmark .helm { width: 1.9rem; height: 1.9rem; display: block; flex-shrink: 0; }
+  .nav .btn { height: 2.35rem; font-size: 0.875rem; padding-inline: 1.2rem; }
+
+  /* ---------- article ---------- */
+  .article-head { padding-block: clamp(3rem, 7vw, 5rem) 0; }
+  h1 {
+    font-size: clamp(1.9rem, 1.2rem + 2vw, 2.6rem);
+    font-weight: 600; line-height: 1.18;
+  }
+  .byline { margin-top: 0.9rem; font-size: 0.9rem; color: var(--gray-light); }
+  .updated { margin-top: 0.35rem; font-size: 0.85rem; color: var(--gray); }
+
+  .disclosure {
+    margin-top: 2rem; padding: 1.1rem 1.3rem;
+    background: var(--tide-wash); border-radius: var(--r-win);
+    color: var(--ink); font-size: 0.98rem;
+  }
+  .disclosure strong { font-weight: 600; }
+  .disclosure a {
+    color: var(--tide); text-decoration: underline;
+    text-underline-offset: 3px; text-decoration-thickness: 1px;
+  }
+
+  /* the verdict box: same construction as the disclosure */
+  .verdict {
+    margin-top: 1rem; padding: 1.1rem 1.3rem;
+    background: var(--tide-wash); border-radius: var(--r-win);
+    color: var(--ink); font-size: 0.98rem;
+  }
+  .verdict strong { font-weight: 600; }
+  .verdict a {
+    color: var(--tide); text-decoration: underline;
+    text-underline-offset: 3px; text-decoration-thickness: 1px;
+  }
+
+  .prose { margin-top: 1.5rem; color: var(--gray); font-size: 1.02rem; }
+  .prose + .prose { margin-top: 1rem; }
+  .prose a {
+    color: var(--tide); text-decoration: underline;
+    text-underline-offset: 3px; text-decoration-thickness: 1px;
+  }
+  .prose a:hover { color: var(--tide-deep); }
+
+  h2 { margin-top: 3.2rem; font-size: 1.45rem; font-weight: 600; }
+
+  /* tables */
+  .table-scroll { margin-top: 1.4rem; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table.compare {
+    width: 100%; border-collapse: collapse;
+    font-size: 0.9rem; line-height: 1.45; min-width: 42rem;
+  }
+  table.compare caption {
+    caption-side: top; text-align: left;
+    font-size: 0.85rem; color: var(--gray); padding-bottom: 0.7rem;
+  }
+  table.compare th {
+    font-size: 0.85rem; font-weight: 600; color: var(--gray);
+    text-align: left; vertical-align: bottom;
+    padding: 0.55rem 0.9rem 0.55rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+  table.compare td {
+    padding: 0.75rem 0.9rem 0.75rem 0;
+    border-bottom: 1px solid var(--line);
+    color: var(--gray); vertical-align: top;
+  }
+  table.compare td.tool { color: var(--ink); font-weight: 600; white-space: nowrap; }
+  table.compare td a {
+    color: var(--tide); text-decoration: underline;
+    text-underline-offset: 3px; text-decoration-thickness: 1px;
+  }
+  table.compare td a:hover { color: var(--tide-deep); }
+  .table-note { margin-top: 0.9rem; font-size: 0.9rem; color: var(--gray); }
+  .table-note a {
+    color: var(--tide); text-decoration: underline;
+    text-underline-offset: 3px; text-decoration-thickness: 1px;
+  }
+
+  /* segments */
+  .segment { margin-top: 1.6rem; padding-top: 1.4rem; border-top: 1px solid var(--line); }
+  .segment:first-of-type { border-top: 0; padding-top: 0; }
+  .segment h3 { font-size: 1.05rem; font-weight: 600; }
+  .segment p { margin-top: 0.45rem; color: var(--gray); }
+  .segment p a {
+    color: var(--tide); text-decoration: underline;
+    text-underline-offset: 3px; text-decoration-thickness: 1px;
+  }
+  .segment p a:hover { color: var(--tide-deep); }
+
+  /* dated timeline (the 2025 record, told once) */
+  ul.timeline { margin: 0.9rem 0 0; padding: 0; list-style: none; }
+  ul.timeline li {
+    padding: 0.7rem 0; border-top: 1px solid var(--line);
+    color: var(--gray); font-size: 0.98rem;
+  }
+  ul.timeline li:first-child { border-top: 0; padding-top: 0.2rem; }
+  ul.timeline strong { color: var(--ink); font-weight: 600; }
+  ul.timeline a {
+    color: var(--tide); text-decoration: underline;
+    text-underline-offset: 3px; text-decoration-thickness: 1px;
+  }
+  ul.timeline a:hover { color: var(--tide-deep); }
+
+  /* the paired choose-if checklist */
+  .choose-pair {
+    margin-top: 1.4rem; display: grid;
+    grid-template-columns: 1fr 1fr; gap: 1rem;
+  }
+  .choose-col {
+    border: 1px solid var(--line); border-radius: var(--r-win);
+    padding: 1.1rem 1.3rem;
+  }
+  .choose-col h3 { font-size: 1rem; font-weight: 600; }
+  .choose-col ul { margin: 0.7rem 0 0; padding-left: 1.1rem; color: var(--gray); }
+  .choose-col li { margin-top: 0.5rem; font-size: 0.95rem; }
+  .choose-col li a {
+    color: var(--tide); text-decoration: underline;
+    text-underline-offset: 3px; text-decoration-thickness: 1px;
+  }
+
+  /* entries */
+  .entries { margin-top: 1.2rem; }
+  .entry {
+    display: grid; grid-template-columns: 2.9rem 1fr; gap: 0 0.6rem;
+    padding-block: 1.7rem;
+  }
+  .entry + .entry { border-top: 1px solid var(--line); }
+  .entry-num {
+    font-size: 1.35rem; font-weight: 600; color: var(--gray);
+    line-height: 1.3; font-variant-numeric: tabular-nums;
+  }
+  .entry h3 { font-size: 1.15rem; font-weight: 600; line-height: 1.3; }
+  .entry h3 a { text-decoration: none; }
+  .entry h3 a:hover { color: var(--tide); }
+  .entry p { margin-top: 0.55rem; color: var(--gray); }
+  .entry p a {
+    color: var(--tide); text-decoration: underline;
+    text-underline-offset: 3px; text-decoration-thickness: 1px;
+  }
+  .entry p a:hover { color: var(--tide-deep); }
+  .bestfor { margin-top: 0.75rem; font-size: 0.92rem; }
+  .bestfor strong { font-weight: 600; color: var(--ink); }
+  .bestfor span { color: var(--gray); }
+
+  .chip {
+    display: inline-block; vertical-align: 0.12em; margin-left: 0.55rem;
+    background: var(--tide-wash); color: var(--tide);
+    font-size: 0.78rem; font-weight: 500; line-height: 1;
+    padding: 0.28rem 0.55rem; border-radius: 6px;
+  }
+  table.compare .chip { margin-left: 0.45rem; vertical-align: 0.05em; }
+
+  /* the driftwood entry sits in a card; the rest are hairline rows */
+  .entry-card {
+    background: #fff; border: 1px solid var(--line);
+    border-radius: var(--r-win); box-shadow: var(--shadow-win);
+    padding: 1.7rem 1.5rem; margin-bottom: 0.6rem;
+  }
+  .entry-card + .entry { border-top: 0; }
+
+  /* CTA */
+  .cta {
+    margin-top: 3.5rem; padding: 2.4rem 1.5rem 2.6rem;
+    border: 1px solid var(--line); border-radius: var(--r-win);
+    box-shadow: var(--shadow-win); text-align: center;
+  }
+  .cta h2 { margin-top: 0; font-size: 1.35rem; }
+  .cta p { margin-top: 0.6rem; color: var(--gray); }
+  .cta .btn { margin-top: 1.4rem; height: 3rem; padding-inline: 2rem; font-size: 1rem; }
+
+  /* footer */
+  footer.site {
+    margin-top: 4.5rem;
+    background: linear-gradient(#15557e, #0d3c5b);
+    color: #fff;
+  }
+  footer.site::before {
+    content: "";
+    display: block;
+    height: 28px;
+    margin-top: -28px;
+    position: relative;
+    z-index: 1;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='28' viewBox='0 0 180 28'%3E%3Cpath d='M0 14 C 11.25 5.5, 33.75 5.5, 45 14 C 56.25 22.5, 78.75 22.5, 90 14 C 101.25 5.5, 123.75 5.5, 135 14 C 146.25 22.5, 168.75 22.5, 180 14 L180 28 L0 28 Z' fill='%2315557e'/%3E%3C/svg%3E") repeat-x bottom;
+  }
+  .foot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1.5rem;
+    padding: 4.5rem 1.5rem 3rem;
+  }
+  .foot .wordmark { color: #fff; font-size: 1.35rem; }
+  .foot .wordmark .helm { width: 2.4rem; height: 2.4rem; }
+  .foot-def {
+    margin: 0;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.75);
+    max-width: 56ch;
+  }
+  .foot-links,
+  .foot-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.5rem;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.75);
+  }
+  footer.site a { color: inherit; text-decoration: none; }
+  footer.site a:hover { color: #fff; }
+
+  @media (max-width: 40rem) {
+    .entry { grid-template-columns: 2.4rem 1fr; }
+    .choose-pair { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <nav class="nav" aria-label="Main">
+    <a class="wordmark" href="/"><svg viewBox="0 0 64 64" class="helm" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#15557e"/><g transform="translate(32 32) scale(0.88)" fill="none" stroke="#f7f4ec" stroke-linecap="round" stroke-linejoin="round"><circle r="22.5" stroke-width="3.4"/><g stroke-width="3.6"><line y1="-22.5" y2="-27.5"/><g transform="rotate(45)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(90)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(135)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(180)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(225)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(270)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(315)"><line y1="-22.5" y2="-27.5"/></g></g><g stroke-width="2.5"><line y1="-8.5" y2="-19.5"/><g transform="rotate(45)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(90)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(135)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(180)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(225)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(270)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(315)"><line y1="-8.5" y2="-19.5"/></g></g><circle r="7.5" stroke-width="2.6" fill="#15557e"/><circle r="2.8" fill="#f7f4ec" stroke="none"/></g></svg>driftwood</a>
+    <a class="btn" href="/#book">Book a demo</a>
+  </nav>
+</header>
+
+<main class="wrap">
+
+  <div class="article-head">
+    <h1>11x alternatives</h1>
+    <p class="byline">By the driftwood team · July 2026</p>
+    <p class="updated">Updated July 2026. Prices checked 2026-07-21; this page gets a monthly fact-check.</p>
+
+    <div class="disclosure">
+      <strong>The disclosure, first.</strong> We build driftwood
+      (<a href="https://driftwood.sh">driftwood.sh</a>), and it is one of the
+      alternatives below. Two things may help you weigh that: the hard claims
+      about 11x on this page come from named outside sources, linked where the
+      claims are made, and 11x's typical buyer is bigger than ours, so we have
+      less to gain from steering you than a direct substitute would.
+    </div>
+
+    <div class="verdict">
+      <strong>The short version.</strong> 11x sells autonomous digital workers,
+      an AI SDR called Alice and an AI phone agent called Julian, to mid-market
+      and enterprise sales orgs that want outbound capacity without hiring
+      SDRs. If that is you, the budget clears a reported five-figure annual
+      contract, and current customer references check out, 11x is the fullest
+      version of that product and a defensible buy. People look for
+      alternatives for three concrete reasons: reported pricing near $5,000 a
+      month on an annual commitment, the March 2025 TechCrunch reporting
+      covered below, and wanting more say over what goes out in their name
+      than a fully autonomous agent allows. Which reason is yours picks the
+      alternative: Artisan for the same autonomous model self-serve,
+      Amplemarket or Apollo to keep reps running the motion, Unify or Clay to
+      fix targeting rather than volume. driftwood, our tool, makes a different
+      bet: a working demo of your product in every message, for founders whose
+      constraint is replies rather than capacity. It is early, and an
+      enterprise team that wants a hands-off phone and email worker is 11x's
+      buyer, not ours.
+    </div>
+  </div>
+
+  <h2>At a glance</h2>
+
+  <div class="table-scroll">
+    <table class="compare">
+      <caption>Every cell is words, not checkmarks. Prices are entry points; the fuller snapshot, with sources, is further down.</caption>
+      <thead>
+        <tr>
+          <th scope="col">Tool</th>
+          <th scope="col">What it is</th>
+          <th scope="col">Entry price (as of July 2026)</th>
+          <th scope="col">What you still need to buy</th>
+          <th scope="col">Best stage</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="tool">11x</td>
+          <td>Autonomous digital workers: Alice runs outbound end to end, Julian covers the phone</td>
+          <td>No public pricing; reported near $5,000 a month, annual contract</td>
+          <td>Implementation fees on top; a CRM (Salesforce, HubSpot) to feed it</td>
+          <td>Mid-market and enterprise replacing SDR headcount</td>
+        </tr>
+        <tr>
+          <td class="tool">Artisan (Ava)</td>
+          <td>Autonomous AI BDR, the closest direct swap, self-serve</td>
+          <td>From $250 a month</td>
+          <td>Little to start; lead discovery and sending are in the box</td>
+          <td>Small teams testing the autonomous model</td>
+        </tr>
+        <tr>
+          <td class="tool">Amplemarket</td>
+          <td>All-in-one platform: data, engagement, deliverability, an AI copilot (Duo) for reps</td>
+          <td>None published that we could verify</td>
+          <td>Reps to run the motion</td>
+          <td>Sales teams that want AI leverage, not replacement</td>
+        </tr>
+        <tr>
+          <td class="tool">Unify</td>
+          <td>Signal-driven outbound: intent triggers decide who gets contacted</td>
+          <td>None published that we could verify</td>
+          <td>People to run the plays it triggers</td>
+          <td>Product-led companies with real intent signal</td>
+        </tr>
+        <tr>
+          <td class="tool">Apollo</td>
+          <td>B2B database with sequencing, a dialer, and light CRM, per seat</td>
+          <td>Free tier; paid from $49 per user per month billed annually</td>
+          <td>Deliverability care and the time of whoever runs it</td>
+          <td>Any stage with people to run outbound</td>
+        </tr>
+        <tr>
+          <td class="tool">Clay</td>
+          <td>Data workbench: waterfall enrichment, AI research columns, workflows you assemble</td>
+          <td>Free tier; paid from $185 a month</td>
+          <td>A sequencer to send with; an operator to build and maintain it</td>
+          <td>Teams with a RevOps or GTM engineering owner</td>
+        </tr>
+        <tr>
+          <td class="tool">driftwood<span class="chip">our tool</span></td>
+          <td>GTM agent for demo-led outbound: a working demo of your product, built per prospect, in every message</td>
+          <td>$1,000 to $5,000 a month</td>
+          <td>Nothing bolted on; it sends from the LinkedIn and email accounts you already have</td>
+          <td>Founders and small teams whose product demos well</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="prose">
+    The rest of this page is the detail behind that table. If you are weighing
+    the whole AI SDR category rather than 11x specifically, we keep
+    <a href="/best-ai-sdr-tools">a separate comparison</a> for that.
+  </p>
+
+  <h2>What 11x is, and where it wins</h2>
+
+  <p class="prose">
+    <a href="https://www.11x.ai/" rel="noopener">11x</a> sells digital workers
+    for go-to-market teams. The flagship is
+    <a href="https://www.11x.ai/worker/alice" rel="noopener">Alice</a>, an AI
+    SDR that runs outbound end to end: sourcing prospects, researching them
+    across what 11x says is more than 50 data sources, writing and sending
+    multi-channel sequences spanning email, phone, social, and SMS, handling
+    follow-up, and booking meetings. The second worker is
+    <a href="https://www.11x.ai/worker/julian" rel="noopener">Julian</a>, an
+    AI phone agent built up around 11x's acquisition of the voice startup
+    Opkit, which handles calls for speed-to-lead, qualification, and
+    re-engagement. The company has raised more than $70 million from Benchmark
+    and Andreessen Horowitz, and the positioning leans mid-market and
+    enterprise.
+  </p>
+  <p class="prose">
+    There is no public pricing page; numbers come on a sales call. The figures
+    that circulate, roughly $5,000 a month for a single digital worker on an
+    annual contract and first-year totals commonly between $50,000 and $60,000
+    once implementation fees are included, are procurement data reported by
+    <a href="https://www.vendr.com/marketplace/11x" rel="noopener">Vendr</a>
+    rather than published prices, and they are collected in the pricing
+    snapshot below. Treat all of them as directional and confirm with 11x
+    directly.
+  </p>
+  <p class="prose">
+    The real strength is scope. 11x is the fullest expression of the replace
+    SDR headcount bet: one platform covers sourcing, research, multi-channel
+    sequencing, and, unusually for the category, the phone, since Julian lives
+    in the same product as Alice. For a larger sales org that wants outbound
+    volume without growing the SDR team, and has the budget and the
+    integrations (Salesforce, HubSpot) to feed it, that scope in one vendor is
+    the real draw.
+  </p>
+
+  <h2>Where 11x falls short, and for whom</h2>
+
+  <div class="segment">
+    <h3>The price and the contract</h3>
+    <p>
+      No public pricing, a sales process, reported entry around $5,000 a month,
+      an annual commitment, and implementation fees on top. That is by design;
+      the product is aimed at organizations replacing headcount, and for them
+      the math can work. For a founder or a seed-stage team, the entry cost
+      alone rules it out before any product question comes up.
+    </p>
+  </div>
+
+  <div class="segment">
+    <h3>The 2025 record, both sides of it</h3>
+    <p>
+      This history belongs in any 11x evaluation, so here it is once, dated.
+    </p>
+    <ul class="timeline">
+      <li>
+        <strong>March 2025.</strong>
+        <a href="https://techcrunch.com/2025/03/24/a16z-and-benchmark-backed-11x-has-been-claiming-customers-it-doesnt-have/" rel="noopener">TechCrunch
+        reported</a> that some companies whose logos appeared on 11x's site
+        said they were not customers, that former employees described losing
+        70 to 80 percent of early customers, and that reported annual
+        recurring revenue included the full value of 12-month contracts even
+        when customers left at three-month break clauses.
+      </li>
+      <li>
+        <strong>The company's response.</strong> 11x disputed the
+        characterization, said its retention at the time was 79 percent, and
+        said inaccurate customer mentions were removed when flagged. Its
+        investors publicly backed the company.
+      </li>
+      <li>
+        <strong>May 2025.</strong> Founder Hasan Sukkar stepped down as CEO,
+        moving to non-executive chairman, and CTO Prabhav Jain took over.
+      </li>
+    </ul>
+    <p>
+      None of that settles what the product does today. It does mean you
+      should reference-check current customers rather than trusting logos,
+      which is fair diligence for any vendor on this page.
+    </p>
+  </div>
+
+  <div class="segment">
+    <h3>The autonomy trade</h3>
+    <p>
+      Alice's pitch is running with little day-to-day steering. That is also
+      the trade: messages go out at volume, in your company's name, without a
+      human approving each one. The complaints from churned customers in the
+      2025 reporting included output that read as generic and results that
+      fell short of the sales pitch. If per-message quality control matters to
+      you, a fully autonomous agent is the wrong shape, whoever builds it.
+    </p>
+  </div>
+
+  <div class="segment">
+    <h3>Volume is still the strategy</h3>
+    <p>
+      An autonomous SDR is a bet that the way to more meetings is more touches
+      with less human time on each. For founders selling into a small market,
+      that bet fails the same way it does with cheap sending tools: burning
+      through your addressable market with templated outreach at a sub-1%
+      reply rate is not recoverable. If your problem is that replies are low,
+      an agent that scales sends will not fix it.
+    </p>
+  </div>
+
+  <h2>The alternatives</h2>
+
+  <p class="prose">
+    driftwood is listed first because it is ours; the other five run from the
+    closest swap for 11x to the furthest.
+  </p>
+
+  <div class="entries">
+
+    <article class="entry entry-card">
+      <div class="entry-num" aria-hidden="true">1</div>
+      <div>
+        <h3><a href="https://driftwood.sh">driftwood</a><span class="chip">our tool</span></h3>
+        <p>
+          driftwood and 11x split on what a cold message carries. Alice
+          personalizes text at volume; driftwood runs
+          <a href="/demo-led-outbound">demo-led outbound</a>: every message
+          includes a working demo of your product, built for the specific
+          prospect receiving it, so the prospect sees your product working on
+          their problem before they have replied to anything. The agent
+          researches the prospect, builds the demo, and drafts the message; a
+          human reviews each send, and sending happens from your own LinkedIn
+          or email account rather than a bot inbox. On the same lead list,
+          replies went from under 1% to over 14% in week one at
+          <a href="/customers/autosana">Autosana</a> (YC S25).
+        </p>
+        <p>
+          driftwood is early, and it trades volume for depth. It does not do
+          phone, and if you are an enterprise org replacing a ten-person SDR
+          team with a hands-off digital worker, that is 11x's product, not
+          ours.
+        </p>
+        <p class="bestfor"><strong>Best for:</strong> <span>founders and small
+        teams selling a product that demos well, whose constraint is replies
+        rather than capacity.</span></p>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-num" aria-hidden="true">2</div>
+      <div>
+        <h3><a href="https://artisan.co" rel="noopener">Artisan (Ava)</a></h3>
+        <p>
+          Artisan is the closest direct swap: Ava is an autonomous AI BDR
+          covering the outbound cycle from lead discovery through follow-up,
+          the same category bet as Alice. The practical difference is the
+          front door. Since the Ava 2.0 relaunch, Artisan is self-serve, so
+          you can test the autonomous model without a sales cycle or an annual
+          contract; entry pricing is in the snapshot below, and we keep
+          <a href="/alternatives/artisan">a full page on Artisan</a> if the
+          autonomous model itself is your open question.
+        </p>
+        <p class="bestfor"><strong>Best for:</strong> <span>teams that want an
+        autonomous outbound agent without 11x's price point or
+        commitment.</span></p>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-num" aria-hidden="true">3</div>
+      <div>
+        <h3><a href="https://amplemarket.com" rel="noopener">Amplemarket</a></h3>
+        <p>
+          Amplemarket answers a different diagnosis: that autonomy was the
+          problem, not the tooling. It is an all-in-one platform, contact
+          data, engagement, deliverability tooling, and an AI copilot called
+          Duo, where your reps run the motion and the AI gives them leverage
+          rather than an agent running it alone. Coming from 11x, the change
+          is where the humans sit.
+        </p>
+        <p class="bestfor"><strong>Best for:</strong> <span>sales teams that
+        want AI leverage for their reps, not a replacement for them.</span></p>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-num" aria-hidden="true">4</div>
+      <div>
+        <h3><a href="https://unifygtm.com" rel="noopener">Unify</a></h3>
+        <p>
+          Unify makes signals decide the targeting: deanonymized website
+          visitors, job changes, and other buying signals trigger plays that
+          determine who gets contacted and what they hear. Where an autonomous
+          SDR works a static list at volume, Unify concentrates effort on
+          accounts showing intent right now. Teams that want to build this
+          kind of system by hand tend to reach for Clay instead; we compared
+          <a href="/alternatives/clay">Clay alternatives</a> separately.
+        </p>
+        <p class="bestfor"><strong>Best for:</strong> <span>teams with real
+        intent signals, especially product-led companies, that care more about
+        who gets contacted than how many.</span></p>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-num" aria-hidden="true">5</div>
+      <div>
+        <h3><a href="https://www.apollo.io" rel="noopener">Apollo</a></h3>
+        <p>
+          Apollo is the pragmatic per-seat answer: a large B2B database with
+          sequencing, a dialer, and light CRM bundled together, with a free
+          tier and paid seats priced in the snapshot below. Nothing about it
+          is autonomous; your team runs the motion. Against a reported
+          $50,000-plus first year with 11x, a few Apollo seats plus a rep's
+          time is the budget it competes on.
+        </p>
+        <p class="bestfor"><strong>Best for:</strong> <span>teams with people
+        to run outbound that want data and sending in one affordable
+        place.</span></p>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-num" aria-hidden="true">6</div>
+      <div>
+        <h3><a href="https://clay.com" rel="noopener">Clay</a></h3>
+        <p>
+          Clay is the build-it-yourself path: a data workbench with waterfall
+          enrichment across more than a hundred providers, AI research
+          columns, and workflows that feed whatever sequencer or CRM you run.
+          Instead of renting a digital worker, a RevOps or GTM engineer
+          assembles your own motion with full control over every step. It
+          takes real operator time, which the entry price in the snapshot
+          below does not show.
+        </p>
+        <p class="bestfor"><strong>Best for:</strong> <span>teams with a
+        RevOps or GTM engineering owner who would rather build the machine
+        than rent one.</span></p>
+      </div>
+    </article>
+
+  </div>
+
+  <h2>When 11x is the right choice, including over us</h2>
+
+  <p class="prose">
+    Buy 11x to replace capacity you would otherwise hire; the 2025 record does
+    not change that answer, it changes the diligence you do on the way in.
+  </p>
+
+  <div class="choose-pair">
+    <div class="choose-col">
+      <h3>Choose 11x if</h3>
+      <ul>
+        <li>You are a mid-market or enterprise org that wants outbound
+        capacity without adding SDR headcount.</li>
+        <li>A five-figure annual contract fits the budget, and a sales-led
+        buying process does not put you off.</li>
+        <li>You want email, social, and phone handled by one vendor; Julian
+        makes that rarer than it sounds.</li>
+        <li>Salesforce or HubSpot is already in place to feed it.</li>
+        <li>You have reference-checked current customers and negotiated the
+        break clause.</li>
+      </ul>
+    </div>
+    <div class="choose-col">
+      <h3>Choose an alternative if</h3>
+      <ul>
+        <li>The reported entry price rules it out before any product question
+        comes up; that is most founders and seed-stage teams.</li>
+        <li>You want to test the autonomous model without a sales call or an
+        annual commitment (Artisan).</li>
+        <li>You have concluded full autonomy was the problem and want AI
+        helping reps run the motion (Amplemarket, Apollo).</li>
+        <li>Targeting, not volume, is what needs fixing (Unify to buy the
+        signal plays, Clay to build them).</li>
+        <li>Replies, not capacity, are your constraint and your product demos
+        well (driftwood, which is early and trades volume for depth).</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>Pricing snapshot</h2>
+
+  <p class="prose">
+    The numbers live here, once. This table is what the monthly fact-check
+    maintains.
+  </p>
+
+  <div class="table-scroll">
+    <table class="compare">
+      <caption>Entry pricing as of July 2026, checked 2026-07-21.</caption>
+      <thead>
+        <tr>
+          <th scope="col">Tool</th>
+          <th scope="col">Entry plan and price</th>
+          <th scope="col">What it includes</th>
+          <th scope="col">What it leaves out</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="tool">11x</td>
+          <td>No published plan. Reported: about $5,000 a month per digital
+          worker on an annual contract; <a href="https://www.vendr.com/marketplace/11x" rel="noopener">Vendr</a>
+          puts the median contract at about $55,050 a year, range about
+          $38,000 to about $90,000. Contracts have historically run 12
+          months, sometimes with a break clause at three months.</td>
+          <td>One digital worker running outbound end to end</td>
+          <td>Implementation fees, reported on top; every number in this row
+          is reported, not published</td>
+        </tr>
+        <tr>
+          <td class="tool">Artisan (Ava)</td>
+          <td>From $250 a month, self-serve</td>
+          <td>Ava, covering lead discovery through follow-up</td>
+          <td>Higher volume tiers; <a href="/alternatives/artisan">our Artisan
+          page</a> breaks them down</td>
+        </tr>
+        <tr>
+          <td class="tool">Apollo</td>
+          <td>Free tier; paid from $49 per user per month billed annually</td>
+          <td>Database access, sequencing, a dialer, light CRM</td>
+          <td>The people; nothing in it is autonomous, and deliverability
+          care is on you</td>
+        </tr>
+        <tr>
+          <td class="tool">Clay</td>
+          <td>Free tier; paid from $185 a month</td>
+          <td>The workbench: enrichment, AI research columns, workflows</td>
+          <td>Sending; you bring a sequencer and an operator</td>
+        </tr>
+        <tr>
+          <td class="tool">driftwood<span class="chip">our tool</span></td>
+          <td>$1,000 to $5,000 a month, published on <a href="/faq">our
+          FAQ</a></td>
+          <td>The agent: prospect research, a working demo of your product
+          built per prospect, drafting, and sending from your own
+          accounts</td>
+          <td>Phone outreach and volume plays; driftwood is early</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="table-note">
+    Amplemarket and Unify are not in this table: neither had a published entry
+    price we could verify at the July check. Work at any of these companies
+    and see something wrong or missing? Email
+    <a href="mailto:aayush@driftwood.sh">aayush@driftwood.sh</a> and we will
+    fix it.
+  </p>
+
+  <h2>FAQ</h2>
+
+  <div class="segment">
+    <h3>Why does 11x not publish pricing?</h3>
+    <p>
+      The sales motion is enterprise: pricing comes on a call, contracts run
+      annual, and implementation is scoped per customer, which is normal at
+      that end of the market. The public numbers that exist are procurement
+      data from Vendr rather than published prices; they are collected in the
+      pricing snapshot above, and the right move is to treat them as
+      directional and confirm directly.
+    </p>
+  </div>
+
+  <div class="segment">
+    <h3>What happened with 11x in 2025?</h3>
+    <p>
+      In March 2025 TechCrunch reported that some companies whose logos
+      appeared on 11x's site said they were not customers, alongside claims
+      about early churn and revenue reporting; 11x disputed the
+      characterization, its investors backed it, and in May 2025 the founder
+      handed the CEO role to the company's CTO. The dated timeline above has
+      both sides. The practical takeaway is to reference-check current
+      customers.
+    </p>
+  </div>
+
+  <div class="segment">
+    <h3>Can I get out of an 11x contract if it does not work?</h3>
+    <p>
+      Reported contract structure has historically been 12 months, sometimes
+      with a break clause at three months. A break clause is a negotiation
+      item rather than a given, so raise it before signing and get it in
+      writing.
+    </p>
+  </div>
+
+  <div class="segment">
+    <h3>Is there a way to try the autonomous AI SDR model without a sales call?</h3>
+    <p>
+      Yes. Artisan's Ava is the same autonomous category bet, self-serve from
+      $250 a month with no annual contract required. If the real need is plain
+      high-volume cold email rather than an autonomous agent, Instantly starts
+      at $47 a month; we compared
+      <a href="/alternatives/instantly">Instantly alternatives</a> separately.
+    </p>
+  </div>
+
+  <section class="cta">
+    <h2>See a demo built for <em class="voice">your</em> business</h2>
+    <p>Twenty minutes. We will show you what your prospects would see.</p>
+    <a class="btn" href="/#book">Book a demo</a>
+  </section>
+
+</main>
+
+<footer class="site">
+  <div class="foot">
+    <a class="wordmark" href="/"><svg viewBox="0 0 64 64" class="helm" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#15557e"/><g transform="translate(32 32) scale(0.88)" fill="none" stroke="#f7f4ec" stroke-linecap="round" stroke-linejoin="round"><circle r="22.5" stroke-width="3.4"/><g stroke-width="3.6"><line y1="-22.5" y2="-27.5"/><g transform="rotate(45)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(90)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(135)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(180)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(225)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(270)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(315)"><line y1="-22.5" y2="-27.5"/></g></g><g stroke-width="2.5"><line y1="-8.5" y2="-19.5"/><g transform="rotate(45)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(90)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(135)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(180)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(225)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(270)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(315)"><line y1="-8.5" y2="-19.5"/></g></g><circle r="7.5" stroke-width="2.6" fill="#15557e"/><circle r="2.8" fill="#f7f4ec" stroke="none"/></g></svg>driftwood</a>
+    <p class="foot-def">driftwood is an AI sales agent for demo-led outbound: it researches each prospect, builds a working demo of your product for their business, and sends from your account after human review.</p>
+    <nav class="foot-links" aria-label="site">
+      <a href="/customers/autosana">customers</a>
+      <a href="/demo-led-outbound">demo-led outbound</a>
+      <a href="/faq">faq</a>
+      <a href="/founder-led-sales">founder-led sales</a>
+      <a href="/cold-outbound-benchmarks">outbound benchmarks</a>
+      <a href="/ai-sdr">what is an AI SDR</a>
+    </nav>
+    <nav class="foot-links foot-compare" aria-label="compare">
+      <span>compare:</span>
+      <a href="/best-ai-sdr-tools">compare AI SDR tools</a>
+      <a href="/alternatives/instantly">Instantly alternatives</a>
+      <a href="/alternatives/clay">Clay alternatives</a>
+      <a href="/alternatives/apollo">Apollo alternatives</a>
+      <a href="/alternatives/artisan">Artisan alternatives</a>
+      <a href="/alternatives/11x">11x alternatives</a>
+    </nav>
+    <div class="foot-meta">
+      <a href="mailto:aayush@driftwood.sh">aayush@driftwood.sh</a>
+      <span>&copy; 2026 driftwood</span>
+    </div>
+  </div>
+</footer>
+
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>
