@@ -58,12 +58,14 @@ Checklist for every new page: build
 as landing/public/<route>/index.html (self-contained pattern; copy an
 existing page) -> sitemap -> llms.txt -> footer-link decision ->
 internal links -> commit main (deploys) -> GSC request indexing.
-Footer decision: Aayush approved footer links 2026-07-21; sitewide
-footer (homepage + every static page) carries seven links: customers,
-demo-led outbound, faq, compare AI SDR tools, founder-led sales,
-outbound benchmarks, what is an AI SDR (/ai-sdr earns the slot as
-the head destination the tail funnels to). Alternatives + guide
-pages get internal links, not footer slots.
+Footer decision (Aayush-directed 2026-07-21): two-row sitewide
+footer. Row 1 (site): customers, demo-led outbound, faq,
+founder-led sales, outbound benchmarks, what is an AI SDR. Row 2
+(compare, his call: every competitor named): compare AI SDR tools +
+Instantly/Clay/Apollo/Artisan/11x alternatives, exact-match anchors
+so each competitor page gets a sitewide anchor for its target query.
+Any new /alternatives/<x> page joins row 2 at ship. Guide pages get
+internal links, not footer slots.
 
 Priority queue with validated targets:
 1. /founder-led-sales — SHIPPED 2026-07-21 (subagent-drafted, QA'd;

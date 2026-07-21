@@ -923,10 +923,18 @@ export default function App() {
               <a href="/customers/autosana">Customers</a>
               <a href="/demo-led-outbound">Demo-led outbound</a>
               <a href="/faq">FAQ</a>
-              <a href="/best-ai-sdr-tools">Compare AI SDR tools</a>
               <a href="/founder-led-sales">Founder-led sales</a>
               <a href="/cold-outbound-benchmarks">Outbound benchmarks</a>
               <a href="/ai-sdr">What is an AI SDR</a>
+            </nav>
+            <nav className="foot-links foot-compare" aria-label="compare">
+              <span>Compare:</span>
+              <a href="/best-ai-sdr-tools">Compare AI SDR tools</a>
+              <a href="/alternatives/instantly">Instantly alternatives</a>
+              <a href="/alternatives/clay">Clay alternatives</a>
+              <a href="/alternatives/apollo">Apollo alternatives</a>
+              <a href="/alternatives/artisan">Artisan alternatives</a>
+              <a href="/alternatives/11x">11x alternatives</a>
             </nav>
           </div>
           <div className="foot-bottom">

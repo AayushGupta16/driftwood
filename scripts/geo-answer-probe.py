@@ -155,6 +155,7 @@ COLLISION_CONTEXT = [
     "advisory",
     "test ideas",
     "build ai products",
+    "real outcomes",  # driftwood.ai tagline "Real AI. Real outcomes."
 ]
 # An engine echoing the query token while admitting it doesn't know
 # the entity is NOT naming us (verified: sonar echoes "driftwood.sh"
@@ -181,9 +182,7 @@ UNCERTAIN_CONTEXT = [
     "doesn't appear",
     "no specific",
     "not aware",
-    "if you mean",
-    "did you mean",
-    "do you mean",
+    "you mean",  # "if (by X) you mean", "do/did you mean" — query echoes
     "tell me which",
 ]
 CONTEXT_WINDOW = 300  # chars each side of a mention (collision/uncertainty)

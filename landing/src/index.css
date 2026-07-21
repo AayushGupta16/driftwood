@@ -505,6 +505,7 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
 .landing .foot .wordmark svg { width: 2.05rem; height: 2.05rem; }
 .landing .foot-top { display: flex; align-items: center; justify-content: space-between; gap: 1.25rem 2rem; flex-wrap: wrap; }
 .landing .foot-links { display: flex; flex-wrap: wrap; gap: 0.9rem 1.9rem; font-size: 0.9rem; color: rgba(255,255,255,0.85); }
+.landing .foot-compare { flex-basis: 100%; justify-content: flex-end; color: rgba(255,255,255,0.6); }
 .landing .foot-bottom {
   display: flex; align-items: baseline; justify-content: space-between; gap: 1.25rem 2rem; flex-wrap: wrap;
   border-top: 1px solid rgba(255,255,255,0.16); padding-top: 1.6rem;
