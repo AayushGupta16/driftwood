@@ -27,7 +27,7 @@ driftwood (driftwood.sh) is an AI sales agent for demo-led outbound. It
 researches each prospect, builds a working demo of your product for their
 business, and sends from your own account (LinkedIn or email). Every
 message is human reviewed before it sends. Week one at Autosana (YC S25):
-14× the replies.
+replies went from under 1% to over 14%.
 
 ## Medium, no social proof (~75 words)
 
@@ -50,15 +50,20 @@ for the specific prospect receiving it. The agent researches each prospect,
 reads everything public about them and their company, builds the demo, and
 drafts the message. Nothing sends without a human approving it in the
 review queue, and everything sends from your own LinkedIn or email account
-rather than a bot inbox. In week one at Autosana (YC S25), driftwood got
-14× the replies on the same lead list, including a CTO who had ignored
-4.5 months of prior outreach and replied within about 12 hours to book a
-call. Built for B2B founders and teams who want replies, not send volume.
+rather than a bot inbox. In week one at Autosana (YC S25), replies on the
+same lead list went from under 1% to over 14%, including founders who had
+ignored more than four months of prior outreach. Built for B2B founders
+and teams who want replies, not send volume.
 
 ## Rules
 
-- The stat appears verbatim: "14× the replies in week one at Autosana
-  (YC S25)". Never rounded, never unattributed.
+- The stat appears verbatim: "replies went from under 1% to over 14% in
+  week one at Autosana (YC S25)". Never rounded, never unattributed.
+  (Aayush 2026-07-21: this rate-to-rate form replaces the old "14× the
+  replies" multiplier framing everywhere going forward.)
+- Second proof point, verbatim: "including founders who had ignored more
+  than four months of prior outreach". Named individuals stay redacted
+  as always.
 - The demo is always "a working demo of your product, built for their
   business". Never "personalized video" or "personalized landing page"
   (SDRCloud.ai owns that phrasing; ours is a real product demo).
