@@ -14,6 +14,30 @@ the long tail where a young domain can rank, and let accumulated
 authority earn the head terms over quarters. Head pages (/ai-sdr,
 /best-ai-sdr-tools) exist as destinations the tail funnels into.
 
+## Who the reader is (Aayush's ICP refinement, 2026-07-21)
+
+Core audiences, in priority order:
+
+1. **Founders doing founder-led sales who want to scale it** without
+   losing the quality that makes it work.
+2. **Founders/teams trying to improve their numbers**: reply rates,
+   demo rates, sales conversion; people diagnosing and operating their
+   cold outbound channel.
+3. **Operators figuring out whether/how a channel works** (the "does
+   X work" and "how do I run X" questions).
+4. Secondary: **SDRs/sales reps improving their own conversion
+   rates** — not buyers, but readers and internal champions.
+
+Explicitly NOT core: people shopping to hire an SDR or retain an SDR
+agency. The outsourced-SDR searcher may overlap our buyer (outcome
+without hiring) but Aayush's read is the intent skews away from his
+market. Consequence: /outsourced-sdr drops from the core set to
+opportunistic (draft exists, ships last, judged by results); the
+founder-led-sales, benchmarks, and how-to-improve content is the
+center. Every page must pass the test: is this what a founder scaling
+their own outbound, or an operator improving their numbers, actually
+needs?
+
 ## Validated targets (Keyword Planner, US, 2026-07-20/21, 184 terms)
 
 Full data: ads/research-keyword-volumes-2026-07-20.md (4 rounds).
@@ -23,7 +47,7 @@ Full data: ads/research-keyword-volumes-2026-07-20.md (4 rounds).
 | founder led sales | 100-1K, Low | /founder-led-sales | drafted |
 | cold email benchmarks + ~12 rate questions | 10-100 each, Low | /cold-outbound-benchmarks | drafted |
 | how to write a cold email / cold email tips (~30 variants) | 100-1K, Low | /cold-email-guide | not drafted |
-| outsourced sdr / sdr services | 100-1K, high CPC | /outsourced-sdr | drafted |
+| outsourced sdr / sdr services | 100-1K, high CPC | /outsourced-sdr | drafted, DEPRIORITIZED (ICP call 07-21) |
 | ai sdr / ai sales agent / ai sdr tool | 1K-10K, Medium | /ai-sdr | drafted |
 | best ai sdr tools | comparison intent | /best-ai-sdr-tools | live, monthly refresh |
 | b2b saas lead generation cluster | 100-1K, Low | tbd | validated, unassigned |
@@ -51,6 +75,14 @@ volume):
 - how to book more demos b2b
 - how to build a sales pipeline from scratch
 - how much should a startup spend on sales
+
+SDR/operator-conversion angle (secondary audience, same validation
+rule):
+
+- how to improve sdr conversion rates / sdr metrics benchmarks
+- how to increase demo bookings / improve demo show rate
+- cold outbound playbook for sdrs
+- how to scale founder led sales (bridges audience 1 directly)
 
 Editorial rule for these pages: honest channel math with real numbers,
 in founder language, citing our own data where we have it. The channel
