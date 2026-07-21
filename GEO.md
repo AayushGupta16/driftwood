@@ -76,7 +76,8 @@ On command: the `/geo-probe` skill (.claude/skills/geo-probe) runs the
 fixed set via a subagent, writes the dated file + latest.json, and
 commits. Anyone in a Claude Code session on this repo can run it.
 
-Cadence recommendation: **weekly**, plus on-command after any ship
+Cadence (Aayush, 2026-07-21): **daily at midnight Pacific** via the
+backend scheduler once deployed; plus on-command after any ship
 that should move it (new page live, listicle inclusion lands, PH
 launch). Daily/every-other-day is possible but not recommended:
 search-index composition changes on week timescales, so daily runs
