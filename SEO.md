@@ -53,25 +53,26 @@ Aayush.
 
 Shipped: /customers/autosana, /demo-led-outbound, /faq,
 /best-ai-sdr-tools, /founder-led-sales, /alternatives/instantly,
-/alternatives/clay (+ homepage). Checklist for every new page: build
+/alternatives/clay, /cold-outbound-benchmarks (+ homepage).
+Checklist for every new page: build
 as landing/public/<route>/index.html (self-contained pattern; copy an
 existing page) -> sitemap -> llms.txt -> footer-link decision ->
 internal links -> commit main (deploys) -> GSC request indexing.
-Footer decision 2026-07-21: new pages carry the standard four-link
-footer; whether /founder-led-sales earns a sitewide footer slot
-(touches the prerendered homepage) is a proposal for Aayush, not
-taken unilaterally.
+Footer decision: Aayush approved footer links 2026-07-21; sitewide
+footer (homepage + every static page) carries six links: customers,
+demo-led outbound, faq, compare AI SDR tools, founder-led sales,
+outbound benchmarks. Alternatives pages get internal links, not
+footer slots.
 
 Priority queue with validated targets:
 1. /founder-led-sales — SHIPPED 2026-07-21 (subagent-drafted, QA'd;
    "founder led sales" 100-1K LOW; numbers-first structure as spec'd).
-2. /cold-outbound-benchmarks — DRAFT READY at
-   design/draft-page-cold-outbound-benchmarks.html (rate-question
-   cluster answered with named-source numbers, all verified; Belkins/
-   Sopro/Woodpecker/Expandi/Google; diagnostic ordering section in).
-   Ships the moment Aayush supplies the three methodology numbers:
-   send count, reply definition, time window. Placeholders are marked
-   [OWED BY AAYUSH] in the methodology block.
+2. /cold-outbound-benchmarks — SHIPPED 2026-07-21 (methodology from
+   Aayush same day: 200 sends over 3 weeks; reply definition = human
+   reply either channel incl. negative, bounces/auto excluded, agent-
+   drafted + Aayush can veto). Rate-question cluster answered with
+   named-source numbers (Belkins/Sopro/Woodpecker/Expandi/Google);
+   the listicle pitches are now UNGATED (Aayush sends).
 3. /ai-sdr — head-term destination (1K-10K Med) + the
    "autonomous vs assisted AI SDRs" category section (unclaimed;
    approve-before-send is our wedge; do NOT coin a third term).
