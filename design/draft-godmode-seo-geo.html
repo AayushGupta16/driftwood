@@ -3,7 +3,20 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Godmode — SEO / GEO metrics (draft, rev 3)</title>
+<title>Godmode — SEO / GEO metrics (draft, rev 4)</title>
+<!-- rev 4 per founder direction 2026-07-21: "I just care about the number of
+     views and conversions each channel drives."
+     delta from rev 3: the ground-truth strip is now TWO channel blocks — SEO
+     left, GEO right — that align with the probe columns beneath them. Each
+     block shows Views (referrer-attributed PostHog sessions) and Demos booked
+     (booking_confirmed, same attribution), each with its vs-last-week slot.
+     Attribution rule (in tooltips): the referrer domain decides the channel —
+     AI-assistant domains are GEO, search-engine domains are SEO. The GSC
+     manual-pull card is DELETED; GSC clicks/impressions survive only as a
+     one-line cross-check footnote under the SEO Views stat. A slim
+     all-channels total sits top-right in the strip header, subordinate.
+     The backlinks count moves to its own small card in the SEO column.
+     Everything else is unchanged rev 3. -->
 <!-- rev 3 per founder direction 2026-07-21: "the ground truth should be at the
      top, even above the rankings, since that is the true north star metric";
      "use PostHog as ground truth to see if we get any AI referrals."
@@ -73,23 +86,27 @@
   .eyebrow { font-size: .85rem; color: var(--ink-soft); }
   .num { font-variant-numeric: tabular-nums; }
 
-  /* ---------- ground truth strip (rev 3, the north star) ----------
-     Deliberately heavier than everything below it: 2px ink top rule, the
-     stronger shadow, darker hairline, ink-weight label. */
-  .gt { margin-top: 18px; padding: 18px 20px 16px; border-color: #d9dee3; border-top: 2px solid var(--ink); box-shadow: var(--shadow-win); }
+  /* ---------- ground truth strip (rev 4, the north star) ----------
+     Two channel blocks — SEO left, GEO right — on the same 1fr/1fr/14px grid
+     as the probe columns beneath, so they align. Each block deliberately
+     heavier than everything below it: 2px ink top rule, the stronger shadow,
+     darker hairline, ink-weight channel label. */
+  .gthead { margin-top: 18px; padding: 0 2px; display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .gtlabel { font-size: .85rem; font-weight: 600; color: var(--ink); }
+  .gtcols { margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: stretch; }
+  .gt { padding: 16px 20px 14px; border-color: #d9dee3; border-top: 2px solid var(--ink); box-shadow: var(--shadow-win); display: flex; flex-direction: column; }
   .gt .toprow { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
   .gt .eyebrow { color: var(--ink); font-weight: 600; }
   .gtsrc { font-size: 11.5px; color: var(--ink-faint); }
-  .gtgrid { margin-top: 14px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+  .gtgrid { margin-top: 12px; flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   .gtstat { min-width: 0; display: flex; flex-direction: column; border-left: 1px solid var(--line); padding-left: 20px; }
   .gtstat:first-child { border-left: 0; padding-left: 0; }
   .gtstat .l { font-size: 11.5px; font-weight: 600; color: var(--ink-soft); }
   .gtstat .v { margin-top: 8px; font-size: 40px; font-weight: 600; letter-spacing: -.025em; line-height: 1; }
-  .gtstat .v .vsep { font-size: 22px; font-weight: 400; color: var(--ink-faint); }
-  .gtstat .split { margin-top: 6px; font-size: 11.5px; color: var(--ink-faint); }
+  .gtstat .fnote { margin-top: 7px; font-size: 10.5px; color: var(--ink-faint); }
   .gtstat .delta { margin-top: auto; padding-top: 8px; font-size: 11px; color: var(--ink-faint); }
   .gtstat .delta .arr { display: inline-block; margin-right: 4px; }
-  @media (max-width: 920px) { .gtgrid { grid-template-columns: 1fr 1fr; row-gap: 18px; } .gtstat { border-left: 0; padding-left: 0; } }
+  @media (max-width: 920px) { .gtcols { grid-template-columns: 1fr; } }
 
   /* leading-indicators section label (rev 3) */
   .seclabel { margin: 30px 2px 0; font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-faint); }
@@ -157,7 +174,7 @@
   .keys { display: inline-flex; gap: 16px; align-items: center; }
   .chartcard svg.trend { width: 100%; height: auto; margin-top: 10px; display: block; }
 
-  /* ---------- leaderboards + GSC ---------- */
+  /* ---------- leaderboards + backlinks ---------- */
   .side { padding: 16px 18px; }
   .lb { margin-top: 12px; display: flex; flex-direction: column; gap: 7px; }
   .lbrow { display: grid; grid-template-columns: 118px 1fr 26px; gap: 10px; align-items: center; }
@@ -172,11 +189,9 @@
   .side .meta { margin: 12px 0 0; font-size: 11.5px; color: var(--ink-faint); }
 
   .tag { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; font-size: 10.5px; color: var(--ink-faint); background: var(--surface); vertical-align: 2px; margin-left: 8px; }
-  .gscgrid { margin-top: 12px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .stat { margin-top: 12px; }
   .stat .v { font-size: 22px; font-weight: 600; letter-spacing: -.02em; line-height: 1; }
   .stat .l { margin-top: 4px; font-size: 11px; color: var(--ink-faint); }
-  .bl { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--ink-soft); }
-  .bl b { font-weight: 600; color: var(--ink); }
 
   /* ---------- footer stamp ---------- */
   .footstrip { margin-top: 36px; border-top: 1px solid var(--line); padding-top: 14px; }
@@ -206,34 +221,49 @@
 <main>
   <h1>Search visibility</h1>
 
-  <!-- rev 3: ground truth first. Real humans arriving and booking is the north
-       star; everything below this strip is a leading indicator for it. -->
-  <div class="card gt">
-    <div class="toprow">
-      <span class="eyebrow" title="North star: did AI answers and search actually send people, and did they book. Sessions are PostHog event-derived; posthog-js drops headless and bot traffic client-side, so these counts are human-biased by design.">Ground truth</span>
-      <span class="gtsrc num">PostHog · GSC · Jul 21</span>
+  <!-- rev 4: ground truth first, one block per channel, aligned with the
+       SEO-left / GEO-right probe columns beneath. The two numbers per channel
+       are the north star: views and demos each channel drives. -->
+  <div class="gthead">
+    <span class="gtlabel" title="North star: how many views and demos each channel drives. Sessions are PostHog event-derived; posthog-js drops headless and bot traffic client-side, so these counts are human-biased by design. Attribution rule: the session's referring domain decides the channel — anything from an AI-assistant domain is GEO, search-engine domains are SEO.">Ground truth</span>
+    <span class="gtsrc num" title="all channels combined, all referrers included; subordinate to the per-channel numbers">all channels: 0 views · 0 demos · PostHog · Jul 21</span>
+  </div>
+  <div class="gtcols">
+    <div class="card gt">
+      <div class="toprow">
+        <span class="eyebrow" title="Attribution rule: the session's referring domain decides the channel — search-engine domains (google, bing) are SEO.">SEO</span>
+        <span class="gtsrc">search referrers</span>
+      </div>
+      <div class="gtgrid num">
+        <div class="gtstat" title="Views: PostHog sessions whose $referring_domain is a search engine — google, bing. Referrer domain decides the channel: search-engine domains count as SEO.">
+          <div class="l">Views</div>
+          <div class="v">0</div>
+          <div class="fnote" title="Google Search Console cross-check, window Jul 14 to Jul 19, pulled Jul 21 · avg position 2.3 · manual pull until the GSC API credential exists">GSC cross-check: 0 clicks · 4 impressions, manual pull</div>
+          <div class="delta" title="week over week; PostHog live since Jul 15"><span class="arr" aria-hidden="true">→</span>±0 vs last week</div>
+        </div>
+        <div class="gtstat" title="booking_confirmed events attributed to search referrers by the session's referring domain">
+          <div class="l">Demos booked</div>
+          <div class="v">0</div>
+          <div class="delta" title="week over week"><span class="arr" aria-hidden="true">→</span>±0 vs last week</div>
+        </div>
+      </div>
     </div>
-    <div class="gtgrid num">
-      <div class="gtstat" title="PostHog sessions with $referring_domain in: chatgpt.com · chat.openai.com · perplexity.ai · claude.ai · gemini.google.com · copilot.microsoft.com">
-        <div class="l">AI-referred sessions</div>
-        <div class="v">0</div>
-        <div class="delta" title="week over week; PostHog live since Jul 15"><span class="arr" aria-hidden="true">→</span>±0 vs last week</div>
+    <div class="card gt">
+      <div class="toprow">
+        <span class="eyebrow" title="Attribution rule: the session's referring domain decides the channel — anything from an AI-assistant domain is GEO.">GEO</span>
+        <span class="gtsrc">AI referrers</span>
       </div>
-      <div class="gtstat" title="PostHog sessions with $referring_domain google or bing">
-        <div class="l">Organic sessions</div>
-        <div class="v">0</div>
-        <div class="delta" title="week over week; PostHog live since Jul 15"><span class="arr" aria-hidden="true">→</span>±0 vs last week</div>
-      </div>
-      <div class="gtstat" title="booking_confirmed events, attributed by the session's referring domain: total / AI-attributed / organic-attributed">
-        <div class="l">Demos booked</div>
-        <div class="v">0</div>
-        <div class="split">0 AI · 0 organic</div>
-        <div class="delta" title="week over week"><span class="arr" aria-hidden="true">→</span>±0 vs last week</div>
-      </div>
-      <div class="gtstat" title="Google Search Console clicks / impressions; manual pull until the GSC API credential exists">
-        <div class="l">GSC clicks · impressions<span class="tag">manual pull</span></div>
-        <div class="v">0<span class="vsep"> / </span>4</div>
-        <div class="delta" title="first pull; delta fills in after the second"><span class="arr" aria-hidden="true">→</span>– vs last week</div>
+      <div class="gtgrid num">
+        <div class="gtstat" title="Views: PostHog sessions whose $referring_domain is an AI assistant — chatgpt.com · chat.openai.com · perplexity.ai · claude.ai · gemini.google.com · copilot.microsoft.com. Referrer domain decides the channel: anything from an AI-assistant domain counts as GEO.">
+          <div class="l">Views</div>
+          <div class="v">0</div>
+          <div class="delta" title="week over week; PostHog live since Jul 15"><span class="arr" aria-hidden="true">→</span>±0 vs last week</div>
+        </div>
+        <div class="gtstat" title="booking_confirmed events attributed to AI referrers by the session's referring domain">
+          <div class="l">Demos booked</div>
+          <div class="v">0</div>
+          <div class="delta" title="week over week"><span class="arr" aria-hidden="true">→</span>±0 vs last week</div>
+        </div>
       </div>
     </div>
   </div>
@@ -662,16 +692,9 @@
         <p class="meta num">28 more domains appeared once</p>
       </div>
 
-      <div class="card side" title="Manual pull until the GSC API is connected. Read: indexed and surfacing on branded lookups at high positions; too few impressions to show query strings yet. Backlink count will read from the BACKLINKS.md registry.">
-        <div class="eyebrow">GSC ground truth<span class="tag">manual pull</span></div>
-        <div class="gscgrid num">
-          <div class="stat"><div class="v">0</div><div class="l">clicks</div></div>
-          <div class="stat"><div class="v">4</div><div class="l">impressions</div></div>
-          <div class="stat"><div class="v">2.3</div><div class="l">avg position</div></div>
-          <div class="stat"><div class="v">0</div><div class="l">queries visible</div></div>
-        </div>
-        <p class="meta num">window Jul 14 to Jul 19 · pulled Jul 21</p>
-        <div class="bl num">backlinks <b>0</b><span class="tag">registry pending</span></div>
+      <div class="card side" title="Count reads from the BACKLINKS.md registry once it lands; 0 until then.">
+        <div class="eyebrow">Backlinks<span class="tag">registry pending</span></div>
+        <div class="stat num"><div class="v">0</div><div class="l">in registry</div></div>
       </div>
     </div>
 
