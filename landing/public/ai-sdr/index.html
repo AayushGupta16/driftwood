@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI SDR: what it is, autonomous vs assisted, and how to evaluate one · driftwood</title>
+<meta name="description" content="What an AI SDR is, what the tools actually do well and badly in 2026, the difference between autonomous and assisted AI SDRs, and how to evaluate one: stage, autonomy level, all-in cost, and whose accounts it sends from." />
+<link rel="canonical" href="https://driftwood.sh/ai-sdr" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<meta name="theme-color" content="#15557e" />
+<meta property="og:title" content="AI SDR: what it is, autonomous vs assisted, and how to evaluate one · driftwood" />
+<meta property="og:description" content="What an AI SDR is, what the tools actually do well and badly in 2026, the difference between autonomous and assisted AI SDRs, and how to evaluate one: stage, autonomy level, all-in cost, and whose accounts it sends from." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://driftwood.sh/ai-sdr" />
+<meta property="og:image" content="https://driftwood.sh/og-5.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://driftwood.sh/og-5.png" />
+<link rel="preload" href="/fonts/public-sans-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "DefinedTerm",
+      "@id": "https://driftwood.sh/ai-sdr#term",
+      "name": "AI SDR",
+      "url": "https://driftwood.sh/ai-sdr",
+      "description": "An AI SDR is software that does the outbound work of a sales development representative: researching prospects, writing outreach, sending it, and following up on replies. The tools split into autonomous AI SDRs, which send on their own, and assisted AI SDRs, where a human approves every send before it goes out."
+    },
+    {
+      "@type": "DefinedTerm",
+      "@id": "https://driftwood.sh/ai-sdr#autonomous",
+      "name": "autonomous AI SDR",
+      "url": "https://driftwood.sh/ai-sdr",
+      "description": "An autonomous AI SDR sources prospects, writes the messages, and sends them on its own; humans set the targeting up front and review results after the fact. The bet is volume."
+    },
+    {
+      "@type": "DefinedTerm",
+      "@id": "https://driftwood.sh/ai-sdr#assisted",
+      "name": "assisted AI SDR",
+      "url": "https://driftwood.sh/ai-sdr",
+      "description": "An assisted AI SDR does the research, drafting, and follow-up, but a human approves every send before it goes out. The bet is quality per message rather than volume."
+    },
+    {
+      "@type": "Article",
+      "@id": "https://driftwood.sh/ai-sdr#article",
+      "headline": "AI SDR: what it is, autonomous vs assisted, and how to evaluate one",
+      "url": "https://driftwood.sh/ai-sdr",
+      "mainEntityOfPage": "https://driftwood.sh/ai-sdr",
+      "about": { "@id": "https://driftwood.sh/ai-sdr#term" },
+      "mentions": [
+        { "@id": "https://driftwood.sh/ai-sdr#autonomous" },
+        { "@id": "https://driftwood.sh/ai-sdr#assisted" }
+      ],
+      "publisher": { "@id": "https://driftwood.sh/#org" },
+      "datePublished": "2026-07-21",
+      "dateModified": "2026-07-21",
+      "inLanguage": "en"
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://driftwood.sh/ai-sdr#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is an AI SDR?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "An AI SDR is software that does a sales development rep's outbound job: it researches prospects, writes and sends outreach, and follows up on replies. The tools split into autonomous AI SDRs, which send on their own, and assisted AI SDRs, where a human approves every send before it goes out."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is an AI sales agent? Is it different from an AI SDR?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "In practice, the same category. AI sales agent is the broader label: some vendors use it to cover inbound and full-cycle selling, and agent usually signals software that plans and acts in a loop rather than running a fixed sequence. For cold outbound, AI SDR and AI sales agent describe the same tools."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the difference between an autonomous and an assisted AI SDR?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "An autonomous AI SDR sources prospects, writes the messages, and sends them on its own; you set targeting up front and review results after the fact. An assisted AI SDR does the same research, drafting, and follow-up, but a human approves every send before it goes out. Autonomous optimizes for volume, assisted for quality per message. Most vendor pages do not say which kind they are selling, so ask directly: does anything reach a prospect without a human reading it first?"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do AI SDRs actually work?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "It depends which number you want. They reliably produce more sends per dollar. But the public studies show average cold email replies under 1% of sends at scale, so more generic sends mostly produce more ignored emails. Replies change when the message carries something specific the prospect can verify. Our own data: replies went from under 1% to over 14% in week one at Autosana (YC S25) when every message carried a working demo."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How much does an AI SDR cost?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Published entry prices run from about $250 a month (Artisan, self-serve) to around $900 a month (AiSDR); enterprise agents such as 11x are custom quoted and do not publish pricing. The subscription is not the whole number: add data credits, extra mailboxes and domains where the tool sends from its own infrastructure, and your own review time. driftwood publishes its range: $1,000 to $5,000 a month depending on send volume and channels."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "AI SDR vs human SDR: what is the difference?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Cost and judgment. Public salary data puts the median US SDR at $60,000 base and $85,000 on-target earnings (RepVue, March 2026), before benefits, tools, data, and management time. An AI SDR costs a fraction of that and covers more prospects, but it has no judgment of its own: left unsupervised, it produces generic outreach at scale. The setups that work keep a human in the loop, either a rep using the software or a founder approving an agent's sends."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can an AI SDR send from my own email and LinkedIn accounts?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Some can. Many volume tools send from mailboxes and domains stood up for the campaign, which protects your main domain but means messages arrive from an address the prospect has never seen and replies land in a tool inbox. Tools that send from your own accounts put your name behind every message; driftwood works this way, and pairs it with a human approving every send."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the best AI SDR tool?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "There is no single answer; it depends on your stage, the autonomy level you want, the all-in cost, and whose accounts it sends from. We keep a comparison of the current tools, driftwood included and ranked with a disclosure, on the best AI SDR tools page."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+
+<style>
+  @font-face {
+    font-family: "Public Sans";
+    src: url("/fonts/public-sans-latin-wght-normal.woff2") format("woff2-variations");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Source Serif 4";
+    src: url("/fonts/source-serif-4-latin-600-normal.woff2") format("woff2");
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  :root {
+    --bg: #ffffff;
+    --ink: #16181b;
+    --gray: #6a737d;
+    --gray-light: #9aa2ab;
+    --line: #e9ebee;
+    --tide: #15557e;
+    --tide-deep: #0d3c5b;
+    --tide-wash: #eaf1f7;
+    --wash-a: #f4f8fb;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  :focus-visible { outline: 2px solid var(--tide); outline-offset: 2px; }
+
+  .wrap {
+    max-width: 68rem;
+    margin-inline: auto;
+    padding-inline: clamp(1.25rem, 4vw, 2.5rem);
+  }
+
+  /* ---------- header ---------- */
+  header { border-bottom: 1px solid var(--line); }
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 4rem;
+  }
+  .wordmark {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-family: "Source Serif 4", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.2rem;
+    color: var(--ink);
+    text-decoration: none;
+    letter-spacing: -0.01em;
+  }
+  .wordmark .helm {
+    width: 1.9rem;
+    height: 1.9rem;
+    display: block;
+    flex-shrink: 0;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--tide);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    height: 2.4rem;
+    padding-inline: 1.3rem;
+    border-radius: 999px;
+    transition: background 0.15s;
+  }
+  .btn:hover { background: var(--tide-deep); }
+
+  /* ---------- article ---------- */
+  main { padding-block: clamp(3rem, 7vw, 5rem) clamp(3rem, 6vw, 4.5rem); }
+  article { max-width: 42rem; margin-inline: auto; }
+
+  .label {
+    font-size: 0.85rem;
+    color: var(--gray);
+    margin: 0 0 0.9rem;
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(1.9rem, 1.2rem + 2vw, 2.6rem);
+    font-weight: 600;
+    letter-spacing: -0.014em;
+    line-height: 1.15;
+    text-wrap: balance;
+  }
+  .lede {
+    margin: 1.4rem 0 0;
+    font-size: 1.22rem;
+    line-height: 1.55;
+    color: var(--ink);
+  }
+  .lede strong { font-weight: 600; }
+
+  section {
+    margin-top: 2.75rem;
+    padding-top: 2.25rem;
+    border-top: 1px solid var(--line);
+  }
+  h2 {
+    margin: 0 0 0.85rem;
+    font-size: 1.3rem;
+    font-weight: 600;
+    letter-spacing: -0.014em;
+    line-height: 1.3;
+    text-wrap: balance;
+  }
+  h3 {
+    margin: 1.6rem 0 0.5rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  em.voice {
+    font-family: Georgia, "Times New Roman", serif;
+    font-style: italic;
+    color: var(--tide);
+    letter-spacing: 0;
+  }
+  p { margin: 0; color: var(--gray); }
+  p + p { margin-top: 0.9rem; }
+  p strong { color: var(--ink); font-weight: 600; }
+  article a {
+    color: var(--tide);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
+  article a:hover { color: var(--tide-deep); }
+
+  ol.loop {
+    margin: 1rem 0 0;
+    padding-left: 1.4rem;
+    color: var(--gray);
+  }
+  ol.loop li { margin-top: 0.55rem; }
+  ol.loop li::marker { color: var(--tide); font-weight: 600; }
+
+  /* ---------- FAQ ---------- */
+  .qa { margin-top: 1.9rem; }
+  .qa:first-of-type { margin-top: 0; }
+  .qa h3 { margin-top: 0; font-size: 1.08rem; }
+  .qa p { margin-top: 0.5rem; }
+
+  /* ---------- close panel ---------- */
+  .close {
+    margin-top: 3rem;
+    background: var(--wash-a);
+    border-radius: 12px;
+    padding: clamp(1.5rem, 4vw, 2.25rem);
+  }
+  .close p { color: var(--ink); font-size: 1.05rem; max-width: 34rem; }
+  .close .btn { margin-top: 1.25rem; height: 2.75rem; padding-inline: 1.7rem; font-size: 0.95rem; }
+
+  /* ---------- footer ---------- */
+  footer {
+    background: linear-gradient(#15557e, #0d3c5b);
+    color: #fff;
+  }
+  footer::before {
+    content: "";
+    display: block;
+    height: 28px;
+    margin-top: -28px;
+    position: relative;
+    z-index: 1;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='28' viewBox='0 0 180 28'%3E%3Cpath d='M0 14 C 11.25 5.5, 33.75 5.5, 45 14 C 56.25 22.5, 78.75 22.5, 90 14 C 101.25 5.5, 123.75 5.5, 135 14 C 146.25 22.5, 168.75 22.5, 180 14 L180 28 L0 28 Z' fill='%2315557e'/%3E%3C/svg%3E") repeat-x bottom;
+  }
+  .foot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1.5rem;
+    padding-block: 4.5rem 3rem;
+  }
+  .foot .wordmark {
+    color: #fff;
+    font-size: 1.35rem;
+  }
+  .foot .wordmark .helm {
+    width: 2.4rem;
+    height: 2.4rem;
+  }
+  .foot-def {
+    margin: 0;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.75);
+    max-width: 56ch;
+  }
+  .foot-links,
+  .foot-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.5rem;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.75);
+  }
+  footer a {
+    color: inherit;
+    text-decoration: none;
+  }
+  footer a:hover { color: #fff; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="wordmark" href="/"><svg viewBox="0 0 64 64" class="helm" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#15557e"/><g transform="translate(32 32) scale(0.88)" fill="none" stroke="#f7f4ec" stroke-linecap="round" stroke-linejoin="round"><circle r="22.5" stroke-width="3.4"/><g stroke-width="3.6"><line y1="-22.5" y2="-27.5"/><g transform="rotate(45)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(90)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(135)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(180)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(225)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(270)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(315)"><line y1="-22.5" y2="-27.5"/></g></g><g stroke-width="2.5"><line y1="-8.5" y2="-19.5"/><g transform="rotate(45)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(90)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(135)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(180)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(225)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(270)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(315)"><line y1="-8.5" y2="-19.5"/></g></g><circle r="7.5" stroke-width="2.6" fill="#15557e"/><circle r="2.8" fill="#f7f4ec" stroke="none"/></g></svg>driftwood</a>
+    <a class="btn" href="/#book">Book a demo</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <article>
+    <p class="label">AI SDR · Updated July 2026</p>
+    <h1>What is an AI SDR?</h1>
+
+    <p class="lede">An <strong>AI SDR</strong> is software that does the outbound work of a sales development representative: researching prospects, writing outreach, sending it, and following up on replies. The tools split into two kinds: <strong>autonomous AI SDRs</strong>, which send on their own, and <strong>assisted AI SDRs</strong>, where a human approves every send before it goes out.</p>
+
+    <section>
+      <h2>What does an AI SDR actually do?</h2>
+      <p>SDR stands for sales development representative: the person at the top of a sales team whose job is to find prospects and start conversations, which someone else then closes. An AI SDR is software doing that job. The job breaks into four parts, and most tools cover some or all of them.</p>
+      <ol class="loop">
+        <li>Research: reading what is public about the person and the company, and deciding whether and why to reach out.</li>
+        <li>Drafting: writing the message for that specific prospect, usually for email or LinkedIn.</li>
+        <li>Sending: scheduling sends, managing deliverability, and rotating inboxes where the tool uses its own accounts.</li>
+        <li>Follow-up: bumping non-responders, spotting replies, and handing real conversations to a person.</li>
+      </ol>
+      <p>Tools differ less on this list than on two other questions: what the message actually carries, and whether a human approves each send before it goes out. The second question splits the category in two; it gets its own section below.</p>
+    </section>
+
+    <section>
+      <h2>AI SDR, AI sales agent, AI BDR: one category, several names</h2>
+      <p>AI sales agent and AI sales rep describe the same tools. Agent usually signals software that plans and acts in a loop rather than running a fixed sequence, and some vendors stretch the label to cover inbound and full-cycle selling, but for cold outbound the products are the same category. AI BDR meant the same thing too and is fading from use: in Google's Keyword Planner data pulled July 2026, US searches for "ai bdr" are down about 90% year over year while "ai sdr" holds steady. Whatever the label on the website, you are evaluating the same kind of software, and the same four questions later on this page apply.</p>
+    </section>
+
+    <section>
+      <h2>What AI SDRs do well and badly today</h2>
+      <p>The honest version of both halves.</p>
+      <p><strong>What they do well:</strong> coverage and consistency. An agent can research more prospects in an evening than a rep covers in a month, it never forgets a follow-up, it works at whatever hour the prospect's timezone wakes up, and its cost per message rounds to zero. The research itself has gotten genuinely good: reading a company's site, docs, job posts, and news and producing an accurate picture is something current models do reliably.</p>
+      <p><strong>What they do badly:</strong> the message. Most tools in the category compete on volume, and their personalization is copy-deep: a merge tag fills in the first name, a scraped detail supplies the opener, a language model restates your homepage in a friendly tone. It costs nothing to produce and it reads that way, and prospects now pattern-match the style and delete it unread. The numbers bear this out. We collect the public studies, with a named source and year for every figure, on our <a href="/cold-outbound-benchmarks">cold outbound benchmarks</a> page: at average quality and at scale, cold email replies now measure under 1% of sends, 0.45% across 7.5 million emails in one 2026 study, while small, heavily personalized campaigns still measure between 5% and 18%. The spread between those two numbers is the whole game, and volume tools sit on the wrong side of it.</p>
+      <p>There are also costs the dashboard does not show: burned sending domains, mail that quietly lands in spam, and lead lists that stop being usable because everyone on them has already deleted three of your sequences. More sends is not the same thing as more replies.</p>
+    </section>
+
+    <section>
+      <h2>Autonomous vs assisted AI SDRs</h2>
+      <p>The most useful split in the category is who approves the send. Vendor pages rarely put it in those words, so here are the two kinds plainly.</p>
+      <p>An <strong>autonomous AI SDR</strong> sources prospects, writes the messages, and sends them on its own. You set the targeting and the playbook up front and review results after the fact. The bet is volume: more prospects touched per dollar than any human team could match. 11x's Alice, Artisan's Ava, and AiSDR work this way.</p>
+      <p>An <strong>assisted AI SDR</strong> does the same work, the research, the drafting, the follow-up, but a human approves every send before it goes out. The bet is quality: nothing reaches a prospect unread, so the agent can take bigger swings with each message, and a bad one gets caught in review instead of in a prospect's inbox. driftwood (<a href="https://driftwood.sh">driftwood.sh</a>) is an assisted AI SDR, so read this page knowing which side we sit on.</p>
+      <p>Which kind fits depends on what a mistake costs you. A fifty-person sales org running a proven playbook can absorb a clumsy message; the volume pays for it. A founder sending from their own LinkedIn and email to a market they will live in for years cannot; one embarrassing message to a prospect who knows your investors costs more than ten messages never sent. That is why stage, not feature lists, should drive the choice, which is where evaluation starts.</p>
+    </section>
+
+    <section>
+      <h2>How to evaluate an AI SDR</h2>
+      <p>Four questions separate the tools faster than any demo call.</p>
+
+      <h3>1. Start from your stage</h3>
+      <p>Before product-market fit, your message changes weekly, because you are still learning what lands. An autonomous agent scales a pitch you have not validated yet; reviewing every send is not overhead at that stage, it is how you learn. If <a href="/founder-led-sales">founder-led sales</a> is working but eating your week, that is the moment for an agent that drafts while you keep judgment. Once a playbook is proven and the math is about coverage, autonomy buys real leverage.</p>
+
+      <h3>2. Ask who approves the send</h3>
+      <p>One direct question: does anything reach a prospect without a human reading it first? If the website will not answer it plainly, that is your answer. Approve-before-send, sometimes described as human-in-the-loop, costs you minutes a day and is the difference between an agent that works for you and one that speaks as you unsupervised.</p>
+
+      <h3>3. Price the all-in cost, not the subscription</h3>
+      <p>The subscription is the start. Add data and enrichment credits where they are metered, the extra mailboxes, domains, and warmup tools where the vendor sends from its own infrastructure, and your own time reviewing or cleaning up whatever the tool gets wrong. Published entry prices in the category run from $250 a month (Artisan, self-serve) to around $900 a month (AiSDR); the enterprise agents, 11x among them, are custom quoted and publish no pricing. driftwood publishes its range: $1,000 to $5,000 a month depending on send volume and channels, with details on the <a href="/faq">FAQ page</a>. Whichever tool you pick, get the all-in number in writing before you compare.</p>
+
+      <h3>4. Ask whose accounts it sends from</h3>
+      <p>Two setups exist. Tools that send from mailboxes and domains stood up for the campaign protect your main domain, but the message arrives from an address the prospect has never seen and replies land in a tool inbox. Tools that send from your own accounts put your name and reputation behind every message, which is stronger, and is exactly why each of those messages deserves review before it goes. Be wary of the combination of high volume, your accounts, and no approval step: that is your reputation spent at machine speed.</p>
+
+      <p>For a tool-by-tool pass over the current field with these axes applied, driftwood included and ranked with a disclosure, see the <a href="/best-ai-sdr-tools">comparison of AI SDR tools</a>.</p>
+    </section>
+
+    <section>
+      <h2>Where driftwood fits</h2>
+      <p>driftwood is an assisted AI SDR that runs <a href="/demo-led-outbound">demo-led outbound</a>: cold outreach where every message carries a working demo of your product, built for their business. The agent researches the prospect, builds the demo, and drafts the message; you approve every send; it goes out from your own LinkedIn or email account.</p>
+      <p>The result we can point to: replies went from under 1% to over 14% in week one at Autosana (YC S25), including founders who had ignored more than four months of prior outreach. That is one company, one list, one week, and driftwood's founder worked at Autosana before building driftwood, so read it with that disclosure attached. The methodology is published on the <a href="/cold-outbound-benchmarks">benchmarks page</a> and the longer writeup is the <a href="/customers/autosana">Autosana case study</a>.</p>
+      <p>We are early: one published case study, a small set of customers, and a founder who still runs onboarding himself. If you want thousands of autonomous touches a month, one of the autonomous agents on the comparison page will serve you better. If you are a founder who wants every prospect to receive proof, and nothing to go out unread, that is what driftwood is for.</p>
+    </section>
+
+    <section>
+      <h2>Common questions</h2>
+
+      <div class="qa">
+        <h3>What is an AI SDR?</h3>
+        <p>An AI SDR is software that does a sales development rep's outbound job: it researches prospects, writes and sends outreach, and follows up on replies. The tools split into autonomous AI SDRs, which send on their own, and assisted AI SDRs, where a human approves every send before it goes out.</p>
+      </div>
+
+      <div class="qa">
+        <h3>What is an AI sales agent? Is it different from an AI SDR?</h3>
+        <p>In practice, the same category. AI sales agent is the broader label: some vendors use it to cover inbound and full-cycle selling, and agent usually signals software that plans and acts in a loop rather than running a fixed sequence. For cold outbound, AI SDR and AI sales agent describe the same tools.</p>
+      </div>
+
+      <div class="qa">
+        <h3>What is the difference between an autonomous and an assisted AI SDR?</h3>
+        <p>An autonomous AI SDR sources prospects, writes the messages, and sends them on its own; you set targeting up front and review results after the fact. An assisted AI SDR does the same research, drafting, and follow-up, but a human approves every send before it goes out. Autonomous optimizes for volume, assisted for quality per message. Most vendor pages do not say which kind they are selling, so ask directly: does anything reach a prospect without a human reading it first?</p>
+      </div>
+
+      <div class="qa">
+        <h3>Do AI SDRs actually work?</h3>
+        <p>It depends which number you want. They reliably produce more sends per dollar. But the public studies collected on our <a href="/cold-outbound-benchmarks">benchmarks page</a> show average cold email replies under 1% of sends at scale, so more generic sends mostly produce more ignored emails. Replies change when the message carries something specific the prospect can verify. Our own data: replies went from under 1% to over 14% in week one at Autosana (YC S25) when every message carried a working demo.</p>
+      </div>
+
+      <div class="qa">
+        <h3>How much does an AI SDR cost?</h3>
+        <p>Published entry prices run from about $250 a month (Artisan, self-serve) to around $900 a month (AiSDR); enterprise agents such as 11x are custom quoted and do not publish pricing. The subscription is not the whole number: add data credits, extra mailboxes and domains where the tool sends from its own infrastructure, and your own review time. driftwood publishes its range: $1,000 to $5,000 a month depending on send volume and channels.</p>
+      </div>
+
+      <div class="qa">
+        <h3>AI SDR vs human SDR: what is the difference?</h3>
+        <p>Cost and judgment. Public salary data puts the median US SDR at $60,000 base and $85,000 on-target earnings (RepVue, March 2026), before benefits, tools, data, and management time. An AI SDR costs a fraction of that and covers more prospects, but it has no judgment of its own: left unsupervised, it produces generic outreach at scale. The setups that work keep a human in the loop, either a rep using the software or a founder approving an agent's sends. If the real question is whether to hire at all, the <a href="/founder-led-sales">founder-led sales</a> page walks through that decision.</p>
+      </div>
+
+      <div class="qa">
+        <h3>Can an AI SDR send from my own email and LinkedIn accounts?</h3>
+        <p>Some can. Many volume tools send from mailboxes and domains stood up for the campaign, which protects your main domain but means messages arrive from an address the prospect has never seen and replies land in a tool inbox. Tools that send from your own accounts put your name behind every message; driftwood works this way, and pairs it with a human approving every send.</p>
+      </div>
+
+      <div class="qa">
+        <h3>What is the best AI SDR tool?</h3>
+        <p>There is no single answer; it depends on your stage, the autonomy level you want, the all-in cost, and whose accounts it sends from. We keep a comparison of the current tools, driftwood included and ranked with a disclosure, on the <a href="/best-ai-sdr-tools">best AI SDR tools</a> page.</p>
+      </div>
+    </section>
+
+    <div class="close">
+      <p>If approve-before-send is the column you keep coming back to, that is what driftwood is: an assisted AI SDR that puts a working demo of your product, built for their business, in every message, with a human approving each send from your own accounts. Book a demo and we will walk through it on your product.</p>
+      <a class="btn" href="/#book">Book a demo</a>
+    </div>
+  </article>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <a class="wordmark" href="/"><svg viewBox="0 0 64 64" class="helm" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#15557e"/><g transform="translate(32 32) scale(0.88)" fill="none" stroke="#f7f4ec" stroke-linecap="round" stroke-linejoin="round"><circle r="22.5" stroke-width="3.4"/><g stroke-width="3.6"><line y1="-22.5" y2="-27.5"/><g transform="rotate(45)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(90)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(135)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(180)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(225)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(270)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(315)"><line y1="-22.5" y2="-27.5"/></g></g><g stroke-width="2.5"><line y1="-8.5" y2="-19.5"/><g transform="rotate(45)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(90)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(135)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(180)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(225)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(270)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(315)"><line y1="-8.5" y2="-19.5"/></g></g><circle r="7.5" stroke-width="2.6" fill="#15557e"/><circle r="2.8" fill="#f7f4ec" stroke="none"/></g></svg>driftwood</a>
+    <p class="foot-def">driftwood is an AI sales agent for demo-led outbound: it researches each prospect, builds a working demo of your product for their business, and sends from your account after human review.</p>
+    <nav class="foot-links" aria-label="site">
+      <a href="/customers/autosana">customers</a>
+      <a href="/demo-led-outbound">demo-led outbound</a>
+      <a href="/faq">faq</a>
+      <a href="/best-ai-sdr-tools">compare AI SDR tools</a>
+      <a href="/founder-led-sales">founder-led sales</a>
+      <a href="/cold-outbound-benchmarks">outbound benchmarks</a>
+      <a href="/ai-sdr">what is an AI SDR</a>
+    </nav>
+    <div class="foot-meta">
+      <a href="mailto:aayush@driftwood.sh">aayush@driftwood.sh</a>
+      <span>&copy; 2026 driftwood</span>
+    </div>
+  </div>
+</footer>
+
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>
