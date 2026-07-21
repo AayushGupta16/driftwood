@@ -47,7 +47,8 @@ also a warm target for a link ask.
 
 | URL/source | Date found | Context (quote/anchor) | Name pairing correct (driftwood (driftwood.sh))? | Follow-up |
 |---|---|---|---|---|
-| | | | | |
+| Google AI Overview, query "driftwood ai sdr" | 2026-07-21 | Overview describes driftwood (demo-led outbound), cites our /faq + a r/SaaSMarketing thread; screenshot from Aayush | Overview says "Driftwood AI" (collision-adjacent) and mislabeled us autonomous (FAQ recut same day) | Track whether the overview picks up the assisted phrasing after recrawl |
+| reddit.com r/SaaSMarketing, "has anyone actually gotten meetings from ai sdr" (2026-06-01) | 2026-07-21 | Co-cited by the Google AI Overview above; thread content unread | unknown | Investigation owed: is driftwood named in-thread, by whom, sentiment |
 
 ## Pending / target pipeline
 

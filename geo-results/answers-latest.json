@@ -1,0 +1,74 @@
+{
+ "date": "2026-07-21",
+ "layer": "answer",
+ "queryset_version": "v2",
+ "aborted": null,
+ "headline": {
+  "sonar": {
+   "model": "perplexity/sonar",
+   "status": "completed",
+   "tier1_named_us": 0,
+   "tier1_total": 20,
+   "tier1_named_us_rate": 0.0
+  }
+ },
+ "engines": [
+  {
+   "engine": "sonar",
+   "model": "perplexity/sonar",
+   "status": "completed",
+   "errors": 0,
+   "error_sample": null,
+   "total": 100,
+   "named_us_total": 0,
+   "tier1_named_us": 0,
+   "tier1_total": 20,
+   "tier1_named_us_rate": 0.0,
+   "per_tier": {
+    "1": {
+     "named_us": 0,
+     "named_collision": 1,
+     "ambiguous": 2,
+     "absent": 17,
+     "total": 20,
+     "named_us_rate": 0.0
+    },
+    "2": {
+     "named_us": 0,
+     "named_collision": 0,
+     "ambiguous": 0,
+     "absent": 40,
+     "total": 40,
+     "named_us_rate": 0.0
+    },
+    "3": {
+     "named_us": 0,
+     "named_collision": 0,
+     "ambiguous": 0,
+     "absent": 40,
+     "total": 40,
+     "named_us_rate": 0.0
+    }
+   },
+   "competitor_counts": {
+    "Apollo": 21,
+    "AiSDR": 13,
+    "Artisan": 13,
+    "Clay": 12,
+    "Amplemarket": 11,
+    "11x": 10,
+    "Saleshandy": 9,
+    "Instantly": 8,
+    "Lemlist": 4,
+    "Salesforge": 3,
+    "Smartlead": 3,
+    "Coldreach": 1,
+    "Unify": 1,
+    "Landbase": 1
+   },
+   "cost_usd": 0.542
+  }
+ ],
+ "total_cost_usd": 0.542,
+ "note": "results comparable only within one engine+model line"
+}
