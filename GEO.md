@@ -51,6 +51,16 @@ Same as SEO.md: LISTINGS.md copy rules are law; nothing sends without
 Aayush; never paid; query-set changes are versioned proposals needing
 his approval; probes' fixed sets are never edited casually.
 
+## How the agent works (delegate and QA)
+
+Same rule as SEO.md and the codebase: the orchestrating agent scopes
+and QAs; subagents do the work. One subagent per bounded job (a
+listicle-pitch draft, a listings-consistency audit, a probe-result
+analysis, an entity-resolution investigation), each with a concrete
+deliverable the orchestrator reviews against this doc + LISTINGS.md.
+Founder gates bind the whole subagent tree; anything outward-facing is
+a draft for Aayush, never a send.
+
 ## The probe (measurement)
 
 - Fixed sets, versioned: geo-results/queryset-v2.json (100, tiers
