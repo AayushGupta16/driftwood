@@ -1,0 +1,165 @@
+{
+ "date": "2026-07-21",
+ "set_version": "v1",
+ "driftwood_hits": 0,
+ "total": 15,
+ "gsc": {
+  "window": "2026-07-14 to 2026-07-19",
+  "clicks": 0,
+  "impressions": 4,
+  "avg_position": 2.3,
+  "queries_visible": 0
+ },
+ "per_query": [
+  {
+   "q": "founder led sales",
+   "hit": false,
+   "position": null,
+   "top_domains": [
+    "pipedrive.com",
+    "hubspot.com",
+    "foundingsales.com"
+   ]
+  },
+  {
+   "q": "cold email benchmarks",
+   "hit": false,
+   "position": null,
+   "top_domains": [
+    "instantly.ai",
+    "community.hubspot.com",
+    "woodpecker.co"
+   ]
+  },
+  {
+   "q": "what is a good cold email reply rate",
+   "hit": false,
+   "position": null,
+   "top_domains": [
+    "instantly.ai",
+    "woodpecker.co",
+    "breakcold.com"
+   ]
+  },
+  {
+   "q": "how to write a cold email",
+   "hit": false,
+   "position": null,
+   "top_domains": [
+    "indeed.com",
+    "copyhackers.com",
+    "hunter.io"
+   ]
+  },
+  {
+   "q": "cold email tips",
+   "hit": false,
+   "position": null,
+   "top_domains": [
+    "copyhackers.com",
+    "forbes.com",
+    "dropcontact.com"
+   ]
+  },
+  {
+   "q": "how to improve cold email response rate",
+   "hit": false,
+   "position": null,
+   "top_domains": [
+    "quora.com",
+    "nethunt.com",
+    "artisan.co"
+   ]
+  },
+  {
+   "q": "ai sdr",
+   "hit": false,
+   "position": null,
+   "top_domains": [
+    "qualified.com",
+    "salesforce.com",
+    "salesforge.ai"
+   ]
+  },
+  {
+   "q": "ai sdr tool",
+   "hit": false,
+   "position": null,
+   "top_domains": [
+    "salesforge.ai",
+    "coldreach.ai",
+    "aisdr.com"
+   ]
+  },
+  {
+   "q": "ai sales agent",
+   "hit": false,
+   "position": null,
+   "top_domains": [
+    "creatio.com",
+    "salesforce.com",
+    "workato.com"
+   ]
+  },
+  {
+   "q": "best ai sdr tools",
+   "hit": false,
+   "position": null,
+   "top_domains": [
+    "salesforge.ai",
+    "aisdr.com",
+    "simular.ai"
+   ]
+  },
+  {
+   "q": "demo-led outbound",
+   "hit": false,
+   "position": null,
+   "top_domains": [
+    "hushly.com",
+    "kotaku.com",
+    "orbitalx.com"
+   ]
+  },
+  {
+   "q": "outsourced sdr",
+   "hit": false,
+   "position": null,
+   "top_domains": [
+    "callboxinc.com",
+    "belkins.io",
+    "saleshive.com"
+   ]
+  },
+  {
+   "q": "b2b saas lead generation",
+   "hit": false,
+   "position": null,
+   "top_domains": [
+    "mouseflow.com",
+    "artisan.co",
+    "callboxinc.com"
+   ]
+  },
+  {
+   "q": "driftwood ai sdr",
+   "hit": false,
+   "position": null,
+   "top_domains": [
+    "dreamstime.com",
+    "getbreakout.ai",
+    "allcode.com"
+   ]
+  },
+  {
+   "q": "driftwood.sh",
+   "hit": false,
+   "position": null,
+   "top_domains": [
+    "facebook.com",
+    "instagram.com",
+    "homedepot.com"
+   ]
+  }
+ ]
+}
