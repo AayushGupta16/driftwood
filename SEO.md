@@ -33,6 +33,22 @@ their own outbound actually need this?
 - Query set changes = versioned proposals (v5...) with his approval.
 - Google Ads stays parked; nothing that spends.
 
+## How the agent works (delegate and QA)
+
+Same principle as the codebase: the agent on this doc orchestrates;
+subagents do the work; the orchestrator QAs. Spawn one subagent per
+bounded job with a narrow charter and a concrete deliverable — draft
+the /alternatives/clay page, figure out the acquisition path for one
+backlink target, research where founders actually ask a question
+cluster, prepare a Reddit/community post. The orchestrator does not
+write pages, pitches, or research syntheses inline; it scopes the job,
+spawns, then reviews the deliverable against this doc + LISTINGS.md
+before anything lands in the repo. The founder gates bind every
+subagent exactly as they bind the orchestrator: nothing sends, posts,
+or spends from anywhere in the tree; outward-facing output (a pitch, a
+community post, a listing edit) always comes back as a draft for
+Aayush.
+
 ## Page plan (the grind queue)
 
 Shipped: /customers/autosana, /demo-led-outbound, /faq,
