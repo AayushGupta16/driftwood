@@ -1,13 +1,47 @@
-# Godmode SEO/GEO metrics page — integration notes (rev 3)
+# Godmode SEO/GEO metrics page — integration notes (rev 4)
 
-Companion to `draft-godmode-seo-geo.html`, **rev 3 per founder direction
-2026-07-21** (rev 2 landed the same day; its deltas are kept below).
-The draft is a full-page static mock populated with the real
+Companion to `draft-godmode-seo-geo.html`, **rev 4 per founder direction
+2026-07-21** (revs 2 and 3 landed the same day; their deltas are kept
+below). The draft is a full-page static mock populated with the real
 current data: both v2 querysets (100 queries each, real tier splits), the
 2026-07-21 v1 baseline joined in by query string (39 probed misses, 161
 pending), the real GEO competitor counts, the SEO domain leaderboard
 aggregated from `seo-results/latest.json` `top_domains`, and the real GSC
-pull (0 / 4 / 2.3 / 2026-07-21).
+pull (0 / 4 / 2.3 / 2026-07-21) — now a footnote, not a panel.
+
+## Rev 4 delta (what changed from rev 3)
+
+Founder direction, verbatim: "I just care about the number of views and
+conversions each channel drives."
+
+1. **Ground truth strip restructured into two channel blocks** — SEO
+   left, GEO right — on the same 1fr / 1fr / 14px grid as the probe
+   columns beneath, so each block sits directly over its channel's hero.
+   Each block shows exactly two numbers:
+   - **Views** — PostHog sessions attributed to the channel by referring
+     domain (SEO: google, bing; GEO: chatgpt.com, chat.openai.com,
+     perplexity.ai, claude.ai, gemini.google.com,
+     copilot.microsoft.com). Currently 0 and 0.
+   - **Demos booked** — `booking_confirmed` events, same referrer
+     attribution. Currently 0 and 0.
+   Every number keeps its vs-last-week delta slot. **Attribution rule
+   (stated in tooltips): the session's referring domain decides the
+   channel — anything from an AI-assistant domain is GEO, search-engine
+   domains are SEO.** The heavy rev-3 treatment (2px ink top rule,
+   stronger shadow, darker hairline) now sits on both channel cards; a
+   slim header line above them carries the "Ground truth" label (left)
+   and a subordinate all-channels total (right, faint:
+   "all channels: 0 views · 0 demos · PostHog · Jul 21").
+2. **GSC manual-pull card DELETED** from the SEO column. GSC survives
+   only as a one-line footnote under the SEO Views stat —
+   "GSC cross-check: 0 clicks · 4 impressions, manual pull" — whose
+   tooltip carries the window (Jul 14–19, pulled Jul 21), avg position
+   2.3, and the manual-pull caveat. The backlinks count that lived in
+   the GSC card moves to its own small card in the SEO column
+   ("Backlinks · 0 in registry · registry pending" tag).
+3. Everything else from rev 3 stays: probe columns under the
+   "Leading indicators" label, combined trend chart, tier tables, both
+   leaderboards, backlinks card, footer stamp.
 
 ## Rev 3 delta (what changed from rev 2)
 
@@ -108,27 +142,37 @@ The `/geo-probe` and `/seo-probe` skills remain as manual/dev tools, but
 the page carries no rerun affordance and no mention of them; cadence is
 the scheduler's job. The footer stamp renders `history.json`'s last date.
 
-## PostHog ground-truth plumbing (rev 3)
+## PostHog ground-truth plumbing (rev 4)
 
 The **same daily-midnight backend job** that runs the probes additionally
 queries PostHog's query API — HogQL over `events` — and stores the
 ground-truth numbers **alongside the probe run**, so the page reads ONE
 payload. No client-side PostHog calls, no second fetch path.
 
+**Per-channel views + demos are the FOUR topline numbers the daily job
+must produce**: `seo.views`, `seo.demos`, `geo.views`, `geo.demos`.
+
 - Credentials: server-side, already at `~/.driftwood-posthog-creds` per
   repo convention; project **513226**; query the events API directly
   (the proven path — same as the traffic checks).
-- **AI-referred sessions**: sessions whose `$referring_domain` is in the
-  AI referrer list — chatgpt.com, chat.openai.com, perplexity.ai,
-  claude.ai, gemini.google.com, copilot.microsoft.com.
-- **Organic sessions**: same query shape, `$referring_domain` in the
-  organic list (google / bing referrers).
-- **Demos booked**: `booking_confirmed` event counts, joined by
-  referring domain into the same buckets for the total / AI-attributed /
-  organic-attributed split.
+- **Views, both channels**: ONE HogQL referrer split over sessions,
+  bucketed by `$referring_domain`:
+  - **SEO bucket** — search-engine referrers: google, bing.
+  - **GEO bucket** — AI-assistant referrers: chatgpt.com,
+    chat.openai.com, perplexity.ai, claude.ai, gemini.google.com,
+    copilot.microsoft.com.
+  Attribution rule: the referrer domain decides the channel — anything
+  from an AI-assistant domain is GEO, search-engine domains are SEO.
+  Referrers outside both lists count toward neither channel (they appear
+  only in the subordinate all-channels total).
+- **Demos, both channels**: `booking_confirmed` events attributed by the
+  session's referring domain into the same two buckets.
 - The job computes the current and prior week in the same pass and
-  writes the vs-last-week deltas server-side; the page never computes
-  windows, it renders the stored numbers.
+  writes the vs-last-week deltas server-side (one per topline number);
+  the page never computes windows, it renders the stored numbers.
+- The all-channels total in the strip header (views + demos across all
+  referrers) comes from the same pass; it is subordinate display, not a
+  fifth tracked metric.
 
 Flags:
 
@@ -137,9 +181,11 @@ Flags:
   human-biased by design. For a ground-truth metric that is a feature,
   not a bug: the strip answers "did humans come", not "did anything
   fetch the page".
-- **GSC numbers stay manual-pull** until the GSC API credential exists;
-  the strip's GSC card keeps its `manual pull` tag (and its en-dash
-  delta slot) until then.
+- **GSC is demoted to a cross-check field in the payload, not a panel**:
+  the payload carries a small `gsc` block (clicks, impressions, window,
+  pulled-at) that renders only as the one-line footnote under the SEO
+  Views stat. Values stay hand-edited constants (manual pull) until the
+  GSC API credential exists.
 
 ## SEO domain leaderboard — data mapping
 
@@ -164,12 +210,16 @@ Source: `site/seo-results/latest.json` → `per_query[].top_domains`
 
 ## Tooltip contract (where the pruned prose went)
 
-- Ground-truth eyebrow (rev 3): north-star framing + event-derived
-  sessions + human-biased-by-design flag.
-- Ground-truth stat cards (rev 3): the exact referrer lists (AI /
-  organic), the booking_confirmed attribution split, the GSC
-  manual-pull caveat; delta slots state their window ("week over week" /
-  "first pull").
+- Ground-truth label (rev 4): north-star framing (views + demos per
+  channel) + event-derived sessions + human-biased-by-design flag + the
+  attribution rule (referrer domain decides the channel).
+- Channel-block labels and stats (rev 4): SEO/GEO labels and both Views
+  stats restate the attribution rule with the exact referrer lists;
+  Demos stats state the booking_confirmed referrer attribution; delta
+  slots state their window ("week over week"); the all-channels total
+  states it is combined and subordinate.
+- GSC footnote under SEO Views (rev 4): window + avg position +
+  manual-pull caveat.
 - Leading-indicators label (rev 3): probes predict the ground truth;
   levers, not the goal.
 - SEO hero eyebrow: WebSearch-proxy disclaimer + v1-covered-15-of-100 +
@@ -184,8 +234,7 @@ Source: `site/seo-results/latest.json` → `per_query[].top_domains`
 - Chart eyebrow: one-line-per-channel + never-mix-runners rule.
 - Leaderboard eyebrows: aggregation basis (top-3 across 15 SERPs; 24
   probed answers + watch-list note).
-- GSC card: manual-pull caveat + interpretation + backlinks-registry
-  pointer (BACKLINKS.md).
+- Backlinks card: registry pointer (BACKLINKS.md), 0 until it lands.
 - Footer stamp: "probes run automatically every day at midnight Pacific".
 
 Tooltips are `title` attrs in the draft; the React port can keep `title`
@@ -262,11 +311,14 @@ out naturally (verified 24/24 and 15/15 on the real data).
       `dashboard-metrics/{geo,seo}/history.json`; seed history with run
       zero.
 - [ ] **Backend: PostHog ground-truth queries** in the same nightly job
-      (HogQL per "PostHog ground-truth plumbing"), WoW deltas computed
-      server-side, block written into the same published payload.
-- [ ] Ground-truth strip in `SeoGeo.tsx` renders that block (four stat
-      cards, GSC values stay hand-edited constants until the GSC API
-      credential exists).
+      (HogQL per "PostHog ground-truth plumbing") producing the four
+      topline numbers — seo.views, seo.demos, geo.views, geo.demos —
+      plus WoW deltas and the all-channels total, written into the same
+      published payload; `gsc` rides along as a cross-check field.
+- [ ] Ground-truth strip in `SeoGeo.tsx` renders the two channel blocks
+      (Views + Demos booked each, deltas, subordinate total); the GSC
+      footnote values stay hand-edited constants until the GSC API
+      credential exists.
 - [ ] SEO domain-leaderboard aggregation (client-side from latest.json
       per the mapping above); GEO competitor aggregation as in rev 1.
 - [ ] Non-admin view: reuse the logged-out card pattern.
@@ -275,8 +327,8 @@ out naturally (verified 24/24 and 15/15 on the real data).
       (filesystem wins on Vercel).
 - [ ] Commit to main; Vercel deploys from the push. QA with scrolled
       screenshots; don't poll prod URLs.
-- [ ] Later hooks: GSC API pull replacing the manual tag (SEO),
-      BACKLINKS.md registry feeding the backlinks count, demos booked as
-      a third line on the combined chart. (The rev-1 "PostHog
-      AI-referrer panel" hook is superseded — rev 3 pulled it forward
-      into the ground-truth strip.)
+- [ ] Later hooks: GSC API pull replacing the hand-edited footnote
+      values (SEO), BACKLINKS.md registry feeding the backlinks count,
+      demos booked as a third line on the combined chart. (The rev-1
+      "PostHog AI-referrer panel" hook is superseded — rev 3 pulled it
+      forward into the ground-truth strip; rev 4 split it per channel.)
