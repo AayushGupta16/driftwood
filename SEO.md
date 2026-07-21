@@ -150,6 +150,26 @@ The video is a Google Ads playbook; these are the parts that transfer:
   source, date, how acquired. GSC's Links report is the free
   discovery tool; the registry is canonical.
 
+## Grading scale (Aayush, 2026-07-21)
+
+Applied to tier-1 hit rate (headline) and shown per tier: under 20% =
+below bare minimum, 20% = bare minimum, 40% = fine, 60% = great, 80%+
+= amazing. Dashboard colors follow these bands.
+
+## Probe runner notes
+
+- Parallelize freely: current skills run 4x25 subagent batches; can go
+  wider. Light token work.
+- A future backend cron runner could use OpenRouter search-enabled
+  models instead of Claude Code sessions. Two caveats recorded: the
+  shared OpenRouter key was out of credits as of 2026-07-20 (top up
+  first), and RESULTS ARE ONLY COMPARABLE WITHIN ONE SEARCH TOOL -
+  switching runner (Claude WebSearch -> OpenRouter/Perplexity) starts
+  a new trend line. Every result file records its tool; the dashboard
+  charts per tool, never mixed.
+- Probes are PAUSED until the dashboard is built (Aayush, 2026-07-21);
+  v1 baselines stand as run zero.
+
 ## Dashboard (Godmode admin page) — spec, SEO half
 
 Aayush wants an SEO/GEO stats page in Godmode. SEO half needs:
