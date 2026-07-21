@@ -3,14 +3,23 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Godmode — SEO / GEO metrics (draft)</title>
+<title>Godmode — SEO / GEO metrics (draft, rev 2)</title>
+<!-- rev 2 per founder feedback 2026-07-21.
+     deltas from rev 1: SEO (left) | GEO (right) two-column top with band-colored
+     headline numbers; per-tier breakdowns are the collapsible tier rows; ONE
+     combined trend chart (SEO solid tide line + filled dot, GEO dashed ink line +
+     hollow dot); prose pruned to tooltips (title attrs); no run controls — probes
+     run daily at midnight PT, footer carries only the last-updated stamp; SEO
+     domain leaderboard added from seo-results top_domains, driftwood pinned;
+     tier dropdowns restyled to dashboard-table density (13px, hairline rows). -->
+<link rel="icon" href="data:," />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400..700&family=Source+Serif+4:wght@600&display=swap" rel="stylesheet" />
 <style>
   /* Tokens: current dashboard @theme block (landing/src/index.css), verbatim.
      Band colors are FUNCTIONAL STATUS colors (like ok-green / error-red already
-     in the dashboard), not accents — see NOTES for the design-language call. */
+     in the dashboard), not accents — see NOTES. */
   :root {
     --paper: #ffffff; --surface: #ffffff;
     --ink: #16181b; --ink-soft: #6a737d; --ink-faint: #9aa2ab;
@@ -31,10 +40,10 @@
   body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
   a { color: inherit; }
 
-  /* draft-only annotation chip (matches dashboard-additions-draft-v2 convention) */
+  /* draft-only annotation chip */
   .newtag { font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; font-size: 9.5px; letter-spacing: .08em; text-transform: uppercase; color: #8a5a12; background: #f6ead2; border: 1px solid #e8d5ab; border-radius: 999px; padding: 1px 7px; vertical-align: 2px; margin-left: 8px; }
 
-  /* ---------- header (Dashboard.tsx logged-in chrome, plus the new admin pill) ---------- */
+  /* ---------- header (Dashboard.tsx logged-in chrome + the admin pill) ---------- */
   header { position: sticky; top: 0; z-index: 40; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.95); backdrop-filter: blur(12px); }
   header nav { max-width: 1280px; margin: 0 auto; height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 32px; }
   .wordmark { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; color: var(--ink); }
@@ -48,135 +57,105 @@
   .pill.active { border-color: var(--tide); background: var(--tide-wash); color: var(--tide); }
 
   /* ---------- page ---------- */
-  main { max-width: 1280px; margin: 0 auto; padding: 44px 32px 72px; }
+  main { max-width: 1280px; margin: 0 auto; padding: 40px 32px 56px; }
   h1 { margin: 0; font-size: clamp(1.7rem, 3.6vw, 2.2rem); font-weight: 600; letter-spacing: -.015em; line-height: 1.08; }
-  .sub { margin: 10px 0 0; font-size: 14.5px; line-height: 1.55; color: var(--ink-soft); max-width: 72ch; }
 
-  .card { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow-win); }
-  .cardsm { box-shadow: var(--shadow-win-sm); }
-  .eyebrow { font-size: .85rem; color: var(--ink-faint); }
+  .card { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow-win-sm); }
+  .eyebrow { font-size: .85rem; color: var(--ink-soft); }
   .num { font-variant-numeric: tabular-nums; }
 
-  /* run-zero framing strip */
-  .runzero { margin-top: 26px; padding: 14px 18px; display: flex; gap: 12px; align-items: flex-start; }
-  .runzero .flag { flex: none; width: 30px; height: 30px; border-radius: 8px; border: 1px solid rgba(21,85,126,.25); background: var(--tide-wash); color: var(--tide); display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; }
-  .runzero p { margin: 0; font-size: 13.5px; line-height: 1.55; color: var(--ink-soft); }
-  .runzero b { color: var(--ink); font-weight: 600; }
-
-  /* section headers */
-  .sect { margin-top: 40px; display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-  .sect h2 { margin: 0; font-size: 18px; font-weight: 600; letter-spacing: -.01em; }
-  .sect .meta { font-size: 12.5px; color: var(--ink-faint); }
-
-  .row2 { margin-top: 14px; display: grid; grid-template-columns: 5fr 7fr; gap: 14px; align-items: stretch; }
-  .row3 { margin-top: 14px; display: grid; grid-template-columns: 8fr 4fr; gap: 14px; align-items: start; }
-  @media (max-width: 920px) { .row2, .row3 { grid-template-columns: 1fr; } }
+  .cols { margin-top: 22px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+  .colstack { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+  @media (max-width: 920px) { .cols { grid-template-columns: 1fr; } }
 
   /* ---------- hero scorecard ---------- */
-  .hero { padding: 20px 22px; display: flex; flex-direction: column; }
-  .hero .headrow { display: flex; align-items: baseline; gap: 12px; margin-top: 10px; }
-  .hero .big { font-size: 54px; font-weight: 600; letter-spacing: -.025em; line-height: 1; }
+  .hero { padding: 18px 20px; }
+  .hero .headrow { display: flex; align-items: baseline; gap: 12px; margin-top: 8px; }
+  .hero .big { font-size: 48px; font-weight: 600; letter-spacing: -.025em; line-height: 1; }
   .bandchip { display: inline-flex; align-items: center; border-radius: 999px; padding: 3px 10px; font-size: 12px; font-weight: 600; }
   .bandchip.b0 { color: var(--band0); background: var(--band0-wash); }
-  .hero .capt { margin: 10px 0 0; font-size: 12.5px; color: var(--ink-soft); }
+  .hero .capt { margin: 9px 0 0; font-size: 12.5px; color: var(--ink-soft); }
 
-  /* band scale: the grading bands with a marker at the current value */
-  .scale { margin-top: 16px; }
-  .scale .bar { position: relative; display: flex; height: 26px; border-radius: 6px; overflow: hidden; border: 1px solid var(--line); }
-  .scale .seg { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 9.5px; font-weight: 600; letter-spacing: .01em; white-space: nowrap; }
+  /* band scale: grading bands with a marker at the current value */
+  .scale { margin-top: 14px; }
+  .scale .bar { position: relative; display: flex; height: 22px; border-radius: 6px; overflow: hidden; border: 1px solid var(--line); }
+  .scale .seg { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 600; letter-spacing: .01em; white-space: nowrap; }
   .scale .seg.s0 { background: var(--band0-wash); color: var(--band0); }
   .scale .seg.s1 { background: var(--band1-wash); color: var(--band1); }
   .scale .seg.s2 { background: var(--band2-wash); color: var(--band2); }
   .scale .seg.s3 { background: var(--band3-wash); color: var(--band3); }
   .scale .seg.s4 { background: var(--band4-wash); color: var(--band4); }
   .scale .marker { position: absolute; top: 0; bottom: 0; left: 0; width: 3px; background: var(--ink); border-radius: 0 2px 2px 0; }
-  .scale .ticks { display: flex; justify-content: space-between; margin-top: 5px; font-size: 10px; color: var(--ink-faint); }
-  .scale .now { margin-top: 7px; font-size: 12px; color: var(--ink); font-weight: 600; }
-  .scale .next { margin-top: 3px; font-size: 12px; color: var(--ink-soft); }
-  .hero .div { height: 1px; background: var(--line); margin: 16px 0 14px; }
-  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-  .chips .chip { display: inline-flex; align-items: baseline; gap: 6px; border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; font-size: 12px; color: var(--ink-soft); background: var(--surface); }
-  .chips .chip b { font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
-  .hero .foot { margin: 12px 0 0; font-size: 11.5px; line-height: 1.5; color: var(--ink-faint); }
+  .scale .ticks { display: flex; justify-content: space-between; margin-top: 4px; font-size: 10px; color: var(--ink-faint); }
 
-  /* ---------- trend card ---------- */
-  .trend { padding: 20px 22px; display: flex; flex-direction: column; }
-  .trend .toprow { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
-  .trend svg { width: 100%; height: auto; margin-top: 12px; display: block; }
-  .trend .capt { margin: 10px 0 0; font-size: 12px; line-height: 1.55; color: var(--ink-faint); }
+  /* ---------- per-tier breakdown + per-query dropdowns ---------- */
+  .tiers { padding: 14px 0 4px; }
+  .tiers .toprow { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 0 18px 10px; }
+  .legend { font-size: 11.5px; color: var(--ink-faint); display: flex; gap: 12px; align-items: center; }
+  .legend .d { margin-right: 4px; }
 
-  /* ---------- per-query table ---------- */
-  .tablecard { padding: 18px 0 6px; }
-  .tablecard .toprow { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; padding: 0 22px; }
-  .legend { font-size: 11.5px; color: var(--ink-faint); display: flex; gap: 14px; align-items: center; }
-  .legend .d { margin-right: 5px; }
-  .proxy-note { margin: 8px 22px 0; font-size: 11.5px; color: var(--ink-faint); }
-
-  details.tier { border-top: 1px solid var(--line); margin-top: 14px; }
-  details.tier:first-of-type { margin-top: 16px; }
-  details.tier summary { list-style: none; cursor: pointer; padding: 12px 22px; display: flex; align-items: baseline; gap: 10px; }
+  details.tier { border-top: 1px solid var(--line); }
+  details.tier summary { list-style: none; cursor: pointer; padding: 9px 18px; display: flex; align-items: center; gap: 10px; }
   details.tier summary::-webkit-details-marker { display: none; }
   details.tier summary:hover { background: var(--sand); }
-  .caret { flex: none; font-size: 10px; color: var(--ink-faint); transition: transform .15s; display: inline-block; transform: translateY(-1px); }
-  details[open] .caret { transform: rotate(90deg) translateX(-1px); }
-  .tiername { font-size: 14px; font-weight: 600; }
-  .tierdesc { font-size: 12px; color: var(--ink-faint); }
-  .tierstat { margin-left: auto; font-size: 12.5px; color: var(--ink-soft); white-space: nowrap; }
-  .tierstat b { color: var(--ink); font-weight: 600; }
+  .caret { flex: none; font-size: 9px; color: var(--ink-faint); transition: transform .15s; }
+  details[open] .caret { transform: rotate(90deg); }
+  .tname { font-size: 13px; font-weight: 600; white-space: nowrap; }
+  .tbar { flex: none; margin-left: auto; width: 96px; height: 6px; border-radius: 999px; background: var(--sand); overflow: hidden; }
+  .tfill { display: block; height: 100%; border-radius: 999px; background: var(--tide); }
+  .tnum { font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+  .tprobe { font-size: 11px; color: var(--ink-faint); white-space: nowrap; }
 
   table { width: 100%; border-collapse: collapse; }
-  td { padding: 6.5px 10px; border-top: 1px solid rgba(233,235,238,.6); vertical-align: baseline; }
+  td { padding: 5.5px 8px; border-top: 1px solid rgba(233,235,238,.6); font-size: 12.5px; line-height: 1.35; vertical-align: middle; }
   tr:hover td { background: var(--sand); }
-  td.dotc { width: 26px; padding-left: 22px; padding-right: 0; }
-  td.qn { width: 30px; font-size: 11px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
-  td.q { font-size: 13px; color: var(--ink); }
-  td.pos { width: 44px; font-size: 12px; color: var(--ink-soft); font-variant-numeric: tabular-nums; text-align: center; }
-  td.dom { font-size: 11.5px; color: var(--ink-faint); padding-right: 22px; max-width: 340px; }
+  td.dotc { width: 34px; padding-left: 20px; padding-right: 0; }
+  td.qn { width: 24px; font-size: 11px; color: var(--ink-faint); text-align: right; padding-right: 10px; font-variant-numeric: tabular-nums; }
+  td.q { color: var(--ink); padding-right: 18px; }
   tr.pend td.q { color: var(--ink-soft); }
-  tr.pend td.dom { color: var(--ink-faint); opacity: .75; }
 
-  .d { display: inline-block; width: 8px; height: 8px; border-radius: 999px; vertical-align: baseline; }
+  .d { display: inline-block; width: 7px; height: 7px; border-radius: 999px; vertical-align: middle; }
   .d-hit { background: var(--ok); }
   .d-miss { background: var(--band0); }
-  .d-pend { background: transparent; border: 1.5px solid var(--ink-faint); width: 7px; height: 7px; }
+  .d-pend { background: transparent; border: 1.5px solid var(--ink-faint); width: 6px; height: 6px; }
 
-  /* ---------- competitor leaderboard ---------- */
-  .side { padding: 18px 20px; }
-  .side .capt { margin: 6px 0 0; font-size: 11.5px; line-height: 1.5; color: var(--ink-faint); }
-  .lb { margin-top: 14px; display: flex; flex-direction: column; gap: 7px; }
-  .lbrow { display: grid; grid-template-columns: 96px 1fr 26px; gap: 10px; align-items: center; }
+  /* ---------- combined trend chart ---------- */
+  .chartcard { margin-top: 14px; padding: 18px 20px; }
+  .chartcard .toprow { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .key { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--ink-soft); }
+  .keys { display: inline-flex; gap: 16px; align-items: center; }
+  .chartcard svg.trend { width: 100%; height: auto; margin-top: 10px; display: block; }
+
+  /* ---------- leaderboards + GSC ---------- */
+  .side { padding: 16px 18px; }
+  .lb { margin-top: 12px; display: flex; flex-direction: column; gap: 7px; }
+  .lbrow { display: grid; grid-template-columns: 118px 1fr 26px; gap: 10px; align-items: center; }
   .lbrow .n { font-size: 12.5px; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .lbrow .track { height: 14px; border-radius: 4px; background: var(--sand); overflow: hidden; }
+  .lbrow .track { height: 13px; border-radius: 4px; background: var(--sand); overflow: hidden; }
   .lbrow .fill { height: 100%; border-radius: 4px; background: var(--ink-faint); }
   .lbrow .c { font-size: 12px; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
   .lbrow.us .n { color: var(--tide); font-weight: 600; }
   .lbrow.us .fill { background: var(--tide); }
   .lbrow.us .c { color: var(--tide); }
-  .lb .div { height: 1px; background: var(--line); margin: 4px 0; }
+  .lb .div { height: 1px; background: var(--line); margin: 3px 0; }
+  .side .meta { margin: 12px 0 0; font-size: 11.5px; color: var(--ink-faint); }
 
-  /* ---------- GSC + backlinks cards ---------- */
-  .side + .side, .sidecol .card + .card { margin-top: 14px; }
   .tag { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; font-size: 10.5px; color: var(--ink-faint); background: var(--surface); vertical-align: 2px; margin-left: 8px; }
-  .gscgrid { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px 12px; }
-  .stat .v { font-size: 24px; font-weight: 600; letter-spacing: -.02em; line-height: 1; }
-  .stat .l { margin-top: 5px; font-size: 11.5px; color: var(--ink-faint); }
-  .side .meta { margin: 14px 0 0; font-size: 11.5px; color: var(--ink-faint); }
-  .side .note { margin: 10px 0 0; padding-top: 10px; border-top: 1px solid var(--line); font-size: 12px; line-height: 1.55; color: var(--ink-soft); }
-  .bigline { margin-top: 12px; display: flex; align-items: baseline; gap: 10px; }
-  .bigline .v { font-size: 24px; font-weight: 600; letter-spacing: -.02em; color: var(--ink-soft); }
+  .gscgrid { margin-top: 12px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .stat .v { font-size: 22px; font-weight: 600; letter-spacing: -.02em; line-height: 1; }
+  .stat .l { margin-top: 4px; font-size: 11px; color: var(--ink-faint); }
+  .bl { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--ink-soft); }
+  .bl b { font-weight: 600; color: var(--ink); }
 
-  /* ---------- footer strip ---------- */
-  .footstrip { margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; display: flex; flex-direction: column; gap: 6px; }
-  .footstrip p { margin: 0; font-size: 12px; line-height: 1.6; color: var(--ink-faint); }
-  .footstrip b { color: var(--ink-soft); font-weight: 600; }
-  .footstrip code { font-family: inherit; font-weight: 600; color: var(--ink-soft); }
+  /* ---------- footer stamp ---------- */
+  .footstrip { margin-top: 36px; border-top: 1px solid var(--line); padding-top: 14px; }
+  .footstrip p { margin: 0; font-size: 12px; color: var(--ink-faint); }
 </style>
 </head>
 <body>
 
-<!-- header: the dashboard's logged-in chrome. The "SEO / GEO" pill is the new
-     admin affordance (renders next to the God mode button when user.is_admin,
-     shown here in its active state because we're on the page). -->
+<!-- header: the dashboard's logged-in chrome. The "SEO / GEO" pill renders next
+     to the God mode button when user.is_admin (unchanged from rev 1). -->
 <header>
   <nav>
     <a class="wordmark" href="#">
@@ -195,539 +174,430 @@
 
 <main>
   <h1>Search visibility</h1>
-  <p class="sub">How driftwood.sh shows up in AI answers (GEO) and in Google (SEO).
-  Admin only. This page reads the committed probe artifacts; nothing here calls an external API.</p>
 
-  <!-- zero-state framing: run zero is a starting line, not a broken page -->
-  <div class="card cardsm runzero">
-    <span class="flag" aria-hidden="true">0</span>
-    <p><b>Run zero.</b> Both probes ran their first baselines on Jul 21, 2026 and driftwood scored
-    0 across the board. That is the expected starting line for a week-old domain, not a bug.
-    Query set v2 (100 tiered queries per channel) is loaded for the next run; weekly probes
-    resume now that this page exists.</p>
-  </div>
-
-  <!-- ==================== GEO ==================== -->
-  <div class="sect">
-    <h2>GEO · AI search visibility</h2>
-    <span class="meta num">last run Jul 21, 2026 · v1 baseline, set v2 loaded · runner: Claude WebSearch</span>
-  </div>
-
-  <div class="row2">
-    <!-- hero scorecard -->
-    <div class="card hero">
-      <div class="eyebrow">Tier-1 hit rate · the headline metric</div>
-      <div class="headrow">
-        <span class="big num" style="color: var(--band0)">0%</span>
-        <span class="bandchip b0">below minimum</span>
-      </div>
-      <p class="capt num">0 of 20 must-win queries cite driftwood.sh · run zero, Jul 21</p>
-
-      <div class="scale" role="img" aria-label="Grading scale from 0 to 100 percent, currently at 0">
-        <div class="bar">
-          <span class="marker" style="left: 0%"></span>
-          <span class="seg s0">below min</span>
-          <span class="seg s1">bare min</span>
-          <span class="seg s2">fine</span>
-          <span class="seg s3">great</span>
-          <span class="seg s4">amazing</span>
+  <!-- top row: SEO left, GEO right — headline tier-1 hit rates -->
+  <div class="cols">
+    <div class="colstack">
+      <!-- SEO hero -->
+      <div class="card hero">
+        <div class="eyebrow" title="WebSearch proxy, not literal Google ranks; GSC below is ground truth. v1 baseline probed 15 of the 100 v2 keywords; unprobed keywords are pending, not misses.">SEO · Google</div>
+        <div class="headrow">
+          <span class="big num" style="color: var(--band0)">0%</span>
+          <span class="bandchip b0">below minimum</span>
         </div>
-        <div class="ticks num"><span>0</span><span>20</span><span>40</span><span>60</span><span>80</span><span>100</span></div>
-        <div class="now num">now: 0%</div>
-        <div class="next num">first milestone: 4 tier-1 hits reaches 20%, bare minimum</div>
-      </div>
-
-      <div class="div"></div>
-      <div class="chips num">
-        <span class="chip">all tiers <b>0 / 100</b></span>
-        <span class="chip">tier 1 <b>0 / 20</b></span>
-        <span class="chip">tier 2 <b>0 / 40</b></span>
-        <span class="chip">tier 3 <b>0 / 40</b></span>
-      </div>
-      <p class="foot num">The v1 baseline probed 24 of the 100 v2 queries (v1 is a strict subset).
-      Unprobed queries show as pending below, not as misses.</p>
-    </div>
-
-    <!-- trend -->
-    <div class="card trend">
-      <div class="toprow">
-        <span class="eyebrow">Tier-1 hit rate by run</span>
-        <span class="eyebrow">one line per runner tool</span>
-      </div>
-      <svg viewBox="0 0 720 248" aria-label="Trend chart: one data point at 0 percent on Jul 21">
-        <!-- band zones (faint) -->
-        <rect x="46" y="16"    width="656" height="38.4" fill="rgba(28,122,68,.06)"/>
-        <rect x="46" y="54.4"  width="656" height="38.4" fill="rgba(42,157,92,.06)"/>
-        <rect x="46" y="92.8"  width="656" height="38.4" fill="rgba(168,135,28,.06)"/>
-        <rect x="46" y="131.2" width="656" height="38.4" fill="rgba(194,106,23,.06)"/>
-        <rect x="46" y="169.6" width="656" height="38.4" fill="rgba(192,58,49,.06)"/>
-        <!-- gridlines at band thresholds -->
-        <g stroke="#e9ebee" stroke-width="1">
-          <line x1="46" y1="16" x2="702" y2="16"/>
-          <line x1="46" y1="54.4" x2="702" y2="54.4"/>
-          <line x1="46" y1="92.8" x2="702" y2="92.8"/>
-          <line x1="46" y1="131.2" x2="702" y2="131.2"/>
-          <line x1="46" y1="169.6" x2="702" y2="169.6"/>
-          <line x1="46" y1="208" x2="702" y2="208"/>
-        </g>
-        <!-- y labels -->
-        <g font-family="Public Sans, sans-serif" font-size="10" fill="#9aa2ab" text-anchor="end">
-          <text x="38" y="19.5">100</text>
-          <text x="38" y="57.9">80</text>
-          <text x="38" y="96.3">60</text>
-          <text x="38" y="134.7">40</text>
-          <text x="38" y="173.1">20</text>
-          <text x="38" y="211.5">0</text>
-        </g>
-        <!-- band names inside zones, right edge -->
-        <g font-family="Public Sans, sans-serif" font-size="9.5" font-weight="600" text-anchor="end" opacity=".55">
-          <text x="696" y="38"  fill="#1c7a44">amazing</text>
-          <text x="696" y="76.4" fill="#2a9d5c">great</text>
-          <text x="696" y="114.8" fill="#a8871c">fine</text>
-          <text x="696" y="153.2" fill="#c26a17">bare minimum</text>
-          <text x="696" y="191.6" fill="#c03a31">below minimum</text>
-        </g>
-        <!-- x ticks: weekly cadence -->
-        <g font-family="Public Sans, sans-serif" font-size="10" text-anchor="middle">
-          <text x="90"  y="230" fill="#6a737d" font-weight="600">Jul 21</text>
-          <text x="205" y="230" fill="#c6cbd1">Jul 28</text>
-          <text x="320" y="230" fill="#c6cbd1">Aug 4</text>
-          <text x="435" y="230" fill="#c6cbd1">Aug 11</text>
-          <text x="550" y="230" fill="#c6cbd1">Aug 18</text>
-          <text x="665" y="230" fill="#c6cbd1">Aug 25</text>
-        </g>
-        <g stroke="#e9ebee" stroke-width="1">
-          <line x1="90" y1="208" x2="90" y2="212"/><line x1="205" y1="208" x2="205" y2="212"/>
-          <line x1="320" y1="208" x2="320" y2="212"/><line x1="435" y1="208" x2="435" y2="212"/>
-          <line x1="550" y1="208" x2="550" y2="212"/><line x1="665" y1="208" x2="665" y2="212"/>
-        </g>
-        <!-- the one real point: run zero -->
-        <circle cx="90" cy="208" r="5" fill="#15557e" stroke="#ffffff" stroke-width="2"/>
-        <text x="102" y="198" font-family="Public Sans, sans-serif" font-size="11" font-weight="600" fill="#15557e">run zero · 0%</text>
-      </svg>
-      <p class="capt">One point so far; each weekly run adds one. The line is per runner tool
-      and never mixes tools: switching from Claude WebSearch to another runner starts a new line.</p>
-    </div>
-  </div>
-
-  <div class="row3">
-    <!-- per-query table -->
-    <div class="card tablecard">
-      <div class="toprow">
-        <span class="eyebrow">Per-query results · set v2 (100 queries)</span>
-        <span class="legend">
-          <span><span class="d d-hit"></span>hit</span>
-          <span><span class="d d-miss"></span>miss</span>
-          <span><span class="d d-pend"></span>pending first run</span>
-        </span>
-      </div>
-
-      <details class="tier" open>
-        <summary>
-          <span class="caret" aria-hidden="true">▶</span>
-          <span class="tiername">Tier 1 · must-win now</span>
-          <span class="tierdesc">entity, coinage, winnable SERPs, shipping pages</span>
-          <span class="tierstat num"><b>0 / 20</b> hits · 8 probed</span>
-        </summary>
-        <table>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">1</td><td class="q">driftwood AI SDR</td><td class="pos">–</td><td class="dom">knock-ai.com · theglobeandmail.com · getbreakout.ai</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">2</td><td class="q">driftwood.sh</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">3</td><td class="q">what is driftwood ai sdr</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">4</td><td class="q">driftwood ai sdr reviews</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">5</td><td class="q">driftwood vs artisan ai sdr</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">6</td><td class="q">what is demo-led outbound</td><td class="pos">–</td><td class="dom">store.steampowered.com · tagn.wordpress.com · youtube.com</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">7</td><td class="q">demo-led outbound definition</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">8</td><td class="q">human-in-the-loop AI outbound tool approve emails before send</td><td class="pos">–</td><td class="dom">n8n.io · activepieces.com · cli.nylas.com</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">9</td><td class="q">AI SDR with human approval before sending</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">10</td><td class="q">autonomous vs assisted outbound founder-led sales</td><td class="pos">–</td><td class="dom">housipro.com · getsliq.com · growthhacksuite.com</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">11</td><td class="q">autonomous vs assisted AI SDR</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">12</td><td class="q">founder-led sales cold outreach playbook early stage</td><td class="pos">–</td><td class="dom">nobsstartupcoach.com · salespipe.co · blog.mean.ceo</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">13</td><td class="q">how to scale founder led sales</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">14</td><td class="q">when should a startup hire an SDR</td><td class="pos">–</td><td class="dom">linkedin.com · signalfire.com · predictablerevenue.com</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">15</td><td class="q">founder led sales to first sales hire</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">16</td><td class="q">cold outbound benchmarks first party data</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">17</td><td class="q">cold email reply rate benchmarks 2026</td><td class="pos">–</td><td class="dom">instantly.ai · martal.ca · apollo.io</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">18</td><td class="q">AI SDR that builds custom demos</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">19</td><td class="q">AI SDR sends from your own accounts</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">20</td><td class="q">best outbound tools for 3 person startup no sales team</td><td class="pos">–</td><td class="dom">unifygtm.com · trellus.ai · salesforge.ai</td></tr>
-        </table>
-      </details>
-
-      <details class="tier">
-        <summary>
-          <span class="caret" aria-hidden="true">▶</span>
-          <span class="tiername">Tier 2 · near-term</span>
-          <span class="tierdesc">clusters our pages target, question tail, founder how-to</span>
-          <span class="tierstat num"><b>0 / 40</b> hits · 8 probed</span>
-        </summary>
-        <table>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">21</td><td class="q">what is a good cold email reply rate</td><td class="pos">–</td><td class="dom">instantly.ai · woodpecker.co · breakcold.com</td></tr>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">22</td><td class="q">average cold email response rate statistics b2b</td><td class="pos">–</td><td class="dom">martal.ca · snov.io · mailforge.ai</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">23</td><td class="q">average cold email reply rate 2026</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">24</td><td class="q">good reply rate for cold emails</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">25</td><td class="q">cold email conversion rate benchmarks</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">26</td><td class="q">b2b cold email response rates</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">27</td><td class="q">cold email success rate</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">28</td><td class="q">why cold emails get no replies common causes</td><td class="pos">–</td><td class="dom">woodpecker.co · blog.ozigi.app · emailchaser.com</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">29</td><td class="q">why is my cold email reply rate so low</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">30</td><td class="q">how to improve cold email response rate</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">31</td><td class="q">how to get more replies to cold emails</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">32</td><td class="q">is cold email dead 2026</td><td class="pos">–</td><td class="dom">instantly.ai · mailshake.com · editorialge.com</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">33</td><td class="q">do cold emails still work for b2b</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">34</td><td class="q">how to write a cold email that gets replies</td><td class="pos">–</td><td class="dom">pipeline.zoominfo.com · overloop.com · saleshandy.com</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">35</td><td class="q">cold email tips b2b founders</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">36</td><td class="q">how to write a cold email for b2b sales</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">37</td><td class="q">cold email personalization impact reply rate research</td><td class="pos">–</td><td class="dom">mailforge.ai · whali.co.uk · apollo.io</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">38</td><td class="q">cold email personalization at scale</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">39</td><td class="q">how many cold emails to book a meeting</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">40</td><td class="q">cold email follow up cadence best practices</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">41</td><td class="q">how to do cold outreach for B2B SaaS startup</td><td class="pos">–</td><td class="dom">paddle.com · denisshatalin.com · hubspot.com</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">42</td><td class="q">cold outreach for startups guide</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">43</td><td class="q">cold email vs LinkedIn outreach B2B</td><td class="pos">–</td><td class="dom">salesbread.com · joinvalley.co · clutch.co</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">44</td><td class="q">how to do cold outreach on linkedin</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">45</td><td class="q">linkedin outreach tips founders</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">46</td><td class="q">how to book more demos b2b saas</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">47</td><td class="q">how to improve demo booking rate</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">48</td><td class="q">how to improve sdr conversion rates</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">49</td><td class="q">sdr metrics benchmarks</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">50</td><td class="q">cold outbound playbook for sdrs</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">51</td><td class="q">how to run a cold outbound channel</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">52</td><td class="q">how to know if cold outbound is working</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">53</td><td class="q">how to get first 10 customers b2b saas</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">54</td><td class="q">how to get your first customers startup</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">55</td><td class="q">best growth channels for b2b saas</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">56</td><td class="q">gtm strategy for seed stage startup</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">57</td><td class="q">does cold email work for startups</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">58</td><td class="q">founder led sales definition</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">59</td><td class="q">hiring your first salesperson startup</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">60</td><td class="q">first sales hire startup when</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-        </table>
-      </details>
-
-      <details class="tier">
-        <summary>
-          <span class="caret" aria-hidden="true">▶</span>
-          <span class="tiername">Tier 3 · long-term build-up</span>
-          <span class="tierdesc">head and best-of terms; expected to sit at zero for quarters</span>
-          <span class="tierstat num"><b>0 / 40</b> hits · 8 probed</span>
-        </summary>
-        <table>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">61</td><td class="q">best AI SDR</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">62</td><td class="q">best AI SDR tools 2026</td><td class="pos">–</td><td class="dom">saleshandy.com · knock-ai.com · amplemarket.com</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">63</td><td class="q">best AI SDR software</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">64</td><td class="q">top AI SDR companies</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">65</td><td class="q">AI SDR tools for seed stage startups</td><td class="pos">–</td><td class="dom">fl0.com · altahq.com · monday.com</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">66</td><td class="q">AI SDR</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">67</td><td class="q">what is an AI SDR</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">68</td><td class="q">AI SDR tool</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">69</td><td class="q">AI sales agent</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">70</td><td class="q">best AI sales agents 2026</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">71</td><td class="q">AI sales rep software</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">72</td><td class="q">AI BDR vs AI SDR</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">73</td><td class="q">AI SDR vs human SDR</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">74</td><td class="q">AI SDR cold email reply rates vs human SDR performance</td><td class="pos">–</td><td class="dom">instantly.ai · digitalapplied.com · instantly.ai</td></tr>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">75</td><td class="q">do AI SDR tools actually work</td><td class="pos">–</td><td class="dom">salesmotion.io · close.com · salesforce.com</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">76</td><td class="q">AI SDR pricing comparison</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">77</td><td class="q">cheapest AI SDR for startups</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">78</td><td class="q">new AI outbound agents 2026 alternatives to 11x Artisan</td><td class="pos">–</td><td class="dom">growtheffect.co · devcommx.com · warmly.ai</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">79</td><td class="q">11x vs artisan alternatives</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">80</td><td class="q">AI SDR vs sales engagement platform comparison</td><td class="pos">–</td><td class="dom">instantly.ai · amplemarket.com · firstsales.io</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">81</td><td class="q">best AI growth tools</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">82</td><td class="q">best AI growth tools for startups</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">83</td><td class="q">AI tools for b2b growth</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">84</td><td class="q">best AI sales tools 2026</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">85</td><td class="q">AI tools for founders</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">86</td><td class="q">best AI tools for lead generation</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">87</td><td class="q">AI lead generation software</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">88</td><td class="q">AI prospecting tools</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">89</td><td class="q">best cold email software</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">90</td><td class="q">best cold email tools 2026</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">91</td><td class="q">cold email automation software</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">92</td><td class="q">outsourced SDR vs AI SDR</td><td class="pos">–</td><td class="dom">aisdr.com · callingagency.com · vectoragents.ai</td></tr>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">93</td><td class="q">outsourced sdr companies cost</td><td class="pos">–</td><td class="dom">leadium.com · outboundsalespro.com · billricestrategy.com</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">94</td><td class="q">sdr as a service</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">95</td><td class="q">ai for sales prospecting</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">96</td><td class="q">b2b saas lead generation tools</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">97</td><td class="q">best sales automation tools startups</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">98</td><td class="q">ai outbound sales tool</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">99</td><td class="q">best ai sdr for linkedin outreach</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">100</td><td class="q">ai sdr comparison 2026</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-        </table>
-      </details>
-    </div>
-
-    <!-- competitor leaderboard -->
-    <div class="card side">
-      <div class="eyebrow">Competitor leaderboard</div>
-      <p class="capt">Appearances across the 24 baseline queries. Fixed 16-vendor watch list;
-      only vendors that showed up are listed.</p>
-      <div class="lb num">
-        <div class="lbrow us"><span class="n">driftwood</span><div class="track"><div class="fill" style="width:0%"></div></div><span class="c">0</span></div>
-        <div class="div"></div>
-        <div class="lbrow"><span class="n">Apollo</span><div class="track"><div class="fill" style="width:100%"></div></div><span class="c">8</span></div>
-        <div class="lbrow"><span class="n">Saleshandy</span><div class="track"><div class="fill" style="width:87.5%"></div></div><span class="c">7</span></div>
-        <div class="lbrow"><span class="n">Instantly</span><div class="track"><div class="fill" style="width:87.5%"></div></div><span class="c">7</span></div>
-        <div class="lbrow"><span class="n">Amplemarket</span><div class="track"><div class="fill" style="width:50%"></div></div><span class="c">4</span></div>
-        <div class="lbrow"><span class="n">Autobound</span><div class="track"><div class="fill" style="width:50%"></div></div><span class="c">4</span></div>
-        <div class="lbrow"><span class="n">AiSDR</span><div class="track"><div class="fill" style="width:50%"></div></div><span class="c">4</span></div>
-        <div class="lbrow"><span class="n">11x</span><div class="track"><div class="fill" style="width:50%"></div></div><span class="c">4</span></div>
-        <div class="lbrow"><span class="n">Salesforge</span><div class="track"><div class="fill" style="width:37.5%"></div></div><span class="c">3</span></div>
-        <div class="lbrow"><span class="n">Artisan</span><div class="track"><div class="fill" style="width:37.5%"></div></div><span class="c">3</span></div>
-        <div class="lbrow"><span class="n">Smartlead</span><div class="track"><div class="fill" style="width:25%"></div></div><span class="c">2</span></div>
-        <div class="lbrow"><span class="n">Clay</span><div class="track"><div class="fill" style="width:12.5%"></div></div><span class="c">1</span></div>
-        <div class="lbrow"><span class="n">Unify</span><div class="track"><div class="fill" style="width:12.5%"></div></div><span class="c">1</span></div>
-        <div class="lbrow"><span class="n">Nooks</span><div class="track"><div class="fill" style="width:12.5%"></div></div><span class="c">1</span></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================== SEO ==================== -->
-  <div class="sect">
-    <h2>SEO · Google visibility</h2>
-    <span class="meta num">last run Jul 21, 2026 · v1 baseline, set v2 loaded · runner: Claude WebSearch proxy + manual GSC pull</span>
-  </div>
-
-  <div class="row2">
-    <!-- hero scorecard -->
-    <div class="card hero">
-      <div class="eyebrow">Tier-1 hit rate · the headline metric</div>
-      <div class="headrow">
-        <span class="big num" style="color: var(--band0)">0%</span>
-        <span class="bandchip b0">below minimum</span>
-      </div>
-      <p class="capt num">0 of 15 must-win keywords surface driftwood.sh · run zero, Jul 21</p>
-
-      <div class="scale" role="img" aria-label="Grading scale from 0 to 100 percent, currently at 0">
-        <div class="bar">
-          <span class="marker" style="left: 0%"></span>
-          <span class="seg s0">below min</span>
-          <span class="seg s1">bare min</span>
-          <span class="seg s2">fine</span>
-          <span class="seg s3">great</span>
-          <span class="seg s4">amazing</span>
+        <p class="capt num">0 / 15 tier-1 keywords · Jul 21</p>
+        <div class="scale" role="img" aria-label="Grading scale 0 to 100 percent, currently 0" title="bands: under 20 below minimum · 20 bare minimum · 40 fine · 60 great · 80+ amazing. Next milestone: 3 tier-1 hits reaches 20%.">
+          <div class="bar">
+            <span class="marker" style="left: 0%"></span>
+            <span class="seg s0">below min</span>
+            <span class="seg s1">bare min</span>
+            <span class="seg s2">fine</span>
+            <span class="seg s3">great</span>
+            <span class="seg s4">amazing</span>
+          </div>
+          <div class="ticks num"><span>0</span><span>20</span><span>40</span><span>60</span><span>80</span><span>100</span></div>
         </div>
-        <div class="ticks num"><span>0</span><span>20</span><span>40</span><span>60</span><span>80</span><span>100</span></div>
-        <div class="now num">now: 0%</div>
-        <div class="next num">first milestone: 3 tier-1 hits reaches 20%, bare minimum</div>
       </div>
 
-      <div class="div"></div>
-      <div class="chips num">
-        <span class="chip">all tiers <b>0 / 100</b></span>
-        <span class="chip">tier 1 <b>0 / 15</b></span>
-        <span class="chip">tier 2 <b>0 / 45</b></span>
-        <span class="chip">tier 3 <b>0 / 40</b></span>
+      <!-- SEO per-tier breakdown / per-keyword dropdowns -->
+      <div class="card tiers">
+        <div class="toprow">
+          <span class="eyebrow num">Keywords · set v2 · 100</span>
+          <span class="legend">
+            <span><span class="d d-hit"></span>hit</span>
+            <span><span class="d d-miss"></span>miss</span>
+            <span><span class="d d-pend"></span>pending</span>
+          </span>
+        </div>
+        <details class="tier">
+          <summary title="must-win now: entity, coinage, winnable SERPs, shipping pages · 6 probed, 9 pending first run">
+            <span class="caret" aria-hidden="true">▶</span>
+            <span class="tname">Tier 1 · must-win</span>
+            <span class="tbar"><span class="tfill" style="width:0.0%"></span></span>
+            <span class="tnum num">0 / 15</span>
+            <span class="tprobe num">6 probed</span>
+          </summary>
+          <table>
+            <tr class="miss" title="miss · top: facebook.com · instagram.com · homedepot.com"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">1</td><td class="q">driftwood.sh</td></tr>
+            <tr class="miss" title="miss · top: dreamstime.com · getbreakout.ai · allcode.com"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">2</td><td class="q">driftwood ai sdr</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">3</td><td class="q">driftwood ai</td></tr>
+            <tr class="miss" title="miss · top: hushly.com · kotaku.com · orbitalx.com"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">4</td><td class="q">demo-led outbound</td></tr>
+            <tr class="miss" title="miss · top: pipedrive.com · hubspot.com · foundingsales.com"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">5</td><td class="q">founder led sales</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">6</td><td class="q">founder-led sales</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">7</td><td class="q">cold outbound benchmarks</td></tr>
+            <tr class="miss" title="miss · top: instantly.ai · community.hubspot.com · woodpecker.co"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">8</td><td class="q">cold email benchmarks</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">9</td><td class="q">driftwood autosana</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">10</td><td class="q">what is demo-led outbound</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">11</td><td class="q">how to scale founder led sales</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">12</td><td class="q">when to hire an sdr</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">13</td><td class="q">founder led sales playbook</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">14</td><td class="q">cold email reply rate benchmark</td></tr>
+            <tr class="miss" title="miss · top: instantly.ai · woodpecker.co · breakcold.com"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">15</td><td class="q">what is a good cold email reply rate</td></tr>
+          </table>
+        </details>
+        <details class="tier">
+          <summary title="near-term: clusters our pages target, question tail, founder/operator how-to · 4 probed, 41 pending first run">
+            <span class="caret" aria-hidden="true">▶</span>
+            <span class="tname">Tier 2 · near-term</span>
+            <span class="tbar"><span class="tfill" style="width:0.0%"></span></span>
+            <span class="tnum num">0 / 45</span>
+            <span class="tprobe num">4 probed</span>
+          </summary>
+          <table>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">16</td><td class="q">average cold email response rate</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">17</td><td class="q">average cold email reply rate</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">18</td><td class="q">good reply rate for cold emails</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">19</td><td class="q">cold email success rate</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">20</td><td class="q">cold email conversion rate</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">21</td><td class="q">b2b cold email response rates</td></tr>
+            <tr class="miss" title="miss · top: indeed.com · copyhackers.com · hunter.io"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">22</td><td class="q">how to write a cold email</td></tr>
+            <tr class="miss" title="miss · top: copyhackers.com · forbes.com · dropcontact.com"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">23</td><td class="q">cold email tips</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">24</td><td class="q">tips for cold emailing</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">25</td><td class="q">how to write a cold email for sales</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">26</td><td class="q">how to start a cold email</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">27</td><td class="q">cold email personalization</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">28</td><td class="q">personalized cold email examples</td></tr>
+            <tr class="miss" title="miss · top: quora.com · nethunt.com · artisan.co"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">29</td><td class="q">how to improve cold email response rate</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">30</td><td class="q">how to get more replies to cold emails</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">31</td><td class="q">why is my cold email not working</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">32</td><td class="q">do cold emails still work</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">33</td><td class="q">is cold email dead</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">34</td><td class="q">how many cold emails to book a meeting</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">35</td><td class="q">cold email follow up cadence</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">36</td><td class="q">how to do cold outreach</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">37</td><td class="q">cold outreach tips</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">38</td><td class="q">startup cold outreach</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">39</td><td class="q">outbound for startups</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">40</td><td class="q">cold email vs linkedin outreach</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">41</td><td class="q">how to do cold outreach on linkedin</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">42</td><td class="q">linkedin outreach tool</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">43</td><td class="q">linkedin outreach automation</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">44</td><td class="q">how to get first customers</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">45</td><td class="q">how to get first customers startup</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">46</td><td class="q">hiring your first salesperson</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">47</td><td class="q">first sales hire startup</td></tr>
+            <tr class="miss" title="miss · top: mouseflow.com · artisan.co · callboxinc.com"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">48</td><td class="q">b2b saas lead generation</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">49</td><td class="q">saas lead generation</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">50</td><td class="q">saas demand generation</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">51</td><td class="q">best growth channels for b2b saas</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">52</td><td class="q">gtm strategy for startups</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">53</td><td class="q">how to book more demos b2b</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">54</td><td class="q">improve demo show rate</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">55</td><td class="q">how to improve sdr conversion rates</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">56</td><td class="q">sdr metrics benchmarks</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">57</td><td class="q">how to validate a sales channel</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">58</td><td class="q">do google ads work for b2b saas</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">59</td><td class="q">is seo worth it for startups</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">60</td><td class="q">how to build a sales pipeline from scratch</td></tr>
+          </table>
+        </details>
+        <details class="tier">
+          <summary title="long-term build-up: head and best-of terms, aspirational categories · 5 probed, 35 pending first run">
+            <span class="caret" aria-hidden="true">▶</span>
+            <span class="tname">Tier 3 · long-term</span>
+            <span class="tbar"><span class="tfill" style="width:0.0%"></span></span>
+            <span class="tnum num">0 / 40</span>
+            <span class="tprobe num">5 probed</span>
+          </summary>
+          <table>
+            <tr class="miss" title="miss · top: qualified.com · salesforce.com · salesforge.ai"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">61</td><td class="q">ai sdr</td></tr>
+            <tr class="miss" title="miss · top: salesforge.ai · coldreach.ai · aisdr.com"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">62</td><td class="q">ai sdr tool</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">63</td><td class="q">ai sdr tools</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">64</td><td class="q">best ai sdr</td></tr>
+            <tr class="miss" title="miss · top: salesforge.ai · aisdr.com · simular.ai"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">65</td><td class="q">best ai sdr tools</td></tr>
+            <tr class="miss" title="miss · top: creatio.com · salesforce.com · workato.com"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">66</td><td class="q">ai sales agent</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">67</td><td class="q">ai sales rep</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">68</td><td class="q">ai bdr</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">69</td><td class="q">sdr ai</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">70</td><td class="q">ai lead generation</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">71</td><td class="q">ai for lead generation</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">72</td><td class="q">ai lead generator</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">73</td><td class="q">ai lead generation software</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">74</td><td class="q">ai prospecting tools</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">75</td><td class="q">ai for sales prospecting</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">76</td><td class="q">best ai growth tools</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">77</td><td class="q">ai growth tools</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">78</td><td class="q">best ai sales tools</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">79</td><td class="q">ai tools for lead generation</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">80</td><td class="q">cold email software</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">81</td><td class="q">best cold email software</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">82</td><td class="q">cold email tools</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">83</td><td class="q">cold email platforms</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">84</td><td class="q">cold email automation software</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">85</td><td class="q">best cold email tools</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">86</td><td class="q">sales automation software</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">87</td><td class="q">outbound sales automation</td></tr>
+            <tr class="miss" title="miss · top: callboxinc.com · belkins.io · saleshive.com"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">88</td><td class="q">outsourced sdr</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">89</td><td class="q">sdr services</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">90</td><td class="q">sdr as a service</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">91</td><td class="q">outsourced sdr companies</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">92</td><td class="q">ai appointment setting</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">93</td><td class="q">ai sales assistant</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">94</td><td class="q">ai outbound</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">95</td><td class="q">automated cold outreach</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">96</td><td class="q">ai cold email</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">97</td><td class="q">ai email outreach</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">98</td><td class="q">ai prospecting</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">99</td><td class="q">pipeline generation</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">100</td><td class="q">best outbound sales tools</td></tr>
+          </table>
+        </details>
       </div>
-      <p class="foot num">The v1 baseline probed 15 of the 100 v2 keywords. Rank checks are a
-      WebSearch proxy, directional only; GSC below is the ground truth.</p>
     </div>
 
-    <!-- trend -->
-    <div class="card trend">
-      <div class="toprow">
-        <span class="eyebrow">Tier-1 hit rate by run</span>
-        <span class="eyebrow">one line per runner tool</span>
+    <div class="colstack">
+      <!-- GEO hero -->
+      <div class="card hero">
+        <div class="eyebrow" title="Runner: Claude WebSearch; results are only comparable within one runner tool. v1 baseline probed 24 of the 100 v2 queries; unprobed queries are pending, not misses.">GEO · AI answers</div>
+        <div class="headrow">
+          <span class="big num" style="color: var(--band0)">0%</span>
+          <span class="bandchip b0">below minimum</span>
+        </div>
+        <p class="capt num">0 / 20 tier-1 queries · Jul 21</p>
+        <div class="scale" role="img" aria-label="Grading scale 0 to 100 percent, currently 0" title="bands: under 20 below minimum · 20 bare minimum · 40 fine · 60 great · 80+ amazing. Next milestone: 4 tier-1 hits reaches 20%.">
+          <div class="bar">
+            <span class="marker" style="left: 0%"></span>
+            <span class="seg s0">below min</span>
+            <span class="seg s1">bare min</span>
+            <span class="seg s2">fine</span>
+            <span class="seg s3">great</span>
+            <span class="seg s4">amazing</span>
+          </div>
+          <div class="ticks num"><span>0</span><span>20</span><span>40</span><span>60</span><span>80</span><span>100</span></div>
+        </div>
       </div>
-      <svg viewBox="0 0 720 248" aria-label="Trend chart: one data point at 0 percent on Jul 21">
-        <rect x="46" y="16"    width="656" height="38.4" fill="rgba(28,122,68,.06)"/>
-        <rect x="46" y="54.4"  width="656" height="38.4" fill="rgba(42,157,92,.06)"/>
-        <rect x="46" y="92.8"  width="656" height="38.4" fill="rgba(168,135,28,.06)"/>
-        <rect x="46" y="131.2" width="656" height="38.4" fill="rgba(194,106,23,.06)"/>
-        <rect x="46" y="169.6" width="656" height="38.4" fill="rgba(192,58,49,.06)"/>
-        <g stroke="#e9ebee" stroke-width="1">
-          <line x1="46" y1="16" x2="702" y2="16"/>
-          <line x1="46" y1="54.4" x2="702" y2="54.4"/>
-          <line x1="46" y1="92.8" x2="702" y2="92.8"/>
-          <line x1="46" y1="131.2" x2="702" y2="131.2"/>
-          <line x1="46" y1="169.6" x2="702" y2="169.6"/>
-          <line x1="46" y1="208" x2="702" y2="208"/>
-        </g>
-        <g font-family="Public Sans, sans-serif" font-size="10" fill="#9aa2ab" text-anchor="end">
-          <text x="38" y="19.5">100</text>
-          <text x="38" y="57.9">80</text>
-          <text x="38" y="96.3">60</text>
-          <text x="38" y="134.7">40</text>
-          <text x="38" y="173.1">20</text>
-          <text x="38" y="211.5">0</text>
-        </g>
-        <g font-family="Public Sans, sans-serif" font-size="9.5" font-weight="600" text-anchor="end" opacity=".55">
-          <text x="696" y="38"  fill="#1c7a44">amazing</text>
-          <text x="696" y="76.4" fill="#2a9d5c">great</text>
-          <text x="696" y="114.8" fill="#a8871c">fine</text>
-          <text x="696" y="153.2" fill="#c26a17">bare minimum</text>
-          <text x="696" y="191.6" fill="#c03a31">below minimum</text>
-        </g>
-        <g font-family="Public Sans, sans-serif" font-size="10" text-anchor="middle">
-          <text x="90"  y="230" fill="#6a737d" font-weight="600">Jul 21</text>
-          <text x="205" y="230" fill="#c6cbd1">Jul 28</text>
-          <text x="320" y="230" fill="#c6cbd1">Aug 4</text>
-          <text x="435" y="230" fill="#c6cbd1">Aug 11</text>
-          <text x="550" y="230" fill="#c6cbd1">Aug 18</text>
-          <text x="665" y="230" fill="#c6cbd1">Aug 25</text>
-        </g>
-        <g stroke="#e9ebee" stroke-width="1">
-          <line x1="90" y1="208" x2="90" y2="212"/><line x1="205" y1="208" x2="205" y2="212"/>
-          <line x1="320" y1="208" x2="320" y2="212"/><line x1="435" y1="208" x2="435" y2="212"/>
-          <line x1="550" y1="208" x2="550" y2="212"/><line x1="665" y1="208" x2="665" y2="212"/>
-        </g>
-        <circle cx="90" cy="208" r="5" fill="#15557e" stroke="#ffffff" stroke-width="2"/>
-        <text x="102" y="198" font-family="Public Sans, sans-serif" font-size="11" font-weight="600" fill="#15557e">run zero · 0%</text>
-      </svg>
-      <p class="capt">One point so far; each weekly run adds one. GSC clicks and impressions will
-      chart here too once the API pull is wired (separate line, separate scale).</p>
+
+      <!-- GEO per-tier breakdown / per-query dropdowns -->
+      <div class="card tiers">
+        <div class="toprow">
+          <span class="eyebrow num">Queries · set v2 · 100</span>
+          <span class="legend">
+            <span><span class="d d-hit"></span>hit</span>
+            <span><span class="d d-miss"></span>miss</span>
+            <span><span class="d d-pend"></span>pending</span>
+          </span>
+        </div>
+        <details class="tier">
+          <summary title="must-win now: entity, coinage, winnable SERPs, shipping pages · 8 probed, 12 pending first run">
+            <span class="caret" aria-hidden="true">▶</span>
+            <span class="tname">Tier 1 · must-win</span>
+            <span class="tbar"><span class="tfill" style="width:0.0%"></span></span>
+            <span class="tnum num">0 / 20</span>
+            <span class="tprobe num">8 probed</span>
+          </summary>
+          <table>
+            <tr class="miss" title="miss · top: knock-ai.com · theglobeandmail.com · getbreakout.ai"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">1</td><td class="q">driftwood AI SDR</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">2</td><td class="q">driftwood.sh</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">3</td><td class="q">what is driftwood ai sdr</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">4</td><td class="q">driftwood ai sdr reviews</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">5</td><td class="q">driftwood vs artisan ai sdr</td></tr>
+            <tr class="miss" title="miss · top: store.steampowered.com · tagn.wordpress.com · youtube.com"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">6</td><td class="q">what is demo-led outbound</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">7</td><td class="q">demo-led outbound definition</td></tr>
+            <tr class="miss" title="miss · top: n8n.io · activepieces.com · cli.nylas.com"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">8</td><td class="q">human-in-the-loop AI outbound tool approve emails before send</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">9</td><td class="q">AI SDR with human approval before sending</td></tr>
+            <tr class="miss" title="miss · top: housipro.com · getsliq.com · growthhacksuite.com"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">10</td><td class="q">autonomous vs assisted outbound founder-led sales</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">11</td><td class="q">autonomous vs assisted AI SDR</td></tr>
+            <tr class="miss" title="miss · top: nobsstartupcoach.com · salespipe.co · blog.mean.ceo"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">12</td><td class="q">founder-led sales cold outreach playbook early stage</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">13</td><td class="q">how to scale founder led sales</td></tr>
+            <tr class="miss" title="miss · top: linkedin.com · signalfire.com · predictablerevenue.com"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">14</td><td class="q">when should a startup hire an SDR</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">15</td><td class="q">founder led sales to first sales hire</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">16</td><td class="q">cold outbound benchmarks first party data</td></tr>
+            <tr class="miss" title="miss · top: instantly.ai · martal.ca · apollo.io"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">17</td><td class="q">cold email reply rate benchmarks 2026</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">18</td><td class="q">AI SDR that builds custom demos</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">19</td><td class="q">AI SDR sends from your own accounts</td></tr>
+            <tr class="miss" title="miss · top: unifygtm.com · trellus.ai · salesforge.ai"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">20</td><td class="q">best outbound tools for 3 person startup no sales team</td></tr>
+          </table>
+        </details>
+        <details class="tier">
+          <summary title="near-term: clusters our pages target, question tail, founder/operator how-to · 8 probed, 32 pending first run">
+            <span class="caret" aria-hidden="true">▶</span>
+            <span class="tname">Tier 2 · near-term</span>
+            <span class="tbar"><span class="tfill" style="width:0.0%"></span></span>
+            <span class="tnum num">0 / 40</span>
+            <span class="tprobe num">8 probed</span>
+          </summary>
+          <table>
+            <tr class="miss" title="miss · top: instantly.ai · woodpecker.co · breakcold.com"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">21</td><td class="q">what is a good cold email reply rate</td></tr>
+            <tr class="miss" title="miss · top: martal.ca · snov.io · mailforge.ai"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">22</td><td class="q">average cold email response rate statistics b2b</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">23</td><td class="q">average cold email reply rate 2026</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">24</td><td class="q">good reply rate for cold emails</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">25</td><td class="q">cold email conversion rate benchmarks</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">26</td><td class="q">b2b cold email response rates</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">27</td><td class="q">cold email success rate</td></tr>
+            <tr class="miss" title="miss · top: woodpecker.co · blog.ozigi.app · emailchaser.com"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">28</td><td class="q">why cold emails get no replies common causes</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">29</td><td class="q">why is my cold email reply rate so low</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">30</td><td class="q">how to improve cold email response rate</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">31</td><td class="q">how to get more replies to cold emails</td></tr>
+            <tr class="miss" title="miss · top: instantly.ai · mailshake.com · editorialge.com"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">32</td><td class="q">is cold email dead 2026</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">33</td><td class="q">do cold emails still work for b2b</td></tr>
+            <tr class="miss" title="miss · top: pipeline.zoominfo.com · overloop.com · saleshandy.com"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">34</td><td class="q">how to write a cold email that gets replies</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">35</td><td class="q">cold email tips b2b founders</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">36</td><td class="q">how to write a cold email for b2b sales</td></tr>
+            <tr class="miss" title="miss · top: mailforge.ai · whali.co.uk · apollo.io"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">37</td><td class="q">cold email personalization impact reply rate research</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">38</td><td class="q">cold email personalization at scale</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">39</td><td class="q">how many cold emails to book a meeting</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">40</td><td class="q">cold email follow up cadence best practices</td></tr>
+            <tr class="miss" title="miss · top: paddle.com · denisshatalin.com · hubspot.com"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">41</td><td class="q">how to do cold outreach for B2B SaaS startup</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">42</td><td class="q">cold outreach for startups guide</td></tr>
+            <tr class="miss" title="miss · top: salesbread.com · joinvalley.co · clutch.co"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">43</td><td class="q">cold email vs LinkedIn outreach B2B</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">44</td><td class="q">how to do cold outreach on linkedin</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">45</td><td class="q">linkedin outreach tips founders</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">46</td><td class="q">how to book more demos b2b saas</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">47</td><td class="q">how to improve demo booking rate</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">48</td><td class="q">how to improve sdr conversion rates</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">49</td><td class="q">sdr metrics benchmarks</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">50</td><td class="q">cold outbound playbook for sdrs</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">51</td><td class="q">how to run a cold outbound channel</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">52</td><td class="q">how to know if cold outbound is working</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">53</td><td class="q">how to get first 10 customers b2b saas</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">54</td><td class="q">how to get your first customers startup</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">55</td><td class="q">best growth channels for b2b saas</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">56</td><td class="q">gtm strategy for seed stage startup</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">57</td><td class="q">does cold email work for startups</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">58</td><td class="q">founder led sales definition</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">59</td><td class="q">hiring your first salesperson startup</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">60</td><td class="q">first sales hire startup when</td></tr>
+          </table>
+        </details>
+        <details class="tier">
+          <summary title="long-term build-up: head and best-of terms, aspirational categories · 8 probed, 32 pending first run">
+            <span class="caret" aria-hidden="true">▶</span>
+            <span class="tname">Tier 3 · long-term</span>
+            <span class="tbar"><span class="tfill" style="width:0.0%"></span></span>
+            <span class="tnum num">0 / 40</span>
+            <span class="tprobe num">8 probed</span>
+          </summary>
+          <table>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">61</td><td class="q">best AI SDR</td></tr>
+            <tr class="miss" title="miss · top: saleshandy.com · knock-ai.com · amplemarket.com"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">62</td><td class="q">best AI SDR tools 2026</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">63</td><td class="q">best AI SDR software</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">64</td><td class="q">top AI SDR companies</td></tr>
+            <tr class="miss" title="miss · top: fl0.com · altahq.com · monday.com"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">65</td><td class="q">AI SDR tools for seed stage startups</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">66</td><td class="q">AI SDR</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">67</td><td class="q">what is an AI SDR</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">68</td><td class="q">AI SDR tool</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">69</td><td class="q">AI sales agent</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">70</td><td class="q">best AI sales agents 2026</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">71</td><td class="q">AI sales rep software</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">72</td><td class="q">AI BDR vs AI SDR</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">73</td><td class="q">AI SDR vs human SDR</td></tr>
+            <tr class="miss" title="miss · top: instantly.ai · digitalapplied.com · instantly.ai"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">74</td><td class="q">AI SDR cold email reply rates vs human SDR performance</td></tr>
+            <tr class="miss" title="miss · top: salesmotion.io · close.com · salesforce.com"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">75</td><td class="q">do AI SDR tools actually work</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">76</td><td class="q">AI SDR pricing comparison</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">77</td><td class="q">cheapest AI SDR for startups</td></tr>
+            <tr class="miss" title="miss · top: growtheffect.co · devcommx.com · warmly.ai"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">78</td><td class="q">new AI outbound agents 2026 alternatives to 11x Artisan</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">79</td><td class="q">11x vs artisan alternatives</td></tr>
+            <tr class="miss" title="miss · top: instantly.ai · amplemarket.com · firstsales.io"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">80</td><td class="q">AI SDR vs sales engagement platform comparison</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">81</td><td class="q">best AI growth tools</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">82</td><td class="q">best AI growth tools for startups</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">83</td><td class="q">AI tools for b2b growth</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">84</td><td class="q">best AI sales tools 2026</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">85</td><td class="q">AI tools for founders</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">86</td><td class="q">best AI tools for lead generation</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">87</td><td class="q">AI lead generation software</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">88</td><td class="q">AI prospecting tools</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">89</td><td class="q">best cold email software</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">90</td><td class="q">best cold email tools 2026</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">91</td><td class="q">cold email automation software</td></tr>
+            <tr class="miss" title="miss · top: aisdr.com · callingagency.com · vectoragents.ai"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">92</td><td class="q">outsourced SDR vs AI SDR</td></tr>
+            <tr class="miss" title="miss · top: leadium.com · outboundsalespro.com · billricestrategy.com"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">93</td><td class="q">outsourced sdr companies cost</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">94</td><td class="q">sdr as a service</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">95</td><td class="q">ai for sales prospecting</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">96</td><td class="q">b2b saas lead generation tools</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">97</td><td class="q">best sales automation tools startups</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">98</td><td class="q">ai outbound sales tool</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">99</td><td class="q">best ai sdr for linkedin outreach</td></tr>
+            <tr class="pend" title="pending first run"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">100</td><td class="q">ai sdr comparison 2026</td></tr>
+          </table>
+        </details>
+      </div>
     </div>
   </div>
 
-  <div class="row3">
-    <!-- per-query table -->
-    <div class="card tablecard">
-      <div class="toprow">
-        <span class="eyebrow">Per-keyword results · set v2 (100 keywords)</span>
-        <span class="legend">
-          <span><span class="d d-hit"></span>hit</span>
-          <span><span class="d d-miss"></span>miss</span>
-          <span><span class="d d-pend"></span>pending first run</span>
-        </span>
-      </div>
-      <p class="proxy-note">WebSearch proxy, not literal Google ranks. Directional only; GSC is ground truth.</p>
-
-      <details class="tier" open>
-        <summary>
-          <span class="caret" aria-hidden="true">▶</span>
-          <span class="tiername">Tier 1 · must-win now</span>
-          <span class="tierdesc">entity, coinage, winnable SERPs, shipping pages</span>
-          <span class="tierstat num"><b>0 / 15</b> hits · 6 probed</span>
-        </summary>
-        <table>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">1</td><td class="q">driftwood.sh</td><td class="pos">–</td><td class="dom">facebook.com · instagram.com · homedepot.com</td></tr>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">2</td><td class="q">driftwood ai sdr</td><td class="pos">–</td><td class="dom">dreamstime.com · getbreakout.ai · allcode.com</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">3</td><td class="q">driftwood ai</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">4</td><td class="q">demo-led outbound</td><td class="pos">–</td><td class="dom">hushly.com · kotaku.com · orbitalx.com</td></tr>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">5</td><td class="q">founder led sales</td><td class="pos">–</td><td class="dom">pipedrive.com · hubspot.com · foundingsales.com</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">6</td><td class="q">founder-led sales</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">7</td><td class="q">cold outbound benchmarks</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">8</td><td class="q">cold email benchmarks</td><td class="pos">–</td><td class="dom">instantly.ai · community.hubspot.com · woodpecker.co</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">9</td><td class="q">driftwood autosana</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">10</td><td class="q">what is demo-led outbound</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">11</td><td class="q">how to scale founder led sales</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">12</td><td class="q">when to hire an sdr</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">13</td><td class="q">founder led sales playbook</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">14</td><td class="q">cold email reply rate benchmark</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">15</td><td class="q">what is a good cold email reply rate</td><td class="pos">–</td><td class="dom">instantly.ai · woodpecker.co · breakcold.com</td></tr>
-        </table>
-      </details>
-
-      <details class="tier">
-        <summary>
-          <span class="caret" aria-hidden="true">▶</span>
-          <span class="tiername">Tier 2 · near-term</span>
-          <span class="tierdesc">clusters our pages target, question tail, founder how-to</span>
-          <span class="tierstat num"><b>0 / 45</b> hits · 4 probed</span>
-        </summary>
-        <table>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">16</td><td class="q">average cold email response rate</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">17</td><td class="q">average cold email reply rate</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">18</td><td class="q">good reply rate for cold emails</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">19</td><td class="q">cold email success rate</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">20</td><td class="q">cold email conversion rate</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">21</td><td class="q">b2b cold email response rates</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">22</td><td class="q">how to write a cold email</td><td class="pos">–</td><td class="dom">indeed.com · copyhackers.com · hunter.io</td></tr>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">23</td><td class="q">cold email tips</td><td class="pos">–</td><td class="dom">copyhackers.com · forbes.com · dropcontact.com</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">24</td><td class="q">tips for cold emailing</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">25</td><td class="q">how to write a cold email for sales</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">26</td><td class="q">how to start a cold email</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">27</td><td class="q">cold email personalization</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">28</td><td class="q">personalized cold email examples</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">29</td><td class="q">how to improve cold email response rate</td><td class="pos">–</td><td class="dom">quora.com · nethunt.com · artisan.co</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">30</td><td class="q">how to get more replies to cold emails</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">31</td><td class="q">why is my cold email not working</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">32</td><td class="q">do cold emails still work</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">33</td><td class="q">is cold email dead</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">34</td><td class="q">how many cold emails to book a meeting</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">35</td><td class="q">cold email follow up cadence</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">36</td><td class="q">how to do cold outreach</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">37</td><td class="q">cold outreach tips</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">38</td><td class="q">startup cold outreach</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">39</td><td class="q">outbound for startups</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">40</td><td class="q">cold email vs linkedin outreach</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">41</td><td class="q">how to do cold outreach on linkedin</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">42</td><td class="q">linkedin outreach tool</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">43</td><td class="q">linkedin outreach automation</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">44</td><td class="q">how to get first customers</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">45</td><td class="q">how to get first customers startup</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">46</td><td class="q">hiring your first salesperson</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">47</td><td class="q">first sales hire startup</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">48</td><td class="q">b2b saas lead generation</td><td class="pos">–</td><td class="dom">mouseflow.com · artisan.co · callboxinc.com</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">49</td><td class="q">saas lead generation</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">50</td><td class="q">saas demand generation</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">51</td><td class="q">best growth channels for b2b saas</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">52</td><td class="q">gtm strategy for startups</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">53</td><td class="q">how to book more demos b2b</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">54</td><td class="q">improve demo show rate</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">55</td><td class="q">how to improve sdr conversion rates</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">56</td><td class="q">sdr metrics benchmarks</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">57</td><td class="q">how to validate a sales channel</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">58</td><td class="q">do google ads work for b2b saas</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">59</td><td class="q">is seo worth it for startups</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">60</td><td class="q">how to build a sales pipeline from scratch</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-        </table>
-      </details>
-
-      <details class="tier">
-        <summary>
-          <span class="caret" aria-hidden="true">▶</span>
-          <span class="tiername">Tier 3 · long-term build-up</span>
-          <span class="tierdesc">head and best-of terms; expected to sit at zero for quarters</span>
-          <span class="tierstat num"><b>0 / 40</b> hits · 5 probed</span>
-        </summary>
-        <table>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">61</td><td class="q">ai sdr</td><td class="pos">–</td><td class="dom">qualified.com · salesforce.com · salesforge.ai</td></tr>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">62</td><td class="q">ai sdr tool</td><td class="pos">–</td><td class="dom">salesforge.ai · coldreach.ai · aisdr.com</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">63</td><td class="q">ai sdr tools</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">64</td><td class="q">best ai sdr</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">65</td><td class="q">best ai sdr tools</td><td class="pos">–</td><td class="dom">salesforge.ai · aisdr.com · simular.ai</td></tr>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">66</td><td class="q">ai sales agent</td><td class="pos">–</td><td class="dom">creatio.com · salesforce.com · workato.com</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">67</td><td class="q">ai sales rep</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">68</td><td class="q">ai bdr</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">69</td><td class="q">sdr ai</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">70</td><td class="q">ai lead generation</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">71</td><td class="q">ai for lead generation</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">72</td><td class="q">ai lead generator</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">73</td><td class="q">ai lead generation software</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">74</td><td class="q">ai prospecting tools</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">75</td><td class="q">ai for sales prospecting</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">76</td><td class="q">best ai growth tools</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">77</td><td class="q">ai growth tools</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">78</td><td class="q">best ai sales tools</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">79</td><td class="q">ai tools for lead generation</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">80</td><td class="q">cold email software</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">81</td><td class="q">best cold email software</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">82</td><td class="q">cold email tools</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">83</td><td class="q">cold email platforms</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">84</td><td class="q">cold email automation software</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">85</td><td class="q">best cold email tools</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">86</td><td class="q">sales automation software</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">87</td><td class="q">outbound sales automation</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="miss"><td class="dotc"><span class="d d-miss"></span></td><td class="qn">88</td><td class="q">outsourced sdr</td><td class="pos">–</td><td class="dom">callboxinc.com · belkins.io · saleshive.com</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">89</td><td class="q">sdr services</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">90</td><td class="q">sdr as a service</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">91</td><td class="q">outsourced sdr companies</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">92</td><td class="q">ai appointment setting</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">93</td><td class="q">ai sales assistant</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">94</td><td class="q">ai outbound</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">95</td><td class="q">automated cold outreach</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">96</td><td class="q">ai cold email</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">97</td><td class="q">ai email outreach</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">98</td><td class="q">ai prospecting</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">99</td><td class="q">pipeline generation</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-          <tr class="pend"><td class="dotc"><span class="d d-pend"></span></td><td class="qn">100</td><td class="q">best outbound sales tools</td><td class="pos">–</td><td class="dom">pending first run</td></tr>
-        </table>
-      </details>
+  <!-- one combined trend chart: SEO + GEO tier-1 rates on the same axes -->
+  <div class="card chartcard">
+    <div class="toprow">
+      <span class="eyebrow" title="One line per channel. A line never mixes runner tools; switching runners starts a new line.">Tier-1 hit rate by run</span>
+      <span class="keys">
+        <span class="key"><svg width="30" height="10" aria-hidden="true"><line x1="1" y1="5" x2="29" y2="5" stroke="#15557e" stroke-width="2"/><circle cx="15" cy="5" r="3.2" fill="#15557e"/></svg>SEO</span>
+        <span class="key"><svg width="30" height="10" aria-hidden="true"><line x1="1" y1="5" x2="29" y2="5" stroke="#16181b" stroke-width="1.6" stroke-dasharray="5 3"/><circle cx="15" cy="5" r="3.4" fill="#ffffff" stroke="#16181b" stroke-width="1.6"/></svg>GEO</span>
+      </span>
     </div>
+    <svg class="trend" viewBox="0 0 1180 244" aria-label="Combined trend chart: SEO and GEO tier-1 hit rates, one data point each at 0 percent on Jul 21">
+      <!-- band zones (faint) -->
+      <rect x="40" y="16"    width="1110" height="38.4" fill="rgba(28,122,68,.06)"/>
+      <rect x="40" y="54.4"  width="1110" height="38.4" fill="rgba(42,157,92,.06)"/>
+      <rect x="40" y="92.8"  width="1110" height="38.4" fill="rgba(168,135,28,.06)"/>
+      <rect x="40" y="131.2" width="1110" height="38.4" fill="rgba(194,106,23,.06)"/>
+      <rect x="40" y="169.6" width="1110" height="38.4" fill="rgba(192,58,49,.06)"/>
+      <!-- gridlines at band thresholds -->
+      <g stroke="#e9ebee" stroke-width="1">
+        <line x1="40" y1="16" x2="1150" y2="16"/>
+        <line x1="40" y1="54.4" x2="1150" y2="54.4"/>
+        <line x1="40" y1="92.8" x2="1150" y2="92.8"/>
+        <line x1="40" y1="131.2" x2="1150" y2="131.2"/>
+        <line x1="40" y1="169.6" x2="1150" y2="169.6"/>
+        <line x1="40" y1="208" x2="1150" y2="208"/>
+      </g>
+      <!-- y labels -->
+      <g font-family="Public Sans, sans-serif" font-size="10" fill="#9aa2ab" text-anchor="end">
+        <text x="32" y="19.5">100</text>
+        <text x="32" y="57.9">80</text>
+        <text x="32" y="96.3">60</text>
+        <text x="32" y="134.7">40</text>
+        <text x="32" y="173.1">20</text>
+        <text x="32" y="211.5">0</text>
+      </g>
+      <!-- band names inside zones, right edge -->
+      <g font-family="Public Sans, sans-serif" font-size="9.5" font-weight="600" text-anchor="end" opacity=".55">
+        <text x="1144" y="38"  fill="#1c7a44">amazing</text>
+        <text x="1144" y="76.4" fill="#2a9d5c">great</text>
+        <text x="1144" y="114.8" fill="#a8871c">fine</text>
+        <text x="1144" y="153.2" fill="#c26a17">bare minimum</text>
+        <text x="1144" y="191.6" fill="#c03a31">below minimum</text>
+      </g>
+      <!-- x ticks: daily runs, labeled every 4 days -->
+      <g font-family="Public Sans, sans-serif" font-size="10" text-anchor="middle">
+        <text x="84"   y="228" fill="#6a737d" font-weight="600">Jul 21</text>
+        <text x="296"  y="228" fill="#c6cbd1">Jul 25</text>
+        <text x="508"  y="228" fill="#c6cbd1">Jul 29</text>
+        <text x="720"  y="228" fill="#c6cbd1">Aug 2</text>
+        <text x="932"  y="228" fill="#c6cbd1">Aug 6</text>
+        <text x="1144" y="228" fill="#c6cbd1">Aug 10</text>
+      </g>
+      <g stroke="#e9ebee" stroke-width="1">
+        <line x1="84" y1="208" x2="84" y2="212"/><line x1="296" y1="208" x2="296" y2="212"/>
+        <line x1="508" y1="208" x2="508" y2="212"/><line x1="720" y1="208" x2="720" y2="212"/>
+        <line x1="932" y1="208" x2="932" y2="212"/><line x1="1144" y1="208" x2="1144" y2="212"/>
+      </g>
+      <!-- run zero: both channels at 0%. GEO hollow ring, SEO filled tide dot inside -->
+      <circle cx="84" cy="208" r="7" fill="#ffffff" stroke="#16181b" stroke-width="1.6"/>
+      <circle cx="84" cy="208" r="3.6" fill="#15557e"/>
+      <text x="98" y="196" font-family="Public Sans, sans-serif" font-size="11" font-weight="600" fill="#6a737d">run zero · both 0%</text>
+    </svg>
+  </div>
 
-    <!-- GSC + backlinks -->
-    <div class="sidecol">
+  <!-- leaderboards: SEO domains left, GEO competitors right -->
+  <div class="cols">
+    <div class="colstack">
       <div class="card side">
+        <div class="eyebrow" title="Appearances in the top-3 results across the 15 probed keywords, from the SEO probe's top_domains. driftwood pinned.">Top domains · target SERPs</div>
+        <div class="lb num">
+          <div class="lbrow us"><span class="n">driftwood.sh</span><div class="track"><div class="fill" style="width:0%"></div></div><span class="c">0</span></div>
+          <div class="div"></div>
+          <div class="lbrow"><span class="n">salesforge.ai</span><div class="track"><div class="fill" style="width:100%"></div></div><span class="c">3</span></div>
+          <div class="lbrow"><span class="n">instantly.ai</span><div class="track"><div class="fill" style="width:66.7%"></div></div><span class="c">2</span></div>
+          <div class="lbrow"><span class="n">woodpecker.co</span><div class="track"><div class="fill" style="width:66.7%"></div></div><span class="c">2</span></div>
+          <div class="lbrow"><span class="n">copyhackers.com</span><div class="track"><div class="fill" style="width:66.7%"></div></div><span class="c">2</span></div>
+          <div class="lbrow"><span class="n">artisan.co</span><div class="track"><div class="fill" style="width:66.7%"></div></div><span class="c">2</span></div>
+          <div class="lbrow"><span class="n">salesforce.com</span><div class="track"><div class="fill" style="width:66.7%"></div></div><span class="c">2</span></div>
+          <div class="lbrow"><span class="n">aisdr.com</span><div class="track"><div class="fill" style="width:66.7%"></div></div><span class="c">2</span></div>
+          <div class="lbrow"><span class="n">callboxinc.com</span><div class="track"><div class="fill" style="width:66.7%"></div></div><span class="c">2</span></div>
+        </div>
+        <p class="meta num">28 more domains appeared once</p>
+      </div>
+
+      <div class="card side" title="Manual pull until the GSC API is connected. Read: indexed and surfacing on branded lookups at high positions; too few impressions to show query strings yet. Backlink count will read from the BACKLINKS.md registry.">
         <div class="eyebrow">GSC ground truth<span class="tag">manual pull</span></div>
         <div class="gscgrid num">
           <div class="stat"><div class="v">0</div><div class="l">clicks</div></div>
@@ -735,29 +605,38 @@
           <div class="stat"><div class="v">2.3</div><div class="l">avg position</div></div>
           <div class="stat"><div class="v">0</div><div class="l">queries visible</div></div>
         </div>
-        <p class="meta num">window Jul 14 to Jul 19 · pulled Jul 21, 2026</p>
-        <p class="note">Manual pull until the GSC API is connected (webmasters.readonly OAuth, owed).
-        Read: indexed and surfacing on branded lookups at high positions; too few impressions to
-        show query strings yet. Normal for a week-old domain.</p>
+        <p class="meta num">window Jul 14 to Jul 19 · pulled Jul 21</p>
+        <div class="bl num">backlinks <b>0</b><span class="tag">registry pending</span></div>
       </div>
+    </div>
 
+    <div class="colstack">
       <div class="card side">
-        <div class="eyebrow">Backlinks<span class="tag">registry pending</span></div>
-        <div class="bigline num"><span class="v">0 recorded</span></div>
-        <p class="note">Will read a count from BACKLINKS.md: every known link with source, date,
-        and how it was acquired. GSC's Links report is the free discovery tool; the registry is
-        canonical. First expected entries: Crunchbase (live), G2 (live), Autosana cross-link (planned).</p>
+        <div class="eyebrow" title="Vendor appearances across the 24 probed queries. Fixed 16-vendor watch list; only vendors that showed up are listed. driftwood pinned.">Competitors · AI answers</div>
+        <div class="lb num">
+          <div class="lbrow us"><span class="n">driftwood</span><div class="track"><div class="fill" style="width:0%"></div></div><span class="c">0</span></div>
+          <div class="div"></div>
+          <div class="lbrow"><span class="n">Apollo</span><div class="track"><div class="fill" style="width:100%"></div></div><span class="c">8</span></div>
+          <div class="lbrow"><span class="n">Saleshandy</span><div class="track"><div class="fill" style="width:87.5%"></div></div><span class="c">7</span></div>
+          <div class="lbrow"><span class="n">Instantly</span><div class="track"><div class="fill" style="width:87.5%"></div></div><span class="c">7</span></div>
+          <div class="lbrow"><span class="n">Amplemarket</span><div class="track"><div class="fill" style="width:50%"></div></div><span class="c">4</span></div>
+          <div class="lbrow"><span class="n">Autobound</span><div class="track"><div class="fill" style="width:50%"></div></div><span class="c">4</span></div>
+          <div class="lbrow"><span class="n">AiSDR</span><div class="track"><div class="fill" style="width:50%"></div></div><span class="c">4</span></div>
+          <div class="lbrow"><span class="n">11x</span><div class="track"><div class="fill" style="width:50%"></div></div><span class="c">4</span></div>
+          <div class="lbrow"><span class="n">Salesforge</span><div class="track"><div class="fill" style="width:37.5%"></div></div><span class="c">3</span></div>
+          <div class="lbrow"><span class="n">Artisan</span><div class="track"><div class="fill" style="width:37.5%"></div></div><span class="c">3</span></div>
+          <div class="lbrow"><span class="n">Smartlead</span><div class="track"><div class="fill" style="width:25%"></div></div><span class="c">2</span></div>
+          <div class="lbrow"><span class="n">Clay</span><div class="track"><div class="fill" style="width:12.5%"></div></div><span class="c">1</span></div>
+          <div class="lbrow"><span class="n">Unify</span><div class="track"><div class="fill" style="width:12.5%"></div></div><span class="c">1</span></div>
+          <div class="lbrow"><span class="n">Nooks</span><div class="track"><div class="fill" style="width:12.5%"></div></div><span class="c">1</span></div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- footer strip -->
+  <!-- footer: the only run-related UI. Probes run automatically daily at midnight PT. -->
   <div class="footstrip num">
-    <p><b>GEO</b> · last run Jul 21, 2026 · set v1 baseline (24 queries), v2 (100) loaded for next run · runner: Claude WebSearch</p>
-    <p><b>SEO</b> · last run Jul 21, 2026 · set v1 baseline (15 keywords), v2 (100) loaded for next run · runner: Claude WebSearch proxy, GSC pulled by hand</p>
-    <p>Reruns: ask Claude to <code>/geo-probe</code> or <code>/seo-probe</code>. Each run writes the dated
-    file plus latest.json and commits; this page reads the committed artifact. Results are only
-    comparable within one runner tool.</p>
+    <p title="Probes run automatically every day at midnight Pacific; this page reads the committed artifacts.">last updated Jul 21, 2026</p>
   </div>
 </main>
 
