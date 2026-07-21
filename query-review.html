@@ -1,0 +1,246 @@
+<!doctype html><html><head><meta charset="utf-8"><title>driftwood query sets v2 - review</title>
+<style>
+body { font-family: -apple-system, sans-serif; max-width: 1000px; margin: 2rem auto; padding: 0 1rem; color: #1a2530; }
+h1 { font-size: 1.4rem } h2 { font-size: 1.15rem; margin-top: 2.2rem; border-bottom: 2px solid #15557e; padding-bottom: .3rem }
+h3 { font-size: 1rem; margin-top: 1.4rem }
+table { border-collapse: collapse; width: 100%; font-size: .82rem }
+td, th { border: 1px solid #d8dee4; padding: .28rem .5rem; text-align: left }
+th { background: #f0f4f8 }
+tr.good td:nth-child(3) { background: #e6f4ea; }
+tr.thin td:nth-child(3) { background: #fefce8; }
+tr.warn td:nth-child(3) { background: #fde8e8; font-weight: 600 }
+tr.brand td:nth-child(3) { background: #eef2f7; color: #667 }
+td.cut { background: #fff1e6; color: #a04000; font-weight: 600 }
+.box { background: #f6f8fa; border: 1px solid #d8dee4; border-radius: 6px; padding: 1rem 1.2rem; margin: 1rem 0 }
+code { background: #eef2f7; padding: .1rem .3rem; border-radius: 3px }
+.legend span { display: inline-block; padding: .15rem .5rem; margin-right: .5rem; border-radius: 3px; font-size: .78rem }
+</style></head><body>
+<h1>Query sets v2 - review copy (2026-07-21)</h1>
+<p>Open questions for Aayush: rows flagged <b style="color:#a04000">PROPOSED CUT</b> are terms I read as off-ICP
+per your call (hire/outsource shoppers, dead terms, tool-category heads we are not). Red rows await Keyword
+Planner validation (in progress). Say cut/keep per row or in bulk; the sets version to v3 after your pass.</p>
+
+<h2>What the GEO probe actually does (the prompt, plainly)</h2>
+<div class="box">
+<p>For each of the 100 fixed queries, a subagent runs ONE web search with the query text, verbatim, then answers
+three questions about the results page it got back:</p>
+<ol>
+<li>Does <b>driftwood.sh</b> appear anywhere in the results? (yes + position / no) - with explicit instructions
+that driftwood.ai, driftwood-ai.com, and literal wood do NOT count.</li>
+<li>Which of the 16 watch-list competitors appear? (Instantly, Artisan, 11x, Apollo, Clay, Autobound, ...)</li>
+<li>What are the top 3 result domains?</li>
+</ol>
+<p>That is the whole prompt - no opinion, no scoring by the model, just presence extraction. The scoring
+(tier hit rates, leaderboards) happens in code afterward. The premise: when a founder asks ChatGPT/Claude
+to research outreach, the assistant runs searches shaped like these queries and reads what comes back -
+so "does driftwood appear in these results" approximates "will an AI assistant ever meet driftwood".
+It measures the search layer, not final AI answers; answer-checking (asking real engines and grading their
+replies) is the planned layer 2 once the backend runner exists.</p>
+</div>
+
+<h2>SEO set v2 (100 keywords)</h2>
+<p class="legend"><span style="background:#e6f4ea">validated, real volume</span><span style="background:#fefce8">validated, thin (0-10)</span><span style="background:#fde8e8">not yet validated</span><span style="background:#eef2f7">brand/coinage - volume not applicable</span><span style="background:#fff1e6">proposed cut</span></p>
+<h3>Tier 1 - must-win now (15)</h3><table><tr><th>#</th><th>query</th><th>volume / competition</th><th>flag</th></tr><tr class="brand"><td>1</td><td>driftwood.sh</td><td>brand (no volume by nature)</td><td></td></tr>
+<tr class="brand"><td>2</td><td>driftwood ai sdr</td><td>brand (no volume by nature)</td><td></td></tr>
+<tr class="brand"><td>3</td><td>driftwood ai</td><td>brand (no volume by nature)</td><td></td></tr>
+<tr class="brand"><td>4</td><td>demo-led outbound</td><td>coinage (deliberate zero)</td><td></td></tr>
+<tr class="good"><td>5</td><td>founder led sales</td><td>100 – 1K / Low</td><td></td></tr>
+<tr class="good"><td>6</td><td>founder-led sales</td><td>100 – 1K / Low</td><td></td></tr>
+<tr class="warn"><td>7</td><td>cold outbound benchmarks</td><td>NOT VALIDATED - round 5 pending</td><td></td></tr>
+<tr class="thin"><td>8</td><td>cold email benchmarks</td><td>10 – 100 / Medium</td><td></td></tr>
+<tr class="brand"><td>9</td><td>driftwood autosana</td><td>brand (no volume by nature)</td><td></td></tr>
+<tr class="brand"><td>10</td><td>what is demo-led outbound</td><td>coinage (deliberate zero)</td><td></td></tr>
+<tr class="warn"><td>11</td><td>how to scale founder led sales</td><td>NOT VALIDATED - round 5 pending</td><td></td></tr>
+<tr class="thin"><td>12</td><td>when to hire an sdr</td><td>0 – 10 / —</td><td></td></tr>
+<tr class="warn"><td>13</td><td>founder led sales playbook</td><td>NOT VALIDATED - round 5 pending</td><td></td></tr>
+<tr class="warn"><td>14</td><td>cold email reply rate benchmark</td><td>NOT VALIDATED - round 5 pending</td><td></td></tr>
+<tr class="warn"><td>15</td><td>what is a good cold email reply rate</td><td>NOT VALIDATED - round 5 pending</td><td></td></tr></table>
+<h3>Tier 2 - near-term (45)</h3><table><tr><th>#</th><th>query</th><th>volume / competition</th><th>flag</th></tr><tr class="thin"><td>16</td><td>average cold email response rate</td><td>10 – 100 / Low</td><td></td></tr>
+<tr class="warn"><td>17</td><td>average cold email reply rate</td><td>NOT VALIDATED - round 5 pending</td><td></td></tr>
+<tr class="thin"><td>18</td><td>good reply rate for cold emails</td><td>10 – 100 / Low</td><td></td></tr>
+<tr class="thin"><td>19</td><td>cold email success rate</td><td>10 – 100 / Low</td><td></td></tr>
+<tr class="thin"><td>20</td><td>cold email conversion rate</td><td>10 – 100 / Low</td><td></td></tr>
+<tr class="thin"><td>21</td><td>b2b cold email response rates</td><td>10 – 100 / Medium</td><td></td></tr>
+<tr class="good"><td>22</td><td>how to write a cold email</td><td>100 – 1K / Low</td><td></td></tr>
+<tr class="good"><td>23</td><td>cold email tips</td><td>100 – 1K / Low</td><td></td></tr>
+<tr class="good"><td>24</td><td>tips for cold emailing</td><td>100 – 1K / Low</td><td></td></tr>
+<tr class="thin"><td>25</td><td>how to write a cold email for sales</td><td>10 – 100 / Medium</td><td></td></tr>
+<tr class="thin"><td>26</td><td>how to start a cold email</td><td>10 – 100 / Low</td><td></td></tr>
+<tr class="thin"><td>27</td><td>cold email personalization</td><td>10 – 100 / Low</td><td></td></tr>
+<tr class="thin"><td>28</td><td>personalized cold email examples</td><td>10 – 100 / Low</td><td></td></tr>
+<tr class="thin"><td>29</td><td>how to improve cold email response rate</td><td>0 – 10 / —</td><td></td></tr>
+<tr class="thin"><td>30</td><td>how to get more replies to cold emails</td><td>0 – 10 / —</td><td></td></tr>
+<tr class="thin"><td>31</td><td>why is my cold email not working</td><td>0 – 10 / —</td><td></td></tr>
+<tr class="thin"><td>32</td><td>do cold emails still work</td><td>0 – 10 / —</td><td></td></tr>
+<tr class="warn"><td>33</td><td>is cold email dead</td><td>NOT VALIDATED - round 5 pending</td><td></td></tr>
+<tr class="warn"><td>34</td><td>how many cold emails to book a meeting</td><td>NOT VALIDATED - round 5 pending</td><td></td></tr>
+<tr class="warn"><td>35</td><td>cold email follow up cadence</td><td>NOT VALIDATED - round 5 pending</td><td></td></tr>
+<tr class="thin"><td>36</td><td>how to do cold outreach</td><td>10 – 100 / High</td><td></td></tr>
+<tr class="thin"><td>37</td><td>cold outreach tips</td><td>10 – 100 / Low</td><td></td></tr>
+<tr class="thin"><td>38</td><td>startup cold outreach</td><td>0 – 10 / —</td><td></td></tr>
+<tr class="thin"><td>39</td><td>outbound for startups</td><td>0 – 10 / —</td><td></td></tr>
+<tr class="warn"><td>40</td><td>cold email vs linkedin outreach</td><td>NOT VALIDATED - round 5 pending</td><td></td></tr>
+<tr class="thin"><td>41</td><td>how to do cold outreach on linkedin</td><td>10 – 100 / Medium</td><td></td></tr>
+<tr class="good"><td>42</td><td>linkedin outreach tool</td><td>100 – 1K / Medium</td><td class="cut">PROPOSED CUT (off-ICP)</td></tr>
+<tr class="good"><td>43</td><td>linkedin outreach automation</td><td>100 – 1K / Medium</td><td class="cut">PROPOSED CUT (off-ICP)</td></tr>
+<tr class="thin"><td>44</td><td>how to get first customers</td><td>10 – 100 / Low</td><td></td></tr>
+<tr class="thin"><td>45</td><td>how to get first customers startup</td><td>10 – 100 / Low</td><td></td></tr>
+<tr class="thin"><td>46</td><td>hiring your first salesperson</td><td>10 – 100 / Low</td><td></td></tr>
+<tr class="thin"><td>47</td><td>first sales hire startup</td><td>10 – 100 / Medium</td><td></td></tr>
+<tr class="good"><td>48</td><td>b2b saas lead generation</td><td>100 – 1K / Low</td><td></td></tr>
+<tr class="warn"><td>49</td><td>saas lead generation</td><td>NOT VALIDATED - round 5 pending</td><td></td></tr>
+<tr class="good"><td>50</td><td>saas demand generation</td><td>100 – 1K / Low</td><td></td></tr>
+<tr class="warn"><td>51</td><td>best growth channels for b2b saas</td><td>NOT VALIDATED - round 5 pending</td><td></td></tr>
+<tr class="warn"><td>52</td><td>gtm strategy for startups</td><td>NOT VALIDATED - round 5 pending</td><td></td></tr>
+<tr class="warn"><td>53</td><td>how to book more demos b2b</td><td>NOT VALIDATED - round 5 pending</td><td></td></tr>
+<tr class="warn"><td>54</td><td>improve demo show rate</td><td>NOT VALIDATED - round 5 pending</td><td></td></tr>
+<tr class="warn"><td>55</td><td>how to improve sdr conversion rates</td><td>NOT VALIDATED - round 5 pending</td><td></td></tr>
+<tr class="warn"><td>56</td><td>sdr metrics benchmarks</td><td>NOT VALIDATED - round 5 pending</td><td></td></tr>
+<tr class="warn"><td>57</td><td>how to validate a sales channel</td><td>NOT VALIDATED - round 5 pending</td><td></td></tr>
+<tr class="warn"><td>58</td><td>do google ads work for b2b saas</td><td>NOT VALIDATED - round 5 pending</td><td></td></tr>
+<tr class="warn"><td>59</td><td>is seo worth it for startups</td><td>NOT VALIDATED - round 5 pending</td><td></td></tr>
+<tr class="warn"><td>60</td><td>how to build a sales pipeline from scratch</td><td>NOT VALIDATED - round 5 pending</td><td></td></tr></table>
+<h3>Tier 3 - long-term build-up (40)</h3><table><tr><th>#</th><th>query</th><th>volume / competition</th><th>flag</th></tr><tr class="good"><td>61</td><td>ai sdr</td><td>1K – 10K / Medium</td><td></td></tr>
+<tr class="good"><td>62</td><td>ai sdr tool</td><td>100 – 1K / Low</td><td></td></tr>
+<tr class="good"><td>63</td><td>ai sdr tools</td><td>100 – 1K / Low</td><td></td></tr>
+<tr class="warn"><td>64</td><td>best ai sdr</td><td>NOT VALIDATED - round 5 pending</td><td></td></tr>
+<tr class="warn"><td>65</td><td>best ai sdr tools</td><td>NOT VALIDATED - round 5 pending</td><td></td></tr>
+<tr class="good"><td>66</td><td>ai sales agent</td><td>1K – 10K / Medium</td><td></td></tr>
+<tr class="good"><td>67</td><td>ai sales rep</td><td>100 – 1K / Medium</td><td></td></tr>
+<tr class="good"><td>68</td><td>ai bdr</td><td>100 – 1K / Medium</td><td class="cut">PROPOSED CUT (off-ICP)</td></tr>
+<tr class="good"><td>69</td><td>sdr ai</td><td>100 – 1K / Medium</td><td class="cut">PROPOSED CUT (off-ICP)</td></tr>
+<tr class="good"><td>70</td><td>ai lead generation</td><td>1K – 10K / Medium</td><td></td></tr>
+<tr class="good"><td>71</td><td>ai for lead generation</td><td>1K – 10K / Medium</td><td></td></tr>
+<tr class="good"><td>72</td><td>ai lead generator</td><td>1K – 10K / Medium</td><td></td></tr>
+<tr class="good"><td>73</td><td>ai lead generation software</td><td>100 – 1K / Low</td><td></td></tr>
+<tr class="good"><td>74</td><td>ai prospecting tools</td><td>100 – 1K / Medium</td><td></td></tr>
+<tr class="good"><td>75</td><td>ai for sales prospecting</td><td>100 – 1K / Low</td><td></td></tr>
+<tr class="warn"><td>76</td><td>best ai growth tools</td><td>NOT VALIDATED - round 5 pending</td><td></td></tr>
+<tr class="warn"><td>77</td><td>ai growth tools</td><td>NOT VALIDATED - round 5 pending</td><td></td></tr>
+<tr class="warn"><td>78</td><td>best ai sales tools</td><td>NOT VALIDATED - round 5 pending</td><td></td></tr>
+<tr class="good"><td>79</td><td>ai tools for lead generation</td><td>100 – 1K / Low</td><td></td></tr>
+<tr class="good"><td>80</td><td>cold email software</td><td>100 – 1K / Low</td><td></td></tr>
+<tr class="good"><td>81</td><td>best cold email software</td><td>100 – 1K / Low</td><td></td></tr>
+<tr class="good"><td>82</td><td>cold email tools</td><td>100 – 1K / Medium</td><td></td></tr>
+<tr class="good"><td>83</td><td>cold email platforms</td><td>100 – 1K / Medium</td><td class="cut">PROPOSED CUT (off-ICP)</td></tr>
+<tr class="thin"><td>84</td><td>cold email automation software</td><td>10 – 100 / Low</td><td></td></tr>
+<tr class="thin"><td>85</td><td>best cold email tools</td><td>10 – 100 / Low</td><td></td></tr>
+<tr class="warn"><td>86</td><td>sales automation software</td><td>NOT VALIDATED - round 5 pending</td><td class="cut">PROPOSED CUT (off-ICP)</td></tr>
+<tr class="thin"><td>87</td><td>outbound sales automation</td><td>10 – 100 / Low</td><td></td></tr>
+<tr class="good"><td>88</td><td>outsourced sdr</td><td>100 – 1K / Medium</td><td class="cut">PROPOSED CUT (off-ICP)</td></tr>
+<tr class="good"><td>89</td><td>sdr services</td><td>100 – 1K / Medium</td><td class="cut">PROPOSED CUT (off-ICP)</td></tr>
+<tr class="thin"><td>90</td><td>sdr as a service</td><td>10 – 100 / Medium</td><td class="cut">PROPOSED CUT (off-ICP)</td></tr>
+<tr class="thin"><td>91</td><td>outsourced sdr companies</td><td>10 – 100 / Low</td><td class="cut">PROPOSED CUT (off-ICP)</td></tr>
+<tr class="thin"><td>92</td><td>ai appointment setting</td><td>10 – 100 / Low</td><td></td></tr>
+<tr class="warn"><td>93</td><td>ai sales assistant</td><td>NOT VALIDATED - round 5 pending</td><td></td></tr>
+<tr class="warn"><td>94</td><td>ai outbound</td><td>NOT VALIDATED - round 5 pending</td><td></td></tr>
+<tr class="thin"><td>95</td><td>automated cold outreach</td><td>10 – 100 / Low</td><td></td></tr>
+<tr class="thin"><td>96</td><td>ai cold email</td><td>10 – 100 / High</td><td class="cut">PROPOSED CUT (off-ICP)</td></tr>
+<tr class="thin"><td>97</td><td>ai email outreach</td><td>10 – 100 / Medium</td><td></td></tr>
+<tr class="thin"><td>98</td><td>ai prospecting</td><td>10 – 100 / Medium</td><td></td></tr>
+<tr class="thin"><td>99</td><td>pipeline generation</td><td>10K – 100K / Medium</td><td class="cut">PROPOSED CUT (off-ICP)</td></tr>
+<tr class="warn"><td>100</td><td>best outbound sales tools</td><td>NOT VALIDATED - round 5 pending</td><td></td></tr></table>
+
+<h2>GEO set v2 (100 queries)</h2>
+<p>No volume column by nature - these measure AI-agent search visibility, which no tool publishes volumes for.</p>
+<h3>Tier 1 - must-win now (20)</h3><table><tr><th>#</th><th>query</th><th>flag</th></tr><tr><td>1</td><td>driftwood AI SDR</td><td></td></tr>
+<tr><td>2</td><td>driftwood.sh</td><td></td></tr>
+<tr><td>3</td><td>what is driftwood ai sdr</td><td></td></tr>
+<tr><td>4</td><td>driftwood ai sdr reviews</td><td></td></tr>
+<tr><td>5</td><td>driftwood vs artisan ai sdr</td><td></td></tr>
+<tr><td>6</td><td>what is demo-led outbound</td><td></td></tr>
+<tr><td>7</td><td>demo-led outbound definition</td><td></td></tr>
+<tr><td>8</td><td>human-in-the-loop AI outbound tool approve emails before send</td><td></td></tr>
+<tr><td>9</td><td>AI SDR with human approval before sending</td><td></td></tr>
+<tr><td>10</td><td>autonomous vs assisted outbound founder-led sales</td><td></td></tr>
+<tr><td>11</td><td>autonomous vs assisted AI SDR</td><td></td></tr>
+<tr><td>12</td><td>founder-led sales cold outreach playbook early stage</td><td></td></tr>
+<tr><td>13</td><td>how to scale founder led sales</td><td></td></tr>
+<tr><td>14</td><td>when should a startup hire an SDR</td><td></td></tr>
+<tr><td>15</td><td>founder led sales to first sales hire</td><td></td></tr>
+<tr><td>16</td><td>cold outbound benchmarks first party data</td><td></td></tr>
+<tr><td>17</td><td>cold email reply rate benchmarks 2026</td><td></td></tr>
+<tr><td>18</td><td>AI SDR that builds custom demos</td><td></td></tr>
+<tr><td>19</td><td>AI SDR sends from your own accounts</td><td></td></tr>
+<tr><td>20</td><td>best outbound tools for 3 person startup no sales team</td><td></td></tr></table>
+<h3>Tier 2 - near-term (40)</h3><table><tr><th>#</th><th>query</th><th>flag</th></tr><tr><td>21</td><td>what is a good cold email reply rate</td><td></td></tr>
+<tr><td>22</td><td>average cold email response rate statistics b2b</td><td></td></tr>
+<tr><td>23</td><td>average cold email reply rate 2026</td><td></td></tr>
+<tr><td>24</td><td>good reply rate for cold emails</td><td></td></tr>
+<tr><td>25</td><td>cold email conversion rate benchmarks</td><td></td></tr>
+<tr><td>26</td><td>b2b cold email response rates</td><td></td></tr>
+<tr><td>27</td><td>cold email success rate</td><td></td></tr>
+<tr><td>28</td><td>why cold emails get no replies common causes</td><td></td></tr>
+<tr><td>29</td><td>why is my cold email reply rate so low</td><td></td></tr>
+<tr><td>30</td><td>how to improve cold email response rate</td><td></td></tr>
+<tr><td>31</td><td>how to get more replies to cold emails</td><td></td></tr>
+<tr><td>32</td><td>is cold email dead 2026</td><td></td></tr>
+<tr><td>33</td><td>do cold emails still work for b2b</td><td></td></tr>
+<tr><td>34</td><td>how to write a cold email that gets replies</td><td></td></tr>
+<tr><td>35</td><td>cold email tips b2b founders</td><td></td></tr>
+<tr><td>36</td><td>how to write a cold email for b2b sales</td><td></td></tr>
+<tr><td>37</td><td>cold email personalization impact reply rate research</td><td></td></tr>
+<tr><td>38</td><td>cold email personalization at scale</td><td></td></tr>
+<tr><td>39</td><td>how many cold emails to book a meeting</td><td></td></tr>
+<tr><td>40</td><td>cold email follow up cadence best practices</td><td></td></tr>
+<tr><td>41</td><td>how to do cold outreach for B2B SaaS startup</td><td></td></tr>
+<tr><td>42</td><td>cold outreach for startups guide</td><td></td></tr>
+<tr><td>43</td><td>cold email vs LinkedIn outreach B2B</td><td></td></tr>
+<tr><td>44</td><td>how to do cold outreach on linkedin</td><td></td></tr>
+<tr><td>45</td><td>linkedin outreach tips founders</td><td></td></tr>
+<tr><td>46</td><td>how to book more demos b2b saas</td><td></td></tr>
+<tr><td>47</td><td>how to improve demo booking rate</td><td></td></tr>
+<tr><td>48</td><td>how to improve sdr conversion rates</td><td></td></tr>
+<tr><td>49</td><td>sdr metrics benchmarks</td><td></td></tr>
+<tr><td>50</td><td>cold outbound playbook for sdrs</td><td></td></tr>
+<tr><td>51</td><td>how to run a cold outbound channel</td><td></td></tr>
+<tr><td>52</td><td>how to know if cold outbound is working</td><td></td></tr>
+<tr><td>53</td><td>how to get first 10 customers b2b saas</td><td></td></tr>
+<tr><td>54</td><td>how to get your first customers startup</td><td></td></tr>
+<tr><td>55</td><td>best growth channels for b2b saas</td><td></td></tr>
+<tr><td>56</td><td>gtm strategy for seed stage startup</td><td></td></tr>
+<tr><td>57</td><td>does cold email work for startups</td><td></td></tr>
+<tr><td>58</td><td>founder led sales definition</td><td></td></tr>
+<tr><td>59</td><td>hiring your first salesperson startup</td><td></td></tr>
+<tr><td>60</td><td>first sales hire startup when</td><td></td></tr></table>
+<h3>Tier 3 - long-term build-up (40)</h3><table><tr><th>#</th><th>query</th><th>flag</th></tr><tr><td>61</td><td>best AI SDR</td><td></td></tr>
+<tr><td>62</td><td>best AI SDR tools 2026</td><td></td></tr>
+<tr><td>63</td><td>best AI SDR software</td><td></td></tr>
+<tr><td>64</td><td>top AI SDR companies</td><td></td></tr>
+<tr><td>65</td><td>AI SDR tools for seed stage startups</td><td></td></tr>
+<tr><td>66</td><td>AI SDR</td><td></td></tr>
+<tr><td>67</td><td>what is an AI SDR</td><td></td></tr>
+<tr><td>68</td><td>AI SDR tool</td><td></td></tr>
+<tr><td>69</td><td>AI sales agent</td><td></td></tr>
+<tr><td>70</td><td>best AI sales agents 2026</td><td></td></tr>
+<tr><td>71</td><td>AI sales rep software</td><td></td></tr>
+<tr><td>72</td><td>AI BDR vs AI SDR</td><td class="cut">PROPOSED CUT (off-ICP)</td></tr>
+<tr><td>73</td><td>AI SDR vs human SDR</td><td></td></tr>
+<tr><td>74</td><td>AI SDR cold email reply rates vs human SDR performance</td><td></td></tr>
+<tr><td>75</td><td>do AI SDR tools actually work</td><td></td></tr>
+<tr><td>76</td><td>AI SDR pricing comparison</td><td></td></tr>
+<tr><td>77</td><td>cheapest AI SDR for startups</td><td></td></tr>
+<tr><td>78</td><td>new AI outbound agents 2026 alternatives to 11x Artisan</td><td></td></tr>
+<tr><td>79</td><td>11x vs artisan alternatives</td><td></td></tr>
+<tr><td>80</td><td>AI SDR vs sales engagement platform comparison</td><td></td></tr>
+<tr><td>81</td><td>best AI growth tools</td><td></td></tr>
+<tr><td>82</td><td>best AI growth tools for startups</td><td></td></tr>
+<tr><td>83</td><td>AI tools for b2b growth</td><td></td></tr>
+<tr><td>84</td><td>best AI sales tools 2026</td><td></td></tr>
+<tr><td>85</td><td>AI tools for founders</td><td></td></tr>
+<tr><td>86</td><td>best AI tools for lead generation</td><td></td></tr>
+<tr><td>87</td><td>AI lead generation software</td><td></td></tr>
+<tr><td>88</td><td>AI prospecting tools</td><td></td></tr>
+<tr><td>89</td><td>best cold email software</td><td class="cut">PROPOSED CUT (off-ICP)</td></tr>
+<tr><td>90</td><td>best cold email tools 2026</td><td class="cut">PROPOSED CUT (off-ICP)</td></tr>
+<tr><td>91</td><td>cold email automation software</td><td class="cut">PROPOSED CUT (off-ICP)</td></tr>
+<tr><td>92</td><td>outsourced SDR vs AI SDR</td><td class="cut">PROPOSED CUT (off-ICP)</td></tr>
+<tr><td>93</td><td>outsourced sdr companies cost</td><td class="cut">PROPOSED CUT (off-ICP)</td></tr>
+<tr><td>94</td><td>sdr as a service</td><td class="cut">PROPOSED CUT (off-ICP)</td></tr>
+<tr><td>95</td><td>ai for sales prospecting</td><td></td></tr>
+<tr><td>96</td><td>b2b saas lead generation tools</td><td></td></tr>
+<tr><td>97</td><td>best sales automation tools startups</td><td></td></tr>
+<tr><td>98</td><td>ai outbound sales tool</td><td></td></tr>
+<tr><td>99</td><td>best ai sdr for linkedin outreach</td><td></td></tr>
+<tr><td>100</td><td>ai sdr comparison 2026</td><td></td></tr></table>
+</body></html>
