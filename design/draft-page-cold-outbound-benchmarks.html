@@ -1,0 +1,527 @@
+<!doctype html>
+<html lang="en">
+<head>
+<!--
+  DRAFT: benchmarks page publishing driftwood's first-party outbound data.
+
+  Proposed URL:    https://driftwood.sh/cold-outbound-benchmarks
+  Proposed title:  Cold outbound benchmarks: cold email reply and open rates · driftwood
+  Proposed meta:   Commonly cited cold email reply and open rate ranges, next
+                   to first-party data: replies went from under 1% to over 14%
+                   in week one at Autosana (YC S25). Updated monthly.
+
+  Why this page: benchmark pages with original data earn backlinks and
+  AI-engine citations. Keyword targets: "cold email benchmarks" (10-100/mo,
+  Medium), "average cold email open rate" (10-100), and the question
+  "do cold emails still work". The first-party numbers are the point;
+  the page's honesty about sourcing IS the credibility play.
+
+  Sourcing rules followed:
+  - Every driftwood number on this page comes from the published Autosana
+    case study (/customers/autosana) or LISTINGS.md. Nothing invented.
+  - The canonical stat appears VERBATIM per LISTINGS.md: "replies went from
+    under 1% to over 14% in week one at Autosana (YC S25)". Rate-to-rate
+    form, not the old multiplier framing.
+  - Second proof point verbatim: "including founders who had ignored more
+    than four months of prior outreach".
+  - Industry figures are deliberately unattributed AND labeled as commonly
+    cited / typically reported, with the caveat in plain text that we did
+    not produce them and cannot verify them. No fake citations.
+
+  Open questions for review:
+  1. The industry ranges (opens 20-40%, replies 1-5%, blasts under 1%,
+     hundreds of sends per meeting) are our read of what is commonly cited
+     as of mid-2026, not sourced from pages we control. Sanity-check before
+     ship; refresh with the monthly sweep. If any range feels wrong, cut it
+     rather than cite something we cannot stand behind.
+  2. Freshness is carried twice: the visible "Updated July 2026" line and
+     dateModified in the Article JSON-LD. The monthly refresh must bump both.
+  3. Internal link to /founder-led-sales assumes that page (drafted in
+     parallel) ships before or with this one. If it slips, point the link
+     at /ai-sdr temporarily or drop it.
+  4. Footer links row copies the ai-sdr draft's proposed five-entry row.
+     Open question: does "benchmarks" also join the site-wide footer row?
+     Drafted without it to keep the row short.
+  5. datePublished/dateModified in JSON-LD are placeholders (2026-07-20);
+     set at publish time.
+  6. This adds another FAQPage node on the site (/faq owns one, the ai-sdr
+     draft adds one). Different URLs, fine per Google's docs, but flagging.
+  7. The live case study page still uses the "14x" multiplier framing in
+     its title. This page uses only the canonical rate-to-rate form per
+     LISTINGS.md (Aayush 2026-07-21). Flagging the inconsistency in case
+     the case study is due the same update.
+  8. Both CTAs point at /#book, same as the ai-sdr draft. If inline booking
+     has not shipped by build time, fall back to the cal.com link.
+-->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Cold outbound benchmarks: cold email reply and open rates · driftwood</title>
+<meta name="description" content="Commonly cited cold email reply and open rate ranges, next to first-party data: replies went from under 1% to over 14% in week one at Autosana (YC S25). Updated monthly." />
+<link rel="canonical" href="https://driftwood.sh/cold-outbound-benchmarks" />
+
+<!-- Draft only: Google Fonts for preview. Prod self-hosts both families
+     via the @font-face block the live static pages use. -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400..700;1,400..700&family=Source+Serif+4:wght@600&display=swap" />
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "@id": "https://driftwood.sh/cold-outbound-benchmarks#article",
+      "headline": "Cold outbound benchmarks",
+      "description": "Cold email benchmarks with the sourcing labeled: commonly cited industry ranges for reply and open rates, next to driftwood's first-party data from the Autosana (YC S25) campaign.",
+      "url": "https://driftwood.sh/cold-outbound-benchmarks",
+      "mainEntityOfPage": "https://driftwood.sh/cold-outbound-benchmarks",
+      "publisher": { "@id": "https://driftwood.sh/#org" },
+      "datePublished": "2026-07-20",
+      "dateModified": "2026-07-20",
+      "inLanguage": "en"
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://driftwood.sh/cold-outbound-benchmarks#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Do cold emails still work?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, with a qualifier: the typical version works poorly. Commonly cited reply rates sit in the low single digits, and untargeted blasts are commonly reported under 1%. What still works is outreach that carries something the prospect can verify. Run that way, replies went from under 1% to over 14% in week one at Autosana (YC S25), on a lead list that had been ignoring generic outreach for months."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is a good cold email reply rate?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Commonly cited figures put typical cold email reply rates between 1% and 5%, with anything above 5% usually described as good. Those are industry numbers we cannot verify. Our own data point: replies went from under 1% to over 14% in week one at Autosana (YC S25), after switching the same lead list to demo-led outbound."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the average cold email open rate?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Typically reported ranges run from about 20% to 40%, and we would not lean on any of them. Open tracking broke when inbox privacy features started loading tracking pixels automatically, so a recorded open is often not a person reading. driftwood does not publish open rates for that reason; we benchmark on replies, which a mail client cannot fake."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How many cold emails does it take to book a meeting?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "At the commonly cited rates, the arithmetic lands in the hundreds of sends per booked meeting for typical volume campaigns. We do not yet publish a meetings-per-send benchmark of our own; the sample is too small to call it one. The data point we can publish: in the Autosana campaign, one message to a CTO who had ignored 4.5 months of outreach drew a reply in about 12 hours, and the call was booked three days after the send."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+
+<style>
+  :root {
+    --bg: #ffffff;
+    --ink: #16181b;
+    --gray: #6a737d;
+    --gray-light: #9aa2ab;
+    --line: #e9ebee;
+    --tide: #15557e;
+    --tide-deep: #0d3c5b;
+    --tide-wash: #eaf1f7;
+    --wash-a: #f4f8fb;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  :focus-visible { outline: 2px solid var(--tide); outline-offset: 2px; }
+
+  .wrap {
+    max-width: 68rem;
+    margin-inline: auto;
+    padding-inline: clamp(1.25rem, 4vw, 2.5rem);
+  }
+
+  /* ---------- header ---------- */
+  header { border-bottom: 1px solid var(--line); }
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 4rem;
+  }
+  .wordmark {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-family: "Source Serif 4", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.2rem;
+    color: var(--ink);
+    text-decoration: none;
+    letter-spacing: -0.01em;
+  }
+  .wordmark .helm {
+    width: 1.9rem;
+    height: 1.9rem;
+    display: block;
+    flex-shrink: 0;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--tide);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    height: 2.4rem;
+    padding-inline: 1.3rem;
+    border-radius: 999px;
+    transition: background 0.15s;
+  }
+  .btn:hover { background: var(--tide-deep); }
+
+  /* ---------- article ---------- */
+  main { padding-block: clamp(3rem, 7vw, 5rem) clamp(3rem, 6vw, 4.5rem); }
+  article { max-width: 42rem; margin-inline: auto; }
+
+  .label {
+    font-size: 0.85rem;
+    color: var(--gray);
+    margin: 0 0 0.9rem;
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(1.9rem, 1.2rem + 2vw, 2.6rem);
+    font-weight: 600;
+    letter-spacing: -0.014em;
+    line-height: 1.15;
+    text-wrap: balance;
+  }
+  .lede {
+    margin: 1.4rem 0 0;
+    font-size: 1.22rem;
+    line-height: 1.55;
+    color: var(--ink);
+  }
+  .lede strong { font-weight: 600; }
+
+  section {
+    margin-top: 2.75rem;
+    padding-top: 2.25rem;
+    border-top: 1px solid var(--line);
+  }
+  h2 {
+    margin: 0 0 0.85rem;
+    font-size: 1.3rem;
+    font-weight: 600;
+    letter-spacing: -0.014em;
+    line-height: 1.3;
+    text-wrap: balance;
+  }
+  h3 {
+    margin: 1.9rem 0 0.55rem;
+    font-size: 1.08rem;
+    font-weight: 600;
+    letter-spacing: -0.012em;
+    line-height: 1.35;
+    text-wrap: balance;
+  }
+  em.voice {
+    font-family: Georgia, "Times New Roman", serif;
+    font-style: italic;
+    color: var(--tide);
+    letter-spacing: 0;
+  }
+  p { margin: 0; color: var(--gray); }
+  p + p { margin-top: 0.9rem; }
+  article a {
+    color: var(--tide);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
+  article a:hover { color: var(--tide-deep); }
+
+  ol.loop {
+    margin: 1rem 0 0;
+    padding-left: 1.4rem;
+    color: var(--gray);
+  }
+  ol.loop li { margin-top: 0.55rem; }
+  ol.loop li::marker { color: var(--tide); font-weight: 600; }
+
+  /* ---------- first-party note ---------- */
+  .note {
+    margin: 1.6rem 0 0;
+    background: var(--tide-wash);
+    border-radius: 12px;
+    padding: 1.1rem 1.3rem 1.2rem;
+  }
+  .note .kicker {
+    margin: 0 0 0.4rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--tide);
+  }
+  .note p { color: var(--ink); font-size: 0.95rem; }
+
+  /* ---------- benchmark tables ---------- */
+  .tablewrap {
+    margin: 1.25rem 0 0.35rem;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow-x: auto;
+  }
+  table.bench {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+  }
+  .bench th {
+    text-align: left;
+    font-weight: 600;
+    color: var(--ink);
+    background: var(--wash-a);
+    padding: 0.6rem 0.95rem;
+    border-bottom: 1px solid var(--line);
+  }
+  .bench.fp th {
+    background: var(--tide-wash);
+    color: var(--tide-deep);
+  }
+  .bench td {
+    padding: 0.6rem 0.95rem;
+    border-bottom: 1px solid var(--line);
+    color: var(--gray);
+    vertical-align: top;
+  }
+  .bench td:first-child { color: var(--ink); font-weight: 600; }
+  .bench tr:last-child td { border-bottom: 0; }
+  .bench .num { color: var(--tide); font-weight: 600; }
+  .tbl-note {
+    margin: 0.55rem 0 0;
+    font-size: 0.85rem;
+    color: var(--gray);
+  }
+
+  /* ---------- close panel ---------- */
+  .close {
+    margin-top: 3rem;
+    background: var(--wash-a);
+    border-radius: 12px;
+    padding: clamp(1.5rem, 4vw, 2.25rem);
+  }
+  .close p { color: var(--ink); font-size: 1.05rem; max-width: 34rem; }
+  .close .btn { margin-top: 1.25rem; height: 2.75rem; padding-inline: 1.7rem; font-size: 0.95rem; }
+
+  /* ---------- footer ---------- */
+  footer {
+    background: linear-gradient(#15557e, #0d3c5b);
+    color: #fff;
+  }
+  footer::before {
+    content: "";
+    display: block;
+    height: 28px;
+    margin-top: -28px;
+    position: relative;
+    z-index: 1;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='28' viewBox='0 0 180 28'%3E%3Cpath d='M0 14 C 11.25 5.5, 33.75 5.5, 45 14 C 56.25 22.5, 78.75 22.5, 90 14 C 101.25 5.5, 123.75 5.5, 135 14 C 146.25 22.5, 168.75 22.5, 180 14 L180 28 L0 28 Z' fill='%2315557e'/%3E%3C/svg%3E") repeat-x bottom;
+  }
+  .foot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1.5rem;
+    padding-block: 4.5rem 3rem;
+  }
+  .foot .wordmark {
+    color: #fff;
+    font-size: 1.35rem;
+  }
+  .foot .wordmark .helm {
+    width: 2.4rem;
+    height: 2.4rem;
+  }
+  .foot-def {
+    margin: 0;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.75);
+    max-width: 56ch;
+  }
+  .foot-links,
+  .foot-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.5rem;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.75);
+  }
+  footer a {
+    color: inherit;
+    text-decoration: none;
+  }
+  footer a:hover { color: #fff; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="wordmark" href="/"><svg viewBox="0 0 64 64" class="helm" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#15557e"/><g transform="translate(32 32) scale(0.88)" fill="none" stroke="#f7f4ec" stroke-linecap="round" stroke-linejoin="round"><circle r="22.5" stroke-width="3.4"/><g stroke-width="3.6"><line y1="-22.5" y2="-27.5"/><g transform="rotate(45)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(90)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(135)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(180)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(225)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(270)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(315)"><line y1="-22.5" y2="-27.5"/></g></g><g stroke-width="2.5"><line y1="-8.5" y2="-19.5"/><g transform="rotate(45)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(90)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(135)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(180)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(225)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(270)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(315)"><line y1="-8.5" y2="-19.5"/></g></g><circle r="7.5" stroke-width="2.6" fill="#15557e"/><circle r="2.8" fill="#f7f4ec" stroke="none"/></g></svg>driftwood</a>
+    <a class="btn" href="/#book">Book a demo</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <article>
+    <p class="label">Benchmarks</p>
+    <h1>Cold outbound benchmarks</h1>
+
+    <p class="lede">This page reports two kinds of numbers and labels which is which: ranges the industry commonly cites for cold email, and <strong>driftwood's own first-party results</strong>. The first kind we cannot verify. The second kind we ran ourselves.</p>
+
+    <div class="note">
+      <p class="kicker">First-party data &middot; Updated July 2026</p>
+      <p>The driftwood numbers on this page come from campaigns we ran, published with attribution on the <a href="/customers/autosana">Autosana case study</a>. Industry figures are marked as commonly cited; we did not produce them. This page is refreshed monthly as new campaign data comes in.</p>
+    </div>
+
+    <section>
+      <h2>What cold email reply rates typically look like</h2>
+      <p>The honest version first: there is no audited industry dataset for cold email. The figures below are the ranges most commonly cited across vendor reports and practitioner writeups as of mid-2026. We did not produce them, we cannot verify them, and the people publishing numbers like these usually sell outreach software. Treat them as the backdrop, not the ground truth.</p>
+
+      <div class="tablewrap">
+        <table class="bench">
+          <thead>
+            <tr><th scope="col">Metric</th><th scope="col">Commonly cited range</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Cold email open rate</td><td>Typically reported between 20% and 40%</td></tr>
+            <tr><td>Cold email reply rate</td><td>Commonly cited between 1% and 5%; above 5% is usually called good</td></tr>
+            <tr><td>Untargeted blasts</td><td>Reply rates commonly reported under 1%</td></tr>
+            <tr><td>Sends per booked meeting</td><td>Commonly cited in the hundreds at typical rates</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="tbl-note">Industry figures, not driftwood data. Unverified by us; refreshed with the monthly sweep.</p>
+
+      <p>Two caveats worth more than the table. Open rates have been unreliable since inbox privacy features started loading tracking pixels automatically; a recorded open is often not a person reading. And averages hide the split that matters: the gap between generic volume outreach and outreach that carries something specific is much larger than the gap between any two tools sending the same kind of message.</p>
+    </section>
+
+    <section>
+      <h2>driftwood's own numbers</h2>
+      <p>Everything in this section is first-party. It comes from a campaign driftwood ran, and the full writeup, including the review-queue screenshots and a reply thread published with identities redacted, is on the <a href="/customers/autosana">Autosana case study</a>.</p>
+      <p>Autosana (YC S25) builds AI agents for mobile QA. Before driftwood, its outbound was the founder-led kind: the founder found the leads, wrote the messages, and sent them from his own accounts, at a self-reported reply rate under 1%. There is more on that pattern on the <a href="/founder-led-sales">founder-led sales</a> page.</p>
+      <p>Then driftwood took over the same list. Replies went from under 1% to over 14% in week one at Autosana (YC S25), including founders who had ignored more than four months of prior outreach. Same leads, same founder's account. Different messages.</p>
+
+      <div class="tablewrap">
+        <table class="bench fp">
+          <thead>
+            <tr><th scope="col">Metric</th><th scope="col">driftwood first-party data</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Reply rate, founder-led baseline</td><td>Under 1%, self-reported</td></tr>
+            <tr><td>Reply rate, week one with driftwood</td><td><span class="num">Over 14%</span></td></tr>
+            <tr><td>Held constant</td><td>Same lead list, same founder's account</td></tr>
+            <tr><td>Longest-ignored prospect who replied</td><td>A CTO, quiet through 4.5 months of outreach; replied in about 12 hours</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="tbl-note">Source: the <a href="/customers/autosana">Autosana case study</a>, published July 2026.</p>
+
+      <p>The thread behind that last row: the CTO got one message on July 9. It opened with a real bug the agent had found on the prospect's own site and attached a 19 second video of Autosana's agent catching it. He replied about 12 hours later, and the call was booked July 12, three days after the send.</p>
+
+      <h3>What we do not publish, and why</h3>
+      <p>We do not publish open rates: opens are too noisy to stand behind, for the reasons in the FAQ below. We do not publish send volume or a meetings-per-send rate yet: one company over one week is a strong result, not a benchmark. As new campaigns run, their numbers land on this page; the update line at the top tracks that.</p>
+    </section>
+
+    <section>
+      <h2>Why most cold outbound underperforms</h2>
+      <p>The commonly cited ranges are low for reasons that show up in almost every underperforming campaign. Three patterns account for most of it.</p>
+
+      <h3>Volume first</h3>
+      <p>Tooling made sends nearly free, so the default strategy became more sends. Most <a href="/ai-sdr">AI SDR</a> tools compete on exactly this. But volume shows up in dashboards, not in replies, and it carries costs the dashboard does not show: burned sending domains, mail landing in spam, and lead lists that stop being usable.</p>
+
+      <h3>Thin personalization</h3>
+      <p>A merge tag fills in the first name, a scraped detail supplies the opener, and a language model restates the sender's homepage in a friendly tone. It costs almost nothing to produce, and it reads that way. Buyers pattern-match the style and delete it unread.</p>
+
+      <h3>No proof in the message</h3>
+      <p>The typical cold message asks for time and offers claims. There is nothing in it the prospect can check in ten seconds, so the claims are worth what they cost to make: nothing. A prospect who cannot verify anything has no reason to reply, and the reply rates above reflect that.</p>
+    </section>
+
+    <section>
+      <h2>What moved the number</h2>
+      <p>The Autosana campaign changed one variable: what the message carried. The mechanics, from the case study:</p>
+      <ol class="loop">
+        <li>For each prospect on the existing list, the agent researched the company and built a working demo of Autosana for their business: Autosana's agent running against the prospect's own product.</li>
+        <li>The message opened with something checkable. In the published thread, that was a real bug the agent found on the prospect's own site, with a 19 second video of Autosana's agent catching it.</li>
+        <li>A human approved every message before it sent. Nothing left the queue on its own.</li>
+        <li>Everything sent from the founder's own accounts, LinkedIn or email, so replies landed where he already works.</li>
+      </ol>
+      <p>This approach has a name, <a href="/demo-led-outbound">demo-led outbound</a>, with a full definition on its own page. The short version of why it moves reply rates: the message gives the prospect proof of work they can verify before they spend any time, which is the one thing volume outreach cannot fake.</p>
+    </section>
+
+    <section>
+      <h2>Frequently asked questions</h2>
+
+      <h3>Do cold emails still work?</h3>
+      <p>Yes, with a qualifier: the typical version works poorly. Commonly cited reply rates sit in the low single digits, and untargeted blasts are commonly reported under 1%. What still works is outreach that carries something the prospect can verify. Run that way, replies went from under 1% to over 14% in week one at Autosana (YC S25), on a lead list that had been ignoring generic outreach for months.</p>
+
+      <h3>What is a good cold email reply rate?</h3>
+      <p>Commonly cited figures put typical cold email reply rates between 1% and 5%, with anything above 5% usually described as good. Those are industry numbers we cannot verify. Our own data point, from the <a href="/customers/autosana">Autosana case study</a>: replies went from under 1% to over 14% in week one at Autosana (YC S25), after switching the same lead list to demo-led outbound.</p>
+
+      <h3>What is the average cold email open rate?</h3>
+      <p>Typically reported ranges run from about 20% to 40%, and we would not lean on any of them. Open tracking broke when inbox privacy features started loading tracking pixels automatically, so a recorded open is often not a person reading. driftwood does not publish open rates for that reason; we benchmark on replies, which a mail client cannot fake.</p>
+
+      <h3>How many cold emails does it take to book a meeting?</h3>
+      <p>At the commonly cited rates above, the arithmetic lands in the hundreds of sends per booked meeting for typical volume campaigns. We do not yet publish a meetings-per-send benchmark of our own; the sample is too small to call it one. The data point we can publish: in the Autosana campaign, one message to a CTO who had ignored 4.5 months of outreach drew a reply in about 12 hours, and the call was booked three days after the send.</p>
+    </section>
+
+    <div class="close">
+      <p>driftwood (<a href="https://driftwood.sh">driftwood.sh</a>) is an AI SDR that runs demo-led outbound: every message carries a working demo of your product, built for their business, approved by a human, and sent from your own accounts. The numbers on this page came from running it. Book a demo and we will build one for yours.</p>
+      <a class="btn" href="/#book">Book a demo</a>
+    </div>
+  </article>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <a class="wordmark" href="/"><svg viewBox="0 0 64 64" class="helm" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#15557e"/><g transform="translate(32 32) scale(0.88)" fill="none" stroke="#f7f4ec" stroke-linecap="round" stroke-linejoin="round"><circle r="22.5" stroke-width="3.4"/><g stroke-width="3.6"><line y1="-22.5" y2="-27.5"/><g transform="rotate(45)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(90)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(135)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(180)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(225)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(270)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(315)"><line y1="-22.5" y2="-27.5"/></g></g><g stroke-width="2.5"><line y1="-8.5" y2="-19.5"/><g transform="rotate(45)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(90)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(135)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(180)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(225)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(270)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(315)"><line y1="-8.5" y2="-19.5"/></g></g><circle r="7.5" stroke-width="2.6" fill="#15557e"/><circle r="2.8" fill="#f7f4ec" stroke="none"/></g></svg>driftwood</a>
+    <p class="foot-def">driftwood is an AI sales agent for demo-led outbound: it researches each prospect, builds a working demo of your product for their business, and sends from your account after human review.</p>
+    <!-- Footer row copies the ai-sdr draft's proposed five entries; whether
+         "benchmarks" joins the site-wide row is an open question (see head). -->
+    <nav class="foot-links" aria-label="site">
+      <a href="/ai-sdr">AI SDR</a>
+      <a href="/customers/autosana">customers</a>
+      <a href="/demo-led-outbound">demo-led outbound</a>
+      <a href="/faq">faq</a>
+      <a href="/best-ai-sdr-tools">compare AI SDR tools</a>
+    </nav>
+    <div class="foot-meta">
+      <a href="mailto:aayush@driftwood.sh">aayush@driftwood.sh</a>
+      <span>&copy; 2026 driftwood</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
