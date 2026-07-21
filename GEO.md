@@ -1,136 +1,97 @@
-# GEO — strategy, formal query set, probe protocol
+# GEO.md — the operating manual (updated 2026-07-21)
 
-Owner doc for driftwood's visibility in AI engines and agents.
-Companion: SEO.md. Phase history: GEO-PLAN.md. Updated 2026-07-21.
+Canonical doc for driftwood's visibility in AI engines and agents.
+Absorbs GEO-PLAN.md (now deleted; history in git). Companion: SEO.md
+(which owns press). Written for the agent that grinds on this.
+Research artifacts: agentic-query-research-2026-07-21.md (58-query
+discovery probe + agent phrasing playbook), geo-results/ (probe runs).
 
-## The strategy
+## Why GEO exists (the 2026-07-15 baseline, still true)
 
-AI engines and research agents do not rank pages; they read a citation
-pool and resolve entities. GEO is five moves:
+driftwood.sh had ZERO citations anywhere; the AI-SDR citation pool is
+pitchable vendor listicles + G2/PH category pages; NOBODY claims the
+custom-demo-per-prospect wedge; and the NAME COLLISION is real
+(driftwood.ai = research org, driftwood-ai.com = consultancy; the
+branded probe query resolves to them, not us). Entity work precedes
+everything.
+
+## The five moves
 
 1. **Entity resolution.** "driftwood (driftwood.sh)" pairing
-   everywhere; alternateName schema (shipped); Crunchbase + G2 as
-   identity anchors (live). Kills the driftwood.ai / driftwood-ai.com
-   collision.
+   everywhere; alternateName schema (SHIPPED); Crunchbase (LIVE) + G2
+   (LIVE, Yuvan review pending) as identity anchors; TAAFT skipped
+   (fee-gated, never-paid rule); Product Hunt on Aayush's timing.
+   First metric to flip: the branded probe queries.
 2. **Primary-source status.** First-party data with methodology inline
-   (N, definitions, window). Agents demonstrably hunt "data / study /
-   methodology" and cite the source, not the listicle. The
-   /cold-outbound-benchmarks page is this play.
+   — agents verifiably hunt "data/study/methodology" and cite sources
+   over listicles. The /cold-outbound-benchmarks page is this play
+   (methodology numbers owed by Aayush).
 3. **Agent-phrasing surface.** Year tokens ("Updated July 2026"),
-   symptom-phrased headings, the literal words agents append to
-   queries. llms.txt written in agent vocabulary.
-4. **Pool membership.** Get into what engines already cite: vendor
-   listicles (4 pitches drafted), G2 (live, reviews pending),
-   comparison pages.
-5. **Definition ownership.** demo-led outbound (live page);
-   autonomous-vs-assisted AI SDRs (section planned on /ai-sdr).
-   Engines answer "what is X" with whoever defined X.
+   symptom-phrased headings, data-qualifier vocabulary, llms.txt in
+   agent language. Full phrasing playbook (verified across 4 probes):
+   year-stamping, "data/study/benchmarks/methodology" qualifiers,
+   symptom-as-query, constraint stacking ("seed stage", "3 person
+   startup"), X-vs-Y after name discovery, adversarial pivots ("do
+   they actually work"), named-source anchoring. Agents CANNOT reach
+   Reddit (verified) — honest practitioner-voice content fills a void
+   nothing else can.
+4. **Pool membership.** Get into what engines cite: the 4 listicle
+   pitches (drafted, Aayush sends after benchmarks is live), G2
+   reviews, comparison pages. Unlinked MENTIONS correlate ~3x more
+   with AI visibility than backlinks (Ahrefs) — press mentions count
+   even without links (press playbook lives in SEO.md).
+5. **Definition ownership.** demo-led outbound (live page; verbatim
+   repetition in listings); autonomous-vs-assisted AI SDRs (planned
+   /ai-sdr section; do NOT coin a third term). Engines answer
+   "what is X" with whoever defined X.
 
-Void worth filling: agents cannot reach Reddit (crawler blocked,
-verified). Honest practitioner-voice content with real numbers is
-uniquely valuable to them.
+## Standing founder gates
 
-## The formal probe — fixed query set
+Same as SEO.md: LISTINGS.md copy rules are law; nothing sends without
+Aayush; never paid; query-set changes are versioned proposals needing
+his approval; probes' fixed sets are never edited casually.
 
-CURRENT SET: v2, 100 queries, in geo-results/queryset-v2.json
-(2026-07-21, same day as v1 — expanded per Aayush to include the
-long-term head terms from day one, e.g. "best AI SDR", "best AI growth
-tools"). Three tiers:
+## The probe (measurement)
 
-- Tier 1 (20): must-win now — entity/brand, coinage, the winnable
-  SERPs, shipping pages. THE HEADLINE METRIC is the tier-1 hit rate.
-- Tier 2 (40): near-term — clusters our pages target, question tail,
-  founder/operator how-to.
-- Tier 3 (40): long-term build-up — head and best-of terms. Expected
-  to sit at zero for quarters; tracked so the day they move is
-  visible, never used as the headline.
+- Fixed sets, versioned: geo-results/queryset-v2.json (100, tiers
+  20/40/40; approved as-is by Aayush). Tier 1 = must-win (entity,
+  coinage, winnable SERPs) and its hit rate is THE headline metric;
+  tier 2 = near-term clusters; tier 3 = long-term heads ("best AI
+  SDR", "best AI growth tools"). Grading: 20/40/60/80 = bare-min/
+  fine/great/amazing.
+- Scoring per query: driftwood present (position), competitor
+  watch-list presence (Instantly, Artisan, 11x, Apollo, Clay,
+  Autobound, Amplemarket, Smartlead, AiSDR, Unify, Landbase, Nooks,
+  Coldreach, Lemlist, Salesforge, Saleshandy), top domains.
+- Runners: backend daily job (00:07 PT; OpenRouter
+  gemini-3.5-flash:online, PROBE_SEARCH_MODEL overridable) is the
+  production trend line; /geo-probe skill = on-command via Claude
+  WebSearch. RESULTS COMPARABLE ONLY WITHIN ONE RUNNER TOOL — every
+  run records its tool; never mix lines.
+- Artifacts: probe_runs + ground_truth_snapshots tables (backend),
+  geo-results/ dated files. Dashboard: /dashboard/seo-geo (ground
+  truth on top: per-channel views + demos from PostHog referrer
+  attribution — AI-assistant domains = GEO, search domains = SEO).
+  Fleet tool: seo_geo_report (free, read-only) for agents.
+- Baselines 2026-07-21: discovery probe 0/58; fixed v1 0/24 (branded
+  query lost to the collision; "what is demo-led outbound" lost to a
+  Steam game); geo_views ground truth = 0. Winnable SERPs with zero
+  AI-SDR competitor presence: approve-before-send/HITL, founder-led
+  playbook, when-to-hire-SDR, outsourced-SDR-cost.
+- Layer 2 (open): answer-checking — ask real engines the prompt set,
+  grade whether driftwood is NAMED in answers. Needs engine API
+  spend approval; the probe is the leading indicator, answer-share is
+  the truth.
+- Quarterly: re-run the 4-persona discovery probe (prompts in
+  agentic-query-research-2026-07-21.md), revise the fixed set to
+  v-next as a proposal.
 
-Scoring is per-tier hit rate + total /100. Do not edit the set
-casually; version it (v3...) when queries change and note the version
-in every result file so trends stay honest. v1 (24 queries, inline in
-git history of this file) is a strict subset by intent; the 07-21
-baseline used v1.
+## Expectations
 
-The original v1 rationale, kept for the record: queries derived from
-the 58-query discovery probe (site/agentic-query-research-2026-07-21.md),
-run verbatim, same instrumentation every time.
-
-## Scoring
-
-Per query: driftwood present in results (0/1, position if present);
-competitor presence (fixed watch list: Instantly, Artisan, 11x,
-Apollo, Clay, Autobound, Amplemarket, Smartlead, AiSDR, Unify,
-Landbase, Nooks, Coldreach, Lemlist, Salesforge, Saleshandy); top 3
-domains. Per run: tier-1 hit rate (the headline number), per-tier hits, total /100,
-competitor leaderboard, domain leaderboard.
-
-Results live in site/geo-results/: one dated markdown per run
-(YYYY-MM-DD.md, raw per-query lines + summary) plus latest.json
-(machine-readable, what the dashboard reads):
-`{"date", "set_version", "driftwood_hits", "total", "per_query":
-[{"q", "hit", "position", "competitors"}], "competitor_counts"}`.
-
-## Running it
-
-On command: the `/geo-probe` skill (.claude/skills/geo-probe) runs the
-fixed set via a subagent, writes the dated file + latest.json, and
-commits. Anyone in a Claude Code session on this repo can run it.
-
-Cadence (Aayush, 2026-07-21): **daily at midnight Pacific** via the
-backend scheduler once deployed; plus on-command after any ship
-that should move it (new page live, listicle inclusion lands, PH
-launch). Daily/every-other-day is possible but not recommended:
-search-index composition changes on week timescales, so daily runs
-measure result-shuffling noise, and each run costs subagents doing
-100 searches. Revisit cadence if a launch window makes daily worth it.
-Quarterly: re-run the 4-persona DISCOVERY probe (free-form, prompts in
-site/agentic-query-research-2026-07-21.md) to find new query shapes,
-then revise the fixed set to v-next.
-
-Layer 2 (future): answer-checking — ask the actual engines (ChatGPT,
-Perplexity, Gemini via API) the prompt-set questions and record
-whether driftwood is named in ANSWERS, not just search results.
-Requires API keys/credits (OpenRouter fleet key currently dry);
-GEO-PLAN Phase 2 owns this. The fixed-set probe is the leading
-indicator; answer-share is the lagging truth.
-
-## Baseline
-
-- 2026-07-21 discovery probe: driftwood 0/58 free-form agent queries
-  (~400 result slots). Competitors everywhere; prospeo.io programmatic
-  SEO dominates symptom queries.
-- 2026-07-21 fixed-set v1 baseline: see geo-results/2026-07-21.md
-  (first tracked run).
-
-## Grading scale (Aayush, 2026-07-21)
-
-Applied to tier-1 hit rate (headline) and shown per tier: under 20% =
-below bare minimum, 20% = bare minimum, 40% = fine, 60% = great, 80%+
-= amazing. Dashboard colors follow these bands.
-
-## Probe runner notes
-
-- Parallelize freely: current skills run 4x25 subagent batches; can go
-  wider. Light token work.
-- A future backend cron runner could use OpenRouter search-enabled
-  models instead of Claude Code sessions. Two caveats recorded: the
-  shared OpenRouter key was out of credits as of 2026-07-20 (top up
-  first), and RESULTS ARE ONLY COMPARABLE WITHIN ONE SEARCH TOOL -
-  switching runner (Claude WebSearch -> OpenRouter/Perplexity) starts
-  a new trend line. Every result file records its tool; the dashboard
-  charts per tool, never mixed.
-- Probes are PAUSED until the dashboard is built (Aayush, 2026-07-21);
-  v1 baselines stand as run zero.
-
-## Dashboard (Godmode admin page) — spec, GEO half
-
-- Data: site/geo-results/latest.json (+ history from dated files for
-  the trend line). No external APIs needed — the probe commits the
-  artifact and the deployed site serves it.
-- Panels: headline tier-1 hit-rate (+ total /100) with trend since baseline;
-  per-query hit table (green/red, position); competitor leaderboard
-  vs us; last-run date + set version; button-equivalent note that a
-  re-run is "ask Claude to /geo-probe" until a backend runner exists.
-- Later: PostHog AI-referrer panel (chatgpt.com / perplexity.ai /
-  gemini referrals on book_demo + booking_confirmed) — the revenue
-  edge of GEO.
+Tier-1 hit rate 20% by ~60 days (entity flips first as Crunchbase/G2
+propagate), 40% by 6 months. First AI-referred sessions within ~60
+days of listicle inclusions; AI-referred visitors are few but the
+highest-intent traffic that exists. GSC-style patience does not apply
+here: citation-pool entry events (a listicle inclusion, an Axios
+mention, benchmarks-page pickup) move this metric in steps, not
+curves.
