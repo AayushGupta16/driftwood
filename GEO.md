@@ -30,45 +30,30 @@ Void worth filling: agents cannot reach Reddit (crawler blocked,
 verified). Honest practitioner-voice content with real numbers is
 uniquely valuable to them.
 
-## The formal probe — fixed query set v1 (2026-07-21)
+## The formal probe — fixed query set
 
-24 fixed queries, run verbatim, same instrumentation every time, so
-runs are comparable. Derived from the 58-query discovery probe
-(site/agentic-query-research-2026-07-21.md). Do not edit casually;
-version the set (v1, v2...) when queries change, and note the version
-in every result file so trends stay honest.
+CURRENT SET: v2, 100 queries, in geo-results/queryset-v2.json
+(2026-07-21, same day as v1 — expanded per Aayush to include the
+long-term head terms from day one, e.g. "best AI SDR", "best AI growth
+tools"). Three tiers:
 
-Category / commercial (1-8):
-1. best AI SDR tools 2026
-2. AI SDR tools for seed stage startups
-3. new AI outbound agents 2026 alternatives to 11x Artisan
-4. human-in-the-loop AI outbound tool approve emails before send
-5. autonomous vs assisted outbound founder-led sales
-6. AI SDR vs sales engagement platform comparison
-7. AI SDR cold email reply rates vs human SDR performance
-8. do AI SDR tools actually work
+- Tier 1 (20): must-win now — entity/brand, coinage, the winnable
+  SERPs, shipping pages. THE HEADLINE METRIC is the tier-1 hit rate.
+- Tier 2 (40): near-term — clusters our pages target, question tail,
+  founder/operator how-to.
+- Tier 3 (40): long-term build-up — head and best-of terms. Expected
+  to sit at zero for quarters; tracked so the day they move is
+  visible, never used as the headline.
 
-Benchmarks / diagnostic (9-14):
-9. cold email reply rate benchmarks 2026
-10. average cold email response rate statistics b2b
-11. what is a good cold email reply rate
-12. cold email personalization impact reply rate research
-13. why cold emails get no replies common causes
-14. is cold email dead 2026
+Scoring is per-tier hit rate + total /100. Do not edit the set
+casually; version it (v3...) when queries change and note the version
+in every result file so trends stay honest. v1 (24 queries, inline in
+git history of this file) is a strict subset by intent; the 07-21
+baseline used v1.
 
-Founder how-to (15-21, 24):
-15. how to do cold outreach for B2B SaaS startup
-16. founder-led sales cold outreach playbook early stage
-17. when should a startup hire an SDR
-18. outsourced SDR vs AI SDR
-19. outsourced sdr companies cost
-20. how to write a cold email that gets replies
-21. cold email vs LinkedIn outreach B2B
-24. best outbound tools for 3 person startup no sales team
-
-Entity / definition (22-23):
-22. what is demo-led outbound
-23. driftwood AI SDR
+The original v1 rationale, kept for the record: queries derived from
+the 58-query discovery probe (site/agentic-query-research-2026-07-21.md),
+run verbatim, same instrumentation every time.
 
 ## Scoring
 
@@ -76,7 +61,7 @@ Per query: driftwood present in results (0/1, position if present);
 competitor presence (fixed watch list: Instantly, Artisan, 11x,
 Apollo, Clay, Autobound, Amplemarket, Smartlead, AiSDR, Unify,
 Landbase, Nooks, Coldreach, Lemlist, Salesforge, Saleshandy); top 3
-domains. Per run: driftwood hit count /24 (the headline number),
+domains. Per run: tier-1 hit rate (the headline number), per-tier hits, total /100,
 competitor leaderboard, domain leaderboard.
 
 Results live in site/geo-results/: one dated markdown per run
@@ -95,8 +80,8 @@ Cadence recommendation: **weekly**, plus on-command after any ship
 that should move it (new page live, listicle inclusion lands, PH
 launch). Daily/every-other-day is possible but not recommended:
 search-index composition changes on week timescales, so daily runs
-measure result-shuffling noise, and each run costs a subagent doing
-24 searches. Revisit cadence if a launch window makes daily worth it.
+measure result-shuffling noise, and each run costs subagents doing
+100 searches. Revisit cadence if a launch window makes daily worth it.
 Quarterly: re-run the 4-persona DISCOVERY probe (free-form, prompts in
 site/agentic-query-research-2026-07-21.md) to find new query shapes,
 then revise the fixed set to v-next.
@@ -121,7 +106,7 @@ indicator; answer-share is the lagging truth.
 - Data: site/geo-results/latest.json (+ history from dated files for
   the trend line). No external APIs needed — the probe commits the
   artifact and the deployed site serves it.
-- Panels: headline hit-rate (N/24) with trend since baseline;
+- Panels: headline tier-1 hit-rate (+ total /100) with trend since baseline;
   per-query hit table (green/red, position); competitor leaderboard
   vs us; last-run date + set version; button-equivalent note that a
   re-run is "ask Claude to /geo-probe" until a backend runner exists.

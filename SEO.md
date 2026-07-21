@@ -142,6 +142,10 @@ The video is a Google Ads playbook; these are the parts that transfer:
 - **Monthly**: comparison-page refresh (vendor positioning drifts);
   re-check top clusters' rankings; fold GSC query discoveries back
   into this doc (queries we rank for accidentally = free clusters).
+- **Rank probe**: /seo-probe skill, set v2 (100 tiered keywords,
+  seo-results/queryset-v2.json; tier-1 hit rate is the headline,
+  tier-3 head terms tracked from day one so the long game is visible).
+  Directional proxy; GSC stays ground truth.
 - **Backlink registry**: BACKLINKS.md (to create) — every known link,
   source, date, how acquired. GSC's Links report is the free
   discovery tool; the registry is canonical.
