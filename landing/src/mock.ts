@@ -12,7 +12,10 @@ if (params.has("mock")) {
     is_approved: true,
     linkedin_connected: true,
     impersonating: false,
-    is_admin: false,
+    // ?mock=admin flips the admin chrome on (God mode + the SEO / GEO pill)
+    // for QA'ing admin-only pages like /dashboard/seo-geo. Plain ?mock=1
+    // stays the customer view the baked marketing screenshots are shot from.
+    is_admin: params.get("mock") === "admin",
   };
   const summary = {
     linkedin_connected: true,
@@ -183,10 +186,20 @@ if (params.has("mock")) {
     } catch { /* malformed body — report nothing decided */ }
     return { approved, denied, skipped: [], queued: [], agent_woken: true };
   };
+  // /api/v1/admin/probes/dashboard deliberately mocks a 404, not data: that
+  // exercises the SEO/GEO page's run-zero empty state (its launch state)
+  // through the real no-data code path, without the network-error console
+  // noise an actually-missing backend would add.
+  const probesNotFound = () =>
+    new Response(JSON.stringify({ detail: "no probe runs yet" }), {
+      status: 404,
+      headers: { "Content-Type": "application/json" },
+    });
   // Matching is startsWith with NO method check, so more-specific paths must
   // come first — /sends/cancel and /sends/dismiss (POST) would otherwise be
   // swallowed by the /sends fixture, and /reviews/decide by /reviews.
   const routes: [string, unknown][] = [
+    ["/api/v1/admin/probes/dashboard", probesNotFound],
     ["/api/v1/dashboard/sends/cancel", cancelSends],
     ["/api/v1/dashboard/sends/dismiss", dismissSends],
     ["/api/v1/dashboard/sends", sends],
@@ -202,6 +215,8 @@ if (params.has("mock")) {
     for (const [path, body] of routes) {
       if (url.startsWith(path)) {
         const payload = typeof body === "function" ? (body as (i?: RequestInit) => unknown)(init) : body;
+        // A fixture may hand back a full Response (e.g. a synthetic 404).
+        if (payload instanceof Response) return Promise.resolve(payload);
         return Promise.resolve(
           new Response(JSON.stringify(payload), {
             status: 200,
