@@ -1,0 +1,607 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Clay alternatives in 2026: six honest options · driftwood</title>
+<meta name="description" content="Six real Clay alternatives as of July 2026: Apollo, Unify, Amplemarket, Artisan, Instantly, and driftwood, with an honest section on when Clay is still the right choice." />
+<link rel="canonical" href="https://driftwood.sh/alternatives/clay" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<meta name="theme-color" content="#15557e" />
+<meta property="og:title" content="Clay alternatives in 2026: six honest options · driftwood" />
+<meta property="og:description" content="Six real Clay alternatives as of July 2026: Apollo, Unify, Amplemarket, Artisan, Instantly, and driftwood, with an honest section on when Clay is still the right choice." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://driftwood.sh/alternatives/clay" />
+<meta property="og:image" content="https://driftwood.sh/og-5.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://driftwood.sh/og-5.png" />
+<link rel="preload" href="/fonts/public-sans-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "@id": "https://driftwood.sh/alternatives/clay#article",
+      "headline": "Clay alternatives in 2026: six honest options",
+      "url": "https://driftwood.sh/alternatives/clay",
+      "mainEntityOfPage": "https://driftwood.sh/alternatives/clay",
+      "datePublished": "2026-07-21",
+      "dateModified": "2026-07-21",
+      "inLanguage": "en"
+    },
+    {
+      "@type": "ItemList",
+      "name": "Clay alternatives",
+      "url": "https://driftwood.sh/alternatives/clay",
+      "numberOfItems": 6,
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "driftwood", "url": "https://driftwood.sh" },
+        { "@type": "ListItem", "position": 2, "name": "Apollo", "url": "https://www.apollo.io" },
+        { "@type": "ListItem", "position": 3, "name": "Unify", "url": "https://unifygtm.com" },
+        { "@type": "ListItem", "position": 4, "name": "Amplemarket", "url": "https://amplemarket.com" },
+        { "@type": "ListItem", "position": 5, "name": "Artisan (Ava)", "url": "https://artisan.co" },
+        { "@type": "ListItem", "position": 6, "name": "Instantly", "url": "https://instantly.ai" }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What does Clay cost in 2026?",
+          "acceptedAnswer": { "@type": "Answer", "text": "As of July 2026: a free tier with 100 data credits and 500 actions a month on tables capped at 200 rows, Launch at $185 a month ($167 billed annually) with 2,500 data credits and 15,000 actions, Growth at $495 a month ($446 billed annually) with 6,000 data credits and 40,000 actions, and custom Enterprise pricing. Clay restructured pricing in March 2026, splitting usage into data credits and actions." }
+        },
+        {
+          "@type": "Question",
+          "name": "Is Clay an AI SDR?",
+          "acceptedAnswer": { "@type": "Answer", "text": "No. Clay is a data and workflow platform. It finds, enriches, and routes data, but your team still designs the motion, writes the messages, and runs the sending. AI SDR agents such as Artisan or driftwood run the outbound motion itself." }
+        },
+        {
+          "@type": "Question",
+          "name": "Do I need a GTM engineer to get value from Clay?",
+          "acceptedAnswer": { "@type": "Answer", "text": "In practice, mostly yes. 2026 reviews consistently describe weeks of ramp time and note that teams getting real value usually have a dedicated RevOps or GTM engineering owner. Without one, credit spend is hard to control and the tables go stale." }
+        },
+        {
+          "@type": "Question",
+          "name": "Do I still need a sending tool with Clay?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Usually. Clay's job is data and orchestration; most teams push enriched lists into a sequencer such as Instantly, Smartlead, or lemlist, or into their CRM, and run sending and deliverability there." }
+        }
+      ]
+    }
+  ]
+}
+</script>
+
+<style>
+  @font-face {
+    font-family: "Public Sans";
+    src: url("/fonts/public-sans-latin-wght-normal.woff2") format("woff2-variations");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Source Serif 4";
+    src: url("/fonts/source-serif-4-latin-600-normal.woff2") format("woff2");
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  :root {
+    --ink: #16181b;
+    --gray: #6a737d;
+    --gray-light: #9aa2ab;
+    --line: #e9ebee;
+    --tide: #15557e;
+    --tide-deep: #0d3c5b;
+    --tide-wash: #eaf1f7;
+    --bg: #ffffff;
+    --r-win: 12px;
+    --shadow-win: 0 1px 2px rgba(22,24,27,0.05), 0 24px 48px -24px rgba(22,24,27,0.18);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 16px; line-height: 1.55; -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 { margin: 0; letter-spacing: -0.014em; text-wrap: balance; }
+  p { margin: 0; }
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid var(--tide); outline-offset: 2px; }
+
+  em.voice {
+    font-family: Georgia, "Times New Roman", serif;
+    font-style: italic; color: var(--tide); letter-spacing: 0;
+  }
+
+  .wrap { max-width: 46rem; margin-inline: auto; padding-inline: clamp(1.25rem, 4vw, 2rem); }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--tide); color: #fff; text-decoration: none;
+    font-weight: 600; font-size: 0.95rem; height: 2.75rem; padding-inline: 1.5rem;
+    border-radius: 999px; transition: background 0.15s ease;
+  }
+  .btn:hover { background: var(--tide-deep); }
+
+  /* ---------- chrome ---------- */
+  header.site {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(255,255,255,0.94); border-bottom: 1px solid var(--line);
+    backdrop-filter: blur(6px);
+  }
+  .nav {
+    max-width: 68rem; margin-inline: auto;
+    padding-inline: clamp(1.25rem, 4vw, 2rem);
+    display: flex; align-items: center; justify-content: space-between; height: 4rem;
+  }
+  .wordmark {
+    display: inline-flex; align-items: center; gap: 0.55rem;
+    font-family: "Source Serif 4", Georgia, serif; font-weight: 600;
+    font-size: 1.2rem; text-decoration: none; color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .wordmark .helm { width: 1.9rem; height: 1.9rem; display: block; flex-shrink: 0; }
+  .nav .btn { height: 2.35rem; font-size: 0.875rem; padding-inline: 1.2rem; }
+
+  /* ---------- article ---------- */
+  .article-head { padding-block: clamp(3rem, 7vw, 5rem) 0; }
+  h1 {
+    font-size: clamp(1.9rem, 1.2rem + 2vw, 2.6rem);
+    font-weight: 600; line-height: 1.18;
+  }
+  .byline { margin-top: 0.9rem; font-size: 0.9rem; color: var(--gray-light); }
+  .updated { margin-top: 0.35rem; font-size: 0.85rem; color: var(--gray); }
+
+  .disclosure {
+    margin-top: 2rem; padding: 1.1rem 1.3rem;
+    background: var(--tide-wash); border-radius: var(--r-win);
+    color: var(--ink); font-size: 0.98rem;
+  }
+  .disclosure strong { font-weight: 600; }
+  .disclosure a {
+    color: var(--tide); text-decoration: underline;
+    text-underline-offset: 3px; text-decoration-thickness: 1px;
+  }
+
+  .prose { margin-top: 1.5rem; color: var(--gray); font-size: 1.02rem; }
+  .prose + .prose { margin-top: 1rem; }
+  .prose a {
+    color: var(--tide); text-decoration: underline;
+    text-underline-offset: 3px; text-decoration-thickness: 1px;
+  }
+  .prose a:hover { color: var(--tide-deep); }
+
+  h2 { margin-top: 3.2rem; font-size: 1.45rem; font-weight: 600; }
+
+  /* segments */
+  .segment { margin-top: 1.6rem; padding-top: 1.4rem; border-top: 1px solid var(--line); }
+  .segment:first-of-type { border-top: 0; padding-top: 0; }
+  .segment h3 { font-size: 1.05rem; font-weight: 600; }
+  .segment p { margin-top: 0.45rem; color: var(--gray); }
+  .segment p a {
+    color: var(--tide); text-decoration: underline;
+    text-underline-offset: 3px; text-decoration-thickness: 1px;
+  }
+  .segment p a:hover { color: var(--tide-deep); }
+
+  /* entries */
+  .entries { margin-top: 1.2rem; }
+  .entry {
+    display: grid; grid-template-columns: 2.9rem 1fr; gap: 0 0.6rem;
+    padding-block: 1.7rem;
+  }
+  .entry + .entry { border-top: 1px solid var(--line); }
+  .entry-num {
+    font-size: 1.35rem; font-weight: 600; color: var(--gray);
+    line-height: 1.3; font-variant-numeric: tabular-nums;
+  }
+  .entry h3 { font-size: 1.15rem; font-weight: 600; line-height: 1.3; }
+  .entry h3 a { text-decoration: none; }
+  .entry h3 a:hover { color: var(--tide); }
+  .entry p { margin-top: 0.55rem; color: var(--gray); }
+  .entry p a {
+    color: var(--tide); text-decoration: underline;
+    text-underline-offset: 3px; text-decoration-thickness: 1px;
+  }
+  .entry p a:hover { color: var(--tide-deep); }
+  .bestfor { margin-top: 0.75rem; font-size: 0.92rem; }
+  .bestfor strong { font-weight: 600; color: var(--ink); }
+  .bestfor span { color: var(--gray); }
+
+  .chip {
+    display: inline-block; vertical-align: 0.12em; margin-left: 0.55rem;
+    background: var(--tide-wash); color: var(--tide);
+    font-size: 0.78rem; font-weight: 500; line-height: 1;
+    padding: 0.28rem 0.55rem; border-radius: 6px;
+  }
+
+  /* the driftwood entry sits in a card; the rest are hairline rows */
+  .entry-card {
+    background: #fff; border: 1px solid var(--line);
+    border-radius: var(--r-win); box-shadow: var(--shadow-win);
+    padding: 1.7rem 1.5rem; margin-bottom: 0.6rem;
+  }
+  .entry-card + .entry { border-top: 0; }
+
+  /* CTA */
+  .cta {
+    margin-top: 3.5rem; padding: 2.4rem 1.5rem 2.6rem;
+    border: 1px solid var(--line); border-radius: var(--r-win);
+    box-shadow: var(--shadow-win); text-align: center;
+  }
+  .cta h2 { margin-top: 0; font-size: 1.35rem; }
+  .cta p { margin-top: 0.6rem; color: var(--gray); }
+  .cta .btn { margin-top: 1.4rem; height: 3rem; padding-inline: 2rem; font-size: 1rem; }
+
+  /* footer */
+  footer.site {
+    margin-top: 4.5rem;
+    background: linear-gradient(#15557e, #0d3c5b);
+    color: #fff;
+  }
+  footer.site::before {
+    content: "";
+    display: block;
+    height: 28px;
+    margin-top: -28px;
+    position: relative;
+    z-index: 1;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='28' viewBox='0 0 180 28'%3E%3Cpath d='M0 14 C 11.25 5.5, 33.75 5.5, 45 14 C 56.25 22.5, 78.75 22.5, 90 14 C 101.25 5.5, 123.75 5.5, 135 14 C 146.25 22.5, 168.75 22.5, 180 14 L180 28 L0 28 Z' fill='%2315557e'/%3E%3C/svg%3E") repeat-x bottom;
+  }
+  .foot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1.5rem;
+    padding: 4.5rem 1.5rem 3rem;
+  }
+  .foot .wordmark { color: #fff; font-size: 1.35rem; }
+  .foot .wordmark .helm { width: 2.4rem; height: 2.4rem; }
+  .foot-def {
+    margin: 0;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.75);
+    max-width: 56ch;
+  }
+  .foot-links,
+  .foot-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.5rem;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.75);
+  }
+  footer.site a { color: inherit; text-decoration: none; }
+  footer.site a:hover { color: #fff; }
+
+  @media (max-width: 40rem) {
+    .entry { grid-template-columns: 2.4rem 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <nav class="nav" aria-label="Main">
+    <a class="wordmark" href="/"><svg viewBox="0 0 64 64" class="helm" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#15557e"/><g transform="translate(32 32) scale(0.88)" fill="none" stroke="#f7f4ec" stroke-linecap="round" stroke-linejoin="round"><circle r="22.5" stroke-width="3.4"/><g stroke-width="3.6"><line y1="-22.5" y2="-27.5"/><g transform="rotate(45)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(90)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(135)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(180)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(225)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(270)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(315)"><line y1="-22.5" y2="-27.5"/></g></g><g stroke-width="2.5"><line y1="-8.5" y2="-19.5"/><g transform="rotate(45)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(90)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(135)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(180)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(225)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(270)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(315)"><line y1="-8.5" y2="-19.5"/></g></g><circle r="7.5" stroke-width="2.6" fill="#15557e"/><circle r="2.8" fill="#f7f4ec" stroke="none"/></g></svg>driftwood</a>
+    <a class="btn" href="/#book">Book a demo</a>
+  </nav>
+</header>
+
+<main class="wrap">
+
+  <div class="article-head">
+    <h1>Clay alternatives</h1>
+    <p class="byline">By the driftwood team · July 2026</p>
+    <p class="updated">Updated July 2026. Pricing and features get a monthly fact-check.</p>
+
+    <div class="disclosure">
+      <strong>The disclosure, first.</strong> We build driftwood
+      (<a href="https://driftwood.sh">driftwood.sh</a>), and it is one of the six
+      alternatives below. Judge the page accordingly. To make it worth your time
+      anyway, every entry says who should pick that tool, and the last section
+      covers when Clay is the right choice, including over us.
+    </div>
+
+    <p class="prose">
+      People searching for Clay alternatives usually mean one of three things:
+      Clay is too expensive for what they use, too complex for who they have,
+      or it turned out to be the wrong layer of the problem, because a data
+      workbench does not send anything. Those lead to different tools, so this
+      page starts with what Clay actually is and where it genuinely wins. For
+      the broader AI SDR category, we keep
+      <a href="/best-ai-sdr-tools">a separate ranked comparison</a>.
+    </p>
+  </div>
+
+  <h2>What Clay is, and what it is genuinely good at</h2>
+
+  <p class="prose">
+    Clay is a data workbench for go-to-market teams. It looks like a
+    spreadsheet: each row is a lead or a company, each column an enrichment,
+    an AI research step, or an action. Underneath is waterfall enrichment
+    across more than a hundred data providers, an AI research agent called
+    Claygent that reads the open web, buying signals such as job changes and
+    web intent, and integrations that push the results into CRMs, sequencers,
+    and ad audiences.
+  </p>
+  <p class="prose">
+    Clay restructured its pricing in March 2026, replacing the old Starter,
+    Explorer, and Pro tiers and splitting usage into data credits, spent when
+    you buy data from providers, and actions, spent when workflows run. As of
+    July 2026 there is a free tier with 100 data credits and 500 actions a
+    month on tables capped at 200 rows, Launch at $185 a month ($167 billed
+    annually) with 2,500 data credits and 15,000 actions, Growth at $495 a
+    month ($446 billed annually) with 6,000 data credits and 40,000 actions,
+    and custom Enterprise pricing. The restructure also cut marketplace data
+    prices substantially.
+  </p>
+  <p class="prose">
+    What it is genuinely good at: coverage and flexibility. Waterfalling
+    across many providers finds emails and phone numbers a single provider
+    misses, and reviewers consistently rate Clay's enrichment coverage
+    best-in-class. If you can imagine a data workflow, Clay can probably
+    build it, and no other tool on this page comes close on that axis. The
+    template library and community are a real asset too.
+  </p>
+
+  <h2>Where Clay falls short, and for whom</h2>
+
+  <div class="segment">
+    <h3>The learning curve is real</h3>
+    <p>
+      Clay markets itself as no-code, but formulas, conditional runs, lookups,
+      and API columns reward people who think like engineers. 2026 reviews
+      consistently describe weeks of ramp before the tool pays for itself, and
+      it is a common thread in negative reviews. This is not a tool you hand
+      to a rep on Monday.
+    </p>
+  </div>
+
+  <div class="segment">
+    <h3>It assumes an operator you may not have</h3>
+    <p>
+      The teams that get real value from Clay almost always have a dedicated
+      RevOps or GTM engineering owner who lives in it. For a founder doing
+      their own outbound, or a small team without that role, Clay tends to
+      become an expensive spreadsheet that nobody maintains.
+    </p>
+  </div>
+
+  <div class="segment">
+    <h3>Credit spend is hard to predict</h3>
+    <p>
+      Every enrichment, AI call, and workflow step consumes credits or
+      actions, and multi-step workflows multiply fast. Unpredictable credit
+      consumption is among the most common complaints in 2026 reviews, with
+      several describing burning through hundreds of dollars of credits during
+      the learning phase. The March 2026 repricing lowered data costs, but the
+      metering model itself has not changed.
+    </p>
+  </div>
+
+  <div class="segment">
+    <h3>It is a layer, not a motion</h3>
+    <p>
+      Clay finds and enriches; it does not run your outbound. You still need a
+      sequencer, deliverability tooling, someone to write the messages, and
+      someone to work the replies. If what you actually want is the outbound
+      motion handled, Clay is the wrong layer of the stack, however good the
+      data is.
+    </p>
+  </div>
+
+  <h2>Six real alternatives</h2>
+
+  <div class="entries">
+
+    <article class="entry entry-card">
+      <div class="entry-num" aria-hidden="true">1</div>
+      <div>
+        <h3><a href="https://driftwood.sh">driftwood</a><span class="chip">our tool</span></h3>
+        <p>
+          Clay gives you a workbench and you build the motion. driftwood is the
+          opposite trade: an agent that runs one specific motion,
+          <a href="/demo-led-outbound">demo-led outbound</a>, end to end. It
+          researches each prospect, builds a working demo of your product for
+          their business, and drafts the message. A human approves every send,
+          and it goes out from your own LinkedIn or email account, not a bot
+          inbox. On the same lead list, replies went from under 1% to over 14%
+          in week one at <a href="/customers/autosana">Autosana</a> (YC S25).
+        </p>
+        <p>
+          The honest fit: driftwood does not replace Clay for data work, and it
+          is early. It is for founders and small teams who want the motion run
+          for them and a reply rate worth reading, not a data platform to
+          operate.
+        </p>
+        <p class="bestfor"><strong>Best for:</strong> <span>founders and lean
+        teams selling a product that demos well, without a GTM engineer to
+        staff a workbench.</span></p>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-num" aria-hidden="true">2</div>
+      <div>
+        <h3><a href="https://www.apollo.io" rel="noopener">Apollo</a></h3>
+        <p>
+          Apollo is the pragmatic budget answer: a large B2B database with
+          sequencing, a dialer, and light CRM bundled per seat, with a free
+          tier and paid plans from $49 per user per month billed annually as of
+          July 2026. Coverage and accuracy will trail a well-tuned Clay
+          waterfall, but there is nothing to build and nothing to operate.
+        </p>
+        <p class="bestfor"><strong>Best for:</strong> <span>teams whose data
+        needs are ordinary and who value simplicity over waterfall
+        coverage.</span></p>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-num" aria-hidden="true">3</div>
+      <div>
+        <h3><a href="https://unifygtm.com" rel="noopener">Unify</a></h3>
+        <p>
+          Unify packages what many teams build in Clay by hand: buying signals
+          such as deanonymized website visitors and job changes trigger plays
+          that decide who gets contacted and what they hear. It is less
+          flexible than Clay, and there is far less to assemble.
+        </p>
+        <p class="bestfor"><strong>Best for:</strong> <span>teams with real
+        intent signals, especially product-led companies, who want
+        signal-driven outbound without building it themselves.</span></p>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-num" aria-hidden="true">4</div>
+      <div>
+        <h3><a href="https://amplemarket.com" rel="noopener">Amplemarket</a></h3>
+        <p>
+          Amplemarket is an all-in-one sales platform: contact data,
+          engagement, deliverability tooling, and an AI copilot called Duo
+          threaded through the workflow. Against Clay the appeal is
+          consolidation: one vendor covering data and outreach instead of a
+          workbench plus a stack of point tools.
+        </p>
+        <p class="bestfor"><strong>Best for:</strong> <span>sales teams that
+        want the whole outbound stack from a single vendor.</span></p>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-num" aria-hidden="true">5</div>
+      <div>
+        <h3><a href="https://artisan.co" rel="noopener">Artisan (Ava)</a></h3>
+        <p>
+          Artisan sells Ava, an autonomous AI BDR that runs the outbound cycle
+          from lead discovery through follow-up, self-serve since the Ava 2.0
+          relaunch with entry pricing from $250 a month as of July 2026. The
+          case against Clay is direct: if you were buying Clay to feed an
+          outbound motion, Ava is the motion, sourcing included.
+        </p>
+        <p class="bestfor"><strong>Best for:</strong> <span>teams that want to
+        delegate outbound entirely rather than operate a data
+        platform.</span></p>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-num" aria-hidden="true">6</div>
+      <div>
+        <h3><a href="https://instantly.ai" rel="noopener">Instantly</a></h3>
+        <p>
+          Instantly comes at outbound from the opposite end: cheap sending
+          infrastructure first, with a lead database and AI agents as add-ons.
+          Sending plans start at $47 a month as of July 2026 with unlimited
+          mailboxes and warmup included. If Clay's cost or complexity is the
+          objection and your data needs are simple, Instantly plus its own
+          database is a much cheaper stack, with the data quality caveats that
+          come at that price. We compared
+          <a href="/alternatives/instantly">Instantly alternatives</a>
+          separately.
+        </p>
+        <p class="bestfor"><strong>Best for:</strong> <span>teams whose
+        constraint is sending volume and budget, not data depth.</span></p>
+      </div>
+    </article>
+
+  </div>
+
+  <h2>When Clay is the right choice</h2>
+  <p class="prose">
+    Clay is the right choice when data is genuinely your bottleneck and you
+    have someone to own it. If you run meaningful outbound volume, your
+    targeting is unusual enough that off-the-shelf filters cannot express it,
+    and a RevOps or GTM engineer will live in the tool, Clay's waterfall
+    coverage and flexibility are worth both the price and the ramp, and
+    nothing on this page replaces it. Agencies building data workflows for
+    many clients amortize the learning curve especially well. Clay also
+    composes with most of the tools above rather than competing with them: it
+    can feed enriched lists to a sequencer, a CRM, or an agent. The honest
+    dividing line: buy Clay to build a motion, buy the others to run one.
+  </p>
+
+  <h2>FAQ</h2>
+
+  <div class="segment">
+    <h3>What does Clay cost in 2026?</h3>
+    <p>
+      As of July 2026: a free tier with 100 data credits and 500 actions a
+      month on tables capped at 200 rows, Launch at $185 a month ($167 billed
+      annually), and Growth at $495 a month ($446 billed annually), with
+      custom Enterprise pricing above that. Clay restructured pricing in March
+      2026, splitting usage into data credits and actions. Check clay.com for
+      current numbers.
+    </p>
+  </div>
+
+  <div class="segment">
+    <h3>Is Clay an AI SDR?</h3>
+    <p>
+      No. Clay is a data and workflow platform: it finds, enriches, and routes
+      data, but your team still designs the motion, writes the messages, and
+      runs the sending. AI SDR agents run the motion itself; we compare those
+      in <a href="/best-ai-sdr-tools">our AI SDR tools ranking</a>.
+    </p>
+  </div>
+
+  <div class="segment">
+    <h3>Do I need a GTM engineer to get value from Clay?</h3>
+    <p>
+      In practice, mostly yes. Reviews through 2026 consistently describe
+      weeks of ramp time, and the teams getting real value usually have a
+      dedicated RevOps or GTM engineering owner. Without one, credit spend is
+      hard to control and the tables go stale.
+    </p>
+  </div>
+
+  <div class="segment">
+    <h3>Do I still need a sending tool with Clay?</h3>
+    <p>
+      Usually. Clay's job is data and orchestration; most teams push enriched
+      lists into a sequencer such as Instantly, Smartlead, or lemlist, or into
+      their CRM, and run sending and deliverability there.
+    </p>
+  </div>
+
+  <section class="cta">
+    <h2>See a demo built for <em class="voice">your</em> business</h2>
+    <p>Twenty minutes. We will show you what your prospects would see.</p>
+    <a class="btn" href="/#book">Book a demo</a>
+  </section>
+
+</main>
+
+<footer class="site">
+  <div class="foot">
+    <a class="wordmark" href="/"><svg viewBox="0 0 64 64" class="helm" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#15557e"/><g transform="translate(32 32) scale(0.88)" fill="none" stroke="#f7f4ec" stroke-linecap="round" stroke-linejoin="round"><circle r="22.5" stroke-width="3.4"/><g stroke-width="3.6"><line y1="-22.5" y2="-27.5"/><g transform="rotate(45)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(90)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(135)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(180)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(225)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(270)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(315)"><line y1="-22.5" y2="-27.5"/></g></g><g stroke-width="2.5"><line y1="-8.5" y2="-19.5"/><g transform="rotate(45)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(90)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(135)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(180)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(225)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(270)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(315)"><line y1="-8.5" y2="-19.5"/></g></g><circle r="7.5" stroke-width="2.6" fill="#15557e"/><circle r="2.8" fill="#f7f4ec" stroke="none"/></g></svg>driftwood</a>
+    <p class="foot-def">driftwood is an AI sales agent for demo-led outbound: it researches each prospect, builds a working demo of your product for their business, and sends from your account after human review.</p>
+    <nav class="foot-links" aria-label="site">
+      <a href="/customers/autosana">customers</a>
+      <a href="/demo-led-outbound">demo-led outbound</a>
+      <a href="/faq">faq</a>
+      <a href="/best-ai-sdr-tools">compare AI SDR tools</a>
+    </nav>
+    <div class="foot-meta">
+      <a href="mailto:aayush@driftwood.sh">aayush@driftwood.sh</a>
+      <span>&copy; 2026 driftwood</span>
+    </div>
+  </div>
+</footer>
+
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

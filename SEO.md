@@ -52,29 +52,35 @@ Aayush.
 ## Page plan (the grind queue)
 
 Shipped: /customers/autosana, /demo-led-outbound, /faq,
-/best-ai-sdr-tools (+ homepage). Checklist for every new page: build
+/best-ai-sdr-tools, /founder-led-sales, /alternatives/instantly,
+/alternatives/clay (+ homepage). Checklist for every new page: build
 as landing/public/<route>/index.html (self-contained pattern; copy an
 existing page) -> sitemap -> llms.txt -> footer-link decision ->
 internal links -> commit main (deploys) -> GSC request indexing.
+Footer decision 2026-07-21: new pages carry the standard four-link
+footer; whether /founder-led-sales earns a sitewide footer slot
+(touches the prerendered homepage) is a proposal for Aayush, not
+taken unilaterally.
 
 Priority queue with validated targets:
-1. /founder-led-sales — "founder led sales" 100-1K LOW. Numbers-first:
-   what it is, why it beats hired outbound early, calendar math where
-   it breaks, when-to-hire-an-SDR (honest), the third option, funnel
-   table, FAQ from the question tail.
-2. /cold-outbound-benchmarks — the rate-question cluster (a dozen
-   10-100 LOW terms) + the CITEABLE first-party data play: the
-   1%-to-14% numbers WITH a methodology block (send count, reply
-   definition, window — NUMBERS STILL OWED BY AAYUSH), diagnostic
-   ordering section (below 1%? bounce rate -> placement test -> then
-   copy), "Updated <month year>" freshness line.
+1. /founder-led-sales — SHIPPED 2026-07-21 (subagent-drafted, QA'd;
+   "founder led sales" 100-1K LOW; numbers-first structure as spec'd).
+2. /cold-outbound-benchmarks — DRAFT READY at
+   design/draft-page-cold-outbound-benchmarks.html (rate-question
+   cluster answered with named-source numbers, all verified; Belkins/
+   Sopro/Woodpecker/Expandi/Google; diagnostic ordering section in).
+   Ships the moment Aayush supplies the three methodology numbers:
+   send count, reply definition, time window. Placeholders are marked
+   [OWED BY AAYUSH] in the methodology block.
 3. /ai-sdr — head-term destination (1K-10K Med) + the
    "autonomous vs assisted AI SDRs" category section (unclaimed;
    approve-before-send is our wedge; do NOT coin a third term).
-4. /alternatives/<competitor> — instantly (100-1K), clay (100-1K,
-   $383 top bid), 11x, apollo, artisan. One template, REAL
-   per-competitor content, honest "when X is right", monthly
-   fact-check refresh (same rule as /best-ai-sdr-tools).
+4. /alternatives/<competitor> — instantly + clay SHIPPED 2026-07-21;
+   both join the monthly fact-check rotation (first re-checks:
+   Instantly annual-discount %, Clay Enterprise floor, Apollo pricing
+   which is secondary-sourced). Remaining: 11x, apollo, artisan. One
+   template, REAL per-competitor content, honest "when X is right",
+   monthly fact-check refresh (same rule as /best-ai-sdr-tools).
 5. /b2b-saas-outreach — qualified-tail guide (thin volumes by
    design); absorbs the how-to-write question tail as H2s/FAQ.
 6. Later: b2b saas lead gen cluster page; /outsourced-sdr exists in
@@ -96,8 +102,12 @@ benchmarks; CTAs -> /#book.
    Zapier first (light REST triggers/actions), then Attio (ICP-native),
    then HubSpot App Marketplace; skip Salesforce AppExchange. Each
    listing = high-authority link + /integrations/<name> page target.
-4. BACKLINKS.md (to create): canonical registry — every link, source,
-   date, acquisition path. GSC Links report = discovery.
+4. BACKLINKS.md — CREATED 2026-07-21: canonical registry — every
+   link, source, date, acquisition path; press-pilot log + unlinked
+   mentions + pipeline sections. GSC Links report = discovery,
+   monthly reconciliation. Crunchbase slug recorded there
+   (organization/driftwood-driftwood-sh, verified indexed); G2 URL
+   pending email.
 
 ## Press (folded from PRESS.md; 104-agent verified research 2026-07-21)
 

@@ -1,0 +1,593 @@
+<!--
+DRAFT, DO NOT SHIP: three methodology numbers owed by Aayush, listed below.
+The first-party methodology block on this page carries three placeholders
+that must be replaced with real values before this file moves to
+landing/public/cold-outbound-benchmarks/index.html:
+
+  1. [SEND COUNT: OWED BY AAYUSH]      how many messages were sent in the demo-led week
+  2. [REPLY DEFINITION: OWED BY AAYUSH] what counted as a reply (any response? positive only? which channels?)
+  3. [TIME WINDOW: OWED BY AAYUSH]      exact dates of the baseline period and the demo-led week
+
+On ship, also: remove this comment, add the route to sitemap.xml and
+llms.txt, decide the footer link, and request indexing in GSC.
+-->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Cold outbound benchmarks 2026: cold email reply rates and LinkedIn accept rates · driftwood</title>
+<meta name="description" content="Cold outbound benchmarks, updated July 2026: average cold email reply rates, open rates, LinkedIn connection accept rates, and meeting rates. A named source for every number, plus first-party data with methodology." />
+<link rel="canonical" href="https://driftwood.sh/cold-outbound-benchmarks" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<meta name="theme-color" content="#15557e" />
+<meta property="og:title" content="Cold outbound benchmarks 2026: cold email reply rates and LinkedIn accept rates · driftwood" />
+<meta property="og:description" content="Cold outbound benchmarks, updated July 2026: average cold email reply rates, open rates, LinkedIn connection accept rates, and meeting rates. A named source for every number, plus first-party data with methodology." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://driftwood.sh/cold-outbound-benchmarks" />
+<meta property="og:image" content="https://driftwood.sh/og-5.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://driftwood.sh/og-5.png" />
+<link rel="preload" href="/fonts/public-sans-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "@id": "https://driftwood.sh/cold-outbound-benchmarks#article",
+      "headline": "Cold outbound benchmarks: cold email reply rates and LinkedIn accept rates",
+      "url": "https://driftwood.sh/cold-outbound-benchmarks",
+      "mainEntityOfPage": "https://driftwood.sh/cold-outbound-benchmarks",
+      "publisher": { "@id": "https://driftwood.sh/#org" },
+      "datePublished": "2026-07-21",
+      "dateModified": "2026-07-21",
+      "inLanguage": "en",
+      "description": "Cold outbound benchmarks with a named source and year for every number: average cold email reply rates, open rates, LinkedIn connection accept rates, and meeting rates, plus first-party data from Autosana (YC S25) with methodology."
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://driftwood.sh/cold-outbound-benchmarks#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is a good cold email reply rate?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Instantly's 2026 benchmark guide calls 5-10% a good cold email reply rate for B2B teams, 10-15% excellent, and 15%+ best-in-class on tightly segmented campaigns. Sopro's State of Prospecting 2026 puts most campaigns between 1% and 5%. If you are below 1%, check bounce rate and deliverability before touching the copy."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the average cold email response rate?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "It depends on how you count. Sopro's State of Prospecting 2026 reports a 5.1% average response rate. Belkins' 2026 study of 7,530,489 client emails sent during 2025 measured 0.45% when replies are divided by every email sent, follow-ups included. Backlinko and Pitchbox found 8.5% in 2019, but that dataset was link-building and PR outreach, not sales. There is no single average; there are averages per measurement method."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the average cold email open rate?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Belkins measured a 36% average open rate across 11 million B2B cold emails in its 2023 study. Treat open rates as directional only: Apple Mail Privacy Protection has inflated opens since 2021 by preloading messages, and Belkins disabled open tracking entirely in 2025, so its 2026 study reports no open rate at all. A placement test tells you more than an open rate does."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is a good LinkedIn connection request acceptance rate?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Public platform data puts the average between roughly 19% and 30%: Expandi's 2026 report across 70,000+ campaigns measured a 29.61% average accept rate, and the Belkins and Expandi joint study of 2025 data measured 18.7%. Below about 20%, the usual cause is targeting, not the connection note."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How many cold emails does it take to book a meeting?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "At average quality, thousands. Belkins' 2026 study reports over 1,200 appointments booked across 7.5 million emails, roughly one appointment per 6,000 emails sent. Its 2023 study reported about 306 cold emails per lead, under a looser definition of lead. Both numbers say the same thing: at average message quality, meetings per send are tiny, and the lever is quality per message, not volume."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do cold emails still work in 2026?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, but the average keeps falling while the top end holds. Belkins measured 0.45% average replies across 7.5 million emails sent in 2025, while Woodpecker's data shows campaigns with advanced personalization replying at roughly 17-18% against 7-9% without. The channel works; templated volume does not. Our own data points the same way: replies went from under 1% to over 14% in week one at Autosana (YC S25) when every message carried a working demo."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I improve my cold email response rate?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "In this order: get bounce rate under 2% by verifying every address, run a placement test and fix deliverability until you land in the inbox, and only then work on the message. Once delivery is clean, the biggest measured lever is how much real, specific work the message shows. Woodpecker's data puts advanced personalization at roughly 17-18% replies against 7-9% without. Demo-led outbound takes that further: instead of personalizing the copy, you personalize the proof."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+
+<style>
+  @font-face {
+    font-family: "Public Sans";
+    src: url("/fonts/public-sans-latin-wght-normal.woff2") format("woff2-variations");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Source Serif 4";
+    src: url("/fonts/source-serif-4-latin-600-normal.woff2") format("woff2");
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  :root {
+    --bg: #ffffff;
+    --ink: #16181b;
+    --gray: #6a737d;
+    --gray-light: #9aa2ab;
+    --line: #e9ebee;
+    --tide: #15557e;
+    --tide-deep: #0d3c5b;
+    --tide-wash: #eaf1f7;
+    --wash-a: #f4f8fb;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  :focus-visible { outline: 2px solid var(--tide); outline-offset: 2px; }
+
+  .wrap {
+    max-width: 68rem;
+    margin-inline: auto;
+    padding-inline: clamp(1.25rem, 4vw, 2.5rem);
+  }
+
+  /* ---------- header ---------- */
+  header { border-bottom: 1px solid var(--line); }
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 4rem;
+  }
+  .wordmark {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-family: "Source Serif 4", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.2rem;
+    color: var(--ink);
+    text-decoration: none;
+    letter-spacing: -0.01em;
+  }
+  .wordmark .helm {
+    width: 1.9rem;
+    height: 1.9rem;
+    display: block;
+    flex-shrink: 0;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--tide);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    height: 2.4rem;
+    padding-inline: 1.3rem;
+    border-radius: 999px;
+    transition: background 0.15s;
+  }
+  .btn:hover { background: var(--tide-deep); }
+
+  /* ---------- article ---------- */
+  main { padding-block: clamp(3rem, 7vw, 5rem) clamp(3rem, 6vw, 4.5rem); }
+  article { max-width: 42rem; margin-inline: auto; }
+
+  .label {
+    font-size: 0.85rem;
+    color: var(--gray);
+    margin: 0 0 0.9rem;
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(1.9rem, 1.2rem + 2vw, 2.6rem);
+    font-weight: 600;
+    letter-spacing: -0.014em;
+    line-height: 1.15;
+    text-wrap: balance;
+  }
+  .lede {
+    margin: 1.4rem 0 0;
+    font-size: 1.22rem;
+    line-height: 1.55;
+    color: var(--ink);
+  }
+  .lede strong { font-weight: 600; }
+
+  section {
+    margin-top: 2.75rem;
+    padding-top: 2.25rem;
+    border-top: 1px solid var(--line);
+  }
+  h2 {
+    margin: 0 0 0.85rem;
+    font-size: 1.3rem;
+    font-weight: 600;
+    letter-spacing: -0.014em;
+    line-height: 1.3;
+    text-wrap: balance;
+  }
+  h3 {
+    margin: 1.6rem 0 0.5rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  em.voice {
+    font-family: Georgia, "Times New Roman", serif;
+    font-style: italic;
+    color: var(--tide);
+    letter-spacing: 0;
+  }
+  p { margin: 0; color: var(--gray); }
+  p + p { margin-top: 0.9rem; }
+  article a {
+    color: var(--tide);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
+  article a:hover { color: var(--tide-deep); }
+
+  ol.loop {
+    margin: 1rem 0 0;
+    padding-left: 1.4rem;
+    color: var(--gray);
+  }
+  ol.loop li { margin-top: 0.55rem; }
+  ol.loop li::marker { color: var(--tide); font-weight: 600; }
+
+  /* ---------- benchmark tables ---------- */
+  .bench-scroll { overflow-x: auto; margin-top: 1.1rem; }
+  table.bench {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+    line-height: 1.45;
+  }
+  .bench th {
+    text-align: left;
+    font-weight: 600;
+    color: var(--ink);
+    font-size: 0.85rem;
+  }
+  .bench th, .bench td {
+    padding: 0.6rem 0.7rem 0.6rem 0;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+  .bench td { color: var(--gray); }
+  .bench td:first-child { color: var(--ink); min-width: 11rem; }
+  .bench td strong { color: var(--ink); font-weight: 600; }
+
+  /* ---------- methodology block ---------- */
+  .method {
+    margin-top: 1.25rem;
+    background: var(--wash-a);
+    border-radius: 12px;
+    padding: clamp(1.25rem, 3.5vw, 1.75rem);
+  }
+  .method-title {
+    margin: 0 0 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .method dl { margin: 0; }
+  .method dt {
+    font-weight: 600;
+    color: var(--ink);
+    font-size: 0.92rem;
+  }
+  .method dd {
+    margin: 0.2rem 0 1rem;
+    color: var(--gray);
+    font-size: 0.95rem;
+  }
+  .method dd:last-child { margin-bottom: 0; }
+
+  /* ---------- FAQ ---------- */
+  .qa { margin-top: 1.9rem; }
+  .qa:first-of-type { margin-top: 0; }
+  .qa h3 { margin-top: 0; font-size: 1.08rem; }
+  .qa p { margin-top: 0.5rem; }
+
+  /* ---------- close panel ---------- */
+  .close {
+    margin-top: 3rem;
+    background: var(--wash-a);
+    border-radius: 12px;
+    padding: clamp(1.5rem, 4vw, 2.25rem);
+  }
+  .close p { color: var(--ink); font-size: 1.05rem; max-width: 34rem; }
+  .close .btn { margin-top: 1.25rem; height: 2.75rem; padding-inline: 1.7rem; font-size: 0.95rem; }
+
+  /* ---------- footer ---------- */
+  footer {
+    background: linear-gradient(#15557e, #0d3c5b);
+    color: #fff;
+  }
+  footer::before {
+    content: "";
+    display: block;
+    height: 28px;
+    margin-top: -28px;
+    position: relative;
+    z-index: 1;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='28' viewBox='0 0 180 28'%3E%3Cpath d='M0 14 C 11.25 5.5, 33.75 5.5, 45 14 C 56.25 22.5, 78.75 22.5, 90 14 C 101.25 5.5, 123.75 5.5, 135 14 C 146.25 22.5, 168.75 22.5, 180 14 L180 28 L0 28 Z' fill='%2315557e'/%3E%3C/svg%3E") repeat-x bottom;
+  }
+  .foot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1.5rem;
+    padding-block: 4.5rem 3rem;
+  }
+  .foot .wordmark {
+    color: #fff;
+    font-size: 1.35rem;
+  }
+  .foot .wordmark .helm {
+    width: 2.4rem;
+    height: 2.4rem;
+  }
+  .foot-def {
+    margin: 0;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.75);
+    max-width: 56ch;
+  }
+  .foot-links,
+  .foot-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.5rem;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.75);
+  }
+  footer a {
+    color: inherit;
+    text-decoration: none;
+  }
+  footer a:hover { color: #fff; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="wordmark" href="/"><svg viewBox="0 0 64 64" class="helm" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#15557e"/><g transform="translate(32 32) scale(0.88)" fill="none" stroke="#f7f4ec" stroke-linecap="round" stroke-linejoin="round"><circle r="22.5" stroke-width="3.4"/><g stroke-width="3.6"><line y1="-22.5" y2="-27.5"/><g transform="rotate(45)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(90)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(135)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(180)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(225)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(270)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(315)"><line y1="-22.5" y2="-27.5"/></g></g><g stroke-width="2.5"><line y1="-8.5" y2="-19.5"/><g transform="rotate(45)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(90)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(135)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(180)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(225)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(270)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(315)"><line y1="-8.5" y2="-19.5"/></g></g><circle r="7.5" stroke-width="2.6" fill="#15557e"/><circle r="2.8" fill="#f7f4ec" stroke="none"/></g></svg>driftwood</a>
+    <a class="btn" href="/#book">Book a demo</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <article>
+    <p class="label">Benchmarks · Updated July 2026</p>
+    <h1>Cold outbound benchmarks: cold email reply rates and LinkedIn accept rates</h1>
+
+    <p class="lede">Every number on this page has a <strong>named source and a year</strong>. Most benchmark roundups do not say where their numbers come from or how they were measured, which is how the same "average cold email reply rate" gets quoted as 1% and 9% in the same week. This page collects the public studies that publish their datasets, is honest about where they disagree, and adds one first-party dataset of our own, with methodology.</p>
+
+    <section>
+      <h2>Average cold email reply rate</h2>
+      <p>The public studies that publish their data:</p>
+      <div class="bench-scroll">
+        <table class="bench">
+          <tr><th>Study</th><th>Dataset</th><th>Number</th></tr>
+          <tr>
+            <td><a href="https://sopro.io/resources/whitepapers/the-state-of-prospecting-26/" rel="noopener">Sopro, State of Prospecting (2026)</a></td>
+            <td>Sopro's outreach dataset across 82 industries</td>
+            <td><strong>5.1%</strong> average response rate; most campaigns land between <strong>1% and 5%</strong></td>
+          </tr>
+          <tr>
+            <td><a href="https://belkins.io/blog/cold-email-response-rates" rel="noopener">Belkins (2026)</a></td>
+            <td>7,530,489 client emails sent January to December 2025</td>
+            <td><strong>0.45%</strong> average reply rate, counting replies against every email sent, follow-ups included; founders and owners replied at 0.57%, companies under 10 people at 0.72%</td>
+          </tr>
+          <tr>
+            <td><a href="https://woodpecker.co/blog/cold-email-statistics/" rel="noopener">Woodpecker (2026)</a></td>
+            <td>20M+ cold emails sent through its platform</td>
+            <td>advanced personalization replies at roughly <strong>17-18%</strong>, against <strong>7-9%</strong> without</td>
+          </tr>
+          <tr>
+            <td><a href="https://instantly.ai/blog/cold-email-reply-rate-benchmarks/" rel="noopener">Instantly (2026)</a></td>
+            <td>benchmark guide, not a single dataset</td>
+            <td>good = <strong>5-10%</strong>, excellent = 10-15%, best-in-class = 15%+ on tight segments</td>
+          </tr>
+          <tr>
+            <td><a href="https://backlinko.com/email-outreach-study" rel="noopener">Backlinko and Pitchbox (2019)</a></td>
+            <td>12 million outreach emails</td>
+            <td><strong>8.5%</strong> received a response; note this was link-building and PR outreach, not sales</td>
+          </tr>
+          <tr>
+            <td><a href="https://belkins.io/blog/cold-email-outreach-statistics" rel="noopener">Belkins (2023)</a></td>
+            <td>11 million client emails across 90+ industries</td>
+            <td><strong>7%</strong> average reply rate</td>
+          </tr>
+        </table>
+      </div>
+
+      <h3>Why these numbers disagree</h3>
+      <p>They measure different things. Belkins' 0.45% divides replies by every email sent, follow-ups included, across a full year of at-scale agency campaigns. Sopro's 5.1% is a per-prospect response rate. Backlinko's 8.5% is from 2019 and covers link-building outreach, where reply norms differ from sales. Even Belkins against itself, 7% in 2023 versus 0.45% on 2025 data, reflects both a changed measurement and a channel that got much more crowded.</p>
+      <p>The honest summary: at average quality and at scale, cold email replies now measure under 1%. Small, carefully targeted, heavily personalized campaigns still measure between 5% and 18%. The spread between those two numbers is the entire game.</p>
+    </section>
+
+    <section>
+      <h2>Average cold email open rate</h2>
+      <p>Belkins measured a <strong>36% average open rate</strong> across 11 million B2B cold emails in its 2023 study. That is the last clean public number worth quoting, because open rates have stopped meaning much: Apple Mail Privacy Protection has preloaded messages since 2021 and inflates opens for a large share of inboxes, and Belkins disabled open tracking entirely in 2025, so its 2026 study reports no open rate at all.</p>
+      <p>Treat opens as directional. If you want to know whether your email is being seen, run a placement test (covered below); it answers the question opens used to answer, without the tracking pixel.</p>
+    </section>
+
+    <section>
+      <h2>LinkedIn connection accept rates and reply rates</h2>
+      <div class="bench-scroll">
+        <table class="bench">
+          <tr><th>Study</th><th>Dataset</th><th>Number</th></tr>
+          <tr>
+            <td><a href="https://expandi.io/blog/state-of-li-outreach-h1-2025/" rel="noopener">Expandi, State of LinkedIn Outreach (2026)</a></td>
+            <td>70,130+ campaigns on its platform</td>
+            <td><strong>29.61%</strong> average connection accept rate; <strong>10.3%</strong> average message reply rate</td>
+          </tr>
+          <tr>
+            <td><a href="https://belkins.io/blog/linkedin-outreach-study" rel="noopener">Belkins and Expandi (2025 data, published 2025)</a></td>
+            <td>15.1M+ outreach touchpoints, January to December 2025</td>
+            <td><strong>18.7%</strong> of invited prospects accepted; <strong>7.2%</strong> message reply rate; <strong>1.3%</strong> of connected prospects booked a meeting</td>
+          </tr>
+        </table>
+      </div>
+      <p>So the public range for cold connection accepts is roughly 19-30%, and LinkedIn message replies run about double cold email replies in the same datasets. One caveat on both studies: they come from automation platforms, so they measure automated outreach, which is the most template-heavy kind. Hand-picked targeting with a specific reason to connect sits above these numbers.</p>
+    </section>
+
+    <section>
+      <h2>How many cold emails to book a meeting</h2>
+      <p>Belkins' 2026 study reports <strong>over 1,200 appointments across 7.5 million emails</strong> sent in 2025, roughly one appointment per 6,000 emails. Its 2023 study reported about <strong>306 cold emails per lead</strong>, under a looser definition of lead. The definitions differ, but the direction is the same: at average message quality, meetings per email sent are tiny, and they are getting tinier.</p>
+      <p>Public data on meeting rates is the weakest of any number on this page. Almost nobody publishes meetings-per-send with a definition of what counted as a meeting, and agency data mixes wildly different client quality. Read any meetings-per-email claim you find, including these, as one shop's observed rate, not a law.</p>
+    </section>
+
+    <section>
+      <h2>First-party data: cold outbound at Autosana (YC S25)</h2>
+      <p>This is our own dataset, published so it can be checked and cited. driftwood (<a href="https://driftwood.sh">driftwood.sh</a>) ran demo-led outbound for <a href="/customers/autosana">Autosana</a>, a YC S25 company, on the same lead list the founders had already been working with conventional founder-written outreach. Replies went from under 1% to over 14% in week one at Autosana (YC S25), including founders who had ignored more than four months of prior outreach.</p>
+      <p>Disclosure: driftwood's founder was a founding engineer at Autosana before building driftwood, and Autosana was driftwood's first customer. This is one company, one list, one week; it is an observed result, not a promise.</p>
+
+      <div class="method">
+        <p class="method-title">Methodology</p>
+        <dl>
+          <dt>What was sent</dt>
+          <dd>Cold outreach messages over LinkedIn and email. Every message carried a working demo of Autosana's product, built for the specific prospect receiving it; in several cases the demo showed a real bug the agent had found in the prospect's own app. Total messages sent in the demo-led week: <strong>[SEND COUNT: OWED BY AAYUSH]</strong>.</dd>
+
+          <dt>Who received it</dt>
+          <dd>The same lead list Autosana's founders had been contacting with conventional founder-written outreach before the switch. No list change between the baseline and the demo-led week.</dd>
+
+          <dt>Time window</dt>
+          <dd><strong>[TIME WINDOW: OWED BY AAYUSH]</strong></dd>
+
+          <dt>What counted as a reply</dt>
+          <dd><strong>[REPLY DEFINITION: OWED BY AAYUSH]</strong></dd>
+
+          <dt>The baseline</dt>
+          <dd>Under 1%, the founders' self-reported reply rate on that list with their prior outreach.</dd>
+
+          <dt>What changed between the baseline and the demo-led week</dt>
+          <dd>Only the message contents and who produced them. driftwood's agent did the prospect research and built each demo; a human reviewed every message before it went out; sends came from the founders' own LinkedIn and email accounts, as before. Same product, same list, same senders.</dd>
+
+          <dt>Result</dt>
+          <dd>Replies went from under 1% to over 14% in week one at Autosana (YC S25), including founders who had ignored more than four months of prior outreach. One reply arrived about 12 hours after a message that opened with a real bug found on the prospect's own site, next to a 19-second demo video.</dd>
+        </dl>
+      </div>
+
+      <p>If you cite the industry numbers above, cite the named study, not this page. For the Autosana numbers, this page is the primary source. There is a longer writeup on the <a href="/customers/autosana">Autosana customer page</a> and a definition of the method at <a href="/demo-led-outbound">demo-led outbound</a>.</p>
+    </section>
+
+    <section>
+      <h2>Reply rate below 1%? Check in this order</h2>
+      <p>Most sub-1% campaigns are not a copy problem. Diagnose in this order, and do not skip ahead:</p>
+      <ol class="loop">
+        <li><strong>Bounce rate first.</strong> If more than 2% of your sends bounce, stop and fix the list before anything else; Woodpecker's benchmark from 20M+ sends is under 2% good, under 1.5% excellent. High bounces mean stale or guessed addresses, and they poison sender reputation, which drags every later send down. Verify every address before it enters a campaign.</li>
+        <li><strong>Placement test second.</strong> A reply rate means nothing if the emails sit in spam. Run a seed-list placement test (GlockApps, MailReach, or similar) and fix what it finds. Since 2024, Google's sender guidelines require SPF, DKIM, and DMARC for bulk senders and expect user-reported spam under 0.1%, never above 0.3%. Sopro's 2026 benchmark for healthy deliverability is 95-98%. Until you place in the inbox, copy changes are noise.</li>
+        <li><strong>Only then, copy and targeting.</strong> If bounces are under 2% and placement is clean, the message is the problem. The biggest measured lever is how much real, prospect-specific work the message shows: Woodpecker's data has advanced personalization at roughly 17-18% replies against 7-9% without. Our data says the strongest form of that is not personalized copy but personalized proof, a working demo of your product built for their business; that is <a href="/demo-led-outbound">demo-led outbound</a>.</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>Common questions</h2>
+
+      <div class="qa">
+        <h3>What is a good cold email reply rate?</h3>
+        <p>Instantly's 2026 benchmark guide calls 5-10% good for B2B teams, 10-15% excellent, and 15%+ best-in-class on tightly segmented campaigns. Sopro's State of Prospecting 2026 puts most campaigns between 1% and 5%. If you are below 1%, work the diagnostic order above before touching the copy.</p>
+      </div>
+
+      <div class="qa">
+        <h3>What is the average cold email response rate?</h3>
+        <p>It depends on how you count. Sopro (2026) reports 5.1% on a per-prospect basis. Belkins (2026) measured 0.45% across 7,530,489 emails sent in 2025 when replies are divided by every email sent, follow-ups included. Backlinko and Pitchbox (2019) found 8.5%, on link-building outreach rather than sales. There is no single average; there are averages per measurement method.</p>
+      </div>
+
+      <div class="qa">
+        <h3>What is the average cold email open rate?</h3>
+        <p>Belkins measured 36% across 11 million B2B cold emails in 2023. Treat it as directional: Apple Mail Privacy Protection has inflated opens since 2021, and Belkins dropped open tracking entirely in 2025. A placement test is the better instrument now.</p>
+      </div>
+
+      <div class="qa">
+        <h3>What is a good LinkedIn connection request acceptance rate?</h3>
+        <p>The public platform studies put the average between roughly 19% and 30%: Expandi (2026) measured 29.61% across 70,000+ campaigns, and the Belkins and Expandi joint study of 2025 data measured 18.7%. Below about 20%, the usual cause is targeting, not the connection note.</p>
+      </div>
+
+      <div class="qa">
+        <h3>How many cold emails does it take to book a meeting?</h3>
+        <p>At average quality, thousands. Belkins (2026) booked over 1,200 appointments across 7.5 million emails, roughly one per 6,000 sent; its 2023 study reported about 306 emails per lead under a looser definition. The lever is quality per message, not volume.</p>
+      </div>
+
+      <div class="qa">
+        <h3>Do cold emails still work in 2026?</h3>
+        <p>Yes, but the average keeps falling while the top end holds. Belkins measured 0.45% average replies on 2025 sends; Woodpecker's data shows advanced personalization replying at roughly 17-18%. The channel works; templated volume does not. Our own numbers point the same way: replies went from under 1% to over 14% in week one at Autosana (YC S25) when every message carried a working demo. If you are comparing tools that promise volume instead, start with our <a href="/best-ai-sdr-tools">honest comparison of AI SDR tools</a>.</p>
+      </div>
+
+      <div class="qa">
+        <h3>How do I improve my cold email response rate?</h3>
+        <p>In order: bounce rate under 2%, placement test until you land in the inbox, then the message. Once delivery is clean, show real work in the message; the measured gap between advanced personalization and none is roughly 17-18% versus 7-9% (Woodpecker). If you are a founder doing this yourself, the <a href="/founder-led-sales">founder-led sales</a> page covers where the manual version of this breaks and what to do about it.</p>
+      </div>
+    </section>
+
+    <div class="close">
+      <p>If your outbound is stuck under 1%, the fix is usually not another copy tweak. driftwood builds a working demo of your product for each prospect, you review every message, and it sends from your own accounts. The Autosana numbers above are what that looked like in week one.</p>
+      <a class="btn" href="/#book">Book a demo</a>
+    </div>
+  </article>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <a class="wordmark" href="/"><svg viewBox="0 0 64 64" class="helm" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#15557e"/><g transform="translate(32 32) scale(0.88)" fill="none" stroke="#f7f4ec" stroke-linecap="round" stroke-linejoin="round"><circle r="22.5" stroke-width="3.4"/><g stroke-width="3.6"><line y1="-22.5" y2="-27.5"/><g transform="rotate(45)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(90)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(135)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(180)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(225)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(270)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(315)"><line y1="-22.5" y2="-27.5"/></g></g><g stroke-width="2.5"><line y1="-8.5" y2="-19.5"/><g transform="rotate(45)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(90)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(135)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(180)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(225)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(270)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(315)"><line y1="-8.5" y2="-19.5"/></g></g><circle r="7.5" stroke-width="2.6" fill="#15557e"/><circle r="2.8" fill="#f7f4ec" stroke="none"/></g></svg>driftwood</a>
+    <p class="foot-def">driftwood is an AI sales agent for demo-led outbound: it researches each prospect, builds a working demo of your product for their business, and sends from your account after human review.</p>
+    <nav class="foot-links" aria-label="site">
+      <a href="/customers/autosana">customers</a>
+      <a href="/demo-led-outbound">demo-led outbound</a>
+      <a href="/founder-led-sales">founder-led sales</a>
+      <a href="/faq">faq</a>
+      <a href="/best-ai-sdr-tools">compare AI SDR tools</a>
+    </nav>
+    <div class="foot-meta">
+      <a href="mailto:aayush@driftwood.sh">aayush@driftwood.sh</a>
+      <span>&copy; 2026 driftwood</span>
+    </div>
+  </div>
+</footer>
+
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

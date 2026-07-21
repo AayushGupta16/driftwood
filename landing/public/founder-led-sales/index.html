@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Founder-led sales: the math, and when to hire an SDR · driftwood</title>
+<meta name="description" content="Founder-led sales with real numbers: why it beats an early SDR hire, the calendar math where it breaks, when to hire, and a third option that keeps the founder approving every send. Updated July 2026." />
+<link rel="canonical" href="https://driftwood.sh/founder-led-sales" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<meta name="theme-color" content="#15557e" />
+<meta property="og:title" content="Founder-led sales: the math, and when to hire an SDR · driftwood" />
+<meta property="og:description" content="Founder-led sales with real numbers: why it beats an early SDR hire, the calendar math where it breaks, when to hire, and a third option that keeps the founder approving every send. Updated July 2026." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://driftwood.sh/founder-led-sales" />
+<meta property="og:image" content="https://driftwood.sh/og-5.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://driftwood.sh/og-5.png" />
+<link rel="preload" href="/fonts/public-sans-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "@id": "https://driftwood.sh/founder-led-sales#article",
+      "headline": "Founder-led sales: what it is, the math, and when it breaks",
+      "url": "https://driftwood.sh/founder-led-sales",
+      "mainEntityOfPage": "https://driftwood.sh/founder-led-sales",
+      "publisher": { "@id": "https://driftwood.sh/#org" },
+      "datePublished": "2026-07-21",
+      "dateModified": "2026-07-21",
+      "inLanguage": "en"
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://driftwood.sh/founder-led-sales#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is founder-led sales?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Founder-led sales is the stage of a company where the founders sell the product themselves: finding prospects, writing the outreach, giving the demos, and closing the deals, with no dedicated sales team. Nearly every B2B company starts this way."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What goes in a founder-led sales playbook?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The ICP definition, the message that gets replies together with the funnel numbers that prove it, the demo flow, common objections and the answers that worked, and the rates at each funnel stage. The test: someone with less context than you could run the motion from the document. That document is also the prerequisite for a working SDR hire."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How long should founder-led sales last?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Until the motion is repeatable and the calendar is the bottleneck. Repeatable means you know who buys, why they buy, and which message gets replies, backed by numbers rather than a feeling. If you hand off before that, you transfer a broken process to someone with less context and pay them while they discover it is broken."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "When should a startup hire its first SDR?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "When the playbook is proven and the funnel can feed a full-time seat. Plan on roughly 3 months of ramp and about $76,000 OTE for the hire, going by the Bridge Group's survey averages, so the message they will send needs to be one you have already shown works. Hiring an SDR to find out whether cold outbound works for you is the expensive way to run that experiment."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Should the first sales hire be an SDR or an AE?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Match the hire to the bottleneck. If meetings are scarce and the founder can close, an SDR adds top of funnel. If meetings are plentiful and deals stall for lack of follow-through, an AE matters more, often full-cycle at first. Many early teams get more from one full-cycle AE than from splitting the role too early."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do you scale founder-led sales without hiring?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Cut the cost of quality, not the quality. The hours in founder-led sales are research and drafting; the judgment is minutes. An AI SDR that researches each prospect, builds a working demo of your product for their business, and drafts the message, while the founder approves every send, keeps the founder's judgment on every message at a few minutes per prospect instead of thirty."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does cold outbound still work for startups?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "It works when the message carries proof of work instead of claims. Our own data point: replies went from under 1% to over 14% in week one at Autosana (YC S25), on the same lead list, when every message carried a working demo built for the prospect. The channel is not dead; the median message in it is just easy to ignore."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+
+<style>
+  @font-face {
+    font-family: "Public Sans";
+    src: url("/fonts/public-sans-latin-wght-normal.woff2") format("woff2-variations");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Source Serif 4";
+    src: url("/fonts/source-serif-4-latin-600-normal.woff2") format("woff2");
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  :root {
+    --bg: #ffffff;
+    --ink: #16181b;
+    --gray: #6a737d;
+    --gray-light: #9aa2ab;
+    --line: #e9ebee;
+    --tide: #15557e;
+    --tide-deep: #0d3c5b;
+    --tide-wash: #eaf1f7;
+    --wash-a: #f4f8fb;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  :focus-visible { outline: 2px solid var(--tide); outline-offset: 2px; }
+
+  .wrap {
+    max-width: 68rem;
+    margin-inline: auto;
+    padding-inline: clamp(1.25rem, 4vw, 2.5rem);
+  }
+
+  /* ---------- header ---------- */
+  header { border-bottom: 1px solid var(--line); }
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 4rem;
+  }
+  .wordmark {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-family: "Source Serif 4", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.2rem;
+    color: var(--ink);
+    text-decoration: none;
+    letter-spacing: -0.01em;
+  }
+  .wordmark .helm {
+    width: 1.9rem;
+    height: 1.9rem;
+    display: block;
+    flex-shrink: 0;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--tide);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    height: 2.4rem;
+    padding-inline: 1.3rem;
+    border-radius: 999px;
+    transition: background 0.15s;
+  }
+  .btn:hover { background: var(--tide-deep); }
+
+  /* ---------- article ---------- */
+  main { padding-block: clamp(3rem, 7vw, 5rem) clamp(3rem, 6vw, 4.5rem); }
+  article { max-width: 42rem; margin-inline: auto; }
+
+  .label {
+    font-size: 0.85rem;
+    color: var(--gray);
+    margin: 0 0 0.9rem;
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(1.9rem, 1.2rem + 2vw, 2.6rem);
+    font-weight: 600;
+    letter-spacing: -0.014em;
+    line-height: 1.15;
+    text-wrap: balance;
+  }
+  .lede {
+    margin: 1.4rem 0 0;
+    font-size: 1.22rem;
+    line-height: 1.55;
+    color: var(--ink);
+  }
+  .lede strong { font-weight: 600; }
+
+  section {
+    margin-top: 2.75rem;
+    padding-top: 2.25rem;
+    border-top: 1px solid var(--line);
+  }
+  h2 {
+    margin: 0 0 0.85rem;
+    font-size: 1.3rem;
+    font-weight: 600;
+    letter-spacing: -0.014em;
+    line-height: 1.3;
+    text-wrap: balance;
+  }
+  h3 {
+    margin: 1.7rem 0 0.45rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: -0.014em;
+    line-height: 1.3;
+  }
+  em.voice {
+    font-family: Georgia, "Times New Roman", serif;
+    font-style: italic;
+    color: var(--tide);
+    letter-spacing: 0;
+  }
+  p { margin: 0; color: var(--gray); }
+  p + p { margin-top: 0.9rem; }
+  article a {
+    color: var(--tide);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
+  article a:hover { color: var(--tide-deep); }
+
+  ol.loop {
+    margin: 1rem 0 0;
+    padding-left: 1.4rem;
+    color: var(--gray);
+  }
+  ol.loop li { margin-top: 0.55rem; }
+  ol.loop li::marker { color: var(--tide); font-weight: 600; }
+
+  ul.list {
+    margin: 1rem 0 0;
+    padding-left: 1.25rem;
+    color: var(--gray);
+  }
+  ul.list li { margin-top: 0.55rem; }
+  ul.list li::marker { color: var(--tide); }
+  ul.list li strong { color: var(--ink); font-weight: 600; }
+
+  /* ---------- funnel table ---------- */
+  table.funnel {
+    margin-top: 1.2rem;
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+  }
+  .funnel th,
+  .funnel td {
+    text-align: left;
+    vertical-align: top;
+    padding: 0.65rem 0.9rem 0.65rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .funnel th {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .funnel td { color: var(--gray); font-variant-numeric: tabular-nums; }
+  .funnel td strong { color: var(--ink); font-weight: 600; }
+  .funnel .src { display: block; font-size: 0.85rem; color: var(--gray-light); }
+  .tablenote { margin-top: 0.8rem; font-size: 0.9rem; color: var(--gray-light); }
+
+  /* ---------- close panel ---------- */
+  .close {
+    margin-top: 3rem;
+    background: var(--wash-a);
+    border-radius: 12px;
+    padding: clamp(1.5rem, 4vw, 2.25rem);
+  }
+  .close p { color: var(--ink); font-size: 1.05rem; max-width: 34rem; }
+  .close .btn { margin-top: 1.25rem; height: 2.75rem; padding-inline: 1.7rem; font-size: 0.95rem; }
+
+  /* ---------- footer ---------- */
+  footer {
+    background: linear-gradient(#15557e, #0d3c5b);
+    color: #fff;
+  }
+  footer::before {
+    content: "";
+    display: block;
+    height: 28px;
+    margin-top: -28px;
+    position: relative;
+    z-index: 1;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='28' viewBox='0 0 180 28'%3E%3Cpath d='M0 14 C 11.25 5.5, 33.75 5.5, 45 14 C 56.25 22.5, 78.75 22.5, 90 14 C 101.25 5.5, 123.75 5.5, 135 14 C 146.25 22.5, 168.75 22.5, 180 14 L180 28 L0 28 Z' fill='%2315557e'/%3E%3C/svg%3E") repeat-x bottom;
+  }
+  .foot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1.5rem;
+    padding-block: 4.5rem 3rem;
+  }
+  .foot .wordmark {
+    color: #fff;
+    font-size: 1.35rem;
+  }
+  .foot .wordmark .helm {
+    width: 2.4rem;
+    height: 2.4rem;
+  }
+  .foot-def {
+    margin: 0;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.75);
+    max-width: 56ch;
+  }
+  .foot-links,
+  .foot-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.5rem;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.75);
+  }
+  footer a {
+    color: inherit;
+    text-decoration: none;
+  }
+  footer a:hover { color: #fff; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="wordmark" href="/"><svg viewBox="0 0 64 64" class="helm" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#15557e"/><g transform="translate(32 32) scale(0.88)" fill="none" stroke="#f7f4ec" stroke-linecap="round" stroke-linejoin="round"><circle r="22.5" stroke-width="3.4"/><g stroke-width="3.6"><line y1="-22.5" y2="-27.5"/><g transform="rotate(45)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(90)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(135)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(180)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(225)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(270)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(315)"><line y1="-22.5" y2="-27.5"/></g></g><g stroke-width="2.5"><line y1="-8.5" y2="-19.5"/><g transform="rotate(45)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(90)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(135)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(180)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(225)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(270)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(315)"><line y1="-8.5" y2="-19.5"/></g></g><circle r="7.5" stroke-width="2.6" fill="#15557e"/><circle r="2.8" fill="#f7f4ec" stroke="none"/></g></svg>driftwood</a>
+    <a class="btn" href="/#book">Book a demo</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <article>
+    <p class="label">Guide · Updated July 2026</p>
+    <h1>Founder-led sales: what it is, the math, and when it breaks</h1>
+
+    <p class="lede"><strong>Founder-led sales</strong> is the stage where the founders sell the product themselves: they find the prospects, write the outreach, give the demos, and close the deals. Almost every B2B company starts here. This page is the math of that stage: why it outperforms an early SDR hire, the hours-per-week arithmetic that eventually breaks it, and what the options are when it does.</p>
+
+    <section>
+      <h2>What founder-led sales is</h2>
+      <p>Founder-led sales means there is no sales team. A founder sources each prospect, writes each message, runs each demo, and closes each deal. It usually carries a company from zero to its first real revenue, and it ends the same way every time: not because it stops working, but because the founder runs out of hours.</p>
+      <p>It works for structural reasons, not motivational ones.</p>
+      <ul class="list">
+        <li><strong>The founder knows the product completely.</strong> Any question in a meeting gets a real answer, and the pitch adjusts in real time.</li>
+        <li><strong>A founder's message is a costly signal.</strong> The person who built the product looked at your company and wrote to you. A sequence cannot fake that, and senior people notice.</li>
+        <li><strong>Every reply feeds the product.</strong> A no to a founder comes with a reason, and the reason changes the roadmap. When a rep hears the no, the reason rarely makes it back.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Why founder-led sales beats an early SDR hire</h2>
+      <p>The alternative at this stage is hiring. The benchmark numbers on that hire are public: the Bridge Group, a sales consultancy that has surveyed SDR teams for years, puts the averages at 3.1 months to ramp, 1.8 years of tenure, and roughly $50,000 base with $76,000 on-target earnings.</p>
+      <p>Run the arithmetic. $76,000 OTE is about $6,300 a month, before benefits, data subscriptions, and sending infrastructure. Three of the first months are ramp. Average tenure leaves about a year and a half of full production before you are hiring again.</p>
+      <p>None of that is an argument against SDRs. It is an argument about order. An SDR scales a playbook that already works. Before that playbook exists, the same hire spends the ramp months testing messages the founder never proved, at full cost. The founder testing those messages personally is slower per message and much cheaper per lesson.</p>
+    </section>
+
+    <section>
+      <h2>The calendar math: where it <em class="voice">breaks</em></h2>
+      <p>Here is the arithmetic that ends the stage. Time one prospect at founder quality:</p>
+      <ol class="loop">
+        <li>Research: about 15 minutes. Their site, their LinkedIn, recent news, and the actual angle.</li>
+        <li>Writing: about 10 minutes, for a message that shows the research.</li>
+        <li>Follow-ups: about 5 minutes, spread over the next two weeks.</li>
+      </ol>
+      <p>Call it 30 minutes per prospect. Two focused hours a day on outbound is 10 hours a week, which is 20 prospects a week at that quality.</p>
+      <p>Now run the funnel forward. Assume a 5% reply rate, which is generous for cold outbound, and one booked meeting for every three replies. Twenty prospects a week yields one reply a week and a meeting every three weeks. To book three meetings a week on the same assumptions, you need about 180 researched messages a week. At 30 minutes each, that is 90 hours of research and writing. The calendar does not have 90 hours.</p>
+      <p>The usual escape is to cut quality: a template, a first-name token, more volume. The reply rate pays for it. Autosana's founders had run that exact trade, and their self-reported reply rate on templated outbound was under 1%. At 1%, even 500 sends a week is five replies, one or two meetings, and 500 leads spent to get them.</p>
+      <p>That is the trap in one sentence: quality times volume is capped by founder hours, and no setting of that dial books a full week of meetings inside 10 hours.</p>
+    </section>
+
+    <section>
+      <h2>When hiring an SDR is the right call</h2>
+      <p>The honest version, because it often is the right call. An SDR works when:</p>
+      <ul class="list">
+        <li><strong>The playbook is proven.</strong> ICP, message, and funnel rates are documented, and the hire is running a system rather than inventing one.</li>
+        <li><strong>The funnel can feed a full seat.</strong> The Bridge Group's average quota is around 19 meetings set per month. Someone has to run those meetings, so the rest of the pipeline has to be ready for that volume.</li>
+        <li><strong>Someone can manage them.</strong> Most SDRs are early in their careers and need real coaching. Without it, the 1.8-year average tenure gets shorter.</li>
+        <li><strong>You need what only a human covers.</strong> A voice on the phone, working a conference floor, and a bench to promote future AEs from.</li>
+      </ul>
+      <p>There is also the fully autonomous route: agents that source, write, and send on their own. They exist and some are good; we keep an honest comparison at <a href="/best-ai-sdr-tools">best AI SDR tools</a>. The trade is the same one the template makes: volume up, per-message quality down.</p>
+    </section>
+
+    <section>
+      <h2>The third option: an AI SDR the founder approves</h2>
+      <p>driftwood (<a href="https://driftwood.sh">driftwood.sh</a>) is built for the gap between those two: keep the founder's judgment, remove the founder's hours. It runs <a href="/demo-led-outbound">demo-led outbound</a>. For each prospect, the agent does the research, builds a working demo of your product for their business, and drafts the message. Every draft waits in a review queue, and nothing sends without your approval. Sends go out from your own LinkedIn or email account, so replies land in your inbox and the thread stays yours.</p>
+      <p>The arithmetic changes shape. Reviewing a drafted message takes a minute or two, so approving 100 messages is under three hours a week. Researching and writing those 100 yourself is 50 hours. The quality bar stays where founder-led sales set it; the founder's cost per prospect falls from 30 minutes to about two.</p>
+      <p>The result at customer zero: on the same lead list the founders had been working themselves, replies went from under 1% to over 14% in week one at Autosana (YC S25), including founders who had ignored more than four months of prior outreach. The full account is in the <a href="/customers/autosana">Autosana case study</a>.</p>
+    </section>
+
+    <section>
+      <h2>The funnel at 100 sends a week</h2>
+      <p>Planning numbers: arithmetic on top of stated assumptions. The meetings column assumes one booked meeting per three replies. Swap in your own rates; the arithmetic is the point.</p>
+      <table class="funnel">
+        <thead>
+          <tr>
+            <th scope="col">Reply rate</th>
+            <th scope="col">Replies per week</th>
+            <th scope="col">Meetings booked</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>under 1%</strong><span class="src">observed: Autosana's templated baseline, self-reported</span></td>
+            <td>about 1</td>
+            <td>about 1 a month</td>
+          </tr>
+          <tr>
+            <td><strong>5%</strong><span class="src">assumption: researched, founder-written</span></td>
+            <td>5</td>
+            <td>1 to 2 a week</td>
+          </tr>
+          <tr>
+            <td><strong>over 14%</strong><span class="src">observed: demo-led, week one at Autosana</span></td>
+            <td>14</td>
+            <td>4 to 5 a week</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="tablenote">The bottom row is a week-one number observed at one company, our first customer. Treat it as observed once, not promised.</p>
+    </section>
+
+    <section>
+      <h2>Common questions</h2>
+      <p>These are the questions founders actually ask about this stage. Product questions about driftwood itself are on the <a href="/faq">FAQ</a>.</p>
+
+      <h3>What is founder-led sales?</h3>
+      <p>Founder-led sales is the stage of a company where the founders sell the product themselves: finding prospects, writing the outreach, giving the demos, and closing the deals, with no dedicated sales team. Nearly every B2B company starts this way.</p>
+
+      <h3>What goes in a founder-led sales playbook?</h3>
+      <p>The ICP definition, the message that gets replies together with the funnel numbers that prove it, the demo flow, common objections and the answers that worked, and the rates at each funnel stage. The test: someone with less context than you could run the motion from the document. That document is also the prerequisite for a working SDR hire.</p>
+
+      <h3>How long should founder-led sales last?</h3>
+      <p>Until the motion is repeatable and the calendar is the bottleneck. Repeatable means you know who buys, why they buy, and which message gets replies, backed by numbers rather than a feeling. If you hand off before that, you transfer a broken process to someone with less context and pay them while they discover it is broken.</p>
+
+      <h3>When should a startup hire its first SDR?</h3>
+      <p>When the playbook is proven and the funnel can feed a full-time seat. Plan on roughly 3 months of ramp and about $76,000 OTE for the hire, going by the Bridge Group's survey averages, so the message they will send needs to be one you have already shown works. Hiring an SDR to find out whether cold outbound works for you is the expensive way to run that experiment.</p>
+
+      <h3>Should the first sales hire be an SDR or an AE?</h3>
+      <p>Match the hire to the bottleneck. If meetings are scarce and the founder can close, an SDR adds top of funnel. If meetings are plentiful and deals stall for lack of follow-through, an AE matters more, often full-cycle at first. Many early teams get more from one full-cycle AE than from splitting the role too early.</p>
+
+      <h3>How do you scale founder-led sales without hiring?</h3>
+      <p>Cut the cost of quality, not the quality. The hours in founder-led sales are research and drafting; the judgment is minutes. An AI SDR that researches each prospect, builds a working demo of your product for their business, and drafts the message, while the founder approves every send, keeps the founder's judgment on every message at a few minutes per prospect instead of thirty.</p>
+
+      <h3>Does cold outbound still work for startups?</h3>
+      <p>It works when the message carries proof of work instead of claims. Our own data point: replies went from under 1% to over 14% in week one at Autosana (YC S25), on the same lead list, when every message carried a working demo built for the prospect. The channel is not dead; the median message in it is just easy to ignore.</p>
+    </section>
+
+    <div class="close">
+      <p>driftwood runs the founder-led motion at SDR volume: demo-led outbound, every message approved by you, sent from your own accounts. Twenty minutes, and we will show you a demo built on your product.</p>
+      <a class="btn" href="/#book">Book a demo</a>
+    </div>
+  </article>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <a class="wordmark" href="/"><svg viewBox="0 0 64 64" class="helm" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#15557e"/><g transform="translate(32 32) scale(0.88)" fill="none" stroke="#f7f4ec" stroke-linecap="round" stroke-linejoin="round"><circle r="22.5" stroke-width="3.4"/><g stroke-width="3.6"><line y1="-22.5" y2="-27.5"/><g transform="rotate(45)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(90)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(135)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(180)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(225)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(270)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(315)"><line y1="-22.5" y2="-27.5"/></g></g><g stroke-width="2.5"><line y1="-8.5" y2="-19.5"/><g transform="rotate(45)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(90)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(135)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(180)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(225)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(270)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(315)"><line y1="-8.5" y2="-19.5"/></g></g><circle r="7.5" stroke-width="2.6" fill="#15557e"/><circle r="2.8" fill="#f7f4ec" stroke="none"/></g></svg>driftwood</a>
+    <p class="foot-def">driftwood is an AI sales agent for demo-led outbound: it researches each prospect, builds a working demo of your product for their business, and sends from your account after human review.</p>
+    <nav class="foot-links" aria-label="site">
+      <a href="/customers/autosana">customers</a>
+      <a href="/demo-led-outbound">demo-led outbound</a>
+      <a href="/faq">faq</a>
+      <a href="/best-ai-sdr-tools">compare AI SDR tools</a>
+    </nav>
+    <div class="foot-meta">
+      <a href="mailto:aayush@driftwood.sh">aayush@driftwood.sh</a>
+      <span>&copy; 2026 driftwood</span>
+    </div>
+  </div>
+</footer>
+
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>
