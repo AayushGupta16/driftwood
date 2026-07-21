@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { trackCta } from "./track";
 import { CAL_URL } from "./components/BookDemo";
 import HelmMark from "./components/HelmMark";
+import InlineBooking from "./components/InlineBooking";
 
 
 function Wordmark({ label = true }: { label?: boolean }) {
@@ -1103,7 +1104,7 @@ export default function App() {
             </a>
             <a
               className="btn btn-primary"
-              href={CAL_URL}
+              href="#book"
               onClick={() => trackCta("nav")}
             >
               Book a demo
@@ -1127,7 +1128,7 @@ export default function App() {
               <div className="hero-actions">
                 <a
                   className="btn btn-primary"
-                  href={CAL_URL}
+                  href="#book"
                   onClick={() => trackCta("hero")}
                 >
                   Book a demo
@@ -1324,20 +1325,23 @@ export default function App() {
           {!seaGone && <canvas className="sea-strip" />}
         </div>
 
-
-        {/* close */}
-        <section className="close-sect sheet wash-b">
+        {/* close → the booking section: the Cal.com calendar lives inline
+            here, and all three CTAs resolve to it */}
+        <section id="book" className="close-sect sheet wash-b">
           <div className="wrap sect">
             <h2>
               See what we'd send <em className="voice">your</em> prospects
             </h2>
-            <a
-              className="btn btn-primary"
-              href={CAL_URL}
-              onClick={() => trackCta("close")}
-            >
-              Book a demo
-            </a>
+            <p className="book-sub">Pick a time below. 30 minutes with Aayush, the founder.</p>
+            <div className="cal-window">
+              <InlineBooking />
+            </div>
+            {/* the old link survives as the fallback path (embed blocked or slow) */}
+            <p className="cal-fallback">
+              If the calendar does not load, book at{" "}
+              <a href={CAL_URL}>cal.com/aayush-gupta-qyilz6/30min</a> or email{" "}
+              <a href="mailto:aayush@driftwood.sh">aayush@driftwood.sh</a>.
+            </p>
           </div>
         </section>
       </main>

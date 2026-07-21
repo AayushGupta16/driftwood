@@ -883,7 +883,9 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
 .landing .explore-card p { margin: 0.7rem 0 0; color: var(--gray); font-size: 1rem; line-height: 1.55; }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
-/* ---------- close ---------- */
+/* ---------- close → the booking section ----------
+   The Cal.com inline embed replaces the old "Book a demo" pill, in standard
+   window chrome (white, 1px line, r-win, shadow-win). No new tokens. */
 .landing .close-sect { text-align: center; }
 /* the last two sheets need real air between them: the dashboard is a dense
    object and the closing ask is one line and a button, so they have to read
@@ -893,7 +895,20 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
 .landing #explore .sect { padding-bottom: clamp(5rem, 9vw, 8rem); }
 .landing .close-sect .sect { padding-block: clamp(6.5rem, 11vw, 9.5rem) clamp(4rem, 7vw, 5.5rem); }
 .landing .close-sect h2 { font-size: clamp(2.4rem, 1.3rem + 4.6vw, 4.6rem); font-weight: 600; line-height: 1.05; letter-spacing: -0.02em; margin-inline: auto; max-width: 16ch; }
-.landing .close-sect .btn { margin-top: 2.5rem; height: 3.1rem; padding-inline: 1.9rem; font-size: 1.05rem; }
+.landing .book-sub { margin-top: 1.2rem; font-size: 1.05rem; color: var(--gray); }
+.landing .cal-window {
+  margin: 2.5rem auto 0; max-width: 58rem;
+  background: #fff; border: 1px solid var(--line); border-radius: var(--r-win);
+  box-shadow: var(--shadow-win);
+  /* reserve the embed's height up front so mounting it causes no layout
+     shift: ~39rem covers the month view with the times column open */
+  min-height: 39rem;
+  text-align: left;
+}
+.landing .cal-slot { width: 100%; overflow: auto; min-height: inherit; }
+.landing .cal-fallback { margin-top: 1.1rem; font-size: 0.85rem; color: var(--gray); }
+.landing .cal-fallback a { color: var(--accent); text-decoration: none; }
+.landing .cal-fallback a:hover { text-decoration: underline; }
 
 /* footer encore: the deepest sheet — docks with the same wave-cut
    shoulder as every sheet above, then deepens toward the sea floor */
@@ -991,6 +1006,8 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
   .landing .app-window img { width: 178%; max-width: none; height: 26rem; object-fit: cover; object-position: left top; }
   /* the shorter window ends inside the hero sea; keep the waves behind it */
   .landing .app-window { position: relative; z-index: 2; }
+  /* stacked embed sets its own height on phones; no desktop reservation */
+  .landing .cal-window { min-height: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   .landing * { animation-duration: 0.01ms !important; animation-delay: 0ms !important; transition-duration: 0.01ms !important; }
