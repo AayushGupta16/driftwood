@@ -924,6 +924,8 @@ export default function App() {
               <a href="/demo-led-outbound">Demo-led outbound</a>
               <a href="/faq">FAQ</a>
               <a href="/best-ai-sdr-tools">Compare AI SDR tools</a>
+              <a href="/founder-led-sales">Founder-led sales</a>
+              <a href="/cold-outbound-benchmarks">Outbound benchmarks</a>
             </nav>
           </div>
           <div className="foot-bottom">
