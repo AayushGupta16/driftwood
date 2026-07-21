@@ -11,18 +11,18 @@
   "errors": 0,
   "error_sample": null,
   "total": 100,
-  "named_us_total": 2,
-  "tier1_named_us": 2,
+  "named_us_total": 1,
+  "tier1_named_us": 1,
   "tier1_total": 20,
-  "tier1_named_us_rate": 0.1,
+  "tier1_named_us_rate": 0.05,
   "per_tier": {
    "1": {
-    "named_us": 2,
-    "named_collision": 1,
-    "ambiguous": 2,
+    "named_us": 1,
+    "named_collision": 0,
+    "ambiguous": 4,
     "absent": 15,
     "total": 20,
-    "named_us_rate": 0.1
+    "named_us_rate": 0.05
    },
    "2": {
     "named_us": 0,
@@ -43,17 +43,18 @@
   },
   "competitor_counts": {
    "Apollo": 23,
-   "Lemlist": 13,
+   "Lemlist": 15,
    "Instantly": 8,
-   "Artisan": 5,
-   "11x": 4,
-   "Salesforge": 3,
-   "Smartlead": 3,
-   "Clay": 3,
-   "AiSDR": 2,
-   "Amplemarket": 1
+   "Artisan": 7,
+   "11x": 6,
+   "AiSDR": 4,
+   "Saleshandy": 3,
+   "Amplemarket": 2,
+   "Clay": 2,
+   "Landbase": 1,
+   "Smartlead": 1
   },
-  "cost_usd": 1.7225
+  "cost_usd": 1.6603
  },
  "per_query": [
   {
@@ -64,9 +65,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "ambiguous",
    "competitors": [],
-   "answer_head": "Do you mean one of these?\n\n- Driftwood AI (the company/product) and you want background or the latest news about it?\n- SDR as in a Sales Development Representative \u2014 e.g., help writing outreach scripts, hiring an SDR, or playbooks using Driftwood AI?\n- SDR as in software\u2011defined radio (technical)?\n\nTell me which one (and what you want: summary, hiring help, outreach templates, technical specs, or latest news). I can look up current info if you want \u2014 should I search the web now?",
-   "mention_snippet": "Do you mean one of these?\n\n- Driftwood AI (the company/product) and you want background or the latest news about it?\n- SDR as in a Sales Development Representative \u2014 e.g., help writing outreach scripts, hiring an SDR, or playbooks using Driftwood AI?\n- SDR as in software\u2011defined radio (technical)?\n\nTell me which one (and what you want: summary, hiring help, outreach templates, technica",
-   "cost_usd": 0.001119
+   "answer_head": "Do you mean Driftwood (driftwood.sh) \u2014 the \u201cdemo-led outbound\u201d AI SDR? I can summarize it, compare it to other AI SDRs, or help you evaluate it. Quick summary below; tell me which follow-up you want.\n\n- What it is: an assisted AI SDR that researches each prospect, builds a custom working demo of your product for that prospect, drafts the outreach, and sends only after a human approves it (sends go out from your own accounts). ([driftwood.sh](https://driftwood.sh/))  \n- How it works (high level):",
+   "mention_snippet": "Do you mean Driftwood (driftwood.sh) \u2014 the \u201cdemo-led outbound\u201d AI SDR? I can summarize it, compare it to other AI SDRs, or help you evaluate it. Quick summary below; tell me which follow-up you want.\n\n- What it is: an assisted AI SDR that researches each prospect, builds a custom working demo of your product for that prospect, drafts the outreach, and sends only after ",
+   "cost_usd": 0.045191
   },
   {
    "n": 2,
@@ -76,9 +77,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "ambiguous",
    "competitors": [],
-   "answer_head": "Do you mean the website/project at driftwood.sh? What would you like about it \u2014 a summary, who runs it, recent updates, source code, download/install instructions, or something else? I can look it up and report what I find.",
-   "mention_snippet": "Do you mean the website/project at driftwood.sh? What would you like about it \u2014 a summary, who runs it, recent updates, source code, download/install instructions, or something else? I can look it up and report what I find.",
-   "cost_usd": 0.000727
+   "answer_head": "Do you mean the website/domain driftwood.sh? What would you like me to do with it \u2014 for example:\n\n- Open the homepage and summarize its content\n- Check who owns the domain / WHOIS info\n- Check safety (SSL, malware reputation)\n- Find a related GitHub repo or source code\n- Show latest updates/news about it\n\nIf one of those, I can look it up now (I\u2019ll browse the web). Which do you want?",
+   "mention_snippet": "Do you mean the website/domain driftwood.sh? What would you like me to do with it \u2014 for example:\n\n- Open the homepage and summarize its content\n- Check who owns the domain / WHOIS info\n- Check safety (SSL, malware reputation)\n- Find a related GitHub repo or source code\n- Show latest updates/news about it\n\nIf one of those, I can look it up now (I\u2019ll browse the web). Which do you want?",
+   "cost_usd": 0.000927
   },
   {
    "n": 3,
@@ -87,10 +88,12 @@
    "engine": "gpt",
    "model": "openai/gpt-5-mini:online",
    "verdict": "named_us",
-   "competitors": [],
-   "answer_head": "Short answer\n- Driftwood is an AI \u201cSDR\u201d (sales-development) agent that automates demo-led outbound: it researches each prospect, builds a custom demo/pitch showing your product for that prospect, queues the outreach for a human to review, and can send from your account. ([driftwood.sh](https://driftwood.sh/))\n\nHow it works (high level)\n- Research: the agent reads public pages about the company/contact to find a relevant hook.  \n- Build: it generates a tiny custom demo/pitch (e.g., a short demo v",
-   "mention_snippet": "Short answer\n- Driftwood is an AI \u201cSDR\u201d (sales-development) agent that automates demo-led outbound: it researches each prospect, builds a custom demo/pitch showing your product for that prospect, queues the outreach for a human to review, and can send from your account. ([driftwood.sh](https://driftwood.sh/))\n\nHow it works (high level)\n- Research: the agent reads public p",
-   "cost_usd": 0.056152
+   "competitors": [
+    "AiSDR"
+   ],
+   "answer_head": "Short answer: Driftwood (often called \u201cDriftwood AI\u201d) is an AI-powered sales agent / AI\u2011SDR that builds personalized, demo\u2011style outreach for cold prospects \u2014 it researches each target, generates a custom demo of your product for that prospect, and (after human review) sends the message from your account. ([driftwood.sh](https://driftwood.sh/?utm_source=openai))\n\nA bit more detail:\n- \u201cSDR\u201d here means Sales Development Representative \u2014 the role that qualifies leads and books meetings. Driftwood a",
+   "mention_snippet": "Short answer: Driftwood (often called \u201cDriftwood AI\u201d) is an AI-powered sales agent / AI\u2011SDR that builds personalized, demo\u2011style outreach for cold prospects \u2014 it researches each target, generates a custom demo of your product for that prospect, and (after human review) sends the message from your account. ([driftwood.sh](https://driftwood.sh/?utm_source=openai))\n\nA bit m",
+   "cost_usd": 0.013695
   },
   {
    "n": 4,
@@ -98,13 +101,11 @@
    "q": "driftwood ai sdr reviews",
    "engine": "gpt",
    "model": "openai/gpt-5-mini:online",
-   "verdict": "named_collision",
-   "competitors": [
-    "Salesforge"
-   ],
-   "answer_head": "Do you mean the startup/product called \u201cDriftwood\u201d (the demo-led outbound AI at driftwood.sh) \u2014 or did you mean Drift (the conversational marketing company) or AI SDR tools in general? I can pull together user reviews, comparisons, or an evaluation checklist \u2014 whichever you want. \n\nQuick summary while you decide:\n- What Driftwood says it does: an \u201cAI sales agent\u201d that researches each prospect, builds a custom product demo/video for them, and sends outreach from your account after human review (t",
-   "mention_snippet": "Do you mean the startup/product called \u201cDriftwood\u201d (the demo-led outbound AI at driftwood.sh) \u2014 or did you mean Drift (the conversational marketing company) or AI SDR tools in general? I can pull together user reviews, comparisons, or an evaluation checklist \u2014 whichever you want. \n\nQuick summary while you decide:\n- What Driftwood says it does: an \u201cAI sales agent\u201d that researches each prospect, bu",
-   "cost_usd": 0.048893
+   "verdict": "ambiguous",
+   "competitors": [],
+   "answer_head": "Do you mean Driftwood (driftwood.sh) \u2014 the startup that advertises an \u201cAI sales agent\u201d that researches prospects, builds custom demos and sends outreach after human review \u2014 or something else? I can dig up user reviews, comparisons, or independent feedback once you confirm.\n\nQuick summary of what I found so far:\n\n- What Driftwood says it does: driftwood.sh describes an \u201cAI sales agent for demo\u2011led outbound\u201d that researches each prospect, builds a working demo tailored to their business, and send",
+   "mention_snippet": "Do you mean Driftwood (driftwood.sh) \u2014 the startup that advertises an \u201cAI sales agent\u201d that researches prospects, builds custom demos and sends outreach after human review \u2014 or something else? I can dig up user reviews, comparisons, or independent feedback once you confirm.\n\nQuick summary of what I found so far:\n\n- What Driftwood says it does: driftwood.sh describes an",
+   "cost_usd": 0.048593
   },
   {
    "n": 5,
@@ -112,13 +113,13 @@
    "q": "driftwood vs artisan ai sdr",
    "engine": "gpt",
    "model": "openai/gpt-5-mini:online",
-   "verdict": "named_us",
+   "verdict": "ambiguous",
    "competitors": [
     "Artisan"
    ],
-   "answer_head": "Short comparison and recommendation (as of July 21, 2026):\n\nQuick summary\n- Driftwood: an AI sales agent focused on demo\u2011led outbound \u2014 it researches a prospect, builds a custom demo/pitch page for that prospect, and sends outreach from your account after human review. Good for product-led teams that can show immediate product value. ([driftwood.sh](https://driftwood.sh/))\n- Artisan (Ava): an end\u2011to\u2011end AI BDR that sources contacts (claims a large contact DB), runs multi\u2011channel personalized seq",
-   "mention_snippet": "Short comparison and recommendation (as of July 21, 2026):\n\nQuick summary\n- Driftwood: an AI sales agent focused on demo\u2011led outbound \u2014 it researches a prospect, builds a custom demo/pitch page for that prospect, and sends outreach from your account after human review. Good for product-led teams that can show immediate product value. ([driftwood.sh](https://driftwood.sh/))\n- Artisan (Ava): an end\u2011to\u2011end AI BDR that sources contacts",
-   "cost_usd": 0.060694
+   "answer_head": "Do you mean a head\u2011to\u2011head product comparison between Driftwood (which Driftwood product do you mean?) and Artisan AI \u2014 specifically for SDR work (outreach, cadences, call summarization, lead scoring, etc.)? \n\nTell me:\n- Which exact products/URLs (if you have them) or confirm the names (e.g., \u201cDriftwood AI\u201d vs \u201cArtisan.ai\u201d).\n- What matters most to you: features, pricing, integrations, performance/accuracy, security, ROI, or something else?\n- Team size and use case (individual SDR, small team, en",
+   "mention_snippet": "Do you mean a head\u2011to\u2011head product comparison between Driftwood (which Driftwood product do you mean?) and Artisan AI \u2014 specifically for SDR work (outreach, cadences, call summarization, lead scoring, etc.)? \n\nTell me:\n- Which exact products/URLs (if you have them) or confirm the names (e.g., \u201cDriftwood AI\u201d vs \u201cArtisan.ai\u201d).\n- What matters most to you: features, pricing, integrations, performance/accuracy, sec",
+   "cost_usd": 0.001358
   },
   {
    "n": 6,
@@ -128,9 +129,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Demo-led outbound is an outbound sales approach where the primary conversion event is a live (or highly personalized recorded) product demo. Instead of pushing gated content, meetings about strategy, or long discovery first, reps use targeted outbound outreach to book demos quickly and use those demos to prove value, qualify fit, and advance prospects through the funnel.\n\nShort breakdown\n- Goal: get qualified prospects into a tailored demo as the main next step.\n- Best fit: B2B products with som",
+   "answer_head": "Short answer: demo-led outbound is an outbound sales approach that makes a live (or interactive) product demo the central event of the outreach sequence. Instead of pushing content, meetings about pricing, or long qualification calls first, you invite prospects to see the product in action early so they can quickly assess fit and value.\n\nWhy teams use it\n- Shows value fast: prospects see product capabilities instead of reading about them.\n- Accelerates qualification: a good demo surfaces real pa",
    "mention_snippet": null,
-   "cost_usd": 0.003143
+   "cost_usd": 0.002723
   },
   {
    "n": 7,
@@ -140,9 +141,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Definition (short)\n- Demo-led outbound is an outbound sales approach where the primary call-to-action in prospecting is a tailored product demonstration. Instead of asking for a discovery call or sending content first, reps push to show the product early to prove value and accelerate qualification.\n\nCore idea (one line)\n- \u201cSee it, believe it\u201d \u2014 use a targeted, concise demo delivered early in the outbound motion to convert interest into pipeline faster.\n\nKey characteristics\n- Outreach is personal",
+   "answer_head": "Definition\n- Demo-led outbound is an outbound sales approach that makes the product demo the primary early touch in your prospecting sequence. Instead of leading with content, whitepapers, or a long qualification call, BDRs/SDRs invite high-fit prospects to see the product in action quickly \u2014 typically a short, tailored demo scheduled within the first few touches.\n\nWhy teams use it\n- Accelerates qualification: a live demo reveals fit and interest faster than back-and-forth discovery.\n- Shows val",
    "mention_snippet": null,
-   "cost_usd": 0.003593
+   "cost_usd": 0.002621
   },
   {
    "n": 8,
@@ -152,9 +153,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Nice \u2014 I can help design that. Below is a concise, practical blueprint you can use to build a human-in-the-loop (HITL) AI outbound email approval tool, with UX, workflow, policy, implementation and safety recommendations. Tell me which parts you want expanded (implementation code, wireframes, Gmail/Outlook integration details, sample model prompts, or policy templates).\n\n1) Goal (one line)\n- Prevent risky, non-compliant, or off-brand outbound emails while keeping send latency low and preserving ",
+   "answer_head": "I can help design and spec a human-in-the-loop (HITL) outbound-email approval tool. To make this immediately useful, below is a compact, practical design + workflow, implementation checklist, policy examples, and an MVP roadmap. Tell me which parts you want expanded (UI mockups, API code snippets for Gmail/Outlook, ML model prompts/rules, compliance wording, etc.).\n\n1) Goal / user story (example)\n- Goal: prevent risky, non-compliant, or sensitive outbound email from being sent by requiring an ex",
    "mention_snippet": null,
-   "cost_usd": 0.004497
+   "cost_usd": 0.005163
   },
   {
    "n": 9,
@@ -164,7 +165,7 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Great \u2014 I can design a practical, low-risk AI-assisted SDR workflow that always requires a human to approve before any message is sent. Below I give a ready-to-adopt plan: roles & states, required components, an approval UI/flow, safeguards and compliance checks, a reviewer checklist, sample prompts the AI can use to draft messages, and a few short outreach templates you can start with. Tell me if you want this adapted to a specific tool (Salesforce, HubSpot, Outreach, Salesloft, or a custom sta",
+   "answer_head": "Great \u2014 I can help design an \u201cAI SDR\u201d system that generates outreach (email/LinkedIn/voicemail scripts/etc.) but requires explicit human approval before any message is sent. Below I give a practical, end-to-end plan you can implement, including workflow, integration points, prompt examples, reviewer checklist, UI/UX behavior for approvals, guardrails/compliance, metrics to track, and a suggested phased roadmap.\n\nIf you want code or an actual prototype (e.g., Zapier/HubSpot/Sendgrid + OpenAI), te",
    "mention_snippet": null,
    "cost_usd": 0.005162
   },
@@ -179,9 +180,9 @@
     "Apollo",
     "Lemlist"
    ],
-   "answer_head": "Here\u2019s a compact, practical comparison and playbook you can use to choose between \u2014 or combine \u2014 autonomous vs assisted outbound in a founder\u2011led sales model.\n\nDefinitions\n- Autonomous outbound: repeatable outreach sequences driven by automation (email/LinkedIn/calling cadences, templates, CRM workflows) with minimal founder one\u2011off personalization. Goal: scale breadth with predictable metrics.\n- Assisted outbound: founder (or AE/SDR) personally crafts high\u2011touch, highly personalized outreach an",
+   "answer_head": "Good topic \u2014 there are two distinct ways founders run outbound outreach and they require different playbooks, people, tooling and KPIs. Below I\u2019ll define each, compare pros/cons, give a recommended hybrid approach, provide concrete transition thresholds (when to keep founder doing it vs hire/automate), an operational checklist, a sample 4\u2011week outreach sequence and two short templates you can copy, and suggested tooling & metrics to track.\n\n1) Quick definitions\n- Autonomous outbound: high\u2011automa",
    "mention_snippet": null,
-   "cost_usd": 0.004114
+   "cost_usd": 0.004798
   },
   {
    "n": 11,
@@ -191,9 +192,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Short answer\n- Autonomous AI SDR: an AI system that independently runs outbound prospecting and qualification workflows end-to-end (research, outreach by email/voice/LinkedIn, live conversation handling or asynchronous replies, and booking meetings / creating opportunities) with minimal human intervention.\n- Assisted AI SDR: AI tools that augment human SDRs \u2014 drafting messages, suggesting next actions, enriching data, real\u2011time call coaching and summarization \u2014 while humans stay in the decision ",
+   "answer_head": "Here\u2019s a concise, practical comparison and guide to \u201cautonomous\u201d vs \u201cassisted\u201d AI SDR (Sales Development Representative) approaches \u2014 what each is, pros/cons, when to choose one, how to implement, and concrete operational ideas you can act on.\n\n1) Definitions\n- Autonomous AI SDR: an AI system that executes substantial parts of SDR work end-to-end with minimal human intervention \u2014 prospecting, multi-step outreach (email/LinkedIn/voicemail scripts), qualification, booking meetings, and sometimes C",
    "mention_snippet": null,
-   "cost_usd": 0.003726
+   "cost_usd": 0.003892
   },
   {
    "n": 12,
@@ -202,8 +203,11 @@
    "engine": "gpt",
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
-   "competitors": [],
-   "answer_head": "Nice \u2014 below is a compact, battle-tested founder-led cold outreach playbook tailored for early-stage startups. It\u2019s designed so a founder can run outreach fast, validate messaging, and create repeatable pipeline before hiring Sales reps.\n\nUse this as a living playbook: run small experiments, measure, iterate weekly.\n\n1) Objective & constraints\n- Goal: book high-quality discovery calls that validate pain, close pilot customers, and create case studies.\n- Constraints: founder\u2019s limited time, minim",
+   "competitors": [
+    "Apollo",
+    "Lemlist"
+   ],
+   "answer_head": "Great \u2014 below is a concise, battle-tested founder-led cold outreach playbook you can use at an early-stage startup. It\u2019s organized as a checklist + templates + sequencing + measurement so you (the founder) can run and iterate quickly.\n\nHigh-level approach (why founder-led works)\n- Founders open doors because they can speak to vision, tradeoffs, and make decisions quickly.\n- Use founder-led outreach to: validate ICP, collect qualitative feedback, book high-quality discovery calls, and win early l",
    "mention_snippet": null,
    "cost_usd": 0.005163
   },
@@ -215,9 +219,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Good question \u2014 scaling founder-led sales is one of the most common, high-leverage challenges for early companies. Below is a concise, practical playbook you can apply today. I\u2019ll give the strategy, the tactical steps, hire/timing heuristics, KPIs to watch, a 90\u2011day starter plan, and common pitfalls.\n\nHigh-level goal\n- Move from \u201cfounder does everything\u201d to a repeatable, measurable sales motion that other reps can execute while founders focus on product, strategy, and the highest-value deals.\n\nW",
+   "answer_head": "Great \u2014 here\u2019s a practical, actionable guide to scaling founder\u2011led sales into a repeatable, hireable process. I\u2019ll cover signals that it\u2019s time to scale, the step\u2011by\u2011step playbook (who to hire and when), concrete processes and metrics to track, compensation guidance, and tips for transitioning founders out of day\u2011to\u2011day selling without killing growth.\n\nWhen to scale (signals)\n- Founder spends >50% of time on selling and that reduces product/strategy work.\n- Sales process is repeatable: same buy",
    "mention_snippet": null,
-   "cost_usd": 0.004236
+   "cost_usd": 0.004456
   },
   {
    "n": 14,
@@ -227,9 +231,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Short answer\nHire your first full\u2011time SDR when you have a repeatable sales motion and an incoming or addressable lead flow that you cannot reliably convert because the founders/AE are occupied with closing or product work \u2014 and you\u2019re ready to invest in training and systems so the hire can ramp. Practically, that\u2019s usually once you need predictable outbound or lead qualification to hit the next revenue milestone (see signals and thresholds below).\n\nWhen to hire \u2014 practical signals\n- You have a ",
+   "answer_head": "Short answer: hire an SDR when you have a repeatable way to win customers (early product\u2013market fit), a defined ideal customer profile (ICP) and messaging, and enough lead volume (or founder time spent qualifying) that qualifying/outbound is preventing growth. An SDR should relieve founders/AE time spent on lead generation and qualification so closers can focus on demos and contracts.\n\nWhen to hire \u2014 clear signals\n- You have repeatable closed deals from a defined ICP (you can consistently get me",
    "mention_snippet": null,
-   "cost_usd": 0.00392
+   "cost_usd": 0.00301
   },
   {
    "n": 15,
@@ -239,9 +243,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Useful \u2014 I\u2019ll give a short, practical playbook you can use to move from founder-led sales to your first hire (when to hire, which role, how to hire, comp + ramp + 90/180d goals, and a quick interview/scorecard). I\u2019ll flag the single most important preparatory work you must finish before hiring.\n\n1) Do this before you hire (must-have checklist)\n- You\u2019ve closed several (ideally 8\u201320) similar customers and can point to a repeatable pattern of why they bought (not just anecdotes). ([thegtmindex.com]",
+   "answer_head": "Great \u2014 here\u2019s a practical, ready-to-use playbook to move from founder-led sales into your first hire. I\u2019ll cover when to hire, who to hire, how to hire, comp/ramp/targets, the founder \u2192 rep handoff checklist, interview scorecard, onboarding (30/60/90), and common pitfalls. If you want, I can customize this to your product, ACV, sales cycle and current ARR \u2014 tell me those and I\u2019ll tailor numbers and a job post.\n\n1) When to hire (signals)\n- You\u2019re spending >50% of your time selling and it prevent",
    "mention_snippet": null,
-   "cost_usd": 0.027359
+   "cost_usd": 0.005162
   },
   {
    "n": 16,
@@ -250,12 +254,10 @@
    "engine": "gpt",
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
-   "competitors": [
-    "Lemlist"
-   ],
-   "answer_head": "Do you mean cold outbound email specifically, or cold outreach more broadly (email + LinkedIn + calls)? I can give a short, actionable benchmark summary now and then tailor it to your channel, industry, list size and whether the data is freshly collected first\u2011party or older/enriched \u2014 which matters.\n\nQuick summary (cold email using first\u2011party data)\n- Reply rate (all replies): Typical/median ~2\u20134%. Good: 5\u20138%. Excellent: 8%+. ([woodpecker.co](https://woodpecker.co/blog/cold-email-statistics/?ut",
+   "competitors": [],
+   "answer_head": "Here\u2019s a practical, source-agnostic summary you can use right away for cold outbound that\u2019s built from first\u2011party data (your own CRM, product usage data, event attendees, etc.). I\u2019ll state typical benchmark ranges, the assumptions behind them, what to measure, and concrete ways to improve results.\n\nShort summary (typical benchmark ranges \u2014 expect wide variance)\n- Cold email (first\u2011party, verified): open rate 20\u201350%, reply rate 1\u201310%, positive/meeting\u2011booked rate 0.5\u20133%. Bounce rate ideally <2%.",
    "mention_snippet": null,
-   "cost_usd": 0.038397
+   "cost_usd": 0.004062
   },
   {
    "n": 17,
@@ -264,10 +266,13 @@
    "engine": "gpt",
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
-   "competitors": [],
-   "answer_head": "",
+   "competitors": [
+    "Instantly",
+    "Saleshandy"
+   ],
+   "answer_head": "Short answer \u2014 industry-wide in 2026 a \u201cnormal\u201d cold\u2011email reply rate sits in the low single digits; most large platform studies put the cross\u2011platform average around ~3\u20134%, top performers >6\u201310%, and failing campaigns below ~1%. ([instantly.ai](https://instantly.ai/blog/cold-email/?utm_source=openai))\n\nKey benchmarks and patterns (2026)\n- Cross\u2011platform averages: Instantly\u2019s 2026 benchmark (billions of sends, data to Dec 2025) reports a 3.43% overall reply rate. Top performers often exceed 10%.",
    "mention_snippet": null,
-   "cost_usd": 0.092038
+   "cost_usd": 0.0492
   },
   {
    "n": 18,
@@ -277,9 +282,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Do you mean you want a product/feature that acts like an AI SDR (sales development rep) which automatically builds personalized product demos for prospects \u2014 or do you want help implementing one (design, prompts, tech stack, MVP plan, sample prompts, etc.)? I can do any of those. Below I\u2019ll give a compact, practical plan you can use immediately: product concept, core features, technical architecture, sample prompt templates the AI SDR would use, an MVP roadmap, and next steps. Tell me which part",
+   "answer_head": "Nice \u2014 I can help you design and/or prototype an \u201cAI SDR that builds custom demos.\u201d To make this useful, tell me whether you want a product plan, technical architecture, prompts & examples, a prototype plan with timelines, or actual code. Below is a compact, actionable brief you can use immediately plus next-step options.\n\nWhat this product does (1-sentence)\n- An AI-driven Sales Development Representative that automatically researches a prospect, qualifies needs, and produces a bespoke demo (sli",
    "mention_snippet": null,
-   "cost_usd": 0.004072
+   "cost_usd": 0.003828
   },
   {
    "n": 19,
@@ -289,9 +294,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Short answer: Yes \u2014 an AI-powered SDR can send from your (or your reps\u2019) actual email accounts, but you must implement it carefully for security, deliverability, compliance, and good UX. Below is a practical summary, a recommended checklist/workflow, key risks, and next steps I can help with.\n\nWhat \u201csending from your accounts\u201d means (options)\n- Send directly through the user\u2019s mailbox via provider APIs (Gmail API, Microsoft Graph/Outlook). Messages actually originate from that person\u2019s account. ",
+   "answer_head": "Short answer: yes \u2014 an AI-driven SDR (outbound sales assistant) can send messages from your own email or social accounts, but doing so safely requires careful setup for authentication, deliverability, security, and legal/compliance controls. Below is a practical guide and checklist so you can decide how to implement it.\n\nWhat \u201csend from your own accounts\u201d can mean (options)\n- Draft-only workflow: AI composes messages, a human reviews and sends from your account (lowest risk).  \n- Send-as / deleg",
    "mention_snippet": null,
-   "cost_usd": 0.003098
+   "cost_usd": 0.003362
   },
   {
    "n": 20,
@@ -304,9 +309,9 @@
     "Apollo",
     "Lemlist"
    ],
-   "answer_head": "Nice \u2014 here\u2019s a compact, practical plan for a 3-person startup with no dedicated sales team. I\u2019ll give you: (A) recommended tools by function (good free/cheap options and all-in-one alternatives), (B) a simple workflow, (C) deliverability & legal checklist, and (D) a quick budget guide. If you tell me your industry, target (SMBs vs enterprise), and monthly budget I\u2019ll tailor this.\n\nA. Best tools by function (good for a 3\u2011person team)\n- Prospecting / contact database (find targets + emails)\n  - A",
+   "answer_head": "Short answer: focus on an ultra-light, cheap-to-run stack that covers (1) a simple CRM, (2) prospect lists/enrichment, (3) an email/sequence tool, (4) email verification/warmup, (5) scheduling + calling, and (6) lightweight automation. Below are practical tool recommendations for a 3\u2011person startup with no dedicated sales team, why each fits, and quick setup tips.\n\nRecommended tools (by category)\n- CRM \u2014 HubSpot CRM (free tier). Simple contact/pipeline management, contact activity logging, basic",
    "mention_snippet": null,
-   "cost_usd": 0.003407
+   "cost_usd": 0.027254
   },
   {
    "n": 21,
@@ -315,10 +320,12 @@
    "engine": "gpt",
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
-   "competitors": [],
-   "answer_head": "Short answer: it depends \u2014 but a useful rule of thumb is:\n- Typical average for truly cold B2B outreach: about 1\u20135% reply rate.\n- A \u201cgood\u201d cold reply rate to aim for: 5\u201315%.\n- \u201cExcellent\u201d (uncommon for true cold): 15%+.\n- If you mean positive/qualified replies (interest, meeting booked): expect lower \u2014 roughly 0.5\u20133% typical; 3\u20137% is strong.\n\nWhy the wide range\n- Industry, role seniority, list quality, offer relevance and value, personalization, sender reputation, and deliverability all move the",
+   "competitors": [
+    "Lemlist"
+   ],
+   "answer_head": "Short answer: a \"good\" cold-email reply rate today is low \u2014 typically in the low single digits. As a practical rule of thumb:\n- Typical / average: about 1\u20134% reply rate. ([assets.mailshake.com](https://assets.mailshake.com/wp-content/uploads/2025/04/16091740/Cold-Email-Report-2025-Mailshake.pdf?utm_source=openai))  \n- Solid/good: ~4\u20137% (top quartile performers). ([b2bdataindex.com](https://b2bdataindex.com/research/cold-email-benchmarks-2026/?utm_source=openai))  \n- Excellent: >10% (possible, bu",
    "mention_snippet": null,
-   "cost_usd": 0.00255
+   "cost_usd": 0.026523
   },
   {
    "n": 22,
@@ -328,9 +335,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Short answer \u2014 averages are low and highly variable. Platform-level B2B cold-email reply (response) rates are roughly 3\u20134% on recent large-sample analyses, while well-targeted, warmed-up campaigns commonly hit 3\u20138%; 5\u201310% is \u201cgood\u201d and >10% is excellent but uncommon. ([woodpecker.co](https://woodpecker.co/blog/cold-email-statistics/?utm_source=openai))\n\nQuick benchmark summary (based on recent industry analyses)\n- Platform-wide average reply/response: ~3.1\u20133.4%. ([woodpecker.co](https://woodpeck",
+   "answer_head": "Short answer \u2014 recent B2B cold\u2011email benchmarks (summarized):\n\n- Typical average reply/response rate: roughly 1\u20135% overall. Platform-level studies in 2026 show a lot of campaigns clustering around ~3% (some platforms report 3.1\u20133.4%), while other samples / well-targeted programs report higher averages (~5%+). ([woodpecker.co](https://woodpecker.co/blog/cold-email-statistics/?utm_source=openai))  \n- Higher figures (5\u20139% or more) are reported for specific datasets (e.g., PR/link\u2011building outreach ",
    "mention_snippet": null,
-   "cost_usd": 0.015653
+   "cost_usd": 0.016163
   },
   {
    "n": 23,
@@ -342,9 +349,9 @@
    "competitors": [
     "Instantly"
    ],
-   "answer_head": "Short answer: across large platform studies the 2026 average cold-email reply rate is roughly 3\u20134% (commonly reported as 3.43%). ([instantly.ai](https://instantly.ai/cold-email-benchmark-report-2026?utm_source=openai))\n\nQuick context and benchmarks\n- Large-sample platform benchmark (Instantly): overall average 3.43%; top quartile \u2248 5.5%; top 10% (\u201celite\u201d) \u2248 10.7%+. ([instantly.ai](https://instantly.ai/cold-email-benchmark-report-2026?utm_source=openai))  \n- Many reports/industry roundups put the",
+   "answer_head": "Short answer: about 3.4% overall. Instantly\u2019s 2026 benchmark (data Jan 1\u2013Dec 18, 2025) reports a platform-wide average cold\u2011email reply rate of 3.43%. ([instantly.ai](https://instantly.ai/cold-email-benchmark-report-2026?utm_source=openai))\n\nQuick context and nuance\n- Reported averages cluster in the low single digits (roughly 2\u20135% depending on source and industry). Aggregated summaries put the common range around ~2.1%\u20134.4%. ([neverspam.com](https://neverspam.com/blog/cold-email-reply-rates?utm",
    "mention_snippet": null,
-   "cost_usd": 0.025537
+   "cost_usd": 0.037333
   },
   {
    "n": 24,
@@ -354,9 +361,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Short answer\n- A \u201cgood\u201d cold-email reply rate: ~5\u201310% is very strong; 2\u20135% is typical/average; <2% means you should change strategy.  \n- Exceptional, highly targeted campaigns can hit 10\u201320%+.\n\nUseful related benchmarks\n- Open rate: typically 15\u201340% (subject line + sender reputation matter).  \n- Meeting/qualified-lead rate (per total sends): often 0.5\u20133%.  \n- Positive-reply rate (replies that move the sale forward): usually a subset of total replies (often 20\u201360% of replies).\n\nWhy numbers vary s",
+   "answer_head": "Short answer\n- Typical B2B cold email reply rate: about 1\u20135%.\n- A \u201cgood\u201d reply rate: 5\u201310%.\n- Excellent: 10%+ (usually only with very tightly targeted, highly personalized outreach).\n- Highly targeted outreach (niche, warm lists, referrals) can reach 10\u201330% or more.\n\n(These are ranges \u2014 actual results depend on list quality, offer, industry, ask, and deliverability.)\n\nWhat \u201creply rate\u201d means\n- Reply rate = number of replies \u00f7 number of delivered emails.\n- Track both overall replies and positive ",
    "mention_snippet": null,
-   "cost_usd": 0.002232
+   "cost_usd": 0.004048
   },
   {
    "n": 25,
@@ -365,10 +372,13 @@
    "engine": "gpt",
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
-   "competitors": [],
-   "answer_head": "Here are concise, current cold\u2011email benchmarks (what people usually mean by \u201cconversion rate\u201d), plus short notes on variance and a few practical targets.\n\nImportant: these numbers vary by industry, list quality, personalization, and deliverability. Use them as ranges, not absolutes.\n\nKey metric definitions\n- Open rate = % of delivered emails opened.\n- Reply rate = % of delivered emails that get any reply.\n- Positive reply rate = % of delivered emails with an interested/qualified reply (vs. out\u2011",
+   "competitors": [
+    "Lemlist",
+    "Saleshandy"
+   ],
+   "answer_head": "Here are practical, up-to-date cold\u2011email benchmarks (based on industry reports and large datasets from 2025\u20132026) and what to aim for.\n\nHigh\u2011level benchmarks (what most studies report today)\n- Average reply rate (all cold outreach, blended): ~2\u20134% (a healthy/typical range is about 3\u20135%; top performers and highly targeted sequences can get much higher). ([saleshandy.com](https://www.saleshandy.com/blog/cold-email-statistics/?utm_source=openai))  \n- \u201cPositive\u201d reply rate (replies that indicate in",
    "mention_snippet": null,
-   "cost_usd": 0.026593
+   "cost_usd": 0.026999
   },
   {
    "n": 26,
@@ -378,9 +388,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Short answer: expect low single-digit reply rates for true cold B2B outreach. Most recent platform studies show overall reply/positive-response averages around ~1\u20134% for mass cold sends, with well-targeted/high-quality campaigns and best performers reaching 8\u201312% (or higher) on the top 10% of sequences. ([mailshake.com](https://mailshake.com/?p=17401&utm_source=openai))\n\nQuick benchmarks and what they mean\n- Platform/market averages: many recent analyses put the typical reply rate in the low sin",
+   "answer_head": "Short answer \u2014 typical B2B cold\u2011email reply rates are low: expect roughly 1\u20135% reply on average for true cold outreach, with \u201cgood\u201d campaigns getting toward the upper end and exceptional, highly targeted campaigns reaching higher. ([assets.mailshake.com](https://assets.mailshake.com/wp-content/uploads/2025/04/16091740/Cold-Email-Report-2025-Mailshake.pdf?utm_source=openai))\n\nQuick context and benchmarks\n- Median/typical reply rate (cold B2B): ~1\u20135% (many vendor studies cluster here). ([assets.ma",
    "mention_snippet": null,
-   "cost_usd": 0.014851
+   "cost_usd": 0.026334
   },
   {
    "n": 27,
@@ -390,9 +400,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Do you mean \u201csuccess rate\u201d as in opens, replies, meetings/bookings, or closed sales? Different teams measure different things \u2014 I\u2019ll give concise benchmarks for each, what moves them, quick best practices, and a short 4-email cold sequence you can use. Tell me if you want industry- or channel-specific numbers (B2B vs B2C) and I\u2019ll tailor them.\n\nTypical benchmark ranges (approximate)\n- Open rate: 15\u201340% (subject line, sender name, and deliverability drive this).\n- Click-through rate (if there\u2019s a",
+   "answer_head": "Quick summary (B2B benchmarks from recent industry reports, 2024\u20132026):\n- Open rate: typically ~20\u201330% (directional \u2014 opens are less reliable now). ([blog.hubspot.com](https://blog.hubspot.com/sales/call-or-email-tips-to-determine-when-to-use-which-in-sales?LanguageId=1&utm_source=openai))  \n- Reply/response rate: typical range 1\u20135%; many large datasets put the current overall average around ~3\u20134%. ([smartreach.io](https://smartreach.io/blog/cold-email-statistics/?utm_source=openai))  \n- Positiv",
    "mention_snippet": null,
-   "cost_usd": 0.003949
+   "cost_usd": 0.014482
   },
   {
    "n": 28,
@@ -402,9 +412,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Short answer: cold emails often get no replies because they fail to grab interest, don\u2019t look trustworthy or relevant, or never reach the right person. Below are the most common causes and quick fixes you can apply.\n\nCommon causes (with quick fixes)\n- Unclear or weak subject line\n  - Fix: be specific, benefit-focused, or curiosity-building (e.g., \u201cQuick idea to reduce X by 20%\u201d).\n- No personalization / irrelevant\n  - Fix: reference a real pain, role, company detail, or recent event \u2014 show you di",
+   "answer_head": "Short answer: most cold emails get no reply because they fail to prove relevance or trust quickly \u2014 or they never reach the inbox. Below are the common causes (grouped) and concise fixes you can apply.\n\nMain causes and fixes\n\n1. Lack of relevance / unclear value\n- Cause: Recipient doesn\u2019t see why it matters to them in the first 2\u20135 seconds.\n- Fix: State a single, specific benefit or outcome tied to their role/company. Use a brief line that shows you understand their situation (metric, recent new",
    "mention_snippet": null,
-   "cost_usd": 0.002484
+   "cost_usd": 0.002936
   },
   {
    "n": 29,
@@ -414,9 +424,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Short answer: because something in your targeting, deliverability, message, or follow-up sequence isn\u2019t convincing recipients to take the small next step. To help you fix it quickly, answer the three quick questions below and then use the checklist and templates I\u2019ve included.\n\nQuick questions (so I can give targeted fixes)\n- Who are you emailing (title, company size, industry)?\n- What are your current metrics: send volume, open rate, reply rate (and what you consider a \u201creply\u201d)?\n- Can you paste",
+   "answer_head": "Short answer: because one or more of these things is broken \u2014 targeting, deliverability, message, timing, or follow-up. Below I\u2019ll list the most common causes, quick checks you can run now, specific fixes you can try, a simple test plan, and two short example templates you can steal. If you share one of your actual emails and your open/bounce/reply rates I\u2019ll give a direct edit.\n\nMost common causes\n- Poor targeting: the recipient isn\u2019t the right person or the use\u2011case isn\u2019t relevant.  \n- Weak su",
    "mention_snippet": null,
-   "cost_usd": 0.004192
+   "cost_usd": 0.003452
   },
   {
    "n": 30,
@@ -426,9 +436,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Great \u2014 here\u2019s a compact, actionable playbook you can use right away to raise cold\u2011email response rates.\n\n1) Lead qualification and list hygiene\n- Target tightly: smaller, well\u2011defined list of recipients who have the problem you solve. Quality beats quantity.\n- Verify emails and remove invalid addresses. Clean lists improve deliverability and open rates.\n- Segment by role/industry/company size so messaging is relevant.\n\n2) Deliverability basics (don\u2019t skip)\n- Send from a real, warmed domain/emai",
+   "answer_head": "Short answer: focus on relevance + value, keep it very short and personal, follow up reliably, and fix deliverability. Below is a practical playbook you can use right away.\n\n1) Core principles\n- Relevance first: show you understand their role/company and a real pain they have.  \n- Value second: state a tangible outcome (time saved, revenue increase, cost cut) \u2014 preferably a number.  \n- Simplicity: one clear, low-friction CTA (a yes/no question or a single proposed time).  \n- Brevity: first outre",
    "mention_snippet": null,
-   "cost_usd": 0.003548
+   "cost_usd": 0.004402
   },
   {
    "n": 31,
@@ -438,9 +448,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Short answer: make your emails clear, short, personally relevant, and easy to respond to \u2014 then follow up. Below are practical tactics, a recommended cadence, subject/preview examples, ready-to-use templates, and what to measure.\n\nWhy people don\u2019t reply (quick checklist)\n- Irrelevant or generic message.  \n- Too long / no obvious value.  \n- No clear, low-friction next step.  \n- Poor timing or deliverability (lands in spam).  \n- You didn\u2019t follow up.\n\nHigh-impact tactics (actionable)\n1. Lead resea",
+   "answer_head": "Short answer: write shorter, clearer, more personal emails that lead the recipient to one simple next step \u2014 then follow up several times while monitoring deliverability and testing. Below is a practical playbook you can copy-and-paste.\n\n1) Before you write\n- Target quality over quantity: use a clean, targeted list (role + industry + company size) not purchased spray lists.\n- Research one specific thing per recipient you can mention (recent funding, hiring, blog post, mutual connection, job chan",
    "mention_snippet": null,
-   "cost_usd": 0.00365
+   "cost_usd": 0.003382
   },
   {
    "n": 32,
@@ -450,9 +460,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Short answer: No \u2014 cold email is not dead in 2026, but the game changed. It still works for many teams, but only when senders solve deliverability, target real intent, and write truly relevant, low-volume outreach instead of \u201cspray-and-pray.\u201d ([blog.google](https://blog.google/products-and-platforms/products/gmail/gmail-security-authentication-spam-protection/?utm_source=openai))\n\nWhy people say it\u2019s \u201cdead\u201d\n- Major mailbox providers tightened rules (Google/Yahoo bulk-sender requirements and DMAR",
+   "answer_head": "Short answer: No \u2014 cold email is not dead as of July 21, 2026 \u2014 but it\u2019s much harder and more technical than it was a few years ago. ([research.mental-momentum.ai](https://research.mental-momentum.ai/r/b2b-cold-email-outreach-deliverability-wchyi5?utm_source=openai))\n\nWhy people say \u201cdead\u201d\n- Reply and positive-response rates have fallen industry-wide (platform-wide reply rates near ~3\u20134% in 2026 vs ~5%+ earlier). Low-effort, AI\u2011generated outreach and stricter inbox filtering are major causes. ([",
    "mention_snippet": null,
-   "cost_usd": 0.026454
+   "cost_usd": 0.016102
   },
   {
    "n": 33,
@@ -462,9 +472,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Short answer: Yes \u2014 cold email still works for B2B, but its effectiveness depends heavily on how you do it. Done well it\u2019s a predictable lead channel; done badly it\u2019s low ROI or gets you deliverability problems and complaints.\n\nHow and when it works\n- Works when you target the right ICP (ideal customer profile) with a high-quality list and a clear, relevant value proposition.\n- Fails when it\u2019s mass, generic, spammy, or sent from unauthenticated/new domains without warming \u2014 those get low replies",
+   "answer_head": "Short answer: yes \u2014 cold email still works for B2B, but it\u2019s harder than it used to be and success depends almost entirely on targeting, message quality, deliverability, legal compliance, and follow\u2011up.\n\nQuick evidence and context\n- Benchmarks and industry reports show average reply rates in the low single digits (commonly ~1\u20136% for broad cold campaigns), and many teams report falling reply/open rates in 2024\u20132026 as inboxes get more crowded. Top performers still get much better results by being",
    "mention_snippet": null,
-   "cost_usd": 0.003258
+   "cost_usd": 0.026975
   },
   {
    "n": 34,
@@ -474,9 +484,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Good question \u2014 the emails that get replies follow a few consistent principles. Below is a compact, actionable guide, a short checklist, and ready-to-send templates you can adapt.\n\nCore principles\n- Be relevant: show you know the recipient and why this matters to them.\n- Lead with value, not yourself: answer \u201cWhat\u2019s in it for them?\u201d quickly.\n- Keep it short: 3\u20136 short sentences + clear CTA.\n- Make the ask small and specific: one clear next step (15-min call, quick yes/no).\n- Personalize one conc",
+   "answer_head": "Here\u2019s a short, practical guide + ready-to-use templates so your cold emails actually get replies.\n\nCore principles (the checklist)\n- Subject line: short, benefit- or curiosity-driven, and personal when possible (5\u20137 words).  \n- Personalize the first line: show you researched them (company, recent post, mutual connection).  \n- Lead with value: say what\u2019s in it for them within the first 1\u20132 lines.  \n- Be brief: 50\u2013125 words is ideal; one idea per email.  \n- Single, low-friction CTA: ask a simple ",
    "mention_snippet": null,
-   "cost_usd": 0.003538
+   "cost_usd": 0.004046
   },
   {
    "n": 35,
@@ -486,9 +496,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Useful, practical cold-email tips for reaching B2B founders \u2014 short, actionable, and ready to use.\n\nQuick principles (what matters most)\n- Be relevant + specific in 3 seconds: founders decide quickly. Lead with a meaningful outcome or a concrete observation about their company.\n- Keep it tiny: subject ~3\u20136 words; body 50\u2013125 words; first line must hook.\n- Value-first, not feature-first: tell them what will change (revenue, cost, growth, time saved) and how fast.\n- Make reply frictionless: ask fo",
+   "answer_head": "Great \u2014 here are practical, battle-tested cold-email tips tailored for reaching B2B founders (concise, actionable, and ready to use).\n\nTop-level principle\n- Founders are busy. Be relevant, very concise, and lead with value (what you\u2019ll change for them) + an ultra-low-friction ask.\n\nBefore you write \u2014 quick research checklist (30\u201360s)\n- Recent trigger: fundraise, hiring, product launch, press, blog post, tech stack, Crunchbase/LinkedIn, Twitter threads.\n- One specific pain you can solve (revenue,",
    "mention_snippet": null,
-   "cost_usd": 0.003896
+   "cost_usd": 0.00391
   },
   {
    "n": 36,
@@ -498,9 +508,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Good question \u2014 a great B2B cold email is short, personal, and focused on one clear value/CTA. Below is a practical guide, templates you can copy, and a follow-up sequence you can use.\n\n1) Quick rules\n- Keep it short: 50\u2013125 words (3\u20136 short lines).\n- Personalize the first line (not just the subject).\n- Lead with value or an insight specific to their business.\n- Make the CTA tiny and easy (e.g., \u201c15 minutes next week?\u201d).\n- Use one offer per email (demo, call, trial).\n- End with a polite sign-off",
+   "answer_head": "Here\u2019s a practical, repeatable guide plus ready-to-send templates to write effective B2B cold emails.\n\nQuick rules (keep these top of mind)\n- Lead with value, not your company. In the first line show you understand their world or pain.  \n- Personalize one thing (role, company metric, recent event) \u2014 it beats generic blasts.  \n- Make it short: 3\u20136 sentences (subject + 1\u20132 short paragraphs + CTA).  \n- One clear CTA (suggest 2 specific times or \u201creply if interested\u201d).  \n- Use a specific subject lin",
    "mention_snippet": null,
-   "cost_usd": 0.003523
+   "cost_usd": 0.003899
   },
   {
    "n": 37,
@@ -510,9 +520,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Short answer (TL;DR)\n- Personalization usually increases cold\u2011email reply rates, but the size of the lift depends hugely on the type of personalization and list quality. Broad industry datasets find mid\u2011teens to low\u2011double\u2011digit reply rates for deep, signal\u2011led personalization vs single\u2011token merges that give only small lifts. ([woodpecker.co](https://woodpecker.co/blog/cold-email-statistics/?utm_source=openai))\n\nWhat the research and large datasets say (key findings)\n1. Large-scale analyses (mi",
+   "answer_head": "Do you mean you want an evidence summary of how personalization in cold emails affects reply rates (with studies and industry benchmarks), or do you want practical guidance (what personalization tactics work, templates, and how to A/B test)? Also helpful to know whether you care about B2B or B2C outreach and whether you want academic papers, marketing/ESP benchmarks, or both.\n\nTell me which of the following you want and I\u2019ll pull research + cite sources:\n1) Short evidence summary + key numbers (",
    "mention_snippet": null,
-   "cost_usd": 0.060225
+   "cost_usd": 0.001286
   },
   {
    "n": 38,
@@ -525,9 +535,9 @@
     "Apollo",
     "Lemlist"
    ],
-   "answer_head": "Good topic \u2014 personalization is the single biggest factor that separates ignored cold email blasts from scalable outbound that actually gets replies. Below is a practical, actionable playbook you can use to personalize cold email at scale, plus templates, technical notes, deliverability & compliance checks, and a safe way to use AI.\n\nQuick summary\n- Personalization at scale = structured data + modular templates + automated personalization generation + human QA + good deliverability practices.\n- ",
+   "answer_head": "Here\u2019s a practical, ready-to-use playbook for doing cold-email personalization at scale \u2014 fast overview, step-by-step process, templates you can drop into your outreach tool, deliverability and legal notes, plus a short checklist to run at launch. If you want, tell me your target industry, volume (e.g., 500/week vs 50k/month), and the tools you already use and I\u2019ll tailor examples and token lists.\n\nQuick summary\n- Personalization at scale = combine reliable data/enrichment + repeatable personali",
    "mention_snippet": null,
-   "cost_usd": 0.004697
+   "cost_usd": 0.005161
   },
   {
    "n": 39,
@@ -537,9 +547,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Short answer: it depends \u2014 but a typical, effective cold-email program is a 4\u20136 message sequence (email + follow-ups, plus at least one social touch) rather than a single blast. That sequence materially increases the chance of booking a meeting versus one standalone email.\n\nHere\u2019s a practical playbook you can use right away.\n\n1) Recommended sequence & cadence\n- Email 1 (intro + value): Day 0\n- Email 2 (reminder / add value): Day 3\u20134\n- Email 3 (case study / social proof): Day 8\u201310\n- Email 4 (shor",
+   "answer_head": "Short answer\n- There\u2019s no single \u201cright\u201d number\u2014most effective cold-email campaigns use a series of emails (not just one). A common practical range is 4\u20137 touches (initial email + 3\u20136 follow-ups) over 2\u20134 weeks.\n- Expected meetings vary hugely by list quality and personalization:\n  - Broad, low-personalization blasts: 0.1\u20130.5% meetings (\u2248 0\u20131 meetings per 1000).\n  - Targeted B2B outreach: 0.5\u20132% meetings (\u2248 1\u201320 meetings per 1,000).\n  - Highly personalized/outbound SDR work: 2\u201310% meetings (\u2248 20",
    "mention_snippet": null,
-   "cost_usd": 0.003072
+   "cost_usd": 0.00341
   },
   {
    "n": 40,
@@ -549,9 +559,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Nice \u2014 here\u2019s a compact, practical guide you can use immediately. I\u2019ll cover principles, recommended cadences (with exact timing), subject-line ideas, short templates, deliverability & legal tips, and metrics to track.\n\nKey principles\n- Value-first: every message should offer something useful (insight, data, help) or make it easy to say \u201cyes\u201d to a small next step.\n- Short & scannable: 2\u20134 short sentences (50\u2013125 words). One clear CTA.\n- Personalization matters: reference a specific trigger (comp",
+   "answer_head": "Here\u2019s a compact, practical set of best practices for cold-email follow-up cadence \u2014 deliverability, timing, content, and ops \u2014 with a ready-to-use sample cadence and a short checklist you can apply immediately.\n\nHigh-level rules\n- Aim for 3\u20134 total touches for most B2B plays (initial + 2\u20133 follow-ups). Extra touches only help if each adds real value or a new angle. [ziellab.com](https://ziellab.com/post/cold-email-follow-up-sequence-b2b-guide)\n- Early follow-ups should be relatively close; wide",
    "mention_snippet": null,
-   "cost_usd": 0.003936
+   "cost_usd": 0.010166
   },
   {
    "n": 41,
@@ -561,9 +571,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Great \u2014 here\u2019s a practical, copy-and-paste-ready playbook for cold outreach for a B2B SaaS startup. I\u2019ll cover strategy, targeting, channel mix, cadence, deliverability and compliance, measurement, common mistakes, and give short templates for email, LinkedIn and voicemail you can adapt.\n\n1) Strategy & prerequisites (don\u2019t skip)\n- Define your ICP (industry, company size, role, tech stack, trigger events). The tighter the ICP, the higher your reply-to-meeting rate.\n- Decide the primary goal per c",
+   "answer_head": "Below is a practical, repeatable playbook you can use to run cold outreach for a B2B SaaS startup \u2014 from strategy and audience selection to message templates, cadence, metrics and scaling. If you want, I can turn these templates into messages customized to your product and ideal customer profile (ICP) \u2014 tell me industry, buyer role, ARR/ACV, and one key customer win or result.\n\n1) Start with strategy (don\u2019t spray-and-pray)\n- Define your ICP precisely: industry, company size (revenue or employee ",
    "mention_snippet": null,
-   "cost_usd": 0.005163
+   "cost_usd": 0.004971
   },
   {
    "n": 42,
@@ -573,12 +583,11 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [
-    "Apollo",
     "Lemlist"
    ],
-   "answer_head": "Below is a practical, copy\u2011pasteable guide to cold outreach for startups \u2014 designed to win customers, partners, hires or investors. Read the short checklist first, then pick the section(s) you need (B2B customers, investors, hires, LinkedIn + phone). Tell me which target you want and I\u2019ll customize templates & sequences to your product, stage, and ICP.\n\nQuick checklist (before you send anything)\n- Define a single goal per campaign: demo, meeting, trial signup, intro, or hire.  \n- Pick one ICP (i",
+   "answer_head": "Below is a practical, ready-to-use guide for cold outreach startups \u2014 covers strategy, channels, sequences, deliverability, metrics, and templates you can copy and customize. If you tell me your target (ICP / role / industry) I\u2019ll tailor the templates.\n\n1) Start with the fundamentals\n- Goal: single, measurable primary goal per campaign (e.g., book demos, get 1 intro meeting with a VP, confirm interest).\n- ICP: define one Ideal Customer Profile \u2014 industry, company size, role, geography, tech stac",
    "mention_snippet": null,
-   "cost_usd": 0.005161
+   "cost_usd": 0.004895
   },
   {
    "n": 43,
@@ -587,10 +596,13 @@
    "engine": "gpt",
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
-   "competitors": [],
-   "answer_head": "Short comparison, when to use each, plus concrete sequences, templates, metrics and best practices you can act on immediately.\n\n1) High-level differences (quick)\n- Cold email\n  - Pros: Scalable, trackable, can include links/attachments, easier to A/B test, lower platform restrictions.\n  - Cons: Deliverability issues (spam), lower initial trust, legal/privacy rules (CAN-SPAM/GDPR), often low raw reply rates.\n  - Best when: You need to reach many targets fast, share a document/demo link, or run me",
+   "competitors": [
+    "Apollo",
+    "Lemlist"
+   ],
+   "answer_head": "Short answer\n- Use both. Cold email scales and gets you into inboxes; LinkedIn builds credibility, warms prospects, and often yields higher reply quality. The best program combines them in a coordinated multi\u2011touch sequence.\n\nQuick comparison (at-a-glance)\n- Deliverability & scale: Cold email = high scale, depends on domain reputation; LinkedIn = lower scale (manual or paid InMail), less deliverability risk but platform limits.\n- Perceived trust: LinkedIn > Email (people expect outreach on Linke",
    "mention_snippet": null,
-   "cost_usd": 0.004214
+   "cost_usd": 0.003792
   },
   {
    "n": 44,
@@ -600,9 +612,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Here\u2019s a practical, repeatable playbook for cold outreach on LinkedIn \u2014 steps, message templates you can copy, timing, and what to test.\n\nBefore you message\n- Clean up your profile: clear headshot, concise headline that says who you help and outcome, 2\u20133 short bullets in About, and 1\u20132 proof items (case study, testimonial, article) in Featured.\n- Define your ICP (ideal customer profile): role, industry, company size, geography, pain points.\n- Do quick research for each prospect: recent post, com",
+   "answer_head": "Here\u2019s a practical, step-by-step playbook you can use to do cold outreach on LinkedIn \u2014 plus ready-to-use message templates and follow-up cadence.\n\n1) Prep your profile (before you message)\n- Photo: professional, clear headshot.\n- Headline: short, benefit-oriented (not just job title).\n- About summary: explain who you help and how in 2\u20133 lines.\n- Add social proof: recommendations, featured work, recent posts.\nWhy: recipients check you \u2014 a weak profile lowers acceptance/reply rates.\n\n2) Targeting",
    "mention_snippet": null,
-   "cost_usd": 0.004926
+   "cost_usd": 0.00295
   },
   {
    "n": 45,
@@ -612,9 +624,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Great \u2014 here are focused, ready-to-use LinkedIn outreach tips for founders, organized so you can act on them immediately.\n\nProfile + presence (first impression)\n- Make your headline outcome-focused (e.g., \u201cFounder \u2014 helping B2B fintechs cut onboarding time 50%\u201d).\n- Use a professional headshot + banner that reinforces your value/traction (logo, metric, short tagline).\n- Short About section: 1\u20132 lines of what you build, 1 line of traction/social proof, 1 sentence CTA (e.g., \u201cDM for 15\u2011min demo\u201d).\n",
+   "answer_head": "Do you mean (A) tips for founders who are doing outreach on LinkedIn, or (B) tips for people who want to do outreach to founders? I can give targeted templates for either \u2014 which do you want?\n\nBelow are bite\u2011size, high\u2011impact tips plus ready-to-use templates that work for both scenarios (you can skip to the templates if you want quick copy).\n\nQuick rules that move responses up (apply to either side)\n- Be ultra-short: 1\u20132 sentences for a connection request; 2\u20134 short sentences for follow-ups.  \n-",
    "mention_snippet": null,
-   "cost_usd": 0.003491
+   "cost_usd": 0.004735
   },
   {
    "n": 46,
@@ -624,9 +636,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Great \u2014 here\u2019s a compact, actionable playbook you can use today to book more demos for a B2B SaaS product. Pick the 2\u20133 highest-impact items you can execute this week and iterate.\n\n1) Lock your foundation (targeting + offer)\n- Define a tight ICP (industry, company size, role, tech stack, pain). Narrow > broad.\n- Clarify the demo value: what one measurable outcome will the prospect get from a live demo (time saved, cost reduced, revenue uplift)?\n- Create 2\u20133 demo types: short qualifying (15 min),",
+   "answer_head": "Short answer: focus on the right prospects, make it ridiculously easy to book, lead with clear value, and run repeatable multi-channel outreach + measurement. Below is a compact, actionable playbook you can use today.\n\nCore principles (one-sentence each)\n- Target tightly: fewer, better-fit prospects convert far higher than broad lists.  \n- Reduce friction: let prospects book instantly, on their terms (calendar link + short form).  \n- Lead with value, not features: \u201cHow we help X reduce Y in Z we",
    "mention_snippet": null,
-   "cost_usd": 0.003999
+   "cost_usd": 0.004567
   },
   {
    "n": 47,
@@ -636,9 +648,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Good question \u2014 there are many high\u2011leverage ways to increase demo booking rate. To give the most useful advice I\u2019ll first clarify two definitions and then give a prioritized playbook, metrics to track, concrete experiments and ready-to-use templates you can copy.\n\nQuick definition\n- Demo booking rate (pick the one you use):  \n  - Visitor \u2192 Demo request rate = number of demo requests / website visitors.  \n  - Lead \u2192 Demo booked rate = demos booked / qualified leads (or / MQLs).  \nMake sure you k",
+   "answer_head": "Good question \u2014 improving demo booking rate is mostly about reducing friction, increasing perceived value, and targeting the right people. Below is a compact, practical playbook you can apply and adapt quickly.\n\n1) Define the metric\n- Demo booking rate = (number of demos booked) / (relevant audience). Pick one denominator and stick with it (e.g., visitors who hit the demo page, MQLs, free-trial users, or outbound contacts). That keeps tests comparable.\n\n2) Quick wins (implement in days)\n- One-cl",
    "mention_snippet": null,
-   "cost_usd": 0.004722
+   "cost_usd": 0.004016
   },
   {
    "n": 48,
@@ -648,9 +660,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Good question \u2014 there are a lot of levers you can pull. First, quick clarification: by \u201cSDR conversion rates\u201d do you mean outreach\u2192meeting (booked demo), meeting\u2192SQL, lead\u2192MQL, or something else? If you tell me which metric and your current baseline I can give more targeted steps. Below are high-impact, practical tactics you can apply immediately and a short roadmap for longer-term improvement.\n\nTop-level approach\n- Measure and pick one conversion metric to optimize (e.g., outreach\u2192meeting). Kno",
+   "answer_head": "Good question \u2014 improving SDR conversion rates is mostly about tightening three things: who you target, what you say, and how you run the process. Below is a compact, actionable playbook you can start using today, plus a few concrete templates and metrics to test.\n\n1) Clarify the foundation\n- Define/validate your ICP (industry, company size, role, buying triggers). If SDRs talk to the wrong people, conversion will be low no matter what.\n- Improve lead quality and routing: tighten lead-scoring ru",
    "mention_snippet": null,
-   "cost_usd": 0.00463
+   "cost_usd": 0.003712
   },
   {
    "n": 49,
@@ -660,9 +672,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Do you mean sales-development (SDR/BDR) benchmarks? If so, here\u2019s a concise set of common SDR metrics with industry benchmark ranges (sourced from recent market reports). If you meant a different \u201cSDR,\u201d tell me which and I\u2019ll adjust.\n\nKey SDR metrics & benchmarks\n- Qualified meetings (booked) / SDR / month: ~8\u201315 (median \u2248 10\u201312). Top performers 15\u201325. ([growthspreeofficial.com](https://www.growthspreeofficial.com/blogs/b2b-saas-sdr-ae-quota-productivity-benchmarks-2026-by-acv-segment-motion?utm",
+   "answer_head": "Do you mean \u201cSDR\u201d as a Sales Development Representative (sales/BDR) \u2014 or something else (software-defined radio, signal-to-distortion ratio, sparse distributed representations, etc.)?\n\nIf you mean Sales Development Representatives, do you want:\n- high-level KPI definitions and typical benchmark ranges (quick reference), or\n- current, industry-specific benchmarks (e.g., B2B SaaS vs. enterprise vs. SMB, by region), with citations?\n\nQuick reference (Sales SDR KPIs and typical benchmark ranges \u2014 gen",
    "mention_snippet": null,
-   "cost_usd": 0.038241
+   "cost_usd": 0.002415
   },
   {
    "n": 50,
@@ -674,7 +686,7 @@
    "competitors": [
     "Apollo"
    ],
-   "answer_head": "Below is a practical, ready-to-run cold outbound playbook for SDRs. It\u2019s channel-agnostic and usable for both SDRs and SDR managers. If you want it tailored to your ICP (SMB vs. enterprise), industry, or product, tell me and I\u2019ll customize.\n\n1) Objective & success metrics\n- Objective: Book qualified first meetings (15\u201330 minute discovery/demo) that convert to SQLs for AEs.\n- Primary KPIs: dials/day, emails sent/day, LinkedIn touches/day, response rate, meeting set rate (touch \u2192 meeting), MQL\u2192SQL",
+   "answer_head": "Below is a practical, ready-to-run cold outbound playbook SDRs can use and adapt. It covers strategy, cadences, templates, qualification, objections, metrics, tools, legal notes, and onboarding \u2014 so an SDR team can execute and iterate quickly.\n\n1) Objective & approach\n- Primary goal: generate qualified meetings that convert to SQLs for AE handoff.\n- Philosophy: research + 1-2 powerful personalization tokens per touch + clear single CTA (book a meeting, agree to demo, allow a brief discovery call",
    "mention_snippet": null,
    "cost_usd": 0.005162
   },
@@ -685,10 +697,12 @@
    "engine": "gpt",
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
-   "competitors": [],
-   "answer_head": "Below is a practical, repeatable playbook for running a cold outbound channel (email / LinkedIn / calls). It\u2019s condensed into steps you can act on immediately plus ready-to-use templates and metrics to track.\n\nQuick summary\n- Focus: target the right prospects, send short value-first messages, sequence follow-ups, measure rigorously, and protect deliverability/compliance.\n- Goal: book qualified conversations (not push for immediate sale).\n\nStep\u2011by\u2011step playbook\n1) Define ICP (ideal customer profi",
+   "competitors": [
+    "Apollo"
+   ],
+   "answer_head": "Here\u2019s a practical, step-by-step playbook for building and running a high-performing cold outbound channel (email / calls / LinkedIn). I\u2019ll give the strategy, a sample cadence, templates, tools, KPIs to track, and common pitfalls.\n\n1) Start with strategy and goals\n- Define the objective: meetings booked, MQLs/SQLs, pipeline dollars, or direct sales. Be specific (e.g., 50 meetings/month).\n- Define your ICP (ideal customer profile): industry, company size, geography, role(s), tech stack, ARR, pain",
    "mention_snippet": null,
-   "cost_usd": 0.004204
+   "cost_usd": 0.004702
   },
   {
    "n": 52,
@@ -700,9 +714,9 @@
    "competitors": [
     "Lemlist"
    ],
-   "answer_head": "Short answer: you measure whether cold outbound is working by tracking a small set of reliable KPIs (deliverability \u2192 engagement \u2192 pipeline \u2192 revenue), diagnosing where the funnel leaks, and running systematic tests. Below is a practical checklist you can use right away.\n\n1) Core KPIs to track (and how to calculate them)\n- Sent: total outreach attempts.\n- Deliverability metrics:\n  - Bounce rate = bounces / sent. (High = bad.)\n  - Spam complaint rate = spam complaints / delivered. (Even small rat",
+   "answer_head": "Short answer: measure outcomes against the goal (meetings, pipeline, revenue). If you\u2019re getting qualified meetings / opportunities at a sustainable cost and conversion rate, cold outbound is \u201cworking.\u201d If you only get opens but no replies, or replies are low-quality, it isn\u2019t.\n\nHere\u2019s a practical checklist and how to evaluate it.\n\n1) Start with the right goal (the north star)\n- Decide what \u201cworking\u201d means for you: meetings booked, SQLs, opportunities created, revenue, or pipeline velocity. Ever",
    "mention_snippet": null,
-   "cost_usd": 0.004128
+   "cost_usd": 0.003616
   },
   {
    "n": 53,
@@ -712,9 +726,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Nice \u2014 here\u2019s a compact, actionable playbook you can follow to land your first 10 B2B SaaS customers (no fluff, just steps, scripts, and metrics).\n\nHigh-level approach (why this works)\n- Start hyper-targeted: the easiest customers are a small, specific segment that has the pain your product solves today.\n- Use outbound + network first (fastest), supplement with one inbound channel (content/ads) if you have runway.\n- Sell a low-risk pilot/paid trial with hands-on onboarding so early customers get",
+   "answer_head": "Great \u2014 here\u2019s a compact, repeatable playbook you can use to land your first 10 B2B SaaS customers (actionable steps, templates, and targets). If you want, tell me your target industry/ICP and I\u2019ll personalize the scripts.\n\nHigh-level approach (why it works)\n- Focus on a very narrow ICP (industry + company size + role). Early buyers buy from people who clearly solve one specific pain.\n- Use founder-led outreach + product demos + irresistible pilot/terms (white-glove onboarding). Close the first ",
    "mention_snippet": null,
-   "cost_usd": 0.005003
+   "cost_usd": 0.004617
   },
   {
    "n": 54,
@@ -724,9 +738,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Short answer: focus on a small, well-defined customer segment, reach them where they already are, and use fast feedback loops (talk \u2192 build \u2192 test \u2192 repeat). Below is a practical, prioritized playbook with scripts and a simple 30-day plan you can start using today.\n\nTop principles\n- Narrow: pick one specific customer persona and one use-case. Don\u2019t try to sell to everyone.\n- Talk first: validate with real conversations before spending on marketing or building features.\n- Give value: offer someth",
+   "answer_head": "Short answer: focus on one narrow customer segment with a clear problem, reach them where they already talk/work, do personal outreach, and iterate quickly based on real conversations. Below is a compact, actionable playbook you can use this week and scale.\n\nCore principles (read first)\n- Solve a real, specific pain for a narrowly defined customer. Don\u2019t sell a vague \u201cplatform.\u201d\n- Treat your first customers as co\u2011creators: ask for feedback, iterate, and make them feel heard.\n- Personal outreach ",
    "mention_snippet": null,
-   "cost_usd": 0.003562
+   "cost_usd": 0.00321
   },
   {
    "n": 55,
@@ -736,9 +750,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Short answer: there\u2019s no single \u201cbest\u201d channel \u2014 the highest-return channels for B2B SaaS are those that fit your product\u2019s buying motion (self-serve vs enterprise), buyer persona (developer, ops, marketing, executive), and stage. That said, the channels that most consistently drive scale for B2B SaaS are:\n\nCore channels (high ROI if matched to product + buyer)\n- Product-led growth (PLG / free trial / freemium)\n  - How: make value obvious in-product, optimize activation and upgrade prompts.\n  - ",
+   "answer_head": "Short answer: there\u2019s no single \u201cbest\u201d channel \u2014 the highest-return channels for a B2B SaaS depend on your go\u2011to\u2011market model (product\u2011led vs sales\u2011led), target customer (SMB vs mid\u2011market vs enterprise), price & sales cycle, and team/budget. That said, these are the consistently highest\u2011impact channels and how to use them.\n\nTop growth channels for B2B SaaS (what they do, when to use them, quick tactics & KPIs)\n\n1. Product\u2011led growth (PLG: freemium / free trial / self\u2011serve)\n- When: low\u2011touch on",
    "mention_snippet": null,
-   "cost_usd": 0.003688
+   "cost_usd": 0.004444
   },
   {
    "n": 56,
@@ -747,12 +761,10 @@
    "engine": "gpt",
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
-   "competitors": [
-    "Lemlist"
-   ],
-   "answer_head": "Below is a concise, practical go\u2011to\u2011market (GTM) playbook you can adapt to a seed-stage startup. It\u2019s focused on one clear goal: validate repeatable customer acquisition and a scalable sales motion fast, with minimal burn.\n\nHigh-level objective\n- Short term (0\u20133 months): validate product-market fit by acquiring your first 10\u201350 paying customers and proving 1\u20132 reproducible acquisition channels.\n- Medium term (3\u201312 months): optimize those channels, reduce CAC, and build predictable MRR growth.\n\nC",
+   "competitors": [],
+   "answer_head": "Good \u2014 here\u2019s a practical, bite\u2011sized go\u2011to\u2011market (GTM) playbook you can apply now for a seed\u2011stage startup. I\u2019ll give a clear framework, prioritized tactics, a 90\u2011day plan, and the key metrics to watch. If you want it tailored to your product (SaaS vs consumer, B2B vs B2C, market, avg deal size), tell me and I\u2019ll customize it.\n\n1) One\u2011line GTM thesis (start here)\n- Define in one sentence: who you help + how you help + the measurable outcome.  \n  Example: \u201cWe help early\u2011stage SaaS founders redu",
    "mention_snippet": null,
-   "cost_usd": 0.00482
+   "cost_usd": 0.003826
   },
   {
    "n": 57,
@@ -762,9 +774,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Short answer: yes \u2014 cold email can work for startups, especially B2B startups with a well\u2011defined target customer. It\u2019s not magic, but when done right it\u2019s a repeatable, scalable way to generate meetings, trials, and early customers.\n\nWhen it\u2019s most effective\n- B2B / mid\u2011market / enterprise sales where one person makes buying decisions.  \n- Clear pain + measurable ROI you can communicate quickly.  \n- You have a narrow ICP (ideal customer profile) so messages can be personalized.  \n- Early stages",
+   "answer_head": "Short answer: yes \u2014 but only when done correctly. Cold email can be a reliable, scalable channel for startups that have a clear ICP (ideal customer profile), a valuable, easy-to-explain offering, and the discipline to test, personalize, and manage deliverability.\n\nWhy it works (when it does)\n- Targets decision-makers directly (faster than waiting for inbound).  \n- Scalable and measurable (you can A/B test subject lines, copy, CTAs).  \n- Low cost per reach compared with paid ads or SDR hires.  \n-",
    "mention_snippet": null,
-   "cost_usd": 0.00419
+   "cost_usd": 0.003392
   },
   {
    "n": 58,
@@ -774,9 +786,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "One-line definition\n- Founder-led sales (FLS) is a go-to-market approach where the company\u2019s founder(s) personally run and own the core sales activities (prospecting, demos, negotiations, and often closing) to win early customers and validate product\u2013market fit.\n\nWhat it looks like in practice\n- The founder is the primary salesperson for key accounts, uses personal vision/credibility to sell, gathers direct customer feedback, and iterates the product and messaging based on those conversations.\n-",
+   "answer_head": "Founder-led sales \u2014 definition\n- Founder-led sales (FLS) is when a startup\u2019s founder(s) personally lead and execute the company\u2019s sales and go-to-market activities, especially in the early stages. The founder acts as the primary salesperson: identifying prospects, pitching, closing deals, gathering customer feedback, and shaping pricing/positioning.\n\nKey characteristics\n- Founder is the main point of contact for customers and closes most early deals.  \n- Heavy emphasis on learning product\u2013market",
    "mention_snippet": null,
-   "cost_usd": 0.002321
+   "cost_usd": 0.002437
   },
   {
    "n": 59,
@@ -786,9 +798,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Good topic \u2014 hiring your first salesperson is one of the highest\u2011leverage decisions an early startup makes. Below is a concise, practical playbook you can action this week: when to hire, who to hire, how to compensate and interview, a 30/60/90 onboarding plan, and the signals that say \u201ckeep\u201d vs \u201cfire.\u201d\n\n1) When to hire (signals)\n- Hire when you can answer \u201cwhy customers buy\u201d with real, repeatable reasons and you\u2019ve closed multiple deals yourself (rough guideline: ~10\u201320 paying customers) \u2014 and s",
+   "answer_head": "Great\u2014here\u2019s a focused, practical playbook for hiring your startup\u2019s first salesperson. I\u2019ll cover when to hire, what profile to hire for, how to structure comp, how to recruit & interview, onboarding + ramp, KPIs to track, and common mistakes to avoid. I\u2019ll also include a short job-description template and a sample commission example you can adapt.\n\n1) Should you hire one now?\n- Wait if you don\u2019t yet have repeatable demand or product\u2011market fit (PMF). Founders should own early discovery/sales u",
    "mention_snippet": null,
-   "cost_usd": 0.016219
+   "cost_usd": 0.00461
   },
   {
    "n": 60,
@@ -798,9 +810,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Short answer: hire your first salesperson when you have product\u2011market fit and a repeatable, teachable sales process you can hand off \u2014 not just a single big sale. Practically that means you can consistently generate leads that convert, you can measure conversion rates and sales cycle length, and you can afford to pay someone (base + commission) while they ramp.\n\nChecklist (signals you\u2019re ready)\n- Evidence of product\u2011market fit: repeatable closes, healthy retention, customers saying \u201cwe\u2019ll buy t",
+   "answer_head": "Short answer\nHire your first dedicated sales person when you have product-market fit and a repeatable, teachable sales motion that the founders can no longer scale or should not be spending most of their time on.\n\nWhy \u2014 the core idea\n- Before the hire you want: (a) real customer demand and retention (evidence of product-market fit), (b) a defined ideal customer profile (ICP), (c) a repeatable demo/pitch and buying process, and (d) enough leads/opportunities that one person can meaningfully move ",
    "mention_snippet": null,
-   "cost_usd": 0.003883
+   "cost_usd": 0.004057
   },
   {
    "n": 61,
@@ -809,12 +821,10 @@
    "engine": "gpt",
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
-   "competitors": [
-    "Apollo"
-   ],
-   "answer_head": "Do you mean \u201cbest AI SDR\u201d as in a product that acts like an AI Sales Development Rep (automated outreach + qualification), or are you asking which AI can best help/augment a human SDR on your team? Also: what CRM do you use (Salesforce / HubSpot / other), target market (SMB / mid-market / enterprise), and approximate budget? That will let me tailor recommendations.\n\nQuick shortlist (by common use-case and strengths)\n\n- Apollo \u2014 Best all\u2011in\u2011one outbound engine for data + AI personalization at sca",
+   "competitors": [],
+   "answer_head": "Do you mean \u201cAI SDR\u201d as in:\n\n- an AI that performs Sales Development Representative tasks (outreach, lead qualification, booking meetings), or  \n- SDR = software\u2011defined radio (AI applied to radio/signal processing)?\n\nIf you mean AI for sales, do you want a recommendation for tools (e.g., AI-powered outreach/qualification platforms), a virtual AI SDR to hire/build, or help choosing for your company (size, budget, CRM, target market)? Tell me which and any constraints and I\u2019ll pull together the b",
    "mention_snippet": null,
-   "cost_usd": 0.015166
+   "cost_usd": 0.001037
   },
   {
    "n": 62,
@@ -824,11 +834,14 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [
-    "Apollo"
+    "Artisan",
+    "Apollo",
+    "11x",
+    "Amplemarket"
    ],
-   "answer_head": "Here\u2019s a compact, 2026-forward snapshot of the top AI tools SDR teams are using \u2014 grouped by the SDR use-case they\u2019re best at, with a short reason and sources you can check.\n\nTop picks (by use case)\n- Enterprise multi\u2011channel AI engagement \u2014 Outreach (AI sequences, agent workflows, multichannel automation). ([outreach.ai](https://www.outreach.ai/platform/features/sales-engagement?utm_source=openai))  \n- Enterprise revenue + engagement (Salesloft now part of Clari) \u2014 Salesloft / Clari (merged 12/",
+   "answer_head": "Here\u2019s a short, up-to-date shortlist of the top AI SDR / AI sales\u2011development tools in 2026 (snapshot: July 21, 2026). I focused on platforms actually used for outbound/inbound SDR work (prospecting, personalization, sequencing, reply handling, meeting\u2011booking) and grouped them by the use case they\u2019re best for.\n\nTop picks (what they\u2019re best at + quick notes)\n\n- 11x.ai \u2014 Best for fully autonomous outbound (enterprise-ready AI SDR \"Alice\")  \n  Why: Alice is designed to run the full outbound SDR wo",
    "mention_snippet": null,
-   "cost_usd": 0.060584
+   "cost_usd": 0.071223
   },
   {
    "n": 63,
@@ -838,9 +851,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Do you mean \"AI SDR\" as in an AI Sales Development Representative (sales/outbound tools), or \"SDR\" as in Software\u2011Defined Radio? \n\nIf you mean AI SDR for sales, tell me:\n- company size (startup / SMB / enterprise),\n- preferred channels (email, LinkedIn, phone, chat),\n- whether you want an autonomous AI that engages leads or an AI copilot for your human SDRs,\n- rough budget (per seat / monthly), and\n- any must-have requirements (CRM, compliance, HIPAA, multilingual, integrations).\n\nI can then pul",
+   "answer_head": "Do you mean \u201cSDR\u201d as in a Sales Development Representative (AI tools that help SDR teams with outreach, lead qualification and booking meetings), or \u201cSDR\u201d as in software\u2011defined radio (radio signal processing software)? \n\nAlso tell me:\n- If you mean Sales SDR tools \u2014 what matters most (outreach automation, conversational AI that books meetings, conversation intelligence, CRM integration, price, team size)?\n- If you mean software\u2011defined radio \u2014 what platform/OS and use case (ham radio, spectrum ",
    "mention_snippet": null,
-   "cost_usd": 0.012954
+   "cost_usd": 0.001333
   },
   {
    "n": 64,
@@ -850,15 +863,14 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [
-    "Instantly",
     "Artisan",
     "Apollo",
     "11x",
-    "Salesforge"
+    "AiSDR"
    ],
-   "answer_head": "Below are notable AI\u2011SDR / AI sales\u2011development companies and tools that buyers and reviewers commonly list as \u201ctop\u201d in 2026. Short note first: these vendors vary a lot in approach (some are full agentic AI SDRs that run autonomously, others are AI features layered into traditional sequencers/data stacks), and results depend heavily on your data, ICP, and human\u2011in\u2011the\u2011loop rules \u2014 so treat this as a starting shortlist, not a guarantee of outcomes.\n\nTop AI SDR companies/tools (short descriptions)",
+   "answer_head": "Do you mean vendors that build AI-driven SDRs/AI SDR agents and sales-engagement tools? Here\u2019s a concise, up-to-date shortlist (as of July 21, 2026) of the top companies to evaluate, grouped by the role they typically play and one-line notes on what they\u2019re best at:\n\nAutonomous / agentic AI SDRs (end\u2011to\u2011end lead qualification & meeting booking)\n- 11x.ai \u2014 enterprise-grade autonomous \u201cAI SDR\u201d agents (email, LinkedIn, phone/video) used for full outbound/inbound automation. ([11x.ai](https://www.11",
    "mention_snippet": null,
-   "cost_usd": 0.093215
+   "cost_usd": 0.060542
   },
   {
    "n": 65,
@@ -870,11 +882,11 @@
    "competitors": [
     "Instantly",
     "Apollo",
-    "Smartlead"
+    "Lemlist"
    ],
-   "answer_head": "Short answer (current as of July 2026): for seed-stage startups I recommend picking 2\u20133 lightweight tools that cover (1) a CRM, (2) prospecting / contact data + sequencing, and (3) affordable sending/personalization or an AI lead-agent depending on budget. Good, widely-used options are below with quick notes on fit, cost posture, and links to sources.\n\nRecommendations by category\n\n- All\u2011in\u2011one prospecting + engagement (good default for founder-led outbound)\n  - Apollo.io \u2014 database + sequences +",
+   "answer_head": "Great \u2014 here\u2019s a compact, practical guide to AI-enabled SDR tools that work well for seed-stage startups (low budget, fast setup, high ROI). I\u2019ll list recommended tools by job, why they fit early-stage teams, price pointers, and three starter stacks you can copy.\n\nTop tools by job (with quick why + source)\n- Prospecting / contact database \u2014 Apollo.io: big contact DB + built-in sequences and a dialer so one tool can handle list building \u2192 outreach for a solo founder/early SDR. ([apollo.io](https:",
    "mention_snippet": null,
-   "cost_usd": 0.038356
+   "cost_usd": 0.060401
   },
   {
    "n": 66,
@@ -883,10 +895,12 @@
    "engine": "gpt",
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
-   "competitors": [],
-   "answer_head": "Do you mean using AI to do Sales Development Representative work (AI-assisted SDR), an \u201cAI SDR\u201d product, or something else? I can: explain the concept, show a sample outreach sequence and copy, give a prompt you can use with an LLM, recommend quick wins and metrics, or help evaluate tools. Tell me which and any specifics (industry, CRM, target ICP).\n\nIf you want a quick overview and actionable starting point, here it is.\n\n1) What \u201cAI SDR\u201d means (short)\n- Using AI to automate, assist, or augment ",
+   "competitors": [
+    "Apollo"
+   ],
+   "answer_head": "Do you mean \u201cAI SDR\u201d as in: (A) an AI that acts like a Sales Development Rep to prospect, qualify, and book meetings, (B) building tools/workflows to augment your existing SDRs, or (C) something else (job description, market research, vendor recommendations)? Tell me which and a bit about your product/ICP and I\u2019ll tailor the output.\n\nBelow is a short, practical primer + a ready-to-use micro-playbook you can use immediately if you meant (A) or (B).\n\nWhat an \u201cAI SDR\u201d can do\n- Automated prospecting",
    "mention_snippet": null,
-   "cost_usd": 0.003461
+   "cost_usd": 0.003239
   },
   {
    "n": 67,
@@ -896,9 +910,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Short answer: an AI SDR is an artificial-intelligence\u2013driven Sales Development Representative \u2014 a system (or a human+AI workflow) that performs front-line outbound and inbound sales tasks like prospecting, outreach, lead qualification, scheduling, and follow-up using AI.\n\nWhat an AI SDR does (core functions)\n- Prospecting: finds and enriches target contacts and accounts from data sources.\n- Outreach: drafts and sequences emails, LinkedIn messages, and SMS; personalizes at scale.\n- Qualification:",
+   "answer_head": "Short answer\n- An AI SDR is an AI-powered Sales Development Representative: software (or an autonomous agent) that performs core SDR tasks \u2014 prospecting, outreach, qualification, and meeting booking \u2014 either by assisting human SDRs or by automating much of the workflow.\n\nWhat it actually does (typical capabilities)\n- Prospect enrichment and list building: finds/contact data, enriches records, and prioritizes prospects by fit/intent.  \n- Outreach sequencing: drafts and sends personalized emails, ",
    "mention_snippet": null,
-   "cost_usd": 0.002673
+   "cost_usd": 0.002565
   },
   {
    "n": 68,
@@ -907,12 +921,10 @@
    "engine": "gpt",
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
-   "competitors": [
-    "Apollo"
-   ],
-   "answer_head": "Do you mean you want to build or buy an \"AI SDR\" (Sales Development Representative) tool \u2014 or do you want a product brief, vendor recommendations, example prompts and cadences, an MVP plan, or something else? I can help any of those. A few quick clarifying questions before I dive deeper:\n\n- Do you want a full product spec to build in\u2011house, or a vendor comparison / buying guide?\n- Which channels matter most: outbound email, phone/voicemail, LinkedIn, chat, or all of them?\n- What CRM or stack mus",
+   "competitors": [],
+   "answer_head": "Do you mean you want to build or buy an \u201cAI SDR\u201d (sales development representative) tool \u2014 or do you want help with prompts, templates, an evaluation checklist, or something else? A couple quick options I can do next; pick one or tell me more:\n\n- Build a plan & roadmap (MVP features, architecture, stack, integrations, compliance, cost estimate).\n- Ready-made tool recommendations and pros/cons.\n- Templates & prompts (email sequences, LinkedIn outreach, cold-call scripts + AI prompt to generate pe",
    "mention_snippet": null,
-   "cost_usd": 0.002849
+   "cost_usd": 0.002313
   },
   {
    "n": 69,
@@ -922,9 +934,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Do you mean you want help building an \u201cAI sales agent\u201d (a virtual salesperson/chatbot) \u2014 or do you mean something else (e.g., hiring a human sales rep who uses AI, a one\u2011page pitch, or a demo script)? I can do any of those. A few quick options \u2014 pick one or tell me which parts you want and I\u2019ll produce it:\n\nOptions I can deliver right away\n1) Productized plan + tech stack (MVP step\u2011by\u2011step, timeline, integrations, cost drivers). \n2) Ready\u2011to\u2011use conversation assets (persona, system prompt, 5\u201310 ",
+   "answer_head": "Do you mean: (A) you want me to act now as an AI sales agent (roleplay/outreach), or (B) you want a plan/blueprint to build one? I can do either \u2014 below I give a compact ready-to-use blueprint plus sample outreach scripts and an offer to roleplay immediately. Tell me which you prefer and give product/target details if you want custom content.\n\nQuick blueprint \u2014 \"AI Sales Agent\" starter\n- Goal: qualify leads and book demos / hand off warm opportunities to human AE.\n- Channels: website chat, email",
    "mention_snippet": null,
-   "cost_usd": 0.002875
+   "cost_usd": 0.003747
   },
   {
    "n": 70,
@@ -934,11 +946,12 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [
-    "Apollo"
+    "Artisan",
+    "11x"
    ],
-   "answer_head": "Here are the leading AI sales\u2011agent platforms in 2026 (short summary + why teams pick them). If you want, I can narrow this to \u201cbest for small teams,\u201d \u201cbest for enterprise,\u201d or build a side\u2011by\u2011side feature/pricing comparison.\n\n- Gong \u2014 Revenue AI with agent capabilities (Agent Studio / Revenue Harness) that automate coaching, meeting follow\u2011ups, call summaries and task execution across the revenue process. Strong for rep enablement and real\u2011time call support. ([gong.io](https://www.gong.io/press",
+   "answer_head": "Here\u2019s a concise, 2026 view of the \u201cbest\u201d AI sales agents by use-case \u2014 short list + what they\u2019re best at and one-line why. I pulled current vendor and review sources so you can follow up on any one that looks promising.\n\nFull autonomous / AI SDR agents (replace or augment an SDR)\n- 11x.ai \u2014 enterprise-focused autonomous SDR (\u201cAlice\u201d) that runs outbound playbooks, books meetings and adapts from results. Good where you want high-volume, phone+email automation. ([11x.ai](https://www.11x.ai/guides/",
    "mention_snippet": null,
-   "cost_usd": 0.049563
+   "cost_usd": 0.060443
   },
   {
    "n": 71,
@@ -948,9 +961,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Do you mean software that acts as an autonomous \u201cAI sales rep\u201d (automated outreach, chat/voice conversations and qualification) or AI tools that assist human sales reps (conversation intelligence, coaching, email/sequence automation)? \n\nA few quick clarifying questions so I give useful recommendations:\n- Are you buying for a startup, SMB, or enterprise?\n- B2B or B2C sales?\n- Primary channels you care about: email, phone (voice), website chat, or all of the above?\n- Goal: find more leads, qualify",
+   "answer_head": "Do you mean software that acts like an AI sales rep (automates outreach, qualification, booking, follow\u2011ups), or are you asking how to build one? Or do you want vendor recommendations, a buying checklist, or a plan for piloting one at your company?\n\nQuick primer while you decide:\n- What it is: AI sales rep software uses LLMs, conversational AI, and automation to do tasks like outbound prospecting, personalized sequence emails, lead qualification via chat or voice, meeting booking, follow\u2011up sequ",
    "mention_snippet": null,
-   "cost_usd": 0.001533
+   "cost_usd": 0.002173
   },
   {
    "n": 72,
@@ -959,10 +972,12 @@
    "engine": "gpt",
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
-   "competitors": [],
-   "answer_head": "Short answer: there\u2019s no fundamental technical difference between an \u201cAI BDR\u201d and an \u201cAI SDR\u201d \u2014 both mean using AI to perform or assist the functions of business-development or sales-development reps \u2014 but the workflows, KPIs, and priorities differ because BDRs and SDRs traditionally focus on different parts of the lead funnel (outbound vs inbound/qualification). Below is a practical breakdown you can use to decide what to build, buy, or pilot.\n\n1) Roles & how teams commonly distinguish them\n- B",
+   "competitors": [
+    "Apollo"
+   ],
+   "answer_head": "Short answer\n- \u201cAI BDR\u201d = an AI system automating top-of-funnel business development (mass prospecting, intent detection, enrichment, initial qualification and meeting booking).\n- \u201cAI SDR\u201d = an AI system focused on mid-funnel qualification and buyer-ready conversations (deeper discovery, objection handling, technical fit checks, handoff to AE).\nThey overlap, but differ in depth of conversation, decision rules for escalation, and required context.\n\nDefinitions & role distinction\n- Human BDR / SDR",
    "mention_snippet": null,
-   "cost_usd": 0.00408
+   "cost_usd": 0.00407
   },
   {
    "n": 73,
@@ -972,9 +987,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Here\u2019s a focused, practical comparison and playbook for AI SDRs vs human SDRs plus recommended hybrid approaches you can use right away.\n\nWhat they are\n- Human SDR: A sales development rep (SDR) who performs lead research, outreach, qualification conversations, and hands-qualified leads to AEs.\n- AI SDR: Automated systems (email sequences, chatbots, voice AI, generative agents) that execute parts of the SDR workflow: list enrichment, outreach personalization at scale, lead scoring, first-contact",
+   "answer_head": "Short answer: AI SDRs are excellent at scale, speed, consistency and data-driven personalization; human SDRs are better at empathy, handling complex objections, relationship-building and high-value accounts. Most high-performing GTM teams use a hybrid model where AI handles repetitive, high-volume work and humans focus on nuanced, high-touch interactions.\n\nKey differences (what each is best at)\n- AI SDR\n  - Strengths: rapid, 24/7 outreach at scale; consistent follow-up sequences; hyper-personali",
    "mention_snippet": null,
-   "cost_usd": 0.003607
+   "cost_usd": 0.004169
   },
   {
    "n": 74,
@@ -984,9 +999,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Short answer\n- There\u2019s no single winner. Across recent field tests and platform benchmarks (2024\u20132026), human SDRs typically still hold a small edge on qualified / downstream outcomes, while AI-generated cold emails often match or come close on raw reply rate \u2014 and sometimes beat humans on consistency/scale. ([apollo.io](https://www.apollo.io/insights/what-is-a-good-benchmark-for-reply-rates-in-cold-outreach?utm_source=openai))\n\nWhat the data and experiments show (summary of the most important f",
+   "answer_head": "Short answer\n- There\u2019s no clear universal winner: industry benchmarks put typical cold-email reply rates in the low single digits (roughly 1\u20136% depending on how \u201creply\u201d is counted), and real-world A/B tests show mixed results \u2014 some teams see higher first-touch replies from AI-drafted emails while others see lower downstream conversion or \u201cpolite\u201d replies that don\u2019t convert. ([assets.mailshake.com](https://assets.mailshake.com/wp-content/uploads/2025/04/16091740/Cold-Email-Report-2025-Mailshake.",
    "mention_snippet": null,
-   "cost_usd": 0.016204
+   "cost_usd": 0.016168
   },
   {
    "n": 75,
@@ -996,9 +1011,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Short answer: Yes \u2014 AI-powered SDR tools can work and produce real gains (more meetings, faster outreach, higher productivity), but only when used with good data, clear processes, and human oversight. They\u2019re not a magic button that automatically fixes a weak ICP, bad product-market fit, or sloppy execution.\n\nWhat AI SDR tools do\n- Automate repetitive tasks: sequence management, follow-ups, CRM updates.\n- Generate and personalize outreach (emails, LinkedIn messages, call scripts).\n- Prioritize l",
+   "answer_head": "Short answer: Yes \u2014 AI SDR tools can work and be very useful, but they aren\u2019t magic. Their effectiveness depends on data quality, process design, human oversight, deliverability practices, and the specific use case.\n\nWhat they typically do well\n- Scale personalized outreach (email, sequences, LinkedIn messaging drafts).  \n- Automate routine tasks: lead enrichment, intent scoring, task reminders, meeting scheduling.  \n- Assist live reps: call scripts, summarizing calls, drafting follow-ups, CRM l",
    "mention_snippet": null,
-   "cost_usd": 0.002698
+   "cost_usd": 0.003384
   },
   {
    "n": 76,
@@ -1010,9 +1025,9 @@
    "competitors": [
     "Apollo"
    ],
-   "answer_head": "I can do that \u2014 do you mean a price comparison of AI-enabled SDR tools (per-seat/month, plans, and what\u2019s included) or a broader TCO comparison (onboarding, credits, integrations, outreach limits, deliverability, etc.)?\n\nQuick choices for vendors I can include (I can add/remove any you want):\n- Outreach\n- SalesLoft\n- Apollo\n- Reply.io\n- Conversica\n- Exceed.ai\n- Lavender\n- Regie.ai\n- Drift (Conversations/Revenue)\n- Gong (Sales/Gong + AI features)\n\nTwo quick clarifying questions before I fetch cur",
+   "answer_head": "Do you mean a price comparison of AI tools for Sales Development (SDR) \u2014 e.g., platforms that help with outbound cadences, AI email/sequence writing, conversation summarization & coaching, and lead enrichment? \n\nQuick questions so I give you the most useful comparison:\n- Do you want specific vendors included? (I can compare a recommended set: Outreach, Salesloft, Apollo, Reply.io, Lavender, Drift, Gong/Chorus, ZoomInfo, Close \u2014 or any others you name.)\n- How many seats/users should I price for (",
    "mention_snippet": null,
-   "cost_usd": 0.002009
+   "cost_usd": 0.001535
   },
   {
    "n": 77,
@@ -1022,12 +1037,11 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [
-    "Instantly",
-    "Apollo"
+    "Instantly"
    ],
-   "answer_head": "Short answer \u2014 for very small/startup teams the cheapest practical AI\u2011SDR options are Apollo (free starter + built\u2011in AI assistant) and cold\u2011email specialists like Instantly (low\u2011cost plans with AI reply/agent). If you need only AI email personalization, SmartWriter or Lavender are cheaper add\u2011ons; full \u201cAI SDR\u201d suites (two\u2011way handling, qualification, booking) like Reply/Regie work but are usually pricier. ([apollo.io](https://www.apollo.io/pricing))\n\nQuick breakdown and when to pick each\n- Apo",
+   "answer_head": "Short answer \u2014 if your priority is lowest monthly cost for a startup doing cold outreach: Instantly (cheap cold\u2011email sequencer). If you want the cheapest full multichannel platform with built\u2011in AI sequencing, Outplay\u2019s Starter plan ($39/mo billed annually) + Outplay\u2019s AI SDR add\u2011on (from $99) is a strong low\u2011cost option. For autonomous AI agents that research, send and handle replies, Reply.io (Jason) and Outplay offer that capability but expect higher pricing. See details and sources below so",
    "mention_snippet": null,
-   "cost_usd": 0.038687
+   "cost_usd": 0.061151
   },
   {
    "n": 78,
@@ -1039,14 +1053,15 @@
    "competitors": [
     "Artisan",
     "Apollo",
+    "Clay",
     "11x",
     "Amplemarket",
     "AiSDR",
-    "Salesforge"
+    "Landbase"
    ],
-   "answer_head": "Short answer \u2014 yes. Below are notable 2026 alternatives to 11x.ai and Artisan (newer AI \u201coutbound/AI\u2011SDR\u201d vendors and enterprise platforms that teams are using for autonomous or semi\u2011autonomous outbound). For each I note what they actually do, channels they support, and when they\u2019re a good fit.\n\n- Agent Frank (Salesforge) \u2014 autonomous AI SDR focused on prospecting + cold email at scale (active\u2011contacts pricing; email + LinkedIn integrations; marketed as an end\u2011to\u2011end AI SDR). Good if you want an",
+   "answer_head": "Nice \u2014 here are notable AI outbound-agent alternatives (mid\u20112026) to 11x / Artisan, with a one\u2011line summary of what each does and where they differ. I grouped them by \u201cagentic/autonomous\u201d vs \u201cAI\u2011assisted\u201d to help you pick quickly.\n\nAutonomous / agentic (closest to a full AI SDR that runs prospecting + outreach end\u2011to\u2011end)\n- AiSDR \u2014 full\u2011cycle AI SDR for prospecting, personalized email/LinkedIn outreach, reply handling and meeting booking; positioned as a plug\u2011and\u2011play autonomous agent for outbou",
    "mention_snippet": null,
-   "cost_usd": 0.049438
+   "cost_usd": 0.049423
   },
   {
    "n": 79,
@@ -1059,9 +1074,9 @@
     "Artisan",
     "11x"
    ],
-   "answer_head": "I\u2019m not sure what you mean by \u201c11x.\u201d Do you mean one of these?\n\n- \u201c11ty\u201d (Eleventy) the static-site generator\n- \u201c11.x\u201d as a version (e.g., Node 11.x, PHP 11.x) \n- A product or service named \u201c11x\u201d (please link or give full name)\n- Something else\n\nAnd by \u201cartisan\u201d do you mean Laravel\u2019s Artisan CLI, or \u201cartisan\u201d as in artisanal/handmade alternatives?\n\nTell me which pair you want compared (or paste a link/name for \u201c11x\u201d), and I\u2019ll give a side\u2011by\u2011side comparison and alternatives (features, workflows,",
+   "answer_head": "Do you mean Laravel 11.x and its Artisan CLI, and you want alternatives to Artisan? Or do you mean something else by \"11x\" (for example \"11ty\" or another product/version)?\n\nIf you mean Laravel 11.x \u2192 Artisan, I can compare Artisan to other CLI/tooling (Symfony Console/Symfony CLI, Robo, Maker bundles, framework CLIs like Adonis/Nest/Next, WP\u2011CLI/Drush for CMSs), show pros/cons, and give migration or replacement recommendations.\n\nTell me which of these you meant and what kind of comparison you wa",
    "mention_snippet": null,
-   "cost_usd": 0.001575
+   "cost_usd": 0.001537
   },
   {
    "n": 80,
@@ -1071,9 +1086,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Short answer\n- An AI SDR is an AI-driven system that performs outbound prospecting tasks (research, personalized outreach, qualification, booking) with minimal human intervention.  \n- A sales engagement platform (SEP) is a human-centered tool that orchestrates multi-channel sequences, tracks activity, and manages reps\u2019 outreach\u2014sometimes augmented with AI features.  \nWhich to pick depends on scale, deal complexity, compliance needs, and how much human judgment you require. A hybrid (SEP + AI-ass",
+   "answer_head": "Below is a focused, practical comparison you can use to decide between (or combine) an AI SDR solution and a traditional sales engagement platform.\n\nShort definitions\n- AI SDR: an automated, AI-driven agent that performs outbound/inbound SDR tasks \u2014 e.g., prospecting, outreach sequencing, real-time conversational qualification (chat/voice/email), lead scoring, and handoff to human reps. Emphasis: automation + natural-language interaction.\n- Sales engagement platform (SEP): a tool that orchestrat",
    "mention_snippet": null,
-   "cost_usd": 0.004094
+   "cost_usd": 0.00385
   },
   {
    "n": 81,
@@ -1082,10 +1097,12 @@
    "engine": "gpt",
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
-   "competitors": [],
-   "answer_head": "Do you mean tools for growth marketing (acquisition, content, ads, email/SMS), product growth & analytics (experiments, personalization, retention), sales/outbound growth, or all of the above? Pick one (or \u201call\u201d) and I\u2019ll give a tailored list of the best AI-powered tools and how to use them.",
+   "competitors": [
+    "Apollo"
+   ],
+   "answer_head": "Do you mean growth-marketing / user acquisition tools (SEO, ads, email, content, outreach), product-growth tools (analytics, experimentation, onboarding), or both? I can give a quick, opinionated shortlist now and then tailor it once I know your industry, team size, and budget. My recommendations below are current as of July 21, 2026.\n\nTop AI growth tools \u2014 by use case (quick picks + why)\n\n- SEO / organic visibility\n  - Surfer SEO \u2014 AI content optimization, SERP analysis and topical maps for on-",
    "mention_snippet": null,
-   "cost_usd": 0.001219
+   "cost_usd": 0.027295
   },
   {
    "n": 82,
@@ -1094,13 +1111,10 @@
    "engine": "gpt",
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
-   "competitors": [
-    "Apollo",
-    "Lemlist"
-   ],
-   "answer_head": "Nice question \u2014 here\u2019s a compact, actionable rundown of high-impact AI growth tools for startups, organized by use case so you can pick what matters most for your stage and goals.\n\nTop picks by category (what they do, why startups use them)\n- CRM + growth automation \u2014 HubSpot: all-in-one CRM/marketing platform with built-in AI assistants and campaign automation that keep marketing, sales, and service in one place. Great if you want a single platform to run inbound marketing, email, and lifecycle",
+   "competitors": [],
+   "answer_head": "Nice\u2014here\u2019s a compact, practical shortlist you can use right away. I grouped tools by growth function, noted when to pick each, and finished with a minimal, budget-friendly AI growth stack and quick rollout steps. (Sources and market context are current as of July 2026.)\n\nTop-level takeaway\n- In 2026 AI tooling is effectively table-stakes for startups: use LLMs/agents for ideation & automation, AI-native martech for content & acquisition, product analytics for experiment-driven growth, and autom",
    "mention_snippet": null,
-   "cost_usd": 0.027526
+   "cost_usd": 0.060452
   },
   {
    "n": 83,
@@ -1109,12 +1123,10 @@
    "engine": "gpt",
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
-   "competitors": [
-    "Apollo"
-   ],
-   "answer_head": "Below is a compact, practical map of AI tools you can use to accelerate B2B growth \u2014 organized by function, with quick notes on when to pick each and a short implementation checklist. If you tell me your budget, tech stack (CRM/MA), and primary growth goal (faster pipeline, higher conversion, more logos, expansion), I\u2019ll make a tailored shortlist.\n\nTop recommendations (quick view \u2014 five high-impact picks)\n- ZoomInfo \u2014 B2B go-to-market intelligence & intent data (great for building accurate targe",
+   "competitors": [],
+   "answer_head": "Great \u2014 here\u2019s a concise, practical rundown of AI tools you can use for B",
    "mention_snippet": null,
-   "cost_usd": 0.027373
+   "cost_usd": 0.06078
   },
   {
    "n": 84,
@@ -1123,10 +1135,12 @@
    "engine": "gpt",
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
-   "competitors": [],
-   "answer_head": "",
+   "competitors": [
+    "Apollo"
+   ],
+   "answer_head": "Here\u2019s a concise, curated list of the best AI sales tools in 2026 \u2014 organized by the job they do and when to pick them. If you tell me your company size, tech stack (CRM), and biggest pain (outbound, forecasting, call coaching, lead quality), I\u2019ll tailor this to you.\n\nTop picks by category (short description + why it stands out)\n\n- Revenue intelligence & AI forecasting \u2014 Clari: enterprise-grade forecasting, pipeline hygiene and explainable AI signals for revenue teams. Great if forecasting accur",
    "mention_snippet": null,
-   "cost_usd": 0.0717
+   "cost_usd": 0.049415
   },
   {
    "n": 85,
@@ -1135,13 +1149,10 @@
    "engine": "gpt",
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
-   "competitors": [
-    "Apollo",
-    "Clay"
-   ],
-   "answer_head": "Nice \u2014 here\u2019s a concise, practical guide to AI tools founders actually use in 2026, organized by the job they do so you can pick only what you need.\n\nQuick summary (what most founders pick)\n- General-purpose LLMs for thinking/writing/research: Claude or ChatGPT. They\u2019re the daily \u201cco\u2011founder\u201d for drafting copy, synthesizing customer interviews, and strategy work. ([theairundown.com](https://theairundown.com/best-ai-tools-for-startups))\n- AI code editor (if you ship product): Cursor is the domina",
+   "competitors": [],
+   "answer_head": "",
    "mention_snippet": null,
-   "cost_usd": 0.049518
+   "cost_usd": 0.049704
   },
   {
    "n": 86,
@@ -1153,9 +1164,9 @@
    "competitors": [
     "Apollo"
    ],
-   "answer_head": "Short answer \u2014 it depends on what part of the lead funnel you need to automate. Below are the best-in-class AI tools grouped by use case (prospecting, enrichment, outreach, conversational/qualification, intent & website signals), with one-line notes and sources so you can compare. If you tell me your company size, target (B2B / B2C), and budget I\u2019ll recommend a 1\u20133 tool stack for your situation.\n\n1) Prospecting & contact databases (find target accounts and contacts)\n- ZoomInfo \u2014 large B2B databa",
+   "answer_head": "Nice \u2014 here\u2019s a compact, up-to-date pick of the best AI tools for lead generation (organized by use case), with when each tool is a good fit and short notes on strengths / integrations. These recommendations reflect the market as of July 2026 \u2014 if you want, I can tailor this to your industry, ICP, tech stack, or budget.\n\nQuick top-line (by use case)\n- Outbound prospecting + sequences: Apollo.io \u2014 strong, affordable all\u2011in\u2011one prospect database + AI sequence/personalization for high-volume outbou",
    "mention_snippet": null,
-   "cost_usd": 0.082709
+   "cost_usd": 0.07114
   },
   {
    "n": 87,
@@ -1164,13 +1175,10 @@
    "engine": "gpt",
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
-   "competitors": [
-    "Apollo",
-    "Clay"
-   ],
-   "answer_head": "Do you want recommendations, a comparison, or help picking one for your stack? A few quick questions to narrow it down:\n- B2B or B2C leads?\n- Monthly budget (cheap / mid / enterprise)?\n- Channels you\u2019ll use (email, LinkedIn, phone, website chat)?\n- Must-have integrations (HubSpot, Salesforce, Outreach, etc.)?\n- Region / compliance concerns (US, EU / GDPR)?\n\nQuick starter shortlist (mapped to common needs)\n\n- All\u2011in\u2011one SMB prospecting + outreach: Apollo \u2014 strong for small/medium teams that want ",
+   "competitors": [],
+   "answer_head": "Do you mean you want an overview of what \u201cAI lead\u2011generation software\u201d is, recommendations for specific tools, a comparison for a particular use case (e.g., B2B SaaS vs. ecommerce), or help choosing / implementing one for your business?\n\nQuick primer (short):\n- What it is: software that uses AI to find, qualify, enrich, score, and/or engage potential customers automatically (examples: prospect discovery, contact enrichment, intent signals, automated outreach, chatbots).\n- Common features: prospe",
    "mention_snippet": null,
-   "cost_usd": 0.026396
+   "cost_usd": 0.001617
   },
   {
    "n": 88,
@@ -1180,14 +1188,11 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [
-    "Instantly",
-    "Apollo",
-    "Clay",
-    "Lemlist"
+    "Apollo"
    ],
-   "answer_head": "Do you mean sales/BDR prospecting (finding leads and running outreach), recruiting/sourcing, or something else? Tell me which and a bit about your CRM (Salesforce, HubSpot, none), team size, and budget and I\u2019ll make a tailored shortlist. Meanwhile \u2014 a short, up-to-date overview and recommended next steps:\n\nQuick summary\n- Modern \u201cAI prospecting\u201d tools typically do one or more of: find & enrich contacts, score/rank leads, generate personalized outreach (email/LinkedIn), and automate sequences. Th",
+   "answer_head": "Do you mean \u201cprospecting\u201d for sales leads (B2B/B2C), recruiting, fundraising, real estate, or something else? Also helpful to know: your target (ICP), your CRM, channels you\u2019ll use (email, LinkedIn, phone), and budget \u2014 I can tailor recommendations.\n\nMeanwhile, here\u2019s a short, practical overview of AI-enabled prospecting tool types and representative options so you can get oriented.\n\n- Lead generation & data enrichment\n  - Apollo.io \u2014 prospect lists + enrichment and sequences.\n  - ZoomInfo / Dis",
    "mention_snippet": null,
-   "cost_usd": 0.015603
+   "cost_usd": 0.002627
   },
   {
    "n": 89,
@@ -1198,12 +1203,11 @@
    "verdict": "absent",
    "competitors": [
     "Instantly",
-    "Smartlead",
     "Lemlist"
    ],
-   "answer_head": "Short answer \u2014 there\u2019s no single \u201cbest\u201d cold\u2011email tool; the right one depends on your budget, sending volume, team size, and whether you need multichannel or deep personalization. That said, these are the market leaders in 2026 and what they\u2019re best at:\n\nTop picks (quick summary)\n- Instantly.ai \u2014 best for scaling high\u2011volume cold email cheaply (built for many sending accounts, automated warmup). Good if you need raw sending power and cost efficiency. ([mailtoolfinder.com](https://mailtoolfinder",
+   "answer_head": "Short answer \u2014 there\u2019s no single \u201cbest\u201d cold\u2011email app; the right one depends on your volume, budget, and priorities. Quick shortlist by use case:\n\n- Best for scaling high volume (agencies/lead gen): Instantly \u2014 built for many sending inboxes, automated warmup and simple scaling. ([inboxkit.com](https://www.inboxkit.com/learn/instantly-review?utm_source=openai))  \n- Best for personalized sequences + built\u2011in warmup/deliverability features (SMB/consultants): Lemlist \u2014 strong personalization (dyna",
    "mention_snippet": null,
-   "cost_usd": 0.027442
+   "cost_usd": 0.048535
   },
   {
    "n": 90,
@@ -1216,11 +1220,12 @@
     "Instantly",
     "Apollo",
     "Smartlead",
-    "Lemlist"
+    "Lemlist",
+    "Saleshandy"
    ],
-   "answer_head": "Short answer \u2014 here\u2019s a concise 2026 shortlist with the right use-case for each. I included one-line pros/cons and sources so you can dive deeper.\n\nTop cold-email tools (2026) \u2014 quick shortlist\n- Instantly \u2014 Best for high-volume senders who want built-in warmup + inbox-placement tools at a low price. Pros: large warmup network, inbox-placement testing, unlimited mailboxes on some plans; Cons: shared-network warmup tradeoffs at extreme scale. ([help.instantly.ai](https://help.instantly.ai/en/arti",
+   "answer_head": "Here are the top cold\u2011email tools for 2026 (short picks + why you\u2019d choose each). I pulled recent comparisons/tests from reputable reviews and hands\u2011on testing so these reflect 2026 performance and pricing.\n\nTop picks (with one\u2011line why and source)\n- Instantly.ai \u2014 Deliverability / scaling for solos & small teams (large warm\u2011up network, very high inbox placement in 2026 tests). ([buyersprint.com](https://buyersprint.com/2026/05/25/cold-email-software-2026/))  \n- Smartlead \u2014 Best for agencies / h",
    "mention_snippet": null,
-   "cost_usd": 0.049297
+   "cost_usd": 0.049303
   },
   {
    "n": 91,
@@ -1230,12 +1235,13 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [
+    "Instantly",
     "Apollo",
     "Lemlist"
    ],
-   "answer_head": "Do you want a short list of options to try now, or a recommendation tuned to your situation (budget, daily volume, Gmail vs SMTP, multichannel, enterprise vs solo founder)? I can give a quick shortlist first \u2014 tell me which direction you want and I\u2019ll refine.\n\nQuick shortlist (by common use-case)\n\n- Mailshake \u2014 Good for scaling personalized cold-email sequences with built-in deliverability training and onboarding resources (solid for SMBs that want a simple, repeatable flow). ([mailshake.com](ht",
+   "answer_head": "Do you want a quick list/recommendation or a comparison (features, pricing, deliverability, best-for)? I can do either \u2014 below is a concise starter: top cold-email automation tools, what each is best at, plus a short checklist and deliverability tips. Tell me your budget, monthly send volume, and whether you use Gmail/Office365 (or need a built-in lead database) and I\u2019ll narrow it to the 2\u20133 best choices for you.\n\nTop picks (what they\u2019re best at)\n- lemlist \u2014 Best for highly personalized, \u201cicebre",
    "mention_snippet": null,
-   "cost_usd": 0.026219
+   "cost_usd": 0.039545
   },
   {
    "n": 92,
@@ -1245,9 +1251,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Short comparison + when to pick which, risks, KPIs and a quick pilot checklist.\n\n1) What they are\n- Outsourced SDR: External human sales-development reps or teams (agency, BPO, freelancers) who run outreach, qualify leads, book meetings and hand off to AE.\n- AI SDR: Software/automation that uses generative models, sequence engines, and analytics to send messages, reply automatically, qualify by rules/AI, and book meetings (sometimes with human oversight).\n\n2) Key differences (side\u2011by\u2011side)\n- Per",
+   "answer_head": "Short answer\n- Outsourced SDRs = human teams managed by an agency or contractor. Best when you need human judgment, empathy and fast time-to-market without hiring.\n- AI SDRs = automation/agents (email + chat + calling automation, LLMs, workflows). Best when you need scale, 24/7 outreach, lower marginal cost and highly repeatable qualification tasks.\n- Hybrid (AI + humans) is often the highest-value choice for most sellers.\n\nDetailed comparison\n\n1) Strengths \u2014 Outsourced SDR\n- Human judgment: han",
    "mention_snippet": null,
-   "cost_usd": 0.00404
+   "cost_usd": 0.003664
   },
   {
    "n": 93,
@@ -1257,9 +1263,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Short answer: outsourced SDR (appointment-setting / outbound) pricing depends a lot on model and scope, but typical ranges are:\n\n- Monthly retainers / dedicated SDRs: roughly $2,500\u2013$15,000+ per month (per engagement / per seat depending on scope). ([launchleads.com](https://www.launchleads.com/wp-content/uploads/2026/01/SDR-as-a-Service_Outsource-SDR-Guide.pdf?utm_source=openai))  \n- Per\u2011SDR (seat) economics: outsourced SDR seat-level fees commonly fall in the ~$1,500\u2013$7,000/month range once yo",
+   "answer_head": "Short answer \u2014 it varies a lot by model, location, and deliverable. As of July 21, 2026, typical market ranges are:\n\n- Monthly retainer / dedicated SDR\n  - US-based agency / fully managed SDR: roughly $5,000\u2013$12,000+ per dedicated SDR per month. ([cience.com](https://www.cience.com/outbound-sdr/?utm_source=openai))\n- Nearshore / offshore SDRs (shared or staffed through a provider)\n  - Nearshore (Latin America, US hours): commonly $2,000\u2013$4,000/month per rep; offshore (Philippines/India) can run ",
    "mention_snippet": null,
-   "cost_usd": 0.016137
+   "cost_usd": 0.015493
   },
   {
    "n": 94,
@@ -1269,9 +1275,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Do you mean \u201cSDR as a service\u201d for sales (outsourced Sales Development Representatives) or \u201cSDR as a service\u201d for radio (cloud/hosted Software\u2011Defined Radio)? Both are common but very different \u2014 I can go deep on either. Quick summaries to help you pick:\n\n- Sales Development Rep (SDR) as a service\n  - What it is: Outsourced team or agency that handles lead prospecting, cold outreach, qualification, and handoff to account executives.\n  - Use cases: Rapid pipeline build, scaling outreach without h",
+   "answer_head": "Do you mean \u201cSDR\u201d as in software-defined radio, or \u201cSDR\u201d as in sales development representative? I can help with either \u2014 short summaries below plus what I can provide next if you tell me which one you want.\n\n1) Software\u2011Defined Radio (SDR) as a Service \u2014 quick summary\n- What it is: A cloud/hosted offering that lets customers access RF front-ends and signal-processing stacks (receivers, transmitters, demodulators) via APIs or web UI without buying/hosting hardware.  \n- Typical capabilities: over",
    "mention_snippet": null,
-   "cost_usd": 0.001611
+   "cost_usd": 0.002287
   },
   {
    "n": 95,
@@ -1280,10 +1286,12 @@
    "engine": "gpt",
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
-   "competitors": [],
-   "answer_head": "Good topic \u2014 AI can dramatically speed up and improve sales prospecting. Before I dive deep, quick question: do you want a high-level strategy and prompts you can use right away, or do you want recommendations for specific tools (I can search and compare those for you)?  \n\nBelow is a compact, practical playbook you can use immediately (no web search required), including use cases, a 5-step implementation plan, prompt templates, outreach sequences, KPIs, and risks to watch.\n\nWhat AI can do for pr",
+   "competitors": [
+    "Apollo"
+   ],
+   "answer_head": "Great \u2014 here\u2019s a compact, practical guide you can use right away to apply AI for sales prospecting, plus ready-to-use prompts, a simple 30/60/90 pilot plan, and risk/ops advice.\n\nWhat AI is good for in prospecting\n- Lead discovery & enrichment: find companies/contacts, fill firmographics, tech stack, funding, recent events.\n- Lead scoring & prioritization: combine intent signals, enrichment and behavior to rank outreach.\n- Personalized outreach at scale: generate subject lines, cold emails, Link",
    "mention_snippet": null,
-   "cost_usd": 0.005161
+   "cost_usd": 0.004437
   },
   {
    "n": 96,
@@ -1295,7 +1303,7 @@
    "competitors": [],
    "answer_head": "",
    "mention_snippet": null,
-   "cost_usd": 0.060545
+   "cost_usd": 0.082481
   },
   {
    "n": 97,
@@ -1309,9 +1317,9 @@
     "Apollo",
     "Lemlist"
    ],
-   "answer_head": "Here\u2019s a compact, startup-focused shortlist of the best sales-automation tools in 2026, what each is best for, and quick pros/cons so you can pick fast. If you tell me your stage (solo/seed/Series A), budget per user, and primary channels (email / phone / LinkedIn), I\u2019ll narrow it to 2\u20133 picks and an evaluation plan.\n\nTop picks (what to try first)\n- HubSpot (Sales Hub + free CRM) \u2014 Best all-in-one, easiest to scale from free to full stack. Strong free tier, modular upgrades, and a startup discou",
+   "answer_head": "Good question \u2014 I can give a short, practical shortlist plus starter stacks for different startup stages. Before I tailor further: what stage is your startup (solo/founder\u2011led, seed / Series A, or scaling) and which channels matter most (email, calling, LinkedIn)?  \n\nQuick shortlist (tools startups actually use, with why they\u2019re a good fit)\n\n- HubSpot Sales Hub \u2014 free CRM + easy workflow automation; great for founders who want a no\u2011cost, extendable system that grows with you. ([hubspot.com](http",
    "mention_snippet": null,
-   "cost_usd": 0.060472
+   "cost_usd": 0.02711
   },
   {
    "n": 98,
@@ -1321,9 +1329,9 @@
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
    "competitors": [],
-   "answer_head": "Do you mean one of these?\n\n1) A shortlist of existing AI-powered outbound sales tools (SaaS) and how they compare.  \n2) A plan / architecture for building your own AI outbound-sales tool (tech stack, data flows, prompts, APIs).  \n3) Example outbound workflows and templates (cold email, LinkedIn DM, call scripts) plus recommended prompts.  \n4) Implementation checklist and compliance (CRM integration, deliverability, CAN\u2011SPAM/GDPR).  \n5) Help choosing which option fits your team (questions about b",
+   "answer_head": "Do you mean you want help finding an AI-powered outbound sales tool, building one, or something else? A few quick options I can do for you:\n\n- Recommend and compare current commercial tools (shortlist + features, pricing ranges, integrations) \u2014 I\u2019ll search for up-to-date info.  \n- Help design/build an AI outbound workflow (cadence, messaging templates, personalization logic, metric tracking).  \n- Draft high-converting cold email / LinkedIn sequences and subject lines using AI.  \n- Explain techni",
    "mention_snippet": null,
-   "cost_usd": 0.001055
+   "cost_usd": 0.001613
   },
   {
    "n": 99,
@@ -1337,9 +1345,9 @@
     "11x",
     "AiSDR"
    ],
-   "answer_head": "Short answer: there\u2019s no single \u201cbest\u201d AI SDR for LinkedIn \u2014 the right choice depends on your goals (fully autonomous meetings vs. AI-assisted personalization), budget, and how much risk you\u2019ll accept around LinkedIn\u2019s rules. Below are the top options by use-case plus safety notes and an action plan.\n\nTop picks by use-case\n- Autonomous AI SDR (finds leads, runs multi-step outreach): Artisan / 11x / AiSDR are marketed as full autonomous outbound agents that handle LinkedIn + email/phone follow-up",
+   "answer_head": "Short answer: it depends on your use case. Below are the top AI\u2011SDR / LinkedIn outreach tools in 2026 by typical needs, with one-line pros/cons and sources \u2014 plus an important compliance warning.\n\nBest picks by use-case\n- Reply.io \u2014 Best AI-first sales engagement for multichannel (LinkedIn + email + calling) with AI message generation and sequencing for teams. Good if you want one platform to manage outreach flows. ([linkedin.com](https://www.linkedin.com/products/reply-io-replyio/?utm_source=op",
    "mention_snippet": null,
-   "cost_usd": 0.026769
+   "cost_usd": 0.038359
   },
   {
    "n": 100,
@@ -1348,11 +1356,14 @@
    "engine": "gpt",
    "model": "openai/gpt-5-mini:online",
    "verdict": "absent",
-   "competitors": [],
-   "answer_head": "Do you mean a market comparison of AI SDR (sales-development) tools in 2026? I can do a short quick-list or a detailed vendor-by-vendor comparison (features, pricing, ROI benchmarks, integrations, deliverability, recommended use-cases) with sources.\n\nQuick choices \u2014 which would you like?\n1) Quick summary: top 5 AI\u2011SDR platforms in 2026 and one-line pros/cons each.  \n2) Detailed report: top 8 vendors with pricing (as of 2026), measured outcomes (meetings/booked %), integrations, strengths/weaknes",
+   "competitors": [
+    "Apollo",
+    "Clay",
+    "Lemlist"
+   ],
+   "answer_head": "Do you mean a market comparison of AI\u2011powered SDR (sales development) platforms in 2026? I pulled current product notes and recent reviews and put together a short, practical comparison and recommendation by use case. If you want, I can convert this into a one\u2011page vendor scorecard for your team (needs your target market, avg deal size, and team size).\n\nQuick headline summary\n- Best for prospecting / contact data: Apollo.io \u2014 strong dataset + built\u2011in AI prospecting. ([knowledge.apollo.io](https",
    "mention_snippet": null,
-   "cost_usd": 0.012975
+   "cost_usd": 0.049387
   }
- ],
- "note": "graded with the 2026-07-21 pre-final grader; differs from the final grader on exactly one non-headline label (n=4 named_collision vs ambiguous - broad 'research' vocab); both named_us rows (n=3, n=5) hand-verified as driftwood.sh; a 402 (key out of credits) blocked a same-day regrade rerun"
+ ]
 }

@@ -1,27 +1,28 @@
 {
  "date": "2026-07-21",
+ "run": "evening re-baseline (fixed grader, canonical)",
  "layer": "answer",
  "queryset_version": "v2",
  "headline": {
   "sonar": {
    "model": "perplexity/sonar",
-   "tier1_named_us": 0,
+   "tier1_named_us": 4,
    "tier1_total": 20,
-   "tier1_named_us_rate": 0.0,
+   "tier1_named_us_rate": 0.2,
    "audited": true
   },
   "gpt": {
    "model": "openai/gpt-5-mini:online",
-   "tier1_named_us": 2,
+   "tier1_named_us": 1,
    "tier1_total": 20,
-   "tier1_named_us_rate": 0.1,
+   "tier1_named_us_rate": 0.05,
    "audited": true
   },
   "gemini": {
    "model": "google/gemini-3.5-flash:online",
-   "tier1_named_us": 6,
+   "tier1_named_us": 7,
    "tier1_total": 20,
-   "tier1_named_us_rate": 0.3,
+   "tier1_named_us_rate": 0.35,
    "audited": true
   }
  },
@@ -33,18 +34,18 @@
    "errors": 0,
    "error_sample": null,
    "total": 100,
-   "named_us_total": 0,
-   "tier1_named_us": 0,
+   "named_us_total": 4,
+   "tier1_named_us": 4,
    "tier1_total": 20,
-   "tier1_named_us_rate": 0.0,
+   "tier1_named_us_rate": 0.2,
    "per_tier": {
     "1": {
-     "named_us": 0,
-     "named_collision": 1,
-     "ambiguous": 2,
-     "absent": 17,
+     "named_us": 4,
+     "named_collision": 0,
+     "ambiguous": 1,
+     "absent": 15,
      "total": 20,
-     "named_us_rate": 0.0
+     "named_us_rate": 0.2
     },
     "2": {
      "named_us": 0,
@@ -64,22 +65,22 @@
     }
    },
    "competitor_counts": {
-    "Apollo": 21,
-    "AiSDR": 13,
-    "Artisan": 13,
-    "Clay": 12,
-    "Amplemarket": 11,
-    "11x": 10,
-    "Saleshandy": 9,
-    "Instantly": 8,
-    "Lemlist": 4,
-    "Salesforge": 3,
-    "Smartlead": 3,
-    "Coldreach": 1,
+    "Apollo": 19,
+    "Clay": 13,
+    "Artisan": 11,
+    "AiSDR": 11,
+    "Amplemarket": 10,
+    "11x": 8,
+    "Saleshandy": 8,
+    "Instantly": 5,
+    "Smartlead": 5,
+    "Lemlist": 2,
+    "Coldreach": 2,
+    "Salesforge": 2,
     "Unify": 1,
     "Landbase": 1
    },
-   "cost_usd": 0.542,
+   "cost_usd": 0.5417,
    "audited": true
   },
   {
@@ -89,18 +90,18 @@
    "errors": 0,
    "error_sample": null,
    "total": 100,
-   "named_us_total": 2,
-   "tier1_named_us": 2,
+   "named_us_total": 1,
+   "tier1_named_us": 1,
    "tier1_total": 20,
-   "tier1_named_us_rate": 0.1,
+   "tier1_named_us_rate": 0.05,
    "per_tier": {
     "1": {
-     "named_us": 2,
-     "named_collision": 1,
-     "ambiguous": 2,
+     "named_us": 1,
+     "named_collision": 0,
+     "ambiguous": 4,
      "absent": 15,
      "total": 20,
-     "named_us_rate": 0.1
+     "named_us_rate": 0.05
     },
     "2": {
      "named_us": 0,
@@ -121,17 +122,18 @@
    },
    "competitor_counts": {
     "Apollo": 23,
-    "Lemlist": 13,
+    "Lemlist": 15,
     "Instantly": 8,
-    "Artisan": 5,
-    "11x": 4,
-    "Salesforge": 3,
-    "Smartlead": 3,
-    "Clay": 3,
-    "AiSDR": 2,
-    "Amplemarket": 1
+    "Artisan": 7,
+    "11x": 6,
+    "AiSDR": 4,
+    "Saleshandy": 3,
+    "Amplemarket": 2,
+    "Clay": 2,
+    "Landbase": 1,
+    "Smartlead": 1
    },
-   "cost_usd": 1.7225,
+   "cost_usd": 1.6603,
    "audited": true
   },
   {
@@ -141,18 +143,18 @@
    "errors": 0,
    "error_sample": null,
    "total": 100,
-   "named_us_total": 6,
-   "tier1_named_us": 6,
+   "named_us_total": 7,
+   "tier1_named_us": 7,
    "tier1_total": 20,
-   "tier1_named_us_rate": 0.3,
+   "tier1_named_us_rate": 0.35,
    "per_tier": {
     "1": {
-     "named_us": 6,
+     "named_us": 7,
      "named_collision": 0,
      "ambiguous": 0,
-     "absent": 14,
+     "absent": 13,
      "total": 20,
-     "named_us_rate": 0.3
+     "named_us_rate": 0.35
     },
     "2": {
      "named_us": 0,
@@ -172,26 +174,27 @@
     }
    },
    "competitor_counts": {
-    "Clay": 39,
-    "Apollo": 38,
-    "Instantly": 33,
-    "11x": 25,
-    "Artisan": 24,
-    "AiSDR": 23,
-    "Smartlead": 20,
-    "Salesforge": 12,
+    "Clay": 38,
+    "Instantly": 37,
+    "Apollo": 37,
+    "Artisan": 30,
+    "11x": 29,
+    "AiSDR": 25,
+    "Smartlead": 19,
+    "Salesforge": 14,
+    "Amplemarket": 13,
     "Lemlist": 11,
-    "Amplemarket": 10,
-    "Saleshandy": 5,
-    "Unify": 5,
-    "Autobound": 4,
-    "Nooks": 3,
-    "Coldreach": 1
+    "Unify": 6,
+    "Autobound": 5,
+    "Nooks": 4,
+    "Coldreach": 3,
+    "Saleshandy": 2,
+    "Landbase": 1
    },
-   "cost_usd": 5.4128,
+   "cost_usd": 5.4555,
    "audited": true
   }
  ],
- "total_cost_usd": 7.68,
- "note": "results comparable only within one engine+model line. All 8 named_us hits hand-read and verified genuine 2026-07-21 (gemini 6/6, gpt 2/2 cite driftwood.sh + demo-led outbound); sonar resolves the brand to driftwood-ai.com or Drift (collision, correctly graded). gpt file is one grader revision behind final (one non-headline label differs)."
+ "total_cost_usd": 7.66,
+ "note": "CANONICAL day-0 baseline: evening 2026-07-21 re-run on the fixed grader, all named_us hand-audited via persisted snippets. Supersedes the morning runs (grader inconsistency, missing excerpts). Results comparable only within one engine+model line."
 }
