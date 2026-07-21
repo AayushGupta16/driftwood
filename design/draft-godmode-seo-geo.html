@@ -3,7 +3,16 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Godmode — SEO / GEO metrics (draft, rev 2)</title>
+<title>Godmode — SEO / GEO metrics (draft, rev 3)</title>
+<!-- rev 3 per founder direction 2026-07-21: "the ground truth should be at the
+     top, even above the rankings, since that is the true north star metric";
+     "use PostHog as ground truth to see if we get any AI referrals."
+     delta from rev 2: full-width Ground truth strip above the probe columns
+     (PostHog AI-referred sessions + organic sessions, demos booked with
+     attribution split, GSC clicks/impressions; trend-arrow + vs-last-week
+     slots; heavier card treatment, it is the north star); the probe hit-rate
+     columns move below it under a tiny "Leading indicators" label.
+     Everything else is unchanged rev 2. -->
 <!-- rev 2 per founder feedback 2026-07-21.
      deltas from rev 1: SEO (left) | GEO (right) two-column top with band-colored
      headline numbers; per-tier breakdowns are the collapsible tier rows; ONE
@@ -63,6 +72,28 @@
   .card { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow-win-sm); }
   .eyebrow { font-size: .85rem; color: var(--ink-soft); }
   .num { font-variant-numeric: tabular-nums; }
+
+  /* ---------- ground truth strip (rev 3, the north star) ----------
+     Deliberately heavier than everything below it: 2px ink top rule, the
+     stronger shadow, darker hairline, ink-weight label. */
+  .gt { margin-top: 18px; padding: 18px 20px 16px; border-color: #d9dee3; border-top: 2px solid var(--ink); box-shadow: var(--shadow-win); }
+  .gt .toprow { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .gt .eyebrow { color: var(--ink); font-weight: 600; }
+  .gtsrc { font-size: 11.5px; color: var(--ink-faint); }
+  .gtgrid { margin-top: 14px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+  .gtstat { min-width: 0; display: flex; flex-direction: column; border-left: 1px solid var(--line); padding-left: 20px; }
+  .gtstat:first-child { border-left: 0; padding-left: 0; }
+  .gtstat .l { font-size: 11.5px; font-weight: 600; color: var(--ink-soft); }
+  .gtstat .v { margin-top: 8px; font-size: 40px; font-weight: 600; letter-spacing: -.025em; line-height: 1; }
+  .gtstat .v .vsep { font-size: 22px; font-weight: 400; color: var(--ink-faint); }
+  .gtstat .split { margin-top: 6px; font-size: 11.5px; color: var(--ink-faint); }
+  .gtstat .delta { margin-top: auto; padding-top: 8px; font-size: 11px; color: var(--ink-faint); }
+  .gtstat .delta .arr { display: inline-block; margin-right: 4px; }
+  @media (max-width: 920px) { .gtgrid { grid-template-columns: 1fr 1fr; row-gap: 18px; } .gtstat { border-left: 0; padding-left: 0; } }
+
+  /* leading-indicators section label (rev 3) */
+  .seclabel { margin: 30px 2px 0; font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-faint); }
+  .seclabel + .cols { margin-top: 12px; }
 
   .cols { margin-top: 22px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
   .colstack { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
@@ -174,6 +205,40 @@
 
 <main>
   <h1>Search visibility</h1>
+
+  <!-- rev 3: ground truth first. Real humans arriving and booking is the north
+       star; everything below this strip is a leading indicator for it. -->
+  <div class="card gt">
+    <div class="toprow">
+      <span class="eyebrow" title="North star: did AI answers and search actually send people, and did they book. Sessions are PostHog event-derived; posthog-js drops headless and bot traffic client-side, so these counts are human-biased by design.">Ground truth</span>
+      <span class="gtsrc num">PostHog · GSC · Jul 21</span>
+    </div>
+    <div class="gtgrid num">
+      <div class="gtstat" title="PostHog sessions with $referring_domain in: chatgpt.com · chat.openai.com · perplexity.ai · claude.ai · gemini.google.com · copilot.microsoft.com">
+        <div class="l">AI-referred sessions</div>
+        <div class="v">0</div>
+        <div class="delta" title="week over week; PostHog live since Jul 15"><span class="arr" aria-hidden="true">→</span>±0 vs last week</div>
+      </div>
+      <div class="gtstat" title="PostHog sessions with $referring_domain google or bing">
+        <div class="l">Organic sessions</div>
+        <div class="v">0</div>
+        <div class="delta" title="week over week; PostHog live since Jul 15"><span class="arr" aria-hidden="true">→</span>±0 vs last week</div>
+      </div>
+      <div class="gtstat" title="booking_confirmed events, attributed by the session's referring domain: total / AI-attributed / organic-attributed">
+        <div class="l">Demos booked</div>
+        <div class="v">0</div>
+        <div class="split">0 AI · 0 organic</div>
+        <div class="delta" title="week over week"><span class="arr" aria-hidden="true">→</span>±0 vs last week</div>
+      </div>
+      <div class="gtstat" title="Google Search Console clicks / impressions; manual pull until the GSC API credential exists">
+        <div class="l">GSC clicks · impressions<span class="tag">manual pull</span></div>
+        <div class="v">0<span class="vsep"> / </span>4</div>
+        <div class="delta" title="first pull; delta fills in after the second"><span class="arr" aria-hidden="true">→</span>– vs last week</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="seclabel" title="Probe hit rates predict the ground truth above; they are the levers, not the goal.">Leading indicators · probe hit rates</div>
 
   <!-- top row: SEO left, GEO right — headline tier-1 hit rates -->
   <div class="cols">
