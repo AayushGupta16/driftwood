@@ -53,17 +53,56 @@ outsourced/hire cluster, ai bdr, sdr ai, pipeline generation.
 Guide-page retarget: /b2b-saas-outreach (not /cold-email-guide).
 
 
-## Traffic goal (Aayush, 2026-07-21)
+## Traffic expectations (goal retracted 2026-07-21)
 
-Stated goal: SEO+GEO drive 10,000 impressions/mo with a 1% visitor-to-
-demo rate. Honest calibration against domain physics: ~1,500-3,000/mo
-run-rate is the aggressive-but-real 30-day mark (ship all pages within
-a week + request indexing + alternatives batch); 10k/mo run-rate lands
-day 60-90 as rankings mature. 1% of VISITORS (sessions) booking is the
-right target with qualified traffic + the inline calendar; measured as
-booking_confirmed / sessions in PostHog. Alternatives pages
-(/alternatives/<competitor>) join the page plan - round-8 data in the
-research file; priority: instantly, clay, 11x, apollo, artisan.
+The 10k-impressions-in-a-month goal was retracted by Aayush; the
+operating expectation is the organic ladder: ~1,500-3,000
+impressions/mo run-rate around day 30 (all pages shipped + indexing
+requested), ~10k/mo around day 60-90, growing with authority. The
+conversion target stands: 1% of visitors book a demo
+(booking_confirmed / sessions in PostHog).
+
+## Competitor-alternative pages (validated 2026-07-21, round 8)
+
+The switching-intent cluster is real: "clay alternative" 100-1K/mo
+($383 top bid), "instantly alternative" 100-1K, then 11x / apollo /
+smartlead / lemlist / artisan / amplemarket alternatives at 10-100
+each. Plan: /alternatives/<competitor> off one template with real
+per-competitor content, an honest "when X is the right choice"
+section (buyers and their agents distrust self-serving comparisons),
+monthly fact-check refresh. Priority: instantly, clay, 11x, apollo,
+artisan. These are also query targets: SEO queryset v4 adds the top
+five alternative terms; GEO already tracks the pattern (the
+alternatives-to-11x/Artisan queries). The never-bid-on-brands rule is
+an ads rule; organic comparison pages are standard practice.
+
+## Integration marketplaces - the authority engine (for a future agent)
+
+Documented 2026-07-21 for whoever picks this up. The strongest
+white-hat backlink + distribution play available: build real CRM/tool
+integrations and get listed in their marketplaces. Each listing is a
+high-authority backlink plus standing discovery traffic, and
+acceptance is mechanical (build to spec, pass review, listed) unlike
+editorial pitching. Framing rule: this is PRODUCT ROADMAP that emits
+backlinks - "push booked demos + enriched leads into your CRM" closes
+deals on its own and answers a standing sales objection.
+
+Sequence by effort/authority/ICP fit:
+1. Zapier - lightest (REST triggers/actions), real utility, instant
+   marketplace page. Spec first.
+2. Attio - driftwood's ICP lives in Attio (YC-stage startups);
+   partner-friendly; featured-app potential.
+3. HubSpot App Marketplace - biggest authority; app review takes
+   weeks; "does it sync to HubSpot" is a real objection.
+4. Pipedrive / Close - later.
+5. Salesforce AppExchange - SKIP for now (enterprise-heavy, fees,
+   wrong ICP).
+
+Paid "featured" slots in marketplaces are advertising, not paid links;
+Aayush draws that line if/when offered. Prerequisite for any of it:
+the integration actually works and is documented on a
+/integrations/<name> page (which itself targets "<crm> outbound
+integration" queries).
 
 ## Validated targets (Keyword Planner, US, 2026-07-20/21, 184 terms)
 
