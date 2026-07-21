@@ -1,5 +1,8 @@
 # GEO/SEO plan — driftwood.sh
 
+> 2026-07-21: current operating strategy moved to SEO.md and GEO.md.
+> This file remains the phase history and status log.
+
 Owner: Claude (execution) + Aayush (approvals, founder content).
 Baseline sweep + plan audit: 2026-07-15. Re-run the sweep monthly.
 
