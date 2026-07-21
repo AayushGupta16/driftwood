@@ -148,8 +148,15 @@ SALES_CONTEXT = [
 ]
 # "test ideas" / "build ai products" = driftwood.ai's live self-
 # description (observed verbatim in 2026-07-21 sonar answers).
+# NOTE: bare "research" is NOT collision vocab — our own pitch says
+# "researches each prospect" (verified live false-collision on gpt).
 COLLISION_CONTEXT = [
-    "research",
+    "research org",
+    "research lab",
+    "research institute",
+    "research group",
+    "research company",
+    "ai research",
     "consultanc",
     "consulting",
     "advisory",
@@ -255,6 +262,14 @@ def grade_answer(text):
             continue
         if any(w in window for w in COLLISION_CONTEXT):
             per_mention.append("named_collision")
+            continue
+        # A standalone "Drift" near a bare "driftwood" = the engine
+        # conflating us with Drift the chat tool (verified live on
+        # sonar 2026-07-21: "Driftwood vs Artisan ... Drift is an
+        # inbound website-conversation tool"). Word boundaries mean
+        # \bdrift\b never matches inside "driftwood".
+        if re.search(r"\bdrift\b", window):
+            per_mention.append("ambiguous")
             continue
         # Sales context must sit in the SAME SENTENCE as the mention:
         # collision-entity mentions live one sentence away from generic

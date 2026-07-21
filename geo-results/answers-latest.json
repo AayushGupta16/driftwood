@@ -15,14 +15,14 @@
    "tier1_named_us": 2,
    "tier1_total": 20,
    "tier1_named_us_rate": 0.1,
-   "audited": false
+   "audited": true
   },
   "gemini": {
    "model": "google/gemini-3.5-flash:online",
    "tier1_named_us": 6,
    "tier1_total": 20,
    "tier1_named_us_rate": 0.3,
-   "audited": false
+   "audited": true
   }
  },
  "engines": [
@@ -132,7 +132,7 @@
     "Amplemarket": 1
    },
    "cost_usd": 1.7225,
-   "audited": false
+   "audited": true
   },
   {
    "engine": "gemini",
@@ -189,9 +189,9 @@
     "Coldreach": 1
    },
    "cost_usd": 5.4128,
-   "audited": false
+   "audited": true
   }
  ],
  "total_cost_usd": 7.68,
- "note": "results comparable only within one engine+model line. gpt/gemini 2026-07-21 verdicts UNAUDITED: answer excerpts were not persisted (script bug during the credits-exhaustion runs); treat as indicative, re-baseline post-topup with excerpts verified."
+ "note": "results comparable only within one engine+model line. All 8 named_us hits hand-read and verified genuine 2026-07-21 (gemini 6/6, gpt 2/2 cite driftwood.sh + demo-led outbound); sonar resolves the brand to driftwood-ai.com or Drift (collision, correctly graded). gpt file is one grader revision behind final (one non-headline label differs)."
 }
