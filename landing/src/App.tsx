@@ -926,6 +926,7 @@ export default function App() {
               <a href="/best-ai-sdr-tools">Compare AI SDR tools</a>
               <a href="/founder-led-sales">Founder-led sales</a>
               <a href="/cold-outbound-benchmarks">Outbound benchmarks</a>
+              <a href="/ai-sdr">What is an AI SDR</a>
             </nav>
           </div>
           <div className="foot-bottom">

@@ -59,10 +59,11 @@ as landing/public/<route>/index.html (self-contained pattern; copy an
 existing page) -> sitemap -> llms.txt -> footer-link decision ->
 internal links -> commit main (deploys) -> GSC request indexing.
 Footer decision: Aayush approved footer links 2026-07-21; sitewide
-footer (homepage + every static page) carries six links: customers,
+footer (homepage + every static page) carries seven links: customers,
 demo-led outbound, faq, compare AI SDR tools, founder-led sales,
-outbound benchmarks. Alternatives pages get internal links, not
-footer slots.
+outbound benchmarks, what is an AI SDR (/ai-sdr earns the slot as
+the head destination the tail funnels to). Alternatives + guide
+pages get internal links, not footer slots.
 
 Priority queue with validated targets:
 1. /founder-led-sales — SHIPPED 2026-07-21 (subagent-drafted, QA'd;
@@ -73,17 +74,20 @@ Priority queue with validated targets:
    drafted + Aayush can veto). Rate-question cluster answered with
    named-source numbers (Belkins/Sopro/Woodpecker/Expandi/Google);
    the listicle pitches are now UNGATED (Aayush sends).
-3. /ai-sdr — head-term destination (1K-10K Med) + the
-   "autonomous vs assisted AI SDRs" category section (unclaimed;
-   approve-before-send is our wedge; do NOT coin a third term).
-4. /alternatives/<competitor> — instantly + clay SHIPPED 2026-07-21;
-   both join the monthly fact-check rotation (first re-checks:
-   Instantly annual-discount %, Clay Enterprise floor, Apollo pricing
-   which is secondary-sourced). Remaining: 11x, apollo, artisan. One
-   template, REAL per-competitor content, honest "when X is right",
-   monthly fact-check refresh (same rule as /best-ai-sdr-tools).
-5. /b2b-saas-outreach — qualified-tail guide (thin volumes by
-   design); absorbs the how-to-write question tail as H2s/FAQ.
+3. /ai-sdr — SHIPPED 2026-07-21 (head-term destination; autonomous
+   vs assisted section live, no third term coined; sitewide footer
+   slot = the tail-funnel mechanism; DefinedTerm schema x3).
+4. /alternatives/<competitor> — ALL FIVE SHIPPED 2026-07-21
+   (instantly, clay, 11x, apollo, artisan). Monthly fact-check
+   rotation covers all five + /best-ai-sdr-tools + /ai-sdr. First
+   re-checks: Instantly annual-discount %, Clay Enterprise floor,
+   11x Vendr median + whether they publish pricing, Artisan
+   quote-based pricing nuance (fold into /best-ai-sdr-tools),
+   Apollo now PRIMARY-sourced via r.jina.ai render of
+   apollo.io/pricing (new credit-pool model 30/48/72k per seat/yr;
+   many roundups still describe the old model).
+5. /b2b-saas-outreach — SHIPPED 2026-07-21 (question-tail guide;
+   all numbers cite /cold-outbound-benchmarks, no new claims).
 6. Later: b2b saas lead gen cluster page; /outsourced-sdr exists in
    git history but is DEPRIORITIZED (off-ICP call 07-21).
 
