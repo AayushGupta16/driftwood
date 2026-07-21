@@ -98,11 +98,13 @@ a draft for Aayush, never a send.
   overridable), grades named_us/named_collision/ambiguous/absent.
   Spend approved <$100/week (Aayush 2026-07-21). Run: python3
   site/scripts/geo-answer-probe.py (key from backend/.env; ~$7.5 per
-  full run, $15 hard stop; daily-capable). Baseline tier-1 named_us:
-  gemini 6/20, gpt 2/20, sonar 0/20 (sonar resolves the brand to
-  driftwood-ai.com or Drift); tiers 2-3 zero on all engines; lines
-  comparable only within one engine+model. The probe is the leading
-  indicator, answer-share is the truth.
+  full run, $15 hard stop; daily-capable). CANONICAL day-0 baseline
+  (2026-07-21 evening, fixed grader, all hits audited): gemini 7/20
+  tier-1 (branded + BOTH coinage queries), sonar 4/20 (branded;
+  flipped intraday from 0 after the FAQ recut + new pages), gpt
+  1/20; tiers 2-3 zero on all engines; lines comparable only within
+  one engine+model. The probe is the leading indicator, answer-share
+  is the truth.
 - Quarterly: re-run the 4-persona discovery probe (prompts in
   agentic-query-research-2026-07-21.md), revise the fixed set to
   v-next as a proposal.
