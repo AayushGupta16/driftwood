@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+<head>
+<!--
+  DRAFT: flagship long-tail page for "founder led sales".
+
+  Proposed URL:    https://driftwood.sh/founder-led-sales
+  Proposed title:  Founder-led sales: why it works and where it breaks · driftwood
+  Proposed meta:   What founder-led sales means, why it beats hired outbound
+                   early, the calendar math that breaks it, when to hire an
+                   SDR, and a third option that keeps the founder's voice.
+
+  Why this page: Keyword Planner (US, 2026-07-20, round 3): "founder led
+  sales" 100-1K/mo at LOW competition, the best fit of the sweep. Strategy
+  is long tail in seed/Series-A founder vocabulary, not head terms. The
+  question tail (when to hire an SDR, first salesperson, first customers,
+  do cold emails still work, how many cold emails) rides along as an H2
+  and the FAQ per the round 3 read; Planner under-reports question
+  queries, so 0-10 there does not disqualify them as headings here.
+
+  Open questions for review:
+  1. Label above the H1 is "Guide", the site's first non-"Definition"
+     label. Flag if you want "Definition" kept site-wide.
+  2. Both CTAs point at /#book. If inline booking has not shipped by
+     build time, fall back to the cal.com link the static pages use.
+  3. Footer links row shows a proposed "founder-led sales" entry next to
+     the proposed "AI SDR" one from the ai-sdr draft. Per GEO-PLAN,
+     shipping also means a sitemap URL, an llms.txt line, and the
+     footer-link decision.
+  4. This adds another FAQPage node (after /faq, and /ai-sdr if that
+     ships). Different URLs, fine per Google's docs, but flagging it.
+  5. The per-prospect time estimates (15 to 20 minutes research, 10 to 15
+     writing) and the three-month SDR ramp are our own numbers, not
+     sourced from a page we control. Sanity-check before ship.
+  6. No DefinedTerm node: "founder-led sales" is an established term, not
+     ours to define. Article + FAQPage only, per the page spec.
+  7. datePublished in JSON-LD is a placeholder (2026-07-20); set at
+     publish time.
+-->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Founder-led sales: why it works and where it breaks · driftwood</title>
+<meta name="description" content="What founder-led sales means, why it beats hired outbound early, the calendar math that breaks it, when to hire an SDR, and a third option that keeps the founder's voice." />
+<link rel="canonical" href="https://driftwood.sh/founder-led-sales" />
+
+<!-- Draft only: Google Fonts for preview. Prod self-hosts both families
+     via the @font-face block the live static pages use. -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400..700;1,400..700&family=Source+Serif+4:wght@600&display=swap" />
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "@id": "https://driftwood.sh/founder-led-sales#article",
+      "headline": "Founder-led sales: why it works and where it breaks",
+      "url": "https://driftwood.sh/founder-led-sales",
+      "mainEntityOfPage": "https://driftwood.sh/founder-led-sales",
+      "publisher": { "@id": "https://driftwood.sh/#org" },
+      "datePublished": "2026-07-20",
+      "inLanguage": "en"
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://driftwood.sh/founder-led-sales#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "When should a startup hire its first salesperson?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "When a founder has closed enough deals to write down what repeats: who buys, why they buy, what they ask, and how long it takes. The first sales hire should execute a motion the founder proved, not discover one; hires made to find the motion usually fail. Until then the higher-leverage fix is founder throughput, not founder replacement. And the first hire is often a closing rep rather than an SDR; hire the role the proven motion actually needs."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I get my first customers for B2B SaaS?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Direct outreach from the founder to a small, carefully chosen list. Start with the people you can reach warm, then go cold on the exact profile the product was built for. Early customers are buying the founder's understanding of their problem as much as the product, so the message has to prove that understanding: short, specific, and easy to verify. List quality and research depth beat volume at this stage."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do cold emails still work?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, for a narrower definition of cold email. Generic AI-written sequences mostly do not; buyers pattern-match the style and delete it unread. Messages that carry something specific and verifiable about the prospect's business still get replies, which is the bet behind demo-led outbound. The Autosana case study shows what that looked like in week one for one company."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How many cold emails should a founder send?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Fewer than the benchmark posts say. Volume advice in the hundreds per week comes from the SDR world and assumes template quality. A founder sending 10 to 20 researched messages a week will usually out-reply a 500-send sequence and keep their domain reputation intact doing it. The constraint worth fixing is not send count; it is how many messages you can produce at founder quality."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+
+<style>
+  :root {
+    --bg: #ffffff;
+    --ink: #16181b;
+    --gray: #6a737d;
+    --gray-light: #9aa2ab;
+    --line: #e9ebee;
+    --tide: #15557e;
+    --tide-deep: #0d3c5b;
+    --tide-wash: #eaf1f7;
+    --wash-a: #f4f8fb;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  :focus-visible { outline: 2px solid var(--tide); outline-offset: 2px; }
+
+  .wrap {
+    max-width: 68rem;
+    margin-inline: auto;
+    padding-inline: clamp(1.25rem, 4vw, 2.5rem);
+  }
+
+  /* ---------- header ---------- */
+  header { border-bottom: 1px solid var(--line); }
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 4rem;
+  }
+  .wordmark {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-family: "Source Serif 4", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.2rem;
+    color: var(--ink);
+    text-decoration: none;
+    letter-spacing: -0.01em;
+  }
+  .wordmark .helm {
+    width: 1.9rem;
+    height: 1.9rem;
+    display: block;
+    flex-shrink: 0;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--tide);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    height: 2.4rem;
+    padding-inline: 1.3rem;
+    border-radius: 999px;
+    transition: background 0.15s;
+  }
+  .btn:hover { background: var(--tide-deep); }
+
+  /* ---------- article ---------- */
+  main { padding-block: clamp(3rem, 7vw, 5rem) clamp(3rem, 6vw, 4.5rem); }
+  article { max-width: 42rem; margin-inline: auto; }
+
+  .label {
+    font-size: 0.85rem;
+    color: var(--gray);
+    margin: 0 0 0.9rem;
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(1.9rem, 1.2rem + 2vw, 2.6rem);
+    font-weight: 600;
+    letter-spacing: -0.014em;
+    line-height: 1.15;
+    text-wrap: balance;
+  }
+  .lede {
+    margin: 1.4rem 0 0;
+    font-size: 1.22rem;
+    line-height: 1.55;
+    color: var(--ink);
+  }
+  .lede strong { font-weight: 600; }
+
+  section {
+    margin-top: 2.75rem;
+    padding-top: 2.25rem;
+    border-top: 1px solid var(--line);
+  }
+  h2 {
+    margin: 0 0 0.85rem;
+    font-size: 1.3rem;
+    font-weight: 600;
+    letter-spacing: -0.014em;
+    line-height: 1.3;
+    text-wrap: balance;
+  }
+  h3 {
+    margin: 1.9rem 0 0.55rem;
+    font-size: 1.08rem;
+    font-weight: 600;
+    letter-spacing: -0.012em;
+    line-height: 1.35;
+    text-wrap: balance;
+  }
+  em.voice {
+    font-family: Georgia, "Times New Roman", serif;
+    font-style: italic;
+    color: var(--tide);
+    letter-spacing: 0;
+  }
+  p { margin: 0; color: var(--gray); }
+  p + p { margin-top: 0.9rem; }
+  article a {
+    color: var(--tide);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
+  article a:hover { color: var(--tide-deep); }
+
+  ol.loop {
+    margin: 1rem 0 0;
+    padding-left: 1.4rem;
+    color: var(--gray);
+  }
+  ol.loop li { margin-top: 0.55rem; }
+  ol.loop li::marker { color: var(--tide); font-weight: 600; }
+
+  /* ---------- close panel ---------- */
+  .close {
+    margin-top: 3rem;
+    background: var(--wash-a);
+    border-radius: 12px;
+    padding: clamp(1.5rem, 4vw, 2.25rem);
+  }
+  .close p { color: var(--ink); font-size: 1.05rem; max-width: 34rem; }
+  .close .btn { margin-top: 1.25rem; height: 2.75rem; padding-inline: 1.7rem; font-size: 0.95rem; }
+
+  /* ---------- footer ---------- */
+  footer {
+    background: linear-gradient(#15557e, #0d3c5b);
+    color: #fff;
+  }
+  footer::before {
+    content: "";
+    display: block;
+    height: 28px;
+    margin-top: -28px;
+    position: relative;
+    z-index: 1;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='28' viewBox='0 0 180 28'%3E%3Cpath d='M0 14 C 11.25 5.5, 33.75 5.5, 45 14 C 56.25 22.5, 78.75 22.5, 90 14 C 101.25 5.5, 123.75 5.5, 135 14 C 146.25 22.5, 168.75 22.5, 180 14 L180 28 L0 28 Z' fill='%2315557e'/%3E%3C/svg%3E") repeat-x bottom;
+  }
+  .foot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1.5rem;
+    padding-block: 4.5rem 3rem;
+  }
+  .foot .wordmark {
+    color: #fff;
+    font-size: 1.35rem;
+  }
+  .foot .wordmark .helm {
+    width: 2.4rem;
+    height: 2.4rem;
+  }
+  .foot-def {
+    margin: 0;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.75);
+    max-width: 56ch;
+  }
+  .foot-links,
+  .foot-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.5rem;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.75);
+  }
+  footer a {
+    color: inherit;
+    text-decoration: none;
+  }
+  footer a:hover { color: #fff; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="wordmark" href="/"><svg viewBox="0 0 64 64" class="helm" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#15557e"/><g transform="translate(32 32) scale(0.88)" fill="none" stroke="#f7f4ec" stroke-linecap="round" stroke-linejoin="round"><circle r="22.5" stroke-width="3.4"/><g stroke-width="3.6"><line y1="-22.5" y2="-27.5"/><g transform="rotate(45)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(90)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(135)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(180)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(225)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(270)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(315)"><line y1="-22.5" y2="-27.5"/></g></g><g stroke-width="2.5"><line y1="-8.5" y2="-19.5"/><g transform="rotate(45)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(90)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(135)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(180)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(225)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(270)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(315)"><line y1="-8.5" y2="-19.5"/></g></g><circle r="7.5" stroke-width="2.6" fill="#15557e"/><circle r="2.8" fill="#f7f4ec" stroke="none"/></g></svg>driftwood</a>
+    <a class="btn" href="/#book">Book a demo</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <article>
+    <p class="label">Guide</p>
+    <h1>Founder-led sales</h1>
+
+    <p class="lede"><strong>Founder-led sales</strong> is the stage where a founder is the sales team: sourcing prospects, writing the outreach, running the calls, closing. Almost every B2B company starts here, and at seed it is usually the right call. The hard part is what to do when it starts eating the calendar.</p>
+
+    <section>
+      <h2>What founder-led sales means</h2>
+      <p>In the early life of a B2B company, usually from the first customer until somewhere past a repeatable playbook, a founder does the selling. Not because founders are natural salespeople; most are not. Because at that stage nobody else can do the job: the pitch changes weekly, the ICP is a guess being tested, and every conversation feeds back into the product.</p>
+      <p>Founder-led sales is that stage treated as a deliberate motion rather than an accident. The founder picks the prospects, writes the messages, takes the calls, and closes the deals. The output is not just revenue. It is the playbook a future sales team will eventually run.</p>
+    </section>
+
+    <section>
+      <h2>Why it beats hired outbound early</h2>
+      <p>Put a founder's cold message next to an agency's or a junior rep's and the difference is not subtle. Three things drive it.</p>
+      <ol class="loop">
+        <li>The founder knows the product. You can say exactly why it fits this one prospect, answer the hard question in the first reply, and skip the marketing language because you do not need it.</li>
+        <li>The founder writes like a human. Two plain sentences from someone who has obviously read the prospect's site look nothing like a sequence, and buyers can tell in one glance.</li>
+        <li>The founder has authority. A note from the person who built the thing carries weight a rep's message cannot, and other founders in particular reply to founders.</li>
+      </ol>
+      <p>There is a fourth advantage that compounds: every reply, objection, and silence lands directly on the person who can change the product and the pitch. At this stage selling is half learning, and hiring the learning out breaks the loop.</p>
+    </section>
+
+    <section>
+      <h2>Where it breaks</h2>
+      <p>The problem is arithmetic, not skill. Done at founder quality, one prospect costs real time: 15 to 20 minutes reading what is public about the person and the company, another 10 to 15 writing a message that could not have been sent to anyone else, plus follow-ups over the next two weeks. Call it half an hour per prospect. Twenty prospects is a full working day, and twenty a week is thin pipeline at any reply rate.</p>
+      <p>A founder's week does not have a spare day. Product, hiring, investors, support, and the customers you already closed all bill their hours first, so outreach becomes the thing that slips: batches go out late, follow-ups get dropped, pipeline turns lumpy. Most founder-led outbound does not fail on message quality. It fails on volume the calendar cannot supply.</p>
+      <p>The usual patch is a template. That quietly converts founder-quality outreach into the rep-quality outreach it was beating, and the advantage does not survive the shortcut.</p>
+    </section>
+
+    <section>
+      <h2>When should you hire an SDR?</h2>
+      <p>Later than the pain suggests. The honest math on the hire:</p>
+      <ol class="loop">
+        <li>Cost: a human SDR in the US typically runs $80,000 to $120,000 a year once salary, commission, tools, and management are counted.</li>
+        <li>Ramp: figure three months or more before full productivity, and the hire ramps into whatever playbook exists. If the playbook is still forming, they ramp into guesswork.</li>
+        <li>Quality: outreach drops from founder level to rep level at exactly the moment your company is least known and the message needs the most judgment.</li>
+      </ol>
+      <p>The working rule: hire an SDR to scale a motion you have already proved, not to discover one. If who you sell to and what you say still change monthly, the constraint is the founder's throughput, not the founder's presence, and a hire does not fix throughput on an unproved motion.</p>
+      <p>If you are weighing software instead of a hire, the <a href="/ai-sdr">AI SDR</a> page covers what those tools do, what they cost, and where most of them go wrong.</p>
+    </section>
+
+    <section>
+      <h2>The third option</h2>
+      <p>The real choice is not founder hours or a hire. What makes founder-led outreach work was never the founder's time. It is the research depth, the plain writing, and the fact that the message comes from you. Those can be kept while the hours move to software.</p>
+      <p>driftwood runs the founder's loop as an agent. It does the research a founder would do, and every message carries a working demo of your product, built for their business, so the prospect gets something to verify instead of claims to believe. The approach is called <a href="/demo-led-outbound">demo-led outbound</a>. Nothing sends without your approval, so the voice stays yours. And everything sends from your own accounts, LinkedIn or email, so replies land where you already work.</p>
+      <p>Run this way, on the same lead list, replies went from under 1% to over 14% in week one at Autosana (YC S25), including founders who had ignored more than four months of prior outreach. The <a href="/customers/autosana">Autosana case study</a> has the full numbers.</p>
+      <p>Pricing is public: $1,000 to $5,000 a month depending on send volume and channels, a fraction of a hire's loaded cost. Details on the <a href="/faq">FAQ page</a>.</p>
+    </section>
+
+    <section>
+      <h2>Frequently asked questions</h2>
+
+      <h3>When should a startup hire its first salesperson?</h3>
+      <p>When a founder has closed enough deals to write down what repeats: who buys, why they buy, what they ask, and how long it takes. The first sales hire should execute a motion the founder proved, not discover one; hires made to find the motion usually fail. Until then the higher-leverage fix is founder throughput, not founder replacement. And the first hire is often a closing rep rather than an SDR; hire the role the proven motion actually needs.</p>
+
+      <h3>How do I get my first customers for B2B SaaS?</h3>
+      <p>Direct outreach from the founder to a small, carefully chosen list. Start with the people you can reach warm, then go cold on the exact profile the product was built for. Early customers are buying the founder's understanding of their problem as much as the product, so the message has to prove that understanding: short, specific, and easy to verify. List quality and research depth beat volume at this stage.</p>
+
+      <h3>Do cold emails still work?</h3>
+      <p>Yes, for a narrower definition of cold email. Generic AI-written sequences mostly do not; buyers pattern-match the style and delete it unread. Messages that carry something specific and verifiable about the prospect's business still get replies, which is the bet behind demo-led outbound. The <a href="/customers/autosana">Autosana case study</a> shows what that looked like in week one for one company.</p>
+
+      <h3>How many cold emails should a founder send?</h3>
+      <p>Fewer than the benchmark posts say. Volume advice in the hundreds per week comes from the SDR world and assumes template quality. A founder sending 10 to 20 researched messages a week will usually out-reply a 500-send sequence and keep their domain reputation intact doing it. The constraint worth fixing is not send count; it is how many messages you can produce at founder quality.</p>
+    </section>
+
+    <div class="close">
+      <p>driftwood (<a href="https://driftwood.sh">driftwood.sh</a>) keeps founder-led sales founder-led: the agent researches each prospect and builds a working demo of your product for their business, you approve every send, and it goes out from your own accounts. Book a demo and we will build one for yours.</p>
+      <a class="btn" href="/#book">Book a demo</a>
+    </div>
+  </article>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <a class="wordmark" href="/"><svg viewBox="0 0 64 64" class="helm" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#15557e"/><g transform="translate(32 32) scale(0.88)" fill="none" stroke="#f7f4ec" stroke-linecap="round" stroke-linejoin="round"><circle r="22.5" stroke-width="3.4"/><g stroke-width="3.6"><line y1="-22.5" y2="-27.5"/><g transform="rotate(45)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(90)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(135)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(180)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(225)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(270)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(315)"><line y1="-22.5" y2="-27.5"/></g></g><g stroke-width="2.5"><line y1="-8.5" y2="-19.5"/><g transform="rotate(45)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(90)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(135)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(180)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(225)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(270)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(315)"><line y1="-8.5" y2="-19.5"/></g></g><circle r="7.5" stroke-width="2.6" fill="#15557e"/><circle r="2.8" fill="#f7f4ec" stroke="none"/></g></svg>driftwood</a>
+    <p class="foot-def">driftwood is an AI sales agent for demo-led outbound: it researches each prospect, builds a working demo of your product for their business, and sends from your account after human review.</p>
+    <!-- "founder-led sales" is this page's proposed addition to the site-wide
+         footer row; "AI SDR" is the ai-sdr draft's proposed entry. -->
+    <nav class="foot-links" aria-label="site">
+      <a href="/ai-sdr">AI SDR</a>
+      <a href="/founder-led-sales">founder-led sales</a>
+      <a href="/customers/autosana">customers</a>
+      <a href="/demo-led-outbound">demo-led outbound</a>
+      <a href="/faq">faq</a>
+      <a href="/best-ai-sdr-tools">compare AI SDR tools</a>
+    </nav>
+    <div class="foot-meta">
+      <a href="mailto:aayush@driftwood.sh">aayush@driftwood.sh</a>
+      <span>&copy; 2026 driftwood</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
