@@ -38,6 +38,20 @@ center. Every page must pass the test: is this what a founder scaling
 their own outbound, or an operator improving their numbers, actually
 needs?
 
+
+## Qualified over broad (Aayush, 2026-07-21, queryset v3)
+
+Only qualified people should reach the site. Broad educational terms
+("how to write a cold email", 100-1K) attract students, job-seekers,
+and one-person side projects; they are demoted to tier-3 watch terms.
+The guide page targets B2B-SaaS-qualified phrasing instead: "b2b saas
+outreach" and family (thin in Planner, high fit - the deliberate
+trade). LinkedIn automation terms are a KEEP (medium-term lean-in).
+Tool-category heads stay tier 3: we are competing with the
+Amplemarket class. Cut outright: driftwood-autosana, the
+outsourced/hire cluster, ai bdr, sdr ai, pipeline generation.
+Guide-page retarget: /b2b-saas-outreach (not /cold-email-guide).
+
 ## Validated targets (Keyword Planner, US, 2026-07-20/21, 184 terms)
 
 Full data: ads/research-keyword-volumes-2026-07-20.md (4 rounds).
@@ -46,7 +60,7 @@ Full data: ads/research-keyword-volumes-2026-07-20.md (4 rounds).
 |---|---|---|---|
 | founder led sales | 100-1K, Low | /founder-led-sales | drafted |
 | cold email benchmarks + ~12 rate questions | 10-100 each, Low | /cold-outbound-benchmarks | drafted |
-| how to write a cold email / cold email tips (~30 variants) | 100-1K, Low | /cold-email-guide | not drafted |
+| b2b saas outreach family (qualified tail) | thin, Low | /b2b-saas-outreach | not drafted; broad write-a-cold-email terms demoted to T3 watch |
 | outsourced sdr / sdr services | 100-1K, high CPC | /outsourced-sdr | drafted, DEPRIORITIZED (ICP call 07-21) |
 | ai sdr / ai sales agent / ai sdr tool | 1K-10K, Medium | /ai-sdr | drafted |
 | best ai sdr tools | comparison intent | /best-ai-sdr-tools | live, monthly refresh |
