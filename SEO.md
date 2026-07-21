@@ -126,6 +126,34 @@ benchmarks; CTAs -> /#book.
    Playbooks not yet built; per-channel subagent investigations are
    the next step when he asks. Details + standing rules in GEO.md.
 
+## Competitor stance map (Aayush 2026-07-21)
+
+Comparison pages do not treat all competitors the same, and the
+current rhetoric was called super weak: the pattern pass rewrites
+for conviction (a real point of view, plainly argued), not just
+structure.
+- Complimentary tier: Amplemarket (genuinely fine for its buyer);
+  extend only as Aayush calls them.
+- Contrarian tier: Artisan and 11x. Aayush is staunchly opposed,
+  and the pages should carry that stance: they sell REPLACING
+  humans, driftwood helps the humans currently employed sell
+  better; they do many things adequately, driftwood does one thing
+  extremely well; volume agents are a brand risk (sloppy sends go
+  out in YOUR name; the 2025 11x reporting and Artisan churn
+  complaints are the evidence base), while driftwood's sends are
+  built to convert and to leave a good impression even on
+  non-buyers (phrase as design intent, not a measured claim); they
+  are a superset of us, we are niched with far higher-touch
+  support.
+- "Don't send slop" is an approved copy angle for these pages (his
+  voice; the landing already uses "AI slop").
+- Evidence discipline: "cheaper to start" is TRUE vs 11x (our
+  published $1k floor vs their reported ~$5k/mo + implementation)
+  and FALSE vs Artisan self-serve ($250/mo entry); never claim it
+  generically. Contrarian never means unfair: named sources,
+  both-sides reporting, and "when X is right" sections all stay;
+  the stance shows in what we choose to compare, not in dunking.
+
 ## Press (folded from PRESS.md; 104-agent verified research 2026-07-21)
 
 Story assets, ranked: (1) the Autosana arc — Aayush was founding
