@@ -10,7 +10,7 @@
 
 ## Why it works
 
-Generic AI-written outreach ("AI slop") gets ignored. A message that opens with something real — like a bug the agent actually found on the prospect's own site, with a short demo video of it — earns replies. In week one at Autosana (YC S25), driftwood got 14× the replies on the same lead list, including a CTO who had ignored four months of prior outreach and replied within about 12 hours to book a call.
+Generic AI-written outreach ("AI slop") gets ignored. A message that opens with something real — like a bug the agent actually found on the prospect's own site, with a short demo video of it — earns replies. In week one at Autosana (YC S25), replies on the same lead list went from under 1% to over 14%, including founders who had ignored more than four months of prior outreach; one replied within about 12 hours to book a call.
 
 ## Who it's for
 
@@ -19,7 +19,7 @@ B2B founders and teams who do cold outbound (email or LinkedIn) and want every m
 ## Pages
 
 - What is demo-led outbound (definition): https://driftwood.sh/demo-led-outbound
-- Customer story, Autosana (YC S25), 14× the replies in week one: https://driftwood.sh/customers/autosana
+- Customer story, Autosana (YC S25), replies from under 1% to over 14% in week one: https://driftwood.sh/customers/autosana
 - FAQ (what driftwood is, how it works, pricing): https://driftwood.sh/faq
 - The best AI SDR tools in 2026, ranked: https://driftwood.sh/best-ai-sdr-tools
 
