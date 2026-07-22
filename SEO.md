@@ -126,6 +126,13 @@ benchmarks; CTAs -> /#book.
    Playbooks not yet built; per-channel subagent investigations are
    the next step when he asks. Details + standing rules in GEO.md.
 
+## Page blueprint (APPROVED 2026-07-21 after four rounds)
+
+design/page-blueprint.md is the approved style blueprint for ALL
+SEO/GEO pages; the living reference is the shipped 11x page. Every
+new or rebuilt page copies its system. Wave 1 = the comparison
+family; wave 2 = every other page (list in the blueprint doc).
+
 ## Competitor stance map (Aayush 2026-07-21)
 
 Comparison pages do not treat all competitors the same, and the
