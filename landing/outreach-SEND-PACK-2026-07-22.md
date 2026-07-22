@@ -33,8 +33,8 @@ about a week later.
 | # | Send | Target | Status | Blocker if any |
 |---|---|---|---|---|
 | 1 | Yuvan bundle: cross-link + G2 review + on-record | Yuvan (Autosana), Slack/text | READY | none; send first, it unblocks the press fact-check |
-| 2 | UMD Innovation Gateway founder story | innovate@umd.edu | READY after fill-ins | MUST-FILL [class year] and [degree] |
-| 3 | UMD OMC "Pitch Your Story" | Asana form (URL below) / omc@umd.edu | READY after fill-ins | MUST-FILL [class year] and [degree] |
+| 2 | UMD Innovation Gateway founder story | innovate@umd.edu | ON HOLD | Aayush 2026-07-22: he has UMD press connects and reaches out himself; draft below = raw material |
+| 3 | UMD OMC "Pitch Your Story" | Asana form (URL below) / omc@umd.edu | ON HOLD | same: his own UMD connects first |
 | 4 | TechCrunch primary | dominic.davis@techcrunch.com | READY | byline verify expires ~2026-08-04; line up Yuvan on record first (#1) |
 | 5 | TechCrunch second | marina.temkin@techcrunch.com | READY | send ~1 week after #4; same byline expiry |
 | 6 | Snov.io listicle pitch | Maria Kovalova, Snov.io | READY | verify her email address first |
