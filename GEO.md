@@ -86,9 +86,9 @@ a draft for Aayush, never a send.
   (Instantly, Artisan, 11x, Apollo, Clay, Autobound, Amplemarket,
   Smartlead, AiSDR, Unify, Landbase, Nooks, Coldreach, Lemlist,
   Salesforge, Saleshandy) unions across answers.
-- Runners: backend daily job (00:07 PT) asks the basic web-grounded
-  mainstream assistants — gpt-5-mini:online,
-  claude-sonnet-4.6:online, gemini-3.5-flash:online
+- Runners: backend daily job (00:07 PT) asks the web-grounded
+  mainstream assistants — the LIVE prod panel is gpt-5.6-terra:online,
+  claude-opus-4.8:online, gemini-3.6-flash:online
   (PROBE_ANSWER_MODELS overridable) — the production trend line.
   Before 2026-07-22 the backend GEO probe graded SEARCH-RESULT ranks
   (gemini:online = native grounding), which marked branded queries
@@ -96,6 +96,23 @@ a draft for Aayush, never a send.
   answer probe replaced it. /geo-probe skill = on-command via Claude
   WebSearch (search layer). RESULTS COMPARABLE ONLY WITHIN ONE
   RUNNER TOOL — every run records its tool; never mix lines.
+  On-demand rerun + audit view:
+  backend/scripts/probe_ops.py (trigger/status/wait/review — review
+  shows per-engine verdicts + judge reasons the dashboard's binary
+  hit dot hides).
+- READ THE HIT RATE RIGHT (2026-07-22 audit, ordered by Aayush after
+  "ChatGPT cites us but the probe says failure"): a query is a HIT
+  only when a MAJORITY of the 3-engine panel names us, so "ChatGPT
+  names us" + hit=false coexist. Panel runs 2026-07-22 evening:
+  gpt-5.6-terra named us on 6/100 (all 5 branded tier-1 queries +
+  "what is demo-led outbound", every one at mention_rank 1 — the
+  real-ChatGPT experience, stable across both runs); gemini 2/100
+  then 4/100 same day (branded queries flicker run-to-run on its
+  grounding); claude-opus 0/100 both runs (95 absent — Claude's web
+  search lands on driftwood-ai.com and Drift instead; a real
+  distribution gap, not a grader bug). Tier-1 hits 2/20 → 4/20 same
+  day on gemini variance alone: watch the composite score and the
+  per-engine split, not the binary hit count.
 - Artifacts: probe_runs + ground_truth_snapshots tables (backend),
   geo-results/ dated files. Dashboard: /dashboard/seo-geo (ground
   truth on top: per-channel views + demos from PostHog referrer
