@@ -74,12 +74,18 @@ a draft for Aayush, never a send.
   SDR", "best AI growth tools"). Grading: 20/40/60/80 = bare-min/
   fine/great/amazing.
 - Scoring per query (ANSWER-LAYER since 2026-07-22): each engine in
-  the panel is asked the query verbatim and its answer graded
-  named_us/named_collision/ambiguous/absent by the deterministic
-  grader; hit = a majority of the panel names us. Competitor
-  watch-list presence (Instantly, Artisan, 11x, Apollo, Clay,
-  Autobound, Amplemarket, Smartlead, AiSDR, Unify, Landbase, Nooks,
-  Coldreach, Lemlist, Salesforge, Saleshandy) unions across answers.
+  the panel is asked the query verbatim; verdicts
+  (named_us/named_collision/ambiguous) come from a context-rich LLM
+  judge (backend/app/geo_grader.py — deepseek-v4-flash, reasoning
+  off, knows who we are + every lookalike; hand-audit-validated 17/17
+  on 2026-07-22, see geo-results/grader-audit-2026-07-22.md); a regex
+  absent gate skips the judge when driftwood isn't mentioned. Hit = a
+  majority of the panel names us. mention_rank (1-based, our first
+  mention vs the watch-list's) records whether we're the top
+  recommendation when named. Competitor watch-list presence
+  (Instantly, Artisan, 11x, Apollo, Clay, Autobound, Amplemarket,
+  Smartlead, AiSDR, Unify, Landbase, Nooks, Coldreach, Lemlist,
+  Salesforge, Saleshandy) unions across answers.
 - Runners: backend daily job (00:07 PT) asks the basic web-grounded
   mainstream assistants — gpt-5-mini:online,
   claude-sonnet-4.6:online, gemini-3.5-flash:online
@@ -112,9 +118,9 @@ a draft for Aayush, never a send.
   flipped intraday from 0 after the FAQ recut + new pages), gpt
   1/20; tiers 2-3 zero on all engines; lines comparable only within
   one engine+model. Answer-share is the truth metric — and since
-  2026-07-22 it IS the backend daily probe (grader ported to
-  backend/app/geo_grader.py; grading changes land in the site script
-  first, then re-sync to the backend copy).
+  2026-07-22 it IS the backend daily probe. Grading canon moved to
+  backend/app/geo_grader.py (LLM judge); this script's vocab grader
+  is legacy/offline only.
 - Quarterly: re-run the 4-persona discovery probe (prompts in
   agentic-query-research-2026-07-21.md), revise the fixed set to
   v-next as a proposal.
