@@ -77,10 +77,15 @@ just fold contents. Orchestrator greps the copy gates before commit.
 
 ## Rollout state
 
-Wave 1 (2026-07-22): 11x SHIPPED (the exemplar itself); Artisan,
-Instantly, Clay, Apollo, /best-ai-sdr-tools rebuilt to blueprint.
-Wave 2 (owed): founder-led-sales, cold-outbound-benchmarks,
-b2b-saas-outreach, ai-sdr (incl. the positioning recut of its
-driftwood sections), demo-led-outbound, faq, customers/autosana.
-Non-comparison pages drop the disclosure line and use the graphic
-where it earns its place.
+COMPLETE 2026-07-22: every SEO/GEO page is on the blueprint. Wave 1
+(e1d4f90): 11x (the exemplar) + Artisan, Instantly, Clay, Apollo,
+/best-ai-sdr-tools. Wave 2 (05815a3): founder-led-sales,
+cold-outbound-benchmarks, b2b-saas-outreach, ai-sdr (with its
+positioning recut), demo-led-outbound, faq, customers/autosana.
+Non-comparison pages drop the disclosure line; autosana omits the
+window-pair graphic because its real thread IS the artifact. The
+homepage stays outside the blueprint (Aayush's standing gate). Any
+NEW page starts from the 11x exemplar + this doc. Verify-pass
+gotchas: lazy-loaded images render blank in fullPage screenshots
+(force eager before shooting); the stat grep must be
+case-insensitive (sentence-case verbatim form is legal).
