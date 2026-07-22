@@ -37,6 +37,7 @@ Finishing pass (2026-07-21, screenshot-verified at 1440x900; sentences untouched
 - Wave shoulders switched to absolute positioning (the negative-margin version collapsed through the section here, leaving flat seams on both sheets and the footer).
 - section[id] scroll-margin so the #slop jump clears the sticky header.
 Deck pass (2026-07-21, founder feedback: the top box had too much text and ruined the look): the tide-wash short-version panel is removed entirely; in its place a two-sentence plain-text deck under the byline (hero-sub scale, ink on white, no container) compressing the same verdict, the disclosure kept as one gray line beneath it, the everyone-else routing moved into The alternatives intro, the driftwood concession left where it already lives in the entry, and the unused verdict CSS deleted.
+Geometry pass (2026-07-21, founder feedback: spacing and page margins look unprofessional; CSS/attributes only, zero copy changes): one text edge (every readable element on the 46rem article column; the jump nav moved off the breakout edge onto it; ch caps dropped from deck and h2-sub so the column sets the measure); breakout reserved for the three tables and the window-pair graphic only, widened 62rem to 68rem (the header nav's and homepage wrap's width) so the two-edge relationship reads as intentional; a five-step vertical scale (xs 0.6 / s 1.4 / m 2.75 / l clamp 3.4-4.6 / xl clamp 5-6.5 rem) replaces the flat ~1rem gaps (byline-deck-disclosure small, jump nav medium, H2 sections large, sea strip and footer extra-large; .sect takes the homepage clamp); the us-row wash flattened (radius and 0.6rem indent removed) so every table row shares one first-column edge; the graphic caption left-aligned like the table captions.
 -->
 <!doctype html>
 <html lang="en">
@@ -145,6 +146,16 @@ Deck pass (2026-07-21, founder feedback: the top box had too much text and ruine
     --bg: #ffffff;
     --r-win: 12px;
     --shadow-win: 0 1px 2px rgba(22,24,27,0.05), 0 24px 48px -24px rgba(22,24,27,0.18);
+    /* vertical scale: one ladder, five steps.
+       xs binds a line to its parent (byline, support lines, disclosure);
+       s separates elements inside a block (deck, prose, tables under subs);
+       m is the step to a new group (jump nav, the fold H2, segment totals);
+       l separates H2 sections; xl isolates the sea strip and the footer seam. */
+    --sp-xs: 0.6rem;
+    --sp-s: 1.4rem;
+    --sp-m: 2.75rem;
+    --sp-l: clamp(3.4rem, 5.5vw, 4.6rem);
+    --sp-xl: clamp(5rem, 8vw, 6.5rem);
   }
   * { box-sizing: border-box; }
   /* the landing's fluid root: 16px up to ~1512w, growing to 21px on wide monitors */
@@ -168,9 +179,11 @@ Deck pass (2026-07-21, founder feedback: the top box had too much text and ruine
     font-style: italic; color: var(--tide); letter-spacing: 0;
   }
 
+  /* two edges total: every readable element sits on the 46rem article column;
+     tables and the window-pair graphic break out to 68rem, the header nav's
+     own width (and the homepage wrap), symmetric about the same center */
   .wrap { max-width: 46rem; margin-inline: auto; padding-inline: clamp(1.25rem, 4vw, 2rem); }
-  /* tables and the graphic breathe on a wider measure while prose holds 46rem */
-  .wrap-wide { max-width: 62rem; }
+  .wrap-wide { max-width: 68rem; }
 
   .btn {
     display: inline-flex; align-items: center; justify-content: center;
@@ -201,29 +214,30 @@ Deck pass (2026-07-21, founder feedback: the top box had too much text and ruine
   .nav .btn { height: 2.35rem; font-size: 0.875rem; padding-inline: 1.2rem; }
 
   /* ---------- article head ---------- */
-  .article-head { padding-top: clamp(1.8rem, 2.5vw, 2.25rem); }
+  .article-head { padding-top: var(--sp-m); }
   h1 {
     /* the homepage hero scale, with its voice phrase */
     font-size: clamp(1.9rem, 1.1rem + 2.4vw, 2.6rem);
     font-weight: 600; line-height: 1.16;
   }
-  .byline { margin-top: 0.6rem; font-size: 0.9rem; color: var(--gray); }
+  .byline { margin-top: var(--sp-xs); font-size: 0.9rem; color: var(--gray); }
+  /* byline and updated read as one two-line unit */
   .updated { margin-top: 0.2rem; font-size: 0.85rem; color: var(--gray); }
 
   /* ---------- deck: plain lede text under the byline (the hero-sub scale) ---------- */
   .deck {
-    margin-top: 1.1rem; font-size: 1.1rem; line-height: 1.55;
-    color: var(--ink); max-width: 62ch;
+    margin-top: var(--sp-s); font-size: 1.1rem; line-height: 1.55;
+    color: var(--ink);
   }
-  .disclosure { margin-top: 0.7rem; font-size: 0.88rem; color: var(--gray); }
+  .disclosure { margin-top: var(--sp-xs); font-size: 0.88rem; color: var(--gray); }
   .disclosure a {
     color: var(--tide); text-decoration: underline;
     text-underline-offset: 3px; text-decoration-thickness: 1px;
   }
 
-  /* ---------- jump nav ---------- */
+  /* ---------- jump nav: on the article edge, a clear step below the head block ---------- */
   .pagenav {
-    margin-top: 1rem; display: flex; flex-wrap: wrap; align-items: baseline;
+    margin-top: var(--sp-m); display: flex; flex-wrap: wrap; align-items: baseline;
     gap: 0.3rem 1rem; font-size: 0.875rem;
   }
   .pagenav > span { color: var(--gray); }
@@ -232,18 +246,18 @@ Deck pass (2026-07-21, founder feedback: the top box had too much text and ruine
 
   /* ---------- section headings: the homepage scale ---------- */
   h2 {
-    margin-top: clamp(3.2rem, 6vw, 4.4rem);
+    margin-top: var(--sp-l);
     font-size: clamp(2rem, 1.2rem + 2.8vw, 3.2rem);
     font-weight: 600; line-height: 1.12; max-width: 28ch;
   }
   h2[id] { scroll-margin-top: 5.5rem; }
   section[id] { scroll-margin-top: 1.25rem; }
-  .h2-sub { margin-top: 0.7rem; font-size: 1.02rem; color: var(--gray); max-width: 60ch; }
-  h2#glance { margin-top: 1.1rem; }
-  h2#glance + .h2-sub { margin-top: 0.45rem; }
+  .h2-sub { margin-top: var(--sp-xs); font-size: 1.02rem; color: var(--gray); }
+  /* the fold H2 takes the medium step so the glance table enters the 900px fold */
+  h2#glance { margin-top: var(--sp-m); }
   .sect > h2:first-child, .sect > .wrap > h2:first-child { margin-top: 0; }
 
-  .prose { margin-top: 1.4rem; color: var(--gray); font-size: 1.02rem; }
+  .prose { margin-top: var(--sp-s); color: var(--gray); font-size: 1.02rem; }
   .prose + .prose { margin-top: 0.85rem; }
   .prose a {
     color: var(--tide); text-decoration: underline;
@@ -254,10 +268,8 @@ Deck pass (2026-07-21, founder feedback: the top box had too much text and ruine
   .prose strong, .segment p strong, .entry p strong { color: var(--ink); font-weight: 600; }
 
   /* tables */
-  .table-scroll { margin-top: 1.4rem; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  /* the fold table docks tight under its heading (delta 3: table start in the 900px fold);
-     its caption reads below the table so rows lead, Plausible-style */
-  .glance-table .table-scroll { margin-top: 1rem; }
+  .table-scroll { margin-top: var(--sp-s); overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  /* the fold table's caption reads below the table so rows lead, Plausible-style */
   .glance-table table.compare caption { caption-side: bottom; padding: 0.7rem 0 0; }
   table.compare {
     width: 100%; border-collapse: collapse;
@@ -279,9 +291,9 @@ Deck pass (2026-07-21, founder feedback: the top box had too much text and ruine
     color: var(--gray); vertical-align: top;
   }
   table.compare td.tool { color: var(--ink); font-weight: 600; white-space: nowrap; }
+  /* flat wash band: no radius or extra indent, so every row's first column
+     shares one left edge and rows read as rows */
   table.compare tr.us td { background: var(--wash-a); }
-  table.compare tr.us td:first-child { border-radius: 8px 0 0 8px; padding-left: 0.6rem; }
-  table.compare tr.us td:last-child { border-radius: 0 8px 8px 0; }
   table.compare td a {
     color: var(--tide); text-decoration: underline;
     text-underline-offset: 3px; text-decoration-thickness: 1px;
@@ -294,7 +306,7 @@ Deck pass (2026-07-21, founder feedback: the top box had too much text and ruine
   }
 
   /* ---------- the graphic: slop vs a driftwood send, ported from the homepage compare artifact ---------- */
-  .graphic { margin-top: clamp(2.4rem, 4.5vw, 3.4rem); }
+  .graphic { margin-top: var(--sp-l); }
   .compare-grid {
     display: grid; grid-template-columns: 1fr 1fr;
     gap: clamp(1.5rem, 3vw, 2.5rem); align-items: stretch;
@@ -302,7 +314,8 @@ Deck pass (2026-07-21, founder feedback: the top box had too much text and ruine
   .compare-grid > div { display: flex; flex-direction: column; }
   .compare-label { font-size: 0.85rem; color: var(--gray); margin-bottom: 0.8rem; }
   .compare-label.us { color: var(--tide); font-weight: 600; }
-  .compare-note { margin-top: 1.1rem; text-align: center; font-size: 0.85rem; color: var(--gray); }
+  /* reads at the breakout's left edge, like the table captions */
+  .compare-note { margin-top: 0.7rem; font-size: 0.85rem; color: var(--gray); }
   .email {
     display: flex; flex-direction: column; flex: 1;
     border: 1px solid var(--line); border-radius: var(--r-win); background: #fff;
@@ -362,7 +375,7 @@ Deck pass (2026-07-21, founder feedback: the top box had too much text and ruine
   .clip-note em { font-family: Georgia, "Times New Roman", serif; font-style: italic; color: var(--tide); font-size: 0.95rem; line-height: 1; }
 
   /* ---------- pull-stats: the dashboard results-card pattern ---------- */
-  .stat-pair { margin-top: 1.4rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .stat-pair { margin-top: var(--sp-s); display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
   .stat {
     border: 1px solid var(--line); border-radius: var(--r-win);
     padding: 1rem 1.2rem; background: #fff;
@@ -394,14 +407,16 @@ Deck pass (2026-07-21, founder feedback: the top box had too much text and ruine
   .sheet-white::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='28' viewBox='0 0 180 28'%3E%3Cpath d='M0 14 C 11.25 5.5, 33.75 5.5, 45 14 C 56.25 22.5, 78.75 22.5, 90 14 C 101.25 5.5, 123.75 5.5, 135 14 C 146.25 22.5, 168.75 22.5, 180 14 L180 28 L0 28 Z' fill='%23ffffff'/%3E%3C/svg%3E"); }
   .wash-a { background: var(--wash-a); }
   .wash-a::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='28' viewBox='0 0 180 28'%3E%3Cpath d='M0 14 C 11.25 5.5, 33.75 5.5, 45 14 C 56.25 22.5, 78.75 22.5, 90 14 C 101.25 5.5, 123.75 5.5, 135 14 C 146.25 22.5, 168.75 22.5, 180 14 L180 28 L0 28 Z' fill='%23f4f8fb'/%3E%3C/svg%3E"); }
-  .sect { padding-block: clamp(2.2rem, 4vw, 3.4rem); }
+  /* the homepage's section padding; with .pre-sheet below it the wash seam
+     gets the extra-large step of the scale */
+  .sect { padding-block: clamp(2.5rem, 5vw, 4.25rem); }
   /* white flow above a sheet leaves room for the incoming wave shoulder */
-  .pre-sheet { padding-bottom: 3.2rem; }
+  .pre-sheet { padding-bottom: var(--sp-l); }
 
   /* ---------- static ASCII sea strip, its duck aboard ---------- */
   .sea-static {
     position: relative; height: 118px; overflow: hidden;
-    margin-top: clamp(1.5rem, 3vw, 2.5rem);
+    margin-top: var(--sp-xl);
     -webkit-mask-image: linear-gradient(to bottom, transparent, black 16%, black 84%, transparent);
     mask-image: linear-gradient(to bottom, transparent, black 16%, black 84%, transparent);
   }
@@ -424,11 +439,12 @@ Deck pass (2026-07-21, founder feedback: the top box had too much text and ruine
   .sea-duck .beak { display: inline; color: rgba(224,138,46,0.95); }
   .sea-buoy { left: 68%; top: 40px; color: rgba(178,94,66,0.9); }
 
-  /* segments: the demoted heads (the old H2 style) anchor in-section blocks */
-  .segment { margin-top: 1.9rem; padding-top: 1.6rem; border-top: 1px solid var(--line); }
+  /* segments: the demoted heads (the old H2 style) anchor in-section blocks;
+     s + s across the hairline lands the medium step of the scale */
+  .segment { margin-top: var(--sp-s); padding-top: var(--sp-s); border-top: 1px solid var(--line); }
   .segment:first-of-type { border-top: 0; padding-top: 0; }
   .segment h3 { font-size: 1.45rem; font-weight: 600; }
-  .segment p { margin-top: 0.6rem; color: var(--gray); }
+  .segment p { margin-top: var(--sp-xs); color: var(--gray); }
   .segment p + p { margin-top: 0.85rem; }
   .segment p a {
     color: var(--tide); text-decoration: underline;
@@ -452,7 +468,7 @@ Deck pass (2026-07-21, founder feedback: the top box had too much text and ruine
 
   /* the paired choose-if checklist */
   .choose-pair {
-    margin-top: 1.4rem; display: grid;
+    margin-top: var(--sp-s); display: grid;
     grid-template-columns: 1fr 1fr; gap: 1rem;
   }
   .choose-col {
@@ -468,11 +484,14 @@ Deck pass (2026-07-21, founder feedback: the top box had too much text and ruine
   }
 
   /* entries */
-  .entries { margin-top: 1.2rem; }
+  .entries { margin-top: var(--sp-s); }
   .entry {
     display: grid; grid-template-columns: 2.9rem 1fr; gap: 0 0.6rem;
     padding-block: 1.7rem;
   }
+  /* the content column may hold a table-scroll; without this the grid item's
+     auto minimum tracks the table's min-width and overflows phone viewports */
+  .entry > div { min-width: 0; }
   .entry + .entry { border-top: 1px solid var(--line); }
   .entry-num {
     font-size: 1.35rem; font-weight: 600; color: var(--gray);
@@ -512,7 +531,7 @@ Deck pass (2026-07-21, founder feedback: the top box had too much text and ruine
 
   /* CTA */
   .cta {
-    margin-top: 1.2rem; margin-bottom: 1rem; padding: 2.4rem 1.5rem 2.6rem;
+    margin-top: var(--sp-l); margin-bottom: 0; padding: 2.4rem 1.5rem 2.6rem;
     border: 1px solid var(--line); border-radius: var(--r-win);
     box-shadow: var(--shadow-win); text-align: center; background: #fff;
   }
@@ -522,7 +541,7 @@ Deck pass (2026-07-21, founder feedback: the top box had too much text and ruine
 
   /* footer */
   footer.site {
-    margin-top: 4rem;
+    margin-top: var(--sp-xl);
     position: relative;
     background: linear-gradient(#15557e, #0d3c5b);
     color: #fff;
@@ -602,7 +621,7 @@ Deck pass (2026-07-21, founder feedback: the top box had too much text and ruine
       sources where they are made.</p>
 
     </div>
-    <div class="wrap wrap-wide">
+    <div class="wrap">
       <nav class="pagenav" aria-label="On this page">
         <span>On this page:</span>
         <a href="#glance">At a glance</a>
