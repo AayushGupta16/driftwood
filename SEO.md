@@ -153,6 +153,17 @@ structure.
   generically. Contrarian never means unfair: named sources,
   both-sides reporting, and "when X is right" sections all stay;
   the stance shows in what we choose to compare, not in dunking.
+- Visual layer (Aayush 2026-07-21, second round on the exemplar:
+  copy approved, visuals rejected): pages must be scannable and
+  clickable, not just rankable. Requirements: brand heading and
+  type choices per design/design-language.md (the draft diverged);
+  ONE consolidated top-of-page element, never stacked disclosure
+  boxes; a slop-vs-not-slop graphic (his suggestion): a
+  volume-agent email side by side with a driftwood send; wordiness
+  is fine for SEO but the page must not LOOK wordy. Process rule:
+  page-pattern research includes a SCREENSHOT-based visual audit of
+  the exemplar sites vs ours; content-structure audits alone are
+  half the job.
 
 ## Press (folded from PRESS.md; 104-agent verified research 2026-07-21)
 
