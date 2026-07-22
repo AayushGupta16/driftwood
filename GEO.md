@@ -73,15 +73,23 @@ a draft for Aayush, never a send.
   tier 2 = near-term clusters; tier 3 = long-term heads ("best AI
   SDR", "best AI growth tools"). Grading: 20/40/60/80 = bare-min/
   fine/great/amazing.
-- Scoring per query: driftwood present (position), competitor
+- Scoring per query (ANSWER-LAYER since 2026-07-22): each engine in
+  the panel is asked the query verbatim and its answer graded
+  named_us/named_collision/ambiguous/absent by the deterministic
+  grader; hit = a majority of the panel names us. Competitor
   watch-list presence (Instantly, Artisan, 11x, Apollo, Clay,
   Autobound, Amplemarket, Smartlead, AiSDR, Unify, Landbase, Nooks,
-  Coldreach, Lemlist, Salesforge, Saleshandy), top domains.
-- Runners: backend daily job (00:07 PT; OpenRouter
-  gemini-3.5-flash:online, PROBE_SEARCH_MODEL overridable) is the
-  production trend line; /geo-probe skill = on-command via Claude
-  WebSearch. RESULTS COMPARABLE ONLY WITHIN ONE RUNNER TOOL — every
-  run records its tool; never mix lines.
+  Coldreach, Lemlist, Salesforge, Saleshandy) unions across answers.
+- Runners: backend daily job (00:07 PT) asks the basic web-grounded
+  mainstream assistants — gpt-5-mini:online,
+  claude-sonnet-4.6:online, gemini-3.5-flash:online
+  (PROBE_ANSWER_MODELS overridable) — the production trend line.
+  Before 2026-07-22 the backend GEO probe graded SEARCH-RESULT ranks
+  (gemini:online = native grounding), which marked branded queries
+  as misses even while real ChatGPT named us — wrong layer; the
+  answer probe replaced it. /geo-probe skill = on-command via Claude
+  WebSearch (search layer). RESULTS COMPARABLE ONLY WITHIN ONE
+  RUNNER TOOL — every run records its tool; never mix lines.
 - Artifacts: probe_runs + ground_truth_snapshots tables (backend),
   geo-results/ dated files. Dashboard: /dashboard/seo-geo (ground
   truth on top: per-channel views + demos from PostHog referrer
@@ -103,8 +111,10 @@ a draft for Aayush, never a send.
   tier-1 (branded + BOTH coinage queries), sonar 4/20 (branded;
   flipped intraday from 0 after the FAQ recut + new pages), gpt
   1/20; tiers 2-3 zero on all engines; lines comparable only within
-  one engine+model. The probe is the leading indicator, answer-share
-  is the truth.
+  one engine+model. Answer-share is the truth metric — and since
+  2026-07-22 it IS the backend daily probe (grader ported to
+  backend/app/geo_grader.py; grading changes land in the site script
+  first, then re-sync to the backend copy).
 - Quarterly: re-run the 4-persona discovery probe (prompts in
   agentic-query-research-2026-07-21.md), revise the fixed set to
   v-next as a proposal.

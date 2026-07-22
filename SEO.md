@@ -232,7 +232,12 @@ optimizing, not setting up.
 GSC = truth (API credential still owed for dashboard panels; manual
 pull meanwhile). /seo-probe skill + backend daily run = directional
 presence tracking (queryset v4, 105 tiered; tier-1 hit rate headline;
-bands 20/40/60/80 = bare-min/fine/great/amazing). Dashboard:
+bands 20/40/60/80 = bare-min/fine/great/amazing). Backend runner pins
+the OpenRouter web plugin to the exa engine since 2026-07-22:
+gemini's :online default (native Google grounding) reformulated
+queries and surfaced the driftwood-ai.com collision while the real
+SERP + GSC had us at #1-3 on branded terms — exa matched the live
+SERP on those; still a proxy, GSC stays the cross-check. Dashboard:
 /dashboard/seo-geo. Expectations: brand queries flip weeks after links
 land; tail impressions 4-8 wks; head terms quarters. Baselines
 2026-07-21: probe 0/15 (v1), GSC 4 impressions / 3 organic sessions
