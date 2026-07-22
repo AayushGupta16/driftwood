@@ -36,6 +36,7 @@ Finishing pass (2026-07-21, screenshot-verified at 1440x900; sentences untouched
 - img height:auto added (the standalone page lacks the Tailwind preflight the homepage relies on; without it the width/height attrs stretched the demo clip portrait).
 - Wave shoulders switched to absolute positioning (the negative-margin version collapsed through the section here, leaving flat seams on both sheets and the footer).
 - section[id] scroll-margin so the #slop jump clears the sticky header.
+Deck pass (2026-07-21, founder feedback: the top box had too much text and ruined the look): the tide-wash short-version panel is removed entirely; in its place a two-sentence plain-text deck under the byline (hero-sub scale, ink on white, no container) compressing the same verdict, the disclosure kept as one gray line beneath it, the everyone-else routing moved into The alternatives intro, the driftwood concession left where it already lives in the entry, and the unused verdict CSS deleted.
 -->
 <!doctype html>
 <html lang="en">
@@ -209,24 +210,15 @@ Finishing pass (2026-07-21, screenshot-verified at 1440x900; sentences untouched
   .byline { margin-top: 0.6rem; font-size: 0.9rem; color: var(--gray); }
   .updated { margin-top: 0.2rem; font-size: 0.85rem; color: var(--gray); }
 
-  /* ---------- the one top panel: verdict, disclosure in its footer ---------- */
-  .verdict {
-    margin-top: 1.2rem; padding: 1.05rem 1.3rem 0.85rem;
-    background: var(--tide-wash); border-radius: var(--r-win);
-    color: var(--ink); font-size: 0.92rem;
+  /* ---------- deck: plain lede text under the byline (the hero-sub scale) ---------- */
+  .deck {
+    margin-top: 1.1rem; font-size: 1.1rem; line-height: 1.55;
+    color: var(--ink); max-width: 62ch;
   }
-  .verdict-title { font-weight: 600; font-size: 1rem; }
-  .verdict-list { margin: 0.55rem 0 0; padding: 0; list-style: none; display: grid; gap: 0.45rem; }
-  .verdict-list li { line-height: 1.45; }
-  .verdict-list strong, .verdict strong { font-weight: 600; }
-  .verdict a {
+  .disclosure { margin-top: 0.7rem; font-size: 0.88rem; color: var(--gray); }
+  .disclosure a {
     color: var(--tide); text-decoration: underline;
     text-underline-offset: 3px; text-decoration-thickness: 1px;
-  }
-  .verdict-foot {
-    margin-top: 0.7rem; padding-block: 0.6rem 0.15rem;
-    border-top: 1px solid rgba(21,85,126,0.16);
-    font-size: 0.88rem; color: var(--gray);
   }
 
   /* ---------- jump nav ---------- */
@@ -596,34 +588,18 @@ Finishing pass (2026-07-21, screenshot-verified at 1440x900; sentences untouched
       <p class="byline">By the driftwood team · July 2026</p>
       <p class="updated">Updated July 2026. Prices checked 2026-07-21; this page gets a monthly fact-check.</p>
 
-      <div class="verdict">
-        <p class="verdict-title">The short version.</p>
-        <ul class="verdict-list">
-          <li><strong>The bet.</strong> 11x sells autonomous digital
-          workers, Alice for outbound and Julian for the phone, and the promise
-          is replacing SDR hiring: the humans step out of the loop.</li>
-          <li><strong>Our side.</strong> driftwood is
-          built on the opposite belief, that the job is making the humans you
-          already employ better at selling, with a working demo of your product
-          in every message and a person approving each send. That is a real
-          disagreement about how selling works, not a feature gap, and this page
-          argues our side with sources.</li>
-          <li><strong>Who should buy 11x.</strong> The genuine 11x buyer is a
-          mid-market or enterprise org replacing SDR headcount, with budget for a
-          reported five-figure annual contract and current customer references
-          that check out.</li>
-          <li><strong>Everyone else.</strong> If that is not you, Artisan sells
-          the same autonomous bet self-serve, Amplemarket and Apollo keep reps
-          running the motion, Unify and Clay fix targeting rather than volume,
-          and driftwood, our tool, is for founders whose constraint is replies
-          rather than capacity. It is early, and an enterprise team that wants a
-          hands-off phone and email worker is 11x's buyer, not ours.</li>
-        </ul>
-        <p class="verdict-foot">We build driftwood
-        (<a href="https://driftwood.sh">driftwood.sh</a>), one of the options
-        below; judge accordingly. Hard claims about 11x are linked to outside
-        sources where they are made.</p>
-      </div>
+      <p class="deck">11x sells autonomous digital workers, and the promise is
+      replacing SDR hiring; driftwood is built on the opposite belief, that the
+      job is making the humans you already employ better at selling, with a
+      working demo of your product in every message and a person approving each
+      send. The genuine 11x buyer is a mid-market or enterprise org replacing
+      SDR headcount, with budget for a reported five-figure annual contract;
+      driftwood is for founders whose constraint is replies rather than
+      capacity.</p>
+      <p class="disclosure">We build driftwood
+      (<a href="https://driftwood.sh">driftwood.sh</a>), one of the options
+      below; judge accordingly. Hard claims about 11x are linked to outside
+      sources where they are made.</p>
 
     </div>
     <div class="wrap wrap-wide">
@@ -1029,7 +1005,9 @@ Finishing pass (2026-07-21, screenshot-verified at 1440x900; sentences untouched
         <h2 id="alternatives">The <em class="voice">alternatives</em></h2>
         <p class="h2-sub">
           driftwood is listed first because it is ours; the other five run from the
-          closest swap for 11x to the furthest.
+          closest swap for 11x to the furthest. Artisan sells the same autonomous
+          bet self-serve, Amplemarket and Apollo keep reps running the motion, and
+          Unify and Clay fix targeting rather than volume.
         </p>
 
         <div class="entries">
