@@ -45,6 +45,11 @@ type ProbeResultRow = {
   competitors?: string[];
   score?: number | null;
   mention_rank?: number | null;
+  /* GEO answer-panel rows only: per-engine audit trail keyed by model id. */
+  engines?: Record<
+    string,
+    { verdict?: string | null; mention_rank?: number | null }
+  > | null;
 };
 type ProbeLatest = {
   run_at?: string | null;
@@ -110,6 +115,9 @@ function bandFor(rate: number) {
 /* ---------- view model ---------- */
 
 type RowStatus = "hit" | "miss" | "pend";
+/* One GEO panel engine's verdict on one query — the split behind the row's
+   majority hit ("ChatGPT names us, Claude doesn't" stays visible). */
+type EngineVerdict = { engine: string; verdict: string; rank: number | null };
 type Row = {
   n: number;
   tier: number;
@@ -120,7 +128,14 @@ type Row = {
   mentionRank: number | null;
   topDomains: string[];
   competitors: string[];
+  engines: EngineVerdict[];
 };
+
+/* "openai/gpt-5.6-terra:online" -> "gpt" — panel display name. */
+function engineShort(model: string): string {
+  const name = model.split("/").pop() ?? model;
+  return name.split("-")[0];
+}
 type TierModel = {
   tier: number;
   name: string;
@@ -168,6 +183,11 @@ function buildChannel(set: Queryset, payload: ChannelPayload | null | undefined)
       mentionRank: r?.mention_rank ?? null,
       topDomains: r?.top_domains ?? [],
       competitors: r?.competitors ?? [],
+      engines: Object.entries(r?.engines ?? {}).map(([model, e]) => ({
+        engine: engineShort(model),
+        verdict: e?.verdict ?? "error",
+        rank: e?.mention_rank ?? null,
+      })),
     };
   });
 
@@ -737,18 +757,52 @@ function Dot({ status, className = "" }: { status: RowStatus; className?: string
   );
 }
 
+/* GEO per-engine verdict colors — the page's existing functional palette
+   (BANDS + the ok hit green), nothing new. named_us green, collision (a
+   lookalike took the answer) orange, ambiguous muted yellow, absent red. */
+const VERDICT_COLORS: Record<string, string> = {
+  named_collision: BANDS[1].color,
+  ambiguous: BANDS[2].color,
+  absent: BANDS[0].color,
+};
+
+function EngineDot({ verdict, className = "" }: { verdict: string; className?: string }) {
+  if (verdict === "named_us")
+    return <span className={`inline-block size-[5px] rounded-full bg-ok align-middle ${className}`} />;
+  const color = VERDICT_COLORS[verdict];
+  if (color == null)
+    /* errored engine: hollow, like a pending row */
+    return (
+      <span
+        className={`inline-block size-[5px] rounded-full border border-ink-faint align-middle ${className}`}
+      />
+    );
+  return (
+    <span
+      className={`inline-block size-[5px] rounded-full align-middle ${className}`}
+      style={{ background: color }}
+    />
+  );
+}
+
+function engineTitle(e: EngineVerdict): string {
+  return `${e.engine}: ${e.verdict}${e.rank != null ? ` · first mention #${e.rank}` : ""}`;
+}
+
 function rowTitle(row: Row): string {
   if (row.status === "pend") return "pending first run";
   const parts = [row.status === "hit" ? "hit" : "miss"];
   if (row.position != null) parts.push(`position ${row.position}`);
   if (row.mentionRank != null) parts.push(`mention rank ${row.mentionRank}`);
   if (row.score != null) parts.push(`score ${row.score}`);
+  if (row.engines.length) parts.push(row.engines.map(engineTitle).join(" · "));
   if (row.status === "miss" && row.topDomains.length)
     parts.push(`top: ${row.topDomains.join(" · ")}`);
   return parts.join(" · ");
 }
 
 function TiersCard({ ch, unitCap }: { ch: ChannelModel; unitCap: string }) {
+  const engineNames = ch.rows.find((r) => r.engines.length)?.engines.map((e) => e.engine);
   return (
     <div className={`${CARD_SM} pb-1 pt-3.5`}>
       <div className="flex items-baseline justify-between gap-3 px-[18px] pb-2.5">
@@ -770,6 +824,30 @@ function TiersCard({ ch, unitCap }: { ch: ChannelModel; unitCap: string }) {
           </span>
         </span>
       </div>
+      {engineNames && (
+        <div
+          className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1 px-[18px] pb-2.5 text-[11px] text-ink-faint"
+          title="A query is a HIT only when a majority of the panel names us — the small dots keep each engine's verdict visible (one assistant citing us and hit=miss can both be true)."
+        >
+          <span>per-engine ({engineNames.join(" · ")}):</span>
+          <span>
+            <EngineDot verdict="named_us" className="mr-1" />
+            named us
+          </span>
+          <span>
+            <EngineDot verdict="named_collision" className="mr-1" />
+            lookalike
+          </span>
+          <span>
+            <EngineDot verdict="ambiguous" className="mr-1" />
+            ambiguous
+          </span>
+          <span>
+            <EngineDot verdict="absent" className="mr-1" />
+            absent
+          </span>
+        </div>
+      )}
       {ch.tiers.map((t) => (
         <TierDetails key={t.tier} tier={t} />
       ))}
@@ -814,11 +892,22 @@ function TierDetails({ tier }: { tier: TierModel }) {
                 {row.n}
               </td>
               <td
-                className={`border-t border-line/60 py-[5.5px] pl-2 pr-[18px] align-middle text-[12.5px] leading-[1.35] ${
+                className={`border-t border-line/60 py-[5.5px] pl-2 align-middle text-[12.5px] leading-[1.35] ${
                   row.status === "pend" ? "text-ink-soft" : "text-ink"
                 }`}
               >
                 {row.q}
+              </td>
+              <td className="border-t border-line/60 py-[5.5px] pl-2 pr-[18px] text-right align-middle">
+                {row.engines.length > 0 && (
+                  <span className="inline-flex items-center gap-[3px]">
+                    {row.engines.map((e) => (
+                      <span key={e.engine} title={engineTitle(e)}>
+                        <EngineDot verdict={e.verdict} />
+                      </span>
+                    ))}
+                  </span>
+                )}
               </td>
             </tr>
           ))}
