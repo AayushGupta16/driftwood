@@ -32,6 +32,12 @@ their own outbound actually need this?
   sends live in outreach-drafts-2026-07-21.md.
 - Query set changes = versioned proposals (v5...) with his approval.
 - Google Ads stays parked; nothing that spends.
+- a16z speedrun membership is NOT public (Aayush 2026-07-22: "we're
+  not allowed to mention it yet"). No page, listing, pitch, or post
+  mentions it until he clears it. /about scrubbed same day; the
+  a16z-directory ask is BLOCKED; press pitches must not use the
+  speedrun angle. (References to a16z as 11x's INVESTOR in sourced
+  reporting are fine; the gate is about OUR membership.)
 
 ## How the agent works (delegate and QA)
 
@@ -64,8 +70,9 @@ founder-led sales, outbound benchmarks, what is an AI SDR. Row 2
 (compare, his call: every competitor named): compare AI SDR tools +
 Instantly/Clay/Apollo/Artisan/11x alternatives, exact-match anchors
 so each competitor page gets a sitewide anchor for its target query.
-Any new /alternatives/<x> page joins row 2 at ship. Guide pages get
-internal links, not footer slots.
+Any new /alternatives/<x> page joins row 2 at ship. Row 2 also
+carries the /vs pages (Aayush 2026-07-22): driftwood vs Artisan,
+driftwood vs 11x. Guide pages get internal links, not footer slots.
 
 Priority queue with validated targets:
 1. /founder-led-sales — SHIPPED 2026-07-21 (subagent-drafted, QA'd;
