@@ -4,6 +4,7 @@ import { LoggedOutView, ToastProvider } from "./Dashboard";
 import { GodModeButton, ImpersonationBanner } from "./GodMode";
 import seoQuerysetJson from "./seo-geo/queryset-seo.json";
 import geoQuerysetJson from "./seo-geo/queryset-geo.json";
+import { toTrendSeries, type HistoryPoint, type TrendPt } from "./seo-geo/trend.ts";
 
 /* /dashboard/seo-geo — admin-only SEO/GEO metrics page, ported from
    design/draft-godmode-seo-geo.html (rev 4). Ground truth first (PostHog
@@ -56,14 +57,8 @@ type ProbeLatest = {
   total?: number;
   results?: ProbeResultRow[];
 };
-type HistoryPoint = {
-  date?: string;
-  run_at?: string;
-  tier1_rate?: number;
-  tier1_score?: number;
-  tier1_hits?: number;
-  tier1_total?: number;
-};
+/* HistoryPoint lives in seo-geo/trend.ts with the chart's pure transform;
+   each row carries id + set_version + tool (the methodology identity). */
 type ChannelPayload = { latest?: ProbeLatest | null; history?: HistoryPoint[] };
 type WowPair = { views?: number | null; demos?: number | null };
 type GtSide = { views?: number; demos?: number; wow?: WowPair | null };
@@ -866,64 +861,60 @@ const Y_LABELS: [string, number][] = [
    run-zero chart axis, nothing time-critical. Render stays pure. */
 const TODAY_DAY = Math.floor(Date.now() / 86400000);
 
-function toPoints(h: HistoryPoint[]): { day: number; rate: number }[] {
-  const pts: { day: number; rate: number }[] = [];
-  for (const p of h) {
-    const day = parseDay(p.date ?? p.run_at);
-    /* Backend history rows carry the position/rank-weighted tier1_score;
-       tier1_rate and hits/total are accepted as fallbacks for old
-       payload shapes. */
-    const rate =
-      typeof p.tier1_score === "number"
-        ? p.tier1_score
-        : typeof p.tier1_rate === "number"
-          ? p.tier1_rate
-          : typeof p.tier1_hits === "number" && p.tier1_total
-            ? (100 * p.tier1_hits) / p.tier1_total
-            : null;
-    if (day == null || rate == null) continue;
-    pts.push({ day, rate: Math.min(100, Math.max(0, rate)) });
-  }
-  pts.sort((a, b) => a.day - b.day);
-  return pts;
+function ptTitle(p: TrendPt, older: boolean): string {
+  const base = `${fmtDay(Math.floor(p.t))} · ${Math.round(p.rate)}%${p.tool ? ` · ${p.tool}` : ""}`;
+  return older ? `${base} · earlier methodology — not comparable to the current line` : base;
 }
 
 function TrendChart({ seo, geo }: { seo: HistoryPoint[]; geo: HistoryPoint[] }) {
-  const seoPts = toPoints(seo);
-  const geoPts = toPoints(geo);
+  /* Each channel splits into the current-methodology line (the connected,
+     trustworthy trend) and earlier-methodology runs (faded, disconnected —
+     results are only comparable within one runner tool, per site/GEO.md). */
+  const seoS = toTrendSeries(seo);
+  const geoS = toTrendSeries(geo);
   // Zero-state design: no history yet still draws the single run-zero point —
   // an axis waiting for dots.
-  if (seoPts.length === 0 && geoPts.length === 0) {
-    seoPts.push({ day: TODAY_DAY, rate: 0 });
-    geoPts.push({ day: TODAY_DAY, rate: 0 });
+  const runZero =
+    seoS.current.length + seoS.older.length + geoS.current.length + geoS.older.length === 0;
+  if (runZero) {
+    seoS.current.push({ t: TODAY_DAY, rate: 0, key: "seo-run-zero", tool: null });
+    geoS.current.push({ t: TODAY_DAY, rate: 0, key: "geo-run-zero", tool: null });
   }
+  const hasOlder = seoS.older.length > 0 || geoS.older.length > 0;
 
-  const allDays = [...seoPts, ...geoPts].map((p) => p.day);
-  const startDay = Math.min(...allDays);
-  const lastDay = Math.max(...allDays);
-  const spanDays = Math.max(20, lastDay - startDay);
+  const allT = [...seoS.current, ...seoS.older, ...geoS.current, ...geoS.older].map(
+    (p) => p.t,
+  );
+  const startDay = Math.floor(Math.min(...allT));
+  const lastDay = Math.floor(Math.max(...allT));
+  const spanDays = Math.max(20, Math.ceil(Math.max(...allT)) - startDay);
   const perDay = 1060 / spanDays;
-  const x = (day: number) => 84 + (day - startDay) * perDay;
+  const x = (t: number) => 84 + (t - startDay) * perDay;
   const y = (rate: number) => 208 - (rate / 100) * 192;
   const labelEvery = Math.max(1, Math.round(spanDays / 5));
   const labelDays = Array.from({ length: 6 }, (_, i) => startDay + i * labelEvery);
 
-  const runZero =
-    seoPts.length === 1 &&
-    geoPts.length === 1 &&
-    seoPts[0].day === geoPts[0].day &&
-    seoPts[0].rate === 0 &&
-    geoPts[0].rate === 0;
+  /* One dashed break marker per distinct day a channel's current-methodology
+     line begins after older-methodology runs. */
+  const markerByDay = new Map<number, number>();
+  for (const s of [seoS, geoS]) {
+    if (s.older.length === 0 || s.current.length === 0) continue;
+    const first = s.current[0].t;
+    if (!s.older.some((o) => o.t < first)) continue;
+    const day = Math.floor(first);
+    const prev = markerByDay.get(day);
+    if (prev == null || first < prev) markerByDay.set(day, first);
+  }
+  const markers = [...markerByDay.values()];
 
-  const line = (pts: { day: number; rate: number }[]) =>
-    pts.map((p) => `${x(p.day)},${y(p.rate)}`).join(" ");
+  const line = (pts: TrendPt[]) => pts.map((p) => `${x(p.t)},${y(p.rate)}`).join(" ");
 
   return (
     <div className={`${CARD_SM} mt-3.5 px-5 py-[18px]`}>
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <span
           className="text-[0.85rem] text-ink-soft"
-          title="Position/rank-weighted tier-1 score per run. One line per channel; a line never mixes runner tools — switching runners starts a new line."
+          title="Position/rank-weighted tier-1 score per run. One line per channel, and a line never mixes runner tools — a methodology switch starts a new line; runs from earlier methodologies stay visible as faded, disconnected dots."
         >
           Tier-1 score by run
         </span>
@@ -950,6 +941,17 @@ function TrendChart({ seo, geo }: { seo: HistoryPoint[]; geo: HistoryPoint[] }) 
             </svg>
             GEO
           </span>
+          {hasOlder && (
+            <span
+              className="inline-flex items-center gap-1.5 text-[11px] text-ink-faint"
+              title="Probe results are comparable only within one runner tool/methodology; runs from before a switch stay visible as faded dots but never connect to the current line."
+            >
+              <svg width="12" height="10" aria-hidden="true">
+                <circle cx="6" cy="5" r="3.2" fill="#15557e" opacity=".3" />
+              </svg>
+              earlier methodology
+            </span>
+          )}
         </span>
       </div>
       <svg
@@ -997,38 +999,77 @@ function TrendChart({ seo, geo }: { seo: HistoryPoint[]; geo: HistoryPoint[] }) 
             <line key={day} x1={x(day)} y1="208" x2={x(day)} y2="212" />
           ))}
         </g>
-        {geoPts.length > 1 && (
+        {markers.map((m) => (
+          <g key={m}>
+            <line
+              x1={x(m) - 8}
+              y1="16"
+              x2={x(m) - 8}
+              y2="208"
+              stroke="#c6cbd1"
+              strokeWidth="1"
+              strokeDasharray="3 3"
+            />
+            <text x={x(m) - 3} y="27" fontSize="9.5" fontWeight="600" fill="#9aa2ab">
+              methodology change · {fmtDay(Math.floor(m))}
+            </text>
+          </g>
+        ))}
+        {geoS.older.map((p) => (
+          <circle
+            key={p.key}
+            cx={x(p.t)}
+            cy={y(p.rate)}
+            r="4.5"
+            fill="#ffffff"
+            stroke="#16181b"
+            strokeWidth="1.6"
+            opacity=".3"
+          >
+            <title>{ptTitle(p, true)}</title>
+          </circle>
+        ))}
+        {seoS.older.map((p) => (
+          <circle key={p.key} cx={x(p.t)} cy={y(p.rate)} r="3.6" fill="#15557e" opacity=".3">
+            <title>{ptTitle(p, true)}</title>
+          </circle>
+        ))}
+        {geoS.current.length > 1 && (
           <polyline
             fill="none"
             stroke="#16181b"
             strokeWidth="1.6"
             strokeDasharray="5 3"
-            points={line(geoPts)}
+            points={line(geoS.current)}
           />
         )}
-        {seoPts.length > 1 && (
-          <polyline fill="none" stroke="#15557e" strokeWidth="2" points={line(seoPts)} />
+        {seoS.current.length > 1 && (
+          <polyline fill="none" stroke="#15557e" strokeWidth="2" points={line(seoS.current)} />
         )}
-        {geoPts.map((p) => {
-          const coincident = seoPts.some((s) => s.day === p.day && s.rate === p.rate);
+        {geoS.current.map((p) => {
+          const coincident = seoS.current.some((s) => s.t === p.t && s.rate === p.rate);
           return (
             <circle
-              key={p.day}
-              cx={x(p.day)}
+              key={p.key}
+              cx={x(p.t)}
               cy={y(p.rate)}
               r={coincident ? 7 : 4.5}
               fill="#ffffff"
               stroke="#16181b"
               strokeWidth="1.6"
-            />
+            >
+              <title>{ptTitle(p, false)}</title>
+            </circle>
           );
         })}
-        {seoPts.map((p) => (
-          <circle key={p.day} cx={x(p.day)} cy={y(p.rate)} r="3.6" fill="#15557e" />
+        {seoS.current.map((p) => (
+          <circle key={p.key} cx={x(p.t)} cy={y(p.rate)} r="3.6" fill="#15557e">
+            <title>{ptTitle(p, false)}</title>
+          </circle>
         ))}
         {runZero && (
           <text
-            x={x(seoPts[0].day) + 14}
+            x={x(seoS.current[0].t) + 14}
             y="196"
             fontSize="11"
             fontWeight="600"
