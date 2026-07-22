@@ -314,6 +314,27 @@ def find_competitors(text):
     return found
 
 
+def mention_rank(text):
+    """1-based rank of driftwood's FIRST mention among all vendors the
+    answer names (us + the watch-list), by first-mention order. Rank 1 =
+    we're the first product the answer reaches for. None if driftwood
+    isn't mentioned; only trust on answers graded named_us."""
+    lower = text.lower()
+    ours = re.search(r"\bdriftwood\b", lower)
+    if ours is None:
+        return None
+    ahead = 0
+    for name in COMPETITORS_EXACT:
+        m = re.search(rf"\b{re.escape(name)}\b", text)
+        if m and m.start() < ours.start():
+            ahead += 1
+    for name in COMPETITORS_ANYCASE:
+        m = re.search(rf"\b{re.escape(name)}\b", text, re.IGNORECASE)
+        if m and m.start() < ours.start():
+            ahead += 1
+    return ahead + 1
+
+
 class RunAborted(Exception):
     pass
 
@@ -407,6 +428,7 @@ def probe_query(session, api_key, engine, model, entry, meter):
         "model": model,
         "verdict": "absent",
         "competitors": [],
+        "mention_rank": None,
         "answer_head": None,
         "mention_snippet": None,
         "cost_usd": 0.0,
@@ -421,6 +443,7 @@ def probe_query(session, api_key, engine, model, entry, meter):
     verdict, snippet = grade_answer(answer)
     row["verdict"] = verdict
     row["competitors"] = find_competitors(answer)
+    row["mention_rank"] = mention_rank(answer) if verdict == "named_us" else None
     row["answer_head"] = answer[:SNIPPET_LEN]
     row["mention_snippet"] = snippet
     row["cost_usd"] = round(cost, 6)
