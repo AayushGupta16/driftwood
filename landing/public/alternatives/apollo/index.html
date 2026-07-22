@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Apollo alternatives in 2026: six honest options · driftwood</title>
-<meta name="description" content="Six real Apollo alternatives as of July 2026: Amplemarket, Clay, Smartlead, lemlist, Instantly, and driftwood, with an honest section on when Apollo is still the right choice." />
+<title>Apollo alternatives in 2026, and when to keep Apollo · driftwood</title>
+<meta name="description" content="Six Apollo alternatives with sourced pricing and an at-a-glance table, plus the plain answer first: for most readers, the right move is to keep Apollo." />
 <link rel="canonical" href="https://driftwood.sh/alternatives/apollo" />
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 <meta name="theme-color" content="#15557e" />
-<meta property="og:title" content="Apollo alternatives in 2026: six honest options · driftwood" />
-<meta property="og:description" content="Six real Apollo alternatives as of July 2026: Amplemarket, Clay, Smartlead, lemlist, Instantly, and driftwood, with an honest section on when Apollo is still the right choice." />
+<meta property="og:title" content="Apollo alternatives in 2026, and when to keep Apollo · driftwood" />
+<meta property="og:description" content="Six Apollo alternatives with sourced pricing and an at-a-glance table, plus the plain answer first: for most readers, the right move is to keep Apollo." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://driftwood.sh/alternatives/apollo" />
 <meta property="og:image" content="https://driftwood.sh/og-5.png" />
@@ -27,11 +27,11 @@
     {
       "@type": "Article",
       "@id": "https://driftwood.sh/alternatives/apollo#article",
-      "headline": "Apollo alternatives in 2026: six honest options",
+      "headline": "Apollo alternatives in 2026, and when to keep Apollo",
       "url": "https://driftwood.sh/alternatives/apollo",
       "mainEntityOfPage": "https://driftwood.sh/alternatives/apollo",
       "datePublished": "2026-07-21",
-      "dateModified": "2026-07-21",
+      "dateModified": "2026-07-22",
       "inLanguage": "en"
     },
     {
@@ -54,22 +54,22 @@
         {
           "@type": "Question",
           "name": "What does Apollo cost in 2026?",
-          "acceptedAnswer": { "@type": "Answer", "text": "As of July 2026: a free tier, then Basic at $49 per user per month, Professional at $79, and Organization at $119 with a three seat minimum, all billed annually; monthly billing costs more. Paid plans grant a yearly credit pool per seat (30,000 on Basic, 48,000 on Professional, 72,000 on Organization) that covers contact reveals and exports, and credits do not roll over." }
+          "acceptedAnswer": { "@type": "Answer", "text": "At the July 2026 check: a free tier, then Basic at $49 per user per month, Professional at $79, and Organization at $119 with a three seat minimum, all billed annually; monthly billing costs more. Paid plans grant a yearly credit pool per seat (30,000 on Basic, 48,000 on Professional, 72,000 on Organization) that covers contact reveals and exports, and credits do not roll over. Check apollo.io/pricing for current numbers." }
         },
         {
           "@type": "Question",
           "name": "Is Apollo's contact data accurate?",
-          "acceptedAnswer": { "@type": "Answer", "text": "It depends on your segment. Coverage of US tech and SMB companies is widely considered Apollo's strongest area. Reviews and Reddit threads through 2026 report staler data outside it, with outdated titles and bounced emails most common for Europe, APAC, and Latin America. Verify exported lists before sending regardless of segment." }
+          "acceptedAnswer": { "@type": "Answer", "text": "It depends on your segment. US tech and SMB coverage is widely considered Apollo's strongest area. Reviews and Reddit threads through 2026 report staler data outside it, with outdated titles and bounced emails most common for Europe, APAC, and Latin America. Wherever you sell, verify exported lists with an independent checker before sending." }
         },
         {
           "@type": "Question",
           "name": "What is the closest direct alternative to Apollo?",
-          "acceptedAnswer": { "@type": "Answer", "text": "Amplemarket, for the same consolidation trade at a higher grade: contact data, engagement, and deliverability tooling from one vendor. If your complaint is specifically data quality rather than the platform, Clay's waterfall enrichment across many providers is the more direct answer." }
+          "acceptedAnswer": { "@type": "Answer", "text": "Amplemarket, which keeps the same data-plus-outreach consolidation at a higher grade. If the complaint is specifically data quality rather than the platform, Clay's waterfall enrichment across many providers is the more direct answer." }
         },
         {
           "@type": "Question",
           "name": "Will switching tools fix a low reply rate?",
-          "acceptedAnswer": { "@type": "Answer", "text": "Usually not. If deliverability is healthy and replies are still under 1 percent, the message is the problem, not the platform. When the message carried a working demo instead, replies went from under 1% to over 14% in week one at Autosana (YC S25)." }
+          "acceptedAnswer": { "@type": "Answer", "text": "Usually not. If deliverability is healthy and replies are still under 1 percent, the message is the problem, not the platform. The case for changing what the message carries is laid out in demo-led outbound, and the result at one company is written up in the Autosana story." }
         }
       ]
     }
@@ -101,19 +101,35 @@
     --tide: #15557e;
     --tide-deep: #0d3c5b;
     --tide-wash: #eaf1f7;
+    --wash-a: #f4f8fb;
     --bg: #ffffff;
     --r-win: 12px;
     --shadow-win: 0 1px 2px rgba(22,24,27,0.05), 0 24px 48px -24px rgba(22,24,27,0.18);
+    /* vertical scale: one ladder, five steps.
+       xs binds a line to its parent (byline, support lines, disclosure);
+       s separates elements inside a block (deck, prose, tables under subs);
+       m is the step to a new group (jump nav, the fold H2, segment totals);
+       l separates H2 sections; xl isolates the sea strip and the footer seam. */
+    --sp-xs: 0.6rem;
+    --sp-s: 1.4rem;
+    --sp-m: 2.75rem;
+    --sp-l: clamp(3.4rem, 5.5vw, 4.6rem);
+    --sp-xl: clamp(5rem, 8vw, 6.5rem);
   }
   * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
+  /* the landing's fluid root: 16px up to ~1512w, growing to 21px on wide monitors */
+  html { scroll-behavior: smooth; font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
   body {
     margin: 0; background: var(--bg); color: var(--ink);
     font-family: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-    font-size: 16px; line-height: 1.55; -webkit-font-smoothing: antialiased;
+    font-size: 1rem; line-height: 1.55; -webkit-font-smoothing: antialiased;
+    overflow-x: clip;
   }
   h1, h2, h3 { margin: 0; letter-spacing: -0.014em; text-wrap: balance; }
   p { margin: 0; }
+  /* height:auto mirrors the Tailwind preflight the homepage relies on; without
+     it the width/height attrs distort the demo clip (width scales, height sticks) */
+  img { display: block; max-width: 100%; height: auto; }
   a { color: inherit; }
   :focus-visible { outline: 2px solid var(--tide); outline-offset: 2px; }
 
@@ -122,7 +138,11 @@
     font-style: italic; color: var(--tide); letter-spacing: 0;
   }
 
+  /* two edges total: every readable element sits on the 46rem article column;
+     tables and the window-pair graphic break out to 68rem, the header nav's
+     own width (and the homepage wrap), symmetric about the same center */
   .wrap { max-width: 46rem; margin-inline: auto; padding-inline: clamp(1.25rem, 4vw, 2rem); }
+  .wrap-wide { max-width: 68rem; }
 
   .btn {
     display: inline-flex; align-items: center; justify-content: center;
@@ -152,59 +172,278 @@
   .wordmark .helm { width: 1.9rem; height: 1.9rem; display: block; flex-shrink: 0; }
   .nav .btn { height: 2.35rem; font-size: 0.875rem; padding-inline: 1.2rem; }
 
-  /* ---------- article ---------- */
-  .article-head { padding-block: clamp(3rem, 7vw, 5rem) 0; }
+  /* ---------- article head ---------- */
+  .article-head { padding-top: var(--sp-m); }
   h1 {
-    font-size: clamp(1.9rem, 1.2rem + 2vw, 2.6rem);
-    font-weight: 600; line-height: 1.18;
+    /* the homepage hero scale, with its voice phrase */
+    font-size: clamp(1.9rem, 1.1rem + 2.4vw, 2.6rem);
+    font-weight: 600; line-height: 1.16;
   }
-  .byline { margin-top: 0.9rem; font-size: 0.9rem; color: var(--gray-light); }
-  .updated { margin-top: 0.35rem; font-size: 0.85rem; color: var(--gray); }
+  .byline { margin-top: var(--sp-xs); font-size: 0.9rem; color: var(--gray); }
+  /* byline and updated read as one two-line unit */
+  .updated { margin-top: 0.2rem; font-size: 0.85rem; color: var(--gray); }
 
-  .disclosure {
-    margin-top: 2rem; padding: 1.1rem 1.3rem;
-    background: var(--tide-wash); border-radius: var(--r-win);
-    color: var(--ink); font-size: 0.98rem;
+  /* ---------- deck: plain lede text under the byline (the hero-sub scale) ---------- */
+  .deck {
+    margin-top: var(--sp-s); font-size: 1.1rem; line-height: 1.55;
+    color: var(--ink);
   }
-  .disclosure strong { font-weight: 600; }
+  .disclosure { margin-top: var(--sp-xs); font-size: 0.88rem; color: var(--gray); }
   .disclosure a {
     color: var(--tide); text-decoration: underline;
     text-underline-offset: 3px; text-decoration-thickness: 1px;
   }
 
-  .prose { margin-top: 1.5rem; color: var(--gray); font-size: 1.02rem; }
-  .prose + .prose { margin-top: 1rem; }
+  /* ---------- jump nav: on the article edge, a clear step below the head block ---------- */
+  .pagenav {
+    margin-top: var(--sp-m); display: flex; flex-wrap: wrap; align-items: baseline;
+    gap: 0.3rem 1rem; font-size: 0.875rem;
+  }
+  .pagenav > span { color: var(--gray); }
+  .pagenav a { color: var(--tide); text-decoration: none; white-space: nowrap; }
+  .pagenav a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+  /* ---------- section headings: the homepage scale ---------- */
+  h2 {
+    margin-top: var(--sp-l);
+    font-size: clamp(2rem, 1.2rem + 2.8vw, 3.2rem);
+    font-weight: 600; line-height: 1.12; max-width: 28ch;
+  }
+  h2[id] { scroll-margin-top: 5.5rem; }
+  section[id] { scroll-margin-top: 1.25rem; }
+  .h2-sub { margin-top: var(--sp-xs); font-size: 1.02rem; color: var(--gray); }
+  /* the fold H2 takes the medium step so the glance table enters the 900px fold */
+  h2#glance { margin-top: var(--sp-m); }
+  .sect > h2:first-child, .sect > .wrap > h2:first-child { margin-top: 0; }
+
+  .prose { margin-top: var(--sp-s); color: var(--gray); font-size: 1.02rem; }
+  .prose + .prose { margin-top: 0.85rem; }
   .prose a {
     color: var(--tide); text-decoration: underline;
     text-underline-offset: 3px; text-decoration-thickness: 1px;
   }
   .prose a:hover { color: var(--tide-deep); }
+  /* the skim layer: bold run-in leads read in ink against gray body text */
+  .prose strong, .segment p strong, .entry p strong { color: var(--ink); font-weight: 600; }
 
-  h2 { margin-top: 3.2rem; font-size: 1.45rem; font-weight: 600; }
+  /* tables */
+  .table-scroll { margin-top: var(--sp-s); overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  /* the fold table's caption reads below the table so rows lead, Plausible-style */
+  .glance-table table.compare caption { caption-side: bottom; padding: 0.7rem 0 0; }
+  table.compare {
+    width: 100%; border-collapse: collapse;
+    font-size: 0.9rem; line-height: 1.45; min-width: 42rem;
+  }
+  table.compare caption {
+    caption-side: top; text-align: left;
+    font-size: 0.85rem; color: var(--gray); padding-bottom: 0.7rem;
+  }
+  table.compare th {
+    font-size: 0.85rem; font-weight: 500; color: var(--gray);
+    text-align: left; vertical-align: bottom;
+    padding: 0.45rem 0.9rem 0.45rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+  table.compare td {
+    padding: 0.75rem 0.9rem 0.75rem 0;
+    border-bottom: 1px solid var(--line);
+    color: var(--gray); vertical-align: top;
+  }
+  table.compare td.tool { color: var(--ink); font-weight: 600; white-space: nowrap; }
+  /* flat wash band: no radius or extra indent, so every row's first column
+     shares one left edge and rows read as rows */
+  table.compare tr.us td { background: var(--wash-a); }
+  table.compare td a {
+    color: var(--tide); text-decoration: underline;
+    text-underline-offset: 3px; text-decoration-thickness: 1px;
+  }
+  table.compare td a:hover { color: var(--tide-deep); }
+  .table-note { margin-top: 0.9rem; font-size: 0.9rem; color: var(--gray); }
+  .table-note strong { color: var(--ink); font-weight: 600; }
+  .table-note a {
+    color: var(--tide); text-decoration: underline;
+    text-underline-offset: 3px; text-decoration-thickness: 1px;
+  }
 
-  /* segments */
-  .segment { margin-top: 1.6rem; padding-top: 1.4rem; border-top: 1px solid var(--line); }
+  /* ---------- the graphic: a templated send beside a driftwood send, ported from the homepage compare artifact ---------- */
+  .graphic { margin-top: var(--sp-l); }
+  .compare-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: clamp(1.5rem, 3vw, 2.5rem); align-items: stretch;
+  }
+  .compare-grid > div { display: flex; flex-direction: column; }
+  .compare-label { font-size: 0.85rem; color: var(--gray); margin-bottom: 0.8rem; }
+  .compare-label.us { color: var(--tide); font-weight: 600; }
+  /* reads at the breakout's left edge, like the table captions */
+  .compare-note { margin-top: 0.7rem; font-size: 0.85rem; color: var(--gray); }
+  .email {
+    display: flex; flex-direction: column; flex: 1;
+    border: 1px solid var(--line); border-radius: var(--r-win); background: #fff;
+    box-shadow: var(--shadow-win);
+    padding: 1.2rem 1.4rem;
+  }
+  .compare-grid > div:first-child .email { background: #f6f7f8; box-shadow: none; }
+  .compare-grid > div:first-child .email-subject,
+  .compare-grid > div:first-child .email-body { opacity: 0.62; }
+  .email-subject { font-weight: 600; font-size: 1rem; padding-bottom: 0.9rem; border-bottom: 1px solid var(--line); }
+  .email-body { margin-top: 1rem; font-size: 0.92rem; color: #3c434a; line-height: 1.55; }
+  .email-body p + p { margin-top: 0.65rem; }
+  .email-body ul { list-style: disc; margin: 0.7rem 0 0 1.35rem; padding: 0; }
+  .email-body li { margin-top: 0.3rem; }
+  .email-body .fake-link { color: #1a0dab; text-decoration: underline; }
+  .email-fate { margin: auto 0 0; padding-top: 1.5rem; font-size: 0.85rem; color: var(--gray); }
+  .redact { display: inline-block; background: #d4d9de; border-radius: 2px; width: 2.5em; height: 0.78em; }
+  .thread {
+    border: 1px solid var(--line); border-radius: var(--r-win); background: #fff;
+    box-shadow: var(--shadow-win); overflow: hidden;
+    font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  .li-head { display: flex; align-items: center; gap: 0.7rem; padding: 0.7rem 1rem; border-bottom: 1px solid #e8e8e8; }
+  .li-head .li-name { font-weight: 700; font-size: 0.95rem; color: #191919; }
+  .li-presence { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: #01754f; }
+  .li-icons { margin-left: auto; display: flex; gap: 0.9rem; color: #666; font-size: 1rem; letter-spacing: 0.05em; }
+  .li-body { padding: 0.4rem 1rem 0.7rem; }
+  .msg { display: grid; grid-template-columns: 2.6rem minmax(0, 1fr); gap: 0.7rem; padding-block: 0.35rem; }
+  .avatar {
+    width: 2.6rem; height: 2.6rem; border-radius: 50%; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    background: #dce6f1; color: #56687a;
+  }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .avatar svg { width: 70%; height: 70%; margin-top: 22%; fill: #8ba0b5; }
+  .msg-head { display: flex; align-items: baseline; gap: 0.5rem; font-size: 0.9rem; }
+  .msg-head .who { font-weight: 700; color: #191919; }
+  .msg-head .when { color: #767676; font-size: 0.78rem; }
+  .msg-head .seen { margin-left: auto; color: #767676; }
+  .msg-head .seen svg { width: 0.85rem; height: 0.85rem; }
+  .msg-body { margin-top: 0.2rem; font-size: 0.9rem; color: #191919; line-height: 1.45; max-width: 52ch; }
+  .divider { display: flex; align-items: center; gap: 0.8rem; margin-block: 0.45rem; }
+  .divider hr { flex: 1; border: 0; border-top: 1px solid #e8e8e8; margin: 0; }
+  .divider span { font-size: 0.72rem; color: #767676; text-transform: uppercase; letter-spacing: 0.06em; }
+  .divider.win span { color: var(--tide); font-weight: 700; }
+  .divider.win hr { border-top-color: rgba(21,85,126,0.3); }
+  .li-compose { display: flex; align-items: center; gap: 0.8rem; border-top: 1px solid #e8e8e8; padding: 0.75rem 1rem; }
+  .li-input { flex: 1; background: #f2f2f2; border-radius: 999px; padding: 0.55rem 1rem; font-size: 0.85rem; color: #767676; }
+  .li-send { color: #a8a8a8; font-weight: 700; font-size: 0.9rem; }
+  .clip { margin-top: 0.7rem; position: relative; width: min(14rem, 100%); border-radius: 10px; overflow: hidden; border: 1px solid var(--line); }
+  .clip img { width: 100%; }
+  .clip::after { content: "0:19"; position: absolute; right: 0.55rem; bottom: 0.5rem; background: rgba(22,24,27,0.75); color: #fff; font-size: 0.7rem; padding: 0.1rem 0.4rem; border-radius: 4px; }
+  .play { position: absolute; inset: 0; margin: auto; width: 2.6rem; height: 2.6rem; background: rgba(22,24,27,0.62); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  .play::after { content: ""; border-style: solid; border-width: 0.45rem 0 0.45rem 0.8rem; border-color: transparent transparent transparent #fff; margin-left: 0.18rem; }
+  .clip-note { display: flex; align-items: flex-end; gap: 0.35rem; margin: 0.5rem 0 0 0.5rem; }
+  .clip-note svg { width: 2.1rem; flex: none; }
+  .clip-note em { font-family: Georgia, "Times New Roman", serif; font-style: italic; color: var(--tide); font-size: 0.95rem; line-height: 1; }
+
+  /* ---------- pull-stats: the dashboard results-card pattern ---------- */
+  .stat-pair { margin-top: var(--sp-s); display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .stat {
+    border: 1px solid var(--line); border-radius: var(--r-win);
+    padding: 1rem 1.2rem; background: #fff;
+  }
+  .stat-label { font-size: 0.85rem; color: var(--gray); }
+  .stat-num {
+    margin-top: 0.25rem; font-size: clamp(1.8rem, 1.3rem + 1.4vw, 2.5rem);
+    font-weight: 600; line-height: 1.12; letter-spacing: -0.014em;
+    font-variant-numeric: tabular-nums; color: var(--ink);
+  }
+  .stat-num.tide { color: var(--tide); }
+  .stat-caption { margin-top: 0.8rem; font-size: 0.9rem; color: var(--gray); }
+  .stat-caption a {
+    color: var(--tide); text-decoration: underline;
+    text-underline-offset: 3px; text-decoration-thickness: 1px;
+  }
+
+  /* ---------- docked sheets, wave-cut seams (the homepage rhythm) ---------- */
+  .sheet { position: relative; }
+  /* the shoulder is absolutely positioned; the homepage's negative-margin version
+     relies on styles this standalone page lacks, and the margin collapses through
+     the section here, leaving a flat seam */
+  .sheet::before {
+    content: ""; position: absolute; left: 0; right: 0; top: -28px; height: 28px;
+    z-index: 1;
+    background-repeat: repeat-x; background-position: bottom;
+  }
+  .sheet-white { background: #ffffff; }
+  .sheet-white::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='28' viewBox='0 0 180 28'%3E%3Cpath d='M0 14 C 11.25 5.5, 33.75 5.5, 45 14 C 56.25 22.5, 78.75 22.5, 90 14 C 101.25 5.5, 123.75 5.5, 135 14 C 146.25 22.5, 168.75 22.5, 180 14 L180 28 L0 28 Z' fill='%23ffffff'/%3E%3C/svg%3E"); }
+  .wash-a { background: var(--wash-a); }
+  .wash-a::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='28' viewBox='0 0 180 28'%3E%3Cpath d='M0 14 C 11.25 5.5, 33.75 5.5, 45 14 C 56.25 22.5, 78.75 22.5, 90 14 C 101.25 5.5, 123.75 5.5, 135 14 C 146.25 22.5, 168.75 22.5, 180 14 L180 28 L0 28 Z' fill='%23f4f8fb'/%3E%3C/svg%3E"); }
+  /* the homepage's section padding; with .pre-sheet below it the wash seam
+     gets the extra-large step of the scale */
+  .sect { padding-block: clamp(2.5rem, 5vw, 4.25rem); }
+  /* white flow above a sheet leaves room for the incoming wave shoulder */
+  .pre-sheet { padding-bottom: var(--sp-l); }
+
+  /* ---------- static ASCII sea strip, its duck aboard ---------- */
+  .sea-static {
+    position: relative; height: 118px; overflow: hidden;
+    margin-top: var(--sp-xl);
+    -webkit-mask-image: linear-gradient(to bottom, transparent, black 16%, black 84%, transparent);
+    mask-image: linear-gradient(to bottom, transparent, black 16%, black 84%, transparent);
+  }
+  .sea-static pre {
+    margin: 0; padding-top: 14px;
+    font: 12px/10.5px ui-monospace, "SF Mono", Menlo, monospace;
+    white-space: pre; letter-spacing: 0;
+  }
+  .sea-static .r0 { color: rgba(21,85,126,0.16); }
+  .sea-static .r1 { color: rgba(21,85,126,0.231); }
+  .sea-static .r2 { color: rgba(21,85,126,0.303); }
+  .sea-static .r3 { color: rgba(21,85,126,0.374); }
+  .sea-static .r4 { color: rgba(21,85,126,0.446); }
+  .sea-static .r5 { color: rgba(21,85,126,0.517); }
+  .sea-static .r6 { color: rgba(21,85,126,0.589); }
+  .sea-static .r7 { color: rgba(21,85,126,0.66); }
+  .sea-sprite { position: absolute; font: 12px/10.5px ui-monospace, "SF Mono", Menlo, monospace; }
+  .sea-sprite span { display: block; }
+  .sea-duck { left: 24%; top: 30px; color: rgba(240,195,60,0.95); }
+  .sea-duck .beak { display: inline; color: rgba(224,138,46,0.95); }
+  .sea-buoy { left: 68%; top: 40px; color: rgba(178,94,66,0.9); }
+
+  /* segments: the demoted heads (the old H2 style) anchor in-section blocks;
+     s + s across the hairline lands the medium step of the scale */
+  .segment { margin-top: var(--sp-s); padding-top: var(--sp-s); border-top: 1px solid var(--line); }
   .segment:first-of-type { border-top: 0; padding-top: 0; }
-  .segment h3 { font-size: 1.05rem; font-weight: 600; }
-  .segment p { margin-top: 0.45rem; color: var(--gray); }
+  .segment h3 { font-size: 1.45rem; font-weight: 600; }
+  .segment p { margin-top: var(--sp-xs); color: var(--gray); }
+  .segment p + p { margin-top: 0.85rem; }
   .segment p a {
     color: var(--tide); text-decoration: underline;
     text-underline-offset: 3px; text-decoration-thickness: 1px;
   }
   .segment p a:hover { color: var(--tide-deep); }
 
+  /* the paired choose-if checklist */
+  .choose-pair {
+    margin-top: var(--sp-s); display: grid;
+    grid-template-columns: 1fr 1fr; gap: 1rem;
+  }
+  .choose-col {
+    border: 1px solid var(--line); border-radius: var(--r-win);
+    padding: 1.1rem 1.3rem; background: #fff;
+  }
+  .choose-col h3 { font-size: 1.05rem; font-weight: 600; }
+  .choose-col ul { margin: 0.7rem 0 0; padding-left: 1.1rem; color: var(--gray); }
+  .choose-col li { margin-top: 0.5rem; font-size: 0.95rem; }
+  .choose-col li a {
+    color: var(--tide); text-decoration: underline;
+    text-underline-offset: 3px; text-decoration-thickness: 1px;
+  }
+
   /* entries */
-  .entries { margin-top: 1.2rem; }
+  .entries { margin-top: var(--sp-s); }
   .entry {
     display: grid; grid-template-columns: 2.9rem 1fr; gap: 0 0.6rem;
     padding-block: 1.7rem;
   }
+  /* the content column may hold a table-scroll; without this the grid item's
+     auto minimum tracks the table's min-width and overflows phone viewports */
+  .entry > div { min-width: 0; }
   .entry + .entry { border-top: 1px solid var(--line); }
   .entry-num {
     font-size: 1.35rem; font-weight: 600; color: var(--gray);
     line-height: 1.3; font-variant-numeric: tabular-nums;
   }
-  .entry h3 { font-size: 1.15rem; font-weight: 600; line-height: 1.3; }
+  .entry h3 { font-size: 1.35rem; font-weight: 600; line-height: 1.3; }
   .entry h3 a { text-decoration: none; }
   .entry h3 a:hover { color: var(--tide); }
   .entry p { margin-top: 0.55rem; color: var(--gray); }
@@ -223,6 +462,10 @@
     font-size: 0.78rem; font-weight: 500; line-height: 1;
     padding: 0.28rem 0.55rem; border-radius: 6px;
   }
+  .entry h3 .chip { vertical-align: 0.18em; }
+  table.compare .chip { margin-left: 0.45rem; vertical-align: 0.05em; }
+  table.compare.h2h { min-width: 34rem; }
+  table.compare.h2h td.tool { white-space: normal; min-width: 8.5rem; }
 
   /* the driftwood entry sits in a card; the rest are hairline rows */
   .entry-card {
@@ -234,26 +477,24 @@
 
   /* CTA */
   .cta {
-    margin-top: 3.5rem; padding: 2.4rem 1.5rem 2.6rem;
+    margin-top: var(--sp-l); margin-bottom: 0; padding: 2.4rem 1.5rem 2.6rem;
     border: 1px solid var(--line); border-radius: var(--r-win);
-    box-shadow: var(--shadow-win); text-align: center;
+    box-shadow: var(--shadow-win); text-align: center; background: #fff;
   }
-  .cta h2 { margin-top: 0; font-size: 1.35rem; }
+  .cta h2 { margin-top: 0; font-size: 1.45rem; max-width: none; }
   .cta p { margin-top: 0.6rem; color: var(--gray); }
   .cta .btn { margin-top: 1.4rem; height: 3rem; padding-inline: 2rem; font-size: 1rem; }
 
   /* footer */
   footer.site {
-    margin-top: 4.5rem;
+    margin-top: var(--sp-xl);
+    position: relative;
     background: linear-gradient(#15557e, #0d3c5b);
     color: #fff;
   }
   footer.site::before {
     content: "";
-    display: block;
-    height: 28px;
-    margin-top: -28px;
-    position: relative;
+    position: absolute; left: 0; right: 0; top: -28px; height: 28px;
     z-index: 1;
     background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='28' viewBox='0 0 180 28'%3E%3Cpath d='M0 14 C 11.25 5.5, 33.75 5.5, 45 14 C 56.25 22.5, 78.75 22.5, 90 14 C 101.25 5.5, 123.75 5.5, 135 14 C 146.25 22.5, 168.75 22.5, 180 14 L180 28 L0 28 Z' fill='%2315557e'/%3E%3C/svg%3E") repeat-x bottom;
   }
@@ -285,8 +526,13 @@
   footer.site a { color: inherit; text-decoration: none; }
   footer.site a:hover { color: #fff; }
 
+  @media (max-width: 46rem) {
+    .compare-grid { grid-template-columns: 1fr; }
+  }
   @media (max-width: 40rem) {
     .entry { grid-template-columns: 2.4rem 1fr; }
+    .choose-pair { grid-template-columns: 1fr; }
+    .stat-pair { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -299,318 +545,867 @@
   </nav>
 </header>
 
-<main class="wrap">
+<main>
 
   <div class="article-head">
-    <h1>Apollo alternatives</h1>
-    <p class="byline">By the driftwood team · July 2026</p>
-    <p class="updated">Updated July 2026. Pricing and features get a monthly fact-check.</p>
+    <div class="wrap">
+      <h1>Apollo <em class="voice">alternatives</em></h1>
+      <p class="byline">By the driftwood team · July 2026</p>
+      <p class="updated">Updated July 2026. Prices checked 2026-07-21; this page gets a monthly fact-check.</p>
 
-    <div class="disclosure">
-      <strong>The disclosure, first.</strong> We build driftwood
-      (<a href="https://driftwood.sh">driftwood.sh</a>), and it is one of the six
-      alternatives below. Judge the page accordingly. To make it worth your time
-      anyway, every entry says who should pick that tool, and the last section
-      covers when Apollo is the right choice, including over us. Fair warning:
-      for most readers of this page, the answer is to keep Apollo.
+      <p class="deck">Apollo is the pragmatic consolidation choice, a B2B
+      contact database, email sequencing, and a dialer in one per-seat
+      product, and for most readers of this page, the answer is to keep
+      Apollo. An alternative genuinely wins in three cases: data quality
+      outside US tech, deliverability at a scale the bundled sequencer cannot
+      carry, or a motion where replies rather than sends are the constraint.
+      The rest of this page routes each case to the tool aimed at it.</p>
+      <p class="disclosure">We build driftwood
+      (<a href="https://driftwood.sh">driftwood.sh</a>), one of the six
+      alternatives below; judge accordingly. Every price on this page is
+      sourced, and the last full section covers when Apollo is the right
+      choice, including over us.</p>
+
+    </div>
+    <div class="wrap">
+      <nav class="pagenav" aria-label="On this page">
+        <span>On this page:</span>
+        <a href="#glance">At a glance</a>
+        <a href="#what-apollo">What Apollo is</a>
+        <a href="#falls-short">Where it falls short</a>
+        <a href="#alternatives">The alternatives</a>
+        <a href="#when-apollo">When Apollo is right</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+    </div>
+  </div>
+
+  <section>
+    <div class="wrap">
+      <h2 id="glance">At a <em class="voice">glance</em></h2>
+      <p class="h2-sub">Six alternatives beside Apollo, priced and staged.</p>
     </div>
 
-    <p class="prose">
-      People searching for Apollo alternatives are usually unhappy about one of
-      four things: data accuracy in their particular segment, the credit meter,
-      deliverability on lists exported straight into sequences, or reply rates
-      that stayed low no matter how many sequences went out. Those are four
-      different problems, and only some of them are Apollo's fault, so this
-      page starts with what Apollo actually is and where it genuinely wins. If
-      you want the whole AI SDR category instead, we keep
-      <a href="/best-ai-sdr-tools">a separate ranked comparison</a>.
-    </p>
-  </div>
-
-  <h2>What Apollo is, and what it is genuinely good at</h2>
-
-  <p class="prose">
-    Apollo is a sales platform built around a B2B contact database that Apollo
-    says covers more than 240 million contacts and 30 million companies as of
-    July 2026. Around the database sits most of the outbound stack: email
-    sequencing, a dialer, meeting scheduling, enrichment, intent topics, light
-    CRM and deal features, and an AI assistant. It is one per-seat product
-    that replaces what would otherwise be a data provider, a sequencer, and a
-    dialer bought separately.
-  </p>
-  <p class="prose">
-    As of July 2026 there is a free tier with a small monthly credit grant,
-    then three paid plans billed annually: Basic at $49 per user per month,
-    Professional at $79, and Organization at $119 with a three seat minimum.
-    Monthly billing costs more. Apollo restructured its credit system in late
-    2025: paid plans now grant a yearly credit pool per seat, 30,000 on Basic,
-    48,000 on Professional, and 72,000 on Organization, which covers contact
-    reveals and exports. Phone numbers consume several times the credits of an
-    email, and credits do not roll over.
-  </p>
-  <p class="prose">
-    What it is genuinely good at: consolidation at a low price. One login
-    covers finding contacts, sequencing them, and calling them, and $49 a seat
-    undercuts buying a database and a sequencer separately by a wide margin.
-    The free tier is a real evaluation path, coverage of US tech and SMB
-    companies is strong, and because Apollo is everywhere, most reps you hire
-    will already know it. As the pragmatic default for a small US-focused
-    sales team, it is hard to argue with.
-  </p>
-
-  <h2>Where Apollo falls short, and for whom</h2>
-
-  <div class="segment">
-    <h3>Data accuracy depends on your segment</h3>
-    <p>
-      Coverage of US tech and SMB is Apollo's home turf. Reviews and Reddit
-      threads through 2026 report staler data outside it: outdated titles and
-      bounced emails are the most common complaints for Europe, APAC, and
-      Latin America. The pattern is consistent enough that you should verify
-      exported lists with an independent checker before sending, whatever your
-      segment. If your market is one Apollo covers thinly, the database that
-      justifies the bundle stops justifying it.
-    </p>
-  </div>
-
-  <div class="segment">
-    <h3>The credit meter</h3>
-    <p>
-      Since the late 2025 restructure, usage is metered against a yearly
-      credit pool per seat. Reveal-heavy prospecting burns through it, phone
-      numbers cost several times what emails do, and unused credits expire.
-      Teams that prospect hard on lower tiers report hitting the pool well
-      before the year ends, at which point the choice is overage credits or a
-      tier upgrade. Budget for how you actually prospect, not the sticker.
-    </p>
-  </div>
-
-  <div class="segment">
-    <h3>Deliverability is your problem, not Apollo's</h3>
-    <p>
-      The workflow Apollo makes easiest, exporting a filtered list straight
-      into a sequence, is also the fastest way to burn a sending domain. The
-      verified label on a contact is not a guarantee, and 2026 reviews
-      regularly describe damaged domains from teams that trusted it and
-      skipped their own checks. Apollo ships warmup and deliverability
-      guidance, but placement is still yours to earn, on your own domains.
-    </p>
-  </div>
-
-  <div class="segment">
-    <h3>Everything included, nothing best-in-class</h3>
-    <p>
-      The bundle is the pitch, and each piece shows it. The sequencer has
-      fewer sending and infrastructure controls than dedicated senders, the
-      dialer trails purpose-built dialers, and the CRM features are light
-      enough that most teams still run a real CRM beside it. Teams tend to
-      outgrow Apollo one piece at a time, which is exactly how the
-      alternatives below are organized.
-    </p>
-  </div>
-
-  <div class="segment">
-    <h3>More sends will not fix low replies</h3>
-    <p>
-      Apollo makes it easy to put thousands of people into a templated
-      sequence, and for many teams that is the whole strategy. If replies are
-      under 1 percent, the platform is not the bottleneck; the message is.
-      Switching to a different database and a different sequencer to send the
-      same message rarely moves the number.
-    </p>
-  </div>
-
-  <h2>Six real alternatives</h2>
-
-  <div class="entries">
-
-    <article class="entry entry-card">
-      <div class="entry-num" aria-hidden="true">1</div>
-      <div>
-        <h3><a href="https://driftwood.sh">driftwood</a><span class="chip">our tool</span></h3>
-        <p>
-          Apollo gives you the whole outbound stack to operate. driftwood is a
-          different bet: an agent that runs one motion,
-          <a href="/demo-led-outbound">demo-led outbound</a>, end to end. It
-          researches each prospect, builds a working demo of your product for
-          the specific prospect receiving it, and drafts the message. A human
-          approves every send, and it goes out from your own LinkedIn or email
-          account, not a bot inbox. On the same lead list, replies went from
-          under 1% to over 14% in week one at
-          <a href="/customers/autosana">Autosana</a> (YC S25).
-        </p>
-        <p>
-          The honest fit: driftwood is early, and it is not a database, so it
-          replaces Apollo's sequencing, not its data. It trades volume for
-          depth: if your model needs thousands of touches a week, it is the
-          wrong tool.
-        </p>
-        <p class="bestfor"><strong>Best for:</strong> <span>founders and lean
-        teams selling a product that demos well, whose problem is reply rate,
-        not contact coverage.</span></p>
+    <div class="wrap wrap-wide glance-table">
+      <div class="table-scroll">
+        <table class="compare">
+          <caption>Every cell is words, not checkmarks. Prices are entry points; the fuller snapshot, with sources, is further down.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Tool</th>
+              <th scope="col">What it is</th>
+              <th scope="col">Entry price (as of July 2026)</th>
+              <th scope="col">What you still need to buy</th>
+              <th scope="col">Best stage</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="tool">Apollo</td>
+              <td>B2B database with sequencing, a dialer, and light CRM, per seat</td>
+              <td>Free tier; paid from $49 per user per month billed annually</td>
+              <td>Deliverability care and the time of whoever runs it</td>
+              <td>US-focused teams of any size with people to run outbound</td>
+            </tr>
+            <tr>
+              <td class="tool">Amplemarket</td>
+              <td>The same consolidation at a higher grade: data, engagement, deliverability tooling, an AI copilot (Duo)</td>
+              <td>None published that we could verify</td>
+              <td>Reps to run the motion</td>
+              <td>Sales teams paying up for a better bundle</td>
+            </tr>
+            <tr>
+              <td class="tool">Clay</td>
+              <td>Data workbench: waterfall enrichment across 100+ providers, AI research columns</td>
+              <td>Free tier; paid from $185 a month</td>
+              <td>A sequencer to send with; an operator to run it</td>
+              <td>Teams with a RevOps or GTM engineering owner</td>
+            </tr>
+            <tr>
+              <td class="tool">Smartlead</td>
+              <td>Dedicated cold email sending: unlimited mailboxes, warmup included</td>
+              <td>From $39 a month</td>
+              <td>A data source; Apollo on a cheap tier is common</td>
+              <td>Teams moving sending onto real infrastructure</td>
+            </tr>
+            <tr>
+              <td class="tool">lemlist</td>
+              <td>Email plus LinkedIn steps in one sequence, with its own lead database</td>
+              <td>$69 per user per month email only; $109 multichannel</td>
+              <td>Deliverability care at volume</td>
+              <td>Small teams whose prospects live on LinkedIn</td>
+            </tr>
+            <tr>
+              <td class="tool">Instantly</td>
+              <td>Budget volume sending: unlimited mailboxes, warmup, leads as an add-on</td>
+              <td>From $47 a month</td>
+              <td>Lead data, from their add-on or elsewhere</td>
+              <td>High-volume cold email at the lowest credible price</td>
+            </tr>
+            <tr class="us">
+              <td class="tool">driftwood<span class="chip">our tool</span></td>
+              <td>GTM agent for demo-led outbound: a working demo of your product, built per prospect, in every message</td>
+              <td>$1,000 to $5,000 a month</td>
+              <td>Nothing bolted on; it sends from the LinkedIn and email accounts you already have</td>
+              <td>Founders and small teams whose product demos well</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-    </article>
+    </div>
 
-    <article class="entry">
-      <div class="entry-num" aria-hidden="true">2</div>
-      <div>
-        <h3><a href="https://amplemarket.com" rel="noopener">Amplemarket</a></h3>
-        <p>
-          Amplemarket is the closest like-for-like swap: contact data,
-          multichannel engagement, deliverability tooling, and an AI copilot
-          called Duo in one platform. It keeps the consolidation trade that
-          brought you to Apollo but aims it at sales teams willing to pay more
-          for better tooling around deliverability and messaging. If the
-          bundle is right and the execution is what disappoints, evaluate this
-          one first.
-        </p>
-        <p class="bestfor"><strong>Best for:</strong> <span>sales teams that
-        want data and outreach from one vendor at a higher grade than
-        Apollo's.</span></p>
-      </div>
-    </article>
-
-    <article class="entry">
-      <div class="entry-num" aria-hidden="true">3</div>
-      <div>
-        <h3><a href="https://clay.com" rel="noopener">Clay</a></h3>
-        <p>
-          If your complaint is specifically data quality, Clay is the direct
-          answer. Instead of one database, it runs waterfall enrichment across
-          more than a hundred providers, checking each in turn until one has
-          the contact, plus AI research columns and buying signals. As of July
-          2026 there is a free tier and paid plans from $185 a month ($167
-          billed annually). The trade is real: Clay is a workbench that wants
-          an operator, not a database with a search box. We compared
-          <a href="/alternatives/clay">Clay alternatives</a> separately.
-        </p>
-        <p class="bestfor"><strong>Best for:</strong> <span>teams whose
-        bottleneck is data coverage or accuracy, with someone technical to own
-        the workbench.</span></p>
-      </div>
-    </article>
-
-    <article class="entry">
-      <div class="entry-num" aria-hidden="true">4</div>
-      <div>
-        <h3><a href="https://www.smartlead.ai" rel="noopener">Smartlead</a></h3>
-        <p>
-          Smartlead replaces the sequencer, not the database: dedicated cold
-          email infrastructure with unlimited mailboxes and warmup included,
-          from $39 a month as of July 2026. Teams that keep Apollo for data on
-          a cheap tier and move sending to Smartlead get better deliverability
-          control than Apollo's sequencer offers, at the cost of running two
-          tools.
-        </p>
-        <p class="bestfor"><strong>Best for:</strong> <span>teams keeping
-        their data source but moving sending onto dedicated
-        infrastructure.</span></p>
-      </div>
-    </article>
-
-    <article class="entry">
-      <div class="entry-num" aria-hidden="true">5</div>
-      <div>
-        <h3><a href="https://www.lemlist.com" rel="noopener">lemlist</a></h3>
-        <p>
-          lemlist covers the channel Apollo mostly does not: email and
-          LinkedIn steps in one sequence, with calling on higher tiers, plus
-          its own lead database. Pricing is per user, $69 a month for email
-          only and $109 for multichannel as of July 2026. If your prospects
-          answer LinkedIn DMs and ignore cold email, this is the shape of tool
-          to switch to.
-        </p>
-        <p class="bestfor"><strong>Best for:</strong> <span>small teams whose
-        prospects live on LinkedIn as much as email.</span></p>
-      </div>
-    </article>
-
-    <article class="entry">
-      <div class="entry-num" aria-hidden="true">6</div>
-      <div>
-        <h3><a href="https://instantly.ai" rel="noopener">Instantly</a></h3>
-        <p>
-          Instantly is the budget volume answer: sending plans from $47 a
-          month as of July 2026 with unlimited mailboxes and warmup included,
-          and its own lead database as a separate add-on. Against Apollo the
-          case is pure sending economics at high volume; the data quality
-          caveats that apply to Apollo apply at least as much here. We
-          compared <a href="/alternatives/instantly">Instantly
-          alternatives</a> separately.
-        </p>
-        <p class="bestfor"><strong>Best for:</strong> <span>teams whose model
-        is high-volume cold email at the lowest credible price.</span></p>
-      </div>
-    </article>
-
-  </div>
-
-  <h2>When Apollo is the right choice</h2>
-  <p class="prose">
-    More often than any other tool we cover, Apollo is the right choice. If
-    you sell into US companies, run a normal per-seat sales team, and want
-    data, sequencing, and calling in one product, nothing on this page beats
-    Apollo's price-to-coverage ratio, and most of the alternatives cost more
-    in total once you rebuild the bundle from parts. The complaints above are
-    real, but they are the cost of consolidation, and for many teams the
-    convenience is worth it. The honest dividing line: keep Apollo while the
-    bundle is the value. Move when one specific failure, data in your segment,
-    deliverability, or a reply rate that will not budge, costs you more than
-    the convenience saves, and then pick the alternative aimed at that
-    failure rather than a second bundle.
-  </p>
-
-  <h2>FAQ</h2>
-
-  <div class="segment">
-    <h3>What does Apollo cost in 2026?</h3>
-    <p>
-      As of July 2026: a free tier, then Basic at $49 per user per month,
-      Professional at $79, and Organization at $119 with a three seat minimum,
-      all billed annually; monthly billing costs more. Paid plans grant a
-      yearly credit pool per seat (30,000 on Basic, 48,000 on Professional,
-      72,000 on Organization) covering contact reveals and exports, and
-      credits do not roll over. Check apollo.io for current numbers.
-    </p>
-  </div>
-
-  <div class="segment">
-    <h3>Is Apollo's contact data accurate?</h3>
-    <p>
-      It depends on your segment. US tech and SMB coverage is widely
-      considered Apollo's strongest area. Reviews and Reddit threads through
-      2026 report staler data outside it, with outdated titles and bounced
-      emails most common for Europe, APAC, and Latin America. Wherever you
-      sell, verify exported lists before sending.
-    </p>
-  </div>
-
-  <div class="segment">
-    <h3>What is the closest direct alternative to Apollo?</h3>
-    <p>
-      Amplemarket, for the same data-plus-outreach consolidation at a higher
-      grade. If the complaint is specifically data quality rather than the
-      platform, Clay's waterfall enrichment is the more direct answer.
-    </p>
-  </div>
-
-  <div class="segment">
-    <h3>Will switching tools fix a low reply rate?</h3>
-    <p>
-      Usually not. If deliverability is healthy and replies are still under 1
-      percent, the message is the problem, not the platform. The case for
-      changing what the message carries is laid out in
-      <a href="/demo-led-outbound">demo-led outbound</a>, and the result at
-      one company is written up in
-      <a href="/customers/autosana">the Autosana story</a>.
-    </p>
-  </div>
-
-  <section class="cta">
-    <h2>See a demo built for <em class="voice">your</em> business</h2>
-    <p>Twenty minutes. We will show you what your prospects would see.</p>
-    <a class="btn" href="/#book">Book a demo</a>
+    <div class="wrap">
+      <p class="prose">
+        For the whole AI SDR category rather than Apollo specifically, we keep
+        <a href="/best-ai-sdr-tools">a separate comparison</a>.
+      </p>
+    </div>
   </section>
+
+  <section class="graphic" aria-label="A templated sequence email beside a driftwood send">
+    <div class="wrap wrap-wide">
+      <div class="compare-grid">
+        <div>
+          <p class="compare-label">what a templated sequence sends</p>
+          <div class="email">
+            <p class="email-subject"><span class="redact" role="img" aria-label="name redacted"></span> quick question</p>
+            <div class="email-body">
+              <p>Hey <span class="redact" role="img" aria-label="name redacted"></span>,</p>
+              <p>Hope you're doing well! Huge fan of what you're building, truly impressive momentum.</p>
+              <p>I'm with an AI-powered QA platform, the <b>all-in-one way to ship faster with confidence</b>. Teams like yours are seeing <b>huge results</b> and we'd love to show you how.</p>
+              <p>A few things teams love:</p>
+              <ul>
+                <li>Cut regression time by up to 90%</li>
+                <li>Seamless integration with your existing stack</li>
+                <li>Enterprise-grade security (SOC 2 Type II)</li>
+              </ul>
+              <p>Any chance you have 15 minutes this week? You can <span class="fake-link">grab time here</span>.</p>
+              <p>Best,<br /><span class="redact" role="img" aria-label="name redacted"></span><br />SDR @ <span class="redact" role="img" aria-label="company redacted"></span></p>
+              <p>P.S. Happy to send over a case study if that's easier!</p>
+            </div>
+            <p class="email-fate">Left on opened.</p>
+          </div>
+        </div>
+        <div>
+          <p class="compare-label us">what driftwood sent</p>
+          <div class="thread">
+            <div class="li-head">
+              <span class="li-name">CTO @ <span class="redact" role="img" aria-label="company withheld"></span></span>
+              <span class="li-presence" aria-hidden="true"></span>
+              <span class="li-icons" aria-hidden="true">&#8943;&nbsp;&nbsp;&#10530;&nbsp;&nbsp;&#10005;</span>
+            </div>
+            <div class="li-body">
+              <div class="divider" role="separator">
+                <hr />
+                <span>4 months of outreach, no reply</span>
+                <hr />
+              </div>
+              <div class="divider" role="separator">
+                <hr />
+                <span>Jul 9</span>
+                <hr />
+              </div>
+              <div class="msg">
+                <span class="avatar">
+                  <img src="/yuvan.webp" width="128" height="128" alt="" loading="lazy" decoding="async" />
+                </span>
+                <div>
+                  <div class="msg-head">
+                    <span class="who">Yuvan Sundrani</span>
+                    <span class="when">&middot; 6:57 PM &middot; sent by driftwood</span>
+                    <span class="seen" role="img" aria-label="seen">
+                      <svg viewBox="0 0 16 16" fill="currentColor">
+                        <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" />
+                        <path d="M4.5 8.2l2.3 2.3 4.7-4.8" fill="none" stroke="currentColor" stroke-width="1.4" />
+                      </svg>
+                    </span>
+                  </div>
+                  <p class="msg-body">
+                    hey <span class="redact" role="img" aria-label="name redacted"></span>,
+                    found a bug on <span class="redact" role="img" aria-label="company withheld"></span>.
+                    our agents caught your pricing page still promising early access for
+                    features lower tiers already have&hellip;
+                  </p>
+                  <div class="clip">
+                    <img src="/demo-still.webp" width="900" height="508" loading="lazy" decoding="async" alt="19 second demo video of Autosana's agent catching a pricing bug on the prospect's site" />
+                    <span class="play" aria-hidden="true"></span>
+                  </div>
+                  <p class="clip-note">
+                    <svg viewBox="0 0 46 26" aria-hidden="true">
+                      <path d="M 5 23 C 17 24, 31 19, 38 8" fill="none" stroke="var(--tide)" stroke-width="2" stroke-linecap="round" />
+                      <path d="M 38 8 l -8.5 1 M 38 8 l -0.5 8.5" fill="none" stroke="var(--tide)" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                    <em>driftwood built this demo</em>
+                  </p>
+                </div>
+              </div>
+              <div class="divider" role="separator">
+                <hr />
+                <span>Jul 10 &middot; 12 hours later</span>
+                <hr />
+              </div>
+              <div class="msg">
+                <span class="avatar" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M12 12c2.8 0 5-2.2 5-5s-2.2-5-5-5-5 2.2-5 5 2.2 5 5 5zm0 2c-4.4 0-9 2.2-9 6.5V24h18v-3.5c0-4.3-4.6-6.5-9-6.5z" />
+                  </svg>
+                </span>
+                <div>
+                  <div class="msg-head">
+                    <span class="who">CTO</span>
+                    <span class="when">&middot; 7:18 AM</span>
+                  </div>
+                  <p class="msg-body">
+                    send me a blurb + demos to
+                    <span class="redact" role="img" aria-label="address redacted" style="width: 6.5em"></span>
+                    and I'll forward to my team - best
+                  </p>
+                </div>
+              </div>
+              <div class="divider win" role="separator">
+                <hr />
+                <span>Call booked &middot; Jul 12</span>
+                <hr />
+              </div>
+            </div>
+            <div class="li-compose" aria-hidden="true">
+              <span class="li-input">Write a message&hellip;</span>
+              <span class="li-send">Send</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="compare-note">Two cold sends, side by side. The right window is a real send from the Autosana week; identities redacted. Neither window is an Apollo screenshot; the left is what any sequencer, Apollo included, sends when the message is a template.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2 id="what-apollo">What Apollo is, and what it is genuinely <em class="voice">good at</em></h2>
+      <p class="h2-sub">The database, the bundle, and why it is the default.</p>
+
+      <p class="prose">
+        <strong>The product.</strong>
+        <a href="https://www.apollo.io" rel="noopener">Apollo</a> is a sales
+        platform built around a B2B contact database that Apollo says covers
+        more than 240 million contacts and 30 million companies. Around the
+        database sits most of the outbound stack: email sequencing, a dialer,
+        meeting scheduling, enrichment, intent topics, light CRM and deal
+        features, and an AI assistant.
+      </p>
+      <p class="prose">
+        <strong>The consolidation trade.</strong> It is one per-seat product
+        that replaces what would otherwise be a data provider, a sequencer,
+        and a dialer bought separately, and at $49 a seat it undercuts
+        assembling those parts by a wide margin.
+      </p>
+      <p class="prose">
+        <strong>The credit system.</strong> Apollo restructured its credits in
+        late 2025: paid plans now grant a yearly credit pool per seat that
+        covers contact reveals and exports. The pool sizes and plan prices are
+        in the <a href="#pricing">pricing snapshot</a> below, read from
+        Apollo's own pricing page.
+      </p>
+      <p class="prose">
+        <strong>The evaluation path.</strong> The free tier is a real one: you
+        can search the database, send a little, and learn whether the data
+        covers your market before paying anything.
+      </p>
+      <p class="prose">
+        <strong>The ubiquity dividend.</strong> Because Apollo is everywhere,
+        most reps you hire will already know it, which is worth more in ramp
+        time than it sounds.
+      </p>
+      <p class="prose">
+        <strong>Who that fits.</strong> A small, US-focused sales team with
+        people to run the motion. That is most readers of this page, and it is
+        why keeping Apollo is the default answer here.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2 id="falls-short">Where Apollo <em class="voice">falls short</em>, and for whom</h2>
+      <p class="h2-sub">Four real complaints, one misdiagnosis, and who each one actually affects.</p>
+
+      <div class="segment">
+        <h3>Data accuracy depends on your segment</h3>
+        <p>
+          <strong>Home turf.</strong> Coverage of US tech and SMB companies is
+          where Apollo is strongest, and inside that segment the database
+          earns the bundle.
+        </p>
+        <p>
+          <strong>The hedge on sourcing.</strong> No neutral audit of contact
+          databases exists, so the evidence is reviews and Reddit threads
+          through 2026. They are consistent: staler data outside US tech, with
+          outdated titles and bounced emails most common for Europe, APAC, and
+          Latin America. Treat that as a strong pattern, not a measurement.
+        </p>
+        <p>
+          <strong>The practical rule.</strong> Verify exported lists with an
+          independent checker before sending, whatever your segment. If your
+          market is one Apollo covers thinly, the database that justifies the
+          bundle stops justifying it.
+        </p>
+      </div>
+
+      <div class="segment">
+        <h3>The credit meter</h3>
+        <p>
+          <strong>The mechanics.</strong> Since the late 2025 restructure,
+          usage meters against a yearly credit pool per seat. Contact reveals
+          and exports draw it down, phone numbers cost several times what
+          emails do, and unused credits expire.
+        </p>
+        <div class="stat-pair">
+          <div class="stat">
+            <p class="stat-label">Basic, per seat per month, billed annually</p>
+            <p class="stat-num">$49</p>
+          </div>
+          <div class="stat">
+            <p class="stat-label">Credit pool per seat per year on Basic</p>
+            <p class="stat-num">30,000</p>
+          </div>
+        </div>
+        <p class="stat-caption">The two numbers to budget together; higher tiers raise both, in the <a href="#pricing">pricing snapshot</a>.</p>
+        <p>
+          <strong>Where it bites.</strong> Teams that prospect reveal-heavy on
+          lower tiers report emptying the pool well before the year ends, and
+          the choice at that point is overage credits or a tier upgrade.
+          Budget for how you actually prospect, not the sticker.
+        </p>
+      </div>
+
+      <div class="segment">
+        <h3>The monthly-billing premium</h3>
+        <p>
+          <strong>The advertised prices are annual.</strong> $49, $79, and
+          $119 are the billed-annually rates; paying month to month costs
+          meaningfully more.
+        </p>
+        <p>
+          <strong>What that means.</strong> The sticker carries an annual
+          commitment inside it. A team that wants to stay month to month
+          should price that version of Apollo, not the advertised one.
+        </p>
+      </div>
+
+      <div class="segment">
+        <h3>Deliverability is your problem, not Apollo's</h3>
+        <p>
+          <strong>The tempting workflow.</strong> The path Apollo makes
+          easiest, exporting a filtered list straight into a sequence, is also
+          the fastest way to burn a sending domain. The verified label on a
+          contact is not a guarantee.
+        </p>
+        <p>
+          <strong>A caveat on the sourcing.</strong> Damaged-domain stories
+          are easy to find, but many of the loudest ones run on the blogs of
+          competing sending tools, so weigh practitioner threads over vendor
+          posts. The pattern holds across both: teams that trusted the export
+          and skipped their own checks paid for it.
+        </p>
+        <p>
+          <strong>The bottom line.</strong> Apollo ships warmup and
+          deliverability guidance, but placement is yours to earn, on your own
+          domains.
+        </p>
+      </div>
+
+      <div class="segment">
+        <h3>Everything included, nothing best-in-class</h3>
+        <p>
+          <strong>The trade inside the bundle.</strong> The sequencer has
+          fewer sending and infrastructure controls than dedicated senders,
+          the dialer trails purpose-built dialers, and the CRM features are
+          light enough that most teams still run a real CRM beside it.
+        </p>
+        <p>
+          <strong>How it plays out.</strong> Teams tend to outgrow Apollo one
+          piece at a time, which is exactly how the alternatives below are
+          organized.
+        </p>
+      </div>
+
+      <div class="segment">
+        <h3>More sends will not fix low replies</h3>
+        <p>
+          <strong>The misdiagnosis.</strong> Apollo makes it easy to put
+          thousands of people into a templated sequence, and for many teams
+          that becomes the whole strategy. If replies are under 1 percent, the
+          platform is not the bottleneck; the message is.
+        </p>
+        <p>
+          <strong>The implication.</strong> Switching to a different database
+          and a different sequencer to send the same message rarely moves the
+          number. That case belongs to the one entry below that is not really
+          an Apollo replacement at all.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="pre-sheet">
+    <div class="wrap">
+      <h2 id="alternatives">The <em class="voice">alternatives</em></h2>
+      <p class="h2-sub">
+        driftwood is listed first because it is ours; the other five run from
+        the closest like-for-like swap to the furthest. Amplemarket keeps the
+        bundle at a higher grade, Clay replaces the data, Smartlead and
+        Instantly replace the sending, and lemlist adds the channel Apollo
+        mostly lacks.
+      </p>
+
+      <div class="entries">
+
+        <article class="entry entry-card">
+          <div class="entry-num" aria-hidden="true">1</div>
+          <div>
+            <h3><a href="https://driftwood.sh">driftwood</a><span class="chip">our tool</span></h3>
+            <p>
+              <strong>A different bet.</strong> Apollo hands your team the
+              whole outbound stack to operate. driftwood runs one motion,
+              <a href="/demo-led-outbound">demo-led outbound</a>, end to end:
+              it researches each prospect, builds a working demo of your
+              product for the specific prospect receiving it, and drafts the
+              message.
+            </p>
+            <p>
+              <strong>How it sends.</strong> A human approves every send, and
+              it goes out from your own LinkedIn or email account, not a bot
+              inbox.
+            </p>
+            <div class="stat-pair">
+              <div class="stat">
+                <p class="stat-label">Reply rate before</p>
+                <p class="stat-num">under 1%</p>
+              </div>
+              <div class="stat">
+                <p class="stat-label">Reply rate, week one</p>
+                <p class="stat-num tide">over 14%</p>
+              </div>
+            </div>
+            <p class="stat-caption">
+              On the same lead list,
+              replies went from under 1% to over 14% in week one at
+              <a href="/customers/autosana">Autosana</a> (YC S25).
+            </p>
+            <div class="table-scroll">
+              <table class="compare h2h">
+                <caption>The two tools side by side; both columns get their bad week.</caption>
+                <thead>
+                  <tr>
+                    <th scope="col"></th>
+                    <th scope="col">Apollo</th>
+                    <th scope="col">driftwood<span class="chip">our tool</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="tool">Built for</td>
+                    <td>Consolidation: data, sequencing, and calling in one per-seat product your team operates</td>
+                    <td>One motion, demo-led outbound, run end to end</td>
+                  </tr>
+                  <tr>
+                    <td class="tool">What the message carries</td>
+                    <td>Whatever your team writes into the sequence, at the volume you choose</td>
+                    <td>A working demo of your product, built for the prospect receiving it</td>
+                  </tr>
+                  <tr>
+                    <td class="tool">A good week</td>
+                    <td>The whole stack in one tab at $49 a seat: lists built, sequences running, calls dialed</td>
+                    <td>Meetings from a handful of sends, each one reviewed and carrying a demo</td>
+                  </tr>
+                  <tr>
+                    <td class="tool">A bad week</td>
+                    <td>A stale export bounces, the credit pool runs low, and a sending domain needs a rest</td>
+                    <td>Fewer sends than you hoped, and each demo takes real work per prospect</td>
+                  </tr>
+                  <tr>
+                    <td class="tool">Entry cost</td>
+                    <td>Free tier; paid from $49 per user per month billed annually</td>
+                    <td>$1,000 to $5,000 a month, published</td>
+                  </tr>
+                  <tr>
+                    <td class="tool">Support</td>
+                    <td>Self-serve, with support tiers by plan</td>
+                    <td>The founder runs your onboarding</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p>
+              <strong>The fit, plainly.</strong> driftwood is early, and it is
+              not a database, so it replaces Apollo's sequencing, not its
+              data. It trades volume for depth: if your model needs thousands
+              of touches a week, it is the wrong tool.
+            </p>
+            <p class="bestfor"><strong>Best for:</strong> <span>founders and
+            lean teams selling a product that demos well, whose problem is
+            reply rate, not contact coverage.</span></p>
+          </div>
+        </article>
+
+        <article class="entry">
+          <div class="entry-num" aria-hidden="true">2</div>
+          <div>
+            <h3><a href="https://amplemarket.com" rel="noopener">Amplemarket</a></h3>
+            <p>
+              <strong>The like-for-like swap.</strong> Amplemarket is the
+              closest direct replacement: contact data, multichannel
+              engagement, deliverability tooling, and an AI copilot called Duo
+              in one platform.
+            </p>
+            <p>
+              <strong>The trade it keeps.</strong> It keeps the consolidation
+              trade that brought you to Apollo and aims it at teams willing to
+              pay more for better execution around deliverability and
+              messaging; no entry price was published that we could verify at
+              the July check. If the bundle is right and the execution is what
+              disappoints, evaluate this one first.
+            </p>
+            <p class="bestfor"><strong>Best for:</strong> <span>sales teams
+            that want data and outreach from one vendor at a higher grade than
+            Apollo's.</span></p>
+          </div>
+        </article>
+
+        <article class="entry">
+          <div class="entry-num" aria-hidden="true">3</div>
+          <div>
+            <h3><a href="https://clay.com" rel="noopener">Clay</a></h3>
+            <p>
+              <strong>The data answer.</strong> If your complaint is
+              specifically data quality, Clay is the direct answer: waterfall
+              enrichment across more than a hundred providers, checking each
+              in turn until one has the contact, plus AI research columns and
+              buying signals.
+            </p>
+            <p>
+              <strong>The operator cost.</strong> Clay is a workbench that
+              wants an operator, not a database with a search box. Paid plans
+              start at $185 a month ($167 billed annually), and the real cost
+              is the person who builds and maintains it. We compared
+              <a href="/alternatives/clay">Clay alternatives</a> separately.
+            </p>
+            <p class="bestfor"><strong>Best for:</strong> <span>teams whose
+            bottleneck is data coverage or accuracy, with someone technical to
+            own the workbench.</span></p>
+          </div>
+        </article>
+
+        <article class="entry">
+          <div class="entry-num" aria-hidden="true">4</div>
+          <div>
+            <h3><a href="https://www.smartlead.ai" rel="noopener">Smartlead</a></h3>
+            <p>
+              <strong>The sending answer.</strong> Smartlead replaces the
+              sequencer, not the database: dedicated cold email infrastructure
+              with unlimited mailboxes and warmup included, from $39 a month.
+            </p>
+            <p>
+              <strong>The common pairing.</strong> Teams keep Apollo on a
+              cheap tier for data and move sending to Smartlead, which buys
+              deliverability controls Apollo's sequencer does not offer at the
+              cost of running two tools.
+            </p>
+            <p class="bestfor"><strong>Best for:</strong> <span>teams keeping
+            their data source but moving sending onto dedicated
+            infrastructure.</span></p>
+          </div>
+        </article>
+
+        <article class="entry">
+          <div class="entry-num" aria-hidden="true">5</div>
+          <div>
+            <h3><a href="https://www.lemlist.com" rel="noopener">lemlist</a></h3>
+            <p>
+              <strong>The channel answer.</strong> lemlist covers the channel
+              Apollo mostly does not: email and LinkedIn steps in one
+              sequence, with calling on higher tiers, plus its own lead
+              database.
+            </p>
+            <p>
+              <strong>The price shape.</strong> Pricing is per user, $69 a
+              month for email only and $109 for multichannel. If your
+              prospects answer LinkedIn DMs and ignore cold email, this is the
+              shape of tool to switch to.
+            </p>
+            <p class="bestfor"><strong>Best for:</strong> <span>small teams
+            whose prospects live on LinkedIn as much as email.</span></p>
+          </div>
+        </article>
+
+        <article class="entry">
+          <div class="entry-num" aria-hidden="true">6</div>
+          <div>
+            <h3><a href="https://instantly.ai" rel="noopener">Instantly</a></h3>
+            <p>
+              <strong>The budget answer.</strong> Instantly is the volume
+              play: sending plans from $47 a month with unlimited mailboxes
+              and warmup included, and its own lead database as a separate
+              add-on.
+            </p>
+            <p>
+              <strong>The caveat that follows you.</strong> Against Apollo the
+              case is pure sending economics at high volume, and the data
+              quality caveats that apply to Apollo apply at least as much
+              here. We compared
+              <a href="/alternatives/instantly">Instantly alternatives</a>
+              separately.
+            </p>
+            <p class="bestfor"><strong>Best for:</strong> <span>teams whose
+            model is high-volume cold email at the lowest credible
+            price.</span></p>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <section class="sheet wash-a" id="when-apollo">
+    <div class="sect">
+      <div class="wrap">
+        <h2>When Apollo is the <em class="voice">right choice</em>, including over us</h2>
+        <p class="h2-sub">More often than for any other tool we cover, the answer is yes.</p>
+
+        <p class="prose">
+          <strong>The default.</strong> If you sell into US companies, run a
+          normal per-seat sales team, and want data, sequencing, and calling
+          in one product, nothing on this page beats Apollo's
+          price-to-coverage ratio. Most of the alternatives cost more in total
+          once you rebuild the bundle from parts.
+        </p>
+        <p class="prose">
+          <strong>The dividing line.</strong> The complaints above are real,
+          but they are the cost of consolidation, and for many teams the
+          convenience is worth it. The honest dividing line: keep Apollo while
+          the bundle is the value, and move when one specific failure, data in
+          your segment, deliverability, or a reply rate that will not budge,
+          costs you more than the convenience saves.
+        </p>
+        <p class="prose">
+          <strong>How to move.</strong> Pick the alternative aimed at that one
+          failure rather than a second bundle; the checklist below is the
+          routing.
+        </p>
+
+        <div class="choose-pair">
+          <div class="choose-col">
+            <h3>Keep Apollo if</h3>
+            <ul>
+              <li>You sell into US companies, mostly tech and SMB, where the
+              database is strongest.</li>
+              <li>You want data, sequencing, and calling in one product, and
+              $49 a seat fits the budget.</li>
+              <li>You have people to run the motion and the discipline to
+              verify lists and watch deliverability.</li>
+              <li>The free tier answered your evaluation questions before you
+              paid anything.</li>
+              <li>No single complaint above costs you more than rebuilding the
+              bundle from parts would.</li>
+            </ul>
+          </div>
+          <div class="choose-col">
+            <h3>Choose an alternative if</h3>
+            <ul>
+              <li>Your market sits outside US tech and exported lists keep
+              bouncing (Clay for data).</li>
+              <li>Sending at scale is the constraint and you need real
+              infrastructure controls (Smartlead, or Instantly on a
+              budget).</li>
+              <li>Your prospects answer LinkedIn DMs and ignore cold email
+              (lemlist).</li>
+              <li>You want the same bundle at a higher grade and will pay for
+              it (Amplemarket).</li>
+              <li>Replies, not sends, are your constraint and your product
+              demos well (driftwood, which is early and trades volume for
+              depth).</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sheet sheet-white">
+    <div class="sect">
+      <div class="wrap">
+        <h2 id="pricing">Pricing <em class="voice">snapshot</em></h2>
+        <p class="h2-sub">
+          The numbers live here, once. This table is what the monthly
+          fact-check maintains.
+        </p>
+      </div>
+
+      <div class="wrap wrap-wide">
+        <div class="table-scroll">
+          <table class="compare">
+            <caption>Entry pricing as of July 2026, checked 2026-07-21.</caption>
+            <thead>
+              <tr>
+                <th scope="col">Tool</th>
+                <th scope="col">Entry plan and price</th>
+                <th scope="col">What it includes</th>
+                <th scope="col">What it leaves out</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="tool">Apollo</td>
+                <td>Free tier with a small monthly credit grant; Basic at $49
+                per user per month, Professional at $79, Organization at $119
+                with a three seat minimum, all billed annually. Paid plans
+                carry a yearly credit pool per seat: 30,000 on Basic, 48,000
+                on Professional, 72,000 on Organization.</td>
+                <td>Database access, sequencing, a dialer, meeting scheduling,
+                light CRM features</td>
+                <td>Monthly billing costs more than the annual rates shown;
+                credits cover reveals and exports, phone numbers cost several
+                times an email, and unused credits expire</td>
+              </tr>
+              <tr>
+                <td class="tool">Clay</td>
+                <td>Free tier; paid from $185 a month, $167 billed annually</td>
+                <td>The workbench: waterfall enrichment, AI research columns,
+                workflows</td>
+                <td>Sending; you bring a sequencer and an operator</td>
+              </tr>
+              <tr>
+                <td class="tool">Smartlead</td>
+                <td>From $39 a month</td>
+                <td>Unlimited mailboxes, warmup, dedicated sending
+                infrastructure</td>
+                <td>Lead data; you bring the list</td>
+              </tr>
+              <tr>
+                <td class="tool">lemlist</td>
+                <td>$69 per user per month email only; $109 multichannel</td>
+                <td>Email and LinkedIn sequencing, its own lead database,
+                calling on higher tiers</td>
+                <td>Deliverability care at volume stays yours</td>
+              </tr>
+              <tr>
+                <td class="tool">Instantly</td>
+                <td>From $47 a month</td>
+                <td>Unlimited mailboxes, warmup, high-volume sending</td>
+                <td>Lead data is a separate add-on</td>
+              </tr>
+              <tr class="us">
+                <td class="tool">driftwood<span class="chip">our tool</span></td>
+                <td>$1,000 to $5,000 a month, published on <a href="/faq">our
+                FAQ</a></td>
+                <td>The agent: prospect research, a working demo of your
+                product built per prospect, drafting, and sending from your
+                own accounts</td>
+                <td>A contact database and volume plays; driftwood is
+                early</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="wrap">
+        <p class="table-note">
+          <strong>Sourcing.</strong> Apollo's row is read directly from a
+          rendered copy of
+          <a href="https://www.apollo.io/pricing" rel="noopener">apollo.io/pricing</a>
+          at the July check, not from third-party roundups; Apollo
+          restructured its credit system in late 2025, and many roundups still
+          describe the old model. Amplemarket is not in this table because it
+          had no published entry price we could verify. Work at any of these
+          companies and see something wrong or missing? Email
+          <a href="mailto:aayush@driftwood.sh">aayush@driftwood.sh</a> and we
+          will fix it.
+        </p>
+
+        <h2 id="faq">FAQ</h2>
+        <p class="h2-sub">Four short answers.</p>
+
+        <div class="segment">
+          <h3>What does Apollo cost in 2026?</h3>
+          <p>
+            <strong>The plans.</strong> At the July 2026 check: a free tier,
+            then Basic at $49 per user per month, Professional at $79, and
+            Organization at $119 with a three seat minimum, all billed
+            annually; monthly billing costs more.
+          </p>
+          <p>
+            <strong>The credits.</strong> Paid plans grant a yearly credit
+            pool per seat (30,000 on Basic, 48,000 on Professional, 72,000 on
+            Organization) that covers contact reveals and exports, and credits
+            do not roll over. Check apollo.io/pricing for current numbers.
+          </p>
+        </div>
+
+        <div class="segment">
+          <h3>Is Apollo's contact data accurate?</h3>
+          <p>
+            <strong>It depends on your segment.</strong> US tech and SMB
+            coverage is widely considered Apollo's strongest area. Reviews and
+            Reddit threads through 2026 report staler data outside it, with
+            outdated titles and bounced emails most common for Europe, APAC,
+            and Latin America.
+          </p>
+          <p>
+            <strong>Either way.</strong> Wherever you sell, verify exported
+            lists with an independent checker before sending.
+          </p>
+        </div>
+
+        <div class="segment">
+          <h3>What is the closest direct alternative to Apollo?</h3>
+          <p>
+            <strong>Amplemarket.</strong> It keeps the same data-plus-outreach
+            consolidation at a higher grade. If the complaint is specifically
+            data quality rather than the platform, Clay's waterfall enrichment
+            across many providers is the more direct answer.
+          </p>
+        </div>
+
+        <div class="segment">
+          <h3>Will switching tools fix a low reply rate?</h3>
+          <p>
+            <strong>Usually not.</strong> If deliverability is healthy and
+            replies are still under 1 percent, the message is the problem, not
+            the platform.
+          </p>
+          <p>
+            The case for changing what the message carries is laid out in
+            <a href="/demo-led-outbound">demo-led outbound</a>, and the result
+            at one company is written up in
+            <a href="/customers/autosana">the Autosana story</a>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="sea-static" aria-hidden="true">
+    <pre><span class="r0">······                        ··································                ···············                                  ·······---------············                            ··············                    ···································                       ····························               ········-------··········                                ···················    </span>
+<span class="r1">····                   ···············-----------------·······         ·························                           ·····------------------·····················         ····················                ···········-----------------------······               ···································           ······-----------------············                      ········-----·········        </span>
+<span class="r2">                  ········---------------------------················----------------···········                      ····----~~~~~~~~~~~~------································-----------·····                ······--------------~~~~~~~~~~~-----·····          ········------·························         ·····----~~~~~~~~~~~~~~-----················             ······-----------······        ·····</span>
+<span class="r3">             ·····------------------~~~~~~~-------···········-----~~~~~~~~~~~~~-----···········                  ····---~~~~~~≈≈≈~~~~~~--------··---------------------------------------····               ·····---------~~~~~~~~~~~~~~~~~~~~~----······  ·······----------------····················         ·····---~~~~≈≈≈≈≈≈≈≈≈~~~~~-------····························--------------·····         ······---</span>
+<span class="r4">       ····-------------------~~~~~~~~~~-------·······-----~~~≈≈≈≈≈≈≈≈≈≈≈≈~~~-----···········               ····---~~~≈≈≈≈≈≈≈≈≈~~~~--------------------~~~--------~~~~~~~~~~~~~~~----···               ···------~~~~~~~~~~~~~~≈≈≈≈≈≈≈≈~~~~~----··········----~~~~~~~~~~~~~-----················           ····--~~~≈≈≈≈≈≋≋≋≋≈≈≈≈≈~~~~~-------------------·········-------~~~~~~~-----···            ····----~~~~</span>
+<span class="r5"> ····-----~~~~~~-----------~~~~~~~~--------····-----~~~≈≈≈≋≋≋≋≋≋≋≋≋≋≋≈≈≈~~~-----············           ····---~~~≈≈≈≈≈≈≈≈≈≈~~~~--------------~~~~~~~~~~~~~~~~~~≈≈≈≈≈≈≈≈≈≈≈≈~~~~--···              ···----~~~~~~~~~~~~~~~≈≈≈≈≈≈≈≈≈≈≈~~~~~-----····-----~~~≈≈≈≈≈≈≈≈≈≈≈≈~~~-----·············           ····--~~~≈≈≈≋≋≋≋≋≋≋≋≋≈≈≈≈~~~~------------------------------~~~~~~~~~~~~~----··             ···---~~~~~~≈≈≈≈</span>
+<span class="r6">--~~~~~~~~~~~~~-----------------------····----~~~≈≈≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≈≈≈~~~-------············    ·····---~~~≈≈≈≈≈≈≈≈≈≈≈~~~-----····-----~~~~~≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≋≋≋≋≋≋≋≋≋≋≋≈≈≈~~---··             ···---~~~~~~~~~~~~~~~~≈≈≈≈≈≈≈≈≈≈≈≈~~~~~-----------~~~≈≈≈≋≋≋≋≋≋≋≋≋≋≋≈≈≈~~~----············           ···---~~≈≈≈≋≋≋≋≋≋≋≋≋≋≋≈≈≈~~~~~------~~~~~~~~~~~~~~~~~~~~~~~≈≈≈≈≈≈≈≈≈≈≈~~~--···             ··---~~~~~≈≈≈≈≈≈≈≈≈≈</span>
+<span class="r7">≈≈≈≈≈≈~~~~~~--------------------·····----~~~≈≈≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≈≈≈~~~~------------············----~~~≈≈≈≈≈≈≈≈≈≈≈~~~---········----~~~≈≈≈≈≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≈≈~~--··           ···---~~~~~~~≈~~~~~~~~~~~~≈≈≈≈≈≈≈≈≈~~~~~~--------~~~≈≈≈≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≈≈~~~-----············        ···---~~≈≈≋≋≋≋≋≋≋≋≋≋≋≋≈≈≈~~~~------~~~~~≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≋≋≋≋≋≋≋≋≋≈≈≈~~--···            ···--~~~~≈≈≈≈≈≈≈≈≈≈≈≋≋≋≋≋</span></pre>
+    <span class="sea-sprite sea-duck"><span>&nbsp;▝<span class="beak">▸</span></span><span>▆▆</span></span>
+    <span class="sea-sprite sea-buoy"><span>▘</span><span>▀</span></span>
+  </div>
+
+  <div class="wrap">
+    <section class="cta">
+      <h2>See a demo built for <em class="voice">your</em> business</h2>
+      <p>Twenty minutes. We will show you what your prospects would see.</p>
+      <a class="btn" href="/#book">Book a demo</a>
+    </section>
+  </div>
 
 </main>
 
