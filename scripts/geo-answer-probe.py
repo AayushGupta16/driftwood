@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """GEO Layer 2: answer-share probe.
 
+NOTE: the grader (grade_answer/find_competitors + vocab) is MIRRORED in
+backend/app/geo_grader.py, which powers the backend's daily GEO probe.
+This file stays canonical for grading semantics — change here first,
+then re-sync the backend copy in the same working session.
+
 Layer 1 (backend probe + /geo-probe skill) checks whether driftwood.sh
 appears in WEB-SEARCH results for the fixed query set. This script is
 Layer 2: it asks real AI answer engines the ACTUAL queries (the user
