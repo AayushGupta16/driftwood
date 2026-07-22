@@ -1368,6 +1368,8 @@ export default function App() {
               <a href="/alternatives/apollo">Apollo alternatives</a>
               <a href="/alternatives/artisan">Artisan alternatives</a>
               <a href="/alternatives/11x">11x alternatives</a>
+              <a href="/vs/artisan">driftwood vs Artisan</a>
+              <a href="/vs/11x">driftwood vs 11x</a>
             </nav>
           </div>
           <div className="foot-bottom">
