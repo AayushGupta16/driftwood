@@ -163,9 +163,15 @@ structure.
   PLAIN deck text under the H1, disclosure as one casual gray line;
   a slop-vs-not-slop graphic (his suggestion): a volume-agent email
   side by side with a driftwood send; wordiness is fine for SEO but
-  the page must not LOOK wordy. Process rule: page-pattern research
-  includes a SCREENSHOT-based visual audit of the exemplar sites vs
-  ours; content-structure audits alone are half the job.
+  the page must not LOOK wordy. Layout grid (round four): ONE left
+  text edge for everything readable (headings, prose, jump nav);
+  breakout width reserved for tables/graphics only, symmetric; a
+  consistent vertical spacing scale (element gaps small, section
+  gaps clearly larger); match the homepage wrap geometry. Wandering
+  left edges read as unprofessional. Process rule: page-pattern
+  research includes a SCREENSHOT-based visual audit of the exemplar
+  sites vs ours, and visual QA checks alignment edges + spacing
+  scale, not just fold contents.
 
 ## Press (folded from PRESS.md; 104-agent verified research 2026-07-21)
 
