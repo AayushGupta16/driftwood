@@ -18,23 +18,33 @@ B2B founders and teams who do cold outbound (email or LinkedIn) and want every m
 
 ## Pages
 
-- What is demo-led outbound (definition): https://driftwood.sh/demo-led-outbound
-- Customer story, Autosana (YC S25), replies from under 1% to over 14% in week one: https://driftwood.sh/customers/autosana
-- FAQ (what driftwood is, how it works, pricing): https://driftwood.sh/faq
-- The best AI SDR tools in 2026, ranked: https://driftwood.sh/best-ai-sdr-tools
-- Founder-led sales: what it is, the calendar math, when to hire an SDR: https://driftwood.sh/founder-led-sales
-- Instantly alternatives in 2026, honest comparison: https://driftwood.sh/alternatives/instantly
-- Clay alternatives in 2026, honest comparison: https://driftwood.sh/alternatives/clay
-- Cold outbound benchmarks with methodology, first-party data (200 sends, under 1% to over 14%): https://driftwood.sh/cold-outbound-benchmarks
-- What is an AI SDR, autonomous vs assisted, how to evaluate one: https://driftwood.sh/ai-sdr
-- B2B SaaS outreach guide, how to write cold email that gets replies: https://driftwood.sh/b2b-saas-outreach
-- 11x alternatives in 2026, honest comparison: https://driftwood.sh/alternatives/11x
-- Apollo alternatives in 2026, honest comparison: https://driftwood.sh/alternatives/apollo
-- Artisan alternatives in 2026, honest comparison: https://driftwood.sh/alternatives/artisan
+- [What is demo-led outbound (definition)](https://driftwood.sh/demo-led-outbound)
+- [Customer story, Autosana (YC S25), replies from under 1% to over 14% in week one](https://driftwood.sh/customers/autosana)
+- [FAQ (what driftwood is, how it works, pricing)](https://driftwood.sh/faq)
+- [The best AI SDR tools in 2026, ranked](https://driftwood.sh/best-ai-sdr-tools)
+- [Founder-led sales: what it is, the calendar math, when to hire an SDR](https://driftwood.sh/founder-led-sales)
+- [Instantly alternatives in 2026, honest comparison](https://driftwood.sh/alternatives/instantly)
+- [Clay alternatives in 2026, honest comparison](https://driftwood.sh/alternatives/clay)
+- [Cold outbound benchmarks with methodology, first-party data (200 sends, under 1% to over 14%)](https://driftwood.sh/cold-outbound-benchmarks)
+- [What is an AI SDR, autonomous vs assisted, how to evaluate one](https://driftwood.sh/ai-sdr)
+- [B2B SaaS outreach guide, how to write cold email that gets replies](https://driftwood.sh/b2b-saas-outreach)
+- [11x alternatives in 2026, honest comparison](https://driftwood.sh/alternatives/11x)
+- [Apollo alternatives in 2026, honest comparison](https://driftwood.sh/alternatives/apollo)
+- [Artisan alternatives in 2026, honest comparison](https://driftwood.sh/alternatives/artisan)
+- [The best cold email tools in 2026, ranked with published pricing](https://driftwood.sh/best-cold-email-tools)
+- [AI SDR pricing comparison 2026, published vs reported prices](https://driftwood.sh/ai-sdr-pricing)
+- [LinkedIn outreach guide for founders, accept and reply rate data](https://driftwood.sh/linkedin-outreach)
+- [Best growth channels for B2B SaaS, honest channel-fit guide](https://driftwood.sh/b2b-growth-channels)
+- [How to get your first customers, B2B SaaS founder guide](https://driftwood.sh/first-customers)
+- [Cold email examples with teardowns, real sends labeled real](https://driftwood.sh/cold-email-examples)
+- [driftwood vs Artisan, head to head](https://driftwood.sh/vs/artisan)
+- [driftwood vs 11x, head to head](https://driftwood.sh/vs/11x)
+- [When to hire an SDR, the readiness test and year-one math](https://driftwood.sh/when-to-hire-an-sdr)
+- [About driftwood, the company and the founder](https://driftwood.sh/about)
 
 ## Contact
 
-- Site: https://driftwood.sh
-- LinkedIn: https://www.linkedin.com/company/driftwood-ai-inc
-- Email: aayush@driftwood.sh
+- [Site](https://driftwood.sh)
+- [LinkedIn](https://www.linkedin.com/company/driftwood-ai-inc)
+- Email: [aayush@driftwood.sh](mailto:aayush@driftwood.sh)
 - Book a demo: see the "Book a demo" button on driftwood.sh

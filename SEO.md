@@ -96,8 +96,25 @@ Priority queue with validated targets:
    many roundups still describe the old model).
 5. /b2b-saas-outreach — SHIPPED 2026-07-21 (question-tail guide;
    all numbers cite /cold-outbound-benchmarks, no new claims).
-6. Later: b2b saas lead gen cluster page; /outsourced-sdr exists in
-   git history but is DEPRIORITIZED (off-ICP call 07-21).
+6. OVERNIGHT BATCH SHIPPED 2026-07-22 (gap-map round, all
+   blueprint-native): /best-cold-email-tools (tier-3 heads, banked
+   pricing), /ai-sdr-pricing (published-vs-reported table, the only
+   vendor with published pricing; joins fact-check rotation),
+   /linkedin-outreach (tool/automation cluster), /b2b-growth-channels
+   (does-channel-X-work audience), /first-customers,
+   /cold-email-examples (real-vs-composite labeling is the page's
+   law), /vs/artisan + /vs/11x (contrarian h2h, join fact-check
+   rotation), /when-to-hire-an-sdr (deep page; founder-led-sales
+   cross-links it; deliberately carries NO Autosana stat),
+   /about (entity/disambiguation page, Person+Org schema; a16z
+   stated WITHOUT cohort code pending Aayush's confirm). Plus
+   tunings: seed-stage FAQ on /best-ai-sdr-tools, HITL vocabulary
+   sentence on /ai-sdr, SDR-metrics FAQ on /cold-outbound-benchmarks;
+   llms.txt converted to markdown links (auditor flag). Footer
+   decision for new pages: internal links only, no footer change
+   (whether /vs joins compare row 2 = Aayush's call).
+7. Later: /outsourced-sdr stays DEPRIORITIZED (off-ICP call 07-21;
+   three tier-3 GEO queries knowingly unowned).
 
 How pages rank (the strategy stack): literal query-language H1/title/
 FAQ phrasing; one strong page per intent cluster (variants = H2s,
