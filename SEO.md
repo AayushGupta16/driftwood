@@ -256,14 +256,23 @@ optimizing, not setting up.
 GSC = truth (API credential still owed for dashboard panels; manual
 pull meanwhile). /seo-probe skill + backend daily run = directional
 presence tracking (queryset v4, 105 tiered; tier-1 hit rate headline;
-bands 20/40/60/80 = bare-min/fine/great/amazing). Backend runner pins
-the OpenRouter web plugin to the exa engine since 2026-07-22:
-gemini's :online default (native Google grounding) reformulated
-queries and surfaced the driftwood-ai.com collision while the real
-SERP + GSC had us at #1-3 on branded terms — exa matched the live
-SERP on those; still a proxy, GSC stays the cross-check. Dashboard:
-/dashboard/seo-geo. Expectations: brand queries flip weeks after links
-land; tail impressions 4-8 wks; head terms quarters. Baselines
-2026-07-21: probe 0/15 (v1), GSC 4 impressions / 3 organic sessions
-this week. Monthly: comparison-page refresh + fold GSC query
+bands 20/40/60/80 = bare-min/fine/great/amazing). Backend source
+history: exa (2026-07-21 → 07-22 daytime) is DEAD as a trend line —
+its neural index topically inflates (claimed driftwood.sh at rank 2
+for "founder led sales"; the real SERP is foundingsales.com/reddit/
+hubspot with us absent — the mismatch Aayush caught 07-22). Since
+2026-07-22 evening PROBE_SEO_SEARCH=google: real Google SERPs via
+Serper.dev, deterministic positions, no LLM (serper-google = the new
+trend line; first run needed the 429 concurrency fix, backend
+8f734ae). Honest serper baseline 2026-07-22: tier-1 1/14 — only
+"driftwood ai sdr" at pos 7. NOTE the branded gap: depersonalized
+US Google reads "driftwood.sh" as Driftwood SH (surf shops, beaches)
+and does not show us in the top 10; GSC's #1 on branded terms is
+position-WHEN-SHOWN, not what a fresh searcher gets. Both are real;
+GSC stays the cross-check. On-demand rerun + audit view:
+backend/scripts/probe_ops.py (trigger/status/wait/review).
+Dashboard: /dashboard/seo-geo. Expectations: brand queries flip weeks
+after links land; tail impressions 4-8 wks; head terms quarters.
+Baselines 2026-07-21: probe 0/15 (v1), GSC 4 impressions / 3 organic
+sessions this week. Monthly: comparison-page refresh + fold GSC query
 discoveries back into targets.
