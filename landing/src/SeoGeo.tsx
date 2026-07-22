@@ -42,6 +42,8 @@ type ProbeResultRow = {
   position?: number | null;
   top_domains?: string[];
   competitors?: string[];
+  score?: number | null;
+  mention_rank?: number | null;
 };
 type ProbeLatest = {
   run_at?: string | null;
@@ -49,6 +51,7 @@ type ProbeLatest = {
   tool?: string;
   tier1_hits?: number;
   tier1_total?: number;
+  tier1_score?: number;
   total_hits?: number;
   total?: number;
   results?: ProbeResultRow[];
@@ -57,6 +60,7 @@ type HistoryPoint = {
   date?: string;
   run_at?: string;
   tier1_rate?: number;
+  tier1_score?: number;
   tier1_hits?: number;
   tier1_total?: number;
 };
@@ -117,6 +121,8 @@ type Row = {
   q: string;
   status: RowStatus;
   position: number | null;
+  score: number | null;
+  mentionRank: number | null;
   topDomains: string[];
   competitors: string[];
 };
@@ -136,6 +142,7 @@ type ChannelModel = {
   tiers: TierModel[];
   tier1Hits: number;
   tier1Total: number;
+  tier1Score: number;
   totalHits: number;
   probed: number;
   history: HistoryPoint[];
@@ -162,6 +169,8 @@ function buildChannel(set: Queryset, payload: ChannelPayload | null | undefined)
       q: s.q,
       status: r == null || r.hit == null ? "pend" : r.hit ? "hit" : "miss",
       position: r?.position ?? null,
+      score: r?.score ?? null,
+      mentionRank: r?.mention_rank ?? null,
       topDomains: r?.top_domains ?? [],
       competitors: r?.competitors ?? [],
     };
@@ -189,6 +198,7 @@ function buildChannel(set: Queryset, payload: ChannelPayload | null | undefined)
     tiers,
     tier1Hits: tier1?.hits ?? 0,
     tier1Total: tier1?.rows.length ?? 0,
+    tier1Score: payload?.latest?.tier1_score ?? 0,
     totalHits: rows.filter((r) => r.status === "hit").length,
     probed: rows.filter((r) => r.status !== "pend").length,
     history: payload && Array.isArray(payload.history) ? payload.history : [],
@@ -444,7 +454,7 @@ function Metrics({ payload }: { payload: ProbesPayload | null }) {
           <Hero
             ch={seo}
             label="SEO · Google"
-            labelTitle={`${seo.tool ?? "WebSearch"} proxy, not literal Google ranks; the GSC footnote above is the cross-check. ${seo.probed} of the ${seo.rows.length} ${seo.setVersion} keywords probed; unprobed keywords are pending, not misses.`}
+            labelTitle={`Position-weighted tier-1 score: each keyword scores 1.0 at rank #1, 0.7 at #2-3, 0.4 at #4-10, 0 when absent; the headline is the tier-1 average. Source: ${seo.tool ?? "search probe"}; GSC above is the cross-check. ${seo.probed} of the ${seo.rows.length} ${seo.setVersion} keywords probed; unprobed keywords are pending, not misses.`}
             unit="keywords"
           />
           <TiersCard ch={seo} unitCap="Keywords" />
@@ -453,7 +463,7 @@ function Metrics({ payload }: { payload: ProbesPayload | null }) {
           <Hero
             ch={geo}
             label="GEO · AI answers"
-            labelTitle={`Runner: ${geo.tool ?? "Claude WebSearch"}; results are only comparable within one runner tool. ${geo.probed} of the ${geo.rows.length} ${geo.setVersion} queries probed; unprobed queries are pending, not misses.`}
+            labelTitle={`Rank-weighted tier-1 score: each panel engine's answer scores 1.0 when it names us first (mention rank 1), 0.8 at rank 2, 0.6 further down, 0 when it doesn't name us; a query is the panel average and the headline is the tier-1 average. Panel: ${geo.tool ?? "answer probe"}; results are only comparable within one runner tool. ${geo.probed} of the ${geo.rows.length} ${geo.setVersion} queries probed; unprobed queries are pending, not misses.`}
             unit="queries"
           />
           <TiersCard ch={geo} unitCap="Queries" />
@@ -650,14 +660,11 @@ function Hero({
   labelTitle: string;
   unit: string;
 }) {
-  const rate = ch.tier1Total > 0 ? Math.round((ch.tier1Hits / ch.tier1Total) * 100) : 0;
+  const rate = Math.round(ch.tier1Score);
   const band = bandFor(rate);
   const next = BANDS.map((b) => b.min).find((t) => t > rate);
   const scaleTitle =
-    BANDS_TIP +
-    (next != null && ch.tier1Total > 0
-      ? ` Next milestone: ${Math.ceil((next / 100) * ch.tier1Total)} tier-1 hits reaches ${next}%.`
-      : "");
+    BANDS_TIP + (next != null ? ` Next milestone: ${next}%.` : "");
 
   return (
     <div className={`${CARD_SM} px-5 py-[18px]`}>
@@ -679,7 +686,8 @@ function Hero({
         </span>
       </div>
       <p className="m-0 mt-[9px] text-[12.5px] text-ink-soft tabular-nums">
-        {ch.tier1Hits} / {ch.tier1Total} tier-1 {unit} · {fmtShort(ch.runDate) ?? "no runs yet"}
+        {ch.tier1Hits} / {ch.tier1Total} tier-1 {unit} hit ·{" "}
+        {fmtShort(ch.runDate) ?? "no runs yet"}
       </p>
       <div
         className="mt-3.5"
@@ -736,9 +744,13 @@ function Dot({ status, className = "" }: { status: RowStatus; className?: string
 
 function rowTitle(row: Row): string {
   if (row.status === "pend") return "pending first run";
-  if (row.status === "hit")
-    return row.position != null ? `hit · position ${row.position}` : "hit";
-  return row.topDomains.length ? `miss · top: ${row.topDomains.join(" · ")}` : "miss";
+  const parts = [row.status === "hit" ? "hit" : "miss"];
+  if (row.position != null) parts.push(`position ${row.position}`);
+  if (row.mentionRank != null) parts.push(`mention rank ${row.mentionRank}`);
+  if (row.score != null) parts.push(`score ${row.score}`);
+  if (row.status === "miss" && row.topDomains.length)
+    parts.push(`top: ${row.topDomains.join(" · ")}`);
+  return parts.join(" · ");
 }
 
 function TiersCard({ ch, unitCap }: { ch: ChannelModel; unitCap: string }) {
@@ -858,14 +870,17 @@ function toPoints(h: HistoryPoint[]): { day: number; rate: number }[] {
   const pts: { day: number; rate: number }[] = [];
   for (const p of h) {
     const day = parseDay(p.date ?? p.run_at);
-    /* Backend history rows carry tier1_hits/tier1_total; tier1_rate is
-       accepted as a precomputed fallback. */
+    /* Backend history rows carry the position/rank-weighted tier1_score;
+       tier1_rate and hits/total are accepted as fallbacks for old
+       payload shapes. */
     const rate =
-      typeof p.tier1_rate === "number"
-        ? p.tier1_rate
-        : typeof p.tier1_hits === "number" && p.tier1_total
-          ? (100 * p.tier1_hits) / p.tier1_total
-          : null;
+      typeof p.tier1_score === "number"
+        ? p.tier1_score
+        : typeof p.tier1_rate === "number"
+          ? p.tier1_rate
+          : typeof p.tier1_hits === "number" && p.tier1_total
+            ? (100 * p.tier1_hits) / p.tier1_total
+            : null;
     if (day == null || rate == null) continue;
     pts.push({ day, rate: Math.min(100, Math.max(0, rate)) });
   }
@@ -908,9 +923,9 @@ function TrendChart({ seo, geo }: { seo: HistoryPoint[]; geo: HistoryPoint[] }) 
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <span
           className="text-[0.85rem] text-ink-soft"
-          title="One line per channel. A line never mixes runner tools; switching runners starts a new line."
+          title="Position/rank-weighted tier-1 score per run. One line per channel; a line never mixes runner tools — switching runners starts a new line."
         >
-          Tier-1 hit rate by run
+          Tier-1 score by run
         </span>
         <span className="inline-flex items-center gap-4">
           <span className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-ink-soft">
@@ -940,7 +955,7 @@ function TrendChart({ seo, geo }: { seo: HistoryPoint[]; geo: HistoryPoint[] }) 
       <svg
         viewBox="0 0 1180 244"
         className="mt-2.5 block h-auto w-full"
-        aria-label="Combined trend chart of SEO and GEO tier-1 hit rates by run"
+        aria-label="Combined trend chart of SEO and GEO tier-1 scores by run"
       >
         {ZONE_FILLS.map((fill, i) => (
           <rect key={fill} x="40" y={16 + i * 38.4} width="1110" height="38.4" fill={fill} />
