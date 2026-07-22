@@ -14,6 +14,12 @@ Pattern deltas vs the live page, one line each:
 - Disclosure rewritten page-specific (states the linked-sources practice and why our bias is smaller here than it looks).
 - Updated line now carries the explicit price-check date (2026-07-21), the monthly fact-check's visible anchor.
 Decisions honored: no competitor screenshots, no G2 citations, no modeled dollar totals (qualitative "what you still need to buy" column), no migration block, published $1,000-$5,000 range in driftwood's pricing row.
+Stance layer (recut 2026-07-21 per SEO.md competitor stance map; 11x is contrarian tier), one line each:
+- Verdict box: first two sentences now carry the disagreement (11x sells replacing SDR hiring; driftwood makes the humans you already employ better at selling), then routes who should genuinely buy 11x; concession ending kept verbatim.
+- Head-to-head table: new, inside the driftwood entry card; rows Built for / What the message carries / A good week / A bad week / Entry cost / Support; both bad-week cells are real (11x's cites the 2025 reporting phrasing with the link, driftwood's admits fewer sends and per-prospect work); table words sit outside the body count like the other tables.
+- "The slop problem": new H2; the brand-risk argument (volume agents make a sloppy send free for the vendor and expensive for you; your name is on every message), grounded in the linked receipts; it subsumes and replaces the old "autonomy trade" segment; reputation lift stated as design intent backed by the four-months proof point, never a measured stat.
+- Cheaper to start is argued vs 11x only (published $1,000 floor vs reported ~$5,000/mo plus implementation), with the page's reported-not-published care; never claimed generically; support contrast (founder-run onboarding vs enterprise account management) lives in the table.
+- Voice pass: limp hedges cut ("may help", "the math can work", the sub-1% aside); flat declaratives throughout; both-sides timeline, choose-if checklist, when-11x-is-right, disclosure, pricing snapshot, and FAQ kept intact.
 -->
 <!doctype html>
 <html lang="en">
@@ -317,6 +323,8 @@ Decisions honored: no competitor screenshots, no G2 citations, no modeled dollar
     padding: 0.28rem 0.55rem; border-radius: 6px;
   }
   table.compare .chip { margin-left: 0.45rem; vertical-align: 0.05em; }
+  table.compare.h2h { min-width: 34rem; }
+  table.compare.h2h td.tool { white-space: normal; min-width: 8.5rem; }
 
   /* the driftwood entry sits in a card; the rest are hairline rows */
   .entry-card {
@@ -404,30 +412,29 @@ Decisions honored: no competitor screenshots, no G2 citations, no modeled dollar
     <div class="disclosure">
       <strong>The disclosure, first.</strong> We build driftwood
       (<a href="https://driftwood.sh">driftwood.sh</a>), and it is one of the
-      alternatives below. Two things may help you weigh that: the hard claims
+      alternatives below. Two facts to weigh that against: the hard claims
       about 11x on this page come from named outside sources, linked where the
       claims are made, and 11x's typical buyer is bigger than ours, so we have
       less to gain from steering you than a direct substitute would.
     </div>
 
     <div class="verdict">
-      <strong>The short version.</strong> 11x sells autonomous digital workers,
-      an AI SDR called Alice and an AI phone agent called Julian, to mid-market
-      and enterprise sales orgs that want outbound capacity without hiring
-      SDRs. If that is you, the budget clears a reported five-figure annual
-      contract, and current customer references check out, 11x is the fullest
-      version of that product and a defensible buy. People look for
-      alternatives for three concrete reasons: reported pricing near $5,000 a
-      month on an annual commitment, the March 2025 TechCrunch reporting
-      covered below, and wanting more say over what goes out in their name
-      than a fully autonomous agent allows. Which reason is yours picks the
-      alternative: Artisan for the same autonomous model self-serve,
-      Amplemarket or Apollo to keep reps running the motion, Unify or Clay to
-      fix targeting rather than volume. driftwood, our tool, makes a different
-      bet: a working demo of your product in every message, for founders whose
-      constraint is replies rather than capacity. It is early, and an
-      enterprise team that wants a hands-off phone and email worker is 11x's
-      buyer, not ours.
+      <strong>The short version.</strong> 11x sells autonomous digital
+      workers, Alice for outbound and Julian for the phone, and the promise
+      is replacing SDR hiring: the humans step out of the loop. driftwood is
+      built on the opposite belief, that the job is making the humans you
+      already employ better at selling, with a working demo of your product
+      in every message and a person approving each send. That is a real
+      disagreement about how selling works, not a feature gap, and this page
+      argues our side with sources. The genuine 11x buyer is a
+      mid-market or enterprise org replacing SDR headcount, with budget for a
+      reported five-figure annual contract and current customer references
+      that check out. If that is not you, Artisan sells the same autonomous
+      bet self-serve, Amplemarket and Apollo keep reps running the motion,
+      Unify and Clay fix targeting rather than volume, and driftwood, our
+      tool, is for founders whose constraint is replies rather than capacity.
+      It is early, and an enterprise team that wants a hands-off phone and
+      email worker is 11x's buyer, not ours.
     </div>
   </div>
 
@@ -500,9 +507,8 @@ Decisions honored: no competitor screenshots, no G2 citations, no modeled dollar
   </div>
 
   <p class="prose">
-    The rest of this page is the detail behind that table. If you are weighing
-    the whole AI SDR category rather than 11x specifically, we keep
-    <a href="/best-ai-sdr-tools">a separate comparison</a> for that.
+    For the whole AI SDR category rather than 11x specifically, we keep
+    <a href="/best-ai-sdr-tools">a separate comparison</a>.
   </p>
 
   <h2>What 11x is, and where it wins</h2>
@@ -516,7 +522,7 @@ Decisions honored: no competitor screenshots, no G2 citations, no modeled dollar
     multi-channel sequences spanning email, phone, social, and SMS, handling
     follow-up, and booking meetings. The second worker is
     <a href="https://www.11x.ai/worker/julian" rel="noopener">Julian</a>, an
-    AI phone agent built up around 11x's acquisition of the voice startup
+    AI phone agent built around 11x's acquisition of the voice startup
     Opkit, which handles calls for speed-to-lead, qualification, and
     re-engagement. The company has raised more than $70 million from Benchmark
     and Andreessen Horowitz, and the positioning leans mid-market and
@@ -528,18 +534,15 @@ Decisions honored: no competitor screenshots, no G2 citations, no modeled dollar
     annual contract and first-year totals commonly between $50,000 and $60,000
     once implementation fees are included, are procurement data reported by
     <a href="https://www.vendr.com/marketplace/11x" rel="noopener">Vendr</a>
-    rather than published prices, and they are collected in the pricing
-    snapshot below. Treat all of them as directional and confirm with 11x
-    directly.
+    rather than published prices; the pricing snapshot below collects them.
   </p>
   <p class="prose">
     The real strength is scope. 11x is the fullest expression of the replace
     SDR headcount bet: one platform covers sourcing, research, multi-channel
     sequencing, and, unusually for the category, the phone, since Julian lives
-    in the same product as Alice. For a larger sales org that wants outbound
-    volume without growing the SDR team, and has the budget and the
-    integrations (Salesforce, HubSpot) to feed it, that scope in one vendor is
-    the real draw.
+    in the same product as Alice. For a larger sales org with the budget and
+    the integrations (Salesforce, HubSpot) to feed it, that scope in one
+    vendor is the real draw.
   </p>
 
   <h2>Where 11x falls short, and for whom</h2>
@@ -548,10 +551,10 @@ Decisions honored: no competitor screenshots, no G2 citations, no modeled dollar
     <h3>The price and the contract</h3>
     <p>
       No public pricing, a sales process, reported entry around $5,000 a month,
-      an annual commitment, and implementation fees on top. That is by design;
-      the product is aimed at organizations replacing headcount, and for them
-      the math can work. For a founder or a seed-stage team, the entry cost
-      alone rules it out before any product question comes up.
+      an annual commitment, and implementation fees on top. That is by design:
+      the product is priced against SDR salaries, and for an org replacing
+      headcount the comparison holds. For a founder or a seed-stage team, the
+      entry cost alone rules it out before any product question comes up.
     </p>
   </div>
 
@@ -589,28 +592,44 @@ Decisions honored: no competitor screenshots, no G2 citations, no modeled dollar
   </div>
 
   <div class="segment">
-    <h3>The autonomy trade</h3>
-    <p>
-      Alice's pitch is running with little day-to-day steering. That is also
-      the trade: messages go out at volume, in your company's name, without a
-      human approving each one. The complaints from churned customers in the
-      2025 reporting included output that read as generic and results that
-      fell short of the sales pitch. If per-message quality control matters to
-      you, a fully autonomous agent is the wrong shape, whoever builds it.
-    </p>
-  </div>
-
-  <div class="segment">
     <h3>Volume is still the strategy</h3>
     <p>
       An autonomous SDR is a bet that the way to more meetings is more touches
       with less human time on each. For founders selling into a small market,
       that bet fails the same way it does with cheap sending tools: burning
-      through your addressable market with templated outreach at a sub-1%
-      reply rate is not recoverable. If your problem is that replies are low,
-      an agent that scales sends will not fix it.
+      through your addressable market with templated outreach is not
+      recoverable. If your problem is that replies are low, an agent that
+      scales sends will not fix it.
     </p>
   </div>
+
+  <h2>The slop problem</h2>
+
+  <p class="prose">
+    Slop is outreach written by a machine, sent at volume, and seen by nobody
+    on the sending side before it goes out. An autonomous SDR makes slop
+    cheap: every send improves the vendor's numbers, and the cost of a bad
+    one lands on you, because your name is on it. The churned customers in
+    the <a href="https://techcrunch.com/2025/03/24/a16z-and-benchmark-backed-11x-has-been-claiming-customers-it-doesnt-have/" rel="noopener">March
+    2025 reporting</a> described the result: output that read as generic and
+    results that fell short of the sales pitch.
+  </p>
+  <p class="prose">
+    That cost has no dashboard. Nobody logs the prospect who read two
+    templated lines and filed your company under spam, and the vendor never
+    finds out. The author of the message and the owner of the reputation are
+    different parties, and in a fully autonomous product nothing stands
+    between them.
+  </p>
+  <p class="prose">
+    driftwood's counter is structural. Every message carries a working demo
+    of your product, built for the one prospect receiving it, and a person
+    approves each send before it leaves. We design for the message to leave a
+    prospect thinking better of your company whether or not they buy. That is
+    intent, not measurement, but the Autosana week in the entry below points
+    the same way, including founders who had ignored more than four months of
+    prior outreach.
+  </p>
 
   <h2>The alternatives</h2>
 
@@ -631,13 +650,57 @@ Decisions honored: no competitor screenshots, no G2 citations, no modeled dollar
           <a href="/demo-led-outbound">demo-led outbound</a>: every message
           includes a working demo of your product, built for the specific
           prospect receiving it, so the prospect sees your product working on
-          their problem before they have replied to anything. The agent
+          their problem before replying to anything. The agent
           researches the prospect, builds the demo, and drafts the message; a
           human reviews each send, and sending happens from your own LinkedIn
-          or email account rather than a bot inbox. On the same lead list,
+          or email account. On the same lead list,
           replies went from under 1% to over 14% in week one at
           <a href="/customers/autosana">Autosana</a> (YC S25).
         </p>
+        <div class="table-scroll">
+          <table class="compare h2h">
+            <caption>The two tools side by side. The figures are the same sourced ones as the pricing snapshot below.</caption>
+            <thead>
+              <tr>
+                <th scope="col"></th>
+                <th scope="col">11x</th>
+                <th scope="col">driftwood<span class="chip">our tool</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="tool">Built for</td>
+                <td>Replacing SDR hiring with autonomous digital workers</td>
+                <td>Making the people you already employ better at selling</td>
+              </tr>
+              <tr>
+                <td class="tool">What the message carries</td>
+                <td>Text the agent personalized, sent at volume</td>
+                <td>A working demo of your product, built for the prospect receiving it</td>
+              </tr>
+              <tr>
+                <td class="tool">A good week</td>
+                <td>Meetings booked at volume across email, phone, and social, with no human time spent</td>
+                <td>Meetings from a small number of sends, each one reviewed and carrying a demo</td>
+              </tr>
+              <tr>
+                <td class="tool">A bad week</td>
+                <td>Generic output going out at volume in your name; churned customers in the <a href="https://techcrunch.com/2025/03/24/a16z-and-benchmark-backed-11x-has-been-claiming-customers-it-doesnt-have/" rel="noopener">2025 reporting</a> described exactly that</td>
+                <td>Fewer sends than you hoped; each demo takes real work per prospect</td>
+              </tr>
+              <tr>
+                <td class="tool">Entry cost</td>
+                <td>No published price; reported near $5,000 a month on an annual contract, plus implementation fees</td>
+                <td>$1,000 to $5,000 a month, published</td>
+              </tr>
+              <tr>
+                <td class="tool">Support</td>
+                <td>Enterprise account management</td>
+                <td>The founder runs your onboarding</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
         <p>
           driftwood is early, and it trades volume for depth. It does not do
           phone, and if you are an enterprise org replacing a ten-person SDR
@@ -657,10 +720,9 @@ Decisions honored: no competitor screenshots, no G2 citations, no modeled dollar
         <p>
           Artisan is the closest direct swap: Ava is an autonomous AI BDR
           covering the outbound cycle from lead discovery through follow-up,
-          the same category bet as Alice. The practical difference is the
-          front door. Since the Ava 2.0 relaunch, Artisan is self-serve, so
+          the same category bet as Alice. Since the Ava 2.0 relaunch, Artisan is self-serve, so
           you can test the autonomous model without a sales cycle or an annual
-          contract; entry pricing is in the snapshot below, and we keep
+          contract; we keep
           <a href="/alternatives/artisan">a full page on Artisan</a> if the
           autonomous model itself is your open question.
         </p>
@@ -697,7 +759,7 @@ Decisions honored: no competitor screenshots, no G2 citations, no modeled dollar
           determine who gets contacted and what they hear. Where an autonomous
           SDR works a static list at volume, Unify concentrates effort on
           accounts showing intent right now. Teams that want to build this
-          kind of system by hand tend to reach for Clay instead; we compared
+          by hand reach for Clay instead; we compared
           <a href="/alternatives/clay">Clay alternatives</a> separately.
         </p>
         <p class="bestfor"><strong>Best for:</strong> <span>teams with real
@@ -712,7 +774,7 @@ Decisions honored: no competitor screenshots, no G2 citations, no modeled dollar
         <h3><a href="https://www.apollo.io" rel="noopener">Apollo</a></h3>
         <p>
           Apollo is the pragmatic per-seat answer: a large B2B database with
-          sequencing, a dialer, and light CRM bundled together, with a free
+          sequencing, a dialer, and light CRM, with a free
           tier and paid seats priced in the snapshot below. Nothing about it
           is autonomous; your team runs the motion. Against a reported
           $50,000-plus first year with 11x, a few Apollo seats plus a rep's
