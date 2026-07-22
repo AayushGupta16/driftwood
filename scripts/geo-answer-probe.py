@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """GEO Layer 2: answer-share probe.
 
-NOTE: the grader (grade_answer/find_competitors + vocab) is MIRRORED in
-backend/app/geo_grader.py, which powers the backend's daily GEO probe.
-This file stays canonical for grading semantics — change here first,
-then re-sync the backend copy in the same working session.
+NOTE (2026-07-22): the CANONICAL grader now lives in
+backend/app/geo_grader.py as a context-rich LLM judge — the vocab-scan
+grader below is LEGACY, kept for offline runs only. The 2026-07-22 hand
+audit (site/geo-results/grader-audit-2026-07-22.md) found 4 false
+positives in the vocab approach; don't trust its verdicts for headline
+numbers.
 
 Layer 1 (backend probe + /geo-probe skill) checks whether driftwood.sh
 appears in WEB-SEARCH results for the fixed query set. This script is
