@@ -4,11 +4,11 @@
    The canonical comparability rule (site/GEO.md): probe results are
    COMPARABLE ONLY WITHIN ONE RUNNER TOOL — every run records its tool and
    query-set version, and a trend line must never connect runs across a
-   methodology switch. The Jul 22 probe changes (GEO search-grading ->
-   answer panel, SEO search source change) made the single-line chart draw
-   exactly that broken line, so the chart plots the LATEST methodology as
-   the connected line per channel and keeps earlier-methodology runs as
-   disconnected faded points.
+   methodology switch. The chart draws ONLY the newest methodology's runs
+   (`current`); a switch clears the chart and starts the line over
+   (Aayush 2026-07-22 — no faded history, no change marker). `older` is
+   still split out here so the chart has nothing to compute, but it is
+   not rendered.
 
    Kept free of browser APIs and React so `node --test` runs it directly
    (npm test). */
