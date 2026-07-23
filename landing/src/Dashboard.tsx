@@ -30,6 +30,9 @@ type User = {
   avatar_url: string | null;
   is_approved: boolean;
   linkedin_connected: boolean;
+  /* optional so older /auth/me payloads (pre-email-channel) still parse;
+     absent reads as not connected. */
+  email_connected?: boolean;
   is_admin?: boolean;
   impersonating?: boolean;
 };
@@ -66,6 +69,15 @@ function LinkedInMark({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={className}>
       <path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zm1.78 13.02H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.22.79 24 1.77 24h20.45c.98 0 1.78-.78 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z" />
+    </svg>
+  );
+}
+
+function MailMark({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={className}>
+      <rect x="2.5" y="5" width="19" height="14" rx="2.5" />
+      <path d="m3.5 7.5 8.5 6 8.5-6" />
     </svg>
   );
 }
@@ -414,6 +426,7 @@ function ApprovedView({ user }: { user: User }) {
   return (
     <>
       <LinkedInBanner />
+      <EmailBanner />
       <Heading>{`Welcome back, ${firstName}.`}</Heading>
 
       {/* top bar — connect prompt when LinkedIn isn't connected, otherwise the
@@ -424,6 +437,7 @@ function ApprovedView({ user }: { user: User }) {
         summary.summary.sending && (
           <StatusStrip sending={summary.summary.sending} />
         )}
+      <EmailCard connected={user.email_connected ?? false} />
 
       {/* two equal-height columns: metrics left, lists right. */}
       <div className="mt-3.5 grid grid-cols-1 items-stretch gap-3.5 lg:grid-cols-[1.45fr_1fr]">
@@ -541,8 +555,9 @@ function ReviewEntryCard({ state }: { state: SummaryState }) {
   );
 }
 
-/* shared disconnect logic — reused by LinkedInCard and the status strip. */
-function useDisconnect() {
+/* shared disconnect logic — reused by LinkedInCard, EmailCard and the
+   status strip. */
+function useDisconnect(endpoint: string) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -550,7 +565,7 @@ function useDisconnect() {
     setPending(true);
     setError(null);
     try {
-      const res = await fetch("/linkedin/disconnect", {
+      const res = await fetch(endpoint, {
         method: "POST",
         credentials: "include",
       });
@@ -567,7 +582,7 @@ function useDisconnect() {
 
 /* 1 · STATUS — is it on & safe. Mirrors the mockup's .status card. */
 function StatusStrip({ sending }: { sending: Sending }) {
-  const { pending, error, disconnect } = useDisconnect();
+  const { pending, error, disconnect } = useDisconnect("/linkedin/disconnect");
   const rel = relativeTime(sending.last_action_at);
 
   return (
@@ -805,7 +820,7 @@ function LinkedInCard({ connected }: { connected: boolean }) {
     pending: disconnectPending,
     error: disconnectError,
     disconnect: handleDisconnect,
-  } = useDisconnect();
+  } = useDisconnect("/linkedin/disconnect");
   const pending = connectPending || disconnectPending;
   const error = connectError ?? disconnectError;
 
@@ -871,6 +886,98 @@ function LinkedInCard({ connected }: { connected: boolean }) {
             >
               <LinkedInMark className="size-4.5 shrink-0" />
               {pending ? "Connecting…" : "Connect LinkedIn"}
+            </button>
+          )}
+
+          {error && (
+            <p
+              className="m-0 mt-3 text-[13.5px] font-medium text-red-700"
+              role="alert"
+            >
+              {error}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* Same card as LinkedInCard, against the /email/* endpoints (Unipile hosted
+   auth again — the redirect comes back with ?email=connected|failed). */
+function EmailCard({ connected }: { connected: boolean }) {
+  const [connectPending, setConnectPending] = useState(false);
+  const [connectError, setConnectError] = useState<string | null>(null);
+  const {
+    pending: disconnectPending,
+    error: disconnectError,
+    disconnect: handleDisconnect,
+  } = useDisconnect("/email/disconnect");
+  const pending = connectPending || disconnectPending;
+  const error = connectError ?? disconnectError;
+
+  async function handleConnect() {
+    setConnectPending(true);
+    setConnectError(null);
+    try {
+      const res = await fetch("/email/connect", {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("request failed");
+      const data = (await res.json()) as { url: string };
+      window.location.href = data.url;
+    } catch {
+      setConnectError("Couldn't start the connection. Please try again.");
+      setConnectPending(false);
+    }
+  }
+
+  return (
+    <div className={`mt-7 ${CARD} p-7 sm:p-8`}>
+      <div className="flex items-start gap-4">
+        <span
+          className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${
+            connected
+              ? "bg-ok/10 text-ok"
+              : "bg-tide/10 text-tide"
+          }`}
+          aria-hidden="true"
+        >
+          {connected ? (
+            <CheckMark className="size-6" />
+          ) : (
+            <MailMark className="size-6" />
+          )}
+        </span>
+        <div className="min-w-0 flex-1">
+          <h2 className="m-0 text-[18px] font-semibold tracking-[-0.01em]">
+            {connected ? "Email connected" : "Connect your email"}
+          </h2>
+          <p className="m-0 mt-2 text-[15px] leading-relaxed text-ink-soft">
+            {connected
+              ? "You're connected! We'll take it from here."
+              : "Optional — lets your AE send email as well as LinkedIn. You'll sign in on a secure Unipile page — we never see your password."}
+          </p>
+
+          {connected ? (
+            <button
+              type="button"
+              onClick={handleDisconnect}
+              disabled={pending}
+              className="mt-5 cursor-pointer rounded-full border border-line bg-surface px-3.5 py-2 text-[13.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {pending ? "Disconnecting…" : "Disconnect"}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleConnect}
+              disabled={pending}
+              className="mt-5 inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-full bg-tide px-4.5 py-2.5 text-[14.5px] font-semibold text-white transition-all hover:-translate-y-px hover:bg-tide-deep disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <MailMark className="size-4.5 shrink-0" />
+              {pending ? "Connecting…" : "Connect email"}
             </button>
           )}
 
@@ -1154,6 +1261,30 @@ function LinkedInBanner() {
       <span aria-hidden="true">{connected ? "✓" : "✕"}</span>
       {connected
         ? "LinkedIn connected — you're all set."
+        : "Connection failed, please try again."}
+    </div>
+  );
+}
+
+/* Same banner for the hosted email auth's ?email=connected|failed redirect. */
+function EmailBanner() {
+  const params = new URLSearchParams(window.location.search);
+  const status = params.get("email");
+  if (status !== "connected" && status !== "failed") return null;
+
+  const connected = status === "connected";
+  return (
+    <div
+      role="status"
+      className={`mb-7 flex items-center gap-2.5 rounded-xl border px-4 py-3 text-[14px] font-medium ${
+        connected
+          ? "border-ok/25 bg-ok/10 text-ok"
+          : "border-red-600/25 bg-red-500/10 text-red-800"
+      }`}
+    >
+      <span aria-hidden="true">{connected ? "✓" : "✕"}</span>
+      {connected
+        ? "Email connected — you're all set."
         : "Connection failed, please try again."}
     </div>
   );

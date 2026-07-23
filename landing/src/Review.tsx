@@ -43,7 +43,7 @@ type ReviewLeadContext = {
 
 /* Per-kind ScheduledSend runway (approved but not yet delivered). */
 type QueueStats = {
-  kind: string; // "message" | "connection_request"
+  kind: string; // "message" | "connection_request" | "email"
   queued: number;
   sent_24h: number;
   cap: number;
@@ -55,8 +55,9 @@ type QueueStats = {
 type SendRow = {
   id: string;
   batch_id: string;
-  kind: string; // "message" | "connection_request"
+  kind: string; // "message" | "connection_request" | "email"
   note: string; // the frozen copy — sends exactly as shown
+  subject: string | null; // email kind only; null elsewhere
   attachment_slug: string | null;
   lead: ReviewLeadContext | null;
   status: string; // "pending" | "sending" | "failed"
@@ -103,9 +104,10 @@ type ReviewItemRow = {
   id: string;
   batch_id: string;
   agent_id: string;
-  kind: string; // "send_message" | "send_connection" | "bug_validation"
+  kind: string; // "send_message" | "send_connection" | "send_email" | "bug_validation"
   title: string;
   body: string;
+  subject: string | null; // send_email only; null elsewhere
   lead: ReviewLeadContext | null;
   attachment_slug: string | null;
   evidence: BugEvidence | null;
@@ -319,6 +321,7 @@ function shortAge(iso: string): string {
 function kindLabel(kind: string): string {
   if (kind === "send_message") return "message";
   if (kind === "send_connection") return "connection";
+  if (kind === "send_email") return "email";
   if (kind === "bug_validation") return "bug";
   return kind;
 }
@@ -328,6 +331,7 @@ function kindLabel(kind: string): string {
 function sendKindLabel(kind: string): string {
   if (kind === "message") return "message";
   if (kind === "connection_request") return "connection";
+  if (kind === "email") return "email";
   return kind;
 }
 
@@ -345,7 +349,12 @@ const ERROR_CLASS_LABEL: Record<string, string> = {
 /* Chip order — connections first (the kind that piles up and gets
    bulk-cleared), then messages, then bugs; unknown kinds trail in
    queue order. */
-const KIND_ORDER = ["send_connection", "send_message", "bug_validation"];
+const KIND_ORDER = [
+  "send_connection",
+  "send_message",
+  "send_email",
+  "bug_validation",
+];
 
 function kindRank(kind: string): number {
   const i = KIND_ORDER.indexOf(kind);
@@ -353,7 +362,7 @@ function kindRank(kind: string): number {
 }
 
 /* Same convention for the queued tab's send kinds. */
-const SEND_KIND_ORDER = ["connection_request", "message"];
+const SEND_KIND_ORDER = ["connection_request", "message", "email"];
 
 function sendKindRank(kind: string): number {
   const i = SEND_KIND_ORDER.indexOf(kind);
@@ -938,6 +947,7 @@ function FilterChip({
 const STATS_KIND_LABEL: Record<string, string> = {
   message: "messages",
   connection_request: "connection requests",
+  email: "emails",
 };
 
 const STATS_MONTHS = [
@@ -1365,6 +1375,12 @@ function QueuedRow({
           send.lead ? "" : "mt-3"
         }`}
       >
+        {/* emails lead with their subject line, above the (clamped) copy */}
+        {send.subject && (
+          <span className="mb-1 block font-mono text-[12.75px] font-semibold leading-[1.65] text-ink">
+            Subject: {send.subject}
+          </span>
+        )}
         {/* line-clamp sets its own display (-webkit-box), so `block` only
             applies to the expanded state — stacking both breaks the clamp */}
         <span
@@ -1486,7 +1502,10 @@ function ItemCard({
   onConfirmDeny: () => void;
 }) {
   const isBug = item.kind === "bug_validation";
-  const isSend = item.kind === "send_message" || item.kind === "send_connection";
+  const isSend =
+    item.kind === "send_message" ||
+    item.kind === "send_connection" ||
+    item.kind === "send_email";
   const denyOpen = denyReason !== null;
   // Bug items read Real / Not real, but map to the same approve/deny.
   const approveLabel = isBug ? "Real" : "Approve";
@@ -1532,10 +1551,18 @@ function ItemCard({
           <span className={`${MICROLABEL} mb-1.5 mt-[3px] block`}>
             {item.kind === "send_connection"
               ? "Connection note — sends exactly as shown"
-              : "Outgoing message — sends exactly as shown"}
+              : item.kind === "send_email"
+                ? "Outgoing email — sends exactly as shown"
+                : "Outgoing message — sends exactly as shown"}
           </span>
-          {/* the exact frozen payload — mono, primary ink, no truncation */}
+          {/* the exact frozen payload — mono, primary ink, no truncation;
+              emails lead with their subject line */}
           <pre className="m-0 mb-3.5 whitespace-pre-wrap break-words rounded-[10px] border border-line bg-paper px-3.5 py-[13px] font-mono text-[12.75px] leading-[1.65] text-ink">
+            {item.subject && (
+              <span className="mb-1.5 block font-semibold">
+                Subject: {item.subject}
+              </span>
+            )}
             {item.body}
           </pre>
         </>
