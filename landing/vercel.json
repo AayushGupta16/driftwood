@@ -17,6 +17,14 @@
       "destination": "https://driftwood-backend-767736087356.us-central1.run.app/email/:path*"
     },
     {
+      "source": "/triage",
+      "destination": "https://driftwood-backend-767736087356.us-central1.run.app/triage"
+    },
+    {
+      "source": "/triage/:path*",
+      "destination": "https://driftwood-backend-767736087356.us-central1.run.app/triage/:path*"
+    },
+    {
       "source": "/api/:path*",
       "destination": "https://driftwood-backend-767736087356.us-central1.run.app/api/:path*"
     },
@@ -28,18 +36,27 @@
       "source": "/ingest/:ppath(.*)",
       "destination": "https://us.i.posthog.com/:ppath"
     },
-    { "source": "/((?!_vercel/|ingest/).*)", "destination": "/index.html" }
+    {
+      "source": "/((?!_vercel/|ingest/).*)",
+      "destination": "/index.html"
+    }
   ],
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
       ]
     },
     {
-      "source": "/((?!d/|api/|auth/|linkedin/|email/|_vercel/).*)",
+      "source": "/((?!d/|api/|auth/|linkedin/|email/|triage|triage/|_vercel/).*)",
       "headers": [
         {
           "key": "Content-Security-Policy",
@@ -50,13 +67,24 @@
     {
       "source": "/dashboard(.*)",
       "headers": [
-        { "key": "X-Robots-Tag", "value": "noindex" },
-        { "key": "X-Frame-Options", "value": "DENY" }
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        }
       ]
     },
     {
       "source": "/og",
-      "headers": [{ "key": "X-Robots-Tag", "value": "noindex" }]
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex"
+        }
+      ]
     }
   ]
 }
