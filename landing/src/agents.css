@@ -49,15 +49,82 @@
 }
 
 /* The needs-attention dot: the sanctioned --alert exception (design-language
- * §1) — internal dashboard cards only. No count; the dot is binary. */
-.agent-alert-dot {
+ * §1) — internal dashboard cards only. No count; the dot is binary. It IS the
+ * state signal's dot rather than a separate corner badge: two dots of
+ * different sizes ~10px apart was the rejected first attempt
+ * (draft-inline-answers.html, "merged"). */
+.agent-state-dot {
+  position: relative;
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.agent-state[data-needs-you] .agent-state-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--color-alert);
+}
+
+.agent-state[data-needs-you] .agent-state-dot::before {
+  content: "";
   position: absolute;
-  top: 14px;
-  right: 14px;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--color-alert);
+  animation: agent-ping 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes agent-ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+
+  70%,
+  100% {
+    transform: scale(2.8);
+    opacity: 0;
+  }
+}
+
+.agent-h1-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: 14px;
+  vertical-align: middle;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: normal;
+  color: var(--color-ink-soft);
+}
+
+.agent-h1-count-dot {
+  position: relative;
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background: var(--color-alert);
+}
+
+.agent-h1-count-dot::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--color-alert);
+  animation: agent-ping 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* Your action: the one accented block on a card that needs you. */
+.agent-action {
+  border: 1px solid color-mix(in srgb, var(--color-tide) 28%, var(--color-line));
+  border-left: 2px solid var(--color-tide);
+  border-radius: 8px;
+  background: var(--color-tide-wash);
 }
 
 .agent-state[data-state="running"] {
@@ -119,5 +186,10 @@
   .agents-page button,
   .agents-page a {
     transition: none;
+  }
+
+  .agent-state[data-needs-you] .agent-state-dot::before,
+  .agent-h1-count-dot::before {
+    animation: none;
   }
 }
