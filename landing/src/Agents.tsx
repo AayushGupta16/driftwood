@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { LoggedOutView, ToastProvider } from "./Dashboard";
 import { GodModeButton, ImpersonationBanner } from "./GodMode";
 import { Wordmark } from "./components/Chrome";
+import { AgentChatComposer, AgentChatThread, ImportFromSlackButton } from "./components/AgentChat";
+import { type AgentChat, agentDisplayName as displayName, useAgentChat } from "./components/useAgentChat";
 import "./agents.css";
 
 type User = {
@@ -101,14 +103,6 @@ function LoadingView() {
   );
 }
 
-function displayName(agentId: string) {
-  return agentId
-    .split(/[-_]/g)
-    .filter(Boolean)
-    .map((part) => part[0]?.toUpperCase() + part.slice(1))
-    .join(" ");
-}
-
 function relativeTime(value: string | null, now: number) {
   if (!value) return "No update yet";
   const seconds = Math.max(0, Math.round((now - new Date(value).getTime()) / 1000));
@@ -190,6 +184,7 @@ function AgentCard({
   now,
   busy,
   onOpen,
+  onMessage,
   onHealth,
   onPause,
 }: {
@@ -197,6 +192,7 @@ function AgentCard({
   now: number;
   busy: boolean;
   onOpen: () => void;
+  onMessage: () => void;
   onHealth: (score: number) => void;
   onPause: () => void;
 }) {
@@ -309,9 +305,17 @@ function AgentCard({
             ))}
           </div>
           <div className="flex items-center gap-2">
+            {/* Still an anchor so cmd-click and middle-click open the standalone
+                page; a plain click keeps you here and opens the dialog's
+                Messages tab instead of navigating away. */}
             <a
               href={`/dashboard/agents/${encodeURIComponent(agent.agent_id)}`}
-              onClick={(event) => event.stopPropagation()}
+              onClick={(event) => {
+                event.stopPropagation();
+                if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                event.preventDefault();
+                onMessage();
+              }}
               className="min-h-11 cursor-pointer content-center rounded-full border border-tide/40 bg-surface px-3 py-1.5 text-[11.5px] font-medium text-tide no-underline hover:bg-tide-wash sm:min-h-0"
             >
               Message
@@ -331,10 +335,33 @@ function AgentCard({
   );
 }
 
-function AgentDetail({ agent, onClose }: { agent: AgentCardData; onClose: () => void }) {
+type DetailTab = "status" | "messages";
+
+function AgentDetail({
+  agent,
+  initialTab,
+  onClose,
+}: {
+  agent: AgentCardData;
+  initialTab: DetailTab;
+  onClose: () => void;
+}) {
+  const [tab, setTab] = useState<DetailTab>(initialTab);
+  // Mounted for the whole dialog, not just the Messages tab, so a half-typed
+  // message survives a look back at the status.
+  const chat = useAgentChat(agent.agent_id);
+
   useEffect(() => {
     function closeOnEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
+      if (event.key !== "Escape") return;
+      // Escape out of the composer first — closing the dialog would throw the
+      // draft away.
+      const target = event.target;
+      if (target instanceof HTMLTextAreaElement || target instanceof HTMLInputElement) {
+        target.blur();
+        return;
+      }
+      onClose();
     }
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
@@ -358,6 +385,77 @@ function AgentDetail({ agent, onClose }: { agent: AgentCardData; onClose: () => 
             Close
           </button>
         </div>
+
+        <div className="mt-5 flex items-center gap-4 border-b border-line" role="tablist" aria-label="Agent detail sections">
+          {([["status", "Status"], ["messages", "Messages"]] as const).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={tab === id}
+              onClick={() => setTab(id)}
+              className={`-mb-px cursor-pointer border-0 border-b-2 bg-transparent px-0.5 pb-2.5 text-[13px] font-medium ${
+                tab === id ? "border-tide text-ink" : "border-transparent text-ink-soft hover:text-ink"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {tab === "messages" ? (
+          <ConversationPanel agent={agent} chat={chat} />
+        ) : (
+          <AgentStatusPanel agent={agent} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// The same conversation as /dashboard/agents/<id>, in the dialog you get from
+// clicking a card — so answering an agent never costs a page load.
+function ConversationPanel({ agent, chat }: { agent: AgentCardData; chat: AgentChat }) {
+  return (
+    <div className="mt-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="m-0 text-[12.5px] text-ink-soft">
+          {chat.data
+            ? `${chat.data.online ? "Online" : "Offline"}${chat.data.paused ? " · archived" : ""} · also in Slack`
+            : "Loading conversation"}
+        </p>
+        <div className="flex items-center gap-3">
+          <ImportFromSlackButton
+            chat={chat}
+            className="cursor-pointer border-0 bg-transparent p-0 text-[12px] font-medium text-ink-soft hover:text-tide disabled:cursor-wait disabled:opacity-60"
+          />
+          <a
+            href={`/dashboard/agents/${encodeURIComponent(agent.agent_id)}`}
+            className="text-[12px] font-medium text-tide no-underline hover:text-tide-deep"
+          >
+            Open full page
+          </a>
+        </div>
+      </div>
+
+      {chat.error && (
+        <div className="mt-3 rounded-xl border border-line bg-sand/50 px-4 py-3 text-[13px] text-ink">{chat.error}</div>
+      )}
+      {chat.notice && (
+        <p className="m-0 mt-3 text-[12.5px] text-ink-soft" role="status">{chat.notice}</p>
+      )}
+
+      <div className="mt-3 flex h-[min(56vh,28rem)] flex-col">
+        <AgentChatThread chat={chat} className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pb-4 pr-1" />
+        <AgentChatComposer chat={chat} hint={false} className="border-t border-line pt-3" />
+      </div>
+    </div>
+  );
+}
+
+function AgentStatusPanel({ agent }: { agent: AgentCardData }) {
+  return (
+    <>
         <p className="m-0 mt-6 text-[15px] leading-[1.55] text-ink">{agent.status?.whats_happening ?? "No status reported."}</p>
 
         <section className="mt-7">
@@ -432,8 +530,7 @@ function AgentDetail({ agent, onClose }: { agent: AgentCardData; onClose: () => 
             )}
           </section>
         )}
-      </div>
-    </div>
+    </>
   );
 }
 
@@ -472,6 +569,7 @@ function AgentsView({ user }: { user: User }) {
   const [now, setNow] = useState(0);
   const [archivedOpen, setArchivedOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedTab, setSelectedTab] = useState<DetailTab>("status");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -619,7 +717,8 @@ function AgentsView({ user }: { user: User }) {
                 agent={agent}
                 now={now}
                 busy={busyId === agent.agent_id}
-                onOpen={() => setSelectedId(agent.agent_id)}
+                onOpen={() => { setSelectedTab("status"); setSelectedId(agent.agent_id); }}
+                onMessage={() => { setSelectedTab("messages"); setSelectedId(agent.agent_id); }}
                 onHealth={(score) => void mutate(`/api/v1/admin/agents/${encodeURIComponent(agent.agent_id)}/health`, { method: "PATCH", body: JSON.stringify({ score }) }, agent.agent_id)}
                 onPause={() => void mutate(`/api/v1/admin/agents/${encodeURIComponent(agent.agent_id)}/pause`, { method: "PATCH", body: JSON.stringify({ paused: true }) }, agent.agent_id)}
               />
@@ -628,7 +727,14 @@ function AgentsView({ user }: { user: User }) {
           </section>
         )}
       </main>
-      {selected && <AgentDetail agent={selected} onClose={() => setSelectedId(null)} />}
+      {selected && (
+        <AgentDetail
+          key={selected.agent_id}
+          agent={selected}
+          initialTab={selectedTab}
+          onClose={() => setSelectedId(null)}
+        />
+      )}
     </>
   );
 }
