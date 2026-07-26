@@ -14,6 +14,7 @@ const Companies = lazy(() => import('./Companies.tsx'))
 const Review = lazy(() => import('./Review.tsx'))
 const SeoGeo = lazy(() => import('./SeoGeo.tsx'))
 const Agents = lazy(() => import('./Agents.tsx'))
+const Conversation = lazy(() => import('./Conversation.tsx'))
 // Pricing is parked for now; re-enable by restoring the route below.
 // const Pricing = lazy(() => import('./Pricing.tsx'))
 
@@ -33,6 +34,8 @@ const page =
     <SeoGeo />
   ) : path === '/dashboard/agents' ? (
     <Agents />
+  ) : path.startsWith('/dashboard/agents/') ? (
+    <Conversation />
   ) : path === '/dashboard' ? (
     <Dashboard />
   ) : (
