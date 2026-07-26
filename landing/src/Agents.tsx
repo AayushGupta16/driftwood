@@ -3,7 +3,7 @@ import { LoggedOutView, ToastProvider } from "./Dashboard";
 import { GodModeButton, ImpersonationBanner } from "./GodMode";
 import { Wordmark } from "./components/Chrome";
 import { AgentChatComposer, AgentChatThread, ImportFromSlackButton } from "./components/AgentChat";
-import { type AgentChat, agentDisplayName as displayName, useAgentChat } from "./components/useAgentChat";
+import { type AgentChat, agentDisplayName as displayName, readErrorDetail, useAgentChat } from "./components/useAgentChat";
 import "./agents.css";
 
 type User = {
@@ -42,6 +42,7 @@ type HumanNeed =
   | string
   | {
       id?: string | null;
+      kind?: "review" | "decision" | "question" | null;
       question: string;
       context?: string | null;
       url?: string | null;
@@ -214,6 +215,9 @@ function AgentCard({
 
   return (
     <article className="agent-card group relative flex min-w-0 flex-col p-5">
+      {(agent.status?.needs_human.length ?? 0) > 0 && !agent.paused && (
+        <span className="agent-alert-dot" aria-label="Has open questions for you" />
+      )}
       <button type="button" onClick={onOpen} className="agent-card-hit absolute inset-0 z-0 cursor-pointer rounded-[inherit] border-0 bg-transparent" aria-label={`Open ${displayName(agent.agent_id)} details`} />
       <div className="pointer-events-none relative z-10 flex flex-1 flex-col">
         <div className="flex items-start justify-between gap-3">
@@ -341,10 +345,12 @@ function AgentDetail({
   agent,
   initialTab,
   onClose,
+  onAnswered,
 }: {
   agent: AgentCardData;
   initialTab: DetailTab;
   onClose: () => void;
+  onAnswered: () => void;
 }) {
   const [tab, setTab] = useState<DetailTab>(initialTab);
   // Mounted for the whole dialog, not just the Messages tab, so a half-typed
@@ -406,7 +412,7 @@ function AgentDetail({
         {tab === "messages" ? (
           <ConversationPanel agent={agent} chat={chat} />
         ) : (
-          <AgentStatusPanel agent={agent} />
+          <AgentStatusPanel agent={agent} onAnswered={onAnswered} />
         )}
       </div>
     </div>
@@ -455,7 +461,71 @@ function ConversationPanel({ agent, chat }: { agent: AgentCardData; chat: AgentC
   );
 }
 
-function AgentStatusPanel({ agent }: { agent: AgentCardData }) {
+function needKind(need: HumanNeed): "review" | "decision" | "question" {
+  if (typeof need === "string") return "question";
+  if (need.kind === "review" || (need.url && need.kind !== "decision")) return "review";
+  if (need.kind === "decision" || (need.options?.length ?? 0) > 0) return "decision";
+  return "question";
+}
+
+function needKey(need: HumanNeed, index: number) {
+  return typeof need === "string" ? `${need}-${index}` : need.id ?? `${need.question}-${index}`;
+}
+
+function AgentStatusPanel({
+  agent,
+  onAnswered,
+}: {
+  agent: AgentCardData;
+  onAnswered: () => void;
+}) {
+  // Draft answers per ask, keyed by the ask's stable id. Deliberately NOT the
+  // chat composer's state: the integration notes call out that routing these
+  // through the composer would clobber a half-typed message.
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [sending, setSending] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const needs = agent.status?.needs_human ?? [];
+  const answerable = needs.filter(
+    (need): need is Exclude<HumanNeed, string> => typeof need !== "string" && !!need.id,
+  );
+  const filled = answerable.filter((need) => (answers[need.id as string] ?? "").trim());
+
+  async function sendAnswers() {
+    if (!filled.length || sending) return;
+    setSending(true);
+    setNotice(null);
+    try {
+      const response = await fetch(
+        `/api/v1/admin/agents/${encodeURIComponent(agent.agent_id)}/asks/answers`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            answers: filled.map((need) => ({
+              slug: need.id,
+              text: (answers[need.id as string] ?? "").trim(),
+            })),
+          }),
+        },
+      );
+      if (!response.ok) {
+        throw new Error(await readErrorDetail(response, `Send returned ${response.status}`));
+      }
+      setAnswers({});
+      setNotice(
+        `Sent ${filled.length} answer${filled.length === 1 ? "" : "s"} to the agent.`,
+      );
+      onAnswered();
+    } catch (reason) {
+      setNotice(reason instanceof Error ? reason.message : "Could not send answers");
+    } finally {
+      setSending(false);
+    }
+  }
+
   return (
     <>
         <p className="m-0 mt-6 text-[15px] leading-[1.55] text-ink">{agent.status?.whats_happening ?? "No status reported."}</p>
@@ -497,28 +567,90 @@ function AgentStatusPanel({ agent }: { agent: AgentCardData }) {
           <section className="mt-7">
             <h3 className="m-0 text-[14px] font-semibold">Questions for you</h3>
             <div className="mt-3 flex flex-col gap-3">
-              {agent.status.needs_human.map((need, index) => (
-                <div key={typeof need === "string" ? need : need.id ?? `${need.question}-${index}`} className="rounded-xl border border-line p-4">
-                  <p className="m-0 text-[13.5px] font-medium">{needQuestion(need)}</p>
-                  {typeof need !== "string" && need.context && <p className="m-0 mt-1.5 text-[12.5px] leading-[1.5] text-ink-soft">{need.context}</p>}
-                  {needUrl(need) && (
-                    <a href={needUrl(need) ?? undefined} target="_blank" rel="noreferrer" className="mt-3 inline-flex text-[12.5px] font-medium text-tide no-underline hover:text-tide-deep">
-                      {typeof need === "string" ? "Open review" : need.link_label || "Open review"}
-                    </a>
-                  )}
-                  {typeof need !== "string" && need.options?.length ? (
-                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                      {need.options.map((option) => (
-                        <div key={option.id} className="rounded-lg border border-line px-3 py-2 text-[12.5px]">
-                          <strong className="font-medium">{option.label}</strong>
-                          {option.consequence && <span className="mt-1 block text-ink-soft">{option.consequence}</span>}
-                        </div>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-              ))}
+              {needs.map((need, index) => {
+                const kind = needKind(need);
+                const slug = typeof need === "string" ? null : (need.id ?? null);
+                const value = slug ? (answers[slug] ?? "") : "";
+                return (
+                  <div key={needKey(need, index)} className="rounded-xl border border-line p-4">
+                    <p className="m-0 text-[13.5px] font-medium">{needQuestion(need)}</p>
+                    {typeof need !== "string" && need.context && <p className="m-0 mt-1.5 text-[12.5px] leading-[1.5] text-ink-soft">{need.context}</p>}
+                    {kind === "review" && needUrl(need) && (
+                      <a href={needUrl(need) ?? undefined} target="_blank" rel="noreferrer" className="mt-3 inline-flex rounded-full border border-tide bg-tide px-3.5 py-1.5 text-[12.5px] font-medium text-white no-underline hover:bg-tide-deep">
+                        {typeof need === "string" ? "Open review" : need.link_label || "Open review"}
+                      </a>
+                    )}
+                    {kind !== "review" && needUrl(need) && (
+                      <a href={needUrl(need) ?? undefined} target="_blank" rel="noreferrer" className="mt-3 inline-flex text-[12.5px] font-medium text-tide no-underline hover:text-tide-deep">
+                        {typeof need === "string" ? "Open link" : need.link_label || "Open link"}
+                      </a>
+                    )}
+                    {typeof need !== "string" && need.options?.length ? (
+                      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                        {need.options.map((option) => {
+                          const selected = slug !== null && value === option.label;
+                          return (
+                            <button
+                              key={option.id}
+                              type="button"
+                              disabled={!slug}
+                              aria-pressed={selected}
+                              onClick={() =>
+                                slug &&
+                                setAnswers((current) => ({
+                                  ...current,
+                                  // Clicking the selected option un-picks it, so a
+                                  // mis-click is undoable without the text field.
+                                  [slug]: selected ? "" : option.label,
+                                }))
+                              }
+                              className={`cursor-pointer rounded-lg border px-3 py-2 text-left text-[12.5px] ${
+                                selected
+                                  ? "border-tide bg-tide-wash text-ink"
+                                  : "border-line bg-surface text-ink hover:border-tide/40"
+                              }`}
+                            >
+                              <strong className="font-medium">{option.label}</strong>
+                              {option.consequence && <span className="mt-1 block text-ink-soft">{option.consequence}</span>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : null}
+                    {slug && (
+                      <input
+                        type="text"
+                        value={value}
+                        onChange={(event) =>
+                          setAnswers((current) => ({ ...current, [slug]: event.target.value }))
+                        }
+                        placeholder={kind === "decision" ? "Pick an option above or write your own" : "Answer"}
+                        className="mt-3 w-full rounded-[10px] border border-line bg-paper px-3 py-2 text-[13px] text-ink placeholder:text-ink-faint focus:border-tide focus:outline-none"
+                      />
+                    )}
+                  </div>
+                );
+              })}
             </div>
+            {answerable.length > 0 && (
+              <div className="mt-3 flex items-center justify-between gap-3">
+                <span className="text-[12px] text-ink-soft">
+                  {agent.is_running
+                    ? "Agent is mid-turn; answers would be lost. Try again in a few minutes."
+                    : notice ?? `${filled.length} of ${answerable.length} answered`}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => void sendAnswers()}
+                  disabled={!filled.length || sending || agent.is_running}
+                  className="shrink-0 cursor-pointer rounded-full border border-tide bg-tide px-4 py-2 text-[12.5px] font-medium text-white hover:bg-tide-deep disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {sending
+                    ? "Sending"
+                    : `Send answer${filled.length === 1 ? "" : "s"}`}
+                </button>
+              </div>
+            )}
           </section>
         ) : null}
 
@@ -730,6 +862,7 @@ function AgentsView({ user }: { user: User }) {
           agent={selected}
           initialTab={selectedTab}
           onClose={() => setSelectedId(null)}
+          onAnswered={() => void load(true)}
         />
       )}
     </>

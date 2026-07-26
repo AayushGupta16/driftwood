@@ -48,6 +48,18 @@
   background: var(--color-ink);
 }
 
+/* The needs-attention dot: the sanctioned --alert exception (design-language
+ * §1) — internal dashboard cards only. No count; the dot is binary. */
+.agent-alert-dot {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-alert);
+}
+
 .agent-state[data-state="running"] {
   color: var(--color-tide);
 }

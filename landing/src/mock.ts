@@ -201,7 +201,7 @@ if (params.has("mock")) {
     next_action: string,
     steps: { text: string; status: string; evidence?: string }[],
     latest_output: { title: string; summary: string; url: string } | null = null,
-    needs_human: (string | { question: string; url?: string; link_label?: string })[] = [],
+    needs_human: (string | { id?: string; kind?: string; question: string; url?: string; link_label?: string; options?: { id: string; label: string; consequence?: string }[] })[] = [],
   ) => ({
     state: needs_human.length
       ? "waiting_for_review"
@@ -236,7 +236,7 @@ if (params.has("mock")) {
             { text: "Run bug hunts on approved targets", status: "todo" },
           ],
           { title: "Taste re-screen", summary: "Promoted and maybe companies awaiting review.", url: "https://driftwood.sh/d/autosana-taste-rescreen" },
-          [{ question: "Approve or reject the pending target batches.", url: "https://driftwood.sh/d/autosana-taste-rescreen", link_label: "Open target review" }],
+          [{ id: "target-batches", kind: "review", question: "Approve or reject the pending target batches.", url: "https://driftwood.sh/d/autosana-taste-rescreen", link_label: "Open target review" }],
         ),
         status_updated_at: hoursAgo(0.3), last_activity_at: hoursAgo(0.05),
       },
@@ -247,7 +247,7 @@ if (params.has("mock")) {
           "Its warm outreach wave cannot start because LinkedIn is disconnected.",
           "Submit the warm wave after LinkedIn reconnects", "Recheck LinkedIn",
           [{ text: "Reconnect LinkedIn", status: "blocked" }, { text: "Submit the warm wave", status: "todo" }],
-          null, ["Reconnect LinkedIn for this account."],
+          null, [{ id: "reconnect-linkedin", kind: "question", question: "Reconnect LinkedIn for this account?" }],
         ),
         status_updated_at: hoursAgo(3), last_activity_at: hoursAgo(3),
       },
@@ -259,7 +259,7 @@ if (params.has("mock")) {
           "Deliver the corrected robot comparison", "Collect review feedback",
           [{ text: "Restore all three opening swings", status: "done" }, { text: "Review the corrected cut", status: "blocked" }],
           { title: "Ngannou robot side-by-side", summary: "Corrected cut with all three swings.", url: "https://driftwood.sh/d/cyberneticphysics-ngannou-ko-sbs" },
-          [{ question: "Review the corrected side-by-side.", url: "https://driftwood.sh/d/cyberneticphysics-ngannou-ko-sbs", link_label: "Open video" }],
+          [{ id: "robot-video", kind: "review", question: "Review the corrected side-by-side.", url: "https://driftwood.sh/d/cyberneticphysics-ngannou-ko-sbs", link_label: "Open video", options: [{ id: "approve", label: "Good to send", consequence: "Goes to the customer today" }, { id: "another-pass", label: "One more pass", consequence: "Agent does another round first" }] }],
         ),
         status_updated_at: hoursAgo(22), last_activity_at: hoursAgo(22),
       },
@@ -331,6 +331,20 @@ if (params.has("mock")) {
     },
     { role: "founder", text: "Flash should not have a disappointed tag. otherwise ready to send", at: 0.2 },
   ];
+  const answerAsks = (init?: RequestInit, url?: string) => {
+    const agentId = decodeURIComponent(url?.match(/\/agents\/([^/]+)\/asks/)?.[1] ?? "");
+    const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
+    const agent = agentDashboard.agents.find((row) => row.agent_id === agentId);
+    const slugs = (body.answers ?? []).map((a: { slug: string }) => a.slug);
+    if (agent?.status) {
+      agent.status.needs_human = agent.status.needs_human.filter(
+        (need) => typeof need === "string" || !slugs.includes(need.id ?? ""),
+      );
+    }
+    return (body.answers ?? []).map((a: { slug: string; text: string }) => ({
+      slug: a.slug, state: "resolved", resolved_by: "founder", answer: a.text,
+    }));
+  };
   const conversation = (init?: RequestInit, url?: string) => {
     const agentId = decodeURIComponent(url?.match(/\/agents\/([^/]+)\/conversation/)?.[1] ?? "oruk");
     const agent = agentDashboard.agents.find((row) => row.agent_id === agentId);
@@ -356,6 +370,7 @@ if (params.has("mock")) {
     };
   };
   const mutateAgent = (init?: RequestInit, url?: string) => {
+    if (url?.includes("/asks/answers")) return answerAsks(init, url);
     if (url?.includes("/conversation")) return conversation(init, url);
     const match = url?.match(/\/api\/v1\/admin\/agents\/([^/]+)\/(pause|health)$/);
     if (!match) return {};
