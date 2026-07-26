@@ -55,6 +55,7 @@
   --color-sand: #eef2f5;
   --color-line: #e9ebee;
   --color-ok: #2a9d5c;
+  --color-alert: #b42318;
   --shadow-win: 0 1px 2px rgba(22, 24, 27, 0.05), 0 24px 48px -24px rgba(22, 24, 27, 0.18);
   --shadow-win-sm: 0 1px 2px rgba(22, 24, 27, 0.04), 0 10px 20px -14px rgba(22, 24, 27, 0.12);
   --font-brand: "Source Serif 4", Georgia, serif;
@@ -160,6 +161,7 @@ body {
   --gray-light: #9aa2ab;
   --line: #e9ebee;
   --accent: #15557e;
+  --alert: #b42318;
   /* the one window system: every artifact on the page wears this chrome */
   --r-win: 12px;
   --ease-settle: linear(0, 0.201 4.5%, 0.634 11.7%, 0.868 17.4%, 0.981 23%, 1.028 29.5%, 1.031 36.4%, 1.003 55.6%, 1);

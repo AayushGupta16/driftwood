@@ -21,10 +21,14 @@ value, change both.
 | tide-wash | `#eaf1f7` | tinted chips/fills |
 | wash-a / wash-b | `#f4f8fb` / `#eaf1f7` | section sheet tints (sparingly) |
 | ground | `#ffffff` | page background. White. Not off-white, not gradient |
+| alert | `#b42318` | needs-attention dot on internal dashboard cards ONLY |
 
 One accent. If a design wants a second accent color, the design is wrong.
 (Exception: in-artifact brand colors — Brex orange inside a Brex demo — live
-inside their artifact window and never leak into page chrome.)
+inside their artifact window and never leak into page chrome.) Sanctioned
+exception, approved by Aayush 2026-07-26: `--alert` is reserved for the
+needs-attention dot on internal/admin dashboard surfaces; it never appears
+on marketing pages and is never a second brand accent.
 
 ## 2. Type
 
