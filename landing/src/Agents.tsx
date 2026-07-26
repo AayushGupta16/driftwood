@@ -246,19 +246,8 @@ function AgentCard({
           <StatusSignal agent={agent} />
         </div>
 
-        <p className="agent-summary-clamp m-0 mt-4 text-[14px] leading-[1.5] text-ink">{summary}</p>
-
-        {agent.attention_reasons.length > 0 && (
-          <ul className="m-0 mt-4 list-none space-y-1.5 p-0 text-[12.5px] leading-[1.4] text-ink">
-            {agent.attention_reasons.map((reason) => (
-              <li key={reason} className="flex items-start gap-2">
-                <span className="agent-attention-mark" aria-hidden="true" />
-                <span className="agent-two-line-clamp">{reason}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-
+        {/* What you can do, then what you need to know, then the narrative —
+            the goal stays a quiet line further down. */}
         {need && (
           <div className="agent-action mt-4 px-3 py-2.5 text-[12.5px] leading-[1.45] text-ink">
             <span className="block text-[11.5px] font-medium text-tide-deep">
@@ -272,6 +261,19 @@ function AgentCard({
             )}
           </div>
         )}
+
+        {agent.attention_reasons.length > 0 && (
+          <ul className="m-0 mt-4 list-none space-y-1.5 p-0 text-[12.5px] leading-[1.4] text-ink">
+            {agent.attention_reasons.map((reason) => (
+              <li key={reason} className="flex items-start gap-2">
+                <span className="agent-attention-mark" aria-hidden="true" />
+                <span className="agent-two-line-clamp">{reason}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <p className="agent-summary-clamp m-0 mt-4 text-[14px] leading-[1.5] text-ink">{summary}</p>
 
         {/* One quiet line; Progress/Next and the step list live in the dialog. */}
         {goal && (
