@@ -125,6 +125,26 @@ function deadlineLabel(goal?: Goal | null) {
   return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(date);
 }
 
+// The card reads deadlines as a countdown (relative for urgency; the dialog
+// keeps the absolute date for planning). Measured to 23:59 of the deadline
+// day — the schema deliberately keeps deadline a bare date. Past a week the
+// hours are noise; inside a day the days are. A settled goal gets the plain
+// date back — a countdown on a finished goal is meaningless.
+function dueShort(goal: Goal | null, now: number) {
+  if (!goal?.deadline) return null;
+  const at = new Date(`${goal.deadline}T23:59:59`).getTime();
+  if (Number.isNaN(at)) return null;
+  if (goal.status === "done" || goal.status === "cancelled") {
+    const date = deadlineLabel(goal);
+    return date ? `due ${date}` : null;
+  }
+  const hours = Math.floor(Math.abs(at - now) / 3600e3);
+  const days = Math.floor(hours / 24);
+  const rest = hours % 24;
+  const span = days >= 7 ? `${days}d` : days === 0 ? `${rest}h` : `${days}d ${rest}h`;
+  return at < now ? `${span} overdue` : `due in ${span}`;
+}
+
 function needQuestion(need: HumanNeed) {
   const question = typeof need === "string" ? need : need.question;
   return question.replace(/^Aayush:\s*/i, "").trim();
@@ -172,10 +192,19 @@ const stateLabels: Record<AgentState, string> = {
 
 function StatusSignal({ agent }: { agent: AgentCardData }) {
   const state = managerState(agent);
+  // The needs-attention dot IS the state signal's dot ("merged" in
+  // draft-inline-answers.html) — a separate corner badge next to this dot was
+  // the rejected first attempt: two dots of different sizes ~10px apart.
+  const open = agent.paused ? 0 : agent.status?.needs_human.length ?? 0;
   return (
-    <span className="agent-state inline-flex shrink-0 items-center gap-1.5 text-[12px] font-medium text-ink-soft" data-state={state}>
-      <span className="size-1.5 rounded-full bg-current" aria-hidden="true" />
+    <span
+      className="agent-state inline-flex shrink-0 items-center gap-1.5 text-[12px] font-medium text-ink-soft"
+      data-state={state}
+      data-needs-you={open > 0 || undefined}
+    >
+      <span className="agent-state-dot" aria-hidden="true" />
       {stateLabels[state]}
+      {open > 0 && <span className="sr-only">, {open} question{open === 1 ? "" : "s"} waiting on you</span>}
     </span>
   );
 }
@@ -198,26 +227,18 @@ function AgentCard({
   onPause: () => void;
 }) {
   const goal = activeGoal(agent.status);
-  const progress = goalProgress(goal);
-  const due = deadlineLabel(goal);
-  const visibleSteps = goal?.steps.filter((step) => step.status !== "cancelled").slice(0, 3) ?? [];
-  const workers = agent.status?.subagents.filter((worker) => worker.status === "working").length ?? 0;
+  const goalMeta = [goalProgress(goal), dueShort(goal, now)].filter(Boolean).join(" · ");
   const latestOutput = agent.status?.latest_output;
   const href = outputUrl(latestOutput?.url);
   const need = agent.status?.needs_human[0] ?? null;
-  const reviewHref = need ? needUrl(need) : null;
-  const progressText = visibleSteps.find((step) => step.status === "doing" || step.status === "blocked")?.text
-    ?? visibleSteps.find((step) => step.status === "todo")?.text
-    ?? null;
+  const openCount = agent.status?.needs_human.length ?? 0;
+  const updatedAt = agent.status_updated_at ?? agent.last_activity_at;
   const summary = agent.status?.whats_happening
     ?? agent.current_assignment
     ?? "This agent has not reported its status yet.";
 
   return (
     <article className="agent-card group relative flex min-w-0 flex-col p-5">
-      {(agent.status?.needs_human.length ?? 0) > 0 && !agent.paused && (
-        <span className="agent-alert-dot" aria-label="Has open questions for you" />
-      )}
       <button type="button" onClick={onOpen} className="agent-card-hit absolute inset-0 z-0 cursor-pointer rounded-[inherit] border-0 bg-transparent" aria-label={`Open ${displayName(agent.agent_id)} details`} />
       <div className="pointer-events-none relative z-10 flex flex-1 flex-col">
         <div className="flex items-start justify-between gap-3">
@@ -238,38 +259,26 @@ function AgentCard({
           </ul>
         )}
 
-        <div className="mt-5 border-t border-line pt-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <span className="block text-[12px] font-medium text-ink-soft">Current goal</span>
-              <span className="agent-two-line-clamp mt-1 block text-[13.5px] font-medium leading-[1.4] text-ink">
-                {goal?.outcome ?? "No active goal reported"}
-              </span>
-            </div>
-            {(progress || due) && <span className="shrink-0 text-[12px] text-ink-soft">{[progress, due].filter(Boolean).join(" · ")}</span>}
-          </div>
-          {progressText && (
-            <p className="agent-two-line-clamp m-0 mt-3 text-[12.5px] leading-[1.4] text-ink-soft">
-              <span className="font-medium text-ink">Progress:</span> {progressText}
-            </p>
-          )}
-          {goal?.next_action && (
-            <p className="agent-two-line-clamp m-0 mt-2 text-[12.5px] leading-[1.4] text-ink-soft">
-              <span className="font-medium text-ink">Next:</span> {goal.next_action}
-            </p>
-          )}
-        </div>
-
         {need && (
-          <div className="mt-4 rounded-lg border border-line bg-sand/50 px-3 py-2.5 text-[12.5px] leading-[1.4] text-ink">
-            <span className="block text-[11.5px] font-medium text-ink-soft">Your action</span>
+          <div className="agent-action mt-4 px-3 py-2.5 text-[12.5px] leading-[1.45] text-ink">
+            <span className="block text-[11.5px] font-medium text-tide-deep">
+              {needKind(need) === "review" ? "Needs your eyes" : "Your action"}
+            </span>
             <span className="agent-two-line-clamp mt-1 block">{needQuestion(need)}</span>
-            {reviewHref && (
-              <a href={reviewHref} target="_blank" rel="noreferrer" className="pointer-events-auto relative z-20 mt-2 inline-flex font-medium text-tide no-underline hover:text-tide-deep" onClick={(event) => event.stopPropagation()}>
-                {typeof need === "string" ? "Open review" : need.link_label || "Open review"}
-              </a>
+            {openCount > 1 && (
+              <span className="mt-1.5 block text-[11.5px] font-medium text-tide-deep/85">
+                + {openCount - 1} more question{openCount === 2 ? "" : "s"}
+              </span>
             )}
           </div>
+        )}
+
+        {/* One quiet line; Progress/Next and the step list live in the dialog. */}
+        {goal && (
+          <p className="agent-two-line-clamp m-0 mt-4 border-t border-line pt-3 text-[12.5px] leading-[1.45] text-ink-soft">
+            <span className="text-ink">{goal.outcome}</span>
+            {goalMeta && <> · {goalMeta}</>}
+          </p>
         )}
 
         {latestOutput && href && (
@@ -285,10 +294,10 @@ function AgentCard({
 
       <div className="pointer-events-auto relative z-20 mt-5">
         <div className="flex items-center justify-between border-t border-line pt-3 text-[11.5px] text-ink-soft">
-          <span>{workers} sub-agent{workers === 1 ? "" : "s"}</span>
-          <span>{relativeTime(agent.status_updated_at ?? agent.last_activity_at, now)}</span>
+          <span>{updatedAt ? "Status updated" : "Status"}</span>
+          <span>{relativeTime(updatedAt, now)}</span>
         </div>
-        <div className="mt-3 flex items-center justify-between gap-3">
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-1" role="group" aria-label={`${displayName(agent.agent_id)} customer health`}>
             <span className="mr-1 text-[11.5px] text-ink-soft">Health</span>
             {[1, 2, 3, 4].map((score) => (
@@ -738,6 +747,10 @@ function AgentsView({ user }: { user: User }) {
 
   const active = useMemo(() => payload?.agents.filter((agent) => !agent.paused) ?? [], [payload]);
   const archived = useMemo(() => payload?.agents.filter((agent) => agent.paused) ?? [], [payload]);
+  const waitingCount = useMemo(
+    () => active.filter((agent) => (agent.status?.needs_human.length ?? 0) > 0).length,
+    [active],
+  );
   const selected = payload?.agents.find((agent) => agent.agent_id === selectedId) ?? null;
   const displayUserName = user.name || user.email;
 
@@ -797,7 +810,16 @@ function AgentsView({ user }: { user: User }) {
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <a href="/dashboard" className="text-[13.5px] font-medium text-ink-soft no-underline hover:text-ink">Back to dashboard</a>
-            <h1 className="m-0 mt-5 text-[clamp(1.7rem,3.6vw,2.2rem)] font-semibold leading-[1.08] tracking-[-0.015em]">Agents</h1>
+            <h1 className="m-0 mt-5 text-[clamp(1.7rem,3.6vw,2.2rem)] font-semibold leading-[1.08] tracking-[-0.015em]">
+              Agents
+              {/* The signal survives scrolling past a card. */}
+              {waitingCount > 0 && (
+                <span className="agent-h1-count" role="status">
+                  <span className="agent-h1-count-dot" aria-hidden="true" />
+                  {waitingCount} waiting on you
+                </span>
+              )}
+            </h1>
           </div>
           <div className="flex items-center gap-2">
             <button type="button" onClick={() => setArchivedOpen((open) => !open)} className="cursor-pointer rounded-full border border-line bg-surface px-3.5 py-2 text-[12.5px] font-medium text-ink-soft hover:text-ink" aria-expanded={archivedOpen}>
@@ -839,7 +861,8 @@ function AgentsView({ user }: { user: User }) {
         {!payload && !error ? (
           <div className="flex items-center justify-center py-24"><LoadingView /></div>
         ) : (
-          <section className="mt-7 grid items-start gap-4 md:grid-cols-2 xl:grid-cols-3" aria-label="Active agents">
+          // Rows stretch so the footer controls line up across a row.
+          <section className="mt-7 grid gap-4 md:grid-cols-2 xl:grid-cols-3" aria-label="Active agents">
             {active.map((agent) => (
               <AgentCard
                 key={agent.agent_id}
