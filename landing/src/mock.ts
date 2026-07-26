@@ -365,12 +365,10 @@ if (params.has("mock")) {
     if (agent && match[2] === "health") agent.customer_health = Number(body.score);
     return { agent_id: agent?.agent_id, paused: agent?.paused, customer_health: agent?.customer_health };
   };
-  const bootstrapStatuses = () => ({ delivered: agentDashboard.agents.filter((agent) => !agent.paused).map((agent) => agent.agent_id), offline: [], skipped: ["master", "madhumita_krishnan"] });
   // Matching is startsWith with NO method check, so more-specific paths must
   // come first — /sends/cancel and /sends/dismiss (POST) would otherwise be
   // swallowed by the /sends fixture, and /reviews/decide by /reviews.
   const routes: [string, unknown][] = [
-    ["/api/v1/admin/agents/status/bootstrap", bootstrapStatuses],
     ["/api/v1/admin/agents/dashboard", agentDashboard],
     ["/api/v1/admin/agents/", mutateAgent],
     ["/api/v1/admin/probes/dashboard", probesNotFound],
