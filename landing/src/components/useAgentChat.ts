@@ -27,7 +27,7 @@ export type AgentConversation = {
 // send was refused — paused, offline, no channel — is the whole value of the
 // response, so it has to survive to the screen rather than becoming a status
 // code. Same reader as the review queue uses.
-async function readErrorDetail(response: Response, fallback: string): Promise<string> {
+export async function readErrorDetail(response: Response, fallback: string): Promise<string> {
   try {
     const data = (await response.json()) as { error?: { detail?: unknown } };
     const detail = data.error?.detail;
