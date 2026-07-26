@@ -35,6 +35,21 @@ type Conversation = {
   has_more: boolean;
 };
 
+// The backend answers failures as {"error": {"code", "detail"}}. The reason a
+// send was refused — paused, offline, no channel — is the whole value of the
+// response, so it has to survive to the screen rather than becoming a status
+// code. Same reader as the review queue uses.
+async function readErrorDetail(response: Response, fallback: string): Promise<string> {
+  try {
+    const data = (await response.json()) as { error?: { detail?: unknown } };
+    const detail = data.error?.detail;
+    if (typeof detail === "string" && detail) return detail;
+  } catch {
+    // non-JSON body — use the fallback
+  }
+  return fallback;
+}
+
 function displayName(agentId: string) {
   return agentId
     .split(/[-_]/g)
@@ -196,8 +211,7 @@ function ConversationView({ user, agentId }: { user: User; agentId: string }) {
         body: JSON.stringify({ text }),
       });
       if (!response.ok) {
-        const body = await response.json().catch(() => null);
-        throw new Error(body?.error?.message ?? `Send returned ${response.status}`);
+        throw new Error(await readErrorDetail(response, `Send returned ${response.status}`));
       }
       setData((await response.json()) as Conversation);
       setDraft("");
@@ -216,7 +230,9 @@ function ConversationView({ user, agentId }: { user: User; agentId: string }) {
       const response = await fetch(`${base}?before=${encodeURIComponent(cursor)}`, {
         credentials: "include",
       });
-      if (!response.ok) throw new Error(`Load returned ${response.status}`);
+      if (!response.ok) {
+        throw new Error(await readErrorDetail(response, `Load returned ${response.status}`));
+      }
       const page = (await response.json()) as Conversation;
       setOlder((current) => [...page.messages, ...current]);
     } catch (reason) {
@@ -234,7 +250,9 @@ function ConversationView({ user, agentId }: { user: User; agentId: string }) {
         method: "POST",
         credentials: "include",
       });
-      if (!response.ok) throw new Error(`Import returned ${response.status}`);
+      if (!response.ok) {
+        throw new Error(await readErrorDetail(response, `Import returned ${response.status}`));
+      }
       const result = (await response.json()) as { scanned: number; imported: number };
       setNotice(
         `Imported ${result.imported} messages from ${result.scanned} scanned in Slack.`,
