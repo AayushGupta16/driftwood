@@ -1,0 +1,73 @@
+/* perfect-ui · <design_plan> v2.5.0
+ * Minimal operational workbench, motion 0/3. All fields verified in
+ * plans/2026-07-25-agent-dashboard-production/plan.md.
+ */
+
+.agent-card {
+  min-width: 0;
+  border: 1px solid var(--color-line);
+  border-radius: 14px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-win-sm);
+}
+
+.agent-copy-clamp {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.agent-card button,
+.agents-page button,
+.agents-page a {
+  transition:
+    border-color 160ms cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 160ms cubic-bezier(0.4, 0, 0.2, 1),
+    color 160ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.agent-step-mark {
+  display: inline-flex;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-ink-faint);
+  border-radius: 50%;
+}
+
+.agent-step-mark[data-status="done"]::after {
+  width: 6px;
+  height: 3px;
+  content: "";
+  border-bottom: 1.5px solid var(--color-tide);
+  border-left: 1.5px solid var(--color-tide);
+  transform: translateY(-1px) rotate(-45deg);
+}
+
+.agent-step-mark[data-status="doing"] {
+  border-color: var(--color-tide);
+}
+
+.agent-step-mark[data-status="doing"]::after {
+  width: 4px;
+  height: 4px;
+  content: "";
+  border-radius: 50%;
+  background: var(--color-tide);
+}
+
+.agent-step-mark[data-status="blocked"] {
+  border-color: var(--color-ink-soft);
+  background: var(--color-sand);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agent-card button,
+  .agents-page button,
+  .agents-page a {
+    transition: none;
+  }
+}

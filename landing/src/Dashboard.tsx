@@ -272,6 +272,12 @@ function LoggedInView({ user, onLogout }: { user: User; onLogout: () => void }) 
                 >
                   SEO / GEO
                 </a>
+                <a
+                  href="/dashboard/agents"
+                  className="inline-flex items-center rounded-full border border-tide/40 bg-surface px-3.5 py-2 text-[13.5px] font-medium text-tide no-underline transition-colors hover:border-tide hover:bg-tide-wash"
+                >
+                  Agents
+                </a>
               </>
             )}
             <button

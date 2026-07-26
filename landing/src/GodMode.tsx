@@ -30,7 +30,9 @@ export function GodModeButton() {
         onClick={() => setOpen(true)}
         className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-tide/40 bg-surface px-3.5 py-2 text-[13.5px] font-medium text-tide transition-colors hover:border-tide hover:bg-tide-wash"
       >
-        <span aria-hidden="true">⚡</span>
+        <svg viewBox="0 0 16 16" className="size-3.5" aria-hidden="true">
+          <path d="M9.6 1.5 4.2 8.2h3.4l-1.1 6.3 5.3-7H8.5l1.1-6Z" fill="none" stroke="currentColor" strokeWidth="1.35" strokeLinejoin="round" />
+        </svg>
         God mode
       </button>
       {open && <ImpersonateModal onClose={() => setOpen(false)} />}
