@@ -11,11 +11,37 @@
   box-shadow: var(--shadow-win-sm);
 }
 
-.agent-copy-clamp {
+.agent-card:has(.agent-card-hit:hover) {
+  border-color: color-mix(in srgb, var(--color-tide) 35%, var(--color-line));
+  box-shadow: var(--shadow-win);
+}
+
+.agent-card-hit:focus-visible {
+  outline: 2px solid var(--color-tide);
+  outline-offset: 3px;
+}
+
+.agent-summary-clamp,
+.agent-two-line-clamp {
   display: -webkit-box;
   overflow: hidden;
   -webkit-box-orient: vertical;
+}
+
+.agent-summary-clamp {
   -webkit-line-clamp: 3;
+}
+
+.agent-two-line-clamp {
+  -webkit-line-clamp: 2;
+}
+
+.agent-state[data-state="running"] {
+  color: var(--color-tide);
+}
+
+.agent-state[data-state="error"] {
+  color: var(--color-ink);
 }
 
 .agent-card button,

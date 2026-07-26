@@ -7,6 +7,19 @@
 5. Cover loading, empty, stale, invalid, error, and mutation states.
 6. Build, lint, inspect desktop/mobile, and ship through `main`.
 
+## Clarity iteration
+
+1. Add explicit manager-facing states: running, partly blocked, blocked,
+   waiting for review, waiting, idle, complete, and error.
+2. Reduce each card to a two-sentence update, one goal/progress line, one next
+   action, and linked review/output actions.
+3. Make the card surface open details while keeping health, archive, and links
+   independently interactive.
+4. Reject malformed deadline display values and verify the screenshot failure
+   cannot recur.
+5. Update the agent contract to use sixth-grade language and public links rather
+   than internal terms or workspace paths.
+
 ## Pre-emit verification
 
 ```yaml
