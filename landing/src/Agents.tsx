@@ -32,6 +32,7 @@ type Goal = {
   deadline?: string | null;
   next_action?: string | null;
   blocked_on?: string | null;
+  progress?: string | string[] | null;
   steps: Step[];
 };
 
@@ -181,6 +182,9 @@ function AgentCard({
   const progress = goalProgress(goal);
   const due = deadlineLabel(goal?.deadline);
   const visibleSteps = goal?.steps.filter((step) => step.status !== "cancelled").slice(0, 3) ?? [];
+  const visibleProgress = goal?.progress
+    ? (Array.isArray(goal.progress) ? goal.progress : [goal.progress]).slice(0, 2)
+    : [];
   const workers = agent.status?.subagents.filter((worker) => worker.status === "working").length ?? 0;
   const latestOutput = agent.status?.latest_output;
   const href = outputUrl(latestOutput?.url);
@@ -227,6 +231,16 @@ function AgentCard({
               <li key={step.id ?? `${step.text}-${index}`} className="flex items-start gap-2 text-[12.5px] leading-[1.35] text-ink-soft">
                 <span className="agent-step-mark mt-[1px]" data-status={step.status} aria-hidden="true" />
                 <span>{step.text}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+        {visibleSteps.length === 0 && visibleProgress.length > 0 && (
+          <ul className="m-0 mt-3 flex list-none flex-col gap-1.5 p-0">
+            {visibleProgress.map((item) => (
+              <li key={item} className="agent-copy-clamp flex items-start gap-2 text-[12.5px] leading-[1.35] text-ink-soft">
+                <span className="mt-[7px] size-1 shrink-0 rounded-full bg-ink-faint" aria-hidden="true" />
+                <span>{item}</span>
               </li>
             ))}
           </ul>
@@ -347,6 +361,13 @@ function AgentDetail({ agent, onClose }: { agent: AgentCardData; onClose: () => 
                   </span>
                 </div>
                 {goal.next_action && <p className="m-0 mt-2 text-[13px] text-ink-soft"><span className="font-medium text-ink">Next:</span> {goal.next_action}</p>}
+                {goal.progress && (
+                  <div className="mt-3 border-t border-line pt-3 text-[12.5px] leading-[1.5] text-ink-soft">
+                    {Array.isArray(goal.progress)
+                      ? <ul className="m-0 pl-5">{goal.progress.map((item) => <li key={item}>{item}</li>)}</ul>
+                      : <p className="m-0">{goal.progress}</p>}
+                  </div>
+                )}
                 {goal.steps.length > 0 && (
                   <ul className="m-0 mt-3 flex list-none flex-col gap-2 border-t border-line pt-3 p-0">
                     {goal.steps.map((step, index) => (
