@@ -30,11 +30,9 @@ type Goal = {
   status: "active" | "blocked" | "done" | "cancelled" | "superseded";
   priority?: "P0" | "P1" | "P2" | "P3" | null;
   deadline?: string | null;
-  deadline_at?: string | null;
-  deadline_all_day?: boolean;
+  deadline_note?: string | null;
   next_action?: string | null;
   blocked_on?: string | null;
-  progress?: string | string[] | null;
   steps: Step[];
 };
 
@@ -60,7 +58,6 @@ type AgentState =
   | "error";
 
 type AgentStatus = {
-  schema_version: 1;
   state: AgentState;
   whats_happening: string;
   goals: Goal[];
@@ -123,19 +120,14 @@ function relativeTime(value: string | null, now: number) {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
-// Agents write deadlines as prose, so the backend extracts the instant into
-// deadline_at. Anything it could not read stays off the card rather than
-// spilling free text into the layout.
+// A deadline is a calendar date the agent had to submit as one; anything it
+// wanted to SAY about the deadline is deadline_note. Parsed at midday so a
+// date-only value cannot roll to the neighbouring day in another timezone.
 function deadlineLabel(goal?: Goal | null) {
-  if (!goal?.deadline_at) return null;
-  const date = new Date(goal.deadline_at);
+  if (!goal?.deadline) return null;
+  const date = new Date(`${goal.deadline}T12:00:00`);
   if (Number.isNaN(date.getTime())) return null;
-  return new Intl.DateTimeFormat(undefined, {
-    month: "short",
-    day: "numeric",
-    hour: goal.deadline_all_day ? undefined : "numeric",
-    timeZone: "America/Los_Angeles",
-  }).format(date);
+  return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(date);
 }
 
 function needQuestion(need: HumanNeed) {
@@ -212,9 +204,6 @@ function AgentCard({
   const progress = goalProgress(goal);
   const due = deadlineLabel(goal);
   const visibleSteps = goal?.steps.filter((step) => step.status !== "cancelled").slice(0, 3) ?? [];
-  const visibleProgress = goal?.progress
-    ? (Array.isArray(goal.progress) ? goal.progress : [goal.progress]).slice(0, 2)
-    : [];
   const workers = agent.status?.subagents.filter((worker) => worker.status === "working").length ?? 0;
   const latestOutput = agent.status?.latest_output;
   const href = outputUrl(latestOutput?.url);
@@ -222,7 +211,6 @@ function AgentCard({
   const reviewHref = need ? needUrl(need) : null;
   const progressText = visibleSteps.find((step) => step.status === "doing" || step.status === "blocked")?.text
     ?? visibleSteps.find((step) => step.status === "todo")?.text
-    ?? visibleProgress[0]
     ?? null;
   const summary = agent.status?.whats_happening
     ?? agent.current_assignment
@@ -384,12 +372,10 @@ function AgentDetail({ agent, onClose }: { agent: AgentCardData; onClose: () => 
                   </span>
                 </div>
                 {goal.next_action && <p className="m-0 mt-2 text-[13px] text-ink-soft"><span className="font-medium text-ink">Next:</span> {goal.next_action}</p>}
-                {goal.progress && (
-                  <div className="mt-3 border-t border-line pt-3 text-[12.5px] leading-[1.5] text-ink-soft">
-                    {Array.isArray(goal.progress)
-                      ? <ul className="m-0 pl-5">{goal.progress.map((item) => <li key={item}>{item}</li>)}</ul>
-                      : <p className="m-0">{goal.progress}</p>}
-                  </div>
+                {goal.deadline_note && (
+                  <p className="m-0 mt-2 text-[13px] text-ink-soft">
+                    <span className="font-medium text-ink">Deadline:</span> {goal.deadline_note}
+                  </p>
                 )}
                 {goal.steps.length > 0 && (
                   <ul className="m-0 mt-3 flex list-none flex-col gap-2 border-t border-line pt-3 p-0">
