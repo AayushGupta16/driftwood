@@ -203,7 +203,6 @@ if (params.has("mock")) {
     latest_output: { title: string; summary: string; url: string } | null = null,
     needs_human: (string | { question: string; url?: string; link_label?: string })[] = [],
   ) => ({
-    schema_version: 1,
     state: needs_human.length
       ? "waiting_for_review"
       : steps.length > 0 && steps.every((step) => step.status === "done")
@@ -214,9 +213,8 @@ if (params.has("mock")) {
     whats_happening,
     goals: [{
       id: outcome.toLowerCase().replace(/\W+/g, "-").slice(0, 48), outcome, status: "active", priority: "P1",
-      // The backend extracts deadline_at out of whatever prose the agent wrote;
-      // the card reads that, never the raw text.
-      deadline: dateAhead(1), deadline_at: daysAhead(1), deadline_all_day: true,
+      // A calendar date, exactly as the update_status tool requires it.
+      deadline: dateAhead(1),
       next_action, steps,
     }],
     needs_human, subagents: [], latest_output,
