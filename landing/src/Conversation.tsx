@@ -32,15 +32,13 @@ function ConversationView({ user, agentId }: { user: User; agentId: string }) {
       {user.impersonating && <ImpersonationBanner email={user.email} />}
       <header className="sticky top-0 z-40 border-b border-line bg-paper/95 backdrop-blur-md">
         <nav className="mx-auto flex h-16 w-full max-w-4xl items-center justify-between px-5 sm:px-8">
-          <a href="/" target="_blank" rel="noreferrer" className="text-[18px] text-ink no-underline">
+          <a href="/" className="text-[18px] text-ink no-underline">
             <Wordmark markSize="size-8" />
           </a>
           <div className="flex items-center gap-3">
             <span className="hidden text-[13px] text-ink-soft sm:inline">{user.name || user.email}</span>
             <a
               href="/dashboard/agents"
-              target="_blank"
-              rel="noreferrer"
               className="inline-flex rounded-full border border-line bg-surface px-3.5 py-2 text-[13px] font-medium text-ink-soft no-underline hover:border-tide/40 hover:text-tide"
             >
               All agents
