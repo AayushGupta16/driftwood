@@ -1,0 +1,14 @@
+[
+  {
+    "date": "2026-07-25",
+    "brief": "Admin fleet status dashboard",
+    "vibe": "minimal",
+    "wildcard": "operational",
+    "macrostructure": "Workbench",
+    "design_variance": 3,
+    "visual_density": 6,
+    "motion_personality": "Premium",
+    "motion_intensity": 0,
+    "illustration_style": "none"
+  }
+]

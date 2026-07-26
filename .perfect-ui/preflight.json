@@ -1,0 +1,9 @@
+{
+  "date": "2026-07-25",
+  "framework": "React 19 + Vite 8 + Tailwind 4",
+  "fonts": ["Public Sans", "Source Serif 4", "IBM Plex Mono"],
+  "palette": "landing/src/index.css @theme",
+  "motion": "CSS only",
+  "icons": "custom SVG only",
+  "preserve": ["fonts", "palette", "spacing", "dashboard chrome"]
+}

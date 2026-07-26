@@ -195,10 +195,125 @@ if (params.has("mock")) {
       status: 404,
       headers: { "Content-Type": "application/json" },
     });
+  const status = (
+    whats_happening: string,
+    outcome: string,
+    next_action: string,
+    steps: { text: string; status: string; evidence?: string }[],
+    latest_output: { title: string; summary: string; url: string } | null = null,
+    needs_human: string[] = [],
+  ) => ({
+    schema_version: 1, whats_happening,
+    goals: [{ id: outcome.toLowerCase().replace(/\W+/g, "-").slice(0, 48), outcome, status: "active", priority: "P1", deadline: dateAhead(1), next_action, steps }],
+    needs_human, subagents: [], latest_output,
+  });
+  const agentDashboard = {
+    refreshed_at: new Date().toISOString(),
+    agents: [
+      {
+        agent_id: "autosana", paused: false, customer_health: 3, is_running: true,
+        attention_required: true, attention_reasons: ["Needs input from Aayush"],
+        current_assignment: "Report target review, bug hunts, demo readiness, and blockers from current pipeline data.",
+        status: status(
+          "It has 35 demo runs ready, but work is stalled until you review its target batches and roughly 107 pending connections.",
+          "Keep the target-review and bug-hunt pipeline moving",
+          "Run bug hunts on the targets Aayush approves",
+          [
+            { text: "Publish the daily pipeline checkpoint", status: "done", evidence: "35 take-ready runs" },
+            { text: "Review the pending target batches", status: "blocked" },
+            { text: "Run bug hunts on approved targets", status: "todo" },
+          ],
+          { title: "Taste re-screen", summary: "Promoted and maybe companies awaiting review.", url: "https://driftwood.sh/d/autosana-taste-rescreen" },
+          ["Approve or reject the pending target batches."],
+        ),
+        status_updated_at: hoursAgo(0.3), last_activity_at: hoursAgo(0.05),
+      },
+      {
+        agent_id: "autosana_demo", paused: false, customer_health: 3, is_running: false,
+        attention_required: true, attention_reasons: ["Needs input from Aayush"], current_assignment: null,
+        status: status(
+          "Its warm outreach wave cannot start because LinkedIn is disconnected.",
+          "Submit the warm wave after LinkedIn reconnects", "Recheck LinkedIn",
+          [{ text: "Reconnect LinkedIn", status: "blocked" }, { text: "Submit the warm wave", status: "todo" }],
+          null, ["Reconnect LinkedIn for this account."],
+        ),
+        status_updated_at: hoursAgo(3), last_activity_at: hoursAgo(3),
+      },
+      {
+        agent_id: "cyberneticphysics", paused: false, customer_health: 3, is_running: false,
+        attention_required: true, attention_reasons: ["Needs input from Aayush"], current_assignment: null,
+        status: status(
+          "The corrected robot comparison is finished and waiting for your review.",
+          "Deliver the corrected robot comparison", "Collect review feedback",
+          [{ text: "Restore all three opening swings", status: "done" }, { text: "Review the corrected cut", status: "blocked" }],
+          { title: "Ngannou robot side-by-side", summary: "Corrected cut with all three swings.", url: "https://driftwood.sh/d/cyberneticphysics-ngannou-ko-sbs" },
+          ["Review the corrected side-by-side."],
+        ),
+        status_updated_at: hoursAgo(22), last_activity_at: hoursAgo(22),
+      },
+      {
+        agent_id: "driftwood", paused: false, customer_health: 3, is_running: false,
+        attention_required: true, attention_reasons: ["Needs input from Aayush"], current_assignment: null,
+        status: status(
+          "It stopped sourcing to avoid duplicates because roughly 449 outreach items are already in your review queue.",
+          "Keep the connection-request queue supplied without duplicates", "Wait for review backlog to clear",
+          [{ text: "Verify the review backlog", status: "done" }, { text: "Review existing outreach waves", status: "blocked" }],
+          null, ["Review the existing outreach waves."],
+        ),
+        status_updated_at: hoursAgo(8), last_activity_at: hoursAgo(8),
+      },
+      {
+        agent_id: "gracegong", paused: false, customer_health: 3, is_running: false,
+        attention_required: false, attention_reasons: [], current_assignment: null,
+        status: status(
+          "It finished the hosted outreach brief and has nothing else assigned.",
+          "Finish the hosted outreach brief", "No next action until redirected",
+          [{ text: "Publish the hosted brief", status: "done" }, { text: "Apply the show-not-tell revision", status: "done" }],
+          { title: "Grace Gong outreach brief", summary: "The hosted full draft.", url: "https://driftwood.sh/d/smartventure-truell-brief" },
+        ),
+        status_updated_at: hoursAgo(26), last_activity_at: hoursAgo(26),
+      },
+      {
+        agent_id: "madhumita_krishnan", paused: true, customer_health: 2, is_running: false,
+        attention_required: false, attention_reasons: [], current_assignment: null,
+        status: status("Paused with no assignment in flight.", "Await the next assignment", "Resume when restored", []),
+        status_updated_at: hoursAgo(48), last_activity_at: hoursAgo(48),
+      },
+      {
+        agent_id: "oruk", paused: false, customer_health: 3, is_running: true,
+        attention_required: false, attention_reasons: [],
+        current_assignment: "Redo the remaining demos with a verified Oruk emotion tag for every caption cue.",
+        status: status(
+          "It is actively rebuilding caption demos. Disney and Paramount passed; Comcast and the remaining cuts are in progress.",
+          "Rebuild every demo with verified Oruk emotion tags", "Finish Comcast and the remaining rebuilds",
+          [
+            { text: "Pass Disney and Paramount strict QA", status: "done", evidence: "Disney 21/21; Paramount 22/22" },
+            { text: "Finish Comcast and remaining rebuilds", status: "doing" },
+            { text: "Update the action-items artifact", status: "todo" },
+          ],
+          { title: "Oruk action items", summary: "Standing review surface for the caption rebuilds.", url: "https://driftwood.sh/d/oruk-action-items" },
+        ),
+        status_updated_at: hoursAgo(0.1), last_activity_at: hoursAgo(0.01),
+      },
+    ],
+  };
+  const mutateAgent = (init?: RequestInit, url?: string) => {
+    const match = url?.match(/\/api\/v1\/admin\/agents\/([^/]+)\/(pause|health)$/);
+    if (!match) return {};
+    const agent = agentDashboard.agents.find((row) => row.agent_id === decodeURIComponent(match[1]));
+    const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
+    if (agent && match[2] === "pause") agent.paused = Boolean(body.paused);
+    if (agent && match[2] === "health") agent.customer_health = Number(body.score);
+    return { agent_id: agent?.agent_id, paused: agent?.paused, customer_health: agent?.customer_health };
+  };
+  const bootstrapStatuses = () => ({ delivered: agentDashboard.agents.filter((agent) => !agent.paused).map((agent) => agent.agent_id), offline: [], skipped: ["master", "madhumita_krishnan"] });
   // Matching is startsWith with NO method check, so more-specific paths must
   // come first — /sends/cancel and /sends/dismiss (POST) would otherwise be
   // swallowed by the /sends fixture, and /reviews/decide by /reviews.
   const routes: [string, unknown][] = [
+    ["/api/v1/admin/agents/status/bootstrap", bootstrapStatuses],
+    ["/api/v1/admin/agents/dashboard", agentDashboard],
+    ["/api/v1/admin/agents/", mutateAgent],
     ["/api/v1/admin/probes/dashboard", probesNotFound],
     ["/api/v1/dashboard/sends/cancel", cancelSends],
     ["/api/v1/dashboard/sends/dismiss", dismissSends],
@@ -214,7 +329,7 @@ if (params.has("mock")) {
     const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
     for (const [path, body] of routes) {
       if (url.startsWith(path)) {
-        const payload = typeof body === "function" ? (body as (i?: RequestInit) => unknown)(init) : body;
+        const payload = typeof body === "function" ? (body as (i?: RequestInit, u?: string) => unknown)(init, url) : body;
         // A fixture may hand back a full Response (e.g. a synthetic 404).
         if (payload instanceof Response) return Promise.resolve(payload);
         return Promise.resolve(
