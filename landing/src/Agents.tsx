@@ -431,6 +431,8 @@ function ConversationPanel({ agent, chat }: { agent: AgentCardData; chat: AgentC
           />
           <a
             href={`/dashboard/agents/${encodeURIComponent(agent.agent_id)}`}
+            target="_blank"
+            rel="noreferrer"
             className="text-[12px] font-medium text-tide no-underline hover:text-tide-deep"
           >
             Open full page
@@ -643,7 +645,7 @@ function AgentsView({ user }: { user: User }) {
       {user.impersonating && <ImpersonationBanner email={user.email} />}
       <header className="sticky top-0 z-40 border-b border-line bg-paper/95 backdrop-blur-md">
         <nav className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-5 sm:px-8">
-          <a href="/" className="text-[18px] text-ink no-underline"><Wordmark markSize="size-8" /></a>
+          <a href="/" target="_blank" rel="noreferrer" className="text-[18px] text-ink no-underline"><Wordmark markSize="size-8" /></a>
           <div className="flex items-center gap-3">
             {user.avatar_url ? (
               <img src={user.avatar_url} alt={`${displayUserName}'s avatar`} className="hidden size-8 rounded-full border border-line object-cover sm:block" referrerPolicy="no-referrer" />
@@ -652,7 +654,7 @@ function AgentsView({ user }: { user: User }) {
             )}
             <span className="hidden text-[14px] font-medium text-ink sm:inline">{displayUserName}</span>
             <span className="hidden sm:inline-flex"><GodModeButton /></span>
-            <a href="/dashboard/seo-geo" className="hidden rounded-full border border-line bg-surface px-3.5 py-2 text-[13px] font-medium text-ink-soft no-underline hover:border-tide/40 hover:text-tide md:inline-flex">SEO / GEO</a>
+            <a href="/dashboard/seo-geo" target="_blank" rel="noreferrer" className="hidden rounded-full border border-line bg-surface px-3.5 py-2 text-[13px] font-medium text-ink-soft no-underline hover:border-tide/40 hover:text-tide md:inline-flex">SEO / GEO</a>
             <a href="/dashboard/agents" aria-current="page" className="inline-flex rounded-full border border-tide bg-tide-wash px-3.5 py-2 text-[13px] font-medium text-tide no-underline">Agents</a>
             <button type="button" onClick={handleLogout} className="hidden cursor-pointer rounded-full border border-line bg-surface px-3.5 py-2 text-[13px] font-medium text-ink-soft hover:text-ink sm:inline-flex">Log out</button>
           </div>
@@ -662,7 +664,7 @@ function AgentsView({ user }: { user: User }) {
       <main id="agents-main" className="mx-auto w-full max-w-7xl flex-1 px-5 pb-14 pt-10 sm:px-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <a href="/dashboard" className="text-[13.5px] font-medium text-ink-soft no-underline hover:text-ink">Back to dashboard</a>
+            <a href="/dashboard" target="_blank" rel="noreferrer" className="text-[13.5px] font-medium text-ink-soft no-underline hover:text-ink">Back to dashboard</a>
             <h1 className="m-0 mt-5 text-[clamp(1.7rem,3.6vw,2.2rem)] font-semibold leading-[1.08] tracking-[-0.015em]">Agents</h1>
           </div>
           <div className="flex items-center gap-2">
