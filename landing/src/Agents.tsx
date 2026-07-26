@@ -42,11 +42,24 @@ type HumanNeed =
       id?: string | null;
       question: string;
       context?: string | null;
+      url?: string | null;
+      link_label?: string | null;
       options?: { id: string; label: string; consequence?: string | null }[];
     };
 
+type AgentState =
+  | "running"
+  | "partially_blocked"
+  | "blocked"
+  | "waiting_for_review"
+  | "waiting"
+  | "idle"
+  | "complete"
+  | "error";
+
 type AgentStatus = {
   schema_version: 1;
+  state: AgentState;
   whats_happening: string;
   goals: Goal[];
   needs_human: HumanNeed[];
@@ -111,7 +124,7 @@ function relativeTime(value: string | null, now: number) {
 function deadlineLabel(value?: string | null) {
   if (!value) return null;
   const date = new Date(value.length === 10 ? `${value}T23:59:59` : value);
-  if (Number.isNaN(date.getTime())) return value;
+  if (Number.isNaN(date.getTime())) return null;
   return new Intl.DateTimeFormat(undefined, {
     month: "short",
     day: "numeric",
@@ -120,7 +133,12 @@ function deadlineLabel(value?: string | null) {
 }
 
 function needQuestion(need: HumanNeed) {
-  return typeof need === "string" ? need : need.question;
+  const question = typeof need === "string" ? need : need.question;
+  return question.replace(/^Aayush:\s*/i, "").trim();
+}
+
+function needUrl(need: HumanNeed) {
+  return typeof need === "string" ? null : outputUrl(need.url);
 }
 
 function outputUrl(value?: string | null) {
@@ -143,24 +161,30 @@ function goalProgress(goal: Goal | null) {
   return `${done}/${goal.steps.length}`;
 }
 
+function managerState(agent: AgentCardData): AgentState {
+  if (agent.is_running) return "running";
+  return agent.status?.state ?? "idle";
+}
+
+const stateLabels: Record<AgentState, string> = {
+  running: "Running",
+  partially_blocked: "Partly blocked",
+  blocked: "Blocked",
+  waiting_for_review: "Waiting for review",
+  waiting: "Waiting",
+  idle: "Idle",
+  complete: "Complete",
+  error: "Error",
+};
+
 function StatusSignal({ agent }: { agent: AgentCardData }) {
-  if (agent.attention_required) {
-    return (
-      <span className="inline-flex items-center gap-1.5 text-[12.5px] font-medium text-ink">
-        <span className="size-1.5 rounded-full bg-ink" aria-hidden="true" />
-        Needs attention
-      </span>
-    );
-  }
-  if (agent.is_running) {
-    return (
-      <span className="inline-flex items-center gap-1.5 text-[12.5px] font-medium text-tide">
-        <span className="size-1.5 rounded-full bg-tide" aria-hidden="true" />
-        Running
-      </span>
-    );
-  }
-  return null;
+  const state = managerState(agent);
+  return (
+    <span className="agent-state inline-flex shrink-0 items-center gap-1.5 text-[12px] font-medium text-ink-soft" data-state={state}>
+      <span className="size-1.5 rounded-full bg-current" aria-hidden="true" />
+      {stateLabels[state]}
+    </span>
+  );
 }
 
 function AgentCard({
@@ -188,93 +212,75 @@ function AgentCard({
   const workers = agent.status?.subagents.filter((worker) => worker.status === "working").length ?? 0;
   const latestOutput = agent.status?.latest_output;
   const href = outputUrl(latestOutput?.url);
+  const need = agent.status?.needs_human[0] ?? null;
+  const reviewHref = need ? needUrl(need) : null;
+  const progressText = visibleSteps.find((step) => step.status === "doing" || step.status === "blocked")?.text
+    ?? visibleSteps.find((step) => step.status === "todo")?.text
+    ?? visibleProgress[0]
+    ?? null;
+  const summary = agent.status?.whats_happening
+    ?? agent.current_assignment
+    ?? "This agent has not reported its status yet.";
 
   return (
-    <article className="agent-card flex min-h-[390px] flex-col p-5">
-      <div className="flex items-start justify-between gap-3">
-        <button
-          type="button"
-          onClick={onOpen}
-          className="cursor-pointer border-0 bg-transparent p-0 text-left text-[18px] font-semibold tracking-[-0.01em] text-ink hover:text-tide"
-        >
-          {displayName(agent.agent_id)}
-        </button>
-        <StatusSignal agent={agent} />
-      </div>
-
-      <p className="agent-copy-clamp m-0 mt-4 min-h-[63px] text-[14px] leading-[1.5] text-ink">
-        {agent.status?.whats_happening ?? "This agent has not reported its status yet."}
-      </p>
-
-      {agent.is_running && agent.current_assignment && (
-        <div className="mt-4 border-l-2 border-tide pl-3">
-          <span className="block text-[12px] font-medium text-ink-soft">Working now</span>
-          <span className="agent-copy-clamp mt-1 block text-[13px] leading-[1.45] text-ink">
-            {agent.current_assignment}
-          </span>
-        </div>
-      )}
-
-      <div className="mt-5 border-t border-line pt-4">
+    <article className="agent-card group relative flex min-w-0 flex-col p-5">
+      <button type="button" onClick={onOpen} className="agent-card-hit absolute inset-0 z-0 cursor-pointer rounded-[inherit] border-0 bg-transparent" aria-label={`Open ${displayName(agent.agent_id)} details`} />
+      <div className="pointer-events-none relative z-10 flex flex-1 flex-col">
         <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <span className="block text-[12px] font-medium text-ink-soft">Current goal</span>
-            <span className="agent-copy-clamp mt-1 block text-[13.5px] font-medium leading-[1.4] text-ink">
-              {goal?.outcome ?? "No active goal reported"}
-            </span>
-          </div>
-          {(progress || due) && <span className="shrink-0 text-[12px] text-ink-soft">{[progress, due].filter(Boolean).join(" · ")}</span>}
+          <h2 className="m-0 text-[18px] font-semibold tracking-[-0.01em] text-ink">{displayName(agent.agent_id)}</h2>
+          <StatusSignal agent={agent} />
         </div>
-        {visibleSteps.length > 0 && (
-          <ul className="m-0 mt-3 flex list-none flex-col gap-2 p-0">
-            {visibleSteps.map((step, index) => (
-              <li key={step.id ?? `${step.text}-${index}`} className="flex items-start gap-2 text-[12.5px] leading-[1.35] text-ink-soft">
-                <span className="agent-step-mark mt-[1px]" data-status={step.status} aria-hidden="true" />
-                <span>{step.text}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-        {visibleSteps.length === 0 && visibleProgress.length > 0 && (
-          <ul className="m-0 mt-3 flex list-none flex-col gap-1.5 p-0">
-            {visibleProgress.map((item) => (
-              <li key={item} className="agent-copy-clamp flex items-start gap-2 text-[12.5px] leading-[1.35] text-ink-soft">
-                <span className="mt-[7px] size-1 shrink-0 rounded-full bg-ink-faint" aria-hidden="true" />
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-        {goal?.next_action && (
-          <p className="m-0 mt-3 text-[12.5px] leading-[1.4] text-ink-soft">
-            <span className="font-medium text-ink">Next:</span> {goal.next_action}
-          </p>
-        )}
-      </div>
 
-      {agent.status?.needs_human[0] && (
-        <div className="mt-4 rounded-lg border border-line bg-sand/50 px-3 py-2.5 text-[12.5px] leading-[1.4] text-ink">
-          <span className="font-medium">You:</span> {needQuestion(agent.status.needs_human[0])}
-        </div>
-      )}
+        <p className="agent-summary-clamp m-0 mt-4 text-[14px] leading-[1.5] text-ink">{summary}</p>
 
-      {latestOutput && (
-        <div className="mt-4 flex items-start justify-between gap-3 border-t border-line pt-3">
-          <div className="min-w-0">
-            <span className="block text-[12px] text-ink-soft">Latest output</span>
-            <span className="mt-0.5 block truncate text-[12.5px] font-medium text-ink">{latestOutput.title}</span>
+        <div className="mt-5 border-t border-line pt-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <span className="block text-[12px] font-medium text-ink-soft">Current goal</span>
+              <span className="agent-two-line-clamp mt-1 block text-[13.5px] font-medium leading-[1.4] text-ink">
+                {goal?.outcome ?? "No active goal reported"}
+              </span>
+            </div>
+            {(progress || due) && <span className="shrink-0 text-[12px] text-ink-soft">{[progress, due].filter(Boolean).join(" · ")}</span>}
           </div>
-          {href && (
-            <a href={href} target="_blank" rel="noreferrer" className="shrink-0 text-[12px] font-medium text-tide no-underline hover:text-tide-deep">
-              Open
-            </a>
+          {progressText && (
+            <p className="agent-two-line-clamp m-0 mt-3 text-[12.5px] leading-[1.4] text-ink-soft">
+              <span className="font-medium text-ink">Progress:</span> {progressText}
+            </p>
+          )}
+          {goal?.next_action && (
+            <p className="agent-two-line-clamp m-0 mt-2 text-[12.5px] leading-[1.4] text-ink-soft">
+              <span className="font-medium text-ink">Next:</span> {goal.next_action}
+            </p>
           )}
         </div>
-      )}
 
-      <div className="mt-auto pt-5">
+        {need && (
+          <div className="mt-4 rounded-lg border border-line bg-sand/50 px-3 py-2.5 text-[12.5px] leading-[1.4] text-ink">
+            <span className="block text-[11.5px] font-medium text-ink-soft">Your action</span>
+            <span className="agent-two-line-clamp mt-1 block">{needQuestion(need)}</span>
+            {reviewHref && (
+              <a href={reviewHref} target="_blank" rel="noreferrer" className="pointer-events-auto relative z-20 mt-2 inline-flex font-medium text-tide no-underline hover:text-tide-deep" onClick={(event) => event.stopPropagation()}>
+                {typeof need === "string" ? "Open review" : need.link_label || "Open review"}
+              </a>
+            )}
+          </div>
+        )}
+
+        {latestOutput && href && (
+          <a href={href} target="_blank" rel="noreferrer" className="pointer-events-auto relative z-20 mt-4 flex items-center justify-between gap-3 border-t border-line pt-3 text-[12.5px] no-underline" onClick={(event) => event.stopPropagation()}>
+            <span className="min-w-0">
+              <span className="block text-[11.5px] text-ink-soft">Latest output</span>
+              <span className="mt-0.5 block truncate font-medium text-ink">{latestOutput.title}</span>
+            </span>
+            <span className="shrink-0 font-medium text-tide">Open</span>
+          </a>
+        )}
+      </div>
+
+      <div className="pointer-events-auto relative z-20 mt-5">
         <div className="flex items-center justify-between border-t border-line pt-3 text-[11.5px] text-ink-soft">
-          <span>{workers} sub-agent{workers === 1 ? "" : "s"} reported working</span>
+          <span>{workers} sub-agent{workers === 1 ? "" : "s"}</span>
           <span>{relativeTime(agent.status_updated_at ?? agent.last_activity_at, now)}</span>
         </div>
         <div className="mt-3 flex items-center justify-between gap-3">
@@ -340,15 +346,6 @@ function AgentDetail({ agent, onClose }: { agent: AgentCardData; onClose: () => 
         </div>
         <p className="m-0 mt-6 text-[15px] leading-[1.55] text-ink">{agent.status?.whats_happening ?? "No status reported."}</p>
 
-        {agent.attention_reasons.length > 0 && (
-          <section className="mt-6 rounded-xl border border-line bg-sand/50 p-4">
-            <h3 className="m-0 text-[13px] font-semibold text-ink">Needs attention</h3>
-            <ul className="mb-0 mt-2 pl-5 text-[13px] leading-[1.6] text-ink-soft">
-              {agent.attention_reasons.map((reason) => <li key={reason}>{reason}</li>)}
-            </ul>
-          </section>
-        )}
-
         <section className="mt-7">
           <h3 className="m-0 text-[14px] font-semibold">Goals</h3>
           <div className="mt-3 flex flex-col gap-3">
@@ -392,6 +389,11 @@ function AgentDetail({ agent, onClose }: { agent: AgentCardData; onClose: () => 
                 <div key={typeof need === "string" ? need : need.id ?? `${need.question}-${index}`} className="rounded-xl border border-line p-4">
                   <p className="m-0 text-[13.5px] font-medium">{needQuestion(need)}</p>
                   {typeof need !== "string" && need.context && <p className="m-0 mt-1.5 text-[12.5px] leading-[1.5] text-ink-soft">{need.context}</p>}
+                  {needUrl(need) && (
+                    <a href={needUrl(need) ?? undefined} target="_blank" rel="noreferrer" className="mt-3 inline-flex text-[12.5px] font-medium text-tide no-underline hover:text-tide-deep">
+                      {typeof need === "string" ? "Open review" : need.link_label || "Open review"}
+                    </a>
+                  )}
                   {typeof need !== "string" && need.options?.length ? (
                     <div className="mt-3 grid gap-2 sm:grid-cols-2">
                       {need.options.map((option) => (
@@ -442,7 +444,7 @@ export default function Agents() {
 
   return (
     <ToastProvider>
-      <div className="agents-page relative flex min-h-screen flex-col overflow-x-clip">
+      <div className="agents-page relative flex min-h-[100dvh] flex-col overflow-x-clip">
         <a href="#agents-main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-full focus:bg-surface focus:px-4 focus:py-2 focus:text-[13px] focus:text-ink">Skip to agents</a>
         {auth.status === "loading" && <LoadingView />}
         {auth.status === "denied" && <LoggedOutView />}
@@ -568,7 +570,7 @@ function AgentsView({ user }: { user: User }) {
         {error && <div className="mt-6 rounded-xl border border-line bg-sand/50 px-4 py-3 text-[13px] text-ink">{error}</div>}
 
         {archivedOpen && (
-          <section className="mt-6 rounded-[14px] border border-line bg-[#f8fafb] p-4" aria-label="Archived agents">
+          <section className="mt-6 rounded-[14px] border border-line bg-paper p-4" aria-label="Archived agents">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h2 className="m-0 text-[14px] font-semibold">Archived agents</h2>
@@ -594,7 +596,7 @@ function AgentsView({ user }: { user: User }) {
         {!payload && !error ? (
           <div className="flex items-center justify-center py-24"><LoadingView /></div>
         ) : (
-          <section className="mt-7 grid gap-4 md:grid-cols-2 xl:grid-cols-3" aria-label="Active agents">
+          <section className="mt-7 grid items-start gap-4 md:grid-cols-2 xl:grid-cols-3" aria-label="Active agents">
             {active.map((agent) => (
               <AgentCard
                 key={agent.agent_id}

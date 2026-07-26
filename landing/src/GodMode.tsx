@@ -253,7 +253,10 @@ export function ImpersonationBanner({ email }: { email: string }) {
     <div className="sticky top-0 z-50 border-b border-amber-600/25 bg-amber-500/10 text-amber-800 backdrop-blur-md">
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-5 py-2.5 sm:px-8">
         <span className="min-w-0 truncate text-[13.5px] font-medium">
-          <span aria-hidden="true">⚡</span> God mode — viewing as {email}.
+          <svg viewBox="0 0 16 16" fill="none" aria-hidden="true" className="mr-1 inline-block size-3.5 align-[-2px]">
+            <path d="M9.3 1.8 4.7 8h3l-1 6.2 4.6-7h-3l1-5.4Z" stroke="currentColor" strokeWidth="1.35" strokeLinejoin="round" />
+          </svg>
+          God mode — viewing as {email}.
         </span>
         <button
           type="button"

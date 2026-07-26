@@ -201,9 +201,17 @@ if (params.has("mock")) {
     next_action: string,
     steps: { text: string; status: string; evidence?: string }[],
     latest_output: { title: string; summary: string; url: string } | null = null,
-    needs_human: string[] = [],
+    needs_human: (string | { question: string; url?: string; link_label?: string })[] = [],
   ) => ({
-    schema_version: 1, whats_happening,
+    schema_version: 1,
+    state: needs_human.length
+      ? "waiting_for_review"
+      : steps.length > 0 && steps.every((step) => step.status === "done")
+        ? "complete"
+        : steps.some((step) => step.status === "blocked")
+          ? "blocked"
+          : "running",
+    whats_happening,
     goals: [{ id: outcome.toLowerCase().replace(/\W+/g, "-").slice(0, 48), outcome, status: "active", priority: "P1", deadline: dateAhead(1), next_action, steps }],
     needs_human, subagents: [], latest_output,
   });
@@ -224,7 +232,7 @@ if (params.has("mock")) {
             { text: "Run bug hunts on approved targets", status: "todo" },
           ],
           { title: "Taste re-screen", summary: "Promoted and maybe companies awaiting review.", url: "https://driftwood.sh/d/autosana-taste-rescreen" },
-          ["Approve or reject the pending target batches."],
+          [{ question: "Approve or reject the pending target batches.", url: "https://driftwood.sh/d/autosana-taste-rescreen", link_label: "Open target review" }],
         ),
         status_updated_at: hoursAgo(0.3), last_activity_at: hoursAgo(0.05),
       },
@@ -247,7 +255,7 @@ if (params.has("mock")) {
           "Deliver the corrected robot comparison", "Collect review feedback",
           [{ text: "Restore all three opening swings", status: "done" }, { text: "Review the corrected cut", status: "blocked" }],
           { title: "Ngannou robot side-by-side", summary: "Corrected cut with all three swings.", url: "https://driftwood.sh/d/cyberneticphysics-ngannou-ko-sbs" },
-          ["Review the corrected side-by-side."],
+          [{ question: "Review the corrected side-by-side.", url: "https://driftwood.sh/d/cyberneticphysics-ngannou-ko-sbs", link_label: "Open video" }],
         ),
         status_updated_at: hoursAgo(22), last_activity_at: hoursAgo(22),
       },
