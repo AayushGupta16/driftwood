@@ -320,14 +320,23 @@ function AgentCard({
               </button>
             ))}
           </div>
-          <button
-            type="button"
-            onClick={onPause}
-            disabled={busy}
-            className="min-h-11 cursor-pointer rounded-full border border-line bg-surface px-3 py-1.5 text-[11.5px] font-medium text-ink-soft hover:border-ink-faint hover:text-ink disabled:cursor-wait disabled:opacity-50 sm:min-h-0"
-          >
-            Archive
-          </button>
+          <div className="flex items-center gap-2">
+            <a
+              href={`/dashboard/agents/${encodeURIComponent(agent.agent_id)}`}
+              onClick={(event) => event.stopPropagation()}
+              className="min-h-11 cursor-pointer content-center rounded-full border border-tide/40 bg-surface px-3 py-1.5 text-[11.5px] font-medium text-tide no-underline hover:bg-tide-wash sm:min-h-0"
+            >
+              Message
+            </a>
+            <button
+              type="button"
+              onClick={onPause}
+              disabled={busy}
+              className="min-h-11 cursor-pointer rounded-full border border-line bg-surface px-3 py-1.5 text-[11.5px] font-medium text-ink-soft hover:border-ink-faint hover:text-ink disabled:cursor-wait disabled:opacity-50 sm:min-h-0"
+            >
+              Archive
+            </button>
+          </div>
         </div>
       </div>
     </article>

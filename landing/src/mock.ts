@@ -311,7 +311,54 @@ if (params.has("mock")) {
       },
     ],
   };
+  // One canned exchange, close to what a real founder channel holds: prose,
+  // a Slack-syntax link, and a mention the page has to unwrap.
+  const conversationLog = [
+    { role: "founder", text: "we need to get something out to nathan tonight", at: 5.5 },
+    {
+      role: "agent",
+      text: "Plan for tonight, working now: fix Zootopia and Studio first, since they unlock the six send-ready rows that already have verified captions. ETA about 40 minutes for both.",
+      at: 5.4,
+    },
+    { role: "founder", text: "why is the ETA so long? should be 20 minutes max if you run them in parallel", at: 4.2 },
+    {
+      role: "agent",
+      text: "Fair push. The caption edit itself is minutes; the rest was product-side QA I was serialising for no good reason. Running them in parallel now.",
+      at: 4.1,
+    },
+    {
+      role: "agent",
+      text: "All four demos are rebuilt and republished with your tags verbatim. Latest cut is up at <https://driftwood.sh/d/oruk-caption-demos|the demo page> if you want to check before it goes out.",
+      at: 0.6,
+    },
+    { role: "founder", text: "Flash should not have a disappointed tag. otherwise ready to send", at: 0.2 },
+  ];
+  const conversation = (init?: RequestInit, url?: string) => {
+    const agentId = decodeURIComponent(url?.match(/\/agents\/([^/]+)\/conversation/)?.[1] ?? "oruk");
+    const agent = agentDashboard.agents.find((row) => row.agent_id === agentId);
+    if (url?.includes("/backfill")) return { agent_id: agentId, scanned: 200, imported: 167 };
+    if (init?.method === "POST") {
+      const body = JSON.parse(typeof init.body === "string" ? init.body : "{}");
+      conversationLog.push({ role: "founder", text: String(body.text ?? ""), at: 0 });
+    }
+    return {
+      agent_id: agentId,
+      paused: Boolean(agent?.paused),
+      online: !agent?.paused,
+      can_send: true,
+      has_more: true,
+      oldest_at: hoursAgo(conversationLog[0].at),
+      messages: conversationLog.map((row, index) => ({
+        id: `m${index}`,
+        role: row.role,
+        text: row.text,
+        source: "slack",
+        created_at: hoursAgo(row.at),
+      })),
+    };
+  };
   const mutateAgent = (init?: RequestInit, url?: string) => {
+    if (url?.includes("/conversation")) return conversation(init, url);
     const match = url?.match(/\/api\/v1\/admin\/agents\/([^/]+)\/(pause|health)$/);
     if (!match) return {};
     const agent = agentDashboard.agents.find((row) => row.agent_id === decodeURIComponent(match[1]));
