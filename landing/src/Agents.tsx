@@ -581,8 +581,10 @@ function AgentsView({ user }: { user: User }) {
       const next = (await response.json()) as DashboardPayload;
       setPayload(next);
       setError(null);
+      return true;
     } catch (reason) {
       if (!quiet) setError(reason instanceof Error ? reason.message : "Could not load agents");
+      return false;
     }
   }, []);
 
@@ -619,23 +621,16 @@ function AgentsView({ user }: { user: User }) {
     }
   }
 
+  // Re-reads what the backend already stores from turn events. It messages no
+  // agent: asking the fleet to restate its status spent a model turn per agent
+  // and interrupted the ones that were mid-turn. A failure paints the error
+  // box, so the notice only claims a refresh that happened.
   async function refreshStatuses() {
     setRefreshing(true);
     setNotice(null);
-    try {
-      const response = await fetch("/api/v1/admin/agents/status/bootstrap", { method: "POST", credentials: "include" });
-      if (!response.ok) throw new Error(`Refresh returned ${response.status}`);
-      const result = (await response.json()) as { delivered: string[]; offline: string[] };
-      // "delivered" means the gateway took the message, not that the agent
-      // acted on it: one that is mid-turn only picks it up when that turn ends.
-      setNotice(
-        `Asked ${result.delivered.length} agents to refresh${result.offline.length ? `; ${result.offline.length} offline` : ""}. Any mid-turn will answer when that turn finishes.`,
-      );
-    } catch (reason) {
-      setNotice(reason instanceof Error ? reason.message : "Could not wake agents");
-    } finally {
-      setRefreshing(false);
-    }
+    const loaded = await load();
+    setRefreshing(false);
+    if (loaded) setNotice("Statuses updated");
   }
 
   async function handleLogout() {
@@ -675,7 +670,7 @@ function AgentsView({ user }: { user: User }) {
               Archived {archived.length}
             </button>
             <button type="button" onClick={refreshStatuses} disabled={refreshing} className="cursor-pointer rounded-full border border-tide bg-tide px-3.5 py-2 text-[12.5px] font-medium text-white hover:bg-tide-deep disabled:cursor-wait disabled:opacity-60">
-              {refreshing ? "Waking agents" : "Refresh status"}
+              {refreshing ? "Refreshing" : "Refresh status"}
             </button>
           </div>
         </div>
