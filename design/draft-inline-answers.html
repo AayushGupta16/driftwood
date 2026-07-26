@@ -1,0 +1,1049 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Draft · agents page + answering in place</title>
+<style>
+  /* Dashboard tokens, copied from landing/src/index.css. No new tokens.
+     Live this renders in Public Sans; the draft falls back to the system
+     stack so the file opens standalone off the filesystem. */
+  :root {
+    --paper: #ffffff;
+    --surface: #ffffff;
+    --ink: #16181b;
+    --ink-soft: #6a737d;
+    --ink-faint: #9aa2ab;
+    --tide: #15557e;
+    --tide-deep: #0d3c5b;
+    --tide-wash: #eaf1f7;
+    --sand: #eef2f5;
+    --line: #e9ebee;
+    --shadow-win: 0 1px 2px rgba(22,24,27,.05), 0 24px 48px -24px rgba(22,24,27,.18);
+    --shadow-win-sm: 0 1px 2px rgba(22,24,27,.04), 0 10px 20px -14px rgba(22,24,27,.12);
+    --sans: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --ease: cubic-bezier(.4,0,.2,1);
+    /* NEW TOKEN. design-language.md says one accent and no second colour, so
+       this needs a documented exception in the same commit: alert is not an
+       accent, it is used at 8px as a notification dot and nowhere else. */
+    --alert: #b42318;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 400 15px/1.5 var(--sans); -webkit-font-smoothing: antialiased; }
+  button { font-family: inherit; }
+
+  /* ---- draft chrome, not part of the design ---- */
+  .draftbar {
+    position: sticky; top: 0; z-index: 200;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 18px;
+    padding: 10px 20px; background: #16181b; color: #fff; font-size: 12.5px;
+  }
+  .draftbar .note { color: #9aa2ab; }
+  .draftbar label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+  .draftbar button { border: 0; background: none; color: #9aa2ab; cursor: pointer; font-size: 12.5px; padding: 0; }
+  .draftbar button:hover { color: #fff; }
+
+  /* ---- page chrome, mirroring Agents.tsx ---- */
+  header.top { position: sticky; top: 39px; z-index: 40; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.95); backdrop-filter: blur(12px); }
+  header.top nav { max-width: 1280px; margin: 0 auto; height: 64px; padding: 0 32px; display: flex; align-items: center; justify-content: space-between; }
+  .wordmark { display: flex; align-items: center; gap: 10px; font: 600 18px/1 "Source Serif 4", Georgia, serif; }
+  .helm { width: 32px; height: 32px; border-radius: 8px; background: var(--tide); color: #fff; display: grid; place-items: center; font-size: 15px; }
+  .navright { display: flex; align-items: center; gap: 12px; }
+  .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--tide); color: #fff; display: grid; place-items: center; font: 600 13px var(--sans); }
+  .pill { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 8px 14px; font: 500 13px var(--sans); color: var(--ink-soft); text-decoration: none; cursor: pointer; }
+  .pill.current { border-color: var(--tide); background: var(--tide-wash); color: var(--tide); }
+  main { max-width: 1280px; margin: 0 auto; padding: 40px 32px 56px; }
+  .titlerow { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; }
+  .backlink { font: 500 13.5px var(--sans); color: var(--ink-soft); text-decoration: none; }
+  h1 { margin: 20px 0 0; font-size: clamp(1.7rem, 3.6vw, 2.2rem); font-weight: 600; line-height: 1.08; letter-spacing: -.015em; }
+  .titleactions { display: flex; align-items: center; gap: 8px; }
+  .btn-primary { border: 1px solid var(--tide); background: var(--tide); color: #fff; border-radius: 999px; padding: 8px 14px; font: 500 12.5px var(--sans); cursor: pointer; }
+  .btn-primary:hover { background: var(--tide-deep); }
+
+  /* ---- section buckets ---- */
+  .bucket { margin-top: 36px; }
+  .bucket-head { display: flex; align-items: baseline; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+  .bucket-head h2 { margin: 0; font-size: 15px; font-weight: 600; }
+  .bucket-head .n { font-size: 13px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .grid { display: grid; gap: 16px; margin-top: 16px; grid-template-columns: 1fr; }
+  @media (min-width: 760px) { .grid { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 1180px) { .grid { grid-template-columns: 1fr 1fr 1fr; } }
+  /* Rows stretch so the footer controls line up across a row. */
+  body[data-layout="proposed"] .grid { align-items: stretch; }
+  body[data-layout="today"] .grid { align-items: start; }
+
+  /* ---- card ---- */
+  .card {
+    position: relative; display: flex; flex-direction: column; min-width: 0;
+    border: 1px solid var(--line); border-radius: 14px; background: var(--surface);
+    box-shadow: var(--shadow-win-sm); padding: 20px;
+    transition: border-color 160ms var(--ease), box-shadow 160ms var(--ease);
+  }
+  .card:hover { border-color: color-mix(in srgb, var(--tide) 35%, var(--line)); box-shadow: var(--shadow-win); }
+
+  /* Notification dot. No count — it says "this one wants you" and nothing else;
+     the number lives on the question list once you are in. Order is stable so a
+     card never moves and the dot is the only thing that changes.
+
+     Two placements, because the top-right corner is ALREADY occupied by the
+     state pill and its own dot — which is what made the first attempt feel
+     wrong: two dots of different sizes and colours ~10px apart, neither aligned
+     to the card's 20px grid.
+     · merged  — the red dot IS the state pill's dot. One indicator, aligned.
+     · corner  — a true corner badge; the state pill moves to the footer so
+                 nothing competes with it. */
+  @keyframes ping {
+    0%   { transform: scale(1); opacity: .55; }
+    70%  { transform: scale(2.8); opacity: 0; }
+    100% { transform: scale(2.8); opacity: 0; }
+  }
+  .bell { position: relative; display: inline-block; width: 8px; height: 8px; flex: 0 0 auto; }
+  .bell::before, .bell::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: var(--alert); }
+  .bell::before { animation: ping 2.4s var(--ease) infinite; }
+
+  body[data-dot="corner"] .card .bell { position: absolute; top: 14px; right: 14px; z-index: 3; }
+  /* In corner mode the state moves down to the metadata row it belongs with. */
+  body[data-dot="corner"] .card-head .state { display: none; }
+  body[data-dot="merged"] .foot-meta .state { display: none; }
+  body[data-dot="corner"] .foot-meta .foot-lbl { display: none; }
+  .foot-meta .state { font-size: 11.5px; }
+  /* Title-side count, so the signal survives scrolling past a card. */
+  .h1count {
+    display: inline-flex; align-items: center; gap: 7px; margin-left: 14px;
+    font: 500 13px var(--sans); color: var(--ink-soft); vertical-align: middle;
+  }
+  .h1count .d { width: 8px; height: 8px; border-radius: 50%; background: var(--alert); position: relative; }
+  .h1count .d::before { content: ""; position: absolute; inset: 0; border-radius: 50%; background: var(--alert); animation: ping 2.4s var(--ease) infinite; }
+  @media (prefers-reduced-motion: reduce) {
+    .bell::before, .h1count .d::before { animation: none; }
+  }
+  .card-hit { position: absolute; inset: 0; z-index: 0; border: 0; background: none; border-radius: inherit; cursor: pointer; }
+  .card-hit:focus-visible { outline: 2px solid var(--tide); outline-offset: 3px; }
+  .card-body { position: relative; z-index: 1; pointer-events: none; display: flex; flex-direction: column; flex: 1; }
+  .card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .card h3 { margin: 0; font-size: 18px; font-weight: 600; letter-spacing: -.01em; }
+  .state { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 6px; font: 500 12px var(--sans); color: var(--ink-soft); }
+  .state .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .state[data-state="running"] { color: var(--tide); }
+  .summary { margin: 16px 0 0; font-size: 14px; line-height: 1.5; }
+  .clamp3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .clamp2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .reasons { margin: 16px 0 0; padding: 0; list-style: none; font-size: 12.5px; line-height: 1.4; }
+  .reasons li { display: flex; align-items: flex-start; gap: 8px; }
+  .reasons li + li { margin-top: 6px; }
+  .reason-mark { flex: 0 0 auto; width: 2px; height: 1.05em; margin-top: 1px; border-radius: 1px; background: var(--ink); }
+
+  /* Your action: the one accented block on a card that needs you. */
+  .action {
+    margin-top: 16px; padding: 10px 12px; border-radius: 8px;
+    border: 1px solid color-mix(in srgb, var(--tide) 28%, var(--line));
+    border-left: 2px solid var(--tide);
+    background: var(--tide-wash);
+    font-size: 12.5px; line-height: 1.45;
+  }
+  .action .lbl { display: block; font: 500 11.5px var(--sans); color: var(--tide-deep); }
+  .action .txt { display: block; margin-top: 3px; }
+  .action .more { display: block; margin-top: 6px; font-size: 11.5px; color: var(--tide-deep); opacity: .85; }
+  body[data-layout="today"] .action { border: 1px solid var(--line); border-left: 1px solid var(--line); background: color-mix(in srgb, var(--sand) 50%, transparent); }
+  body[data-layout="today"] .action .lbl { color: var(--ink-soft); }
+  body[data-layout="today"] .action .more { display: none; }
+
+  /* Goal: one quiet line in the proposed layout, the old block in "today". */
+  .goalline { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--ink-soft); line-height: 1.45; }
+  .goalline .g { color: var(--ink); }
+  .goalblock { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
+  .goalblock .row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .goalblock .lbl { display: block; font: 500 12px var(--sans); color: var(--ink-soft); }
+  .goalblock .outcome { display: block; margin-top: 4px; font: 500 13.5px/1.4 var(--sans); }
+  .goalblock .meta { flex: 0 0 auto; font-size: 12px; color: var(--ink-soft); }
+  .goalblock p { margin: 10px 0 0; font-size: 12.5px; line-height: 1.4; color: var(--ink-soft); }
+  .goalblock p b { font-weight: 500; color: var(--ink); }
+  body[data-layout="proposed"] .goalblock { display: none; }
+  body[data-layout="today"] .goalline { display: none; }
+
+  .latest { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 12.5px; text-decoration: none; color: inherit; pointer-events: auto; position: relative; z-index: 2; }
+  .latest .k { display: block; font-size: 11.5px; color: var(--ink-soft); }
+  .latest .v { display: block; margin-top: 2px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .latest .open { flex: 0 0 auto; font-weight: 500; color: var(--tide); }
+
+  .card-foot { position: relative; z-index: 2; pointer-events: auto; margin-top: 20px; }
+  .foot-meta { display: flex; align-items: center; justify-content: space-between; padding-top: 12px; border-top: 1px solid var(--line); font-size: 11.5px; color: var(--ink-soft); }
+  .foot-ctl { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+  .health { display: flex; align-items: center; gap: 4px; }
+  .health .k { margin-right: 4px; font-size: 11.5px; color: var(--ink-soft); }
+  .health button { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--ink-soft); font: 500 11.5px var(--sans); cursor: pointer; }
+  .health button[aria-pressed="true"] { border-color: var(--tide); background: var(--tide); color: #fff; }
+  .foot-btns { display: flex; align-items: center; gap: 8px; }
+  .btn-ghost { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 12px; font: 500 11.5px var(--sans); color: var(--ink-soft); cursor: pointer; }
+  .btn-tide { border: 1px solid color-mix(in srgb, var(--tide) 40%, transparent); background: var(--surface); border-radius: 999px; padding: 6px 12px; font: 500 11.5px var(--sans); color: var(--tide); cursor: pointer; }
+
+  /* ---- dialog ---- */
+  .overlay { position: fixed; inset: 0; z-index: 150; overflow-y: auto; background: rgba(22,24,27,.35); padding: 6vh 16px 10vh; }
+  .overlay[hidden] { display: none; }
+  .dialog { width: 100%; max-width: 768px; margin: 0 auto; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow-win); padding: 28px; }
+  .dialog-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+  .dialog h2 { margin: 0; font-size: 23px; font-weight: 600; letter-spacing: -.015em; }
+  .tabs { display: flex; gap: 16px; margin-top: 20px; border-bottom: 1px solid var(--line); }
+  .tab { margin-bottom: -1px; padding: 0 2px 10px; background: none; border: 0; border-bottom: 2px solid transparent; font: 500 13px var(--sans); color: var(--ink-soft); cursor: pointer; }
+  .tab[aria-selected="true"] { border-bottom-color: var(--tide); color: var(--ink); }
+  .tab .badge { display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 999px; background: var(--tide); color: #fff; font-size: 10.5px; font-variant-numeric: tabular-nums; }
+  .whats { margin: 24px 0 0; font-size: 15px; line-height: 1.55; }
+  h3.sec { margin: 28px 0 0; font-size: 14px; font-weight: 600; }
+  .sec-sub { margin: 4px 0 0; font-size: 12.5px; color: var(--ink-soft); }
+
+  /* ---- questions ---- */
+  .qlist { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
+  .q { border: 1px solid var(--line); border-radius: 12px; padding: 16px; transition: border-color 160ms var(--ease), box-shadow 160ms var(--ease); }
+  .q[data-answered="true"] { border-color: color-mix(in srgb, var(--tide) 45%, var(--line)); box-shadow: var(--shadow-win-sm); }
+  .q[data-pending="true"] { border-style: dashed; background: color-mix(in srgb, var(--sand) 45%, transparent); }
+  .q-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .q-question { margin: 0; font-size: 13.5px; font-weight: 500; line-height: 1.45; }
+  .q-context { margin: 6px 0 0; font-size: 12.5px; line-height: 1.5; color: var(--ink-soft); }
+  .q-index { flex: 0 0 auto; font-size: 11.5px; font-weight: 500; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+  .q-link { display: inline-flex; margin-top: 12px; font: 500 12.5px var(--sans); color: var(--tide); text-decoration: none; }
+  .q-link:hover { color: var(--tide-deep); }
+  /* A review ask always has a link (the schema requires it), and looking is the
+     first thing you do — so it is a button, not a text link buried in prose. */
+  .q-open {
+    display: inline-flex; align-items: center; gap: 7px; margin-top: 12px;
+    border: 1px solid var(--tide); background: var(--tide-wash); border-radius: 999px;
+    padding: 7px 14px; font: 500 12.5px var(--sans); color: var(--tide-deep); text-decoration: none;
+  }
+  .q-open::after { content: "↗"; font-size: 11px; }
+  .q-open:hover { background: var(--tide); color: #fff; }
+  .q-kind {
+    display: block; margin-top: 6px;
+    font: 500 11px var(--sans); color: var(--ink-faint); text-transform: lowercase;
+  }
+  .opts { display: grid; gap: 8px; margin-top: 12px; }
+  @media (min-width: 560px) { .opts { grid-template-columns: 1fr 1fr; } }
+  .opt { text-align: left; cursor: pointer; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 9px 12px; font: 400 12.5px/1.4 var(--sans); color: var(--ink); transition: border-color 160ms var(--ease), background-color 160ms var(--ease); }
+  .opt:hover { border-color: color-mix(in srgb, var(--tide) 60%, var(--line)); }
+  .opt[aria-pressed="true"] { border-color: var(--tide); background: var(--tide-wash); color: var(--tide-deep); }
+  .opt strong { display: block; font-weight: 500; }
+  .opt span { display: block; margin-top: 3px; color: var(--ink-soft); }
+  .opt[aria-pressed="true"] span { color: var(--tide-deep); opacity: .8; }
+  .answer { margin-top: 12px; }
+  .answer textarea { display: block; width: 100%; resize: vertical; min-height: 40px; border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; font: 400 13px/1.5 var(--sans); color: var(--ink); background: var(--surface); }
+  .answer textarea::placeholder { color: var(--ink-faint); }
+  .answer textarea:focus-visible { outline: 2px solid var(--tide); outline-offset: 1px; border-color: transparent; }
+  .q-pendingnote { margin: 10px 0 0; font-size: 12px; color: var(--ink-soft); }
+
+  .sendbar { position: sticky; bottom: 0; z-index: 5; margin: 16px -28px 0; padding: 16px 28px; border-top: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 94%, transparent); backdrop-filter: blur(8px); }
+  .sendbar-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+  .sendbar-count { font-size: 12.5px; color: var(--ink-soft); }
+  .sendbar-actions { display: flex; align-items: center; gap: 12px; }
+  .link-btn { border: 0; background: none; padding: 0; cursor: pointer; font: 500 12px var(--sans); color: var(--ink-soft); }
+  .link-btn:hover { color: var(--tide); }
+  .btn-send { border: 1px solid var(--tide); background: var(--tide); color: #fff; border-radius: 999px; padding: 8px 16px; cursor: pointer; font: 500 12.5px var(--sans); transition: background-color 160ms var(--ease); }
+  .btn-send:hover:not(:disabled) { background: var(--tide-deep); }
+  .btn-send:disabled { opacity: .4; cursor: not-allowed; }
+  .preview { margin-top: 14px; padding: 14px 16px; background: var(--sand); border-radius: 10px; font-size: 13px; line-height: 1.55; white-space: pre-wrap; }
+  .preview-label { margin: 0 0 8px; font: 500 11.5px var(--sans); color: var(--ink-soft); }
+  .warn { margin-top: 14px; padding: 12px 14px; border: 1px solid var(--line); border-left: 2px solid var(--ink); border-radius: 0 8px 8px 0; background: var(--sand); font-size: 12.5px; line-height: 1.5; }
+
+  /* ---- goals & deadlines ---- */
+  .goal { border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+  .goal + .goal { margin-top: 12px; }
+  .goal-top { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .goal-outcome { font-size: 14px; font-weight: 600; }
+  .goal-tags { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-soft); }
+  .tag { border: 1px solid var(--line); border-radius: 999px; padding: 2px 8px; font-size: 11px; }
+  .tag[data-status="blocked"] { border-color: var(--ink); color: var(--ink); font-weight: 500; }
+  .due { margin: 10px 0 0; font-size: 12.5px; color: var(--ink-soft); }
+  .due b { font-weight: 500; color: var(--ink); }
+  /* Overdue earns ink weight, not a second accent colour. */
+  .due[data-overdue="true"] { color: var(--ink); font-weight: 500; }
+  .due[data-overdue="true"] .bar { display: inline-block; width: 2px; height: 1em; margin-right: 7px; vertical-align: -2px; background: var(--ink); border-radius: 1px; }
+  .due .raw { display: block; margin-top: 3px; font-weight: 400; color: var(--ink-soft); }
+  .goal-next { margin: 8px 0 0; font-size: 12.5px; color: var(--ink-soft); }
+  .goal-next b { font-weight: 500; color: var(--ink); }
+  .steps { margin: 14px 0 0; padding: 14px 0 0; border-top: 1px solid var(--line); list-style: none; display: flex; flex-direction: column; gap: 9px; }
+  .steps li { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: var(--ink-soft); }
+  .steps li[data-status="blocked"] { color: var(--ink); }
+  .step-mark { flex: 0 0 auto; width: 14px; height: 14px; margin-top: 2px; border-radius: 50%; border: 1px solid var(--ink-faint); display: inline-flex; align-items: center; justify-content: center; }
+  .step-mark[data-status="done"]::after { content: ""; width: 6px; height: 3px; border-left: 1.5px solid var(--tide); border-bottom: 1.5px solid var(--tide); transform: translateY(-1px) rotate(-45deg); }
+  .step-mark[data-status="doing"] { border-color: var(--tide); }
+  .step-mark[data-status="doing"]::after { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--tide); }
+  /* Blocked is the state that means "stuck on you" — it gets solid ink so it
+     cannot be confused with an empty todo ring. */
+  .step-mark[data-status="blocked"] { border-color: var(--ink); background: var(--ink); }
+  .step-mark[data-status="blocked"]::after { content: ""; width: 6px; height: 1.5px; background: #fff; border-radius: 1px; }
+  .step-ev { display: block; margin-top: 2px; font-size: 11.5px; color: var(--ink-faint); }
+
+  .out { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--line); }
+  .out p { margin: 8px 0 0; }
+  .out .t { font-size: 13px; font-weight: 500; }
+  .out .s { font-size: 12.5px; line-height: 1.5; color: var(--ink-soft); }
+  .out a { display: inline-flex; margin-top: 12px; font: 500 12.5px var(--sans); color: var(--tide); text-decoration: none; }
+
+  /* ---- messages ---- */
+  .thread { display: flex; flex-direction: column; gap: 16px; margin-top: 16px; max-height: 40vh; overflow-y: auto; padding-right: 4px; }
+  .msg { max-width: 82%; }
+  .msg .who { font-size: 11.5px; color: var(--ink-soft); margin-bottom: 4px; }
+  .msg .bubble { border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; font-size: 13.5px; line-height: 1.5; }
+  .msg[data-role="founder"] { align-self: flex-end; text-align: right; }
+  .msg[data-role="founder"] .bubble { background: var(--tide-wash); border-color: transparent; text-align: left; }
+  .composer { display: flex; gap: 10px; align-items: flex-end; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .composer textarea { flex: 1; min-height: 44px; resize: vertical; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font: 400 13.5px/1.5 var(--sans); }
+  .composer textarea:focus-visible { outline: 2px solid var(--tide); outline-offset: 1px; border-color: transparent; }
+
+  .sent { margin-top: 12px; padding: 16px; border: 1px solid var(--line); border-radius: 12px; }
+  .sent h4 { margin: 0 0 8px; font-size: 13px; font-weight: 600; }
+  .sent .meta { margin: 10px 0 0; font-size: 12px; color: var(--ink-soft); }
+  .sent .meta.confirmed { color: var(--tide); font-weight: 500; }
+  .empty { margin: 12px 0 0; font-size: 13px; color: var(--ink-soft); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body data-layout="proposed" data-dot="merged">
+
+<div class="draftbar">
+  <strong>Draft</strong>
+  <span class="note">agents page · nothing is wired to a real agent</span>
+  <label><input type="radio" name="layout" value="proposed" checked> proposed</label>
+  <label><input type="radio" name="layout" value="today"> today</label>
+  <label>dot
+    <select id="dotstyle" style="background:#2a2d31;color:#fff;border:1px solid #3a3f45;border-radius:4px;padding:2px 4px;font-size:12px">
+      <option value="merged">merged into state</option>
+      <option value="corner">corner badge</option>
+    </select>
+  </label>
+  <label><input type="checkbox" id="toggle-running"> selected agent is mid-turn</label>
+  <label><input type="checkbox" id="toggle-slow"> delivery not picked up</label>
+  <button id="reset">reset</button>
+</div>
+
+<header class="top">
+  <nav>
+    <span class="wordmark"><span class="helm">⎈</span>driftwood</span>
+    <div class="navright">
+      <span class="avatar">A</span>
+      <span style="font:500 14px var(--sans)">Aayush</span>
+      <span class="pill">God mode</span>
+      <span class="pill">SEO / GEO</span>
+      <span class="pill current">Agents</span>
+      <span class="pill">Log out</span>
+    </div>
+  </nav>
+</header>
+
+<main>
+  <div class="titlerow">
+    <div>
+      <a class="backlink" href="#">Back to dashboard</a>
+      <h1>Agents<span class="h1count" id="h1count" hidden></span></h1>
+    </div>
+    <div class="titleactions">
+      <button class="pill">Archived 1</button>
+      <button class="btn-primary">Refresh status</button>
+    </div>
+  </div>
+  <div id="buckets"></div>
+</main>
+
+<div class="overlay" id="overlay" hidden><div class="dialog" id="dialog"></div></div>
+
+<script>
+// ---------------------------------------------------------------------------
+// Fixture. Shapes mirror the shipped update_status contract (backend a124a87 +
+// a3e4446): needs_human entries carry a `kind`, a review ask always carries a
+// url, `deadline` is a real date and `deadline_note` holds the prose about it.
+// ---------------------------------------------------------------------------
+const DAY = 86400e3;
+const iso = (d) => new Date(Date.now() + d * DAY).toISOString().slice(0, 10);
+const ago = (h) => new Date(Date.now() - h * 3600e3).toISOString();
+const at = iso;  // deadlines are dates now; kept so fixtures read the same
+
+const AGENTS = [
+  {
+    id: "oruk", name: "Oruk", state: "running", health: 3, updated: ago(0.1),
+    whats: "It rebuilt the four caption demos and needs three calls from you before the Comcast set can go out.",
+    reasons: [],
+    goals: [
+      {
+        outcome: "Rebuild every demo with verified Oruk emotion tags",
+        status: "active", priority: "P1",
+        deadline: at(-1), deadline_note: "missed; slipped to Monday after the Disney re-render",
+        next: "Finish Comcast and the remaining rebuilds",
+        steps: [
+          { text: "Pass Disney and Paramount strict QA", status: "done", evidence: "Disney 21/21; Paramount 22/22" },
+          { text: "Finish Comcast and remaining rebuilds", status: "doing" },
+          { text: "Update the action-items artifact", status: "todo" },
+        ],
+      },
+      {
+        outcome: "Ship the 100-demos-a-week cadence",
+        status: "blocked", priority: "P2",
+        deadline: iso(5), deadline_note: null,
+        next: "Unblocked once the caption rebuilds land",
+        steps: [
+          { text: "Agree the weekly target with Nathan", status: "done" },
+          { text: "Automate the render queue", status: "blocked" },
+        ],
+      },
+    ],
+    questions: [
+      { id: "q-flash", kind: "decision", question: "Should Flash keep the disappointed tag?",
+        context: "You flagged this on the last cut. Changing it means re-rendering the Zootopia demo, about 8 minutes.",
+        options: [ { label: "Use neutral", consequence: "Re-renders Zootopia" }, { label: "Keep disappointed", consequence: "Ships as-is" } ] },
+      { id: "q-comcast", kind: "review", question: "Does the Comcast set look right to send?",
+        url: "https://driftwood.sh/d/oruk-caption-demos", link_label: "Open the demos" },
+      { id: "q-paramount", kind: "question", question: "Paramount asked for a 30-second cut. Worth building before Monday?" },
+    ],
+    output: { title: "Oruk action items", summary: "Standing review surface for the caption rebuilds.", url: "#" },
+    messages: [
+      { role: "founder", text: "we need to get something out to nathan tonight", at: "Yesterday 9:12 PM" },
+      { role: "agent", text: "Plan for tonight: fix Zootopia and Studio first, since they unlock the six send-ready rows that already have verified captions. ETA about 40 minutes.", at: "Yesterday 9:14 PM" },
+      { role: "founder", text: "why is the ETA so long? should be 20 minutes max if you run them in parallel", at: "Yesterday 10:03 PM" },
+      { role: "agent", text: "Fair push. The caption edit itself is minutes; the rest was product-side QA I was serialising for no good reason. Running them in parallel now.", at: "Yesterday 10:05 PM" },
+    ],
+  },
+  {
+    id: "autosana", name: "Autosana", state: "running", health: 2, updated: ago(0.3),
+    whats: "It has 35 demo runs ready, but work is stalled until you review its target batches and roughly 107 pending connections.",
+    reasons: [],
+    goals: [
+      { outcome: "Keep the target-review and bug-hunt pipeline moving", status: "active", priority: "P1",
+        deadline: iso(1), deadline_note: null,
+        next: "Run bug hunts on the targets you approve",
+        steps: [
+          { text: "Publish the daily pipeline checkpoint", status: "done", evidence: "35 take-ready runs" },
+          { text: "Review the pending target batches", status: "blocked" },
+          { text: "Run bug hunts on approved targets", status: "todo" },
+        ] },
+    ],
+    questions: [ { id: "q-batches", kind: "review", question: "Do the pending target batches look right?", url: "#", link_label: "Open target review" } ],
+    output: { title: "Taste re-screen", summary: "Promoted and maybe companies awaiting review.", url: "#" },
+    messages: [ { role: "agent", text: "Checkpoint posted. 35 runs are take-ready and waiting on your batch call.", at: "Today 8:40 AM" } ],
+  },
+  {
+    id: "autosana_demo", name: "Autosana Demo", state: "waiting_for_review", health: 2, updated: ago(3),
+    whats: "Its warm outreach wave cannot start because LinkedIn is disconnected.",
+    reasons: ["Started a turn hours ago and never reported finishing"],
+    goals: [ { outcome: "Submit the warm wave after LinkedIn reconnects", status: "blocked", priority: "P2",
+      deadline: null, deadline_note: null, next: "Recheck LinkedIn",
+      steps: [ { text: "Reconnect LinkedIn", status: "blocked" }, { text: "Submit the warm wave", status: "todo" } ] } ],
+    questions: [ { id: "q-li", kind: "question", question: "Can you reconnect LinkedIn for this account?" } ],
+    output: null,
+    messages: [],
+  },
+  {
+    id: "cyberneticphysics", name: "Cybernetic Physics", state: "waiting_for_review", health: 3, updated: ago(22),
+    whats: "The corrected robot comparison is finished and waiting for your review.",
+    reasons: [],
+    goals: [ { outcome: "Deliver the corrected robot comparison", status: "active", priority: "P1",
+      deadline: iso(1), deadline_note: "Nathan is expecting it that morning",
+      next: "Collect review feedback",
+      steps: [ { text: "Restore all three opening swings", status: "done" }, { text: "Review the corrected cut", status: "blocked" } ] } ],
+    questions: [ { id: "q-sbs", kind: "review", question: "Does the corrected side-by-side look good enough to send?", url: "#", link_label: "Open video" } ],
+    output: { title: "Ngannou robot side-by-side", summary: "Corrected cut with all three swings.", url: "#" },
+    messages: [],
+  },
+  {
+    id: "driftwood", name: "Driftwood", state: "waiting_for_review", health: 1, updated: ago(8),
+    whats: "It stopped sourcing to avoid duplicates because roughly 449 outreach items are already in your review queue.",
+    reasons: [],
+    goals: [ { outcome: "Keep the connection-request queue supplied without duplicates", status: "blocked", priority: "P2",
+      deadline: iso(3), deadline_note: null, next: "Wait for the review backlog to clear",
+      steps: [ { text: "Verify the review backlog", status: "done" }, { text: "Review existing outreach waves", status: "blocked" } ] } ],
+    questions: [ { id: "q-waves", kind: "decision", question: "The review queue holds 449 outreach items. Clear them now or hold until you unpause?",
+      options: [ { label: "Clear them now", consequence: "Sourcing resumes today" }, { label: "Hold until I unpause", consequence: "Queue keeps growing" } ] } ],
+    output: null,
+    messages: [],
+  },
+  {
+    id: "gracegong", name: "Grace Gong", state: "complete", health: 4, updated: ago(26),
+    whats: "It finished the hosted outreach brief and has nothing else assigned.",
+    reasons: [],
+    goals: [ { outcome: "Finish the hosted outreach brief", status: "done", priority: "P2",
+      deadline: iso(-2), deadline_note: "met, two days early", next: null,
+      steps: [ { text: "Publish the hosted brief", status: "done" }, { text: "Apply the show-not-tell revision", status: "done" } ] } ],
+    questions: [],
+    output: { title: "Grace Gong outreach brief", summary: "The hosted full draft.", url: "#" },
+    messages: [],
+  },
+];
+
+const STATE_LABEL = { running: "Running", partially_blocked: "Partly blocked", blocked: "Blocked",
+  waiting_for_review: "Waiting for review", waiting: "Waiting", idle: "Idle", complete: "Complete", error: "Error" };
+
+
+const sentNotices = new Map(); // agentId -> [notice elements]
+const answers = new Map();   // questionKey -> text
+const pending = new Map();   // questionKey -> text already sent, agent not yet re-reported
+let openId = null, tab = "status";
+const el = (id) => document.getElementById(id);
+const key = (agentId, q) => `${agentId}::${q.id || q.question}`;
+
+function relTime(isoStr) {
+  const s = Math.max(0, Math.round((Date.now() - new Date(isoStr).getTime()) / 1000));
+  if (s < 60) return `${s}s ago`;
+  const m = Math.floor(s / 60); if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60); if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
+const fmtDate = (d, withTime) => new Intl.DateTimeFormat(undefined,
+  withTime ? { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" } : { month: "short", day: "numeric" }
+).format(d);
+
+// `deadline` is a real date on the wire and `deadline_note` holds whatever the
+// agent wants to SAY about it. A date-only deadline expires at the END of that
+// day, so the hours in a countdown are measured to 23:59 — the precision is
+// real, but it comes from the day boundary, not from a time the agent gave.
+function dueInfo(goal) {
+  if (!goal.deadline) return null;
+  const at = new Date(`${goal.deadline}T23:59:59`);
+  const settled = goal.status === "done" || goal.status === "cancelled";
+  const ms = at - new Date();
+  const overdue = ms < 0 && !settled;
+  const hours = Math.floor(Math.abs(ms) / 3600e3);
+  const d = Math.floor(hours / 24);
+  const h = hours % 24;
+
+  // Past a week the hours are noise; inside a day the days are.
+  const long = d >= 7 ? `${d} days` : d === 0 ? `${h} hour${h === 1 ? "" : "s"}`
+    : `${d} day${d === 1 ? "" : "s"} and ${h} hour${h === 1 ? "" : "s"}`;
+  const short = d >= 7 ? `${d}d` : d === 0 ? `${h}h` : `${d}d ${h}h`;
+
+  return {
+    overdue,
+    settled,
+    date: fmtDate(at, false),
+    long: overdue ? `${long} overdue` : `Due in ${long}`,
+    short: overdue ? `${short} overdue` : `due in ${short}`,
+  };
+}
+
+function liveQuestions(agent) {
+  return agent.questions.filter((q) => !pending.has(key(agent.id, q)));
+}
+
+// ---------------------------------------------------------------------------
+// Page
+// ---------------------------------------------------------------------------
+function renderPage() {
+  // One grid, stable order. The notification dot carries "needs you" instead
+  // of a section split, so a card never moves when its state changes.
+  el("buckets").innerHTML = "";
+  el("buckets").append(bucket(null, AGENTS));
+  const waiting = AGENTS.filter((a) => liveQuestions(a).length > 0).length;
+  const badge = el("h1count");
+  badge.hidden = waiting === 0;
+  badge.innerHTML = "";
+  if (waiting) {
+    const d = document.createElement("span"); d.className = "d";
+    badge.append(d, `${waiting} waiting on you`);
+  }
+}
+
+function bucket(title, list) {
+  const sec = document.createElement("section");
+  sec.className = "bucket";
+  if (title) {
+    const head = document.createElement("div");
+    head.className = "bucket-head";
+    const h = document.createElement("h2"); h.textContent = title;
+    const n = document.createElement("span"); n.className = "n"; n.textContent = list.length;
+    head.append(h, n); sec.append(head);
+  }
+  const grid = document.createElement("div"); grid.className = "grid";
+  list.forEach((a) => grid.append(card(a)));
+  sec.append(grid);
+  return sec;
+}
+
+function card(agent) {
+  const qs = liveQuestions(agent);
+  const goal = agent.goals.find((g) => g.status === "active" || g.status === "blocked") || agent.goals[0] || null;
+  const due = goal ? dueInfo(goal) : null;
+  const done = goal ? goal.steps.filter((s) => s.status === "done").length : 0;
+
+  const c = document.createElement("article");
+  c.className = "card";
+  const bell = qs.length ? document.createElement("span") : null;
+  if (bell) {
+    bell.className = "bell";
+    bell.setAttribute("role", "status");
+    bell.setAttribute("aria-label", `${qs.length} question${qs.length === 1 ? "" : "s"} waiting on you`);
+    if (document.body.dataset.dot === "corner") c.append(bell);
+  }
+  const hit = document.createElement("button");
+  hit.className = "card-hit"; hit.type = "button";
+  hit.setAttribute("aria-label", `Open ${agent.name} details`);
+  hit.addEventListener("click", () => openDialog(agent.id, "status"));
+  c.append(hit);
+
+  const body = document.createElement("div"); body.className = "card-body";
+  const head = document.createElement("div"); head.className = "card-head";
+  const h3 = document.createElement("h3"); h3.textContent = agent.name;
+  const st = document.createElement("span"); st.className = "state"; st.dataset.state = agent.state;
+  // Merged mode: the notification dot IS the state pill's dot, so there is one
+  // indicator in the corner rather than two fighting over it.
+  if (bell && document.body.dataset.dot === "merged") st.append(bell);
+  else st.innerHTML = '<span class="dot"></span>';
+  st.append(STATE_LABEL[agent.state]);
+  head.append(h3, st); body.append(head);
+
+  const sum = document.createElement("p"); sum.className = "summary clamp3"; sum.textContent = agent.whats;
+  body.append(sum);
+
+  if (agent.reasons.length) {
+    const ul = document.createElement("ul"); ul.className = "reasons";
+    agent.reasons.forEach((r) => {
+      const li = document.createElement("li");
+      li.innerHTML = '<span class="reason-mark"></span>';
+      const s = document.createElement("span"); s.className = "clamp2"; s.textContent = r;
+      li.append(s); ul.append(li);
+    });
+    body.append(ul);
+  }
+
+  if (qs.length) {
+    const box = document.createElement("div"); box.className = "action";
+    const lbl = document.createElement("span"); lbl.className = "lbl"; lbl.textContent = qs[0].kind === "review" ? "Needs your eyes" : "Your action";
+    const txt = document.createElement("span"); txt.className = "txt clamp2"; txt.textContent = qs[0].question;
+    box.append(lbl, txt);
+    if (qs.length > 1) {
+      const more = document.createElement("span"); more.className = "more";
+      more.textContent = `+ ${qs.length - 1} more question${qs.length - 1 === 1 ? "" : "s"}`;
+      box.append(more);
+    }
+    body.append(box);
+  }
+
+  // Proposed: one quiet line. Today: the five-line block.
+  if (goal) {
+    const line = document.createElement("p"); line.className = "goalline";
+    // Date only on the card — the exact hour is dialog detail, and a bare
+    // "9:26 PM" in a scan line is noise.
+    const bits = [`${done}/${goal.steps.length}`];
+    if (due) bits.push(due.settled ? `due ${due.date}` : due.short);
+    line.innerHTML = `<span class="g">${goal.outcome}</span> · ${bits.join(" · ")}`;
+    body.append(line);
+
+    const block = document.createElement("div"); block.className = "goalblock";
+    const row = document.createElement("div"); row.className = "row";
+    const left = document.createElement("div");
+    left.innerHTML = `<span class="lbl">Current goal</span><span class="outcome clamp2">${goal.outcome}</span>`;
+    const meta = document.createElement("span"); meta.className = "meta";
+    meta.textContent = bits.join(" · ");
+    row.append(left, meta); block.append(row);
+    const cur = goal.steps.find((s) => s.status === "doing" || s.status === "blocked") || goal.steps.find((s) => s.status === "todo");
+    if (cur) { const p = document.createElement("p"); p.innerHTML = `<b>Progress:</b> ${cur.text}`; block.append(p); }
+    if (goal.next) { const p = document.createElement("p"); p.innerHTML = `<b>Next:</b> ${goal.next}`; block.append(p); }
+    body.append(block);
+  }
+
+  if (agent.output) {
+    const a = document.createElement("a"); a.className = "latest"; a.href = agent.output.url; a.target = "_blank"; a.rel = "noreferrer";
+    a.innerHTML = `<span style="min-width:0"><span class="k">Latest output</span><span class="v">${agent.output.title}</span></span><span class="open">Open</span>`;
+    a.addEventListener("click", (e) => e.stopPropagation());
+    body.append(a);
+  }
+  c.append(body);
+
+  const foot = document.createElement("div"); foot.className = "card-foot";
+  const fm = document.createElement("div"); fm.className = "foot-meta";
+  const fst = document.createElement("span"); fst.className = "state"; fst.dataset.state = agent.state;
+  fst.innerHTML = '<span class="dot"></span>'; fst.append(STATE_LABEL[agent.state]);
+  // Left slot: the state in corner mode, the plain label in merged mode where
+  // the state already sits up in the header.
+  const lbl = document.createElement("span"); lbl.className = "foot-lbl"; lbl.textContent = "Status updated";
+  const ago = document.createElement("span"); ago.textContent = relTime(agent.updated);
+  fm.append(fst, lbl, ago);
+  const fc = document.createElement("div"); fc.className = "foot-ctl";
+  const health = document.createElement("div"); health.className = "health";
+  health.innerHTML = '<span class="k">Health</span>';
+  [1, 2, 3, 4].forEach((n) => {
+    const b = document.createElement("button"); b.type = "button"; b.textContent = n;
+    b.setAttribute("aria-pressed", String(agent.health === n));
+    b.addEventListener("click", (e) => { e.stopPropagation(); agent.health = n; renderPage(); });
+    health.append(b);
+  });
+  const btns = document.createElement("div"); btns.className = "foot-btns";
+  const msg = document.createElement("button"); msg.className = "btn-tide"; msg.type = "button"; msg.textContent = "Message";
+  msg.addEventListener("click", (e) => { e.stopPropagation(); openDialog(agent.id, "messages"); });
+  const arch = document.createElement("button"); arch.className = "btn-ghost"; arch.type = "button"; arch.textContent = "Archive";
+  arch.addEventListener("click", (e) => e.stopPropagation());
+  btns.append(msg, arch);
+  fc.append(health, btns);
+  foot.append(fm, fc); c.append(foot);
+  return c;
+}
+
+// ---------------------------------------------------------------------------
+// Dialog
+// ---------------------------------------------------------------------------
+function openDialog(id, which) { openId = id; tab = which; renderDialog(); el("overlay").hidden = false; }
+function closeDialog() { openId = null; el("overlay").hidden = true; }
+
+el("overlay").addEventListener("mousedown", (e) => { if (e.target === el("overlay")) closeDialog(); });
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape" || openId === null) return;
+  if (e.target instanceof HTMLTextAreaElement) { e.target.blur(); return; }
+  closeDialog();
+});
+
+function renderDialog() {
+  const agent = AGENTS.find((a) => a.id === openId);
+  if (!agent) return;
+  const running = el("toggle-running").checked;
+  const d = el("dialog"); d.innerHTML = "";
+
+  const head = document.createElement("div"); head.className = "dialog-head";
+  const left = document.createElement("div");
+  const h2 = document.createElement("h2"); h2.textContent = agent.name;
+  const st = document.createElement("div"); st.className = "state"; st.style.marginTop = "8px";
+  st.dataset.state = running ? "running" : agent.state;
+  st.innerHTML = '<span class="dot"></span>'; st.append(running ? "Running" : STATE_LABEL[agent.state]);
+  left.append(h2, st);
+  const close = document.createElement("button"); close.className = "pill"; close.textContent = "Close";
+  close.addEventListener("click", closeDialog);
+  head.append(left, close); d.append(head);
+
+  const tabs = document.createElement("div"); tabs.className = "tabs"; tabs.setAttribute("role", "tablist");
+  const openQs = liveQuestions(agent).length;
+  [["status", "Status"], ["messages", "Messages"]].forEach(([k, label]) => {
+    const b = document.createElement("button"); b.className = "tab"; b.setAttribute("role", "tab");
+    b.setAttribute("aria-selected", String(tab === k));
+    b.textContent = label;
+    if (k === "status" && openQs) {
+      const badge = document.createElement("span"); badge.className = "badge"; badge.textContent = openQs;
+      b.append(badge);
+    }
+    b.addEventListener("click", () => { tab = k; renderDialog(); });
+    tabs.append(b);
+  });
+  d.append(tabs);
+
+  if (tab === "messages") { renderMessages(d, agent); } else { renderStatus(d, agent, running); }
+}
+
+function renderStatus(d, agent, running) {
+  const whats = document.createElement("p"); whats.className = "whats"; whats.textContent = agent.whats;
+  d.append(whats);
+
+  const qs = liveQuestions(agent);
+  const pend = agent.questions.filter((q) => pending.has(key(agent.id, q)));
+
+  if (qs.length || pend.length) {
+    const h = document.createElement("h3"); h.className = "sec"; h.textContent = "Questions for you";
+    d.append(h);
+    const list = document.createElement("div"); list.className = "qlist";
+    qs.forEach((q, i) => list.append(questionCard(agent, q, i, qs.length)));
+    pend.forEach((q) => list.append(pendingCard(agent, q)));
+    d.append(list);
+    if (qs.length) d.append(sendBar(agent, running));
+  }
+
+  const gh = document.createElement("h3"); gh.className = "sec"; gh.textContent = "Goals and deadlines";
+  d.append(gh);
+  const gwrap = document.createElement("div"); gwrap.style.marginTop = "12px";
+  if (!agent.goals.length) {
+    const p = document.createElement("p"); p.className = "empty"; p.textContent = "No goals reported.";
+    gwrap.append(p);
+  }
+  agent.goals.forEach((goal) => gwrap.append(goalCard(goal)));
+  d.append(gwrap);
+
+  (sentNotices.get(agent.id) || []).forEach((n) => d.append(n));
+
+  if (agent.output) {
+    const o = document.createElement("div"); o.className = "out";
+    o.innerHTML = `<h3 class="sec" style="margin-top:0">Latest output</h3>
+      <p class="t">${agent.output.title}</p><p class="s">${agent.output.summary}</p>`;
+    const a = document.createElement("a"); a.href = agent.output.url; a.target = "_blank"; a.rel = "noreferrer";
+    a.textContent = "Open output"; o.append(a); d.append(o);
+  }
+}
+
+function goalCard(goal) {
+  const g = document.createElement("div"); g.className = "goal";
+  const top = document.createElement("div"); top.className = "goal-top";
+  const o = document.createElement("span"); o.className = "goal-outcome"; o.textContent = goal.outcome;
+  const tags = document.createElement("span"); tags.className = "goal-tags";
+  if (goal.priority) { const t = document.createElement("span"); t.className = "tag"; t.textContent = goal.priority; tags.append(t); }
+  const ts = document.createElement("span"); ts.className = "tag"; ts.dataset.status = goal.status; ts.textContent = goal.status;
+  tags.append(ts);
+  top.append(o, tags); g.append(top);
+
+  const due = dueInfo(goal);
+  const p = document.createElement("p"); p.className = "due";
+  if (!due) {
+    p.textContent = "No deadline set";
+  } else {
+    p.dataset.overdue = String(due.overdue);
+    p.innerHTML = due.overdue
+      ? `<span class="bar"></span><b>${due.long}</b> — was due ${due.date}`
+      : due.settled ? `Due ${due.date}` : `<b>${due.long}</b> — ${due.date}`;
+    if (due.note) { const s = document.createElement("span"); s.className = "raw"; s.textContent = due.note; p.append(s); }
+  }
+  g.append(p);
+
+  if (goal.next) { const n = document.createElement("p"); n.className = "goal-next"; n.innerHTML = `<b>Next:</b> ${goal.next}`; g.append(n); }
+
+  if (goal.steps.length) {
+    const ul = document.createElement("ul"); ul.className = "steps";
+    goal.steps.forEach((s) => {
+      const li = document.createElement("li"); li.dataset.status = s.status;
+      const m = document.createElement("span"); m.className = "step-mark"; m.dataset.status = s.status;
+      const t = document.createElement("span"); t.textContent = s.text;
+      if (s.evidence) { const e = document.createElement("span"); e.className = "step-ev"; e.textContent = s.evidence; t.append(e); }
+      li.append(m, t); ul.append(li);
+    });
+    g.append(ul);
+  }
+  return g;
+}
+
+function questionCard(agent, q, i, total) {
+  const k = key(agent.id, q);
+  const val = answers.get(k) || "";
+  const c = document.createElement("div"); c.className = "q";
+  c.dataset.answered = String(val.trim().length > 0);
+
+  const top = document.createElement("div"); top.className = "q-top";
+  const p = document.createElement("p"); p.className = "q-question"; p.textContent = q.question;
+  const idx = document.createElement("span"); idx.className = "q-index";
+  idx.textContent = `${i + 1} of ${total}`;
+  top.append(p, idx); c.append(top);
+  const kind = document.createElement("span"); kind.className = "q-kind"; kind.textContent = q.kind;
+  c.append(kind);
+
+  if (q.context) { const cx = document.createElement("p"); cx.className = "q-context"; cx.textContent = q.context; c.append(cx); }
+
+  // Render by `kind`. A review ask is guaranteed to carry a url, so the link is
+  // the primary element — you look before you answer. A decision leads with its
+  // options. A question is just the field.
+  if (q.url) {
+    const a = document.createElement("a");
+    a.className = q.kind === "review" ? "q-open" : "q-link";
+    a.href = q.url; a.target = "_blank"; a.rel = "noreferrer";
+    a.textContent = q.link_label || "Open it";
+    c.append(a);
+  }
+  if (q.options && q.options.length) {
+    const wrap = document.createElement("div"); wrap.className = "opts";
+    q.options.forEach((opt) => {
+      const b = document.createElement("button"); b.type = "button"; b.className = "opt";
+      b.setAttribute("aria-pressed", String(val === opt.label));
+      const s = document.createElement("strong"); s.textContent = opt.label; b.append(s);
+      if (opt.consequence) { const sp = document.createElement("span"); sp.textContent = opt.consequence; b.append(sp); }
+      // Clicking the selected option clears it, so a mis-click is undoable
+      // without reaching for the text field.
+      b.addEventListener("click", () => { answers.set(k, val === opt.label ? "" : opt.label); renderDialog(); });
+      wrap.append(b);
+    });
+    c.append(wrap);
+  }
+
+  const ans = document.createElement("div"); ans.className = "answer";
+  const ta = document.createElement("textarea"); ta.rows = 1; ta.value = val;
+  ta.placeholder = q.options && q.options.length ? "Or say it in your own words" : "Your answer";
+  ta.addEventListener("input", () => {
+    answers.set(k, ta.value);
+    c.dataset.answered = String(ta.value.trim().length > 0);
+    c.querySelectorAll(".opt").forEach((b) => b.setAttribute("aria-pressed", String(b.querySelector("strong").textContent === ta.value)));
+    ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight, 200) + "px";
+    refreshBar(agent);
+  });
+  ans.append(ta); c.append(ans);
+  return c;
+}
+
+// Answered questions do NOT vanish in production — needs_human only changes
+// when the agent posts a new status. This is the honest in-between state.
+function pendingCard(agent, q) {
+  const c = document.createElement("div"); c.className = "q"; c.dataset.pending = "true";
+  const p = document.createElement("p"); p.className = "q-question"; p.textContent = q.question;
+  const a = document.createElement("p"); a.className = "q-pendingnote";
+  a.textContent = `You answered: ${pending.get(key(agent.id, q))} — waiting for ${agent.name} to confirm.`;
+  c.append(p, a);
+  return c;
+}
+
+function answeredRows(agent) {
+  return liveQuestions(agent)
+    .map((q) => ({ q, text: (answers.get(key(agent.id, q)) || "").trim() }))
+    .filter((r) => r.text.length > 0);
+}
+
+// One message, each question quoted above its answer. NeedsHuman.id defaults to
+// null with no auto-assignment, so quoting is the only reliable correlation.
+function composed(agent) {
+  const rows = answeredRows(agent);
+  if (!rows.length) return "";
+  const total = liveQuestions(agent).length;
+  const head = rows.length === total
+    ? `Answering your ${total} question${total === 1 ? "" : "s"}:`
+    : `Answering ${rows.length} of your ${total} questions:`;
+  const body = rows.map((r, i) => `${i + 1}. ${r.q.question}\n→ ${r.text}`).join("\n\n");
+  const left = total - rows.length;
+  const tail = left ? `\n\nStill thinking about the ${left === 1 ? "other one" : `other ${left}`}.` : "";
+  return `${head}\n\n${body}${tail}`;
+}
+
+// Built with real node references and listeners attached synchronously. An
+// earlier version wired these up in a setTimeout(0) after render, so a click
+// landing in that gap did nothing at all.
+function sendBar(agent, running) {
+  const bar = document.createElement("div"); bar.className = "sendbar"; bar.id = "sendbar";
+  bar.innerHTML = `<div class="sendbar-row">
+      <span class="sendbar-count" id="count"></span>
+      <div class="sendbar-actions">
+        <button class="link-btn" id="toggle-preview" hidden>Preview message</button>
+        <button class="btn-send" id="send" disabled>Send answers</button>
+      </div>
+    </div><div id="warnbox"></div><div id="previewbox" hidden></div>`;
+  bar.querySelector("#toggle-preview").addEventListener("click", () => {
+    const box = bar.querySelector("#previewbox");
+    if (box.hidden) showPreview(agent);
+    else { box.hidden = true; bar.querySelector("#toggle-preview").textContent = "Preview message"; }
+  });
+  bar.querySelector("#send").addEventListener("click", () => doSend(agent));
+  // Populate from the current answer set before it is even in the document.
+  refreshBar(agent, bar);
+  return bar;
+}
+
+function refreshBar(agent, scope) {
+  const root = scope || document.getElementById("sendbar");
+  if (!root) return;
+  const q = (sel) => root.querySelector(sel);
+  const n = answeredRows(agent).length;
+  const total = liveQuestions(agent).length;
+  q("#count").textContent = n === 0 ? "Nothing answered yet"
+    : `${n} of ${total} answered${n < total ? " · the rest stay on the card" : ""}`;
+  q("#send").disabled = n === 0;
+  q("#send").textContent = n === 0 ? "Send answers" : `Send ${n} answer${n === 1 ? "" : "s"}`;
+  q("#toggle-preview").hidden = n === 0;
+  if (n === 0) {
+    q("#previewbox").hidden = true; q("#previewbox").innerHTML = "";
+    q("#toggle-preview").textContent = "Preview message";
+  } else if (!q("#previewbox").hidden) showPreview(agent, root);
+  refreshWarn(agent, root);
+}
+
+function refreshWarn(agent, scope) {
+  const root = scope || document.getElementById("sendbar"); if (!root) return;
+  const box = root.querySelector("#warnbox"); if (!box) return;
+  box.innerHTML = "";
+  if (!el("toggle-running").checked || answeredRows(agent).length === 0) return;
+  const w = document.createElement("div"); w.className = "warn";
+  w.innerHTML = `<strong>${agent.name} is mid-turn.</strong> Messages that arrive during a turn can be swallowed by the gateway without spawning a turn of their own. This one is checked after sending, and offered back to you if it was not picked up.`;
+  box.append(w);
+}
+
+function showPreview(agent, scope) {
+  const root = scope || document.getElementById("sendbar");
+  const box = root.querySelector("#previewbox"); box.hidden = false; box.innerHTML = "";
+  const l = document.createElement("p"); l.className = "preview-label";
+  l.textContent = `Exactly what ${agent.name} receives — one message, one turn`;
+  const pre = document.createElement("div"); pre.className = "preview"; pre.textContent = composed(agent);
+  box.append(l, pre);
+  root.querySelector("#toggle-preview").textContent = "Hide preview";
+}
+
+function doSend(agent) {
+  const text = composed(agent);
+  const rows = answeredRows(agent);
+  rows.forEach((r) => {
+    const k = key(agent.id, r.q);
+    pending.set(k, r.text);
+    answers.delete(k);
+  });
+  agent.messages.push({ role: "founder", text, at: "Just now" });
+
+  renderDialog();
+  renderPage();
+
+  const s = document.createElement("div"); s.className = "sent";
+  const h = document.createElement("h4"); h.textContent = `Sent ${rows.length} answer${rows.length === 1 ? "" : "s"}`;
+  const body = document.createElement("div"); body.className = "preview"; body.textContent = text;
+  const meta = document.createElement("p"); meta.className = "meta"; meta.textContent = "Checking whether it was picked up…";
+  s.append(h, body, meta);
+  const kept = sentNotices.get(agent.id) || [];
+  kept.push(s);
+  sentNotices.set(agent.id, kept);
+  el("dialog").append(s);
+
+  // A 200 from the send endpoint only means the websocket accepted the frame.
+  // The real confirmation is a turn starting that carries this text.
+  setTimeout(() => {
+    if (el("toggle-slow").checked) {
+      // The dot cleared optimistically on click, which is right — but if the
+      // message never spawned a turn the ask is still open, so it comes back
+      // rather than leaving you thinking it was handled.
+      rows.forEach((r) => {
+        const k = key(agent.id, r.q);
+        pending.delete(k);
+        answers.set(k, r.text);
+      });
+      meta.innerHTML = "";
+      meta.append(`Not picked up after 3 minutes — the gateway took it but no turn started. Put back on the list. `);
+      const again = document.createElement("button");
+      again.className = "link-btn"; again.style.color = "var(--tide)"; again.textContent = "Send it again";
+      again.addEventListener("click", () => {
+        rows.forEach((r) => { const k = key(agent.id, r.q); answers.delete(k); pending.set(k, r.text); });
+        meta.className = "meta confirmed";
+        meta.textContent = `${agent.name} picked this up.`;
+        renderDialog(); renderPage();
+      });
+      meta.append(again);
+      renderDialog(); renderPage();
+    } else {
+      meta.className = "meta confirmed";
+      meta.textContent = `${agent.name} picked this up.`;
+    }
+  }, 2200);
+}
+
+// ---------------------------------------------------------------------------
+// Messages — what the tab is still for once answering moves to Status.
+// ---------------------------------------------------------------------------
+function renderMessages(d, agent) {
+  const sub = document.createElement("p"); sub.className = "sec-sub"; sub.style.marginTop = "16px";
+  sub.textContent = "The founder channel, same as Slack. Answers you send from Status land here too.";
+  d.append(sub);
+
+  const thread = document.createElement("div"); thread.className = "thread";
+  if (!agent.messages.length) {
+    const p = document.createElement("p"); p.className = "empty";
+    p.textContent = "No conversation recorded yet. Earlier messages live in Slack.";
+    thread.append(p);
+  }
+  agent.messages.forEach((m) => {
+    const w = document.createElement("div"); w.className = "msg"; w.dataset.role = m.role;
+    const who = document.createElement("div"); who.className = "who";
+    who.textContent = `${m.role === "founder" ? "You" : agent.name} · ${m.at}`;
+    const b = document.createElement("div"); b.className = "bubble"; b.textContent = m.text;
+    w.append(who, b); thread.append(w);
+  });
+  d.append(thread);
+  // Jump, don't animate — the live thread smooth-scrolls from the top on first
+  // paint, which is the delay you noticed.
+  requestAnimationFrame(() => { thread.scrollTop = thread.scrollHeight; });
+
+  const c = document.createElement("div"); c.className = "composer";
+  const ta = document.createElement("textarea");
+  ta.placeholder = `Message ${agent.name}`;
+  const send = document.createElement("button"); send.className = "btn-send"; send.textContent = "Send";
+  send.addEventListener("click", () => {
+    if (!ta.value.trim()) return;
+    agent.messages.push({ role: "founder", text: ta.value.trim(), at: "Just now" });
+    renderDialog();
+  });
+  c.append(ta, send); d.append(c);
+}
+
+el("dotstyle").addEventListener("change", (e) => { document.body.dataset.dot = e.target.value; renderPage(); });
+document.querySelectorAll('input[name="layout"]').forEach((r) =>
+  r.addEventListener("change", () => { document.body.dataset.layout = r.value; renderPage(); }));
+el("toggle-running").addEventListener("change", () => { if (openId) renderDialog(); });
+el("reset").addEventListener("click", () => location.reload());
+
+renderPage();
+</script>
+</body>
+</html>
