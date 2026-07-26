@@ -28,7 +28,7 @@ type Goal = {
   id: string;
   outcome: string;
   status: "active" | "blocked" | "done" | "cancelled" | "superseded";
-  priority?: "P1" | "P2" | "P3" | null;
+  priority?: "P0" | "P1" | "P2" | "P3" | null;
   deadline?: string | null;
   next_action?: string | null;
   blocked_on?: string | null;
