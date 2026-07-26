@@ -212,7 +212,13 @@ if (params.has("mock")) {
           ? "blocked"
           : "running",
     whats_happening,
-    goals: [{ id: outcome.toLowerCase().replace(/\W+/g, "-").slice(0, 48), outcome, status: "active", priority: "P1", deadline: dateAhead(1), next_action, steps }],
+    goals: [{
+      id: outcome.toLowerCase().replace(/\W+/g, "-").slice(0, 48), outcome, status: "active", priority: "P1",
+      // The backend extracts deadline_at out of whatever prose the agent wrote;
+      // the card reads that, never the raw text.
+      deadline: dateAhead(1), deadline_at: daysAhead(1), deadline_all_day: true,
+      next_action, steps,
+    }],
     needs_human, subagents: [], latest_output,
   });
   const agentDashboard = {
@@ -220,7 +226,7 @@ if (params.has("mock")) {
     agents: [
       {
         agent_id: "autosana", paused: false, customer_health: 3, is_running: true,
-        attention_required: true, attention_reasons: ["Needs input from Aayush"],
+        attention_required: true, attention_reasons: [],
         current_assignment: "Report target review, bug hunts, demo readiness, and blockers from current pipeline data.",
         status: status(
           "It has 35 demo runs ready, but work is stalled until you review its target batches and roughly 107 pending connections.",
@@ -238,7 +244,7 @@ if (params.has("mock")) {
       },
       {
         agent_id: "autosana_demo", paused: false, customer_health: 3, is_running: false,
-        attention_required: true, attention_reasons: ["Needs input from Aayush"], current_assignment: null,
+        attention_required: true, attention_reasons: ["Started a turn hours ago and never reported finishing"], current_assignment: null,
         status: status(
           "Its warm outreach wave cannot start because LinkedIn is disconnected.",
           "Submit the warm wave after LinkedIn reconnects", "Recheck LinkedIn",
@@ -249,7 +255,7 @@ if (params.has("mock")) {
       },
       {
         agent_id: "cyberneticphysics", paused: false, customer_health: 3, is_running: false,
-        attention_required: true, attention_reasons: ["Needs input from Aayush"], current_assignment: null,
+        attention_required: true, attention_reasons: [], current_assignment: null,
         status: status(
           "The corrected robot comparison is finished and waiting for your review.",
           "Deliver the corrected robot comparison", "Collect review feedback",
@@ -261,7 +267,7 @@ if (params.has("mock")) {
       },
       {
         agent_id: "driftwood", paused: false, customer_health: 3, is_running: false,
-        attention_required: true, attention_reasons: ["Needs input from Aayush"], current_assignment: null,
+        attention_required: true, attention_reasons: [], current_assignment: null,
         status: status(
           "It stopped sourcing to avoid duplicates because roughly 449 outreach items are already in your review queue.",
           "Keep the connection-request queue supplied without duplicates", "Wait for review backlog to clear",

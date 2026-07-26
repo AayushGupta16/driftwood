@@ -30,6 +30,8 @@ type Goal = {
   status: "active" | "blocked" | "done" | "cancelled" | "superseded";
   priority?: "P0" | "P1" | "P2" | "P3" | null;
   deadline?: string | null;
+  deadline_at?: string | null;
+  deadline_all_day?: boolean;
   next_action?: string | null;
   blocked_on?: string | null;
   progress?: string | string[] | null;
@@ -121,14 +123,18 @@ function relativeTime(value: string | null, now: number) {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
-function deadlineLabel(value?: string | null) {
-  if (!value) return null;
-  const date = new Date(value.length === 10 ? `${value}T23:59:59` : value);
+// Agents write deadlines as prose, so the backend extracts the instant into
+// deadline_at. Anything it could not read stays off the card rather than
+// spilling free text into the layout.
+function deadlineLabel(goal?: Goal | null) {
+  if (!goal?.deadline_at) return null;
+  const date = new Date(goal.deadline_at);
   if (Number.isNaN(date.getTime())) return null;
   return new Intl.DateTimeFormat(undefined, {
     month: "short",
     day: "numeric",
-    hour: value.length === 10 ? undefined : "numeric",
+    hour: goal.deadline_all_day ? undefined : "numeric",
+    timeZone: "America/Los_Angeles",
   }).format(date);
 }
 
@@ -204,7 +210,7 @@ function AgentCard({
 }) {
   const goal = activeGoal(agent.status);
   const progress = goalProgress(goal);
-  const due = deadlineLabel(goal?.deadline);
+  const due = deadlineLabel(goal);
   const visibleSteps = goal?.steps.filter((step) => step.status !== "cancelled").slice(0, 3) ?? [];
   const visibleProgress = goal?.progress
     ? (Array.isArray(goal.progress) ? goal.progress : [goal.progress]).slice(0, 2)
@@ -232,6 +238,17 @@ function AgentCard({
         </div>
 
         <p className="agent-summary-clamp m-0 mt-4 text-[14px] leading-[1.5] text-ink">{summary}</p>
+
+        {agent.attention_reasons.length > 0 && (
+          <ul className="m-0 mt-4 list-none space-y-1.5 p-0 text-[12.5px] leading-[1.4] text-ink">
+            {agent.attention_reasons.map((reason) => (
+              <li key={reason} className="flex items-start gap-2">
+                <span className="agent-attention-mark" aria-hidden="true" />
+                <span className="agent-two-line-clamp">{reason}</span>
+              </li>
+            ))}
+          </ul>
+        )}
 
         <div className="mt-5 border-t border-line pt-4">
           <div className="flex items-start justify-between gap-3">
@@ -354,7 +371,7 @@ function AgentDetail({ agent, onClose }: { agent: AgentCardData; onClose: () => 
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <strong className="text-[14px] font-semibold">{goal.outcome}</strong>
                   <span className="text-[12px] text-ink-soft">
-                    {[goal.priority, goal.status, deadlineLabel(goal.deadline)].filter(Boolean).join(" · ")}
+                    {[goal.priority, goal.status, deadlineLabel(goal)].filter(Boolean).join(" · ")}
                   </span>
                 </div>
                 {goal.next_action && <p className="m-0 mt-2 text-[13px] text-ink-soft"><span className="font-medium text-ink">Next:</span> {goal.next_action}</p>}
@@ -516,7 +533,11 @@ function AgentsView({ user }: { user: User }) {
       const response = await fetch("/api/v1/admin/agents/status/bootstrap", { method: "POST", credentials: "include" });
       if (!response.ok) throw new Error(`Refresh returned ${response.status}`);
       const result = (await response.json()) as { delivered: string[]; offline: string[] };
-      setNotice(`Woke ${result.delivered.length} agents${result.offline.length ? `; ${result.offline.length} offline` : ""}.`);
+      // "delivered" means the gateway took the message, not that the agent
+      // acted on it: one that is mid-turn only picks it up when that turn ends.
+      setNotice(
+        `Asked ${result.delivered.length} agents to refresh${result.offline.length ? `; ${result.offline.length} offline` : ""}. Any mid-turn will answer when that turn finishes.`,
+      );
     } catch (reason) {
       setNotice(reason instanceof Error ? reason.message : "Could not wake agents");
     } finally {

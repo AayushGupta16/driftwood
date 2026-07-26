@@ -36,6 +36,18 @@
   -webkit-line-clamp: 2;
 }
 
+/* Attention reasons carry the trouble the rest of the card cannot show.
+ * They earn weight from an ink rule, not from a second accent colour —
+ * the design language allows exactly one accent. */
+.agent-attention-mark {
+  width: 2px;
+  height: 1.05em;
+  flex: 0 0 auto;
+  margin-top: 1px;
+  border-radius: 1px;
+  background: var(--color-ink);
+}
+
 .agent-state[data-state="running"] {
   color: var(--color-tide);
 }
