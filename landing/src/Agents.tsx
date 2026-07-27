@@ -535,6 +535,9 @@ function AgentStatusPanel({
   // chat composer's state: the integration notes call out that routing these
   // through the composer would clobber a half-typed message.
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  // The follow-up that almost always comes with an answer; rides the same
+  // single message rather than needing a detour through the Messages tab.
+  const [comment, setComment] = useState("");
   const [sending, setSending] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -543,9 +546,10 @@ function AgentStatusPanel({
     (need): need is Exclude<HumanNeed, string> => typeof need !== "string" && !!need.id,
   );
   const filled = answerable.filter((need) => (answers[need.id as string] ?? "").trim());
+  const commentText = comment.trim();
 
   async function sendAnswers() {
-    if (!filled.length || sending) return;
+    if ((!filled.length && !commentText) || sending) return;
     setSending(true);
     setNotice(null);
     try {
@@ -560,15 +564,20 @@ function AgentStatusPanel({
               slug: need.id,
               text: (answers[need.id as string] ?? "").trim(),
             })),
+            ...(commentText ? { comment: commentText } : {}),
           }),
         },
       );
       if (!response.ok) {
         throw new Error(await readErrorDetail(response, `Send returned ${response.status}`));
       }
+      const sentAnswers = filled.length
+        ? `${filled.length} answer${filled.length === 1 ? "" : "s"}`
+        : null;
       setAnswers({});
+      setComment("");
       setNotice(
-        `Sent ${filled.length} answer${filled.length === 1 ? "" : "s"} to the agent.`,
+        `Sent ${[sentAnswers, commentText ? "a comment" : null].filter(Boolean).join(" and ")} to the agent.`,
       );
       onAnswered();
     } catch (reason) {
@@ -684,22 +693,38 @@ function AgentStatusPanel({
                 );
               })}
             </div>
-            {answerable.length > 0 && (
+            <div className="mt-3">
+              <label className="block text-[12px] font-medium text-ink-soft" htmlFor="ask-comment">
+                Additional comments
+              </label>
+              <textarea
+                id="ask-comment"
+                value={comment}
+                onChange={(event) => setComment(event.target.value)}
+                rows={2}
+                placeholder="Anything else — a follow-up, context, a redirection. Rides the same message."
+                className="mt-1.5 w-full resize-y rounded-[10px] border border-line bg-paper px-3 py-2 text-[13px] leading-[1.5] text-ink placeholder:text-ink-faint focus:border-tide focus:outline-none"
+              />
+            </div>
+            {(answerable.length > 0 || needs.length > 0) && (
               <div className="mt-3 flex items-center justify-between gap-3">
                 <span className="text-[12px] text-ink-soft">
-                  {agent.is_running
-                    ? "Agent is mid-turn; answers would be lost. Try again in a few minutes."
-                    : notice ?? `${filled.length} of ${answerable.length} answered`}
+                  {notice
+                    ?? (agent.is_running
+                      ? "Agent is mid-turn — your message will be folded into its current work."
+                      : `${filled.length} of ${answerable.length} answered`)}
                 </span>
                 <button
                   type="button"
                   onClick={() => void sendAnswers()}
-                  disabled={!filled.length || sending || agent.is_running}
+                  disabled={(!filled.length && !commentText) || sending}
                   className="shrink-0 cursor-pointer rounded-full border border-tide bg-tide px-4 py-2 text-[12.5px] font-medium text-white hover:bg-tide-deep disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {sending
                     ? "Sending"
-                    : `Send answer${filled.length === 1 ? "" : "s"}`}
+                    : filled.length
+                      ? `Send answer${filled.length === 1 ? "" : "s"}`
+                      : "Send comment"}
                 </button>
               </div>
             )}
