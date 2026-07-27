@@ -228,6 +228,10 @@ function AgentCard({
 }) {
   const goal = activeGoal(agent.status);
   const goalMeta = [goalProgress(goal), dueShort(goal, now)].filter(Boolean).join(" · ");
+  const goals = (agent.status?.goals ?? []).filter(
+    (item) => item.status !== "cancelled" && item.status !== "superseded",
+  );
+  const cardGoals = goals.slice(0, 3);
   const latestOutput = agent.status?.latest_output;
   const href = outputUrl(latestOutput?.url);
   const needs = agent.status?.needs_human ?? [];
@@ -284,13 +288,34 @@ function AgentCard({
           </div>
         )}
 
-        {/* One quiet line; Progress/Next and the step list live in the dialog. */}
-        {goal && (
-          <p className="agent-two-line-clamp m-0 mt-4 border-t border-line pt-3 text-[12.5px] leading-[1.45] text-ink-soft">
-            <span className="text-ink">{goal.outcome}</span>
-            {goalMeta && <> · {goalMeta}</>}
-          </p>
-        )}
+        {/* With decisions on the card the goal stays one quiet line; with
+            nothing waiting, spend that space on the goals and their due
+            dates. Progress/Next and the step list live in the dialog. */}
+        {needs.length > 0
+          ? goal && (
+            <p className="agent-two-line-clamp m-0 mt-4 border-t border-line pt-3 text-[12.5px] leading-[1.45] text-ink-soft">
+              <span className="text-ink">{goal.outcome}</span>
+              {goalMeta && <> · {goalMeta}</>}
+            </p>
+          )
+          : cardGoals.length > 0 && (
+            <ul className="m-0 mt-4 list-none space-y-2 border-t border-line p-0 pt-3">
+              {cardGoals.map((item) => {
+                const meta = [item.status === "blocked" ? "blocked" : null, goalProgress(item), dueShort(item, now)]
+                  .filter(Boolean)
+                  .join(" · ");
+                return (
+                  <li key={item.id} className="agent-two-line-clamp text-[12.5px] leading-[1.45] text-ink-soft">
+                    <span className="text-ink">{item.outcome}</span>
+                    {meta && <> · {meta}</>}
+                  </li>
+                );
+              })}
+              {goals.length > cardGoals.length && (
+                <li className="text-[11.5px] text-ink-faint">+ {goals.length - cardGoals.length} more goals</li>
+              )}
+            </ul>
+          )}
 
         {latestOutput && href && (
           <a href={href} target="_blank" rel="noreferrer" className="pointer-events-auto relative z-20 mt-4 flex items-center justify-between gap-3 border-t border-line pt-3 text-[12.5px] no-underline" onClick={(event) => event.stopPropagation()}>
