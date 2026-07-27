@@ -125,6 +125,13 @@ function deadlineLabel(goal?: Goal | null) {
   return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(date);
 }
 
+// Goal meta sits right-aligned in tabular numerals so progress and due dates
+// stack scannable down the card edge; overdue earns ink weight, not a second
+// accent colour.
+function goalMetaClass(meta: string) {
+  return `shrink-0 text-[12px] tabular-nums ${meta.includes("overdue") ? "font-medium text-ink" : "text-ink-soft"}`;
+}
+
 // The card reads deadlines as a countdown (relative for urgency; the dialog
 // keeps the absolute date for planning). Measured to 23:59 of the deadline
 // day — the schema deliberately keeps deadline a bare date. Past a week the
@@ -267,7 +274,7 @@ function AgentCard({
         <p className="agent-summary-clamp m-0 mt-4 text-[14px] leading-[1.5] text-ink">{summary}</p>
 
         {shownNeeds.length > 0 && (
-          <div className="agent-action mt-4 px-3 py-2.5 text-[12.5px] leading-[1.45] text-ink">
+          <div className="agent-action mt-4 px-3 py-2.5 text-[13px] leading-[1.45] text-ink">
             <span className="block text-[11.5px] font-medium text-tide-deep">
               {shownNeeds.length === 1
                 ? needKind(shownNeeds[0]) === "review" ? "Needs your eyes" : "Your action"
@@ -276,7 +283,7 @@ function AgentCard({
             <ul className="m-0 list-none p-0">
               {shownNeeds.map((item, index) => (
                 <li key={needKey(item, index)} className={index === 0 ? "mt-1" : "mt-1.5 border-t border-tide/15 pt-1.5"}>
-                  <span className="agent-two-line-clamp block">{needQuestion(item)}</span>
+                  <span className="agent-two-line-clamp block font-medium">{needQuestion(item)}</span>
                 </li>
               ))}
             </ul>
@@ -293,9 +300,9 @@ function AgentCard({
             dates. Progress/Next and the step list live in the dialog. */}
         {needs.length > 0
           ? goal && (
-            <p className="agent-two-line-clamp m-0 mt-4 border-t border-line pt-3 text-[12.5px] leading-[1.45] text-ink-soft">
-              <span className="text-ink">{goal.outcome}</span>
-              {goalMeta && <> · {goalMeta}</>}
+            <p className="m-0 mt-4 flex items-baseline justify-between gap-3 border-t border-line pt-3 text-[13px] leading-[1.45]">
+              <span className="min-w-0 truncate text-ink">{goal.outcome}</span>
+              {goalMeta && <span className={goalMetaClass(goalMeta)}>{goalMeta}</span>}
             </p>
           )
           : cardGoals.length > 0 && (
@@ -305,9 +312,9 @@ function AgentCard({
                   .filter(Boolean)
                   .join(" · ");
                 return (
-                  <li key={item.id} className="agent-two-line-clamp text-[12.5px] leading-[1.45] text-ink-soft">
-                    <span className="text-ink">{item.outcome}</span>
-                    {meta && <> · {meta}</>}
+                  <li key={item.id} className="flex items-baseline justify-between gap-3 text-[13px] leading-[1.45]">
+                    <span className="min-w-0 truncate text-ink">{item.outcome}</span>
+                    {meta && <span className={goalMetaClass(meta)}>{meta}</span>}
                   </li>
                 );
               })}
