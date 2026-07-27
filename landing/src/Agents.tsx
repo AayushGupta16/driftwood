@@ -230,8 +230,8 @@ function AgentCard({
   const goalMeta = [goalProgress(goal), dueShort(goal, now)].filter(Boolean).join(" · ");
   const latestOutput = agent.status?.latest_output;
   const href = outputUrl(latestOutput?.url);
-  const need = agent.status?.needs_human[0] ?? null;
-  const openCount = agent.status?.needs_human.length ?? 0;
+  const needs = agent.status?.needs_human ?? [];
+  const shownNeeds = needs.slice(0, 3);
   const updatedAt = agent.status_updated_at ?? agent.last_activity_at;
   const summary = agent.status?.whats_happening
     ?? agent.current_assignment
@@ -246,22 +246,9 @@ function AgentCard({
           <StatusSignal agent={agent} />
         </div>
 
-        {/* What you can do, then what you need to know, then the narrative —
-            the goal stays a quiet line further down. */}
-        {need && (
-          <div className="agent-action mt-4 px-3 py-2.5 text-[12.5px] leading-[1.45] text-ink">
-            <span className="block text-[11.5px] font-medium text-tide-deep">
-              {needKind(need) === "review" ? "Needs your eyes" : "Your action"}
-            </span>
-            <span className="agent-two-line-clamp mt-1 block">{needQuestion(need)}</span>
-            {openCount > 1 && (
-              <span className="mt-1.5 block text-[11.5px] font-medium text-tide-deep/85">
-                + {openCount - 1} more question{openCount === 2 ? "" : "s"}
-              </span>
-            )}
-          </div>
-        )}
-
+        {/* Need-to-know up top (flags, then the narrative); the middle of the
+            card is every decision waiting on you; the goal stays a quiet line
+            further down. */}
         {agent.attention_reasons.length > 0 && (
           <ul className="m-0 mt-4 list-none space-y-1.5 p-0 text-[12.5px] leading-[1.4] text-ink">
             {agent.attention_reasons.map((reason) => (
@@ -274,6 +261,28 @@ function AgentCard({
         )}
 
         <p className="agent-summary-clamp m-0 mt-4 text-[14px] leading-[1.5] text-ink">{summary}</p>
+
+        {shownNeeds.length > 0 && (
+          <div className="agent-action mt-4 px-3 py-2.5 text-[12.5px] leading-[1.45] text-ink">
+            <span className="block text-[11.5px] font-medium text-tide-deep">
+              {shownNeeds.length === 1
+                ? needKind(shownNeeds[0]) === "review" ? "Needs your eyes" : "Your action"
+                : "Decisions for you"}
+            </span>
+            <ul className="m-0 list-none p-0">
+              {shownNeeds.map((item, index) => (
+                <li key={needKey(item, index)} className={index === 0 ? "mt-1" : "mt-1.5 border-t border-tide/15 pt-1.5"}>
+                  <span className="agent-two-line-clamp block">{needQuestion(item)}</span>
+                </li>
+              ))}
+            </ul>
+            {needs.length > shownNeeds.length && (
+              <span className="mt-1.5 block text-[11.5px] font-medium text-tide-deep/85">
+                + {needs.length - shownNeeds.length} more
+              </span>
+            )}
+          </div>
+        )}
 
         {/* One quiet line; Progress/Next and the step list live in the dialog. */}
         {goal && (

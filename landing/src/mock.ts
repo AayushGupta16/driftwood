@@ -236,7 +236,18 @@ if (params.has("mock")) {
             { text: "Run bug hunts on approved targets", status: "todo" },
           ],
           { title: "Taste re-screen", summary: "Promoted and maybe companies awaiting review.", url: "https://driftwood.sh/d/autosana-taste-rescreen" },
-          [{ id: "target-batches", kind: "review", question: "Approve or reject the pending target batches.", url: "https://driftwood.sh/d/autosana-taste-rescreen", link_label: "Open target review" }],
+          [
+            { id: "target-batches", kind: "review", question: "Approve or reject the pending target batches.", url: "https://driftwood.sh/d/autosana-taste-rescreen", link_label: "Open target review" },
+            {
+              id: "sprocket-breakaway", kind: "decision",
+              question: "Sprocket Sports and BreakAway Data look strong — add both to this week's wave?",
+              options: [
+                { id: "both", label: "Add both", consequence: "Connection requests queue tonight" },
+                { id: "hold", label: "Hold for now", consequence: "They stay in the sourcing list" },
+              ],
+            },
+            { id: "stale-batch", kind: "question", question: "The oldest connection batch is 10 days old — drop it or send as-is?" },
+          ],
         ),
         status_updated_at: hoursAgo(0.3), last_activity_at: hoursAgo(0.05),
       },
