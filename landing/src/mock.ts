@@ -320,6 +320,19 @@ if (params.has("mock")) {
       },
     ],
   };
+  // A second goal on a no-ask agent, so the card's goals-list state (shown
+  // when nothing waits on the founder) is visible with canned data.
+  agentDashboard.agents
+    .find((agent) => agent.agent_id === "oruk")
+    ?.status.goals.push({
+      id: "hit-100-caption-demos", outcome: "Hit 100 caption demos this week", status: "active", priority: "P2",
+      deadline: dateAhead(5),
+      next_action: "Queue the next batch after the emotion-tag rebuilds",
+      steps: [
+        { text: "Ship the first 40 demos", status: "done" },
+        { text: "Ship the remaining 60", status: "doing" },
+      ],
+    });
   // One canned exchange, close to what a real founder channel holds: prose,
   // a Slack-syntax link, and a mention the page has to unwrap.
   const conversationLog = [
