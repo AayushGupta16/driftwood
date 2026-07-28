@@ -6,8 +6,6 @@ import { trackCta } from "./track";
 import { CAL_URL } from "./components/BookDemo";
 import HelmMark from "./components/HelmMark";
 
-/* style={{ "--i": n }} helper for the thread stagger delays */
-const iv = (n: number) => ({ "--i": n } as CSSProperties);
 
 function Wordmark({ label = true }: { label?: boolean }) {
   return (
@@ -18,56 +16,185 @@ function Wordmark({ label = true }: { label?: boolean }) {
   );
 }
 
+/* The hero waterline: a band of monospace wave characters, sparse at the top
+   and denser toward the bottom, that the gif card appears to rise out of.
+   Generated deterministically (no Math.random) so the prerender and the
+   client render byte-for-byte the same grid — a mismatch here would hydrate
+   into a flicker. Two identical copies are laid side by side and the strip
+   drifts one copy's width sideways on a loop, so the surface reads as alive. */
+const WAVE_CHARS = [" ", "·", "∼", "~", "≈"]; // (space) · ∼ ~ ≈
+function waveBand(cols: number, rows: number): string {
+  const lines: string[] = [];
+  for (let r = 0; r < rows; r++) {
+    const density = 0.32 + (r / (rows - 1)) * 0.68; // rows deepen toward the bottom
+    let line = "";
+    for (let c = 0; c < cols; c++) {
+      const v =
+        (Math.sin(c * 0.5 + r * 0.9) + Math.sin(c * 0.21 - r * 0.5) + Math.sin(c * 0.11)) / 3; // -1..1 swell
+      const lvl = Math.round(((v + 1) / 2) * density * (WAVE_CHARS.length - 1));
+      line += WAVE_CHARS[Math.max(0, Math.min(WAVE_CHARS.length - 1, lvl))];
+    }
+    lines.push(line);
+  }
+  return lines.join("\n");
+}
+const WATERBAND = waveBand(480, 16);
+
+/* The hero card plops into the sea on load and throws a little pixel splash.
+   Droplets are generated deterministically (index-based, no Math.random) so
+   the prerender and the client agree; each carries its own throw (--dx),
+   apex (--peak), landing (--fall) and stagger (--delay) as CSS custom props
+   that one keyframe reads. Center droplets fly highest; edges fan wider. */
+const SPLASH: CSSProperties[] = Array.from({ length: 30 }, (_, i) => {
+  const n = 30;
+  const dir = i / (n - 1) - 0.5; // -0.5 (left) .. 0.5 (right)
+  const dx = dir * 480 + ((i % 2) - 0.5) * 30; // horizontal throw, jittered
+  const peak = -(80 + (0.5 - Math.abs(dir)) * 140 + (i % 3) * 12); // center highest
+  const fall = 44 + Math.abs(dir) * 34;
+  const size = 5 + ((i * 7) % 5); // 5..9px pixels
+  const delay = Math.abs(dir) * 0.05 + (i % 2) * 0.015;
+  return {
+    "--dx": `${dx.toFixed(1)}px`,
+    "--peak": `${peak.toFixed(1)}px`,
+    "--fall": `${fall.toFixed(1)}px`,
+    "--size": `${size}px`,
+    "--delay": `${delay.toFixed(3)}s`,
+  } as CSSProperties;
+});
+
+/* case studies — scroll through them; more get added as clients come on.
+   Each card runs case study → testimonial → company logo, loudest first: the
+   16:9 clip is the real demo the client sent, the quote sits beside it, and
+   the lockup closes the column. Clips stay unloaded (preload="none") until
+   someone hits play; the poster is a frame of the demo itself. */
+type CaseStudy = {
+  id: string;
+  company: string;
+  title: string;
+  sub: string;
+  video: string;
+  poster: string;
+  // every lockup is baked as a rounded tile on its own plate (the source art's
+  // plate colour, sampled, so the added room is seamless) with alpha corners —
+  // drop-shadow follows that alpha and lifts it as a chip. See the bake recipe
+  // in design/design-language.md; never ship a hard-cut square.
+  logo: string;
+  // the testimonial is optional: a case ships the moment the clip is cleared,
+  // the quote lands whenever the client sends one (never invented — §6)
+  quote?: string;
+  author?: string;
+  role?: string;
+  avatar?: string;
+};
+const CASE_STUDIES: CaseStudy[] = [
+  {
+    id: "autosana",
+    company: "Autosana",
+    title: "14× more responses in week one",
+    sub: "Tailored demos landed replies from accounts that had gone quiet for months.",
+    video: "/case-autosana.mp4",
+    poster: "/case-autosana-poster.webp",
+    logo: "/logo-autosana.webp",
+    quote: "amazing stuff, the demos are working so well",
+    author: "Yuvan Sundrani",
+    role: "Founder, Autosana (YC S25)",
+    avatar: "/yuvan.webp",
+  },
+  {
+    id: "oruk",
+    company: "Oruk",
+    title: "The prospect's own footage, already localized",
+    sub: "Oruk's tone-aware subtitles running over a scene from the show the prospect makes.",
+    video: "/case-oruk.mp4",
+    poster: "/case-oruk-poster.webp",
+    logo: "/logo-oruk.webp",
+    // TODO(placeholder): Autosana's testimonial, stood in verbatim — name and
+    // company included — so the column reads at full height while Oruk's own
+    // quote is outstanding. Swap all four fields together when it lands; do
+    // NOT re-point this text at an Oruk person (design-language §6).
+    quote: "amazing stuff, the demos are working so well",
+    author: "Yuvan Sundrani",
+    role: "Founder, Autosana (YC S25)",
+    avatar: "/yuvan.webp",
+  },
+];
+
+/* the interactive dashboard section: hotspots over the baked dashboard image
+   (positions are % of the image so they scale with it). Hovering one lights it
+   up and fills the info panel; nothing hovered shows the prompt. The image is
+   cropped to ~90% height (the "all leads" strip removed), so the t/h below are
+   already scaled into that cropped box. */
+type Widget = { id: string; l: number; t: number; w: number; h: number; title: string; body: string };
+const WIDGETS: Widget[] = [
+  { id: "linkedin", l: 1.5, t: 23.6, w: 96.5, h: 10.2,
+    title: "Send from LinkedIn, Twitter, or email",
+    body: "Demos go out from your own accounts, within safe daily limits — so nothing gets flagged." },
+  { id: "results", l: 1.5, t: 34.9, w: 57.2, h: 16.8,
+    title: "Track your conversion rates",
+    body: "Meetings booked, replies, and reply rate, updated the moment each one lands." },
+  { id: "pipeline", l: 1.5, t: 51.4, w: 57.2, h: 18.2,
+    title: "Spot the bottleneck in your pipeline",
+    body: "Every lead's stage at a glance — see exactly where deals stall." },
+  { id: "latest", l: 1.5, t: 69.4, w: 57.2, h: 30.4,
+    title: "Daily movement across your accounts",
+    body: "Every reply, send, and new connection as it happens. No refreshing." },
+  { id: "leads", l: 61.6, t: 49.5, w: 33.9, h: 23.7,
+    title: "Find leads that fit your ICP",
+    body: "Bring a CSV or let us source them — matched and enriched either way." },
+  { id: "blacklist", l: 61.6, t: 74.4, w: 33.9, h: 23,
+    title: "We keep track so you don't have to",
+    body: "Do-not-contact emails, domains, and URLs, excluded from every send." },
+];
+
+/* The demo, as a crisp 2x video (the old 484x591 gif was 256-colour and
+   dithered — it blurred the moment it scaled). One shell wraps it with a
+   bezel + layered shadow so it reads as a physical, lit object. Mounted
+   inline in both the hero and the compare slot. */
+function GifMedia() {
+  return (
+    <div className="gif-shell">
+      <div className="gif-reveal">
+        <video
+          className="gif-media"
+          src="/compare.mp4"
+          poster="/compare-poster.png"
+          width={484}
+          height={591}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          aria-label="A generic AI cold email is selected, deleted, and replaced by a driftwood message with a custom demo video. The CTO replies and a call is booked."
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const rootRef = useRef<HTMLDivElement>(null);
   const seaRef = useRef<HTMLCanvasElement>(null);
   const howWrapRef = useRef<HTMLDivElement>(null);
-  const cmpWrapRef = useRef<HTMLDivElement>(null);
-  const arrowPathRef = useRef<SVGPathElement>(null);
-  const arrowHeadRef = useRef<SVGPathElement>(null);
+  const cmpSectRef = useRef<HTMLElement>(null);
+  const washRef = useRef<HTMLDivElement>(null);
+  const casesRef = useRef<HTMLDivElement>(null);
+  // wash-in progress (0..1), shared with the sea draw so the hero pixels
+  // densify in step with the arriving water instead of on a fixed gradient
+  const washPRef = useRef(0);
   // sea state: null = trying, true = live (strips shown), false = fallback (canvases removed)
   const [seaLive, setSeaLive] = useState<boolean | null>(null);
+  // interactive dashboard: id of the hovered/selected widget, or null
+  const [sel, setSel] = useState<string | null>(null);
 
-  /* thread stagger, fire once — desktop only; on touch the scroll-link
-     scrubs each message in 1:1 with the finger instead */
-  useEffect(() => {
-    const t = rootRef.current?.querySelector(".stagger");
-    if (!t) return;
-    const touchScrubbed =
-      !(matchMedia("(min-width: 52rem)").matches && matchMedia("(pointer: fine)").matches) &&
-      !matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (touchScrubbed) return;
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries)
-          if (e.isIntersecting) {
-            t.classList.add("seen");
-            io.disconnect();
-          }
-      },
-      { threshold: 0.25 },
-    );
-    io.observe(t);
-    return () => io.disconnect();
-  }, []);
-
-  /* the two pinned scrubs: the slop-vs-real section, the how stage */
+  /* the how-stage pinned scrub (the slop-vs-real section is now a
+     self-animating gif — no choreography needed) */
   useEffect(() => {
     const root = rootRef.current;
     const pinWrap = howWrapRef.current;
-    const cmpWrap = cmpWrapRef.current;
-    const arrowPath = arrowPathRef.current;
-    const arrowHead = arrowHeadRef.current;
-    if (!root || !pinWrap || !cmpWrap || !arrowPath || !arrowHead) return;
+    if (!root || !pinWrap) return;
 
     const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    // full pinned scrubs on big pointer screens; the week/compare pins hold
-    // content taller than a phone screen, so those two go scroll-linked
-    // (un-pinned) on touch instead
-    const scrubOk =
-      matchMedia("(min-width: 52rem)").matches &&
-      matchMedia("(pointer: fine)").matches &&
-      !reduceMotion;
     const cleanups: (() => void)[] = [];
 
     // pinned scrub: scroll cycles the stage while the rail highlights.
@@ -117,74 +244,98 @@ export default function App() {
       /* static stack on mobile / reduced motion via CSS */
     }
 
-    // slop vs. real: the scrub drives the arrow across the cards
-    const arrowLen = arrowPath.getTotalLength();
-    arrowPath.style.strokeDasharray = `${arrowLen}`;
-    if (scrubOk) {
-      const cmpPin = cmpWrap.querySelector(".pin") as HTMLElement | null;
-      const cmpInner = cmpPin?.querySelector(".wrap") as HTMLElement | null;
-      let raf2 = 0;
-      const updateC = () => {
-        raf2 = 0;
-        const total = cmpWrap.offsetHeight - innerHeight;
-        if (total <= 0) return;
-        const p = Math.min(1, Math.max(0, -cmpWrap.getBoundingClientRect().top / total));
-        // content taller than the pin drifts up as the scrub advances, so
-        // the reply grids surface for the payoff (no-op on tall screens)
-        if (cmpPin && cmpInner) {
-          const over = Math.max(0, cmpPin.scrollHeight - cmpPin.clientHeight);
-          cmpInner.style.transform = `translateY(${-over * Math.min(1, p * 1.2)}px)`;
-        }
-        const draw = Math.min(1, Math.max(0, (p - 0.03) / 0.22));
-        arrowPath.style.strokeDashoffset = `${arrowLen * (1 - draw)}`;
-        arrowHead.style.opacity = draw > 0.95 ? "1" : "0";
-        arrowHead.style.transform = draw > 0.95 ? "scale(1)" : "scale(0.3)";
-      };
-      const onScroll2 = () => {
-        if (!raf2) raf2 = requestAnimationFrame(updateC);
-      };
-      addEventListener("scroll", onScroll2, { passive: true });
-      cleanups.push(() => {
-        removeEventListener("scroll", onScroll2);
-        if (raf2) cancelAnimationFrame(raf2);
-      });
-      updateC();
-    } else if (!reduceMotion) {
-      // touch: un-pinned, the same choreography rides the viewport — the
-      // arrow draws, each thread message scrubs in
-      const svgEl = arrowPath.ownerSVGElement;
-      const msgs = [...root.querySelectorAll(".stagger .msg, .stagger .divider")] as HTMLElement[];
-      let rafM = 0;
-      const updateM = () => {
-        rafM = 0;
+    // compare wash: the sea's dark water washes down over the section as it
+    // arrives, then pulls back up like a retreating wave as the next sheet
+    // takes over. Scroll-linked 1:1; reduced motion keeps the sheet white.
+    const cmpSect = cmpSectRef.current;
+    const wash = washRef.current;
+    // the wash choreography (dark water washing over, retreating onto the
+    // sand, wiping the gif) is a desktop scroll effect. On phones the compare
+    // section is tall and stacked, so a single washed-state layer smears white
+    // text over uncovered rows — there we keep the section plainly white and
+    // let the sand testimonial simply follow (design-language §5).
+    if (cmpSect && wash && !reduceMotion && matchMedia("(min-width: 52rem)").matches) {
+      // the compare gif is masked crisply by the waterline as the wave pulls
+      // back on scroll-down — nothing left below the retreating edge
+      const gifEl = cmpSect.querySelector(".compare-gif .gif-shell") as HTMLElement | null;
+      // the lowest checkpoint sinks away with the gif on the pull-back
+      const lastPoint = cmpSect.querySelector(".compare-points li:last-child") as HTMLElement | null;
+      let rafW = 0;
+      const updateW = () => {
+        rafW = 0;
         const vh = innerHeight;
-        if (svgEl) {
-          const r = svgEl.getBoundingClientRect();
-          const p = Math.min(1, Math.max(0, (vh - r.top - 30) / (vh * 0.28)));
-          arrowPath.style.strokeDashoffset = `${arrowLen * (1 - p)}`;
-          arrowHead.style.opacity = p > 0.93 ? "1" : "0";
-          arrowHead.style.transform = p > 0.93 ? "scale(1)" : "scale(0.3)";
+        const r = cmpSect.getBoundingClientRect();
+        // pIn tracks the section's arrival — used only to deepen the hero sea
+        // into the water below as you approach (the wash itself doesn't animate
+        // in; it's simply already down)
+        const pIn = Math.min(1, Math.max(0, (vh - r.top) / (vh * 0.85)));
+        washPRef.current = pIn;
+        // the water is already blue when you enter the section and only moves on
+        // the way out: the wave retreats up as the section exits
+        const pOut = Math.min(1, Math.max(0, (vh * 0.95 - r.bottom) / (vh * 1.1)));
+        const ty = Math.max(-101, Math.min(0, -pOut * 101));
+        wash.style.transform = `translateY(${ty}%)`;
+        // fully parked away → hide, so the crest can't peek over the seam
+        wash.style.opacity = ty <= -100.5 ? "0" : "1";
+        // the crest drifts sideways with the scroll itself — still water
+        // when the reader is still, alive while they move
+        wash.style.setProperty("--wave-x", `${-(scrollY * 0.35) % 180}px`);
+
+        // on retreat, the waterline wipes the gif as the wave pulls back:
+        // the mask edge tracks the wash's bottom so the gif dissolves at the
+        // exact water surface, nothing left below it. Off-retreat it's whole.
+        if (gifEl) {
+          const gr = gifEl.getBoundingClientRect();
+          let mask = "none";
+          if (pOut > 0) {
+            const washBottom = r.height * (1 + ty / 101); // px from sheet top
+            const cut = washBottom - (gr.top - r.top); // waterline within the gif
+            if (cut < gr.height + 4) {
+              mask = `linear-gradient(180deg, #000 ${cut - 4}px, transparent ${cut + 6}px)`;
+            }
+          }
+          gifEl.style.maskImage = mask;
+          gifEl.style.webkitMaskImage = mask;
         }
-        msgs.forEach((el) => {
-          const r = el.getBoundingClientRect();
-          const q = Math.min(1, Math.max(0, (vh - r.top - 30) / (vh * 0.22)));
-          el.style.opacity = `${q}`;
-          el.style.transform = `translateY(${(1 - q) * 12}px)`;
-        });
+        // "Higher conversion…" is wiped off by the waterline just like the gif —
+        // the same mask edge tracks the wash's bottom so the wave sweeps it away
+        if (lastPoint) {
+          const pr = lastPoint.getBoundingClientRect();
+          let pmask = "none";
+          if (pOut > 0) {
+            const washBottom = r.height * (1 + ty / 101);
+            const cut = washBottom - (pr.top - r.top);
+            if (cut < pr.height + 6) {
+              pmask = `linear-gradient(180deg, #000 ${cut - 2}px, transparent ${cut + 5}px)`;
+            }
+          }
+          lastPoint.style.maskImage = pmask;
+          lastPoint.style.webkitMaskImage = pmask;
+        }
+
+        // section 3 eases into focus as the wave uncovers it: soft and dim
+        // while underwater, sharpening as it surfaces
+        const howGrid = pinWrap.querySelector(".how-grid") as HTMLElement | null;
+        if (howGrid) {
+          const wt = pinWrap.getBoundingClientRect().top;
+          const p3 = Math.min(1, Math.max(0, (vh - wt) / (vh * 0.55)));
+          howGrid.style.filter = p3 >= 1 ? "none" : `blur(${(1 - p3) * 7}px)`;
+          howGrid.style.opacity = `${0.3 + 0.7 * p3}`;
+        }
+        // flip the type light as soon as the water's leading edge passes the
+        // heading — it sits in the sheet's top quarter, which is covered once
+        // the wash hangs ~28% down (ty above -72)
+        cmpSect.classList.toggle("washed", ty > -72);
       };
-      const onScrollM = () => {
-        if (!rafM) rafM = requestAnimationFrame(updateM);
+      const onScrollW = () => {
+        if (!rafW) rafW = requestAnimationFrame(updateW);
       };
-      addEventListener("scroll", onScrollM, { passive: true });
+      addEventListener("scroll", onScrollW, { passive: true });
       cleanups.push(() => {
-        removeEventListener("scroll", onScrollM);
-        if (rafM) cancelAnimationFrame(rafM);
+        removeEventListener("scroll", onScrollW);
+        if (rafW) cancelAnimationFrame(rafW);
       });
-      updateM();
-    } else {
-      arrowPath.style.strokeDashoffset = "0";
-      arrowHead.style.opacity = "1";
-      /* the note stays fully visible under reduced motion */
+      updateW();
     }
 
     return () => cleanups.forEach((fn) => fn());
@@ -299,13 +450,17 @@ export default function App() {
       rafId = requestAnimationFrame(tick);
       if (ms - last < 66) return; // ~15fps: water at terminal cadence
       last = ms;
-      const t = ms / 1000;
+      const tBase = ms / 1000;
       for (const m of mounts) {
         if (!m.visible) continue;
         if (!m.cols) sizeMount(m); // strips are display:none until sea-live commits
         if (!m.cols) continue;
         if (m.canvas.clientWidth !== m.w || m.canvas.clientHeight !== m.h) sizeMount(m);
         const { ctx, cols, rows, strip, phase } = m;
+        // the hero sea runs at a calmer tempo than the seam strips — the big
+        // body of water reads better slow; everything (swell + movers) scales
+        // off this one clock
+        const t = strip ? tBase : tBase * 0.5;
         ctx.clearRect(0, 0, m.canvas.clientWidth, m.canvas.clientHeight);
         // the proof island: the hero sea reserves ground under the quote and
         // draws it in the same character grid, waves lapping at the coast
@@ -347,7 +502,20 @@ export default function App() {
         for (let r = 0; r < rows; r++) {
           // hero: sparse at the horizon, denser toward the bottom
           const depth = strip ? 0.85 : 0.5 + (r / rows) * 0.45;
-          ctx.fillStyle = `rgba(21, 85, 126, ${depth * 0.88})`;
+          // the last rows densify and deepen toward the dark sheet below, so
+          // the pixels dissolve into the compare wash instead of stopping
+          const deepen = strip
+            ? 0
+            : Math.min(1, Math.max(0, (r / rows - 0.62) / 0.3)) * washPRef.current;
+          const baseFill = `rgba(21, 85, 126, ${Math.min(1, depth * 0.88 + deepen * 0.6)})`;
+          if (deepen > 0) {
+            // the water column fills in behind the chars in the same accent
+            // blue the chars are drawn in, reaching full alpha a few rows
+            // early — the last rows ARE the wash's top color, chars and all
+            ctx.fillStyle = `rgba(21, 85, 126, ${Math.min(1, Math.pow(deepen, 1.5))})`;
+            ctx.fillRect(0, r * CELL_H, m.w, CELL_H + 1);
+          }
+          ctx.fillStyle = baseFill;
           const y = r * CELL_H + CELL_H / 2;
           for (let c = 0; c < cols; c++) {
             const e = islE(c, r);
@@ -358,19 +526,19 @@ export default function App() {
               if (v > -0.2) {
                 ctx.fillStyle = `rgba(21, 85, 126, ${Math.min(0.9, depth * (0.7 + v * 0.4))}`.concat(")");
                 ctx.fillText(v > 0.5 ? CHARS[5] : CHARS[4], c * CELL_W, y);
-                ctx.fillStyle = `rgba(21, 85, 126, ${depth * 0.88})`;
+                ctx.fillStyle = baseFill;
               }
               continue;
             }
             const idx = Math.max(
               0,
-              Math.min(CHARS.length - 1, Math.round((v + 1.16) * 0.5 * (CHARS.length - 2) + (strip ? 0.85 : (r / rows) * 1.7 + 0.1) - 0.35)),
+              Math.min(CHARS.length - 1, Math.round((v + 1.16) * 0.5 * (CHARS.length - 2) + (strip ? 0.85 : (r / rows) * 1.7 + 0.1) + deepen * 2.4 - 0.35)),
             );
             if (idx === 0) continue;
             if (v > 0.82) {
               ctx.fillStyle = `rgba(21, 85, 126, ${Math.min(0.95, depth * 1.15)})`;
               ctx.fillText(CHARS[5], c * CELL_W, y);
-              ctx.fillStyle = `rgba(21, 85, 126, ${depth * 0.88})`;
+              ctx.fillStyle = baseFill;
             } else {
               ctx.fillText(CHARS[idx], c * CELL_W, y);
             }
@@ -431,6 +599,81 @@ export default function App() {
           ctx.fillText("▄▄", crx - 6, cry - 3);
           ctx.font = "7px ui-monospace, Menlo, monospace";
           ctx.fillText("ʌʌʌ", crx - 4.5, cry + 2); // legs, tucked under the body
+          // the castaway: kicked back in a beach chair on the dry sand with a
+          // phone to his ear, promising the demo is on its way. Drawn in 3px
+          // "pixels" (the splash's unit) rather than block glyphs — at a body
+          // this small glyphs read as noise and squares read as a person.
+          // an actual stick figure: hollow ring for a head, everything else a
+          // two-pixel line. Head thrown back on the headrest at the top left,
+          // spine running parallel to the backrest, one arm bent up with the
+          // phone at his ear, legs stretched out down the seat to the right.
+          const SIT = [
+            ".........bbb..................",
+            "........b...bp................",
+            "........b...bpb...............",
+            "......c..bbb...b..............",
+            "......cc..bb...bb.............",
+            ".......cc..bbbb...............",
+            ".......cc..bb.................",
+            "........cc..bb................",
+            "........cc..bb................",
+            ".........cc..bb...............",
+            ".........cc...bb..............",
+            "..........cc..bb..............",
+            "..........cc...bbbbb......bb..",
+            "...........cc......bbbbbbbb...",
+            "........cccccccccccccccccc....",
+            ".........cccccccccccccccc.....",
+            "..........cc.........cc.......",
+            "..........cc.........cc.......",
+            ".........cccc.......cccc......",
+          ];
+          const SIT_INK: Record<string, string> = {
+            b: "rgba(23, 60, 84, 0.95)", // him — deep tide, a silhouette on ivory
+            c: "rgba(178, 94, 66, 0.95)", // the chair — the one terracotta
+            p: "rgba(63, 126, 169, 0.95)", // the phone, screen lit
+          };
+          const PX = 3;
+          const sitX = Math.round((isl.cx - isl.rx * 0.52) * CELL_W);
+          const sitY = Math.round((isl.cy + isl.ry * 0.4) * CELL_H) - SIT.length * PX;
+          for (let sr = 0; sr < SIT.length; sr++) {
+            for (let sc = 0; sc < SIT[sr].length; sc++) {
+              const ink = SIT_INK[SIT[sr][sc]];
+              if (!ink) continue;
+              ctx.fillStyle = ink;
+              ctx.fillRect(sitX + sc * PX, sitY + sr * PX, PX, PX);
+            }
+          }
+          // his half of the call, in a bubble over his head
+          ctx.font = '11px ui-monospace, "SF Mono", Menlo, monospace';
+          const SAY = "hold on, sending you the demo";
+          const bw = ctx.measureText(SAY).width + 20;
+          const bh = 22;
+          const bxB = sitX + 6 * PX;
+          const byB = sitY - 15 - bh;
+          const tailX = bxB + 13; // the tail leans back over his head
+          ctx.beginPath();
+          ctx.roundRect(bxB, byB, bw, bh, 7);
+          ctx.fillStyle = "rgba(255, 255, 255, 0.97)";
+          ctx.fill();
+          ctx.strokeStyle = "rgba(21, 85, 126, 0.6)";
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          // the tail: filled first (it wipes the bubble's bottom edge under
+          // it), then only its two slanted sides are stroked
+          ctx.beginPath();
+          ctx.moveTo(tailX + 9, byB + bh - 1);
+          ctx.lineTo(tailX - 7, byB + bh + 11);
+          ctx.lineTo(tailX, byB + bh - 1);
+          ctx.closePath();
+          ctx.fill();
+          ctx.beginPath();
+          ctx.moveTo(tailX + 9, byB + bh - 1);
+          ctx.lineTo(tailX - 7, byB + bh + 11);
+          ctx.lineTo(tailX, byB + bh - 1);
+          ctx.stroke();
+          ctx.fillStyle = "rgba(21, 85, 126, 0.95)";
+          ctx.fillText(SAY, bxB + 10, byB + bh / 2 + 0.5);
           ctx.font = prevFont;
         }
         const duck = (seed: number, rowF: number, max = cols - 3.5) => {
@@ -535,7 +778,261 @@ export default function App() {
     return () => cleanups.forEach((fn) => fn());
   }, []);
 
+  /* case studies are a centre-focus rail: the card nearest the middle scales
+     up (zooms into place) while the neighbours sit back, dimmed and smaller.
+     A clip only runs while its card holds the centre — scroll on and it
+     pauses, so two demos never talk over each other. */
+  useEffect(() => {
+    const rail = casesRef.current;
+    if (!rail) return;
+    const cards = [...rail.querySelectorAll<HTMLElement>(".case")];
+    if (!cards.length) return;
+    const cleanups: (() => void)[] = [];
+    // .playing swaps the card out of poster state (copy + play button go, the
+    // native controls come in); the video's own events are the source of truth
+    cards.forEach((c) => {
+      const v = c.querySelector("video");
+      if (!v) return;
+      const sync = () => {
+        const on = !v.paused && !v.ended;
+        c.classList.toggle("playing", on);
+        v.controls = on;
+      };
+      (["play", "pause", "ended"] as const).forEach((e) => v.addEventListener(e, sync));
+      cleanups.push(() => (["play", "pause", "ended"] as const).forEach((e) => v.removeEventListener(e, sync)));
+    });
+    // The deck settles under our own tween rather than the browser's snap.
+    // Mandatory snap fought short trackpad flicks — it would yank the card
+    // back at whatever speed it felt like, and a flick that ran out of force
+    // mid-gap stuttered between two snap targets. Here a light nudge (see
+    // COMMIT_PX below) commits to the next card in the direction of travel,
+    // and anything shorter eases back; either way it's the same 560ms curve.
+    // the snapport is inset from the left (see .cases-rail scroll-padding-left),
+    // which puts a snapped card half that inset right of the scrollport centre.
+    // Read it rather than repeat it, so the two can't drift apart — but read it
+    // ONCE per layout, not per scroll frame: getComputedStyle in the scroll
+    // handler forces a style recalc every frame.
+    let inset = 0;
+    const readInset = () => {
+      inset = parseFloat(getComputedStyle(rail).scrollPaddingLeft) || 0;
+    };
+    readInset();
+    const restFor = (c: HTMLElement) =>
+      c.offsetLeft + c.clientWidth / 2 - rail.clientWidth / 2 - inset / 2;
+    // native snap still handles touch, where momentum and rubber-banding are
+    // the platform's job; the tween takes over for wheel and trackpad
+    const settleGesture = matchMedia("(pointer: fine)").matches;
+    // where the deck was resting before this gesture began; the settle is
+    // measured from here, not from whichever card happens to be nearest
+    let anchor = 0;
+    let tween = 0;
+    // the last scrollLeft the tween itself wrote. Every scroll event compares
+    // against it: a position we didn't write is the reader's own wheel, and
+    // that always outranks the tween (see onScroll).
+    let written = -1;
+    let lastScrollAt = 0;
+    const glide = (to: number) => {
+      if (tween) cancelAnimationFrame(tween);
+      tween = 0;
+      const from = rail.scrollLeft;
+      const span = to - from;
+      if (Math.abs(span) < 1) return;
+      const t0 = performance.now();
+      const step = (now: number) => {
+        const p = Math.min(1, (now - t0) / 560);
+        // ease-out quint: leaves fast, lands without a bump
+        rail.scrollLeft = from + span * (1 - Math.pow(1 - p, 5));
+        written = rail.scrollLeft; // read back: the browser may clamp or round
+        tween = p < 1 ? requestAnimationFrame(step) : 0;
+      };
+      tween = requestAnimationFrame(step);
+    };
+    const centre = (c: HTMLElement) => {
+      anchor = Math.max(0, cards.indexOf(c));
+      glide(restFor(c));
+    };
+    // clicking a card brings it round — bound here, not in JSX, so it shares
+    // the same tween and anchor as the hover and the settle
+    cards.forEach((c) => {
+      const onClick = () => centre(c);
+      c.addEventListener("click", onClick);
+      cleanups.push(() => c.removeEventListener("click", onClick));
+    });
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const mid = rail.scrollLeft + rail.clientWidth / 2 + inset / 2;
+      // measure every card first, then write. Interleaving offsetLeft reads
+      // with class/style writes in one loop forces a synchronous layout per
+      // card, on every frame of every scroll.
+      const centres = cards.map((c) => c.offsetLeft + c.clientWidth / 2);
+      let best = 0, bd = Infinity;
+      centres.forEach((cx, i) => {
+        const d = Math.abs(cx - mid);
+        if (d < bd) { bd = d; best = i; }
+      });
+      cards.forEach((c, i) => {
+        const on = i === best;
+        c.classList.toggle("active", on);
+        // which way a waiting card turns away: the one to the right shows you
+        // its left edge, the one to the left shows its right (see the coverflow
+        // rules in the stylesheet — CSS reads this as --side)
+        c.style.setProperty("--side", centres[i] < mid ? "-1" : "1");
+        if (!on) c.querySelector("video")?.pause();
+      });
+    };
+    let settleT: ReturnType<typeof setTimeout> | undefined;
+    const settle = () => {
+      if (rail.querySelector(".case.playing")) return; // don't move a running clip
+      const step = cards.length > 1 ? restFor(cards[1]) - restFor(cards[0]) : 0;
+      if (!step) return;
+      const px = rail.scrollLeft - restFor(cards[anchor]);
+      const drift = px / step;
+      // a light nudge is enough: the deck is a deck, not a page, so ~44px of
+      // travel (or a tenth of a card, whichever is shorter — the cards are
+      // ~1000px wide, so it's always the 44) already commits to the next one.
+      // A hard fling still carries as far as it actually went.
+      const commit = Math.min(step / 10, 44);
+      const moved =
+        Math.abs(px) > commit
+          ? Math.sign(drift) * Math.max(1, Math.round(Math.abs(drift)))
+          : 0;
+      anchor = Math.min(cards.length - 1, Math.max(0, anchor + moved));
+      glide(restFor(cards[anchor]));
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+      lastScrollAt = performance.now();
+      if (!settleGesture) return;
+      // The reader always wins. A scroll event carrying a position the tween
+      // did not write is a fresh wheel gesture on top of the running settle —
+      // without this the tween kept overwriting scrollLeft for the rest of its
+      // 560ms and the deck fought the trackpad, which is the stutter you feel
+      // when you flick twice in a row. Scroll events fire before the next
+      // animation-frame callback, so `written` is still the tween's last
+      // position when we compare.
+      if (tween && Math.abs(rail.scrollLeft - written) > 1.5) {
+        cancelAnimationFrame(tween);
+        tween = 0;
+      }
+      if (tween) return; // our own tween scrolling; it will settle itself
+      clearTimeout(settleT);
+      settleT = setTimeout(settle, 90); // fires once the wheel/fling stops
+    };
+    const onResize = () => {
+      readInset();
+      onScroll();
+    };
+    rail.addEventListener("scroll", onScroll, { passive: true });
+    addEventListener("resize", onResize);
+    cleanups.push(() => {
+      clearTimeout(settleT);
+      if (tween) cancelAnimationFrame(tween);
+    });
+
+    // hover brings a waiting card round to the front — it turns to face you,
+    // grows, and lands centred, ready to play. Mouse only, and never while a
+    // clip is running (the pull would pause it out from under the viewer).
+    if (
+      matchMedia("(hover: hover) and (pointer: fine)").matches &&
+      matchMedia("(prefers-reduced-motion: no-preference)").matches
+    ) {
+      let hoverT: ReturnType<typeof setTimeout> | undefined;
+      // `pointerenter` fires when the DECK moves under a still cursor, not
+      // only when the cursor moves onto a card. Left unguarded, every scroll
+      // slid a new card under the pointer and 130ms later that card yanked
+      // itself to the centre — a second tween fighting the settle, landing on
+      // a different card than the gesture asked for. So: no hover pull while
+      // the deck is in motion, or in the beat right after it stops.
+      const deckMoving = () => tween !== 0 || performance.now() - lastScrollAt < 400;
+      cards.forEach((c) => {
+        const enter = () => {
+          if (c.classList.contains("active")) return;
+          if (rail.querySelector(".case.playing")) return;
+          if (deckMoving()) return;
+          clearTimeout(hoverT);
+          // a beat of dwell, so sweeping the pointer across the rail on the way
+          // somewhere else doesn't drag the whole deck around
+          hoverT = setTimeout(() => {
+            if (deckMoving()) return; // a scroll started during the dwell
+            centre(c);
+          }, 130);
+        };
+        const leave = () => clearTimeout(hoverT);
+        c.addEventListener("pointerenter", enter);
+        c.addEventListener("pointerleave", leave);
+        cleanups.push(() => {
+          clearTimeout(hoverT);
+          c.removeEventListener("pointerenter", enter);
+          c.removeEventListener("pointerleave", leave);
+        });
+      });
+    }
+
+    update();
+    return () => {
+      rail.removeEventListener("scroll", onScroll);
+      removeEventListener("resize", onResize);
+      if (raf) cancelAnimationFrame(raf);
+      cleanups.forEach((fn) => fn());
+    };
+  }, []);
+
+  /* reduced motion gets a static page (design-language §5): freeze the demo
+     videos on their poster (the "call booked" payoff) instead of looping */
+  useEffect(() => {
+    if (!matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const vids = rootRef.current?.querySelectorAll<HTMLVideoElement>("video.gif-media");
+    vids?.forEach((v) => {
+      v.autoplay = false;
+      v.pause();
+      const stop = () => v.pause();
+      v.addEventListener("play", stop);
+    });
+  }, []);
+
+  /* the hero card sinks back under the sea as you scroll down (and rises again
+     scrolling up), splashing the moment it goes under. The load-in rise is a
+     CSS animation on .gif-reveal; this drives the scroll sink on the shell. */
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const shell = root.querySelector(".hero-card .gif-shell") as HTMLElement | null;
+    const splash = root.querySelector(".hero-splash") as HTMLElement | null;
+    if (!shell) return;
+    const SINK = 300; // px it travels before it's fully under
+    let armed = false; // don't splash on the initial settle, only on a real sink
+    let raf = 0;
+    const fire = () => {
+      if (!splash) return;
+      splash.classList.remove("go");
+      void splash.offsetWidth; // force reflow so the animation restarts
+      splash.classList.add("go");
+    };
+    const update = () => {
+      raf = 0;
+      const p = Math.min(1, Math.max(0, scrollY / (innerHeight * 0.5)));
+      shell.style.transform = `translateY(${p * SINK}px)`;
+      shell.style.opacity = `${Math.max(0, 1 - p * 1.15)}`;
+      if (p > 0.24 && armed) {
+        fire();
+        armed = false;
+      }
+      if (p < 0.1) armed = true; // re-arm once it's back up near the surface
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    addEventListener("scroll", onScroll, { passive: true });
+    update();
+    return () => {
+      removeEventListener("scroll", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+
   const seaGone = seaLive === false;
+  const selectedWidget = WIDGETS.find((w) => w.id === sel) ?? null;
 
   return (
     <div ref={rootRef} className={`landing${seaLive ? " sea-live" : ""}`}>
@@ -565,10 +1062,12 @@ export default function App() {
           <div className="wrap hero-grid">
             <div>
               <h1>
-                Ship a <em className="voice">custom demo</em>
-                <br className="h1-br" /> in every cold message.
+                Ship tailored demos
+                <br className="h1-br" /> to every prospect
               </h1>
-              <p className="hero-sub">Grow your revenue with cold outbound that converts.</p>
+              {/* "cold outbound" is one idea and must never break across the
+                  two lines — the nbsp forces the turn after it instead */}
+              <p className="hero-sub">Grow revenue with cold&nbsp;outbound that feels handcrafted.</p>
               <div className="hero-actions">
                 <a
                   className="btn btn-primary"
@@ -578,324 +1077,190 @@ export default function App() {
                   Book a demo
                 </a>
               </div>
-              <div className="hero-proof">
-                <img src="/yuvan.webp" width="128" height="128" alt="Yuvan Sundrani, founder of Autosana" />
-                <div>
-                  <p className="proof-quote">&ldquo;amazing stuff, the demos are working so well&rdquo;</p>
-                  <p className="proof-attr">
-                    <b>Yuvan Sundrani</b> &middot; Founder, Autosana (YC S25)
-                  </p>
-                </div>
-              </div>
+              {/* the island the sea draws stands on this rect (see the canvas
+                  code). Yuvan's quote used to stand on it; the testimonials
+                  now live with the case studies, so the ground stays and the
+                  words are gone — the box keeps its size for the sea to read. */}
+              <div className="hero-proof" aria-hidden="true" />
             </div>
-            <div className="app-window enter-window">
-              <img
-                src="/dw-demo-dashboard-hero.webp"
-                width="2000"
-                height="1940"
-                fetchPriority="high"
-                alt="The driftwood dashboard: LinkedIn connected and sending, 4 meetings booked, 7 replies, pipeline of 124 leads"
-              />
+            {/* TODO: dashboard preserved for later — the original hero dashboard
+                window now lives in components/_HeroDashboard.legacy.tsx. Import it
+                and drop <HeroDashboard /> back in here to restore it. */}
+            <div className="hero-card gif-anchor">
+              <GifMedia />
+              {/* the pixel splash the card kicks up as it plops into the sea */}
+              <div className="hero-splash" aria-hidden="true">
+                {SPLASH.map((s, i) => (
+                  <span key={i} className="drop" style={s} />
+                ))}
+              </div>
             </div>
           </div>
           {!seaGone && <canvas id="sea" ref={seaRef} aria-hidden="true" />}
+          {/* the surface the card rises out of: two copies of the wave grid,
+              drifting sideways on a loop (see waveBand / WATERBAND above) */}
+          <div className="hero-waterband" aria-hidden="true">
+            <div className="waterband-scroll">
+              <pre className="waterband-col">{WATERBAND}</pre>
+              <pre className="waterband-col">{WATERBAND}</pre>
+            </div>
+          </div>
         </div>
 
-        {/* the favorite: don't send out AI slop — pinned, the arrow draws as you scroll */}
-        <section id="compare" className="sheet sheet-white">
-          <div className="pin-wrap compare-pin-wrap" ref={cmpWrapRef}>
-            <div className="pin">
-              <div className="wrap" style={{ width: "100%" }}>
-                <div className="compare-head">
-                  <h2 style={{ marginInline: "auto" }}>
-                    Don't send out <em className="voice">AI slop.</em>
-                  </h2>
-                  <p className="compare-sub">
-                    Same leads, <b>14&times;</b> the replies. Week one at Autosana.
-                  </p>
-                </div>
-                <div className="compare-grid">
-                  <svg className="compare-arrow" viewBox="0 0 260 100" aria-hidden="true">
-                    <path
-                      ref={arrowPathRef}
-                      d="M 14 70 C 40 36, 72 20, 102 28 C 130 36, 132 64, 112 62 C 92 60, 98 32, 128 28 C 166 23, 208 36, 234 58"
-                      fill="none"
-                      stroke="var(--accent)"
-                      strokeWidth="3.75"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      ref={arrowHeadRef}
-                      d="M 234 58 l -15 -2 M 234 58 l -3 -14.5"
-                      fill="none"
-                      stroke="var(--accent)"
-                      strokeWidth="3.75"
-                      strokeLinecap="round"
-                      style={{ opacity: 0, transition: "opacity 0.3s" }}
-                    />
-                  </svg>
-                  <div>
-                    <p className="compare-label">what everyone else sends</p>
-                    <div className="email">
-                      <p className="email-subject">
-                        <span className="redact" role="img" aria-label="name redacted"></span>{" "}
-                        &mdash; quick question
-                      </p>
-                      <div className="email-body">
-                        <p>
-                          Hey <span className="redact" role="img" aria-label="name redacted"></span>,
-                        </p>
-                        <p>
-                          Hope you're doing well! Huge fan of what you're building &mdash; truly
-                          impressive momentum.
-                        </p>
-                        <p>
-                          I'm with an AI-powered QA platform, the{" "}
-                          <b>all-in-one way to ship faster with confidence</b>. Teams like yours
-                          are seeing <b>huge results</b> &mdash; we'd love to show you how.
-                        </p>
-                        <p>A few things teams love:</p>
-                        <ul>
-                          <li>Cut regression time by up to 90%</li>
-                          <li>Seamless integration with your existing stack</li>
-                          <li>Enterprise-grade security (SOC 2 Type II)</li>
-                        </ul>
-                        <p>
-                          Any chance you have 15 minutes this week? You can{" "}
-                          <span className="fake-link">grab time here</span>.
-                        </p>
-                        <p>
-                          Best,
-                          <br />
-                          <span className="redact" role="img" aria-label="name redacted"></span>
-                          <br />
-                          SDR @ <span className="redact" role="img" aria-label="company redacted"></span>
-                        </p>
-                        <p>P.S. Happy to send over a case study if that's easier!</p>
-                      </div>
-                      <p className="email-fate">Left on opened.</p>
+        {/* case studies: a snapping horizontal rail you scroll through */}
+        <section id="cases" className="sheet sheet-white">
+          <div className="sect">
+            <div className="wrap cases-head">
+              <h2>
+                Good outbound converts at <b>10%</b>
+              </h2>
+            </div>
+            <div className="cases-rail" ref={casesRef}>
+              {/* click-to-centre is bound in the rail effect, not on the article
+                  here, so it shares that tween and its anchor */}
+              {CASE_STUDIES.map((c) => (
+                <article key={c.id} className="case">
+                  {/* first voice: the demo itself, the loudest object on the sheet,
+                      and the card's leading edge — so the card waiting off to the
+                      right teases its clip, never its logo. The copy is a sibling
+                      of the frame, not a child of it: on desktop it lies over the
+                      clip's head, on phones (where a 342px frame can't carry type)
+                      it drops below in ink. */}
+                  <div className="case-main">
+                    <div className="case-video">
+                      <video
+                        className="case-media"
+                        src={c.video}
+                        poster={c.poster}
+                        preload="none"
+                        playsInline
+                        aria-label={`The demo driftwood built and sent for ${c.company}`}
+                      />
+                      <button
+                        type="button"
+                        className="case-play"
+                        aria-label={`Play the ${c.company} demo`}
+                        onClick={(e) => {
+                          // an off-centre card only comes to the middle — the
+                          // click bubbles to the card's own centring handler,
+                          // and the second click is the one that plays it
+                          const card = e.currentTarget.closest(".case");
+                          if (card?.classList.contains("active")) {
+                            void card.querySelector("video")?.play();
+                          }
+                        }}
+                      />
+                    </div>
+                    <div className="case-copy">
+                      <h3 className="case-title">{c.title}</h3>
+                      <p className="case-sub">{c.sub}</p>
                     </div>
                   </div>
-                  <div>
-                    <p className="compare-label us">what driftwood sent</p>
-                    <div className="thread">
-                      <div className="li-head">
-                        <span className="li-name">
-                          CTO @ <span className="redact" role="img" aria-label="company withheld"></span>
-                        </span>
-                        <span className="li-presence" aria-hidden="true"></span>
-                        <span className="li-icons" aria-hidden="true">
-                          &#8943;&nbsp;&nbsp;&#10530;&nbsp;&nbsp;&#10005;
-                        </span>
-                      </div>
-                      <div className="li-body stagger">
-                        <div className="divider" role="separator" style={iv(0)}>
-                          <hr />
-                          <span>4 months of outreach, no reply</span>
-                          <hr />
-                        </div>
-                        <div className="divider" role="separator" style={iv(1)}>
-                          <hr />
-                          <span>Jul 9</span>
-                          <hr />
-                        </div>
-                        <div className="msg" style={iv(2)}>
-                          <span className="avatar">
-                            <img src="/yuvan.webp" width="128" height="128" alt="" loading="lazy" decoding="async" />
+                  {/* second and third voice — they arrive with the card as it
+                      turns to face you, not before */}
+                  <div className="case-aside">
+                    {c.quote && (
+                      <figure className="case-quote">
+                        <blockquote>&ldquo;{c.quote}&rdquo;</blockquote>
+                        <figcaption>
+                          {c.avatar && (
+                            <img src={c.avatar} width="128" height="128" alt="" loading="lazy" decoding="async" />
+                          )}
+                          <span>
+                            <b>{c.author}</b>
+                            {c.role}
                           </span>
-                          <div>
-                            <div className="msg-head">
-                              <span className="who">Yuvan Sundrani</span>
-                              <span className="when">&middot; 6:57 PM &middot; sent by driftwood</span>
-                              <span className="seen" role="img" aria-label="seen">
-                                <svg viewBox="0 0 16 16" fill="currentColor">
-                                  <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" />
-                                  <path
-                                    d="M4.5 8.2l2.3 2.3 4.7-4.8"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="1.4"
-                                  />
-                                </svg>
-                              </span>
-                            </div>
-                            <p className="msg-body">
-                              hey <span className="redact" role="img" aria-label="name redacted"></span>,
-                              found a bug on{" "}
-                              <span className="redact" role="img" aria-label="company withheld"></span>.
-                              our agents caught your pricing page still promising early access for
-                              features lower tiers already have&hellip;
-                            </p>
-                            <div className="clip">
-                              <img
-                                src="/demo-still.webp"
-                                width="900"
-                                height="508"
-                                loading="lazy"
-                                decoding="async"
-                                alt="19 second demo video of Autosana's agent catching a pricing bug on the prospect's site"
-                              />
-                              <span className="play" aria-hidden="true"></span>
-                            </div>
-                            <p className="clip-note">
-                              <svg viewBox="0 0 46 26" aria-hidden="true">
-                                <path
-                                  d="M 5 23 C 17 24, 31 19, 38 8"
-                                  fill="none"
-                                  stroke="var(--accent)"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                />
-                                <path
-                                  d="M 38 8 l -8.5 1 M 38 8 l -0.5 8.5"
-                                  fill="none"
-                                  stroke="var(--accent)"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                />
-                              </svg>
-                              <em>driftwood built this demo</em>
-                            </p>
-                          </div>
-                        </div>
-                        <div className="divider" role="separator" style={iv(3)}>
-                          <hr />
-                          <span>Jul 10 &middot; 12 hours later</span>
-                          <hr />
-                        </div>
-                        <div className="msg" style={iv(4)}>
-                          <span className="avatar" aria-hidden="true">
-                            <svg viewBox="0 0 24 24">
-                              <path d="M12 12c2.8 0 5-2.2 5-5s-2.2-5-5-5-5 2.2-5 5 2.2 5 5 5zm0 2c-4.4 0-9 2.2-9 6.5V24h18v-3.5c0-4.3-4.6-6.5-9-6.5z" />
-                            </svg>
-                          </span>
-                          <div>
-                            <div className="msg-head">
-                              <span className="who">CTO</span>
-                              <span className="when">&middot; 7:18 AM</span>
-                            </div>
-                            <p className="msg-body">
-                              send me a blurb + demos to{" "}
-                              <span
-                                className="redact"
-                                role="img"
-                                aria-label="address redacted"
-                                style={{ width: "6.5em" }}
-                              ></span>{" "}
-                              and I'll forward to my team - best
-                            </p>
-                          </div>
-                        </div>
-                        <div className="divider win" role="separator" style={iv(5)}>
-                          <hr />
-                          <span>Call booked &middot; Jul 12</span>
-                          <hr />
-                        </div>
-                      </div>
-                      <div className="li-compose" aria-hidden="true">
-                        <span className="li-input">Write a message&hellip;</span>
-                        <span className="li-send">Send</span>
-                      </div>
+                        </figcaption>
+                      </figure>
+                    )}
+                    <div className="case-mark">
+                      <img
+                        className="case-logo"
+                        src={c.logo}
+                        alt={c.company}
+                        loading="lazy"
+                        decoding="async"
+                      />
                     </div>
                   </div>
-                </div>
-              </div>
+                </article>
+              ))}
             </div>
           </div>
-          {!seaGone && <canvas className="sea-strip" aria-hidden="true" />}
         </section>
 
-        {/* how it works: pinned scrub */}
-        <section id="how" className="sheet sheet-white">
-          <div className="pin-wrap" ref={howWrapRef}>
-            <div className="pin">
-              <div className="wrap how-grid">
-                <div>
-                  <h2>
-                    The agent does the <em className="voice">whole job.</em>
-                  </h2>
-                  <ol className="rail-list">
-                    <li data-step="0" className="active">
-                      <span>01</span>
-                      <div>
-                        Researches the prospect
-                        <p className="rail-sub">Reads everything public about them.</p>
-                      </div>
-                    </li>
-                    <li data-step="1">
-                      <span>02</span>
-                      <div>
-                        Builds them a custom demo
-                        <p className="rail-sub">Shows what your product does for them.</p>
-                      </div>
-                    </li>
-                    <li data-step="2">
-                      <span>03</span>
-                      <div>
-                        Sends it from your account
-                        <p className="rail-sub">Human reviewed before it sends.</p>
-                      </div>
-                    </li>
-                  </ol>
-                </div>
-                <div className="stage">
-                  <div className="stage-card on">
-                    <div className="artifact">
-                      <div className="artifact-bar" aria-hidden="true">
-                        #driftwood-sh &middot; the agent at work
-                      </div>
-                      <img
-                        src="/slack-trace.webp"
-                        width="2000"
-                        height="1350"
-                        loading="lazy"
-                        decoding="async"
-                        alt="The driftwood agent in Slack: asked for a Brex demo, it reads its build skill and spawns research subagents for Brex and Ramp"
-                      />
-                    </div>
-                  </div>
-                  <div className="stage-card">
-                    <div className="artifact">
-                      <div className="artifact-bar" aria-hidden="true">
-                        the demo it built &middot; a live page for Brex
-                      </div>
-                      <img
-                        src="/brex-demo.webp"
-                        width="1280"
-                        height="1420"
-                        loading="lazy"
-                        decoding="async"
-                        alt="The demo the agent built: a Brex-branded pitch page it could send Notion's finance team"
-                      />
-                    </div>
-                  </div>
-                  <div className="stage-card">
-                    <div className="artifact">
-                      <div className="artifact-bar" aria-hidden="true">
-                        your review queue &middot; nothing sends without you
-                      </div>
-                      <img
-                        src="/review-queue.webp"
-                        width="2020"
-                        height="2426"
-                        loading="lazy"
-                        decoding="async"
-                        alt="The driftwood review queue: each outbound message waiting for your approve or deny"
-                      />
-                    </div>
-                  </div>
-                </div>
+        {/* interactive dashboard: hover a widget to see what it does */}
+        <section id="explore" className="sheet sheet-white">
+          <div className="wrap sect">
+            <div className="explore-head">
+              <h2>The numbers you'll keep track of</h2>
+            </div>
+            {/* the whole section stands on a baby-blue mat — a bounding box
+                holding the dashboard AND the panel that reads it, so the two
+                are one object on the white sheet */}
+            <div className="explore-plate">
+            <div className="explore-grid">
+              <div
+                className="explore-dash"
+                onMouseLeave={() => setSel(null)}
+                onBlur={(e) => {
+                  if (!e.currentTarget.contains(e.relatedTarget as Node)) setSel(null);
+                }}
+              >
+                <img
+                  src="/dw-demo-dashboard-hero.webp"
+                  width="2000"
+                  height="1940"
+                  loading="lazy"
+                  decoding="async"
+                  alt="The driftwood dashboard: LinkedIn connected, results, pipeline, activity feed, and your lists"
+                />
+                {WIDGETS.map((w) => (
+                  <button
+                    key={w.id}
+                    type="button"
+                    className={`hot${sel === w.id ? " on" : ""}`}
+                    style={{ left: `${w.l}%`, top: `${w.t}%`, width: `${w.w}%`, height: `${w.h}%` }}
+                    onMouseEnter={() => setSel(w.id)}
+                    onFocus={() => setSel(w.id)}
+                    onClick={() => setSel(w.id)}
+                    aria-label={w.title}
+                  />
+                ))}
               </div>
+              <aside className="explore-info" aria-live="polite">
+                {selectedWidget ? (
+                  <div key={selectedWidget.id} className="explore-card">
+                    <h3>{selectedWidget.title}</h3>
+                    <p>{selectedWidget.body}</p>
+                  </div>
+                ) : (
+                  <p className="explore-prompt">Select a widget to learn more</p>
+                )}
+              </aside>
+            </div>
             </div>
           </div>
-          <canvas className="sea-strip" aria-hidden="true" />
         </section>
+
+        {/* the seam: open water between the dashboard sheet and the closing
+            ask, the same ASCII sea the hero carries. The band is white — it
+            runs straight out of the white dashboard sheet with no shoulder
+            (a shoulder its own colour would be invisible anyway) — and the
+            close sheet docks onto its far edge with a baby-blue wave, so the
+            water reads as running up onto a shore.
+            The band always stands, but it holds still water (no canvas) when
+            the sea is off for reduced motion. */}
+        <div className="sea-seam" aria-hidden="true">
+          {!seaGone && <canvas className="sea-strip" />}
+        </div>
+
 
         {/* close */}
         <section className="close-sect sheet wash-b">
           <div className="wrap sect">
             <h2>
-              See what we'd send <em className="voice">your</em> prospects.
+              See what we'd send <em className="voice">your</em> prospects
             </h2>
             <a
               className="btn btn-primary"

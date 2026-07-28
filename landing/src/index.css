@@ -227,45 +227,51 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
 }
 .landing .hero-grid {
   position: relative; z-index: 1;
-  display: grid; grid-template-columns: minmax(0, 4.5fr) minmax(0, 7.5fr);
-  align-items: stretch; gap: clamp(2rem, 4vw, 3.5rem);
+  /* balanced split: the copy and the card get even columns so the card sits
+     centred in its half rather than floating in a wide right gutter */
+  /* the gif is the focus — give its column a touch more room */
+  display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  align-items: center; gap: clamp(2rem, 4vw, 3.25rem);
   padding-block: clamp(3.5rem, 6vw, 5rem);
   min-height: min(90vh, 60rem);
-  max-width: 82rem; /* the hero runs wider than the rest of the page */
+  max-width: 78rem; /* the hero runs a touch wider than the rest of the page */
 }
+/* the headline is the loudest type on the page and has to hold its own
+   against the sub under it: a size up from the shared heading scale, a hair
+   more weight than 600 (620 — Public Sans is variable, so it's a real step,
+   not a jump to semibold), and tighter tracking than the -0.014em body scale
+   so the bigger setting doesn't read loose. */
 .landing .hero h1 {
   margin: 0;
-  font-size: clamp(1.9rem, 1.1rem + 2.4vw, 2.6rem);
-  font-weight: 600; line-height: 1.16; max-width: 19ch;
+  font-size: clamp(2.05rem, 1.15rem + 2.75vw, 3.15rem);
+  font-weight: 620; line-height: 1.1; letter-spacing: -0.028em; max-width: 22ch;
 }
 /* the headline's two-line break only engages where both halves fit the
    column on one line each; narrower widths wrap naturally */
 .landing .h1-br { display: none; }
-@media (min-width: 78rem) {
+@media (min-width: 60rem) {
   .landing .h1-br { display: inline; }
   .landing .hero h1 { max-width: none; }
-  .landing .hero h1 em.voice { white-space: nowrap; }
 }
 /* text rides high against the tall window (the offset drops the headline
    just below the window's chrome); the proof floats at the bottom, on the
    water, like a little island — solid ground so the waves stop at its edge */
-.landing .hero-grid > div:first-child { display: flex; flex-direction: column; align-items: flex-start; padding-top: clamp(2.5rem, 9vh, 8rem); }
-.landing .hero-sub { margin-top: 1.1rem; font-size: 1.1rem; color: var(--gray); max-width: 30ch; text-wrap: balance; }
-/* the proof stands on an island the sea itself draws (see the canvas code:
-   block-char mound under this element, foam lapping at its coast) */
+/* the copy column fills the hero height and tops out the headline, so the
+   proof can drop to the bottom (onto the island the sea draws) with real air
+   between it and the CTA — not crammed right under it */
+.landing .hero-grid > div:first-child { display: flex; flex-direction: column; align-items: flex-start; align-self: stretch; justify-content: flex-start; padding-top: clamp(2.5rem, 9vh, 7rem); }
+/* 34ch, not 32: "Grow revenue with cold outbound" has to fit on one line for
+   the nbsp in the markup to do its job (see the hero sub in App.tsx) */
+.landing .hero-sub { margin-top: 1.2rem; font-size: clamp(1.02rem, 0.92rem + 0.42vw, 1.22rem); color: var(--gray); max-width: 34ch; text-wrap: balance; }
+/* the island the sea itself draws (see the canvas code: block-char mound under
+   this element, foam lapping at its coast). It's an empty rect now — the
+   testimonial that stood on it moved to the case studies — so it carries its
+   own size instead of taking one from its (gone) contents. No white clearing
+   either: with nothing to keep readable, the sand reads better bare. */
 .landing .hero-proof {
-  display: flex; align-items: center; gap: 0.8rem;
-  margin-top: auto; margin-bottom: 6rem;
-  padding: 1rem 1.7rem 1rem 1rem;
-  font-size: 0.92rem; color: #46412f;
-  /* a feathered clearing on the island so the quote reads; no hard edges */
-  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.6) 60%, rgba(255, 255, 255, 0) 100%);
+  width: min(26rem, 100%); height: 6rem;
+  margin-top: auto; margin-bottom: 10.5rem;
 }
-.landing .hero-proof img { width: 2.9rem; height: 2.9rem; border-radius: 50%; object-fit: cover; box-shadow: 0 1px 3px rgba(60, 50, 30, 0.3); }
-/* quote over attribution, two clear sizes — not one same-size run-on line */
-.landing .proof-quote { font-size: 1rem; font-weight: 600; line-height: 1.35; max-width: 30ch; }
-.landing .proof-attr { margin-top: 0.2rem; font-size: 0.82rem; line-height: 1.4; color: #6f6852; }
-.landing .proof-attr b { color: #46412f; font-weight: 600; }
 .landing .hero-actions { margin-top: 1.8rem; }
 .landing .app-window {
   border: 1px solid var(--line); border-radius: var(--r-win); overflow: hidden;
@@ -275,11 +281,110 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
 /* the hero window sits a touch right of its column */
 .landing .hero-grid .app-window { margin-right: -2.5rem; }
 .landing .enter-window { animation: rise 0.65s var(--ease-settle) both 0.1s, bob 7s ease-in-out 2.6s infinite; }
-.landing .thread { animation: bob 7.6s ease-in-out 1.3s infinite; }
-.landing .email { animation: bob 8.2s ease-in-out 0.6s infinite; }
-.landing .email.us { animation-delay: 2.1s; }
 @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1.5px); } }
 @keyframes rise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+
+/* ---------- the demo card: hero + compare share one shell ----------
+   .gif-anchor reserves the layout box (same aspect as the video); .gif-shell
+   is the physical, lit card that fills it (and, on desktop, flies between the
+   two anchors). */
+.landing .gif-anchor {
+  position: relative;
+  width: min(440px, 100%);
+  aspect-ratio: 484 / 591;
+}
+.landing .gif-shell {
+  position: absolute; inset: 0;
+  border-radius: 24px;
+  /* a faint top-lit bezel around the screen so the card has an edge that
+     catches light instead of a flat cut */
+  padding: 7px;
+  background: linear-gradient(158deg, #ffffff 0%, #f2f6f9 46%, #e4ecf2 100%);
+  /* depth = stacked shadows (contact + mid + the deep cast the brief asked
+     for) plus a bright top rim and a hairline ring — not one flat drop */
+  box-shadow:
+    0 1px 1px rgba(18, 63, 94, 0.05),
+    0 5px 10px -3px rgba(18, 63, 94, 0.12),
+    0 18px 34px -14px rgba(18, 63, 94, 0.22),
+    0 44px 90px -34px rgba(18, 63, 94, 0.45),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.95),
+    inset 0 0 0 1px rgba(18, 63, 94, 0.07);
+  will-change: transform;
+}
+.landing .gif-reveal { height: 100%; }
+.landing .gif-media {
+  display: block; width: 100%; height: 100%;
+  object-fit: cover; border-radius: 17px;
+  background: #fff;
+}
+/* the hero card rises smoothly out of the sea on load; scrolling down sinks
+   it back under (JS-driven transform on the shell) and it splashes as it goes
+   under. Its foot dissolves into the waterband (the compare copy does none). */
+.landing .hero-card { width: min(560px, 100%); align-self: end; justify-self: center; margin-bottom: -2.6rem; }
+.landing .hero-card .gif-reveal { animation: rise 1.25s cubic-bezier(0.16, 1, 0.3, 1) both 0.1s; }
+.landing .hero-card .gif-shell {
+  -webkit-mask-image: linear-gradient(to bottom, #000 85%, transparent 99%);
+  mask-image: linear-gradient(to bottom, #000 85%, transparent 99%);
+}
+/* enter: a smooth rise from below the surface, no bounce */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(210px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* the pixel splash the card kicks up at the waterline as it sinks under on
+   scroll. Small square "pixels" thrown up in a fan and falling back, each on
+   its own arc via the SPLASH props; fired by toggling .go from the scroll
+   handler (removing + re-adding restarts the animation). */
+.landing .hero-splash {
+  position: absolute; left: 50%; bottom: 15%;
+  width: 0; height: 0; z-index: 3; pointer-events: none;
+  color: #3f7ea9;
+}
+.landing .hero-splash .drop {
+  position: absolute; left: 0; top: 0;
+  width: var(--size); height: var(--size); margin: calc(var(--size) / -2);
+  background: currentColor; border-radius: 1px; opacity: 0;
+}
+.landing .hero-splash.go .drop {
+  animation: splash 0.72s ease-out both;
+  animation-delay: var(--delay);
+}
+.landing .hero-splash .drop:nth-child(3n) { color: #6ea6c8; }
+.landing .hero-splash .drop:nth-child(4n) { color: #285f85; }
+@keyframes splash {
+  0%   { opacity: 0; transform: translate(0, 0) scale(0.5); }
+  12%  { opacity: 1; transform: translate(calc(var(--dx) * 0.22), calc(var(--peak) * 0.5)) scale(1); }
+  55%  { opacity: 0.95; transform: translate(calc(var(--dx) * 0.72), var(--peak)) scale(0.82); }
+  100% { opacity: 0; transform: translate(var(--dx), var(--fall)) scale(0.32); }
+}
+
+/* the waterline band: monospace wave grid, sparse up top and dense at the
+   bottom, drawn over the card's lower edge so it reads as breaking the
+   surface. A lighter tide tint (#5088ad) than the canvas sea below it, so
+   the two layers read as surface-over-depth rather than one flat wash. */
+.landing .hero-waterband {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 200px;
+  z-index: 2; /* above .hero-grid (z-index 1) so it overlaps the card */
+  pointer-events: none; overflow: hidden;
+  color: #5088ad;
+  /* a sharp waterline: no faint chars bleeding up over the card's readable
+     content, then a quick ramp to the dense surface at the card's foot */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 42%, #000 82%);
+  mask-image: linear-gradient(to bottom, transparent 42%, #000 82%);
+}
+.landing .waterband-scroll {
+  display: flex; width: max-content; height: 100%; align-items: flex-end;
+  animation: waterdrift 40s linear infinite;
+}
+.landing .waterband-col {
+  margin: 0; white-space: pre;
+  font: 12px/13px ui-monospace, "SF Mono", Menlo, monospace;
+  letter-spacing: 0.04em;
+}
+/* two identical copies sit side by side; sliding exactly one copy's width
+   loops seamlessly */
+@keyframes waterdrift { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
 /* the hero fits the fold: its height comes from the viewport, never from the
    dashboard screenshot (whose near-square aspect would otherwise set it —
@@ -314,67 +419,30 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
   mask-image: linear-gradient(to bottom, transparent, black 16%, black 84%, transparent);
 }
 .landing.sea-live .sea-strip { display: block; }
+/* Open water between the dashboard sheet and the closing ask: the same ASCII
+   sea the hero carries, in a white channel. Only ONE shoulder is needed now —
+   the dashboard sheet is white and so is the band, so they run together with
+   no seam at all, and the close sheet docks onto the band's far edge with its
+   baby-blue wave. The water runs up onto a shore. */
+.landing .sea-seam { position: relative; background: #ffffff; line-height: 0; height: 124px; }
+.landing .sea-seam .sea-strip { height: 100%; }
+/* That close-sheet shoulder has to be lifted out of flow to be visible at all:
+   `.sheet::before`'s negative margin collapses into its own section, and
+   because the band above and the section itself are both positioned, the
+   later sibling's background paints over the earlier one's — so an in-flow
+   shoulder ends up drawing baby blue onto baby blue and disappears.
+   Absolutely positioned above the section (z-index 2, clearing the sheets'
+   own z-index:1 shoulders) it lands on the band, where it can be seen. */
+.landing .close-sect::before {
+  position: absolute; top: -27px; left: 0; right: 0; height: 28px;
+  margin: 0; z-index: 2;
+}
 .landing .sect { padding-block: clamp(2.5rem, 5vw, 4.25rem); }
 .landing .sect h2, .landing .how-grid h2 { font-size: clamp(2rem, 1.2rem + 2.8vw, 3.2rem); font-weight: 600; line-height: 1.12; max-width: 28ch; }
 
-/* labels: gray, not gray-light — they carry real information ("what
-   everyone else sends") and gray-light fails AA contrast at this size */
-.landing .compare-label, .landing .artifact-bar { font-size: 0.85rem; color: var(--gray); }
-
-/* the thread, styled like a real LinkedIn message window */
-.landing .thread {
-  border: 1px solid var(--line); border-radius: var(--r-win); background: #fff;
-  box-shadow: var(--shadow-win);
-  overflow: hidden;
-  font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
-}
-.landing .li-head {
-  display: flex; align-items: center; gap: 0.7rem;
-  padding: 0.7rem 1rem; border-bottom: 1px solid #e8e8e8;
-}
-.landing .li-head .li-name { font-weight: 700; font-size: 0.95rem; color: #191919; }
-.landing .li-presence { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: #01754f; }
-.landing .li-icons { margin-left: auto; display: flex; gap: 0.9rem; color: #666; font-size: 1rem; letter-spacing: 0.05em; }
-.landing .li-body { padding: 0.5rem 1.1rem 0.9rem; }
-.landing .msg { display: grid; grid-template-columns: 2.6rem minmax(0, 1fr); gap: 0.7rem; padding-block: 0.5rem; }
-.landing .avatar {
-  width: 2.6rem; height: 2.6rem; border-radius: 50%; overflow: hidden;
-  display: flex; align-items: center; justify-content: center;
-  background: #dce6f1; color: #56687a;
-}
-.landing .avatar img { width: 100%; height: 100%; object-fit: cover; }
-.landing .avatar svg { width: 70%; height: 70%; margin-top: 22%; fill: #8ba0b5; }
-.landing .msg-head { display: flex; align-items: baseline; gap: 0.5rem; font-size: 0.9rem; }
-.landing .msg-head .who { font-weight: 700; color: #191919; }
-.landing .msg-head .when { color: #767676; font-size: 0.78rem; }
-.landing .msg-head .seen { margin-left: auto; color: #767676; }
-.landing .msg-head .seen svg { width: 0.85rem; height: 0.85rem; }
-.landing .msg-body { margin-top: 0.2rem; font-size: 0.9rem; color: #191919; line-height: 1.45; max-width: 52ch; }
-.landing .divider { display: flex; align-items: center; gap: 0.8rem; margin-block: 0.6rem; }
-.landing .divider hr { flex: 1; border: 0; border-top: 1px solid #e8e8e8; margin: 0; }
-.landing .divider span { font-size: 0.72rem; color: #767676; text-transform: uppercase; letter-spacing: 0.06em; }
-.landing .divider.win span { color: var(--accent); font-weight: 700; }
-.landing .divider.win hr { border-top-color: rgba(21,85,126,0.3); }
-.landing .li-compose {
-  display: flex; align-items: center; gap: 0.8rem;
-  border-top: 1px solid #e8e8e8; padding: 0.75rem 1rem;
-}
-.landing .li-input { flex: 1; background: #f2f2f2; border-radius: 999px; padding: 0.55rem 1rem; font-size: 0.85rem; color: #767676; }
-.landing .li-send { color: #a8a8a8; font-weight: 700; font-size: 0.9rem; }
-.landing .redact { display: inline-block; background: #d4d9de; border-radius: 2px; width: 2.5em; height: 0.78em; }
-.landing .clip { margin-top: 0.7rem; position: relative; width: min(19rem, 100%); border-radius: 10px; overflow: hidden; border: 1px solid var(--line); }
-.landing .clip-note { display: flex; align-items: flex-end; gap: 0.35rem; margin: 0.5rem 0 0 0.5rem; }
-.landing .clip-note svg { width: 2.1rem; flex: none; }
-.landing .clip-note em { font-family: Georgia, "Times New Roman", serif; font-style: italic; color: var(--accent); font-size: 0.95rem; line-height: 1; }
-.landing .clip img { width: 100%; }
-.landing .clip::after { content: "0:19"; position: absolute; right: 0.55rem; bottom: 0.5rem; background: rgba(22,24,27,0.75); color: #fff; font-size: 0.7rem; padding: 0.1rem 0.4rem; border-radius: 4px; }
-.landing .play { position: absolute; inset: 0; margin: auto; width: 2.6rem; height: 2.6rem; background: rgba(22,24,27,0.62); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-.landing .play::after { content: ""; border-style: solid; border-width: 0.45rem 0 0.45rem 0.8rem; border-color: transparent transparent transparent #fff; margin-left: 0.18rem; }
-.landing .stagger .msg, .landing .stagger .divider { opacity: 0; transform: translateY(10px); }
-.landing .stagger.seen .msg, .landing .stagger.seen .divider {
-  animation: rise 0.45s cubic-bezier(0.16,1,0.3,1) both;
-  animation-delay: calc(var(--i) * 110ms);
-}
+/* labels: gray, not gray-light — they carry real information and
+   gray-light fails AA contrast at this size */
+.landing .artifact-bar { font-size: 0.85rem; color: var(--gray); }
 
 /* ---------- how it works: G3 pinned scrub ---------- */
 .landing .pin-wrap { height: 155vh; }
@@ -423,55 +491,360 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
 .landing .artifact-bar { display: flex; align-items: center; gap: 0.4rem; padding: 0.7rem 1rem; border-bottom: 1px solid var(--line); font-size: 0.8rem; color: var(--gray); }
 .landing .artifact > img { width: 100%; display: block; }
 
-/* ---------- compare: G4, the favorite section, restyled ---------- */
+/* ---------- compare: the slop-vs-real story, told by one gif ---------- */
 .landing .compare-head { text-align: center; }
-.landing .compare-head h2 { font-size: clamp(2rem, 1.2rem + 2.8vw, 3.2rem); max-width: none; }
-.landing .compare-grid > div:first-child .email {
-  background: #f6f7f8; box-shadow: none;
+/* the sentence runs light so the one number owns the line: thin ground,
+   heavy accent-colored figure */
+.landing .compare-head h2 { font-size: clamp(2rem, 1.2rem + 2.8vw, 3.2rem); max-width: none; font-weight: 350; line-height: 1.12; }
+.landing .compare-head h2 b { font-weight: 750; color: var(--accent); }
+.landing .compare-row { display: flex; justify-content: center; align-items: center; gap: clamp(2rem, 4vw, 3.5rem); margin-top: 2.5rem; }
+/* --slide 1 = gif parked in the row's center (points hidden); 0 = slid left
+   with the points revealed. Scroll drives it; the no-JS default is 0 so the
+   static page shows the final layout. */
+/* section 2's own demo card (left as-is) */
+.landing .compare-gif { width: min(500px, 92vw); }
+.landing .compare-points { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1.2rem; }
+.landing .compare-points li { display: flex; align-items: baseline; gap: 0.65rem; font-size: 1.12rem; font-weight: 500; max-width: 20ch; }
+.landing .pt-check { font-weight: 700; color: var(--accent); }
+.landing #compare.washed .compare-points { color: #fff; }
+.landing #compare.washed .pt-check { color: #9fd3f5; }
+/* the wash: the sea's dark water, scroll-translated over the sheet. Its
+   leading edge is the same wave-cut sine as every sheet shoulder. Hidden
+   above the sheet at rest, so reduced motion / no-JS stays white. */
+/* clip top/sides (hides the parked wash) but let the crest overhang the
+   bottom; transparent + raised above the next sheet, so the water is a
+   real layer over section 3 and retreating it reveals what's beneath */
+.landing #compare { clip-path: inset(0 0 -60px 0); background: transparent; z-index: 2; }
+.landing #compare.sheet-white::before { content: none; }
+.landing .compare-wash {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  /* accent at the top — the exact color the sea's pixels densify into, so
+     the dissolve happens in the ascii grid with no hue jump — deepening
+     toward the waterline below */
+  background: linear-gradient(180deg, var(--accent), #0d3c5b);
+  transform: translateY(-101%);
+  /* NO will-change here: promoting this layer + the section's clip-path
+     hits a Chromium compositing bug where the translated layer's newly
+     exposed area never repaints (blank white instead of water) */
 }
-.landing .compare-grid > div:first-child .email-subject,
-.landing .compare-grid > div:first-child .email-body { opacity: 0.62; }
-.landing .compare-pin-wrap { height: 200vh; }
-.landing .compare-pin-wrap .pin { align-items: flex-start; padding-top: clamp(4.5rem, 7vh, 5.5rem); }
-.landing .compare-sub { margin: 0.9rem auto 0; text-align: center; color: var(--gray); font-size: 1.08rem; }
-.landing .compare-sub b { color: var(--accent); }
-.landing .compare-grid { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: clamp(1.5rem, 3vw, 2.5rem); margin-top: 5.25rem; align-items: stretch; }
-/* both artifacts shorter via tighter spacing — the type stays full size */
-.landing .compare-grid .email { padding: 1.2rem 1.4rem; }
-.landing .email-fate { margin: auto 0 0; padding-top: 1.5rem; font-size: 0.85rem; color: var(--gray); }
-.landing .compare-grid .email-body p + p { margin-top: 0.65rem; }
-.landing .compare-grid .li-body { padding: 0.4rem 1rem 0.7rem; }
-.landing .compare-grid .msg { padding-block: 0.35rem; }
-.landing .compare-grid .divider { margin-block: 0.45rem; }
-.landing .compare-grid .clip { width: min(14rem, 100%); }
-.landing .compare-arrow {
-  position: absolute; top: -4.9rem; left: 50%; transform: translateX(-58%);
-  width: 20rem; z-index: 2; pointer-events: none;
+.landing .compare-wash::after {
+  content: ""; position: absolute; top: calc(100% - 1px); left: 0; right: 0; height: 28px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='28' viewBox='0 0 180 28'%3E%3Cpath d='M0 14 C 11.25 5.5, 33.75 5.5, 45 14 C 56.25 22.5, 78.75 22.5, 90 14 C 101.25 5.5, 123.75 5.5, 135 14 C 146.25 22.5, 168.75 22.5, 180 14 L180 28 L0 28 Z' fill='%230d3c5b'/%3E%3C/svg%3E") repeat-x bottom;
+  background-position-x: var(--wave-x, 0px);
+  transform: scaleY(-1);
+  /* crisp sine edge, drifting sideways with the scroll (--wave-x) */
 }
-.landing .compare-arrow path:last-of-type {
-  transform-box: fill-box; transform-origin: center;
-  transition: opacity 0.25s, transform 0.45s var(--ease-settle);
+/* trim the white tail so the sand tucked beneath meets the water with no gap */
+.landing #compare .sect { position: relative; z-index: 1; padding-block: clamp(3rem, 5vw, 4.5rem) clamp(2rem, 3vw, 3rem); }
+
+/* type flips light while the water holds the sheet */
+.landing .compare-head h2, .landing .compare-head h2 b { transition: color 0.35s ease; }
+.landing #compare.washed .compare-head h2 { color: #fff; }
+.landing #compare.washed .compare-head h2 b { color: #9fd3f5; }
+
+/* ---------- testimonial band: a sandy shore the wave pulls back to reveal ----------
+   full-bleed warm sand behind the quote, tucked up under #compare so the
+   retreating wash uncovers sand instead of white; the sand fades to white low
+   down so it melts into the how-deck with no hard seam. */
+.landing .testimonial-band {
+  position: relative; z-index: 0; margin-top: -20rem;
+  /* warm ivory sand (design-language weathered-coast palette). The top sits
+     deep under #compare so the retreating wave lands on a tall stretch of
+     sand, not white; it settles to white by the foot so section 3 begins
+     seamlessly. The solid-sand band runs to ~34% before it starts fading. */
+  background: linear-gradient(to bottom, #e4d3b1 0%, #e6d6ba 34%, #efe4d0 66%, #ffffff 100%);
 }
-.landing .compare-label { margin-bottom: 0.8rem; }
-.landing .compare-label.us { color: var(--accent); font-weight: 600; }
-.landing .compare-grid > div { display: flex; flex-direction: column; }
-.landing .email {
-  display: flex; flex-direction: column; flex: 1;
-  border: 1px solid var(--line); border-radius: var(--r-win); background: #fff;
-  box-shadow: var(--shadow-win);
-  padding: 1.4rem 1.5rem;
+/* speckled grains scattered over the sand — random (SVG fractal noise, not a
+   dot grid), trickling down and thinning gradually so they blur the seam into
+   section 3 instead of ending on a line */
+.landing .testimonial-band::before {
+  content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='discrete' tableValues='0 0 0 0 0 0 0 0 0 0 0 0 0.35 0.85'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)' fill='%235c4420'/%3E%3C/svg%3E");
+  background-size: 165px 165px;
+  opacity: 0.9;
+  /* gradual, long fade so the grains trickle down and dissolve across the
+     boundary rather than cutting off */
+  -webkit-mask-image: linear-gradient(to bottom, #000 26%, rgba(0,0,0,0.55) 64%, rgba(0,0,0,0.2) 86%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 26%, rgba(0,0,0,0.55) 64%, rgba(0,0,0,0.2) 86%, transparent 100%);
 }
-.landing .email.us { border: 2px solid rgba(21,85,126,0.45); box-shadow: 0 2px 4px rgba(22,24,27,0.05), 0 32px 64px -28px rgba(21,85,126,0.42); transform: translateY(-8px); }
-.landing .email-subject { font-weight: 600; font-size: 1rem; padding-bottom: 0.9rem; border-bottom: 1px solid var(--line); }
-.landing .email-body { margin-top: 1rem; font-size: 0.92rem; color: #3c434a; line-height: 1.55; }
-.landing .email-body p + p { margin-top: 0.9rem; }
-.landing .email-body ul { list-style: disc; margin: 0.7rem 0 0 1.35rem; padding: 0; }
-.landing .email-body li { margin-top: 0.3rem; }
-.landing .email-body .fake-link { color: #1a0dab; text-decoration: underline; }
+/* the quote clears the deep tuck zone (the top ~20rem sit under the compare
+   sheet, forming the tall shore the wave pulls back to) */
+.landing .testimonial-band .sect { position: relative; z-index: 1; padding-block: clamp(12rem, 17vw, 16rem) clamp(6rem, 11vw, 10rem); }
+.landing .testimonial {
+  display: flex; align-items: center; justify-content: center; gap: 1.6rem;
+  /* shrink to the content and center it as a unit, so the quote sits on the
+     page's centre line rather than leaning left inside a wide box */
+  width: fit-content; max-width: min(46rem, 92vw); margin-inline: auto;
+}
+.landing .testimonial-quote { max-width: 22ch; }
+.landing .testimonial img {
+  width: 4.6rem; height: 4.6rem; border-radius: 50%; object-fit: cover; flex: none;
+  box-shadow: 0 2px 12px rgba(120, 92, 40, 0.32);
+}
+.landing .testimonial blockquote { margin: 0; }
+.landing .testimonial-quote {
+  font-size: clamp(1.45rem, 1rem + 1.5vw, 2.1rem); font-weight: 600;
+  line-height: 1.24; letter-spacing: -0.012em; text-wrap: balance; color: #2c2618;
+}
+.landing .testimonial-attr { margin-top: 0.75rem; font-size: 0.98rem; color: #6f6852; }
+.landing .testimonial-attr b { color: #46412f; font-weight: 600; }
+
+/* ---------- case studies: a horizontal snapping rail ----------
+   One card = one client, read right-to-left in three descending voices:
+   (1) the demo clip — biggest, fully saturated, the only moving thing;
+   (2) their testimonial, ink-weight type in the column beside it;
+   (3) their lockup, small and quiet, closing the column. */
+.landing #cases .sect { padding-block: clamp(3rem, 6vw, 4.75rem); }
+.landing .cases-head { text-align: center; margin-bottom: clamp(2rem, 4vw, 3rem); }
+/* flat type, back to the earlier treatment: the sentence runs light so the one
+   number owns the line — thin ground, heavy accent-colored figure. The
+   thin-sheet letterpress (text-shadow) that was tried here belongs to the
+   clips; on type it read as a second object competing with them. */
+.landing .cases-head h2 {
+  margin-inline: auto; max-width: none; font-weight: 350;
+}
+.landing .cases-head h2 b { font-weight: 750; color: var(--accent); }
+.landing .cases-rail {
+  display: flex; gap: clamp(1rem, 2.5vw, 1.75rem);
+  overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+  /* touch keeps native snap (momentum and rubber-banding are the platform's
+     job). Wheel and trackpad hand off to the rail's own eased settle — the
+     browser's mandatory snap yanked short flicks back at its own speed and
+     stuttered when a flick died mid-gap. */
+  scroll-behavior: auto;
+  /* pad both sides so any card can sit dead-centre (half the card width);
+     the deep bottom pad is room for the front card's cast shadow */
+  /* the card's ink sits left of its own box — the aside column runs out into
+     whitespace — so a box-centred card reads left-heavy. The deck rests
+     --rail-shift to the right of the scrollport centre: the snapport is inset
+     from the left by twice that (snap centre moves half the inset), and the
+     side padding is rebalanced by the same amount so the first card can still
+     reach the shifted position from scrollLeft 0. The rail JS reads
+     scroll-padding-left back rather than repeating the number. */
+  --rail-shift: 4.5rem;
+  --rail-pad: calc(50% - min(32rem, 44vw));
+  padding: 2rem max(0px, calc(var(--rail-pad) - var(--rail-shift))) 7.5rem
+    calc(var(--rail-pad) + var(--rail-shift));
+  scroll-padding-left: calc(var(--rail-shift) * 2);
+  scrollbar-width: none;
+  /* `overflow-x: auto` makes the vertical axis clip too, so the clip's deep
+     cast (110px of blur) used to be sliced off flat by the rail's own bottom
+     edge — a hard horizontal line across the sheet. Room for the falloff plus
+     a mask that takes the last of it to zero, so it dies out instead of
+     stopping. The fade only ever crosses padding; the cards end above it. */
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 5rem), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 5rem), transparent);
+  /* the deck stands in space: waiting cards turn away from a vanishing point
+     fixed at the middle of the rail, so the one on deck is seen edge-on */
+  perspective: 2000px; perspective-origin: 50% 45%;
+}
+.landing .cases-rail::-webkit-scrollbar { display: none; }
+@media (pointer: fine) { .landing .cases-rail { scroll-snap-type: none; } }
+/* coverflow: the card at the centre faces you square and full size; the ones
+   waiting turn away — right-hand card shows its left edge, left-hand card its
+   right (JS writes --side per card as the rail scrolls) */
+.landing .case {
+  flex: 0 0 min(64rem, 88vw); scroll-snap-align: center; cursor: pointer;
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 17rem);
+  gap: clamp(1.5rem, 3vw, 2.75rem); align-items: center;
+  /* hinge from the near edge, not the middle: a card shrinking toward its own
+     centre pulls its clip out of the gutter and there's nothing left to tease.
+     --side 1 (card on the right) → origin at its left edge, and vice versa. */
+  transform-origin: calc(50% - var(--side, 1) * 50%) center;
+  transform: rotateY(calc(var(--side, 1) * 32deg)) scale(0.86);
+  opacity: 0.72; filter: saturate(0.66);
+  transition: transform 0.6s cubic-bezier(0.2, 0.72, 0.28, 1), opacity 0.45s ease, filter 0.45s ease;
+}
+.landing .case.active {
+  transform: none; opacity: 1; filter: none; cursor: default;
+}
+
+/* the aside: testimonial over lockup. It arrives with the card as it turns —
+   a waiting card is a clip and nothing else, so the deck reads as demos */
+.landing .case-aside {
+  display: flex; flex-direction: column; align-items: flex-start;
+  opacity: 0; transform: translateX(1.5rem);
+  transition: opacity 0.35s ease, transform 0.45s var(--ease-settle);
+}
+.landing .case.active .case-aside {
+  opacity: 1; transform: none;
+  transition: opacity 0.5s ease 0.24s, transform 0.6s var(--ease-settle) 0.24s;
+}
+.landing .case-quote { margin: 0; }
+.landing .case-quote blockquote {
+  margin: 0; font-size: clamp(1.1rem, 0.98rem + 0.5vw, 1.45rem); font-weight: 600;
+  line-height: 1.36; letter-spacing: -0.01em; color: var(--ink); text-wrap: pretty;
+}
+.landing .case-quote figcaption {
+  display: flex; align-items: center; gap: 0.62rem; margin-top: 1rem;
+  font-size: 0.84rem; line-height: 1.35; color: var(--gray);
+}
+.landing .case-quote figcaption img {
+  width: 2.2rem; height: 2.2rem; flex: none; border-radius: 50%; object-fit: cover;
+}
+.landing .case-quote figcaption b { display: block; color: var(--ink); font-weight: 600; }
+/* the lockup is the last word, not a third headline: a hairline sets it below
+   the quote, so it can be big enough to read as a brand without competing */
+.landing .case-mark {
+  margin-top: clamp(1.4rem, 2.6vw, 2rem); padding-top: clamp(1.4rem, 2.6vw, 2rem);
+  border-top: 1px solid var(--line); width: 100%;
+}
+/* no quote yet (a case ships before its testimonial does) — then the mark is
+   all there is, and there's nothing for the rule to divide it from */
+.landing .case-aside > .case-mark:only-child { margin-top: 0; padding-top: 0; border-top: 0; }
+/* every lockup is baked as a rounded tile with alpha corners; drop-shadow
+   follows that alpha, so it lifts as a chip rather than casting a rectangle
+   the way box-shadow would. Never a hard-cut square. */
+.landing .case-logo {
+  display: block; height: 2.85rem; width: auto; max-width: 100%; object-fit: contain;
+  object-position: left center;
+  filter:
+    drop-shadow(0 1px 1px rgba(13, 60, 91, 0.10))
+    drop-shadow(0 4px 8px rgba(13, 60, 91, 0.12))
+    drop-shadow(0 10px 22px rgba(13, 60, 91, 0.16));
+}
+
+/* cinematic: the whole right side is the clip; the copy sits at its head over
+   a dark gradient, clear of anything burned into the foot of the footage */
+.landing .case-video {
+  position: relative; aspect-ratio: 16 / 9; border-radius: 16px; overflow: hidden;
+  border: 1px solid rgba(13, 60, 91, 0.18);
+  /* the clip is a thin sheet of metal, not a decal: a lit rim along its top
+     edge, and three hard 1px offsets below it that read as the material's cut
+     edge catching light. Then five soft layers, each roughly doubling the blur
+     and shedding weight, so the cast falls off as one continuous gradient —
+     the old single -30px-spread layer at 0.55 stopped dead and banded. */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -1px 0 rgba(13, 60, 91, 0.12),
+    0 1px 0 rgba(13, 60, 91, 0.26),
+    0 2px 0 rgba(13, 60, 91, 0.17),
+    0 3px 0 rgba(13, 60, 91, 0.1),
+    0 4px 3px rgba(13, 60, 91, 0.09),
+    0 7px 12px rgba(13, 60, 91, 0.07),
+    0 15px 28px rgba(13, 60, 91, 0.07),
+    0 30px 58px rgba(13, 60, 91, 0.075),
+    0 56px 110px rgba(13, 60, 91, 0.085);
+  background: #0d3c5b;
+}
+.landing .case-video video { display: block; width: 100%; height: 100%; object-fit: cover; }
+/* the readability gradient — dense at the head, clear by mid-frame */
+.landing .case-video::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(to bottom,
+    rgba(8, 26, 38, 0.92) 0%, rgba(8, 26, 38, 0.8) 16%, rgba(8, 26, 38, 0.5) 32%,
+    rgba(8, 26, 38, 0.16) 50%, rgba(8, 26, 38, 0.02) 66%, transparent 78%);
+  transition: opacity 0.3s ease;
+}
+.landing .case-play {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 3;
+  width: 4.5rem; height: 4.5rem; border-radius: 50%; padding: 0; cursor: pointer;
+  /* tinted dark, not light: the frame under it is a screenshot on one card and
+     a lit interior on the next, and a white wash disappears on both */
+  background: rgba(8, 26, 38, 0.42); backdrop-filter: blur(6px);
+  border: 1.5px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 2px 12px rgba(8, 26, 38, 0.28);
+  transition: background 0.24s var(--ease-settle), transform 0.24s var(--ease-settle), opacity 0.3s ease;
+}
+.landing .case-play:hover { background: rgba(8, 26, 38, 0.62); transform: translate(-50%, -50%) scale(1.06); }
+.landing .case-play::after {
+  content: ""; position: absolute; inset: 0; margin: auto; width: 0; height: 0;
+  border-style: solid; border-width: 0.6rem 0 0.6rem 1rem;
+  border-color: transparent transparent transparent #fff; transform: translateX(0.13rem);
+}
+.landing .case-main { position: relative; }
+.landing .case-copy {
+  position: absolute; left: 0; right: 0; top: 0; z-index: 2; pointer-events: none;
+  padding: clamp(1.15rem, 2.4vw, 1.9rem);
+  transition: opacity 0.3s ease;
+}
+.landing .case-title { margin: 0; font-size: clamp(1.25rem, 1rem + 1vw, 1.85rem); font-weight: 650; line-height: 1.14; letter-spacing: -0.016em; color: #fff; text-wrap: balance; }
+.landing .case-sub { margin: 0.55rem 0 0; font-size: clamp(0.9rem, 0.85rem + 0.2vw, 1rem); color: rgba(255, 255, 255, 0.86); line-height: 1.5; max-width: 46ch; }
+/* once it's running, the poster furniture gets out of the way and the native
+   controls take over */
+.landing .case.playing .case-copy,
+.landing .case.playing .case-play,
+.landing .case.playing .case-video::after { opacity: 0; pointer-events: none; }
+
+/* ---------- explore: the interactive dashboard ---------- */
+.landing #explore .explore-head { text-align: center; max-width: 40rem; margin-inline: auto; }
+/* one line: the shared 28ch cap would break it after "keep", which splits the
+   voice phrase across two rows. Desktop only — at the clamp's floor this
+   overruns a 390px screen, so phones get the wrap back. */
+/* thin ground, like the cases heading: the section title introduces the
+   dashboard rather than competing with it, and it carries no voice italic —
+   there's no one phrase here that outranks the rest of the line */
+.landing #explore .explore-head h2 { margin-inline: auto; max-width: none; font-weight: 350; }
+@media (min-width: 52rem) {
+  .landing #explore .explore-head { max-width: none; }
+  .landing #explore .explore-head h2 { white-space: nowrap; }
+}
+.landing #explore .explore-head h2 b { font-weight: 750; color: var(--accent); }
+.landing .explore-grid {
+  display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 0.82fr);
+  gap: clamp(1.5rem, 3vw, 3rem); align-items: start;
+}
+/* the mat: the dashboard AND the panel that reads it stand together on one
+   tide-wash plate on a white sheet, so the two read as a single object
+   instead of a window and a loose card. The plate is also what separates this
+   section from the closing ask now that the water divider is gone. Light
+   plate on white, so the cast stays faint — it only has to lift the mat off
+   the page, not carve it out. */
+.landing .explore-plate {
+  background: #eaf1f7;
+  border-radius: calc(var(--r-win) + 0.9rem);
+  padding: clamp(1.1rem, 2.2vw, 2rem);
+  margin-top: clamp(2.5rem, 4vw, 3.75rem);
+  box-shadow:
+    0 1px 2px rgba(13, 60, 91, 0.06),
+    0 8px 18px -12px rgba(13, 60, 91, 0.16),
+    0 28px 56px -34px rgba(13, 60, 91, 0.26);
+}
+.landing .explore-dash {
+  position: relative; border: 1px solid var(--line); border-radius: var(--r-win);
+  overflow: hidden; box-shadow: var(--shadow-win); background: #fff;
+  /* reserve the box up front (so the % hotspots line up before the lazy image
+     loads) AND crop the "all leads" strip off the bottom: the box is ~90% of
+     the image's native height and the image is pinned to the top */
+  aspect-ratio: 2000 / 1746;
+}
+.landing .explore-dash img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+/* hotspots: invisible until hovered/selected, then a tide wash + inset ring
+   so the widget "lights up" as the chosen one */
+.landing .hot {
+  position: absolute; margin: 0; padding: 0; border: 0; background: transparent;
+  border-radius: 10px; cursor: pointer;
+  transition: background 0.18s ease, box-shadow 0.18s ease;
+}
+.landing .hot:hover, .landing .hot.on {
+  background: rgba(21, 85, 126, 0.1);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+.landing .hot:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* the info panel tracks the dashboard as you read down it */
+.landing .explore-info {
+  position: sticky; top: 5rem;
+  min-height: 15rem; padding: clamp(1.6rem, 2.5vw, 2.3rem);
+  border: 1px solid var(--line); border-radius: var(--r-win); background: var(--bg);
+  box-shadow: 0 1px 2px rgba(22, 24, 27, 0.04), 0 12px 28px -18px rgba(22, 24, 27, 0.16);
+  display: flex; flex-direction: column; justify-content: center;
+}
+.landing .explore-prompt { color: var(--gray); font-size: 1.1rem; font-weight: 500; text-align: center; line-height: 1.4; }
+/* the selected widget: a quiet title + a supporting line (not a shouty slab) */
+.landing .explore-card { animation: fadeUp 0.28s ease both; }
+.landing .explore-card h3 { margin: 0; font-size: 1.22rem; font-weight: 600; line-height: 1.28; letter-spacing: -0.01em; color: var(--ink); text-wrap: balance; }
+.landing .explore-card p { margin: 0.7rem 0 0; color: var(--gray); font-size: 1rem; line-height: 1.55; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
 /* ---------- close ---------- */
 .landing .close-sect { text-align: center; }
-.landing .close-sect .sect { padding-block: clamp(4rem, 7vw, 5.5rem); }
+/* the last two sheets need real air between them: the dashboard is a dense
+   object and the closing ask is one line and a button, so they have to read
+   as a beat apart, not as a continuation. This pad is the open water the
+   mat sits above — the 124px sea-seam band follows it, so the two together
+   are the gap; the water must not crowd the mat's foot. */
+.landing #explore .sect { padding-bottom: clamp(5rem, 9vw, 8rem); }
+.landing .close-sect .sect { padding-block: clamp(6.5rem, 11vw, 9.5rem) clamp(4rem, 7vw, 5.5rem); }
 .landing .close-sect h2 { font-size: clamp(2.4rem, 1.3rem + 4.6vw, 4.6rem); font-weight: 600; line-height: 1.05; letter-spacing: -0.02em; margin-inline: auto; max-width: 16ch; }
 .landing .close-sect .btn { margin-top: 2.5rem; height: 3.1rem; padding-inline: 1.9rem; font-size: 1.05rem; }
 
@@ -500,7 +873,7 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
 .landing .foot a:hover { color: #fff; }
 
 @media (max-width: 52rem) {
-  .landing .hero-grid, .landing .how-grid, .landing .compare-grid { grid-template-columns: 1fr; }
+  .landing .hero-grid, .landing .how-grid { grid-template-columns: 1fr; }
   /* the text column dissolves into grid items so the proof can move below
      the window — onto the water, where the sea draws its island (the same
      canvas runs on phones; only reduced-motion goes without) */
@@ -511,22 +884,44 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
   .landing .hero h1, .landing .hero-sub { text-align: center; justify-self: center; }
   .landing .hero-actions { justify-self: center; }
   .landing .hero-grid .app-window { margin-right: 0; margin-top: 2.2rem; }
+  /* stacked hero: the card centers under the CTA, a shallow dip into the band */
+  .landing .hero-grid .hero-card { margin: 2.4rem auto -1.4rem; width: min(440px, 86vw); }
+  .landing .hero-waterband { height: 150px; }
   .landing .hero-proof {
-    order: 9; width: fit-content; justify-self: center;
+    order: 9; justify-self: center;
+    width: min(20rem, 74vw); height: 5rem;
     margin: 4rem 0 1.2rem;
-    padding: 0.8rem 1.2rem 0.8rem 0.85rem;
   }
-  .landing .hero-proof img { width: 2.5rem; height: 2.5rem; }
-  .landing .proof-quote { font-size: 0.92rem; max-width: 26ch; }
-  .landing .proof-attr { font-size: 0.78rem; max-width: 26ch; }
-  /* the hand-drawn arrow moves between the stacked cards, pointing at ours */
-  .landing .compare-grid > div:nth-of-type(1) { order: 1; }
-  .landing .compare-arrow { position: static; order: 2; width: 6rem; margin: 0.4rem auto; transform: rotate(64deg); }
-  .landing .compare-grid > div:nth-of-type(2) { order: 3; }
-  /* compare flows statically (its content is taller than a phone screen),
-     but its scroll-linked animations still run un-pinned */
-  .landing .compare-pin-wrap { height: auto; }
-  .landing .compare-pin-wrap .pin { position: static; height: auto; overflow: visible; padding-top: 2.5rem; padding-bottom: 1.5rem; }
+  /* the card stacks: clip first (still the loudest), then its line, then the
+     quote, then the lockup — the same three voices, read top to bottom.
+     No coverflow turn on a phone: there's no hover to bring a card round, and
+     a rotated card clips against the rail's own scroll box at this width. */
+  /* no shift on a phone: the card fills the width, so its ink is already
+     centred and there's no side padding left to rebalance */
+  /* still room for the cast to fall off inside the rail (see the desktop
+     rule) — a phone clips it just as hard */
+  .landing .cases-rail { perspective: none; padding-block: 0.5rem 5.5rem; --rail-shift: 0rem; }
+  .landing .case { grid-template-columns: 1fr; gap: 1.4rem; transform: scale(0.92); }
+  .landing .case.active { transform: none; }
+  /* a 342px frame can't carry a headline over footage: the copy leaves the
+     clip and sets in ink below it, so the gradient has nothing to hold */
+  .landing .case-copy { position: static; padding: 1rem 0 0; }
+  .landing .case-video::after { display: none; }
+  .landing .case-title { color: var(--ink); }
+  .landing .case-sub { color: var(--gray); }
+  /* it's beside the clip now, not on it — playing shouldn't wipe it */
+  .landing .case.playing .case-copy { opacity: 1; }
+  .landing .compare-row { margin-top: 2rem; flex-direction: column; align-items: center; }
+  .landing .compare-gif { width: min(440px, 86vw); }
+  .landing .compare-points { align-items: flex-start; }
+  .landing .testimonial { flex-direction: column; text-align: center; gap: 1rem; }
+  /* no wash reveal on phones, so no tuck — the sand simply follows the compare
+     section as its own band (keeps the checkpoints clear of the sand) */
+  .landing .testimonial-band { margin-top: 0; }
+  .landing .testimonial-band .sect { padding-block: clamp(4rem, 12vw, 6rem) clamp(3rem, 8vw, 4.5rem); }
+  /* explore stacks: dashboard, then the panel (tap a widget to fill it) */
+  .landing .explore-grid { grid-template-columns: 1fr; gap: 1.25rem; }
+  .landing .explore-info { position: static; min-height: 6.5rem; }
   /* the how deck keeps its scroll-scrub on phones: a compact pinned scene.
      svh, not vh — iOS toolbar collapse makes vh pins jump mid-scrub */
   .landing #how .pin-wrap { height: 200vh; height: 200svh; }
@@ -550,16 +945,13 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
   /* the shorter window ends inside the hero sea; keep the waves behind it */
   .landing .app-window { position: relative; z-index: 2; }
 }
-/* desktop-width touch devices (tablets): the how deck scrubs fine, but the
-   compare pin holds content taller than makes sense to freeze on touch */
-@media (pointer: coarse) and (min-width: 52rem) {
-  .landing .compare-pin-wrap { height: auto; }
-  .landing .compare-pin-wrap .pin { position: static; height: auto; overflow: visible; padding-top: 2.5rem; }
-}
 @media (prefers-reduced-motion: reduce) {
   .landing * { animation-duration: 0.01ms !important; animation-delay: 0ms !important; transition-duration: 0.01ms !important; }
-  .landing .stagger .msg, .landing .stagger .divider { opacity: 1; transform: none; }
-  .landing .enter-window, .landing .thread, .landing .email, .landing .hero-proof { animation: none; }
+  .landing .enter-window, .landing .hero-proof { animation: none; }
+  /* card lands at rest, water holds still (the video itself is paused in JS) */
+  .landing .hero-card .gif-reveal { animation: none; }
+  .landing .hero-splash { display: none; } /* no plop, no splash */
+  .landing .waterband-scroll { animation: none; }
   .landing .pin-wrap { height: auto; }
   .landing .pin { position: static; height: auto; }
   .landing .stage-card { position: static; opacity: 1; transform: none; }
@@ -568,6 +960,11 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
   .landing .rail-list li span { color: var(--accent); }
   /* no scrub, no focus: every step keeps its sub */
   .landing .rail-list li:not(.active) .rail-sub { max-height: 3.4rem; opacity: 1; margin-top: 0.4rem; }
+  /* the deck stands still and square: no turn, no hover pull, and every card
+     keeps its quote and mark (JS skips the hover-to-front wiring too) */
+  .landing .cases-rail { perspective: none; }
+  .landing .case { transform: none; opacity: 1; filter: none; }
+  .landing .case-aside { opacity: 1; transform: none; }
   /* the ID-scoped mobile pin rules would otherwise out-rank this block */
   .landing #how .pin-wrap { height: auto; }
   .landing #how .pin { position: static; height: auto; }

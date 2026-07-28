@@ -1,0 +1,230 @@
+/* card styles cloned from landing/src/index.css so the GIF is pixel-true
+   to the site. tokens inlined; .landing scope dropped. */
+
+@font-face {
+  font-family: "Public Sans";
+  src: url("./public-sans-latin-wght-normal.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-style: normal;
+}
+
+:root {
+  --ink: #16181b;
+  --gray: #6a737d;
+  --gray-light: #9aa2ab;
+  --line: #e9ebee;
+  --accent: #15557e;
+  --r-win: 12px;
+  --shadow-win: 0 1px 2px rgba(22, 24, 27, 0.05), 0 24px 48px -24px rgba(22, 24, 27, 0.18);
+}
+
+* { box-sizing: border-box; }
+
+.scene {
+  font-family: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+.scene p { margin: 0; }
+.scene b { font-weight: 700; }
+
+/* ---- the card (shared frame: starts as the email, becomes the thread) ---- */
+.card {
+  position: absolute;
+  inset: 4px; /* breathing room so the shadow isn't clipped */
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: var(--r-win);
+  background: #fff;
+  /* no shadow: GIF's 256-color palette bands soft shadows into a harsh
+     dark ring — the light hairline border alone matches the site cards */
+  overflow: hidden;
+}
+
+/* ---- email face (image1) ---- */
+.email-inner { display: flex; flex-direction: column; flex: 1; padding: 1.2rem 1.4rem; min-height: 0; }
+.email-subject { font-weight: 600; font-size: 1rem; padding-bottom: 0.9rem; border-bottom: 1px solid var(--line); }
+.email-body { margin-top: 1rem; font-size: 0.92rem; color: #3c434a; line-height: 1.55; }
+.email-body .blk + .blk { margin-top: 0.65rem; }
+.email-body ul { list-style: disc; margin: 0.7rem 0 0 1.35rem; padding: 0; }
+.email-body li { margin-top: 0.3rem; }
+.email-body .fake-link { color: #1a0dab; text-decoration: underline; }
+.email-fate { margin: auto 0 0; padding-top: 1.5rem; font-size: 0.85rem; color: var(--gray); }
+
+/* selection highlight: painted per-block as the cursor sweeps up */
+.blk { border-radius: 2px; }
+.blk.sel, .blk.sel li { background: rgba(51, 121, 183, 0.32); }
+
+/* ---- thread face (image2) ---- */
+.thread-inner {
+  display: flex; flex-direction: column; flex: 1; min-height: 0;
+  font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+.li-head { display: flex; align-items: center; gap: 0.7rem; padding: 0.7rem 1rem; border-bottom: 1px solid #e8e8e8; }
+.li-head .li-name { font-weight: 700; font-size: 0.95rem; color: #191919; }
+.li-presence { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: #01754f; }
+.li-icons { margin-left: auto; display: flex; gap: 0.9rem; color: #666; font-size: 1rem; letter-spacing: 0.05em; }
+.li-body { padding: 0.4rem 1rem 0.7rem; flex: 1; }
+.msg { display: grid; grid-template-columns: 2.6rem minmax(0, 1fr); gap: 0.7rem; padding-block: 0.35rem; }
+.avatar {
+  width: 2.6rem; height: 2.6rem; border-radius: 50%; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  background: #dce6f1; color: #56687a;
+}
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+.avatar svg { width: 70%; height: 70%; margin-top: 22%; fill: #8ba0b5; }
+.msg-head { display: flex; align-items: baseline; gap: 0.5rem; font-size: 0.9rem; }
+.msg-head .who { font-weight: 700; color: #191919; }
+.msg-head .when { color: #767676; font-size: 0.78rem; }
+.msg-head .seen { margin-left: auto; color: #767676; }
+.msg-head .seen svg { width: 0.85rem; height: 0.85rem; }
+.msg-body { margin-top: 0.2rem; font-size: 0.9rem; color: #191919; line-height: 1.45; max-width: 52ch; }
+.divider { display: flex; align-items: center; gap: 0.8rem; margin-block: 0.45rem; }
+.divider hr { flex: 1; border: 0; border-top: 1px solid #e8e8e8; margin: 0; }
+.divider span { font-size: 0.72rem; color: #767676; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
+.divider.win span { color: var(--accent); font-weight: 700; }
+.divider.win hr { border-top-color: rgba(21, 85, 126, 0.3); }
+.li-compose { display: flex; align-items: center; gap: 0.8rem; border-top: 1px solid #e8e8e8; padding: 0.75rem 1rem; }
+.li-input { flex: 1; background: #f2f2f2; border-radius: 999px; padding: 0.55rem 1rem; font-size: 0.85rem; color: #767676; border: 1px solid transparent; }
+.li-send { color: #a8a8a8; font-weight: 700; font-size: 0.9rem; }
+.clip { margin-top: 0.7rem; position: relative; width: min(14rem, 100%); border-radius: 10px; border: 1px solid var(--line); }
+.clip img { width: 100%; display: block; border-radius: 9px; }
+.clip::after {
+  content: "0:19"; position: absolute; right: 0.55rem; bottom: 0.5rem;
+  background: rgba(22, 24, 27, 0.75); color: #fff; font-size: 0.7rem;
+  padding: 0.1rem 0.4rem; border-radius: 4px;
+}
+.play {
+  position: absolute; inset: 0; margin: auto; width: 2.6rem; height: 2.6rem;
+  background: rgba(22, 24, 27, 0.62); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+.play::after {
+  content: ""; border-style: solid; border-width: 0.45rem 0 0.45rem 0.8rem;
+  border-color: transparent transparent transparent #fff; margin-left: 0.18rem;
+}
+/* an overlay pill, floating over the demo — same treatment + up-arrow as
+   the .callout so the two read as a set; absolute so it never pushes the
+   thread content around */
+.clip-note {
+  position: absolute; z-index: 7; left: 0.5rem; top: calc(100% + 0.6rem);
+  background: var(--accent); color: #fff;
+  font-family: "Public Sans", -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  font-size: 0.92rem; font-weight: 600; letter-spacing: 0.005em;
+  padding: 0.55rem 0.95rem; border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(13, 60, 91, 0.35);
+  white-space: nowrap;
+}
+.clip-note::after {
+  content: ""; position: absolute; top: -7px; left: 30px;
+  border: 7px solid transparent; border-bottom-color: var(--accent); border-top: 0;
+}
+
+/* ---- blurred redaction: illegible fake text instead of the grey bar ---- */
+.redact-blur {
+  display: inline-block;
+  filter: blur(4.5px);
+  opacity: 0.85;
+  user-select: none;
+  /* keep the blur from bleeding into neighbors */
+  padding-inline: 2px;
+  margin-inline: -2px;
+}
+
+/* ---- text caret: blinks in the emptied window before the paste ---- */
+.caret {
+  position: absolute;
+  left: 1rem;
+  top: 0.9rem;
+  width: 2px;
+  height: 1.1rem;
+  background: #191919;
+}
+
+/* ---- "CTO is typing" indicator ---- */
+.typing-label { display: block; font-size: 0.78rem; color: #767676; margin-bottom: 0.25rem; }
+.typing {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #f2f2f2;
+  border-radius: 16px;
+  padding: 0.6rem 0.85rem;
+}
+.typing i { display: block; width: 6px; height: 6px; border-radius: 50%; background: #6a737d; }
+
+/* ---- the cursor ---- */
+/* 15px, not 22 — at 22 the arrow read as a giant novelty pointer against a
+   484px-wide window and covered the menu row it was meant to be clicking */
+.cursor { position: absolute; z-index: 10; width: 15px; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3)); }
+
+/* ---- LinkedIn hover + popups (References for Gif/pop up*.png) ---- */
+.hover-band { position: absolute; left: -1rem; right: -1rem; background: #efefef; z-index: 0; }
+.seen-solid { position: absolute; right: 0.2rem; z-index: 1; width: 1rem; height: 1rem; }
+.seen-solid svg { width: 100%; height: 100%; }
+.msg { position: relative; z-index: 1; }
+/* Both popups are measured off References for Gif/pop up*.png. Those are 2×
+   screenshots, so every figure there is halved to land here (a ~2.2 divisor
+   once the reference's slightly larger message type is matched to ours). The
+   first pass eyeballed it and came out cartoonish: emoji half again too big,
+   corners near-pill, menu rows half their real height. Numbers, not vibes.
+
+   bar: 176×29, 1px #e9e9e9 hairline, r6, items 13.6px on a 29.3px pitch */
+.react-bar {
+  position: absolute; z-index: 5;
+  display: flex; align-items: center; gap: 0.98rem;
+  background: #fff; border: 1px solid #e9e9e9; border-radius: 6px;
+  padding: 0.42rem 0.47rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 3px 10px rgba(0, 0, 0, 0.1);
+  font-size: 0.85rem; line-height: 1;
+  font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+.react-bar .rb-icon { display: flex; align-items: center; }
+.react-bar .rb-dots { position: relative; display: flex; align-items: center; }
+/* opens upward off the ⋯ that summoned it, overlapping the message above.
+   menu: 155×136, no border (the reference edge is shadow, not a hairline),
+   rows on a 32.7px pitch — nearly double what they were. */
+.menu-pop {
+  position: absolute; z-index: 6;
+  bottom: calc(100% + 15px); right: -11px;
+  transform-origin: bottom right;
+  width: 9.7rem;
+  background: #fff; border-radius: 5px;
+  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.05), 0 2px 6px rgba(0, 0, 0, 0.12), 0 8px 26px rgba(0, 0, 0, 0.16);
+  padding: 3px 0;
+  font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+/* 600, not 400: measured like-for-like on the word "Share via email", the
+   reference's ink density is 0.360 against 0.279 at regular weight — 29%
+   heavier, which is the gap between regular and semibold. LinkedIn sets its
+   dropdown items semibold; at 400 the menu read washed out beside it. */
+.menu-pop div {
+  padding: 0.525rem 1.05rem; font-size: 0.83rem; font-weight: 600;
+  line-height: 1.2; color: #494949;
+}
+.menu-pop div.hot { background: #f0f0f0; }
+
+/* ---- compose interactions ---- */
+/* focus only recolors the already-present border, so the compose bar height
+   doesn't change and the thread above it never compresses */
+.li-input.focus { outline: 2px solid rgba(21, 85, 126, 0.45); outline-offset: -1px; background: #fff; border-color: #ddd; }
+.li-input.filled { color: #191919; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.li-send.active { color: var(--accent); }
+.caret2 { display: inline-block; width: 2px; height: 1em; background: #333; vertical-align: text-bottom; }
+
+/* ---- blue callout: the thesis, floating above the slop message ---- */
+.callout {
+  position: absolute; z-index: 7; left: 0.4rem; top: 196px;
+  background: var(--accent); color: #fff;
+  font-family: "Public Sans", -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  font-size: 0.92rem; font-weight: 600; letter-spacing: 0.005em;
+  padding: 0.55rem 0.95rem; border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(13, 60, 91, 0.35);
+  white-space: nowrap;
+}
+.callout::after {
+  content: ""; position: absolute; top: -7px; left: 30px;
+  border: 7px solid transparent; border-bottom-color: var(--accent); border-top: 0;
+}

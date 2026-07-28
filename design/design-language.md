@@ -36,10 +36,32 @@ inside their artifact window and never leak into page chrome.)
 - **Voice accent**: Georgia italic in tide blue, `em.voice`. One phrase per
   heading, the phrase that carries the meaning ("*AI slop*", "*whole job*").
   Never two voice phrases in the same block.
+  **Earn it or drop it** (2026-07-28): a heading only takes one if there is a
+  single phrase that genuinely outranks the rest of the line. The hero and the
+  `#explore` headings both had theirs pulled — "Ship *tailored demos*" and
+  "The numbers you'll *keep track* of" have no such phrase, and the blue there
+  read as decoration. As of now the closing ask ("*your* prospects") is the
+  only voice italic on the landing page.
+- **Section headings run thin** (2026-07-28): `#cases` and `#explore` set
+  weight **350** on the shared heading scale — a light ground under a heavy
+  accent figure where there is one (`10%` at 750), and light throughout where
+  there isn't. Only the hero H1 and the closing ask carry weight.
 - Headings share one scale: `clamp(2rem, 1.2rem + 2.8vw, 3.2rem)`, weight
   600, tracking −0.014em. H1 caps at 12 words.
+- **The hero H1 is the one exception** (2026-07-28): it sits a step above the
+  shared scale — `clamp(2.05rem, 1.15rem + 2.75vw, 3.15rem)`, weight **620**
+  (Public Sans is variable, so this is a real notch above 600 and not a jump
+  to semibold), tracking −0.028em, leading 1.1. It has to out-rank the sub
+  under it; at the shared scale the two read as one block. It also carries
+  **no voice italic** — the phrase that matters is the whole line.
 - No em dashes in site copy. (Sole exception: the slop parody card — slop
   uses em dashes, that's the joke.)
+- **Break lines on meaning, not on measure** (2026-07-28): `text-wrap: balance`
+  evens the lines but has no idea which words belong together, and it split
+  the hero sub as "Grow revenue with cold / outbound…". Bind the phrase with
+  an `&nbsp;` (`cold&nbsp;outbound`) and give the block enough `max-width` for
+  the bound phrase to fit one line — the turn then lands where the sense
+  turns. Check any two-line block for this; a `<br>` is not the fix.
 
 ## 3. Surfaces
 
@@ -60,6 +82,113 @@ inside their artifact window and never leak into page chrome.)
   truly decorative deemphasis.
 - **Redaction language**: identity we withhold = `.redact` gray bar
   (`#d4d9de`, 2px radius). Used consistently: names, companies, addresses.
+- **Cast shadows are stacked, never one layer** (2026-07-28): a single
+  large-blur/negative-spread shadow stops dead at its edge and bands — it
+  reads choppy against white. Build depth from 4–5 layers, each roughly
+  doubling the blur and shedding alpha (`.case-video`, `.gif-shell` are the
+  reference recipes). Contact layer tight and faint; deepest layer wide and
+  under 0.09 alpha.
+- **The thin-sheet edge** (2026-07-28): things cut from the page's "material"
+  — the case clips — carry a little thickness: a lit rim along the top
+  (`inset 0 1px 0 rgba(255,255,255,.5)`), then three *hard* 1px offsets
+  stepping down in tide-blue (0.26 → 0.17 → 0.10) that read as the cut edge
+  catching light, and only then the soft cast. Blur on those three steps kills
+  the effect — they must stay hard.
+  **It is for objects, not type** (reverted 2026-07-28): the same recipe was
+  tried on the `#cases` heading as a `text-shadow` and pulled back out — a
+  letterpressed headline reads as a second physical object competing with the
+  clips it introduces. Section headings stay flat: thin ground (weight 350) so
+  the one accent-colored number carries the line.
+- **A clipped cast is a hard line** (2026-07-28): `overflow-x: auto` clips the
+  *vertical* axis too, so a scroll rail has to carry room for its cards'
+  shadows or it slices them off flat — that's what the straight edge under the
+  case deck was. Give the rail padding past the deepest layer's reach AND a
+  bottom `mask-image` fade that takes the last of the falloff to zero. The fade
+  may only ever cross padding; if it touches card content, the padding is too
+  short.
+- **The case-study card** (2026-07-28): three descending voices, left to
+  right on desktop and top to bottom on phones —
+  (1) the demo clip the client actually sent, 16:9, the biggest and only
+  moving object, and **always the card's leading edge** so the card waiting
+  off-rail teases its clip and never its logo; its title/sub lie over the
+  clip's *head* on desktop (the foot belongs to burned-in subtitles) and
+  drop below it in ink on phones, where a 342px frame can't carry a headline;
+  (2) the client's testimonial, ink-weight, in the column beside it;
+  (3) their lockup, under a hairline so it can be big (2.2–2.7rem) without
+  competing — size is not weight.
+  The aside is **hidden until the card faces you** and arrives on a delay:
+  a waiting card is a clip and nothing else, so the deck reads as demos.
+  Clips are `preload="none"` behind a poster frame of the demo itself, and
+  only the centre card may play — scrolling on pauses it.
+- **Every client lockup is a baked tile** (2026-07-28): rounded corners, alpha
+  outside the radius, and generous room on all four sides — bake at 486px
+  inner width, 64px side / 26px top-bottom padding, 44px radius, on a plate
+  sampled from the source art's own corner pixel (a plate that is merely
+  *close* leaves the original crop showing as an inner rectangle). Light
+  plates take a 1px `#e3e8ed` hairline so a white chip still has an edge on a
+  white sheet. Lift with stacked `drop-shadow()`, which follows alpha —
+  `box-shadow` would cast a rectangle around the rounded tile. Never ship a
+  hard-cut square.
+- **The case rail is a coverflow** (2026-07-28): `perspective` on the rail,
+  each waiting card turned `rotateY(±32deg)` away from a vanishing point
+  fixed at the rail's middle — right-hand card shows its left edge, left-hand
+  its right (JS writes `--side` per card as it scrolls). Cards hinge from the
+  **near edge** (`transform-origin: calc(50% - var(--side) * 50%)`); hinging
+  from the middle pulls the clip out of the gutter and leaves nothing to
+  tease. Hover brings a waiting card round to the front and centres it after
+  ~130ms of dwell — never while a clip is playing, and never on touch or
+  reduced motion, where the deck stands square and still.
+  The deck rests `--rail-shift` (4.5rem) **right** of the scrollport centre: a
+  box-centred card reads left-heavy because its aside column runs out into
+  whitespace. That's `scroll-padding-left: calc(shift * 2)` (a snapped card
+  moves half the inset) plus the side padding rebalanced by the same amount,
+  so the first card can still reach the shifted rest from `scrollLeft` 0. The
+  rail JS reads `scroll-padding-left` back rather than repeating the number.
+  **The deck settles under its own tween on wheel/trackpad** (2026-07-28):
+  `scroll-snap-type: none` under `(pointer: fine)`, and 90ms after the
+  scrolling stops the rail eases to a rest over 560ms (ease-out quint). Native
+  snap keeps touch, where momentum and rubber-banding are the platform's job.
+  Mandatory snap on a trackpad yanked short flicks back at its own speed and
+  stuttered when a flick died mid-gap.
+  **The reader always outranks the tween** (2026-07-28): a settle that keeps
+  writing `scrollLeft` for 560ms will fight a second flick and feels like the
+  deck is stuck. Every scroll event compares `scrollLeft` against the last
+  value the tween wrote; a position we did not write is a fresh gesture, and
+  it cancels the tween on the spot. Three more fixes in the same pass, each a
+  real stutter: `glide()` bailing on a sub-1px span without clearing `tween`
+  left a stale truthy id that **blocked every later settle for the rest of the
+  session** (reachable by clicking a card mid-glide); `pointerenter` fires
+  when the *deck* slides under a still cursor, so the hover pull has to be
+  gated on the deck being at rest (plus a 400ms beat after) or it starts a
+  second tween toward a card the reader never chose; and `update()` must
+  measure all the cards before it writes any, or it forces a synchronous
+  layout per card per frame.
+  **A light nudge is enough** (2026-07-28): the commit threshold is ~44px of
+  travel (`min(cardStep / 10, 44)`), not a fraction of a card — the cards are
+  ~1000px wide, so the old "past a sixth" rule meant a 170px shove to see the
+  next demo and the deck felt stuck. Anything shorter eases back to where it
+  started, measured from the card the gesture *began* on, not whichever is
+  nearest; a hard fling still carries as far as it actually went.
+
+- **The closing ask gets a beat before it** (2026-07-28): the dashboard is a
+  dense object and the close is one line and a button, so the two need real
+  air between them or the ask reads as a continuation of the section above.
+  Deeper padding on both sides of that seam (`#explore .sect` bottom,
+  `.close-sect .sect` top) — the mat's foot and the wave shoulder both live in
+  that gap.
+- **The dashboard section stands on a mat** (2026-07-28): `.explore-plate`, a
+  **tide-wash (`#eaf1f7`) plate on a white sheet** (`#explore` is
+  `sheet-white`), radius `--r-win + 0.9rem`, wrapping the **whole**
+  `.explore-grid` — the dashboard window AND the panel that reads it. Two
+  jobs: the white windows need something to sit against, and the mat, not a
+  divider, is what separates this section from the closing ask. It holds both
+  because they are one instrument; a plate around the dashboard alone left the
+  panel reading as a loose card floating beside it. A deep-tide plate was
+  tried first and reversed — the dark slab under a light page fought the
+  hero's own water for weight. Light plate on white means the cast stays
+  faint: it only has to lift the mat off the page, not carve it out. The
+  panel's `position: sticky` is bounded by the grid, so it travels down the
+  mat as you read and stops at its foot, never outside it.
 
 ## 4. The water
 
@@ -101,14 +230,59 @@ The signature. ASCII character sea on 2D canvas — never rendered 3D.
   (`240,195,60` + `224,138,46` beak), always.** They are the debugging
   duck — the one deliberate CS in-joke on the page. A gray gull was tried
   2026-07-14 and rejected; never neutralize them for palette purity.
+  **The castaway** (2026-07-28): a pixel figure kicked back in a terracotta
+  beach chair on the proof island's dry sand, phone to his ear, over a white
+  speech bubble reading "hold on, sending you the demo". He is drawn as a
+  bitmap of 3px squares (the splash's unit), NOT as block glyphs — at a body
+  ~90px tall glyphs read as noise and squares read as a person. He recreates
+  the page's whole promise in one joke, so keep him legible: head thrown back
+  on the headrest at the top left, spine parallel to the backrest, legs
+  stretched down the seat to the right. An earlier upright/hunched pose read
+  as someone *working*, which is exactly wrong.
+  **He is a stick figure and stays one**: a hollow ring for a head and
+  two-pixel lines for spine, arm and legs. The first pass filled the body in
+  solid and it read as a seal on a rock — the open ring and the thin limbs are
+  what make him a person. Body is tide-deep, chair is the one terracotta, the
+  phone is splash-blue (`63,126,169`) so it separates from his head.
   A crab skitters sideways along the proof island's beach (v2 sprite,
   re-added 2026-07-14 on Aayush's ask: ∩ pincers + low ▄▄ body + ʌ leg
   ticks + lateral scuttle — v1's bare block read as a red staple; the
   round claws and sideways motion are what sell the shape).
 - The proof island: drawn BY the sea from the `.hero-proof` rect — dithered
   `▒` beach, faint `█` interior, surf piling at the coast. Never a CSS shape.
+  The rect is empty as of 2026-07-28 (testimonials moved to the case studies)
+  and so carries its own width/height instead of taking one from contents —
+  if it ever collapses to zero, the island goes with it.
   It lives on phones too: the stacked hero moves the proof below the window,
   onto the water. Only reduced-motion goes without it.
+- **The dashboard and the closing ask are divided by open water**
+  (2026-07-28, after a round trip): a `.sea-seam` band — 124px of the same
+  ASCII sea the hero carries — stands between them. It was briefly cut and
+  then asked back; the version that works is the one where the water has a
+  *shore* to run onto, and that only became possible once `#explore` turned
+  white. The band is white, so it runs straight out of the dashboard sheet
+  with **no** top shoulder (a shoulder its own colour is invisible anyway),
+  and the baby-blue close sheet docks onto its far edge with a single
+  wave-cut shoulder. Water above, shore below — not a strip of sea boxed in
+  by two identical scallops, which is what the first attempt was and why it
+  read as ornament.
+  Leave real air between the mat's foot and the band (`#explore .sect`
+  padding-bottom): the water must not crowd the dashboard.
+  The shoulder has to be **absolutely positioned** — see the collapse rule
+  below.
+- **A sheet shoulder between two sections must be absolutely positioned**
+  (2026-07-28, learned the hard way twice): `.sheet::before` carries
+  `margin-top: -28px`, which **collapses into its own section** — the section
+  box moves up 28px and the shoulder paints *inside* it, over its own
+  background. It survives against the footer only by accident (the footer is
+  not positioned, so the close sheet's positioned background paints over its
+  top strip and the shoulder shows against that). Between two *positioned*
+  siblings — every `.landing section` and the `.sea-seam` band — both `position: relative`, so the later one's background wins
+  the overlap — the shoulder draws its sheet's colour onto its own colour and
+  vanishes. That's why `#explore → .close-sect` looked like a razor-straight
+  cut. Fix: lift the shoulder out of flow (`position: absolute; top: -27px;
+  margin: 0; z-index: 2`) so it lands on the band *above*, where it can be
+  seen. Same move the `.sea-seam` waves always used, same reason.
 - Canvases self-heal: every frame checks CSS size vs sized-for size
   (layout can grow after images/fonts load; a stale buffer stretches).
 
@@ -134,7 +308,11 @@ The signature. ASCII character sea on 2D canvas — never rendered 3D.
 - Numbers stated as observed fact with attribution ("week one at Autosana"),
   never rounded up.
 - Real people/companies only with consent; otherwise redaction bars, and
-  scrub the asset filename too.
+  scrub the asset filename too. **Testimonials live with the case studies,
+  one per client, never invented** — a case ships the moment its clip is
+  cleared and the quote slot stays empty until the client sends one. Same
+  rule for the *prospect* a demo was built for: unless they've agreed to be
+  named, the copy says "the prospect", not the brand.
 
 ## 7. Process
 
@@ -147,6 +325,21 @@ The signature. ASCII character sea on 2D canvas — never rendered 3D.
   mocked dashboard (`?mock=1`). If the mock or dashboard styling changes,
   RE-SHOOT them in the same commit — a stale bake is a style bug (see the
   black "View all leads" that outlived the button restyle).
+- The compare clip is a Remotion project (`compare-gif/`), rendered with
+  `npx remotion render CompareGif out/compare.mp4 --scale=2 --codec=h264` and
+  copied into `landing/public/`. Its LinkedIn chrome is **measured** off
+  `References for Gif/pop up*.png`, not eyeballed — those are 2× screenshots,
+  so halve every figure (÷2.2 once their slightly larger message type is
+  matched to ours). Eyeballing produced emoji half again too big, near-pill
+  corners and menu rows at half height. Whenever a popup's size or position
+  changes, **re-measure the cursor's stops off a fresh `remotion still`** —
+  the path is hardcoded scene coordinates, and it will silently go on
+  clicking where the row used to be. Weight is measurable too: compare ink
+  density on the same word (the reference menu is 0.360, regular weight gives
+  0.279 — LinkedIn sets its dropdown items semibold).
+  The clip's foot is masked away on the site, so **nothing that has to be read
+  may play out below the thread** — the compose beat (click, caret, paste,
+  Send) was cut for exactly that reason.
 - Baked assets ship as WebP (`cwebp -q 85 -m 6 -sharp_yuv`, keep ~2× display
   size for retina); only the OG card stays PNG (link-preview compatibility).
   Below-the-fold `<img>`s get `loading="lazy" decoding="async"`; the hero
