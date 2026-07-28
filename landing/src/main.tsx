@@ -28,7 +28,9 @@ const page =
     <Leads />
   ) : path === '/dashboard/companies' ? (
     <Companies />
-  ) : path === '/dashboard/review' ? (
+  ) : path === '/dashboard/review' || path === '/dashboard/reviews' ? (
+    // /reviews (plural) is aliased — it's a natural guess for the URL and
+    // falling through to the landing page reads as "the queue is gone".
     <Review />
   ) : path === '/dashboard/seo-geo' ? (
     <SeoGeo />
