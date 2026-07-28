@@ -346,19 +346,31 @@ const ERROR_CLASS_LABEL: Record<string, string> = {
   other: "other",
 };
 
-/* Chip order — connections first (the kind that piles up and gets
-   bulk-cleared), then messages, then bugs; unknown kinds trail in
-   queue order. */
+/* Kind order — bugs first: they are few, decision-critical, and gate the
+   agent's outreach drafting, while connections pile up and get bulk-cleared.
+   Orders both the chips and the card list (stable-sorted, so it stays
+   oldest-first within each kind); unknown kinds trail in queue order. */
 const KIND_ORDER = [
+  "bug_validation",
   "send_connection",
   "send_message",
   "send_email",
-  "bug_validation",
 ];
 
 function kindRank(kind: string): number {
   const i = KIND_ORDER.indexOf(kind);
   return i === -1 ? KIND_ORDER.length : i;
+}
+
+/* Bug demos are hosted at /d/<slug>. Items should carry attachment_slug,
+   but early bug_validation submissions referenced their demo only inside
+   the evidence text — pull the first /d/ slug out of it so the card still
+   renders the player instead of a text-only claim. */
+function salvagedDemoSlug(item: ReviewItemRow): string | null {
+  if (item.kind !== "bug_validation") return null;
+  const text = `${item.evidence?.video_timestamp ?? ""} ${item.body}`;
+  const match = /\/d\/([a-z0-9][a-z0-9_-]*)/i.exec(text);
+  return match ? match[1] : null;
 }
 
 /* Same convention for the queued tab's send kinds. */
@@ -584,7 +596,12 @@ function ReviewQueue() {
     );
   }
 
-  const items = state.status === "ready" ? state.items : [];
+  /* Stable sort: bugs lead the default view (KIND_ORDER), and the API's
+     oldest-first order is preserved within each kind. */
+  const items =
+    state.status === "ready"
+      ? [...state.items].sort((a, b) => kindRank(a.kind) - kindRank(b.kind))
+      : [];
   /* Sends load in full (same guard), so the row list IS
      counts.pending + counts.sending + counts.failed. */
   const queuedCount =
@@ -668,7 +685,7 @@ function ReviewQueue() {
         )}
       </div>
       <p className="m-0 mt-2 text-[13px] leading-[1.5] text-ink-soft">
-        Decisions your AE is waiting on &mdash; oldest first.
+        Decisions your AE is waiting on &mdash; bugs first, then sends.
       </p>
 
       {/* Needs review = decisions still owed; Queued = approved sends waiting
@@ -1511,6 +1528,7 @@ function ItemCard({
   const approveLabel = isBug ? "Real" : "Approve";
   const denyLabel = isBug ? "Not real" : "Deny";
   const evidence = isBug ? item.evidence : null;
+  const videoSlug = item.attachment_slug || salvagedDemoSlug(item);
 
   return (
     <article className={`${CARD} p-4 min-[700px]:px-[22px] min-[700px]:py-5`}>
@@ -1568,17 +1586,17 @@ function ItemCard({
         </>
       )}
 
-      {item.attachment_slug && (
+      {videoSlug && (
         <>
           <video
             controls
             playsInline
             preload="metadata"
-            src={`/d/${item.attachment_slug}`}
+            src={`/d/${videoSlug}`}
             className="mb-1.5 aspect-video w-full rounded-xl bg-[#101820]"
           />
           <p className="m-0 mb-3.5 font-mono text-[10.5px] text-ink-faint">
-            d/{item.attachment_slug}
+            d/{videoSlug}
             {isSend && " · attached to this message"}
           </p>
         </>
