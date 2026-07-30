@@ -33,6 +33,10 @@ type User = {
   /* optional so older /auth/me payloads (pre-email-channel) still parse;
      absent reads as not connected. */
   email_connected?: boolean;
+  /* why the mailbox isn't usable even though OAuth finished (e.g. a Google
+     account with no Gmail service behind it) — set server-side, shown on
+     the email card. */
+  email_error?: string | null;
   is_admin?: boolean;
   impersonating?: boolean;
 };
@@ -432,7 +436,7 @@ function ApprovedView({ user }: { user: User }) {
   return (
     <>
       <LinkedInBanner />
-      <EmailBanner />
+      <EmailBanner emailError={user.email_error ?? null} />
       <Heading>{`Welcome back, ${firstName}.`}</Heading>
 
       {/* top bar — connect prompt when LinkedIn isn't connected, otherwise the
@@ -443,7 +447,10 @@ function ApprovedView({ user }: { user: User }) {
         summary.summary.sending && (
           <StatusStrip sending={summary.summary.sending} />
         )}
-      <EmailCard connected={user.email_connected ?? false} />
+      <EmailCard
+        connected={user.email_connected ?? false}
+        emailError={user.email_error ?? null}
+      />
 
       {/* two equal-height columns: metrics left, lists right. */}
       <div className="mt-3.5 grid grid-cols-1 items-stretch gap-3.5 lg:grid-cols-[1.45fr_1fr]">
@@ -909,33 +916,58 @@ function LinkedInCard({ connected }: { connected: boolean }) {
   );
 }
 
-/* Same card as LinkedInCard, against the /email/* endpoints (Unipile hosted
-   auth again — the redirect comes back with ?email=connected|failed). */
-function EmailCard({ connected }: { connected: boolean }) {
-  const [connectPending, setConnectPending] = useState(false);
+function MicrosoftMark({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 21 21" aria-hidden="true" className={className}>
+      <rect x="1" y="1" width="9" height="9" fill="#F25022" />
+      <rect x="11" y="1" width="9" height="9" fill="#7FBA00" />
+      <rect x="1" y="11" width="9" height="9" fill="#00A4EF" />
+      <rect x="11" y="11" width="9" height="9" fill="#FFB900" />
+    </svg>
+  );
+}
+
+type EmailProvider = "gmail" | "outlook";
+
+/* Same card as LinkedInCard, against the /email/* endpoints (Composio hosted
+   auth — the redirect comes back with ?email=connected|failed). Two connect
+   buttons because the provider must match where the mailbox actually lives:
+   a Google sign-in on an M365-hosted address completes OAuth but can't send. */
+function EmailCard({
+  connected,
+  emailError,
+}: {
+  connected: boolean;
+  emailError: string | null;
+}) {
+  const [connectPending, setConnectPending] = useState<EmailProvider | null>(
+    null,
+  );
   const [connectError, setConnectError] = useState<string | null>(null);
   const {
     pending: disconnectPending,
     error: disconnectError,
     disconnect: handleDisconnect,
   } = useDisconnect("/email/disconnect");
-  const pending = connectPending || disconnectPending;
+  const pending = connectPending !== null || disconnectPending;
   const error = connectError ?? disconnectError;
 
-  async function handleConnect() {
-    setConnectPending(true);
+  async function handleConnect(provider: EmailProvider) {
+    setConnectPending(provider);
     setConnectError(null);
     try {
       const res = await fetch("/email/connect", {
         method: "POST",
         credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider }),
       });
       if (!res.ok) throw new Error("request failed");
       const data = (await res.json()) as { url: string };
       window.location.href = data.url;
     } catch {
       setConnectError("Couldn't start the connection. Please try again.");
-      setConnectPending(false);
+      setConnectPending(null);
     }
   }
 
@@ -963,7 +995,7 @@ function EmailCard({ connected }: { connected: boolean }) {
           <p className="m-0 mt-2 text-[15px] leading-relaxed text-ink-soft">
             {connected
               ? "You're connected! We'll take it from here."
-              : "Optional — lets your AE send email as well as LinkedIn. You'll sign in on a secure Unipile page — we never see your password."}
+              : "Optional — lets your AE send email as well as LinkedIn. Pick where your mailbox lives: Gmail for Google-hosted email, Outlook for Microsoft 365. We never see your password."}
           </p>
 
           {connected ? (
@@ -976,15 +1008,37 @@ function EmailCard({ connected }: { connected: boolean }) {
               {pending ? "Disconnecting…" : "Disconnect"}
             </button>
           ) : (
-            <button
-              type="button"
-              onClick={handleConnect}
-              disabled={pending}
-              className="mt-5 inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-full bg-tide px-4.5 py-2.5 text-[14.5px] font-semibold text-white transition-all hover:-translate-y-px hover:bg-tide-deep disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+            <div className="mt-5 flex flex-wrap gap-2.5">
+              <button
+                type="button"
+                onClick={() => void handleConnect("gmail")}
+                disabled={pending}
+                className="inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-full border border-line bg-surface px-4.5 py-2.5 text-[14.5px] font-semibold text-ink transition-colors hover:border-ink-faint/50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <GoogleMark className="size-4.5 shrink-0" />
+                {connectPending === "gmail" ? "Connecting…" : "Connect Gmail"}
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleConnect("outlook")}
+                disabled={pending}
+                className="inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-full border border-line bg-surface px-4.5 py-2.5 text-[14.5px] font-semibold text-ink transition-colors hover:border-ink-faint/50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <MicrosoftMark className="size-4.5 shrink-0" />
+                {connectPending === "outlook"
+                  ? "Connecting…"
+                  : "Connect Outlook"}
+              </button>
+            </div>
+          )}
+
+          {!connected && emailError && (
+            <p
+              className="m-0 mt-3 text-[13.5px] font-medium text-red-700"
+              role="alert"
             >
-              <MailMark className="size-4.5 shrink-0" />
-              {pending ? "Connecting…" : "Connect email"}
-            </button>
+              {emailError}
+            </p>
           )}
 
           {error && (
@@ -1272,11 +1326,15 @@ function LinkedInBanner() {
   );
 }
 
-/* Same banner for the hosted email auth's ?email=connected|failed redirect. */
-function EmailBanner() {
+/* Same banner for the hosted email auth's ?email=connected|failed redirect.
+   The redirect only proves OAuth finished — when the server-side mailbox
+   probe failed (email_error), stay quiet and let the card explain instead
+   of flashing a green "all set" over a red error. */
+function EmailBanner({ emailError }: { emailError: string | null }) {
   const params = new URLSearchParams(window.location.search);
   const status = params.get("email");
   if (status !== "connected" && status !== "failed") return null;
+  if (status === "connected" && emailError) return null;
 
   const connected = status === "connected";
   return (
