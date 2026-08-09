@@ -109,12 +109,11 @@ const CASE_STUDIES: CaseStudy[] = [
     video: "/case-oruk.mp4",
     poster: "/case-oruk-poster.webp",
     logo: "/logo-oruk.webp",
-    // TODO(placeholder quote): the WORDING below is provisional — Aayush is
-    // swapping in Nathan's verbatim words (his call, 08-09). Name, role and
-    // avatar are real. Do not ship prod with this text unreplaced.
-    quote: "the demos look great",
+    // Nathan's words as relayed by Aayush 08-09 ("what he said to my friend")
+    quote: "driftwood is like a head of growth for your team",
     author: "Nathan Roll",
-    role: "Founder, Oruk",
+    // nbsp: "(Speedrun 007)" wraps as one phrase, never leaving "007)" alone
+    role: "Founder & CEO, Oruk (Speedrun 007)",
     avatar: "/nathan.webp",
   },
 ];
@@ -356,6 +355,7 @@ export default function App() {
 
     const cleanups: (() => void)[] = [];
     const proofEl = root.querySelector(".hero-proof") as HTMLElement | null;
+    const backedEl = root.querySelector(".hero-backed") as HTMLElement | null;
     const winEl = root.querySelector(".app-window") as HTMLElement | null;
     const CHARS = [" ", "\u00b7", "-", "~", "\u2248", "\u224b"]; // · - ~ ≈ ≋ by wave height
     const CELL_W = 8;
@@ -479,6 +479,32 @@ export default function App() {
         }
         const islE = (c: number, r: number) =>
           isl ? ((c - isl.cx) / isl.rx) ** 2 + ((r - isl.cy) / isl.ry) ** 2 : 99;
+        // the backed-by line floats on this water, and glyphs running under
+        // the lockup read as mud — so the sea parts around it: an ellipse of
+        // calm measured off the line's CONTENT (first/last child union — the
+        // <p> box itself spans the island's full width), water skipped
+        // inside, a faint lap ring at the edge. Same trick as the island,
+        // minus the coast: a calm patch, not dry land.
+        let bk: { cx: number; cy: number; rx: number; ry: number } | null = null;
+        if (!strip && backedEl && backedEl.firstElementChild && backedEl.lastElementChild) {
+          const fr = backedEl.firstElementChild.getBoundingClientRect();
+          const lr = backedEl.lastElementChild.getBoundingClientRect();
+          const cr = m.canvas.getBoundingClientRect();
+          const left = Math.min(fr.left, lr.left);
+          const right = Math.max(fr.right, lr.right);
+          const top = Math.min(fr.top, lr.top);
+          const bottom = Math.max(fr.bottom, lr.bottom);
+          if (right > left && bottom > cr.top + 6 && top < cr.bottom) {
+            bk = {
+              cx: (left + (right - left) / 2 - cr.left) / CELL_W,
+              cy: (top + (bottom - top) / 2 - cr.top) / CELL_H,
+              rx: (right - left) / 2 / CELL_W + 3,
+              ry: (bottom - top) / 2 / CELL_H + 1.4,
+            };
+          }
+        }
+        const bkE = (c: number, r: number) =>
+          bk ? ((c - bk.cx) / bk.rx) ** 2 + ((r - bk.cy) / bk.ry) ** 2 : 99;
         // the dashboard window sails over the sea's right side on desktop.
         // A mover whose lane passes behind it must turn around at the
         // window's edge, not the canvas edge — patrolling the full width
@@ -520,7 +546,19 @@ export default function App() {
           for (let c = 0; c < cols; c++) {
             const e = islE(c, r);
             if (e <= 1) continue; // dry land: the island is drawn below
+            const eb = bkE(c, r);
+            if (eb <= 1) continue; // the calm patch the backed-by line floats in
             const v = wave(c, r, t, phase); // -1..1
+            if (eb <= 1.5) {
+              // the lap at the calm patch's edge: only the taller swell
+              // registers, dimmer than open water — a ring, not a coast
+              if (v > 0.45) {
+                ctx.fillStyle = `rgba(21, 85, 126, ${Math.min(0.5, depth * 0.5)})`;
+                ctx.fillText(CHARS[3], c * CELL_W, y);
+                ctx.fillStyle = baseFill;
+              }
+              continue;
+            }
             if (e <= 1.5) {
               // surf: water piles up against the coastline
               if (v > -0.2) {

@@ -306,16 +306,14 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
   width: min(26rem, 100%);
   margin: 0 0 5.2rem;
   font-size: 0.85rem; color: var(--gray);
-  /* a soft white halo — the line rides open water, and gray words sink
-     straight into the wave glyphs without one (no hard clearing: a boxed
-     plate out here would read as a second chip) */
-  text-shadow:
-    0 0 2px #fff, 0 0 6px #fff, 0 0 12px #fff,
-    0 1px 1px #fff, 0 -1px 1px #fff;
+  /* the sea itself parts around the line (see the bk clearing in the canvas
+     code) — the whisper of halo left here only covers the reduced-motion
+     fallback, where still water sits under it */
+  text-shadow: 0 1px 0 #fff, 0 0 3px #fff;
 }
 .landing .hero-backed img {
   display: block; height: 1.8rem; width: auto; opacity: 0.85;
-  filter: drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 5px #fff) drop-shadow(0 0 10px #fff);
+  filter: drop-shadow(0 0 2px #fff);
 }
 .landing .app-window {
   border: 1px solid var(--line); border-radius: var(--r-win); overflow: hidden;
@@ -729,9 +727,14 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
 }
 
 /* the aside: testimonial over lockup. It arrives with the card as it turns —
-   a waiting card is a clip and nothing else, so the deck reads as demos */
+   a waiting card is a clip and nothing else, so the deck reads as demos.
+   The column is bottom-anchored to the clip's foot: quotes differ in line
+   count card to card, and a centred stack left every attribution row and
+   hairline at its own height — anchored, the rows share one baseline across
+   the deck and only the quote's top edge breathes (2026-08-09). */
 .landing .case-aside {
   display: flex; flex-direction: column; align-items: flex-start;
+  align-self: stretch; justify-content: flex-end;
   opacity: 0; transform: translateX(1.5rem);
   transition: opacity 0.35s ease, transform 0.45s var(--ease-settle);
 }

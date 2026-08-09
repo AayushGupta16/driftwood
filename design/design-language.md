@@ -89,6 +89,13 @@ on marketing pages and is never a second brand accent.
   "a16z speedrun" in the words was also cut — the lockup is the brand,
   two gray words are enough. Asset: `backed-alpha.webp`, the supplied
   black lockup trimmed, recolored to ink, 3× display height.
+  **The sea parts around it** (same day, on "it looks muddy"): glyphs
+  running under the mark read as mud, and a white halo strong enough to
+  fix that read as fog. The canvas clears an ellipse measured off the
+  line's *content* (first/last child union — the `<p>` box spans the
+  island's full width) with a faint `~` lap at the ring: the island
+  mechanism minus the coast. Only a whisper of halo remains for the
+  sea-off fallback.
 - **Labels** (`.compare-label`, `.artifact-bar`, `.label`): 0.85rem,
   **gray** (not gray-light — labels carry real information and gray-light
   on white is ~2.7:1, under the 4.5:1 AA floor at this size), sentence
@@ -130,6 +137,11 @@ on marketing pages and is never a second brand accent.
   (2) the client's testimonial, ink-weight, in the column beside it;
   (3) their lockup, under a hairline so it can be big (2.2–2.7rem) without
   competing — size is not weight.
+  **The aside is bottom-anchored to the clip's foot** (2026-08-09): quotes
+  differ in line count card to card, and a centred stack left every
+  attribution row and hairline at its own height — anchored, hairline and
+  lockup share one baseline across the deck and only the quote's top edge
+  breathes.
   The aside is **hidden until the card faces you** and arrives on a delay:
   a waiting card is a clip and nothing else, so the deck reads as demos.
   Clips are `preload="none"` behind a poster frame of the demo itself, and
