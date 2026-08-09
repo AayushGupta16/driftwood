@@ -79,6 +79,15 @@ on marketing pages and is never a second brand accent.
 - **Buttons**: pills (`border-radius: 999px`). Primary action = tide
   background, white text, hover tide-deep. There are no black buttons.
   Secondary = outlined/ghost. This applies to the dashboard too.
+- **The backed-by line** (2026-08-09): investor provenance is one quiet line
+  in the hero, between the sub and the CTA — label-scale gray words
+  ("Backed by a16z speedrun") with the ink alpha lockup beside them at
+  1.8rem, opacity 0.82 so it never outweighs the tide action under it.
+  It sits *above* the CTA because below it the water begins: type laid over
+  the sea reads as clutter (tried and reverted the same day). The lockup's
+  own a16z/speedrun sub-line is texture at this size, so the words, not the
+  mark, carry the fact. Asset: `backed-alpha.webp`, the supplied black
+  lockup trimmed, recolored to ink, 3× display height.
 - **Labels** (`.compare-label`, `.artifact-bar`, `.label`): 0.85rem,
   **gray** (not gray-light — labels carry real information and gray-light
   on white is ~2.7:1, under the 4.5:1 AA floor at this size), sentence

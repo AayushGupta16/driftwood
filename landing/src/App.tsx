@@ -109,14 +109,11 @@ const CASE_STUDIES: CaseStudy[] = [
     video: "/case-oruk.mp4",
     poster: "/case-oruk-poster.webp",
     logo: "/logo-oruk.webp",
-    // TODO(placeholder): Autosana's testimonial, stood in verbatim — name and
-    // company included — so the column reads at full height while Oruk's own
-    // quote is outstanding. Swap all four fields together when it lands; do
-    // NOT re-point this text at an Oruk person (design-language §6).
-    quote: "amazing stuff, the demos are working so well",
-    author: "Yuvan Sundrani",
-    role: "Founder, Autosana (YC S25)",
-    avatar: "/yuvan.webp",
+    // Oruk's quote is still outstanding — the slot stays empty until Nathan
+    // sends one (design-language §6; the aside falls back to the lockup
+    // alone). His avatar is already baked at /nathan.webp: when the quote
+    // lands, add quote + author "Nathan Roll" + role "Founder, Oruk" +
+    // avatar "/nathan.webp" together.
   },
 ];
 
@@ -1125,6 +1122,21 @@ export default function App() {
               {/* "cold outbound" is one idea and must never break across the
                   two lines — the nbsp forces the turn after it instead */}
               <p className="hero-sub">Grow revenue with cold&nbsp;outbound that feels handcrafted.</p>
+              {/* provenance, not a second CTA: it reads as a footnote to the
+                  sub, above the ask and on white ground (below the CTA the
+                  water begins, and words over the sea read as clutter). The
+                  words carry the fact — the lockup's a16z/speedrun sub-line
+                  is texture at this size — and the alpha mark the brand. */}
+              <p className="hero-backed">
+                <span>Backed by a16z speedrun</span>
+                <img
+                  src="/backed-alpha.webp"
+                  alt="alpha, the a16z speedrun fund"
+                  width={393}
+                  height={132}
+                  decoding="async"
+                />
+              </p>
               <div className="hero-actions">
                 <a
                   className="btn btn-primary"

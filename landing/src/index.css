@@ -297,6 +297,15 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
 }
 .landing #cases { scroll-margin-top: 4rem; }
 .landing .hero-actions { margin-top: 1.8rem; }
+/* backed-by: a quiet provenance line between the sub and the CTA —
+   label-scale gray words, the alpha lockup beside them, softened so it
+   never outweighs the one tide action under it */
+.landing .hero-backed {
+  display: flex; align-items: center; gap: 0.7rem;
+  margin: 1.1rem 0 0;
+  font-size: 0.85rem; color: var(--gray);
+}
+.landing .hero-backed img { display: block; height: 1.8rem; width: auto; opacity: 0.82; }
 .landing .app-window {
   border: 1px solid var(--line); border-radius: var(--r-win); overflow: hidden;
   box-shadow: var(--shadow-win);
@@ -948,6 +957,7 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
   .landing .hero h1 { max-width: 22ch; text-wrap: balance; }
   .landing .hero h1, .landing .hero-sub { text-align: center; justify-self: center; }
   .landing .hero-actions { justify-self: center; }
+  .landing .hero-backed { justify-self: center; margin-top: 1.6rem; }
   .landing .hero-grid .app-window { margin-right: 0; margin-top: 2.2rem; }
   /* stacked hero: the card centers under the CTA, a shallow dip into the band */
   .landing .hero-grid .hero-card { margin: 5.6rem auto -1.4rem; width: min(440px, 86vw); }
