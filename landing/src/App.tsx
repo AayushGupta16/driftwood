@@ -109,11 +109,13 @@ const CASE_STUDIES: CaseStudy[] = [
     video: "/case-oruk.mp4",
     poster: "/case-oruk-poster.webp",
     logo: "/logo-oruk.webp",
-    // Oruk's quote is still outstanding — the slot stays empty until Nathan
-    // sends one (design-language §6; the aside falls back to the lockup
-    // alone). His avatar is already baked at /nathan.webp: when the quote
-    // lands, add quote + author "Nathan Roll" + role "Founder, Oruk" +
-    // avatar "/nathan.webp" together.
+    // TODO(placeholder quote): the WORDING below is provisional — Aayush is
+    // swapping in Nathan's verbatim words (his call, 08-09). Name, role and
+    // avatar are real. Do not ship prod with this text unreplaced.
+    quote: "the demos look great",
+    author: "Nathan Roll",
+    role: "Founder, Oruk",
+    avatar: "/nathan.webp",
   },
 ];
 
@@ -1122,21 +1124,6 @@ export default function App() {
               {/* "cold outbound" is one idea and must never break across the
                   two lines — the nbsp forces the turn after it instead */}
               <p className="hero-sub">Grow revenue with cold&nbsp;outbound that feels handcrafted.</p>
-              {/* provenance, not a second CTA: it reads as a footnote to the
-                  sub, above the ask and on white ground (below the CTA the
-                  water begins, and words over the sea read as clutter). The
-                  words carry the fact — the lockup's a16z/speedrun sub-line
-                  is texture at this size — and the alpha mark the brand. */}
-              <p className="hero-backed">
-                <span>Backed by a16z speedrun</span>
-                <img
-                  src="/backed-alpha.webp"
-                  alt="alpha, the a16z speedrun fund"
-                  width={393}
-                  height={132}
-                  decoding="async"
-                />
-              </p>
               <div className="hero-actions">
                 <a
                   className="btn btn-primary"
@@ -1157,6 +1144,19 @@ export default function App() {
                   aria-label="Scroll to testimonials"
                 />
               </div>
+              {/* provenance, not a second CTA: two words and the mark, in the
+                  open water under the island (Aayush 08-09 — between the sub
+                  and the CTA it crowded the ask) */}
+              <p className="hero-backed">
+                <span>Backed by</span>
+                <img
+                  src="/backed-alpha.webp"
+                  alt="alpha, the a16z speedrun fund"
+                  width={393}
+                  height={132}
+                  decoding="async"
+                />
+              </p>
             </div>
             {/* TODO: dashboard preserved for later — the original hero dashboard
                 window now lives in components/_HeroDashboard.legacy.tsx. Import it
@@ -1164,9 +1164,12 @@ export default function App() {
             <div className="hero-card gif-anchor">
               <div className="hero-story-callout">
                 <span>Real customer story</span>
+                {/* the arrow leaves the label, banks right, and dives DOWN at
+                    the card below — the tip must land on the card's face, not
+                    sail past its corner */}
                 <svg viewBox="0 0 120 64" aria-hidden="true">
-                  <path d="M4 10 C 36 5, 50 51, 111 46" />
-                  <path d="M100 36 L 112 46 L 99 53" />
+                  <path d="M4 12 C 42 2, 76 10, 86 48" />
+                  <path d="M89 35 L 86 48 L 77 43" />
                 </svg>
               </div>
               <GifMedia />

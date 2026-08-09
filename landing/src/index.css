@@ -273,7 +273,7 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
 .landing .hero-proof {
   position: relative;
   width: min(26rem, 100%); height: 6rem;
-  margin-top: auto; margin-bottom: 10.5rem;
+  margin-top: auto; margin-bottom: 3.2rem;
 }
 .landing .hero-proof-scroll {
   position: absolute;
@@ -297,15 +297,26 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
 }
 .landing #cases { scroll-margin-top: 4rem; }
 .landing .hero-actions { margin-top: 1.8rem; }
-/* backed-by: a quiet provenance line between the sub and the CTA —
-   label-scale gray words, the alpha lockup beside them, softened so it
-   never outweighs the one tide action under it */
+/* backed-by: a quiet provenance line riding the open water under the island —
+   two label-scale gray words and the alpha lockup, centred on the island's
+   axis. It shares the below-island gap (2.4 + line + 6 ≈ the 10.5rem the
+   island used to carry), so the island itself does not move. */
 .landing .hero-backed {
-  display: flex; align-items: center; gap: 0.7rem;
-  margin: 1.1rem 0 0;
+  display: flex; align-items: center; justify-content: center; gap: 0.7rem;
+  width: min(26rem, 100%);
+  margin: 0 0 5.2rem;
   font-size: 0.85rem; color: var(--gray);
+  /* a soft white halo — the line rides open water, and gray words sink
+     straight into the wave glyphs without one (no hard clearing: a boxed
+     plate out here would read as a second chip) */
+  text-shadow:
+    0 0 2px #fff, 0 0 6px #fff, 0 0 12px #fff,
+    0 1px 1px #fff, 0 -1px 1px #fff;
 }
-.landing .hero-backed img { display: block; height: 1.8rem; width: auto; opacity: 0.82; }
+.landing .hero-backed img {
+  display: block; height: 1.8rem; width: auto; opacity: 0.85;
+  filter: drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 5px #fff) drop-shadow(0 0 10px #fff);
+}
 .landing .app-window {
   border: 1px solid var(--line); border-radius: var(--r-win); overflow: hidden;
   box-shadow: var(--shadow-win);
@@ -957,7 +968,8 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
   .landing .hero h1 { max-width: 22ch; text-wrap: balance; }
   .landing .hero h1, .landing .hero-sub { text-align: center; justify-self: center; }
   .landing .hero-actions { justify-self: center; }
-  .landing .hero-backed { justify-self: center; margin-top: 1.6rem; }
+  /* stacked: the line follows the island onto the water, same order slot */
+  .landing .hero-backed { order: 9; justify-self: center; margin: 0 0 1.6rem; }
   .landing .hero-grid .app-window { margin-right: 0; margin-top: 2.2rem; }
   /* stacked hero: the card centers under the CTA, a shallow dip into the band */
   .landing .hero-grid .hero-card { margin: 5.6rem auto -1.4rem; width: min(440px, 86vw); }
