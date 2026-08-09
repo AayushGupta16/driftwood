@@ -91,8 +91,10 @@ const CASE_STUDIES: CaseStudy[] = [
   {
     id: "autosana",
     company: "Autosana",
-    title: "14× more responses in week one",
-    sub: "Tailored demos landed replies from accounts that had gone quiet for months.",
+    // artifact-style title (Aayush 08-09), matching the Oruk card's register:
+    // the card names what the clip shows, not an outcome stat
+    title: "Agent filed bug report",
+    sub: "Autosana's QA agent running a real test on the prospect's app and filing the bug it caught.",
     video: "/case-autosana.mp4",
     poster: "/case-autosana-poster.webp",
     logo: "/logo-autosana.webp",

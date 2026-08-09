@@ -297,21 +297,23 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
 }
 .landing #cases { scroll-margin-top: 4rem; }
 .landing .hero-actions { margin-top: 1.8rem; }
-/* backed-by: a quiet provenance line anchored to the hero's bottom-left
-   gutter, floating on the open water (the sea parts around it — see the bk
-   clearing in the canvas code). bottom: 8rem keeps it above the waterband's
-   visible surface: the band is a DOM <pre> the canvas clearing cannot part,
-   but its mask is still fully transparent at this height. */
+/* backed-by: a quiet provenance line anchored into the hero's bottom-left
+   corner, floating on the open water (the sea parts around it — see the bk
+   clearing in the canvas code). Down here it sits INSIDE the waterband's
+   visible surface, and the band is a DOM <pre> the canvas clearing cannot
+   part — so the band's own mask carries a matching hole (see .hero-waterband
+   below). The two are position-locked: both read the same left gutter clamp,
+   so the hole tracks the line across viewport widths. */
 .landing .hero-backed {
   position: absolute; z-index: 2;
-  left: clamp(1.25rem, 4vw, 2.5rem); bottom: 8rem;
-  display: flex; align-items: center; gap: 0.8rem;
+  left: clamp(1.25rem, 4vw, 2.5rem); bottom: 4.5rem;
+  display: flex; align-items: center; gap: 0.85rem;
   font-size: 0.95rem; color: var(--gray);
   /* whisper of halo for the sea-off fallback, where the clearing is gone */
   text-shadow: 0 1px 0 #fff, 0 0 3px #fff;
 }
 .landing .hero-backed img {
-  display: block; height: 2.3rem; width: auto; opacity: 0.85;
+  display: block; height: 3rem; width: auto; opacity: 0.85;
   filter: drop-shadow(0 0 2px #fff);
 }
 .landing .app-window {
@@ -438,6 +440,25 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
      content, then a quick ramp to the dense surface at the card's foot */
   -webkit-mask-image: linear-gradient(to bottom, transparent 42%, #000 82%);
   mask-image: linear-gradient(to bottom, transparent 42%, #000 82%);
+}
+/* the hole the backed-by line floats in: the band's surface would run its
+   chars straight through the mark down in the corner, and being a <pre> it
+   can't be parted by the canvas clearing — so a second mask layer cuts a
+   soft ellipse, intersected with the surface ramp. Geometry is locked to
+   .hero-backed: same left clamp + 122px to the line's centre, 52% = the
+   line's centre height inside the 200px band. Desktop only — on phones the
+   line rides above the band in flow. */
+@media (min-width: 52rem) {
+  .landing .hero-waterband {
+    -webkit-mask-image:
+      linear-gradient(to bottom, transparent 42%, #000 82%),
+      radial-gradient(175px 62px at calc(clamp(1.25rem, 4vw, 2.5rem) + 122px) 52%, transparent 58%, #000 95%);
+    -webkit-mask-composite: source-in;
+    mask-image:
+      linear-gradient(to bottom, transparent 42%, #000 82%),
+      radial-gradient(175px 62px at calc(clamp(1.25rem, 4vw, 2.5rem) + 122px) 52%, transparent 58%, #000 95%);
+    mask-composite: intersect;
+  }
 }
 .landing .waterband-scroll {
   display: flex; width: max-content; height: 100%; align-items: flex-end;
