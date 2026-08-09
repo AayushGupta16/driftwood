@@ -564,31 +564,163 @@ export default function App() {
               }
             }
           }
-          // the palm stands out on the island's far right shoulder: five
-          // fronds fanning from the crown, a coconut, a curved trunk
-          const tx = (isl.cx + isl.rx * 0.82) * CELL_W;
-          const ty = (isl.cy - isl.ry * 0.28) * CELL_H;
-          const prevFont = ctx.font;
-          ctx.font = "15px ui-monospace, Menlo, monospace";
-          ctx.fillStyle = "rgba(101, 125, 106, 0.92)"; // sea-glass, not tropical green
-          ctx.fillText("▂", tx - 3, ty - 52);
-          ctx.fillText("▚", tx - 16, ty - 46);
-          ctx.fillText("▞", tx + 8, ty - 46);
-          ctx.fillText("▄", tx - 26, ty - 40);
-          ctx.fillText("▄", tx + 20, ty - 40);
-          ctx.fillText("▖", tx - 30, ty - 32);
-          ctx.fillText("▗", tx + 26, ty - 32);
-          ctx.fillStyle = "rgba(178, 94, 66, 0.92)"; // coconut joins the terracotta family
-          ctx.font = "10px ui-monospace, Menlo, monospace";
-          ctx.fillText("●", tx - 4, ty - 36);
-          ctx.fillStyle = "rgba(121, 85, 52, 0.95)";
-          ctx.font = "15px ui-monospace, Menlo, monospace";
-          ctx.fillText("▐", tx - 4, ty - 26);
-          ctx.fillText("▐", tx - 1, ty - 14);
-          ctx.fillText("▌", tx + 2, ty - 2);
+          // A small grove replaces the castaway. It uses the same character
+          // grid and restrained sea-glass green as the original palm so the
+          // island feels fuller without turning into a separate illustration.
+          const drawPalm = (x: number, y: number, scale: number, lean: number) => {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(scale, scale);
+            ctx.rotate(lean);
+            ctx.font = "15px ui-monospace, Menlo, monospace";
+            ctx.fillStyle = "rgba(101, 125, 106, 0.92)";
+            ctx.fillText("▂", -3, -52);
+            ctx.fillText("▚", -16, -46);
+            ctx.fillText("▞", 8, -46);
+            ctx.fillText("▄", -26, -40);
+            ctx.fillText("▄", 20, -40);
+            ctx.fillText("▖", -30, -32);
+            ctx.fillText("▗", 26, -32);
+            ctx.fillStyle = "rgba(178, 94, 66, 0.92)";
+            ctx.font = "10px ui-monospace, Menlo, monospace";
+            ctx.fillText("●", -4, -36);
+            ctx.fillStyle = "rgba(121, 85, 52, 0.95)";
+            ctx.font = "15px ui-monospace, Menlo, monospace";
+            ctx.fillText("▐", -4, -26);
+            ctx.fillText("▐", -1, -14);
+            ctx.fillText("▌", 2, -2);
+            ctx.restore();
+          };
+
+          // All three trunks meet the island's upper ridge, leaving the open
+          // sand below them clear rather than planting the grove mid-island.
+          drawPalm((isl.cx - isl.rx * 0.54) * CELL_W, (isl.cy - isl.ry * 0.54) * CELL_H, 0.62, -0.08);
+          drawPalm((isl.cx + isl.rx * 0.02) * CELL_W, (isl.cy - isl.ry * 0.58) * CELL_H, 0.78, 0.05);
+          drawPalm((isl.cx + isl.rx * 0.62) * CELL_W, (isl.cy - isl.ry * 0.62) * CELL_H, 1, -0.025);
+
+          // A large pixel inscription makes the island itself the handoff to
+          // the proof below. It owns the open sand between grove and wreck,
+          // with a block-built arrow rather than an icon glyph.
+          const hintX = (isl.cx - isl.rx * 0.34) * CELL_W;
+          const hintY = (isl.cy + isl.ry * 0.02) * CELL_H;
+          ctx.save();
+          ctx.translate(hintX, hintY);
+          ctx.rotate(-0.014);
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillStyle = "rgba(255, 255, 255, 0.72)";
+          ctx.font = "700 14px ui-monospace, Menlo, monospace";
+          ctx.fillText("scroll to see", 1, -4);
+          ctx.font = "800 16px ui-monospace, Menlo, monospace";
+          ctx.fillText("testimonials", 1, 13);
+          ctx.fillStyle = "rgba(13, 60, 91, 0.96)";
+          ctx.font = "700 14px ui-monospace, Menlo, monospace";
+          ctx.fillText("scroll to see", 0, -5);
+          ctx.font = "800 16px ui-monospace, Menlo, monospace";
+          ctx.fillText("testimonials", 0, 12);
+          ctx.fillStyle = "rgba(178, 94, 66, 0.94)";
+          ctx.fillRect(-1.5, 25, 3, 15);
+          ctx.fillRect(-10, 36, 6, 3);
+          ctx.fillRect(4, 36, 6, 3);
+          ctx.fillRect(-7, 39, 6, 3);
+          ctx.fillRect(1, 39, 6, 3);
+          ctx.fillRect(-4, 42, 8, 3);
+          ctx.fillRect(-1.5, 45, 3, 4);
+          ctx.restore();
+
+          // A beached, old-world galleon sits crooked beside the surf. The
+          // raised stern, square sails and two bare masts suggest a pirate-era
+          // ship without adding a flag, crest or other pirate symbol.
+          const drawWreck = (x: number, y: number, scale: number) => {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(-0.12);
+            ctx.scale(scale, scale);
+
+            const pixel = (px: number, py: number, pw: number, ph: number, ink: string) => {
+              ctx.fillStyle = ink;
+              ctx.fillRect(px, py, pw, ph);
+            };
+            const hull = "rgba(13, 60, 91, 0.95)";
+            const warm = "rgba(178, 94, 66, 0.94)";
+            const timber = "rgba(121, 85, 52, 0.95)";
+            const sail = "rgba(101, 125, 106, 0.88)";
+            const sailSoft = "rgba(126, 145, 119, 0.72)";
+            const rope = "rgba(121, 85, 52, 0.58)";
+
+            // High stern, long gunwale and a stepped keel give the hull a
+            // heavier galleon profile. Tiny pale ports and warm planking keep
+            // the detail legible without turning into pirate iconography.
+            pixel(-43, -24, 3, 15, timber); // stern rail
+            pixel(-43, -24, 16, 3, timber);
+            pixel(-40, -20, 13, 11, hull); // raised sterncastle
+            pixel(-35, -17, 67, 5, hull);
+            pixel(-38, -12, 78, 5, timber);
+            pixel(-35, -7, 72, 6, hull);
+            pixel(-29, -1, 60, 5, hull);
+            pixel(-21, 4, 43, 4, hull);
+            pixel(37, -10, 9, 3, hull); // pointed bow
+            pixel(43, -13, 6, 3, timber); // bowsprit
+            pixel(-31, -10, 15, 3, warm);
+            pixel(-12, -10, 15, 3, warm);
+            pixel(7, -10, 15, 3, warm);
+            pixel(26, -10, 8, 3, warm);
+            pixel(-25, -5, 3, 3, sailSoft);
+            pixel(-7, -5, 3, 3, sailSoft);
+            pixel(11, -5, 3, 3, sailSoft);
+            pixel(25, -5, 3, 3, sailSoft);
+            pixel(-2, -3, 3, 10, "rgba(255, 255, 255, 0.68)"); // split keel
+
+            // Two bare-topped masts carry broad, stepped square sails. The
+            // irregular lower edges make the ship feel weathered and wrecked.
+            pixel(-12, -70, 3, 57, timber);
+            pixel(18, -58, 3, 45, timber);
+            pixel(-30, -59, 38, 3, timber);
+            pixel(-28, -37, 35, 3, timber);
+            pixel(7, -49, 31, 3, timber);
+            pixel(9, -30, 29, 3, timber);
+
+            pixel(-27, -55, 32, 4, sail);
+            pixel(-29, -51, 34, 10, sail);
+            pixel(-27, -41, 31, 3, sail);
+            pixel(-25, -33, 29, 4, sailSoft);
+            pixel(-27, -29, 31, 10, sailSoft);
+            pixel(-22, -19, 25, 3, sailSoft);
+
+            pixel(10, -45, 25, 4, sailSoft);
+            pixel(8, -41, 27, 9, sailSoft);
+            pixel(11, -32, 24, 3, sailSoft);
+            pixel(12, -26, 23, 4, sail);
+            pixel(10, -22, 25, 8, sail);
+            pixel(14, -14, 20, 3, sail);
+
+            // Block-stepped rigging and a little torn jib add old-world detail
+            // while preserving the intentionally low-resolution illustration.
+            pixel(-38, -22, 2, 4, rope);
+            pixel(-34, -29, 2, 5, rope);
+            pixel(-30, -36, 2, 5, rope);
+            pixel(-26, -43, 2, 5, rope);
+            pixel(38, -15, 2, 4, rope);
+            pixel(34, -22, 2, 4, rope);
+            pixel(30, -29, 2, 4, rope);
+            pixel(26, -36, 2, 4, rope);
+            pixel(24, -43, 2, 4, rope);
+            pixel(39, -36, 3, 4, sailSoft);
+            pixel(39, -32, 7, 4, sailSoft);
+            pixel(39, -28, 11, 4, sailSoft);
+            pixel(39, -24, 7, 3, sailSoft);
+
+            // Washed-up spars make the crash read as a wreck rather than a
+            // ship deliberately parked on the beach.
+            pixel(45, 4, 15, 3, timber);
+            pixel(52, 10, 11, 3, warm);
+            ctx.restore();
+          };
+
+          drawWreck((isl.cx + isl.rx * 0.36) * CELL_W, (isl.cy + isl.ry * 0.62) * CELL_H, 1.4);
           // the crab, v2 (v1's bare block read as a red staple): round ∩
-          // pincers over a low body, skittering sideways along the beach
-          const scut = Math.sin(t * 0.45 + 1.3) * isl.rx * 0.45 + Math.sin(t * 5.2) * 0.22;
+          // pincers over a low body, skittering along the opposite beach
+          const scut = -isl.rx * 0.35 + Math.sin(t * 0.45 + 1.3) * isl.rx * 0.16 + Math.sin(t * 5.2) * 0.22;
           const crx = (isl.cx + scut) * CELL_W;
           const cry = (isl.cy + isl.ry * 0.74) * CELL_H;
           ctx.fillStyle = "rgba(178, 94, 66, 0.95)"; // terracotta, the one warm accent
@@ -599,82 +731,6 @@ export default function App() {
           ctx.fillText("▄▄", crx - 6, cry - 3);
           ctx.font = "7px ui-monospace, Menlo, monospace";
           ctx.fillText("ʌʌʌ", crx - 4.5, cry + 2); // legs, tucked under the body
-          // the castaway: kicked back in a beach chair on the dry sand with a
-          // phone to his ear, promising the demo is on its way. Drawn in 3px
-          // "pixels" (the splash's unit) rather than block glyphs — at a body
-          // this small glyphs read as noise and squares read as a person.
-          // an actual stick figure: hollow ring for a head, everything else a
-          // two-pixel line. Head thrown back on the headrest at the top left,
-          // spine running parallel to the backrest, one arm bent up with the
-          // phone at his ear, legs stretched out down the seat to the right.
-          const SIT = [
-            ".........bbb..................",
-            "........b...bp................",
-            "........b...bpb...............",
-            "......c..bbb...b..............",
-            "......cc..bb...bb.............",
-            ".......cc..bbbb...............",
-            ".......cc..bb.................",
-            "........cc..bb................",
-            "........cc..bb................",
-            ".........cc..bb...............",
-            ".........cc...bb..............",
-            "..........cc..bb..............",
-            "..........cc...bbbbb......bb..",
-            "...........cc......bbbbbbbb...",
-            "........cccccccccccccccccc....",
-            ".........cccccccccccccccc.....",
-            "..........cc.........cc.......",
-            "..........cc.........cc.......",
-            ".........cccc.......cccc......",
-          ];
-          const SIT_INK: Record<string, string> = {
-            b: "rgba(23, 60, 84, 0.95)", // him — deep tide, a silhouette on ivory
-            c: "rgba(178, 94, 66, 0.95)", // the chair — the one terracotta
-            p: "rgba(63, 126, 169, 0.95)", // the phone, screen lit
-          };
-          const PX = 3;
-          const sitX = Math.round((isl.cx - isl.rx * 0.52) * CELL_W);
-          const sitY = Math.round((isl.cy + isl.ry * 0.4) * CELL_H) - SIT.length * PX;
-          for (let sr = 0; sr < SIT.length; sr++) {
-            for (let sc = 0; sc < SIT[sr].length; sc++) {
-              const ink = SIT_INK[SIT[sr][sc]];
-              if (!ink) continue;
-              ctx.fillStyle = ink;
-              ctx.fillRect(sitX + sc * PX, sitY + sr * PX, PX, PX);
-            }
-          }
-          // his half of the call, in a bubble over his head
-          ctx.font = '11px ui-monospace, "SF Mono", Menlo, monospace';
-          const SAY = "hold on, sending you the demo";
-          const bw = ctx.measureText(SAY).width + 20;
-          const bh = 22;
-          const bxB = sitX + 6 * PX;
-          const byB = sitY - 15 - bh;
-          const tailX = bxB + 13; // the tail leans back over his head
-          ctx.beginPath();
-          ctx.roundRect(bxB, byB, bw, bh, 7);
-          ctx.fillStyle = "rgba(255, 255, 255, 0.97)";
-          ctx.fill();
-          ctx.strokeStyle = "rgba(21, 85, 126, 0.6)";
-          ctx.lineWidth = 1;
-          ctx.stroke();
-          // the tail: filled first (it wipes the bubble's bottom edge under
-          // it), then only its two slanted sides are stroked
-          ctx.beginPath();
-          ctx.moveTo(tailX + 9, byB + bh - 1);
-          ctx.lineTo(tailX - 7, byB + bh + 11);
-          ctx.lineTo(tailX, byB + bh - 1);
-          ctx.closePath();
-          ctx.fill();
-          ctx.beginPath();
-          ctx.moveTo(tailX + 9, byB + bh - 1);
-          ctx.lineTo(tailX - 7, byB + bh + 11);
-          ctx.lineTo(tailX, byB + bh - 1);
-          ctx.stroke();
-          ctx.fillStyle = "rgba(21, 85, 126, 0.95)";
-          ctx.fillText(SAY, bxB + 10, byB + bh / 2 + 0.5);
-          ctx.font = prevFont;
         }
         const duck = (seed: number, rowF: number, max = cols - 3.5) => {
           // the rubber duck stays rubber-duck yellow \u2014 it's the debugging
@@ -1081,12 +1137,25 @@ export default function App() {
                   code). Yuvan's quote used to stand on it; the testimonials
                   now live with the case studies, so the ground stays and the
                   words are gone — the box keeps its size for the sea to read. */}
-              <div className="hero-proof" aria-hidden="true" />
+              <div className="hero-proof">
+                <a
+                  className="hero-proof-scroll"
+                  href="#cases"
+                  aria-label="Scroll to testimonials"
+                />
+              </div>
             </div>
             {/* TODO: dashboard preserved for later — the original hero dashboard
                 window now lives in components/_HeroDashboard.legacy.tsx. Import it
                 and drop <HeroDashboard /> back in here to restore it. */}
             <div className="hero-card gif-anchor">
+              <div className="hero-story-callout">
+                <span>Real customer story</span>
+                <svg viewBox="0 0 120 64" aria-hidden="true">
+                  <path d="M4 10 C 36 5, 50 51, 111 46" />
+                  <path d="M100 36 L 112 46 L 99 53" />
+                </svg>
+              </div>
               <GifMedia />
               {/* the pixel splash the card kicks up as it plops into the sea */}
               <div className="hero-splash" aria-hidden="true">
