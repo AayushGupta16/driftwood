@@ -1235,8 +1235,11 @@ export default function App() {
         <section id="cases" className="sheet sheet-white">
           <div className="sect">
             <div className="wrap cases-head">
+              {/* tested copy (Aayush 08-09): names the enemy in the page's own
+                  vocabulary — the compare section IS the slop parody. "slop"
+                  carries the line, so it takes the voice accent. */}
               <h2>
-                Good outbound converts at <b>10%</b>
+                Don&rsquo;t send your leads <em className="voice">slop</em>
               </h2>
             </div>
             <div className="cases-rail" ref={casesRef}>

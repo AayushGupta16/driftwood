@@ -44,11 +44,14 @@ on marketing pages and is never a second brand accent.
   single phrase that genuinely outranks the rest of the line. The hero and the
   `#explore` headings both had theirs pulled — "Ship *tailored demos*" and
   "The numbers you'll *keep track* of" have no such phrase, and the blue there
-  read as decoration. As of now the closing ask ("*your* prospects") is the
-  only voice italic on the landing page.
+  read as decoration. Two survive as of 2026-08-09: the closing ask
+  ("*your* prospects") and the `#cases` heading ("Don't send your leads
+  *slop*" — tested copy from Aayush; "slop" is the page's own vocabulary,
+  the compare section IS the slop parody, and no word outranks it).
 - **Section headings run thin** (2026-07-28): `#cases` and `#explore` set
   weight **350** on the shared heading scale — a light ground under a heavy
-  accent figure where there is one (`10%` at 750), and light throughout where
+  accent figure where there is one (the voice-italic *slop*; before
+  2026-08-09 it was `10%` at 750), and light throughout where
   there isn't. Only the hero H1 and the closing ask carry weight.
 - Headings share one scale: `clamp(2rem, 1.2rem + 2.8vw, 3.2rem)`, weight
   600, tracking −0.014em. H1 caps at 12 words.
