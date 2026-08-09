@@ -1182,9 +1182,10 @@ export default function App() {
                   aria-label="Scroll to testimonials"
                 />
               </div>
-              {/* provenance, not a second CTA: two words and the mark, in the
-                  open water under the island (Aayush 08-09 — between the sub
-                  and the CTA it crowded the ask) */}
+              {/* provenance, not a second CTA: two words and the mark, riding
+                  the open water in the hero's bottom-left corner (Aayush
+                  08-09, placement round three — absolute on desktop, in flow
+                  under the island on phones) */}
               <p className="hero-backed">
                 <span>Backed by</span>
                 <img
