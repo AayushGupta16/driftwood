@@ -1,0 +1,73 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The demo script</title><style>
+:root{--ink:#16181b;--gray:#6a737d;--gray-light:#9aa2ab;--line:#e9ebee;
+--tide:#15557e;--tide-deep:#0d3c5b;--tide-wash:#eaf1f7;--ground:#fff;
+--sans:"Public Sans","Helvetica Neue",Helvetica,Arial,sans-serif;
+--serif:"Source Serif 4",Georgia,serif;--r:12px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
+font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+header{border-bottom:1px solid var(--line)}
+header div{max-width:820px;margin:0 auto;padding:18px 28px;display:flex;
+align-items:center;gap:9px}
+.helm{width:22px;height:22px;border-radius:6px;background:var(--tide)}
+.wordmark{font-family:var(--serif);font-weight:600;font-size:18px}
+main{max-width:820px;margin:0 auto;padding:44px 28px 88px}
+h1{font-size:clamp(2rem,1.2rem + 2.8vw,3.2rem);font-weight:600;letter-spacing:-.014em;
+line-height:1.12;margin:0 0 14px;max-width:16ch}
+em.voice{font-family:Georgia,serif;font-style:italic;color:var(--tide)}
+.lede{color:var(--gray);margin:0 0 40px;max-width:60ch}
+h2{font-size:19px;font-weight:600;margin:44px 0 6px;letter-spacing:-.01em}
+.note{color:var(--gray);font-size:15px;margin:0 0 16px;max-width:62ch}
+table{border-collapse:collapse;width:100%;font-size:15px}
+td{text-align:left;padding:11px 0;border-bottom:1px solid var(--line);
+vertical-align:top}
+td:first-child{width:180px;padding-right:20px;font-weight:500}
+tr:last-child td{border-bottom:0}
+.shot{display:flex;gap:24px;padding:18px 0;border-bottom:1px solid var(--line)}
+.shot:last-of-type{border-bottom:0}
+.who{width:180px;flex:0 0 180px}
+.who b{display:block;font-size:15px}
+.who span{display:block;color:var(--gray);font-size:14px;margin-top:2px}
+.body{flex:1;min-width:0}
+.beat{margin:0 0 8px;font-size:15px}
+.tpl{margin:0;font-size:14.5px;color:var(--gray);line-height:1.65}
+.fixed{margin:0;font-size:14.5px;color:var(--gray-light)}
+.slot{background:var(--tide-wash);color:var(--tide);border-radius:4px;
+padding:1px 3px;margin:0 -1px;font-weight:500;white-space:nowrap}
+textarea{width:100%;border:1px solid var(--line);border-radius:var(--r);
+padding:12px 14px;
+font-family:var(--sans);font-size:15px;color:var(--ink);resize:vertical;background:var(--ground)}
+textarea:focus{outline:none;border-color:var(--tide)}
+button{margin-top:10px;border:0;background:var(--tide);color:#fff;border-radius:999px;
+padding:9px 20px;font-family:var(--sans);font-size:15px;font-weight:500;cursor:pointer}
+button:hover{background:var(--tide-deep)}
+@media(max-width:680px){.shot{flex-direction:column;gap:8px}.who{width:auto;flex:none}
+td:first-child{width:130px}}
+</style></head><body>
+<header><div><span class="helm"></span>
+<span class="wordmark">driftwood</span></div></header>
+<main>
+<h1>The demo <em class="voice">script</em></h1>
+<p class="lede">One script builds every prospect demo. This is the whole of it: the
+handful of things the agent researches, and the 11 shots it fills them into.
+Change anything here and every demo built from now on changes with it.</p>
+
+<h2>What the agent fills in</h2>
+<p class="note">The entire per-prospect surface. Get these right and the demo is
+right.</p>
+<table><tr><td>chain</td><td>Display name, e.g. El Palacio de Hierro</td></tr><tr><td>city</td><td>City for the flagship store, e.g. Ciudad de México</td></tr><tr><td>category</td><td>Merchandise category in Spanish, e.g. ropa y accesorios / calzado deportivo / electrónica</td></tr><tr><td>uniform</td><td>Verified staff wardrobe in Spanish, plus a confidence level and the source URL. Medium confidence backed by a real photo of actual staff is good enough; plain wardrobe in the chain palette only when there is no usable image, and the demo is then marked an approximation.</td></tr><tr><td>store_photos</td><td>1-2 public https URLs of REAL photos of that chain&#x27;s store, exterior and interior. These become reference 2 on every store shot. Veo takes 3 references and slot 1 is always her frame, so 2 is the ceiling.</td></tr><tr><td>dashboard</td><td>Chain-specific figures for the corporate dashboard: conversaciones analizadas, score promedio, intento de venta cruzada, adherencia a protocolo, producto más mencionado, NPS estimado, plus three advisor scores. Always rendered with the SIMULACIÓN / DATOS ILUSTRATIVOS label.</td></tr></table>
+
+<h2>The 11 shots</h2>
+<p class="note">6 carry the prospect. The other 5 are B-Pin's own
+and are identical in every demo. Highlighted words are the slots.</p>
+<div class="shot"><div class="who"><b>s01</b><span>Filled per prospect</span></div><div class="body"><p class="beat">The question that opens the film. Verbatim from the b-pin.ai hero.</p><p class="tpl">Photorealistic wide shot inside a real <span class="slot">chain</span> store in <span class="slot">city</span>, Mexico. Match the composition, camera height, subject distance, lens feel and warm premium lighting of reference 1. Set it in the store shown in reference 2, match its architecture, fixtures and <span class="slot">category</span> merchandise exactly. A sales advisor wearing <span class="slot">uniform</span> helps a customer; other shoppers and one more staff member are visible deeper in frame. Latin American cast. Shallow depth of field, one slow push, subjects nearly still, hands at rest. No text, no signage lettering, no logos anywhere in frame. Silent.</p></div></div><div class="shot"><div class="who"><b>s02</b><span>Filled per prospect</span></div><div class="body"><p class="beat">The conversation itself, the raw material the product runs on.</p><p class="tpl">Photorealistic medium two-shot inside a real <span class="slot">chain</span> store. Match the composition, camera height, subject distance, lens feel and warm practical lighting of reference 1. Set it at the service counter shown in reference 2. An advisor wearing <span class="slot">uniform</span> is mid-conversation with a customer, holding a <span class="slot">category</span> item. Latin American cast. Intimate framing, close background, shallow depth of field, one slow push, subjects nearly still. No text, no signage lettering, no logos anywhere in frame. Silent.</p></div></div><div class="shot"><div class="who"><b>s03</b><span>Filled per prospect</span></div><div class="body"><p class="beat">The loss. Same set as s02, tighter, so the cut reads as a push rather than a jump.</p><p class="tpl">Photorealistic tight two-shot inside a real <span class="slot">chain</span> store, same counter as the previous shot. Match the composition, camera height, subject distance and lighting of reference 1. Set it in the store shown in reference 2. An advisor wearing <span class="slot">uniform</span> and a customer face each other in profile, mid-conversation. Latin American cast. Shallow depth of field, camera nearly still. No text, no signage lettering, no logos anywhere in frame. Silent.</p></div></div><div class="shot"><div class="who"><b>s04</b><span>Fixed. Built once.</span></div><div class="body"><p class="beat">The hardware hero. Shortest shot in the film and the one that has to be perfect.</p><p class="tpl">FIXED ASSET, generated once for B-Pin, reused for every prospect. Photorealistic macro of the B-Pin device, a compact black rounded-rectangle transmitter with a circular top element and a small amber status indicator, clipped high on a dark blazer lapel. Match reference 1 exactly for device geometry, clip position, lighting and amber bokeh falloff. Slow breathing camera drift. No text, no logos, no lettering. Silent.</p></div></div><div class="shot"><div class="who"><b>s05</b><span>Filled per prospect</span></div><div class="body"><p class="beat">The device in use, worn and unremarkable. Line 05 is the longest in the script and runs across s05 and s06.</p><p class="tpl">Photorealistic medium shot inside a real <span class="slot">chain</span> store. Match the composition, camera height, subject distance, lens feel and lighting of reference 1. Set it in the store shown in reference 2. An advisor wearing <span class="slot">uniform</span>, with a small black device clipped high at the chest, talks with a customer. The device is clearly visible but unremarkable. Latin American cast. Shallow depth of field, one slow push. No text, no signage lettering, no logos anywhere in frame. Silent.</p></div></div><div class="shot"><div class="who"><b>s06</b><span>Filled per prospect</span></div><div class="body"><p class="beat">Tail of line 05. A different corner of the floor so the two conversation beats do not read as the same shot twice.</p><p class="tpl">Photorealistic medium two-shot inside a real <span class="slot">chain</span> store, on a different part of the floor from the counter, among <span class="slot">category</span> displays. Match the composition, camera height, subject distance and lighting of reference 1. Set it in the store shown in reference 2. An advisor wearing <span class="slot">uniform</span> stands half-turned toward a customer, mid-conversation. Latin American cast. Shallow depth of field, camera nearly still. No text, no signage lettering, no logos anywhere in frame. Silent.</p></div></div><div class="shot"><div class="who"><b>s07</b><span>Fixed plate, product screen composited on top.</span></div><div class="body"><p class="beat">First product payoff, the advisor&#x27;s own feedback, on a phone.</p><p class="tpl">FIXED PLATE, generated once, UI composited per prospect. Photorealistic over-the-shoulder shot of a hand holding a smartphone in a retail store, screen facing camera and filling most of the frame. Match reference 1 for framing, hand position, screen angle and background falloff. The phone screen must be a FLAT DARK BLANK panel with no interface on it. Retail rails soft and out of focus behind. No text, no logos, no lettering anywhere. Silent.</p></div></div><div class="shot"><div class="who"><b>s08</b><span>Fixed plate, product screen composited on top.</span></div><div class="body"><p class="beat">The manager&#x27;s view, coaching, not surveillance.</p><p class="tpl">FIXED PLATE, generated once, UI composited per prospect. Photorealistic shot of a retail manager in business dress standing at a large desktop monitor, half-profile, one hand raised toward the screen. Match reference 1 for framing, monitor angle, body position and lighting. The monitor must show a FLAT DARK BLANK panel with no interface on it. No text, no logos, no lettering anywhere. Silent.</p></div></div><div class="shot"><div class="who"><b>s09</b><span>Fixed plate, product screen composited on top.</span></div><div class="body"><p class="beat">The corporate payoff, the dashboard. This is the beat that carries the chain&#x27;s own name and figures.</p><p class="tpl">FIXED PLATE, generated once, UI composited per prospect. Photorealistic shot of a seated executive at a desk beside a window, viewed past her shoulder, working at a desktop monitor. Match reference 1 for framing, seat position, monitor angle and cool daylight. The monitor must show a FLAT DARK BLANK panel with no interface on it. No text, no logos, no lettering anywhere. Silent.</p></div></div><div class="shot"><div class="who"><b>s10</b><span>Filled per prospect</span></div><div class="body"><p class="beat">The CTA, played over the floor working well, the after state.</p><p class="tpl">Photorealistic wide group shot inside a real <span class="slot">chain</span> store. Match the composition, camera height, subject distance, lens feel and lighting of reference 1. Set it in the store shown in reference 2. Several advisors wearing <span class="slot">uniform</span> help several customers at once among <span class="slot">category</span> displays, a busy floor working well. Latin American cast. Shallow depth of field, one slow push. No text, no signage lettering, no logos anywhere in frame. Silent.</p></div></div><div class="shot"><div class="who"><b>s11</b><span>Drawn in code.</span></div><div class="body"><p class="beat">End card. Device on black with gold signal streaks, then the wordmark and sign-off.</p><p class="fixed">No prompt. This one is drawn in code from the b-pin.ai tokens.</p></div></div>
+
+<h2>Change the script</h2>
+<p class="note">Feedback here rewrites the template, so it applies to every demo from
+the next one onward rather than to a single video.</p>
+<textarea rows="3" placeholder="e.g. shot 2 should not say premium. Half these
+chains are value retail."></textarea>
+<button>Send to the agent</button>
+</main></body></html>
