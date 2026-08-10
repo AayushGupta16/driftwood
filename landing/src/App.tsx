@@ -1535,13 +1535,25 @@ export default function App() {
         </section>
       </main>
 
+      {/* the footer reads as three quiet columns — the brand and what it is
+          on the left, then two titled link lists — over one hairline bottom
+          line. The old shape (two wrapping link ROWS at clashing alignments,
+          the definition marooned at the foot) read as a pile. */}
       <footer>
         <div className="wrap foot">
           <div className="foot-top">
-            <a className="wordmark" href="#top" aria-label="back to top">
-              <Wordmark label={false} />
-            </a>
-            <nav className="foot-links" aria-label="site">
+            <div className="foot-brand">
+              <a className="wordmark" href="#top" aria-label="back to top">
+                <Wordmark label={false} />
+              </a>
+              <p className="foot-def">
+                driftwood is an AI sales agent for demo-led outbound: it researches each prospect,
+                builds a working demo of your product for their business, and sends from your account
+                after human review.
+              </p>
+            </div>
+            <nav className="foot-col" aria-label="site">
+              <span className="foot-col-head">Learn</span>
               <a href="/customers/autosana">Customers</a>
               <a href="/demo-led-outbound">Demo-led outbound</a>
               <a href="/faq">FAQ</a>
@@ -1549,8 +1561,8 @@ export default function App() {
               <a href="/cold-outbound-benchmarks">Outbound benchmarks</a>
               <a href="/ai-sdr">What is an AI SDR</a>
             </nav>
-            <nav className="foot-links foot-compare" aria-label="compare">
-              <span>Compare:</span>
+            <nav className="foot-col" aria-label="compare">
+              <span className="foot-col-head">Compare</span>
               <a href="/best-ai-sdr-tools">Compare AI SDR tools</a>
               <a href="/alternatives/instantly">Instantly alternatives</a>
               <a href="/alternatives/clay">Clay alternatives</a>
@@ -1562,15 +1574,8 @@ export default function App() {
             </nav>
           </div>
           <div className="foot-bottom">
-            <p className="foot-def">
-              driftwood is an AI sales agent for demo-led outbound: it researches each prospect,
-              builds a working demo of your product for their business, and sends from your account
-              after human review.
-            </p>
-            <div className="foot-line">
-              <a href="mailto:aayush@driftwood.sh">aayush@driftwood.sh</a>
-              <span>&copy; 2026 driftwood</span>
-            </div>
+            <a href="mailto:aayush@driftwood.sh">aayush@driftwood.sh</a>
+            <span>&copy; 2026 driftwood</span>
           </div>
         </div>
       </footer>
