@@ -129,22 +129,22 @@ type Widget = { id: string; l: number; t: number; w: number; h: number; title: s
 const WIDGETS: Widget[] = [
   { id: "linkedin", l: 1.5, t: 23.6, w: 96.5, h: 10.2,
     title: "Send from LinkedIn, Twitter, or email",
-    body: "Demos go out from your own accounts, within safe daily limits — so nothing gets flagged." },
+    body: "Demos go out from your own accounts, within safe daily limits, so nothing gets flagged." },
   { id: "results", l: 1.5, t: 34.9, w: 57.2, h: 16.8,
     title: "Track your conversion rates",
     body: "Meetings booked, replies, and reply rate, updated the moment each one lands." },
   { id: "pipeline", l: 1.5, t: 51.4, w: 57.2, h: 18.2,
     title: "Spot the bottleneck in your pipeline",
-    body: "Every lead's stage at a glance — see exactly where deals stall." },
+    body: "Every lead's stage at a glance, so you can see exactly where deals stall." },
   { id: "latest", l: 1.5, t: 69.4, w: 57.2, h: 30.4,
     title: "Daily movement across your accounts",
-    body: "Every reply, send, and new connection as it happens. No refreshing." },
+    body: "Every reply, send, and new connection as it happens. You never have to refresh." },
   { id: "leads", l: 61.6, t: 49.5, w: 33.9, h: 23.7,
     title: "Find leads that fit your ICP",
-    body: "Bring a CSV or let us source them — matched and enriched either way." },
+    body: "Bring a CSV or let us source them. We match and enrich every lead either way." },
   { id: "blacklist", l: 61.6, t: 74.4, w: 33.9, h: 23,
     title: "We keep track so you don't have to",
-    body: "Do-not-contact emails, domains, and URLs, excluded from every send." },
+    body: "We exclude do-not-contact emails, domains, and URLs from every send." },
 ];
 
 /* The demo, as a crisp 2x video (the old 484x591 gif was 256-colour and

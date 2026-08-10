@@ -993,12 +993,11 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
   .landing .hero h1 { max-width: 22ch; text-wrap: balance; }
   .landing .hero h1, .landing .hero-sub { text-align: center; justify-self: center; }
   .landing .hero-actions { justify-self: center; }
-  /* stacked: no corner to anchor to, and down on the water the line drowned
-     in the dense rows — it stands on the white under the CTA instead,
-     centred in flow before the story card */
+  /* stacked: the line follows the island onto the water (Aayush's call,
+     twice) — centred on its axis, in the calm the canvas clears for it */
   .landing .hero-backed {
-    position: static; justify-self: center;
-    margin: 1.5rem 0 0; font-size: 0.85rem;
+    position: static; order: 9; justify-self: center;
+    margin: 0 0 1.6rem; font-size: 0.85rem;
   }
   .landing .hero-backed img { height: 2rem; }
   .landing .hero-grid .app-window { margin-right: 0; margin-top: 2.2rem; }
