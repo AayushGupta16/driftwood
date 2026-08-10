@@ -299,6 +299,11 @@ type DecideError = { message: string; itemId: string | null };
 
 const EMPTY_SET: ReadonlySet<string> = new Set();
 
+/* Stamped on every bulk denial so the agent reading back decision_reason can
+   tell a considered no from a queue clear-out. The per-item deny box is where
+   a real reason gets typed. */
+const BULK_DENY_REASON = "Bulk denied from the review queue";
+
 const DECIDE_FALLBACK = "Couldn't submit that decision. Please try again.";
 const CANCEL_FALLBACK = "Couldn't cancel those sends. Please try again.";
 const DISMISS_FALLBACK = "Couldn't dismiss those sends. Please try again.";
@@ -437,6 +442,7 @@ function ReviewQueue() {
   const [busyIds, setBusyIds] = useState<ReadonlySet<string>>(EMPTY_SET);
   const [decideError, setDecideError] = useState<DecideError | null>(null);
   const [confirmAll, setConfirmAll] = useState(false);
+  const [confirmDenyAll, setConfirmDenyAll] = useState(false);
   const [kindFilter, setKindFilter] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>(tabFromUrl);
   const [sendsState, setSendsState] = useState<SendsState>({
@@ -451,6 +457,15 @@ function ReviewQueue() {
     const t = window.setTimeout(() => setConfirmAll(false), 5000);
     return () => window.clearTimeout(t);
   }, [confirmAll]);
+
+  /* Same for "Deny all" — and the two are mutually exclusive, so arming one
+     disarms the other. Denying is not destructive the way approving is (it
+     sends nothing), but 300 items is still not something to fat-finger. */
+  useEffect(() => {
+    if (!confirmDenyAll) return;
+    const t = window.setTimeout(() => setConfirmDenyAll(false), 5000);
+    return () => window.clearTimeout(t);
+  }, [confirmDenyAll]);
 
   const loadAll = useCallback(async () => {
     try {
@@ -636,6 +651,7 @@ function ReviewQueue() {
     setKindFilter(kind);
     setSelected(EMPTY_SET);
     setConfirmAll(false);
+    setConfirmDenyAll(false);
   }
 
   function toggleSelect(id: string) {
@@ -662,12 +678,47 @@ function ReviewQueue() {
      on approve — never off a single click. */
   function handleApproveAll() {
     if (!confirmAll) {
+      setConfirmDenyAll(false);
       setConfirmAll(true);
       return;
     }
     setConfirmAll(false);
     void decide(
       visible.map((item) => ({ item_id: item.id, decision: "approve" as const })),
+      null,
+    );
+  }
+
+  function handleBulkDeny() {
+    void decide(
+      visible
+        .filter((item) => selected.has(item.id))
+        .map((item) => ({
+          item_id: item.id,
+          decision: "deny" as const,
+          reason: BULK_DENY_REASON,
+        })),
+      null,
+    );
+  }
+
+  /* Deny all, armed the same way as Approve all. Clearing a whole kind at once
+     is the point: a lane that gets shelved (say outreach moves off LinkedIn)
+     leaves hundreds of pending items that would otherwise need one tap each,
+     and the per-item deny box does not scale to that. */
+  function handleDenyAll() {
+    if (!confirmDenyAll) {
+      setConfirmAll(false);
+      setConfirmDenyAll(true);
+      return;
+    }
+    setConfirmDenyAll(false);
+    void decide(
+      visible.map((item) => ({
+        item_id: item.id,
+        decision: "deny" as const,
+        reason: BULK_DENY_REASON,
+      })),
       null,
     );
   }
@@ -787,6 +838,16 @@ function ReviewQueue() {
                   Approve selected ({selected.size})
                 </button>
               )}
+              {selected.size > 0 && (
+                <button
+                  type="button"
+                  onClick={handleBulkDeny}
+                  disabled={busy}
+                  className="min-h-9 cursor-pointer rounded-[10px] border border-line bg-surface px-3.5 py-2 text-[13px] font-medium text-red-700 transition-colors hover:border-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Deny selected ({selected.size})
+                </button>
+              )}
               <button
                 type="button"
                 onClick={handleApproveAll}
@@ -800,6 +861,20 @@ function ReviewQueue() {
                 {confirmAll
                   ? `Approve all ${visible.length}? Confirm`
                   : "Approve all"}
+              </button>
+              <button
+                type="button"
+                onClick={handleDenyAll}
+                disabled={busy}
+                className={`min-h-9 cursor-pointer rounded-[10px] px-3.5 py-2 text-[13px] transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+                  confirmDenyAll
+                    ? "bg-red-700 font-semibold text-white shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] hover:bg-red-800"
+                    : "border border-line bg-surface font-medium text-ink-soft hover:border-red-700 hover:text-red-700"
+                }`}
+              >
+                {confirmDenyAll
+                  ? `Deny all ${visible.length}? Confirm`
+                  : "Deny all"}
               </button>
               <span className="ml-auto shrink-0 font-mono text-[11px] tracking-[0.06em] text-ink-faint tabular-nums">
                 {activeKind === null

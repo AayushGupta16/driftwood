@@ -192,6 +192,12 @@ on marketing pages and is never a second brand accent.
   second tween toward a card the reader never chose; and `update()` must
   measure all the cards before it writes any, or it forces a synchronous
   layout per card per frame.
+  **The deck also drags under a mouse** (2026-08-10): grab anywhere on the
+  rail and pull — pointer-fine only, a 6px dead zone so clicks stay clicks,
+  scrollLeft written directly so the reader-outranks-tween rule treats it
+  as any gesture, the settle held until release, and a real drag swallows
+  the click it would otherwise fire on the card under the pointer.
+  Cursor: grab/grabbing.
   **A light nudge is enough** (2026-07-28): the commit threshold is ~44px of
   travel (`min(cardStep / 10, 44)`), not a fraction of a card — the cards are
   ~1000px wide, so the old "past a sixth" rule meant a 170px shove to see the
@@ -218,6 +224,15 @@ on marketing pages and is never a second brand accent.
   faint: it only has to lift the mat off the page, not carve it out. The
   panel's `position: sticky` is bounded by the grid, so it travels down the
   mat as you read and stops at its foot, never outside it.
+  **On phones, scroll is the selector** (2026-08-10, replacing one day of a
+  static card list): hover doesn't exist and invisible hotspots are a broken
+  promise on touch, so the dashboard sticks under the header while the six
+  explanations pass beneath it as cards, and the card crossing mid-viewport
+  takes the tide ring and lights its widget's ring on the image
+  (IntersectionObserver, armed under 52rem only; the grid dissolves to
+  `display: contents` so the sticky can travel the whole plate). Same
+  information as desktop hover, driven by the gesture a phone already has.
+  Hotspots stay visible as rings but stop being tap targets.
 
 ## 4. The water
 

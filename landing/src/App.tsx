@@ -106,8 +106,8 @@ const CASE_STUDIES: CaseStudy[] = [
   {
     id: "oruk",
     company: "Oruk",
-    title: "The prospect's own footage, already localized",
-    sub: "Oruk's tone-aware subtitles running over a scene from the show the prospect makes.",
+    title: "Autonomously trying different growth experiments",
+    sub: "Using Oruk's emotion-aware captioning on each lead's favorite TV show and sending it to them.",
     video: "/case-oruk.mp4",
     poster: "/case-oruk-poster.webp",
     logo: "/logo-oruk.webp",
@@ -922,6 +922,9 @@ export default function App() {
     // measured from here, not from whichever card happens to be nearest
     let anchor = 0;
     let tween = 0;
+    // a mouse drag in progress: the settle must not fire while the reader is
+    // still holding the deck, even if the pointer rests mid-drag
+    let dragActive = false;
     // the last scrollLeft the tween itself wrote. Every scroll event compares
     // against it: a position we didn't write is the reader's own wheel, and
     // that always outranks the tween (see onScroll).
@@ -979,6 +982,7 @@ export default function App() {
     };
     let settleT: ReturnType<typeof setTimeout> | undefined;
     const settle = () => {
+      if (dragActive) return; // the reader is still holding the deck
       if (rail.querySelector(".case.playing")) return; // don't move a running clip
       const step = cards.length > 1 ? restFor(cards[1]) - restFor(cards[0]) : 0;
       if (!step) return;
@@ -1065,6 +1069,83 @@ export default function App() {
       });
     }
 
+    // drag the deck with the mouse: grab anywhere on the rail and pull.
+    // Writing scrollLeft mid-drag fires scroll events the tween didn't
+    // write, so the reader-outranks-tween rule and the coverflow update
+    // both treat it as any other gesture; the settle waits for release
+    // (dragActive) and a real drag swallows the click that would otherwise
+    // centre or play the card under the pointer.
+    if (settleGesture) {
+      let down = false;
+      let dragged = false;
+      let startX = 0;
+      let startLeft = 0;
+      const onDown = (e: PointerEvent) => {
+        if (e.button !== 0 || e.pointerType !== "mouse") return;
+        down = true;
+        dragged = false;
+        startX = e.clientX;
+        startLeft = rail.scrollLeft;
+      };
+      const onMove = (e: PointerEvent) => {
+        if (!down) return;
+        const dx = e.clientX - startX;
+        // a 6px dead zone so a plain click never turns into a micro-drag
+        if (!dragged && Math.abs(dx) < 6) return;
+        if (!dragged) {
+          dragged = true;
+          dragActive = true;
+          rail.classList.add("dragging");
+          try {
+            rail.setPointerCapture(e.pointerId);
+          } catch {
+            /* capture is best-effort */
+          }
+          if (tween) {
+            cancelAnimationFrame(tween);
+            tween = 0;
+          }
+        }
+        rail.scrollLeft = startLeft - dx;
+      };
+      const onUp = (e: PointerEvent) => {
+        if (!down) return;
+        down = false;
+        if (!dragged) return;
+        dragged = false;
+        dragActive = false;
+        rail.classList.remove("dragging");
+        try {
+          rail.releasePointerCapture(e.pointerId);
+        } catch {
+          /* already released */
+        }
+        // the browser fires a click at whatever the pointer was over when it
+        // let go — after a real drag that click is noise, not intent
+        const swallow = (ce: Event) => {
+          ce.stopPropagation();
+          ce.preventDefault();
+        };
+        rail.addEventListener("click", swallow, { capture: true, once: true });
+        setTimeout(() => rail.removeEventListener("click", swallow, { capture: true }), 150);
+        clearTimeout(settleT);
+        settleT = setTimeout(settle, 90);
+      };
+      const onDragStart = (e: Event) => e.preventDefault(); // logos are <img>s
+      rail.addEventListener("pointerdown", onDown);
+      rail.addEventListener("pointermove", onMove);
+      rail.addEventListener("pointerup", onUp);
+      rail.addEventListener("pointercancel", onUp);
+      rail.addEventListener("dragstart", onDragStart);
+      cleanups.push(() => {
+        rail.removeEventListener("pointerdown", onDown);
+        rail.removeEventListener("pointermove", onMove);
+        rail.removeEventListener("pointerup", onUp);
+        rail.removeEventListener("pointercancel", onUp);
+        rail.removeEventListener("dragstart", onDragStart);
+      });
+    }
+
     update();
     return () => {
       rail.removeEventListener("scroll", onScroll);
@@ -1124,6 +1205,42 @@ export default function App() {
     return () => {
       removeEventListener("scroll", onScroll);
       if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  /* mobile explore: scroll is the selector. The dashboard sticks under the
+     header while the cards pass beneath it, and the card crossing the middle
+     of the viewport lights its widget's ring on the image — the same
+     information hover carries on desktop, driven by the gesture a phone
+     already has. Armed only under 52rem; desktop keeps hover. */
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const mq = matchMedia("(max-width: 52rem)");
+    let obs: IntersectionObserver | null = null;
+    const arm = () => {
+      obs?.disconnect();
+      obs = null;
+      if (!mq.matches) return;
+      const items = [...root.querySelectorAll(".explore-item")];
+      obs = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) {
+            if (!e.isIntersecting) continue;
+            const i = items.indexOf(e.target);
+            if (i >= 0) setSel(WIDGETS[i].id);
+          }
+        },
+        // the active band is the stripe just under the stuck dashboard
+        { rootMargin: "-45% 0px -45% 0px" },
+      );
+      items.forEach((el) => obs?.observe(el));
+    };
+    arm();
+    mq.addEventListener("change", arm);
+    return () => {
+      obs?.disconnect();
+      mq.removeEventListener("change", arm);
     };
   }, []);
 
@@ -1322,7 +1439,7 @@ export default function App() {
         <section id="explore" className="sheet sheet-white">
           <div className="wrap sect">
             <div className="explore-head">
-              <h2>The numbers you'll keep track of</h2>
+              <h2>Watch your outbound book meetings</h2>
             </div>
             {/* the whole section stands on a baby-blue mat — a bounding box
                 holding the dashboard AND the panel that reads it, so the two
@@ -1368,13 +1485,12 @@ export default function App() {
                 )}
               </aside>
             </div>
-            {/* phones: hover doesn't exist and the hotspots are unlabeled
-                targets whose feedback lands off-screen — so the six
-                explanations stand as a plain list under the dashboard
-                instead of behind taps. Hidden on desktop (CSS). */}
+            {/* phones: the cards scroll under the stuck dashboard and the
+                mid-viewport one lights its widget (see the observer effect).
+                Hidden on desktop (CSS). */}
             <div className="explore-list">
               {WIDGETS.map((w) => (
-                <div key={w.id} className="explore-item">
+                <div key={w.id} className={`explore-item${sel === w.id ? " on" : ""}`}>
                   <h3>{w.title}</h3>
                   <p>{w.body}</p>
                 </div>

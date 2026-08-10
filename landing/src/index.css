@@ -745,6 +745,12 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
 .landing .case.active {
   transform: none; opacity: 1; filter: none; cursor: default;
 }
+/* the deck drags under a mouse (see the drag block in the rail effect) */
+@media (hover: hover) and (pointer: fine) {
+  .landing .cases-rail { cursor: grab; }
+  .landing .cases-rail.dragging { cursor: grabbing; user-select: none; }
+  .landing .cases-rail.dragging .case, .landing .cases-rail.dragging .case.active { cursor: grabbing; }
+}
 
 /* the aside: testimonial over lockup. It arrives with the card as it turns —
    a waiting card is a clip and nothing else, so the deck reads as demos.
@@ -994,10 +1000,11 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
   .landing .hero h1, .landing .hero-sub { text-align: center; justify-self: center; }
   .landing .hero-actions { justify-self: center; }
   /* stacked: the line follows the island onto the water (Aayush's call,
-     twice) — centred on its axis, in the calm the canvas clears for it */
+     twice) — centred on its axis, in the calm the canvas clears for it,
+     with real open water between the island's coast and the line */
   .landing .hero-backed {
     position: static; order: 9; justify-self: center;
-    margin: 0 0 1.6rem; font-size: 0.85rem;
+    margin: 4.5rem 0 1.6rem; font-size: 0.85rem;
   }
   .landing .hero-backed img { height: 2rem; }
   .landing .hero-grid .app-window { margin-right: 0; margin-top: 2.2rem; }
@@ -1036,14 +1043,26 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
      section as its own band (keeps the checkpoints clear of the sand) */
   .landing .testimonial-band { margin-top: 0; }
   .landing .testimonial-band .sect { padding-block: clamp(4rem, 12vw, 6rem) clamp(3rem, 8vw, 4.5rem); }
-  /* explore on a phone: the hover game is off — hotspots and the side
-     panel go, and the six explanations stand as cards under the dashboard */
-  .landing .explore-grid { grid-template-columns: 1fr; }
-  .landing .explore-info, .landing .explore-dash .hot { display: none; }
+  /* explore on a phone: scroll is the selector. The grid dissolves so the
+     dashboard can stick to the plate's full height under the header while
+     the cards pass beneath it; the mid-viewport card lights its widget's
+     ring on the image (the observer effect in App.tsx). The side panel goes;
+     hotspots stay visible as rings but stop being tap targets. */
+  .landing .explore-grid { display: contents; }
+  .landing .explore-info { display: none; }
+  .landing .explore-dash {
+    position: sticky; top: 4.6rem; z-index: 2;
+  }
+  .landing .explore-dash .hot { pointer-events: none; }
   .landing .explore-list { display: grid; gap: 0.9rem; margin-top: 1.1rem; }
   .landing .explore-item {
     background: var(--bg); border: 1px solid var(--line);
     border-radius: var(--r-win); padding: 1.05rem 1.2rem;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  }
+  .landing .explore-item.on {
+    border-color: rgba(21, 85, 126, 0.45);
+    box-shadow: 0 0 0 1px rgba(21, 85, 126, 0.45);
   }
   .landing .explore-item h3 {
     margin: 0; font-size: 1.05rem; font-weight: 600;
