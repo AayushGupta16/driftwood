@@ -40,14 +40,14 @@ on marketing pages and is never a second brand accent.
 - **Voice accent**: Georgia italic in tide blue, `em.voice`. One phrase per
   heading, the phrase that carries the meaning ("*AI slop*", "*whole job*").
   Never two voice phrases in the same block.
-  **Earn it or drop it** (2026-07-28): a heading only takes one if there is a
-  single phrase that genuinely outranks the rest of the line. The hero and the
-  `#explore` headings both had theirs pulled — "Ship *tailored demos*" and
-  "The numbers you'll *keep track* of" have no such phrase, and the blue there
-  read as decoration. Two survive as of 2026-08-09: the closing ask
-  ("*your* prospects") and the `#cases` heading ("Don't send your leads
-  *slop*" — tested copy from Aayush; "slop" is the page's own vocabulary,
-  the compare section IS the slop parody, and no word outranks it).
+  **Every heading carries one** (2026-08-10, Aayush's call reversing the
+  2026-07-28 "earn it or drop it" pullback): hero "Ship *tailored demos*",
+  `#cases` "your leads *slop*", `#explore` "*book meetings*", the close
+  "*your* prospects". The 07-28 worry was that the serif-blue word is the
+  stock AI-website flourish; the ruling now is that it was also simply good
+  design, and the page's identity lives in the sea and the artifacts, not
+  in abstaining from the accent. Still one phrase per heading, never two,
+  and it goes on the phrase that carries the meaning.
 - **Section headings carry full weight** (2026-08-10, reversing the
   2026-07-28 thin-350 rule at Aayush's call): `#cases` and `#explore` sit at
   the shared scale's 600, matching the closing ask. The thin ground was
@@ -62,8 +62,9 @@ on marketing pages and is never a second brand accent.
   shared scale — `clamp(2.05rem, 1.15rem + 2.75vw, 3.15rem)`, weight **620**
   (Public Sans is variable, so this is a real notch above 600 and not a jump
   to semibold), tracking −0.028em, leading 1.1. It has to out-rank the sub
-  under it; at the shared scale the two read as one block. It also carries
-  **no voice italic** — the phrase that matters is the whole line.
+  under it; at the shared scale the two read as one block. Since 2026-08-10
+  it carries "*tailored demos*" as its voice phrase, like every heading
+  (see the voice-accent rule above).
 - No em dashes in site copy. (Sole exception: the slop parody card — slop
   uses em dashes, that's the joke.)
 - **Break lines on meaning, not on measure** (2026-07-28): `text-wrap: balance`

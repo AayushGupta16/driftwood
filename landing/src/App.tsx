@@ -1275,7 +1275,7 @@ export default function App() {
           <div className="wrap hero-grid">
             <div>
               <h1>
-                Ship tailored demos
+                Ship <em className="voice">tailored demos</em>
                 <br className="h1-br" /> to every prospect
               </h1>
               {/* "cold outbound" is one idea and must never break across the
@@ -1439,7 +1439,9 @@ export default function App() {
         <section id="explore" className="sheet sheet-white">
           <div className="wrap sect">
             <div className="explore-head">
-              <h2>Watch your outbound book meetings</h2>
+              <h2>
+                Watch your outbound <em className="voice">book meetings</em>
+              </h2>
             </div>
             {/* the whole section stands on a baby-blue mat — a bounding box
                 holding the dashboard AND the panel that reads it, so the two
