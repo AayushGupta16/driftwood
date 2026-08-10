@@ -683,12 +683,14 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
    (3) their lockup, small and quiet, closing the column. */
 .landing #cases .sect { padding-block: clamp(3rem, 6vw, 4.75rem); }
 .landing .cases-head { text-align: center; margin-bottom: clamp(2rem, 4vw, 3rem); }
-/* flat type, back to the earlier treatment: the sentence runs light so the one
-   number owns the line — thin ground, heavy accent-colored figure. The
-   thin-sheet letterpress (text-shadow) that was tried here belongs to the
-   clips; on type it read as a second object competing with them. */
+/* full weight, matching the closing ask (2026-08-10): the thin ground was
+   built for a long line carrying a heavy figure ("...converts at 10%");
+   the five-word imperative that replaced it read frail at 350. The voice
+   italic still separates by serif + color, not weight. The thin-sheet
+   letterpress (text-shadow) tried here earlier stays dead — on type it
+   read as a second object competing with the clips. */
 .landing .cases-head h2 {
-  margin-inline: auto; max-width: none; font-weight: 350;
+  margin-inline: auto; max-width: none;
 }
 .landing .cases-head h2 b { font-weight: 750; color: var(--accent); }
 .landing .cases-rail {
@@ -869,10 +871,9 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
 /* one line: the shared 28ch cap would break it after "keep", which splits the
    voice phrase across two rows. Desktop only — at the clamp's floor this
    overruns a 390px screen, so phones get the wrap back. */
-/* thin ground, like the cases heading: the section title introduces the
-   dashboard rather than competing with it, and it carries no voice italic —
-   there's no one phrase here that outranks the rest of the line */
-.landing #explore .explore-head h2 { margin-inline: auto; max-width: none; font-weight: 350; }
+/* full weight, like the cases heading and the closing ask (2026-08-10);
+   still no voice italic — no one phrase here outranks the rest of the line */
+.landing #explore .explore-head h2 { margin-inline: auto; max-width: none; }
 @media (min-width: 52rem) {
   .landing #explore .explore-head { max-width: none; }
   .landing #explore .explore-head h2 { white-space: nowrap; }

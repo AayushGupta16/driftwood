@@ -48,11 +48,14 @@ on marketing pages and is never a second brand accent.
   ("*your* prospects") and the `#cases` heading ("Don't send your leads
   *slop*" — tested copy from Aayush; "slop" is the page's own vocabulary,
   the compare section IS the slop parody, and no word outranks it).
-- **Section headings run thin** (2026-07-28): `#cases` and `#explore` set
-  weight **350** on the shared heading scale — a light ground under a heavy
-  accent figure where there is one (the voice-italic *slop*; before
-  2026-08-09 it was `10%` at 750), and light throughout where
-  there isn't. Only the hero H1 and the closing ask carry weight.
+- **Section headings carry full weight** (2026-08-10, reversing the
+  2026-07-28 thin-350 rule at Aayush's call): `#cases` and `#explore` sit at
+  the shared scale's 600, matching the closing ask. The thin ground was
+  built for long descriptive lines carrying a heavy accent figure
+  ("...converts at `10%`" at 750); once the copy turned into short
+  imperatives ("Don't send your leads *slop*") the light weight read frail,
+  not elegant. The voice italic still separates by serif and color, and the
+  hero still outranks sections by size and position, so nothing shouts.
 - Headings share one scale: `clamp(2rem, 1.2rem + 2.8vw, 3.2rem)`, weight
   600, tracking −0.014em. H1 caps at 12 words.
 - **The hero H1 is the one exception** (2026-07-28): it sits a step above the
