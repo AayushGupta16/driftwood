@@ -1368,6 +1368,18 @@ export default function App() {
                 )}
               </aside>
             </div>
+            {/* phones: hover doesn't exist and the hotspots are unlabeled
+                targets whose feedback lands off-screen — so the six
+                explanations stand as a plain list under the dashboard
+                instead of behind taps. Hidden on desktop (CSS). */}
+            <div className="explore-list">
+              {WIDGETS.map((w) => (
+                <div key={w.id} className="explore-item">
+                  <h3>{w.title}</h3>
+                  <p>{w.body}</p>
+                </div>
+              ))}
+            </div>
             </div>
           </div>
         </section>

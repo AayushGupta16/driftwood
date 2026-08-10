@@ -926,6 +926,8 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
 .landing .explore-card { animation: fadeUp 0.28s ease both; }
 .landing .explore-card h3 { margin: 0; font-size: 1.22rem; font-weight: 600; line-height: 1.28; letter-spacing: -0.01em; color: var(--ink); text-wrap: balance; }
 .landing .explore-card p { margin: 0.7rem 0 0; color: var(--gray); font-size: 1rem; line-height: 1.55; }
+/* the phone stand-in for the hover panel (see the mobile block below) */
+.landing .explore-list { display: none; }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
 /* ---------- close → the booking section ----------
@@ -991,13 +993,14 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
   .landing .hero h1 { max-width: 22ch; text-wrap: balance; }
   .landing .hero h1, .landing .hero-sub { text-align: center; justify-self: center; }
   .landing .hero-actions { justify-self: center; }
-  /* stacked: no corner to anchor to — the line follows the island onto the
-     water in flow, centred, a step smaller than the desktop corner mark */
+  /* stacked: no corner to anchor to, and down on the water the line drowned
+     in the dense rows — it stands on the white under the CTA instead,
+     centred in flow before the story card */
   .landing .hero-backed {
-    position: static; order: 9; justify-self: center;
-    margin: 0 0 1.6rem; font-size: 0.85rem;
+    position: static; justify-self: center;
+    margin: 1.5rem 0 0; font-size: 0.85rem;
   }
-  .landing .hero-backed img { height: 1.9rem; }
+  .landing .hero-backed img { height: 2rem; }
   .landing .hero-grid .app-window { margin-right: 0; margin-top: 2.2rem; }
   /* stacked hero: the card centers under the CTA, a shallow dip into the band */
   .landing .hero-grid .hero-card { margin: 5.6rem auto -1.4rem; width: min(440px, 86vw); }
@@ -1034,9 +1037,20 @@ html:has(.landing) { font-size: clamp(16px, 0.477vw + 8.8px, 21px); }
      section as its own band (keeps the checkpoints clear of the sand) */
   .landing .testimonial-band { margin-top: 0; }
   .landing .testimonial-band .sect { padding-block: clamp(4rem, 12vw, 6rem) clamp(3rem, 8vw, 4.5rem); }
-  /* explore stacks: dashboard, then the panel (tap a widget to fill it) */
-  .landing .explore-grid { grid-template-columns: 1fr; gap: 1.25rem; }
-  .landing .explore-info { position: static; min-height: 6.5rem; }
+  /* explore on a phone: the hover game is off — hotspots and the side
+     panel go, and the six explanations stand as cards under the dashboard */
+  .landing .explore-grid { grid-template-columns: 1fr; }
+  .landing .explore-info, .landing .explore-dash .hot { display: none; }
+  .landing .explore-list { display: grid; gap: 0.9rem; margin-top: 1.1rem; }
+  .landing .explore-item {
+    background: var(--bg); border: 1px solid var(--line);
+    border-radius: var(--r-win); padding: 1.05rem 1.2rem;
+  }
+  .landing .explore-item h3 {
+    margin: 0; font-size: 1.05rem; font-weight: 600;
+    line-height: 1.3; letter-spacing: -0.01em; color: var(--ink);
+  }
+  .landing .explore-item p { margin: 0.45rem 0 0; color: var(--gray); font-size: 0.95rem; line-height: 1.5; }
   /* the how deck keeps its scroll-scrub on phones: a compact pinned scene.
      svh, not vh — iOS toolbar collapse makes vh pins jump mid-scrub */
   .landing #how .pin-wrap { height: 200vh; height: 200svh; }
