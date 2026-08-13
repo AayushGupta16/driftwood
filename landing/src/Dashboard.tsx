@@ -37,6 +37,13 @@ type User = {
      account with no Gmail service behind it) — set server-side, shown on
      the email card. */
   email_error?: string | null;
+  /* optional so older /auth/me payloads still parse; absent reads as
+     never-attempted. */
+  twitter_connected?: boolean;
+  /* profile+proxy exist but login isn't confirmed yet — the card starts in
+     its "waiting on you" state instead of "Connect X" on page load. */
+  twitter_pending?: boolean;
+  twitter_handle?: string | null;
   is_admin?: boolean;
   impersonating?: boolean;
 };
@@ -73,6 +80,14 @@ function LinkedInMark({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={className}>
       <path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zm1.78 13.02H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.22.79 24 1.77 24h20.45c.98 0 1.78-.78 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z" />
+    </svg>
+  );
+}
+
+function XMark({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={className}>
+      <path d="M18.24 2.25h3.31l-7.23 8.26L23 21.75h-6.66l-5.22-6.83-5.97 6.83H1.83l7.73-8.84L1 2.25h6.83l4.71 6.24 5.7-6.24Zm-1.16 17.52h1.84L7.02 4.13H5.04l12.04 15.64Z" />
     </svg>
   );
 }
@@ -450,6 +465,11 @@ function ApprovedView({ user }: { user: User }) {
       <EmailCard
         connected={user.email_connected ?? false}
         emailError={user.email_error ?? null}
+      />
+      <TwitterCard
+        connected={user.twitter_connected ?? false}
+        pending={user.twitter_pending ?? false}
+        handle={user.twitter_handle ?? null}
       />
 
       {/* two equal-height columns: metrics left, lists right. */}
@@ -1047,6 +1067,144 @@ function EmailCard({
               role="alert"
             >
               {error}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+type TwitterState = "idle" | "connecting" | "pending" | "error";
+
+/* Same card shape as LinkedInCard/EmailCard, but against Kernel instead of
+   an OAuth hosted-auth provider — X has none. handleConnect opens the
+   returned live-view URL in a NEW TAB (nothing navigates the dashboard
+   away, unlike the LinkedIn/Email redirect flows), and since there's no
+   callback to confirm completion, this card polls /auth/me on a coarse
+   interval + window focus while pending and reloads once when the backend's
+   self-heal check (see routers/auth.py::_twitter_connected) confirms login. */
+function TwitterCard({
+  connected,
+  pending: alreadyPending,
+  handle,
+}: {
+  connected: boolean;
+  pending: boolean;
+  handle: string | null;
+}) {
+  const [state, setState] = useState<TwitterState>(
+    alreadyPending ? "pending" : "idle",
+  );
+  const [error, setError] = useState<string | null>(null);
+  const {
+    pending: disconnectPending,
+    error: disconnectError,
+    disconnect: handleDisconnect,
+  } = useDisconnect("/twitter/disconnect");
+  const pending = state === "connecting" || disconnectPending;
+
+  useEffect(() => {
+    if (state !== "pending") return;
+    let cancelled = false;
+    const check = async () => {
+      try {
+        const res = await fetch("/auth/me", { credentials: "include" });
+        if (!res.ok || cancelled) return;
+        const data = (await res.json()) as { twitter_connected?: boolean };
+        if (data.twitter_connected) window.location.reload();
+      } catch {
+        /* transient failure — keep polling, nothing to surface here */
+      }
+    };
+    const onFocus = () => void check();
+    window.addEventListener("focus", onFocus);
+    const interval = window.setInterval(() => void check(), 60_000);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("focus", onFocus);
+      window.clearInterval(interval);
+    };
+  }, [state]);
+
+  async function handleConnect() {
+    setState("connecting");
+    setError(null);
+    try {
+      const res = await fetch("/twitter/connect", {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("request failed");
+      const data = (await res.json()) as { live_view_url: string };
+      window.open(data.live_view_url, "_blank", "noopener,noreferrer");
+      setState("pending");
+    } catch {
+      setError("Couldn't start the connection. Please try again.");
+      setState("error");
+    }
+  }
+
+  return (
+    <div className={`mt-7 ${CARD} p-7 sm:p-8`}>
+      <div className="flex items-start gap-4">
+        <span
+          className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${
+            connected ? "bg-ok/10 text-ok" : "bg-tide/10 text-tide"
+          }`}
+          aria-hidden="true"
+        >
+          {connected ? (
+            <CheckMark className="size-6" />
+          ) : (
+            <XMark className="size-6" />
+          )}
+        </span>
+        <div className="min-w-0 flex-1">
+          <h2 className="m-0 text-[18px] font-semibold tracking-[-0.01em]">
+            {connected
+              ? `Connected as @${handle ?? "…"}`
+              : "Connect your X account"}
+          </h2>
+          <p className="m-0 mt-2 text-[15px] leading-relaxed text-ink-soft">
+            {connected
+              ? "You're connected! We'll take it from here."
+              : state === "pending"
+                ? "Log in to X in the new tab — we'll pick it up automatically once you're back."
+                : "Optional — lets your AE reach prospects on X. You'll log in inside a secure isolated browser session; we never see your password."}
+          </p>
+
+          {connected ? (
+            <button
+              type="button"
+              onClick={handleDisconnect}
+              disabled={pending}
+              className="mt-5 cursor-pointer rounded-full border border-line bg-surface px-3.5 py-2 text-[13.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {pending ? "Disconnecting…" : "Disconnect"}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => void handleConnect()}
+              disabled={pending}
+              className="mt-5 inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-full bg-tide px-4.5 py-2.5 text-[14.5px] font-semibold text-white transition-all hover:-translate-y-px hover:bg-tide-deep disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <XMark className="size-4.5 shrink-0" />
+              {state === "connecting"
+                ? "Connecting…"
+                : state === "pending"
+                  ? "Reopen login tab"
+                  : "Connect X"}
+            </button>
+          )}
+
+          {(error ?? disconnectError) && (
+            <p
+              className="m-0 mt-3 text-[13.5px] font-medium text-red-700"
+              role="alert"
+            >
+              {error ?? disconnectError}
             </p>
           )}
         </div>

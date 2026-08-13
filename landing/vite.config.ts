@@ -9,6 +9,7 @@ export default defineConfig({
       '/auth': { target: 'http://localhost:8000', changeOrigin: true },
       '/linkedin': { target: 'http://localhost:8000', changeOrigin: true },
       '/email': { target: 'http://localhost:8000', changeOrigin: true },
+      '/twitter': { target: 'http://localhost:8000', changeOrigin: true },
       '/api': { target: 'http://localhost:8000', changeOrigin: true },
     },
   },
