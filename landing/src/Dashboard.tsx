@@ -1103,6 +1103,11 @@ function TwitterCard({
     disconnect: handleDisconnect,
   } = useDisconnect("/twitter/disconnect");
   const pending = state === "connecting" || disconnectPending;
+  // Deliberately no noopener/noreferrer on the window.open below — we need
+  // this reference back specifically to close the tab once login is
+  // confirmed, and the target is Kernel's own live-view host, not
+  // arbitrary user content.
+  const loginTab = useRef<Window | null>(null);
 
   useEffect(() => {
     if (state !== "pending") return;
@@ -1112,14 +1117,20 @@ function TwitterCard({
         const res = await fetch("/auth/me", { credentials: "include" });
         if (!res.ok || cancelled) return;
         const data = (await res.json()) as { twitter_connected?: boolean };
-        if (data.twitter_connected) window.location.reload();
+        if (data.twitter_connected) {
+          loginTab.current?.close();
+          window.location.reload();
+        }
       } catch {
         /* transient failure — keep polling, nothing to surface here */
       }
     };
     const onFocus = () => void check();
     window.addEventListener("focus", onFocus);
-    const interval = window.setInterval(() => void check(), 60_000);
+    // Backend confirms fast now — it polls the still-open login session
+    // directly rather than opening a fresh check each time — so this can
+    // run tight without meaningfully adding Kernel cost.
+    const interval = window.setInterval(() => void check(), 4_000);
     return () => {
       cancelled = true;
       window.removeEventListener("focus", onFocus);
@@ -1137,7 +1148,7 @@ function TwitterCard({
       });
       if (!res.ok) throw new Error("request failed");
       const data = (await res.json()) as { live_view_url: string };
-      window.open(data.live_view_url, "_blank", "noopener,noreferrer");
+      loginTab.current = window.open(data.live_view_url, "_blank");
       setState("pending");
     } catch {
       setError("Couldn't start the connection. Please try again.");
