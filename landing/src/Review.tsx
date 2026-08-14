@@ -104,7 +104,7 @@ type ReviewItemRow = {
   id: string;
   batch_id: string;
   agent_id: string;
-  kind: string; // "send_message" | "send_connection" | "send_email" | "bug_validation"
+  kind: string; // "send_message" | "send_connection" | "send_email" | "send_x_dm" | "follow_x_account" | "bug_validation"
   title: string;
   body: string;
   subject: string | null; // send_email only; null elsewhere
@@ -327,6 +327,8 @@ function kindLabel(kind: string): string {
   if (kind === "send_message") return "message";
   if (kind === "send_connection") return "connection";
   if (kind === "send_email") return "email";
+  if (kind === "send_x_dm") return "X DM";
+  if (kind === "follow_x_account") return "X follow";
   if (kind === "bug_validation") return "bug";
   return kind;
 }
@@ -337,6 +339,8 @@ function sendKindLabel(kind: string): string {
   if (kind === "message") return "message";
   if (kind === "connection_request") return "connection";
   if (kind === "email") return "email";
+  if (kind === "x_dm") return "X DM";
+  if (kind === "x_follow") return "X follow";
   return kind;
 }
 
@@ -360,6 +364,8 @@ const KIND_ORDER = [
   "send_connection",
   "send_message",
   "send_email",
+  "send_x_dm",
+  "follow_x_account",
 ];
 
 function kindRank(kind: string): number {
@@ -1594,10 +1600,12 @@ function ItemCard({
   onConfirmDeny: () => void;
 }) {
   const isBug = item.kind === "bug_validation";
+  const isFollow = item.kind === "follow_x_account";
   const isSend =
     item.kind === "send_message" ||
     item.kind === "send_connection" ||
-    item.kind === "send_email";
+    item.kind === "send_email" ||
+    item.kind === "send_x_dm";
   const denyOpen = denyReason !== null;
   // Bug items read Real / Not real, but map to the same approve/deny.
   const approveLabel = isBug ? "Real" : "Approve";
@@ -1646,7 +1654,11 @@ function ItemCard({
               ? "Connection note — sends exactly as shown"
               : item.kind === "send_email"
                 ? "Outgoing email — sends exactly as shown"
-                : "Outgoing message — sends exactly as shown"}
+                : item.kind === "send_x_dm"
+                  ? "Outgoing X DM — sends exactly as shown"
+                  : isFollow
+                    ? "Follow this X account — rationale below, not sent as a message"
+                    : "Outgoing message — sends exactly as shown"}
           </span>
           {/* the exact frozen payload — mono, primary ink, no truncation;
               emails lead with their subject line */}
