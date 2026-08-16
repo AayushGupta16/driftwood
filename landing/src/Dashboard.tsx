@@ -469,7 +469,6 @@ function ApprovedView({ user }: { user: User }) {
       <TwitterCard
         connected={user.twitter_connected ?? false}
         pending={user.twitter_pending ?? false}
-        handle={user.twitter_handle ?? null}
       />
 
       {/* two equal-height columns: metrics left, lists right. */}
@@ -1080,18 +1079,17 @@ type TwitterState = "idle" | "connecting" | "pending" | "error";
 /* Same card shape as LinkedInCard/EmailCard, but against Kernel instead of
    an OAuth hosted-auth provider — X has none. handleConnect opens the
    returned live-view URL in a NEW TAB (nothing navigates the dashboard
-   away, unlike the LinkedIn/Email redirect flows), and since there's no
-   callback to confirm completion, this card polls /auth/me on a coarse
-   interval + window focus while pending and reloads once when the backend's
-   self-heal check (see routers/auth.py::_twitter_connected) confirms login. */
+   away, unlike the LinkedIn/Email redirect flows). There's no callback, so
+   this card is the one that notices the user is done: it watches that tab
+   for `closed` and POSTs /twitter/finish, which is what ends the Kernel
+   session and confirms the login. It also polls /auth/me on the same
+   interval + window focus, and reloads once connected. */
 function TwitterCard({
   connected,
   pending: alreadyPending,
-  handle,
 }: {
   connected: boolean;
   pending: boolean;
-  handle: string | null;
 }) {
   const [state, setState] = useState<TwitterState>(
     alreadyPending ? "pending" : "idle",
@@ -1104,15 +1102,31 @@ function TwitterCard({
   } = useDisconnect("/twitter/disconnect");
   const pending = state === "connecting" || disconnectPending;
   // Deliberately no noopener/noreferrer on the window.open below — we need
-  // this reference back specifically to close the tab once login is
-  // confirmed, and the target is Kernel's own live-view host, not
-  // arbitrary user content.
+  // this reference back to watch for the user closing the tab (and to close
+  // it ourselves if the backend confirms first), and the target is Kernel's
+  // own live-view host, not arbitrary user content.
   const loginTab = useRef<Window | null>(null);
 
   useEffect(() => {
     if (state !== "pending") return;
     let cancelled = false;
     const check = async () => {
+      // The user closing the login tab is the trigger: the backend ends the
+      // Kernel session (which is what flushes the login into the saved
+      // profile) and confirms from that profile's cookies. Null the ref
+      // first so a focus + interval overlap can't POST this twice.
+      if (loginTab.current?.closed) {
+        loginTab.current = null;
+        try {
+          await fetch("/twitter/finish", {
+            method: "POST",
+            credentials: "include",
+          });
+        } catch {
+          /* the backend's own self-heal check still covers this */
+        }
+        if (cancelled) return;
+      }
       try {
         const res = await fetch("/auth/me", { credentials: "include" });
         if (!res.ok || cancelled) return;
@@ -1127,9 +1141,9 @@ function TwitterCard({
     };
     const onFocus = () => void check();
     window.addEventListener("focus", onFocus);
-    // Backend confirms fast now — it polls the still-open login session
-    // directly rather than opening a fresh check each time — so this can
-    // run tight without meaningfully adding Kernel cost.
+    // Tight enough that closing the tab feels instant; /auth/me itself is
+    // cheap, and its Kernel-backed self-heal check is separately throttled
+    // backend-side (routers/auth.py::_TWITTER_CHECK_MIN_INTERVAL).
     const interval = window.setInterval(() => void check(), 4_000);
     return () => {
       cancelled = true;
@@ -1173,9 +1187,10 @@ function TwitterCard({
         </span>
         <div className="min-w-0 flex-1">
           <h2 className="m-0 text-[18px] font-semibold tracking-[-0.01em]">
-            {connected
-              ? `Connected as @${handle ?? "…"}`
-              : "Connect your X account"}
+            {/* No @handle to show: the login check reads cookies, not X's
+                DOM, so nothing scrapes the handle any more. Plain
+                "Connected" until a later slice reads it back. */}
+            {connected ? "Connected" : "Connect your X account"}
           </h2>
           <p className="m-0 mt-2 text-[15px] leading-relaxed text-ink-soft">
             {connected
