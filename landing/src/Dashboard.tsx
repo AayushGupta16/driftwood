@@ -43,6 +43,10 @@ type User = {
   /* profile+proxy exist but login isn't confirmed yet — the card starts in
      its "waiting on you" state instead of "Connect X" on page load. */
   twitter_pending?: boolean;
+  /* logged in, but the profile is sitting behind X's encrypted-chat PIN
+     wall — the account is connected and DMs specifically can't go out
+     until the user enters that PIN. Its own state, not a kind of pending. */
+  twitter_chat_locked?: boolean;
   twitter_handle?: string | null;
   is_admin?: boolean;
   impersonating?: boolean;
@@ -105,6 +109,16 @@ function CheckMark({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={className}>
       <path d="M20 6 9 17l-5-5" />
+    </svg>
+  );
+}
+
+/* padlock — the X card's "connected, but chats are still locked" state. */
+function LockMark({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={className}>
+      <rect x="4.5" y="10.5" width="15" height="10" rx="2.5" />
+      <path d="M8 10.5V7.4a4 4 0 0 1 8 0v3.1" />
     </svg>
   );
 }
@@ -469,6 +483,7 @@ function ApprovedView({ user }: { user: User }) {
       <TwitterCard
         connected={user.twitter_connected ?? false}
         pending={user.twitter_pending ?? false}
+        chatLocked={user.twitter_chat_locked ?? false}
       />
 
       {/* two equal-height columns: metrics left, lists right. */}
@@ -1074,7 +1089,53 @@ function EmailCard({
   );
 }
 
-type TwitterState = "idle" | "connecting" | "pending" | "error";
+type TwitterState =
+  | "idle"
+  | "connecting" // a /connect or /unlock POST is in flight
+  | "pending" // the login tab is open, we're watching for its close
+  | "unlocking" // same, but the tab was opened to enter the chat PIN
+  | "error";
+
+/* The ordered list the card shows while the X tab is open.
+
+   This exists because step 2 is the one people skip. The old copy — "Log in
+   to X in the new tab, we'll pick it up automatically once you're back" —
+   said login was the whole job, and a user who did exactly that got a green
+   "Connected" card whose every DM then died at X's chat PIN wall. Closing
+   the tab is listed LAST because the close is what confirms the connection:
+   anything not done by then isn't in the saved profile. */
+function TwitterSteps({ loggedIn }: { loggedIn: boolean }) {
+  const steps = [
+    { key: "login", done: loggedIn, text: <>Log in to your X account.</> },
+    {
+      key: "pin",
+      done: false,
+      text: <>Open Messages and enter your chat PIN.</>,
+    },
+    {
+      key: "close",
+      done: false,
+      text: <>Close the X tab — that&rsquo;s what saves the connection.</>,
+    },
+  ];
+  return (
+    <ol className="m-0 mt-3.5 list-none p-0">
+      {steps.map((step, i) => (
+        <li key={step.key} className="relative mb-2.5 pl-[30px] text-[15px] leading-relaxed">
+          <span
+            aria-hidden="true"
+            className={`absolute left-0 top-px inline-flex size-5 items-center justify-center rounded-full text-[11.5px] font-bold ${
+              step.done ? "bg-ok/12 text-ok" : "bg-sand text-ink-soft"
+            }`}
+          >
+            {step.done ? "✓" : i + 1}
+          </span>
+          <span className={step.done ? "text-ink-soft" : "text-ink"}>{step.text}</span>
+        </li>
+      ))}
+    </ol>
+  );
+}
 
 /* Same card shape as LinkedInCard/EmailCard, but against Kernel instead of
    an OAuth hosted-auth provider — X has none. handleConnect opens the
@@ -1087,9 +1148,11 @@ type TwitterState = "idle" | "connecting" | "pending" | "error";
 function TwitterCard({
   connected,
   pending: alreadyPending,
+  chatLocked,
 }: {
   connected: boolean;
   pending: boolean;
+  chatLocked: boolean;
 }) {
   const [state, setState] = useState<TwitterState>(
     alreadyPending ? "pending" : "idle",
@@ -1101,6 +1164,12 @@ function TwitterCard({
     disconnect: handleDisconnect,
   } = useDisconnect("/twitter/disconnect");
   const pending = state === "connecting" || disconnectPending;
+  const watching = state === "pending" || state === "unlocking";
+  // Connected but walled: the login is fine, chats aren't reachable. Treated
+  // as its own state rather than a variant of "connected" because the user
+  // has something left to do, and as its own state rather than a variant of
+  // "pending" because nothing about the connection is in doubt.
+  const locked = connected && chatLocked;
   // Deliberately no noopener/noreferrer on the window.open below — we need
   // this reference back to watch for the user closing the tab (and to close
   // it ourselves if the backend confirms first), and the target is Kernel's
@@ -1108,13 +1177,14 @@ function TwitterCard({
   const loginTab = useRef<Window | null>(null);
 
   useEffect(() => {
-    if (state !== "pending") return;
+    if (!watching) return;
+    const forUnlock = state === "unlocking";
     let cancelled = false;
     const check = async () => {
-      // The user closing the login tab is the trigger: the backend ends the
-      // Kernel session (which is what flushes the login into the saved
-      // profile) and confirms from that profile's cookies. Null the ref
-      // first so a focus + interval overlap can't POST this twice.
+      // The user closing the tab is the trigger: the backend ends the Kernel
+      // session (which is what flushes what they did into the saved profile)
+      // and reads that profile back. Null the ref first so a focus +
+      // interval overlap can't POST this twice.
       if (loginTab.current?.closed) {
         loginTab.current = null;
         try {
@@ -1130,8 +1200,18 @@ function TwitterCard({
       try {
         const res = await fetch("/auth/me", { credentials: "include" });
         if (!res.ok || cancelled) return;
-        const data = (await res.json()) as { twitter_connected?: boolean };
-        if (data.twitter_connected) {
+        const data = (await res.json()) as {
+          twitter_connected?: boolean;
+          twitter_chat_locked?: boolean;
+        };
+        // What counts as done depends on why the tab was opened. An unlock
+        // run starts already-connected, so waiting on twitter_connected
+        // would be satisfied instantly and reload the page out from under
+        // someone still typing their PIN.
+        const done = forUnlock
+          ? data.twitter_connected === true && !data.twitter_chat_locked
+          : data.twitter_connected === true;
+        if (done) {
           loginTab.current?.close();
           window.location.reload();
         }
@@ -1150,22 +1230,30 @@ function TwitterCard({
       window.removeEventListener("focus", onFocus);
       window.clearInterval(interval);
     };
-  }, [state]);
+  }, [watching, state]);
 
-  async function handleConnect() {
+  /* One opener for both tabs. /unlock reuses the profile that already holds
+     the login (so the user isn't made to log in again just to type a PIN)
+     and lands on the chat surface; /connect mints or reuses per its own
+     rules and lands on the login page. */
+  async function openTab(kind: "connect" | "unlock") {
     setState("connecting");
     setError(null);
     try {
-      const res = await fetch("/twitter/connect", {
+      const res = await fetch(`/twitter/${kind}`, {
         method: "POST",
         credentials: "include",
       });
       if (!res.ok) throw new Error("request failed");
       const data = (await res.json()) as { live_view_url: string };
       loginTab.current = window.open(data.live_view_url, "_blank");
-      setState("pending");
+      setState(kind === "unlock" ? "unlocking" : "pending");
     } catch {
-      setError("Couldn't start the connection. Please try again.");
+      setError(
+        kind === "unlock"
+          ? "Couldn't reopen X. Please try again."
+          : "Couldn't start the connection. Please try again.",
+      );
       setState("error");
     }
   }
@@ -1175,11 +1263,17 @@ function TwitterCard({
       <div className="flex items-start gap-4">
         <span
           className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${
-            connected ? "bg-ok/10 text-ok" : "bg-tide/10 text-tide"
+            locked
+              ? "bg-amber-500/10 text-amber-700"
+              : connected
+                ? "bg-ok/10 text-ok"
+                : "bg-tide/10 text-tide"
           }`}
           aria-hidden="true"
         >
-          {connected ? (
+          {locked ? (
+            <LockMark className="size-6" />
+          ) : connected ? (
             <CheckMark className="size-6" />
           ) : (
             <XMark className="size-6" />
@@ -1190,17 +1284,64 @@ function TwitterCard({
             {/* No @handle to show: the login check reads cookies, not X's
                 DOM, so nothing scrapes the handle any more. Plain
                 "Connected" until a later slice reads it back. */}
-            {connected ? "Connected" : "Connect your X account"}
+            {locked
+              ? "Almost there — Messages is locked"
+              : connected
+                ? "Connected"
+                : watching
+                  ? "Finish in the X tab"
+                  : "Connect your X account"}
           </h2>
           <p className="m-0 mt-2 text-[15px] leading-relaxed text-ink-soft">
-            {connected
-              ? "You're connected! We'll take it from here."
-              : state === "pending"
-                ? "Log in to X in the new tab — we'll pick it up automatically once you're back."
-                : "Optional — lets your AE reach prospects on X. You'll log in inside a secure isolated browser session; we never see your password."}
+            {locked
+              ? "You're logged in to X, but your chat PIN wasn't entered, so your AE can't send DMs yet."
+              : connected
+                ? "You're connected! We'll take it from here."
+                : watching
+                  ? "Do these in order, then come back:"
+                  : "Optional — lets your AE reach prospects on X. You'll log in and unlock Messages with your chat PIN inside a secure isolated browser session; we never see either."}
           </p>
 
-          {connected ? (
+          {(watching || locked) && <TwitterSteps loggedIn={locked} />}
+
+          {/* One callout, never two stacked: during an unlock both states
+              are live at once, and the amber one is the specific message. */}
+          {watching && !locked && (
+            <p className="m-0 mt-3 rounded-lg border-l-[3px] border-tide bg-tide-wash px-3.5 py-2.5 text-[13.5px] leading-relaxed text-tide-deep">
+              Step 2 is easy to miss. X keeps DMs behind a separate passcode,
+              and if it isn&rsquo;t entered here your AE can&rsquo;t open a
+              conversation later. We never see the PIN.
+            </p>
+          )}
+          {locked && (
+            <p className="m-0 mt-3 rounded-lg border-l-[3px] border-amber-600 bg-amber-50 px-3.5 py-2.5 text-[13.5px] leading-relaxed text-amber-900">
+              Your login is saved — this only takes a few seconds. Everything
+              else on your account keeps working; it&rsquo;s DMs specifically
+              that stay blocked until this is done.
+            </p>
+          )}
+
+          {locked ? (
+            <div className="mt-5 flex flex-wrap items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => void openTab("unlock")}
+                disabled={pending}
+                className="inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-full bg-tide px-4.5 py-2.5 text-[14.5px] font-semibold text-white transition-all hover:-translate-y-px hover:bg-tide-deep disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <XMark className="size-4.5 shrink-0" />
+                {state === "connecting" ? "Opening…" : "Reopen X tab"}
+              </button>
+              <button
+                type="button"
+                onClick={handleDisconnect}
+                disabled={pending}
+                className="cursor-pointer rounded-full border border-line bg-surface px-3.5 py-2 text-[13.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {pending ? "Disconnecting…" : "Disconnect"}
+              </button>
+            </div>
+          ) : connected ? (
             <button
               type="button"
               onClick={handleDisconnect}
@@ -1212,7 +1353,7 @@ function TwitterCard({
           ) : (
             <button
               type="button"
-              onClick={() => void handleConnect()}
+              onClick={() => void openTab("connect")}
               disabled={pending}
               className="mt-5 inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-full bg-tide px-4.5 py-2.5 text-[14.5px] font-semibold text-white transition-all hover:-translate-y-px hover:bg-tide-deep disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
             >

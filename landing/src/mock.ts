@@ -16,6 +16,13 @@ if (params.has("mock")) {
     // for QA'ing admin-only pages like /dashboard/seo-geo. Plain ?mock=1
     // stays the customer view the baked marketing screenshots are shot from.
     is_admin: params.get("mock") === "admin",
+    // ?x=pending|connected|locked walks the X card's later states without a
+    // real Kernel profile. "locked" is the one worth looking at: connected,
+    // but sitting behind X's chat PIN wall so DMs can't go out. Omit for
+    // the default "Connect your X account".
+    twitter_connected: ["connected", "locked"].includes(params.get("x") ?? ""),
+    twitter_pending: params.get("x") === "pending",
+    twitter_chat_locked: params.get("x") === "locked",
   };
   const summary = {
     linkedin_connected: true,

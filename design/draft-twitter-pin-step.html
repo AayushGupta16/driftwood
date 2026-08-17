@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Draft — X connect, chat PIN step</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --color-paper: #ffffff;
+    --color-surface: #ffffff;
+    --color-ink: #16181b;
+    --color-ink-soft: #6a737d;
+    --color-ink-faint: #9aa2ab;
+    --color-tide: #15557e;
+    --color-tide-deep: #0d3c5b;
+    --color-tide-wash: #eaf1f7;
+    --color-sand: #eef2f5;
+    --color-line: #e9ebee;
+    --color-ok: #2a9d5c;
+    --color-alert: #b42318;
+    --color-warn: #b45309;
+    --color-warn-wash: #fdf6ec;
+    --shadow-win: 0 1px 2px rgba(22,24,27,.05), 0 24px 48px -24px rgba(22,24,27,.18);
+    --font-sans: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--color-paper); color: var(--color-ink);
+    font-family: var(--font-sans); -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 940px; margin: 0 auto; padding: 40px 24px 100px; }
+
+  /* draft chrome — not part of the dashboard */
+  .draftbar {
+    background: var(--color-ink); color: #fff; font-size: 13px;
+    padding: 10px 24px; letter-spacing: .01em;
+  }
+  .draftbar b { font-weight: 600; }
+  .legend {
+    display: flex; gap: 18px; align-items: center; flex-wrap: wrap;
+    margin: 0 0 30px; padding: 12px 16px; border: 1px dashed var(--color-line);
+    border-radius: 12px; font-size: 13px; color: var(--color-ink-soft);
+  }
+  .sectionhead {
+    margin: 54px 0 14px; padding-top: 26px; border-top: 1px solid var(--color-line);
+    font-size: 13px; text-transform: uppercase; letter-spacing: .09em;
+    color: var(--color-ink-faint); font-weight: 600;
+  }
+  .sectionhead:first-of-type { border-top: 0; padding-top: 0; margin-top: 0; }
+  .caption { font-size: 13.5px; color: var(--color-ink-soft); margin: 0 0 14px; }
+
+  .chip-new {
+    display: inline-block; vertical-align: middle; margin-left: 8px;
+    background: var(--color-tide); color: #fff; font-size: 10.5px;
+    font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    padding: 2px 7px; border-radius: 999px;
+  }
+  .chip-new.state { background: var(--color-warn); }
+
+  h1.head {
+    margin: 0; font-size: clamp(1.9rem, 4.4vw, 2.5rem); font-weight: 600;
+    line-height: 1.08; letter-spacing: -0.015em;
+  }
+
+  .card {
+    border-radius: 12px; border: 1px solid var(--color-line);
+    background: var(--color-surface); box-shadow: var(--shadow-win);
+  }
+  .card.pad { padding: 32px; }
+  .mt7 { margin-top: 28px; }
+  .mt35 { margin-top: 14px; }
+
+  .row { display: flex; align-items: flex-start; gap: 16px; }
+  .icon {
+    display: flex; width: 44px; height: 44px; flex: 0 0 44px;
+    align-items: center; justify-content: center; border-radius: 12px;
+  }
+  .icon.tide { background: rgba(21,85,126,.1); color: var(--color-tide); }
+  .icon.ok { background: rgba(42,157,92,.1); color: var(--color-ok); }
+  .icon.warn { background: rgba(180,83,9,.1); color: var(--color-warn); }
+  .body { min-width: 0; flex: 1; }
+  h2.cardtitle { margin: 0; font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
+  p.cardtext { margin: 8px 0 0; font-size: 15px; line-height: 1.6; color: var(--color-ink-soft); }
+
+  .btn {
+    margin-top: 20px; display: inline-flex; align-items: center; gap: 10px;
+    border-radius: 999px; border: 1px solid var(--color-line);
+    background: var(--color-surface); padding: 10px 18px;
+    font-size: 14.5px; font-weight: 600; color: var(--color-ink); cursor: pointer;
+  }
+  .btn.quiet { padding: 8px 14px; font-size: 13.5px; font-weight: 500; color: var(--color-ink-soft); }
+  .btn.primary { background: var(--color-tide); border-color: var(--color-tide); color: #fff; }
+
+  /* the delta: the ordered step list inside the pending state */
+  ol.steps {
+    margin: 14px 0 0; padding: 0; list-style: none;
+    counter-reset: step;
+  }
+  ol.steps li {
+    position: relative; counter-increment: step;
+    padding: 0 0 0 30px; margin: 0 0 9px;
+    font-size: 15px; line-height: 1.55; color: var(--color-ink);
+  }
+  ol.steps li::before {
+    content: counter(step);
+    position: absolute; left: 0; top: 1px;
+    width: 20px; height: 20px; border-radius: 999px;
+    background: var(--color-sand); color: var(--color-ink-soft);
+    font-size: 11.5px; font-weight: 700; line-height: 20px; text-align: center;
+  }
+  ol.steps li.done { color: var(--color-ink-soft); }
+  ol.steps li.done::before {
+    content: "✓"; background: rgba(42,157,92,.12); color: var(--color-ok); font-size: 12px;
+  }
+  ol.steps li b { font-weight: 600; }
+  .why {
+    margin: 12px 0 0; padding: 10px 14px; border-radius: 8px;
+    background: var(--color-tide-wash); border-left: 3px solid var(--color-tide);
+    font-size: 13.5px; line-height: 1.55; color: var(--color-tide-deep);
+  }
+  .why.warn { background: var(--color-warn-wash); border-left-color: var(--color-warn); color: #7c3d09; }
+
+  .stub { color: var(--color-ink-faint); font-size: 13.5px; }
+  .grid2 { display: grid; grid-template-columns: 1.45fr 1fr; gap: 14px; margin-top: 14px; }
+  @media (max-width: 860px) { .grid2 { grid-template-columns: 1fr; } }
+  .strip { display: flex; align-items: center; gap: 12px; padding: 16px; }
+  .strip .t { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+  .strip .s { margin-top: 4px; font-size: 12.5px; color: var(--color-ink-soft); }
+  .mono { font-family: var(--font-mono); font-size: 12.5px; }
+</style>
+</head>
+<body>
+
+<div class="draftbar">
+  <b>Draft</b> · dashboard, X connect card — adding the chat-PIN step. Whole page reproduced; only the
+  <span style="background:#15557e;padding:1px 6px;border-radius:999px;font-size:10.5px;font-weight:700;letter-spacing:.06em">NEW</span>
+  spots change.
+</div>
+
+<div class="wrap">
+
+  <div class="legend">
+    <span><span class="chip-new">new</span> copy or element that changes</span>
+    <span><span class="chip-new state">new state</span> a card state that does not exist today</span>
+    <span>Everything unmarked is current production.</span>
+  </div>
+
+  <!-- ======================= THE PAGE AS IT IS ======================= -->
+  <div class="sectionhead">The dashboard, top to bottom</div>
+
+  <h1 class="head">Welcome back, Aayush.</h1>
+
+  <!-- LinkedIn status strip (unchanged) -->
+  <div class="card mt7">
+    <div class="strip">
+      <span class="icon ok" style="width:32px;height:32px;flex:0 0 32px;border-radius:9px;border:1px solid rgba(42,157,92,.25)">✓</span>
+      <div style="flex:1">
+        <div class="t">LinkedIn connected &amp; sending</div>
+        <div class="s"><span class="mono">3/20</span> invites · <span class="mono">7/40</span> messages today ·
+          <span style="color:var(--color-ok);font-weight:500">within safe limits</span> · last action 12m ago</div>
+      </div>
+      <button class="btn quiet" style="margin:0">Disconnect</button>
+    </div>
+  </div>
+
+  <!-- Email card (unchanged) -->
+  <div class="card pad mt7">
+    <div class="row">
+      <span class="icon ok">✓</span>
+      <div class="body">
+        <h2 class="cardtitle">Email connected</h2>
+        <p class="cardtext">You're connected! We'll take it from here.</p>
+        <button class="btn quiet">Disconnect</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- X card — idle -->
+  <div class="card pad mt7">
+    <div class="row">
+      <span class="icon tide">𝕏</span>
+      <div class="body">
+        <h2 class="cardtitle">Connect your X account</h2>
+        <p class="cardtext">
+          Optional — lets your AE reach prospects on X. You'll log in
+          <b style="color:var(--color-ink)">and unlock Messages with your chat PIN</b>
+          inside a secure isolated browser session; we never see either.<span class="chip-new">new</span>
+        </p>
+        <button class="btn">Connect X</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- rest of the page, stubbed so the whole thing is here -->
+  <div class="grid2">
+    <div class="card pad"><div class="stub">Metrics + latest activity (unchanged)</div></div>
+    <div class="card pad"><div class="stub">Lists / import (unchanged)</div></div>
+  </div>
+  <div class="card pad mt35"><div class="stub">All leads (unchanged)</div></div>
+  <div class="card pad mt35"><div class="stub">Companies (unchanged)</div></div>
+  <div class="card pad mt35"><div class="stub">Review queue (unchanged)</div></div>
+
+
+  <!-- ======================= THE X CARD, EVERY STATE ======================= -->
+  <div class="sectionhead">The X card — every state in the flow</div>
+  <p class="caption">Only states 2 and 3 change. State 3 does not exist today, and is the whole point:
+    today a login-and-close lands straight on “Connected” with Messages still locked.</p>
+
+  <!-- 1 · idle -->
+  <p class="caption"><b>1 · Idle</b> — before they start.</p>
+  <div class="card pad">
+    <div class="row">
+      <span class="icon tide">𝕏</span>
+      <div class="body">
+        <h2 class="cardtitle">Connect your X account</h2>
+        <p class="cardtext">
+          Optional — lets your AE reach prospects on X. You'll log in
+          <b style="color:var(--color-ink)">and unlock Messages with your chat PIN</b>
+          inside a secure isolated browser session; we never see either.<span class="chip-new">new</span>
+        </p>
+        <button class="btn">Connect X</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2 · pending -->
+  <p class="caption" style="margin-top:26px"><b>2 · Login tab open</b> — the card is sitting next to the
+    tab they're working in. This is the one moment the instruction can land, because closing the tab is
+    what finishes the connection.</p>
+  <div class="card pad">
+    <div class="row">
+      <span class="icon tide">𝕏</span>
+      <div class="body">
+        <h2 class="cardtitle">Finish in the X tab<span class="chip-new">new</span></h2>
+        <p class="cardtext">Do these in order, then come back:</p>
+        <ol class="steps">
+          <li><b>Log in</b> to your X account.</li>
+          <li><b>Open Messages and enter your chat PIN.</b></li>
+          <li><b>Close the X tab</b> — that's what saves the connection.</li>
+        </ol>
+        <p class="why">
+          Step 2 is easy to miss. X keeps DMs behind a separate passcode, and if it isn't entered here
+          your AE can't open a conversation later. We never see the PIN.<span class="chip-new">new</span>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3 · chat locked -->
+  <p class="caption" style="margin-top:26px"><b>3 · Logged in, Messages still locked</b> — they closed the
+    tab after step 1. Today this silently reads “Connected” and every DM fails forever.</p>
+  <div class="card pad">
+    <div class="row">
+      <span class="icon warn">!</span>
+      <div class="body">
+        <h2 class="cardtitle">Almost there — Messages is locked<span class="chip-new state">new state</span></h2>
+        <p class="cardtext">
+          You're logged in to X, but your chat PIN wasn't entered, so your AE can't send DMs yet.
+        </p>
+        <ol class="steps">
+          <li class="done">Logged in to X.</li>
+          <li><b>Open Messages and enter your chat PIN.</b></li>
+          <li><b>Close the tab</b> to finish.</li>
+        </ol>
+        <p class="why warn">
+          Your login is saved — this only takes a few seconds. Everything else on your account keeps
+          working; it's DMs specifically that stay blocked until this is done.
+        </p>
+        <button class="btn primary">Reopen X tab</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4 · connected -->
+  <p class="caption" style="margin-top:26px"><b>4 · Connected</b> — unchanged, but it now means something
+    stronger: logged in <em>and</em> Messages reachable.</p>
+  <div class="card pad">
+    <div class="row">
+      <span class="icon ok">✓</span>
+      <div class="body">
+        <h2 class="cardtitle">Connected</h2>
+        <p class="cardtext">You're connected! We'll take it from here.</p>
+        <button class="btn quiet">Disconnect</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
