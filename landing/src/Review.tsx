@@ -8,14 +8,9 @@ import { CARD, useToast } from "./dashboard-shared";
    of decisions the AE is waiting on (oldest first), per the signed-off draft
    in site/design/review-queue.html, plus kind-filter chips so one send type
    (e.g. connection requests) can be isolated and bulk-approved. Mobile-first:
-   the usual entry point is a Slack magic link tapped on a phone, so the base
+   the usual entry point is a Slack review link tapped on a phone, so the base
    layout IS the ~640px single column with 44px touch targets; ≥700px only
-   adds air and right-aligns actions.
-
-   Auth: a `?token=` magic link is exchanged for the normal session cookie
-   via POST /api/v1/dashboard/reviews/token-login BEFORE the /auth/me gate,
-   then scrubbed from the URL. A bad token simply falls through to the gate,
-   which bounces to /dashboard like the other dashboard pages. */
+   adds air and right-aligns actions. */
 
 type User = {
   id: string;
@@ -26,6 +21,9 @@ type User = {
   linkedin_connected: boolean;
   is_admin?: boolean;
   impersonating?: boolean;
+  /* org workspace membership; absent/null (solo accounts) reads as owner.
+     Members are read-only — every decide/cancel/dismiss affordance hides. */
+  org?: { name: string; role: "owner" | "admin" | "member" } | null;
 };
 
 /* ---------- API shapes (mirror backend app/schemas/reviews.py) ---------- */
@@ -149,31 +147,6 @@ export default function Review() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      // Magic-link entry: exchange ?token= for the session cookie FIRST, then
-      // strip the param from the URL so it never lingers in history/shares.
-      // Token failure is silent — the /auth/me gate below decides where we land.
-      const params = new URLSearchParams(window.location.search);
-      const token = params.get("token");
-      if (token) {
-        try {
-          await fetch("/api/v1/dashboard/reviews/token-login", {
-            method: "POST",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ token }),
-          });
-        } catch {
-          // fall through to the normal session gate
-        }
-        params.delete("token");
-        const qs = params.toString();
-        window.history.replaceState(
-          null,
-          "",
-          window.location.pathname + (qs ? `?${qs}` : "") + window.location.hash,
-        );
-      }
-      if (cancelled) return;
       try {
         const res = await fetch("/auth/me", { credentials: "include" });
         if (cancelled) return;
@@ -219,6 +192,10 @@ function LoadingView() {
 
 function ReviewView({ user }: { user: User }) {
   const displayName = user.name || user.email;
+  // Solo accounts carry no org and stay full-control; workspace members are
+  // read-only — they see the queue and the sends, never the buttons.
+  const role = user.org?.role ?? "owner";
+  const canWrite = role !== "member";
 
   async function handleLogout() {
     try {
@@ -271,7 +248,7 @@ function ReviewView({ user }: { user: User }) {
         >
           <span aria-hidden="true">←</span> Back to dashboard
         </a>
-        <ReviewQueue />
+        <ReviewQueue canWrite={canWrite} />
       </main>
     </>
   );
@@ -441,7 +418,7 @@ function tabFromUrl(): Tab {
   return tab === "queued" ? "queued" : "review";
 }
 
-function ReviewQueue() {
+function ReviewQueue({ canWrite }: { canWrite: boolean }) {
   const [state, setState] = useState<QueueState>({ status: "loading" });
   const [selected, setSelected] = useState<ReadonlySet<string>>(EMPTY_SET);
   const [deny, setDeny] = useState<{ id: string; reason: string } | null>(null);
@@ -817,71 +794,77 @@ function ReviewQueue() {
               ))}
             </div>
 
+            {/* read-only members keep the count line; the selection +
+                decide affordances only exist for writers */}
             <div className="mx-0.5 mb-2.5 mt-[14px] flex flex-wrap items-center gap-2.5">
-              <label className="inline-flex cursor-pointer items-center gap-[9px] text-[13.5px] font-medium text-ink-soft">
-                <input
-                  type="checkbox"
-                  checked={allSelected}
-                  onChange={(e) =>
-                    setSelected(
-                      e.target.checked
-                        ? new Set(visible.map((item) => item.id))
-                        : EMPTY_SET,
-                    )
-                  }
-                  aria-label="Select all items"
-                  className="size-5 shrink-0 accent-tide"
-                />
-                Select all
-              </label>
-              {selected.size > 0 && (
-                <button
-                  type="button"
-                  onClick={handleBulkApprove}
-                  disabled={busy}
-                  className="min-h-9 cursor-pointer rounded-[10px] bg-tide px-3.5 py-2 text-[13px] font-semibold text-white shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] transition-colors hover:bg-tide-deep disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  Approve selected ({selected.size})
-                </button>
+              {canWrite && (
+                <>
+                  <label className="inline-flex cursor-pointer items-center gap-[9px] text-[13.5px] font-medium text-ink-soft">
+                    <input
+                      type="checkbox"
+                      checked={allSelected}
+                      onChange={(e) =>
+                        setSelected(
+                          e.target.checked
+                            ? new Set(visible.map((item) => item.id))
+                            : EMPTY_SET,
+                        )
+                      }
+                      aria-label="Select all items"
+                      className="size-5 shrink-0 accent-tide"
+                    />
+                    Select all
+                  </label>
+                  {selected.size > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleBulkApprove}
+                      disabled={busy}
+                      className="min-h-9 cursor-pointer rounded-[10px] bg-tide px-3.5 py-2 text-[13px] font-semibold text-white shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] transition-colors hover:bg-tide-deep disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      Approve selected ({selected.size})
+                    </button>
+                  )}
+                  {selected.size > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleBulkDeny}
+                      disabled={busy}
+                      className="min-h-9 cursor-pointer rounded-[10px] border border-line bg-surface px-3.5 py-2 text-[13px] font-medium text-red-700 transition-colors hover:border-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      Deny selected ({selected.size})
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleApproveAll}
+                    disabled={busy}
+                    className={`min-h-9 cursor-pointer rounded-[10px] px-3.5 py-2 text-[13px] transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+                      confirmAll
+                        ? "bg-tide font-semibold text-white shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] hover:bg-tide-deep"
+                        : "border border-line bg-surface font-medium text-ink-soft hover:border-ink-faint hover:text-ink"
+                    }`}
+                  >
+                    {confirmAll
+                      ? `Approve all ${visible.length}? Confirm`
+                      : "Approve all"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDenyAll}
+                    disabled={busy}
+                    className={`min-h-9 cursor-pointer rounded-[10px] px-3.5 py-2 text-[13px] transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+                      confirmDenyAll
+                        ? "bg-red-700 font-semibold text-white shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] hover:bg-red-800"
+                        : "border border-line bg-surface font-medium text-ink-soft hover:border-red-700 hover:text-red-700"
+                    }`}
+                  >
+                    {confirmDenyAll
+                      ? `Deny all ${visible.length}? Confirm`
+                      : "Deny all"}
+                  </button>
+                </>
               )}
-              {selected.size > 0 && (
-                <button
-                  type="button"
-                  onClick={handleBulkDeny}
-                  disabled={busy}
-                  className="min-h-9 cursor-pointer rounded-[10px] border border-line bg-surface px-3.5 py-2 text-[13px] font-medium text-red-700 transition-colors hover:border-red-700 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  Deny selected ({selected.size})
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={handleApproveAll}
-                disabled={busy}
-                className={`min-h-9 cursor-pointer rounded-[10px] px-3.5 py-2 text-[13px] transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
-                  confirmAll
-                    ? "bg-tide font-semibold text-white shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] hover:bg-tide-deep"
-                    : "border border-line bg-surface font-medium text-ink-soft hover:border-ink-faint hover:text-ink"
-                }`}
-              >
-                {confirmAll
-                  ? `Approve all ${visible.length}? Confirm`
-                  : "Approve all"}
-              </button>
-              <button
-                type="button"
-                onClick={handleDenyAll}
-                disabled={busy}
-                className={`min-h-9 cursor-pointer rounded-[10px] px-3.5 py-2 text-[13px] transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
-                  confirmDenyAll
-                    ? "bg-red-700 font-semibold text-white shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] hover:bg-red-800"
-                    : "border border-line bg-surface font-medium text-ink-soft hover:border-red-700 hover:text-red-700"
-                }`}
-              >
-                {confirmDenyAll
-                  ? `Deny all ${visible.length}? Confirm`
-                  : "Deny all"}
-              </button>
               <span className="ml-auto shrink-0 font-mono text-[11px] tracking-[0.06em] text-ink-faint tabular-nums">
                 {activeKind === null
                   ? `${items.length} pending`
@@ -903,6 +886,7 @@ function ReviewQueue() {
                 <ItemCard
                   key={item.id}
                   item={item}
+                  canWrite={canWrite}
                   checked={selected.has(item.id)}
                   busy={busyIds.has(item.id)}
                   denyReason={deny?.id === item.id ? deny.reason : null}
@@ -964,6 +948,7 @@ function ReviewQueue() {
         ) : (
           <QueuedList
             sends={sendsState.sends}
+            canWrite={canWrite}
             onRemove={removeSends}
             refreshStats={refreshStats}
           />
@@ -1111,10 +1096,12 @@ type ActionError = { message: string; sendId: string | null };
 
 function QueuedList({
   sends,
+  canWrite,
   onRemove,
   refreshStats,
 }: {
   sends: SendRow[];
+  canWrite: boolean;
   onRemove: (ids: ReadonlySet<string>) => void;
   refreshStats: () => Promise<void>;
 }) {
@@ -1322,62 +1309,68 @@ function QueuedList({
         ))}
       </div>
 
+      {/* read-only members keep the count line; the selection + cancel /
+          dismiss affordances only exist for writers */}
       <div className="mx-0.5 mb-2.5 mt-[14px] flex flex-wrap items-center gap-2.5">
-        <label className="inline-flex cursor-pointer items-center gap-[9px] text-[13.5px] font-medium text-ink-soft">
-          <input
-            type="checkbox"
-            checked={allSelected}
-            onChange={(e) =>
-              setSelected(
-                e.target.checked
-                  ? new Set(cancelable.map((s) => s.id))
-                  : EMPTY_SET,
-              )
-            }
-            aria-label="Select all queued sends"
-            className="size-5 shrink-0 accent-tide"
-          />
-          Select all
-        </label>
-        {selected.size > 0 && (
-          <button
-            type="button"
-            onClick={handleCancelSelected}
-            disabled={busy}
-            className="min-h-9 cursor-pointer rounded-[10px] bg-tide px-3.5 py-2 text-[13px] font-semibold text-white shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] transition-colors hover:bg-tide-deep disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            Cancel selected ({selected.size})
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={handleCancelAll}
-          disabled={busy || cancelable.length === 0}
-          className={`min-h-9 cursor-pointer rounded-[10px] px-3.5 py-2 text-[13px] transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
-            confirmAll === "cancel"
-              ? "bg-tide font-semibold text-white shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] hover:bg-tide-deep"
-              : "border border-line bg-surface font-medium text-ink-soft hover:border-ink-faint hover:text-ink"
-          }`}
-        >
-          {confirmAll === "cancel"
-            ? `Cancel all ${cancelable.length}? Confirm`
-            : "Cancel all queued"}
-        </button>
-        {failedVisible.length > 1 && (
-          <button
-            type="button"
-            onClick={handleDismissAllFailed}
-            disabled={busy}
-            className={`min-h-9 cursor-pointer rounded-[10px] px-3.5 py-2 text-[13px] transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
-              confirmAll === "dismiss"
-                ? "bg-tide font-semibold text-white shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] hover:bg-tide-deep"
-                : "border border-line bg-surface font-medium text-ink-soft hover:border-ink-faint hover:text-ink"
-            }`}
-          >
-            {confirmAll === "dismiss"
-              ? `Dismiss all ${failedVisible.length} failed? Confirm`
-              : `Dismiss all failed (${failedVisible.length})`}
-          </button>
+        {canWrite && (
+          <>
+            <label className="inline-flex cursor-pointer items-center gap-[9px] text-[13.5px] font-medium text-ink-soft">
+              <input
+                type="checkbox"
+                checked={allSelected}
+                onChange={(e) =>
+                  setSelected(
+                    e.target.checked
+                      ? new Set(cancelable.map((s) => s.id))
+                      : EMPTY_SET,
+                  )
+                }
+                aria-label="Select all queued sends"
+                className="size-5 shrink-0 accent-tide"
+              />
+              Select all
+            </label>
+            {selected.size > 0 && (
+              <button
+                type="button"
+                onClick={handleCancelSelected}
+                disabled={busy}
+                className="min-h-9 cursor-pointer rounded-[10px] bg-tide px-3.5 py-2 text-[13px] font-semibold text-white shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] transition-colors hover:bg-tide-deep disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Cancel selected ({selected.size})
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={handleCancelAll}
+              disabled={busy || cancelable.length === 0}
+              className={`min-h-9 cursor-pointer rounded-[10px] px-3.5 py-2 text-[13px] transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+                confirmAll === "cancel"
+                  ? "bg-tide font-semibold text-white shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] hover:bg-tide-deep"
+                  : "border border-line bg-surface font-medium text-ink-soft hover:border-ink-faint hover:text-ink"
+              }`}
+            >
+              {confirmAll === "cancel"
+                ? `Cancel all ${cancelable.length}? Confirm`
+                : "Cancel all queued"}
+            </button>
+            {failedVisible.length > 1 && (
+              <button
+                type="button"
+                onClick={handleDismissAllFailed}
+                disabled={busy}
+                className={`min-h-9 cursor-pointer rounded-[10px] px-3.5 py-2 text-[13px] transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+                  confirmAll === "dismiss"
+                    ? "bg-tide font-semibold text-white shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] hover:bg-tide-deep"
+                    : "border border-line bg-surface font-medium text-ink-soft hover:border-ink-faint hover:text-ink"
+                }`}
+              >
+                {confirmAll === "dismiss"
+                  ? `Dismiss all ${failedVisible.length} failed? Confirm`
+                  : `Dismiss all failed (${failedVisible.length})`}
+              </button>
+            )}
+          </>
         )}
         <span className="ml-auto shrink-0 font-mono text-[11px] tracking-[0.06em] text-ink-faint tabular-nums">
           {activeKind === null
@@ -1400,6 +1393,7 @@ function QueuedList({
           <QueuedRow
             key={send.id}
             send={send}
+            canWrite={canWrite}
             checked={selected.has(send.id)}
             busy={busyIds.has(send.id)}
             expanded={expanded.has(send.id)}
@@ -1421,6 +1415,7 @@ function QueuedList({
    decision card: smaller shadow, tighter padding, no action pair. */
 function QueuedRow({
   send,
+  canWrite,
   checked,
   busy,
   expanded,
@@ -1431,6 +1426,7 @@ function QueuedRow({
   onDismiss,
 }: {
   send: SendRow;
+  canWrite: boolean;
   checked: boolean;
   busy: boolean;
   expanded: boolean;
@@ -1444,14 +1440,17 @@ function QueuedRow({
   return (
     <article className="rounded-xl border border-line bg-surface p-3.5 shadow-win-sm min-[700px]:px-[18px] min-[700px]:py-4">
       <div className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          checked={checked}
-          onChange={onToggleSelect}
-          disabled={busy || failed}
-          aria-label={`Select send to ${send.lead?.name ?? "lead"}`}
-          className="size-5 shrink-0 accent-tide disabled:cursor-not-allowed"
-        />
+        {/* selection only feeds the bulk cancel, so it hides with it */}
+        {canWrite && (
+          <input
+            type="checkbox"
+            checked={checked}
+            onChange={onToggleSelect}
+            disabled={busy || failed}
+            aria-label={`Select send to ${send.lead?.name ?? "lead"}`}
+            className="size-5 shrink-0 accent-tide disabled:cursor-not-allowed"
+          />
+        )}
         <span className="rounded-full border border-line bg-paper px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] text-ink-soft">
           {sendKindLabel(send.kind)}
         </span>
@@ -1498,7 +1497,7 @@ function QueuedRow({
 
       <div className="mt-2.5 flex min-h-6 items-center gap-2.5">
         <SendStatus send={send} />
-        {send.status === "pending" && (
+        {canWrite && send.status === "pending" && (
           <button
             type="button"
             onClick={onCancel}
@@ -1510,7 +1509,7 @@ function QueuedRow({
         )}
         {/* failed rows swap Cancel for Dismiss — same quiet weight; the
             send already didn't happen, this just clears the wreckage */}
-        {failed && (
+        {canWrite && failed && (
           <button
             type="button"
             onClick={onDismiss}
@@ -1575,6 +1574,7 @@ function SendStatus({ send }: { send: SendRow }) {
 
 function ItemCard({
   item,
+  canWrite,
   checked,
   busy,
   denyReason,
@@ -1587,6 +1587,7 @@ function ItemCard({
   onConfirmDeny,
 }: {
   item: ReviewItemRow;
+  canWrite: boolean;
   checked: boolean;
   busy: boolean;
   /** null = deny box closed; string = the in-progress reason text. */
@@ -1616,14 +1617,17 @@ function ItemCard({
   return (
     <article className={`${CARD} p-4 min-[700px]:px-[22px] min-[700px]:py-5`}>
       <div className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          checked={checked}
-          onChange={onToggleSelect}
-          disabled={busy}
-          aria-label={`Select: ${item.title}`}
-          className="size-5 shrink-0 accent-tide"
-        />
+        {/* selection only feeds the bulk decide, so it hides with it */}
+        {canWrite && (
+          <input
+            type="checkbox"
+            checked={checked}
+            onChange={onToggleSelect}
+            disabled={busy}
+            aria-label={`Select: ${item.title}`}
+            className="size-5 shrink-0 accent-tide"
+          />
+        )}
         <span className="rounded-full border border-line bg-paper px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] text-ink-soft">
           {kindLabel(item.kind)}
         </span>
@@ -1689,66 +1693,71 @@ function ItemCard({
         </>
       )}
 
-      <div className="flex gap-2.5 min-[700px]:justify-end">
-        <button
-          type="button"
-          onClick={onApprove}
-          disabled={busy}
-          className="min-h-11 flex-[1.4] cursor-pointer rounded-xl bg-tide px-[18px] py-2.5 text-[14px] font-semibold text-white shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] transition-colors hover:bg-tide-deep disabled:cursor-not-allowed disabled:opacity-60 min-[700px]:min-w-[130px] min-[700px]:flex-none"
-        >
-          {approveLabel}
-        </button>
-        <button
-          type="button"
-          onClick={onToggleDeny}
-          disabled={busy}
-          aria-expanded={denyOpen}
-          className={`min-h-11 flex-1 cursor-pointer rounded-xl border bg-surface px-4 py-2.5 text-[14px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 min-[700px]:min-w-[130px] min-[700px]:flex-none ${
-            denyOpen
-              ? "border-ink-faint text-ink"
-              : "border-line text-ink-soft hover:border-ink-faint hover:text-ink"
-          }`}
-        >
-          {denyLabel}
-        </button>
-      </div>
-
-      {denyOpen && (
-        <div className="mt-3 border-t border-dashed border-line pt-3">
-          <input
-            type="text"
-            value={denyReason}
-            onChange={(e) => onReasonChange(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") onConfirmDeny();
-            }}
-            placeholder="what should change?"
-            aria-label="Deny reason"
-            autoFocus
-            className="min-h-11 w-full rounded-[10px] border border-line bg-paper px-3 py-[11px] text-[14px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-tide"
-          />
-          <p className="m-0 mb-2.5 mt-1.5 text-[12px] leading-[1.5] text-ink-faint">
-            Optional &mdash; goes to your AE as feedback; the revised copy
-            comes back here for review.
-          </p>
-          <div className="flex items-center gap-3 min-[700px]:justify-end">
+      {/* read-only members get the full card minus the decision pair */}
+      {canWrite && (
+        <>
+          <div className="flex gap-2.5 min-[700px]:justify-end">
             <button
               type="button"
-              onClick={onCancelDeny}
-              className="cursor-pointer px-1 py-2 text-[13.5px] font-medium text-ink-faint transition-colors hover:text-ink"
+              onClick={onApprove}
+              disabled={busy}
+              className="min-h-11 flex-[1.4] cursor-pointer rounded-xl bg-tide px-[18px] py-2.5 text-[14px] font-semibold text-white shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] transition-colors hover:bg-tide-deep disabled:cursor-not-allowed disabled:opacity-60 min-[700px]:min-w-[130px] min-[700px]:flex-none"
             >
-              Cancel
+              {approveLabel}
             </button>
             <button
               type="button"
-              onClick={onConfirmDeny}
+              onClick={onToggleDeny}
               disabled={busy}
-              className="min-h-10 cursor-pointer rounded-[10px] bg-tide px-[18px] py-2 text-[13.5px] font-semibold text-white transition-colors hover:bg-tide-deep disabled:cursor-not-allowed disabled:opacity-60"
+              aria-expanded={denyOpen}
+              className={`min-h-11 flex-1 cursor-pointer rounded-xl border bg-surface px-4 py-2.5 text-[14px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 min-[700px]:min-w-[130px] min-[700px]:flex-none ${
+                denyOpen
+                  ? "border-ink-faint text-ink"
+                  : "border-line text-ink-soft hover:border-ink-faint hover:text-ink"
+              }`}
             >
               {denyLabel}
             </button>
           </div>
-        </div>
+
+          {denyOpen && (
+            <div className="mt-3 border-t border-dashed border-line pt-3">
+              <input
+                type="text"
+                value={denyReason}
+                onChange={(e) => onReasonChange(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") onConfirmDeny();
+                }}
+                placeholder="what should change?"
+                aria-label="Deny reason"
+                autoFocus
+                className="min-h-11 w-full rounded-[10px] border border-line bg-paper px-3 py-[11px] text-[14px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-tide"
+              />
+              <p className="m-0 mb-2.5 mt-1.5 text-[12px] leading-[1.5] text-ink-faint">
+                Optional &mdash; goes to your AE as feedback; the revised copy
+                comes back here for review.
+              </p>
+              <div className="flex items-center gap-3 min-[700px]:justify-end">
+                <button
+                  type="button"
+                  onClick={onCancelDeny}
+                  className="cursor-pointer px-1 py-2 text-[13.5px] font-medium text-ink-faint transition-colors hover:text-ink"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={onConfirmDeny}
+                  disabled={busy}
+                  className="min-h-10 cursor-pointer rounded-[10px] bg-tide px-[18px] py-2 text-[13.5px] font-semibold text-white transition-colors hover:bg-tide-deep disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {denyLabel}
+                </button>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {error && (

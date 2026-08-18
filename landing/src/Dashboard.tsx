@@ -50,6 +50,11 @@ type User = {
   twitter_handle?: string | null;
   is_admin?: boolean;
   impersonating?: boolean;
+  /* org workspace membership; absent/null (solo accounts) reads as owner.
+     Only the owner manages channel connections; members are read-only. For
+     admins/members the connection booleans above reflect the workspace
+     owner's connections. */
+  org?: { name: string; role: "owner" | "admin" | "member" } | null;
 };
 
 type AuthState =
@@ -271,6 +276,8 @@ export function LoggedOutView() {
 
 function LoggedInView({ user, onLogout }: { user: User; onLogout: () => void }) {
   const displayName = user.name || user.email;
+  // Shown next to the identity when the account belongs to a named workspace.
+  const orgName = user.org?.name.trim() || null;
 
   return (
     <>
@@ -296,6 +303,11 @@ function LoggedInView({ user, onLogout }: { user: User; onLogout: () => void }) 
             <span className="hidden text-[14px] font-medium text-ink sm:inline">
               {displayName}
             </span>
+            {orgName && (
+              <span className="hidden text-[13px] text-ink-faint sm:inline">
+                {orgName}
+              </span>
+            )}
             {user.is_admin && (
               <>
                 <GodModeButton />
@@ -422,6 +434,11 @@ type ActivityState =
 
 function ApprovedView({ user }: { user: User }) {
   const firstName = user.name.split(" ")[0] || user.email;
+  // Solo accounts carry no org and stay full-control. Only the owner manages
+  // channel connections; members are read-only everywhere.
+  const role = user.org?.role ?? "owner";
+  const isOwner = role === "owner";
+  const canWrite = role !== "member";
   const [summary, setSummary] = useState<SummaryState>({ status: "loading" });
   const [activity, setActivity] = useState<ActivityState>({ status: "loading" });
 
@@ -469,27 +486,33 @@ function ApprovedView({ user }: { user: User }) {
       <Heading>{`Welcome back, ${firstName}.`}</Heading>
 
       {/* top bar — connect prompt when LinkedIn isn't connected, otherwise the
-          slim sending-status strip once the summary loads. */}
-      {!user.linkedin_connected && <LinkedInCard connected={false} />}
+          slim sending-status strip once the summary loads. Connections belong
+          to the workspace owner, so only the owner gets the connect/disconnect
+          cards; everyone still sees the status strip. */}
+      {isOwner && !user.linkedin_connected && <LinkedInCard connected={false} />}
       {user.linkedin_connected &&
         summary.status === "ready" &&
         summary.summary.sending && (
-          <StatusStrip sending={summary.summary.sending} />
+          <StatusStrip sending={summary.summary.sending} isOwner={isOwner} />
         )}
-      <EmailCard
-        connected={user.email_connected ?? false}
-        emailError={user.email_error ?? null}
-      />
-      <TwitterCard
-        connected={user.twitter_connected ?? false}
-        pending={user.twitter_pending ?? false}
-        chatLocked={user.twitter_chat_locked ?? false}
-      />
+      {isOwner && (
+        <EmailCard
+          connected={user.email_connected ?? false}
+          emailError={user.email_error ?? null}
+        />
+      )}
+      {isOwner && (
+        <TwitterCard
+          connected={user.twitter_connected ?? false}
+          pending={user.twitter_pending ?? false}
+          chatLocked={user.twitter_chat_locked ?? false}
+        />
+      )}
 
       {/* two equal-height columns: metrics left, lists right. */}
       <div className="mt-3.5 grid grid-cols-1 items-stretch gap-3.5 lg:grid-cols-[1.45fr_1fr]">
         <MetricsCard state={summary} activity={activity} />
-        <ListsCard state={summary} onImported={loadSummary} />
+        <ListsCard state={summary} canWrite={canWrite} onImported={loadSummary} />
       </div>
 
       <LeadsEntryCard state={summary} />
@@ -627,8 +650,9 @@ function useDisconnect(endpoint: string) {
   return { pending, error, disconnect };
 }
 
-/* 1 · STATUS — is it on & safe. Mirrors the mockup's .status card. */
-function StatusStrip({ sending }: { sending: Sending }) {
+/* 1 · STATUS — is it on & safe. Mirrors the mockup's .status card. Everyone
+   in the workspace sees the status; only the owner gets Disconnect. */
+function StatusStrip({ sending, isOwner }: { sending: Sending; isOwner: boolean }) {
   const { pending, error, disconnect } = useDisconnect("/linkedin/disconnect");
   const rel = relativeTime(sending.last_action_at);
 
@@ -666,14 +690,16 @@ function StatusStrip({ sending }: { sending: Sending }) {
             {rel && <> · last action {rel}</>}
           </div>
         </div>
-        <button
-          type="button"
-          onClick={disconnect}
-          disabled={pending}
-          className="ml-auto shrink-0 cursor-pointer rounded-full border border-line bg-surface px-3 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {pending ? "Disconnecting…" : "Disconnect"}
-        </button>
+        {isOwner && (
+          <button
+            type="button"
+            onClick={disconnect}
+            disabled={pending}
+            className="ml-auto shrink-0 cursor-pointer rounded-full border border-line bg-surface px-3 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {pending ? "Disconnecting…" : "Disconnect"}
+          </button>
+        )}
       </div>
       {error && (
         <p className="m-0 mt-3 text-[13px] font-medium text-red-700" role="alert">
@@ -1418,9 +1444,11 @@ function summarizeBlacklist(r: BlacklistImportResult): string {
 
 function ListsCard({
   state,
+  canWrite,
   onImported,
 }: {
   state: SummaryState;
+  canWrite: boolean;
   onImported: () => void;
 }) {
   const lists = state.status === "ready" ? state.summary.lists : null;
@@ -1448,6 +1476,7 @@ function ListsCard({
           title="Lead list"
           hint="Contacts to add to your pipeline. Any CSV — name, email, or LinkedIn; we'll match on whatever columns you've got and enrich the rest."
           endpoint="/api/v1/imports/leads"
+          canWrite={canWrite}
           summarize={summarizeLeads}
           current={leadsLine}
           onImported={onImported}
@@ -1461,6 +1490,7 @@ function ListsCard({
           title="Blacklist"
           hint="Excluded from all outreach. Emails, domains, or LinkedIn URLs — one per row."
           endpoint="/api/v1/imports/blacklist"
+          canWrite={canWrite}
           summarize={summarizeBlacklist}
           current={blacklistLine}
           onImported={onImported}
@@ -1481,6 +1511,7 @@ function UploadField<T>({
   title,
   hint,
   endpoint,
+  canWrite,
   summarize,
   current,
   onImported,
@@ -1493,6 +1524,8 @@ function UploadField<T>({
   title: string;
   hint: string;
   endpoint: string;
+  /** Read-only members keep the counts; the upload/clear controls hide. */
+  canWrite: boolean;
   summarize: (data: T) => string;
   /** Persisted state from the summary (e.g. "200 leads in your pipeline"),
    *  shown until a fresh upload this session replaces it. */
@@ -1573,44 +1606,46 @@ function UploadField<T>({
     <div className={`rounded-xl border border-line bg-surface p-4 shadow-win-sm ${className}`}>
       <h3 className="m-0 text-[15px] font-semibold">{title}</h3>
       <p className="m-0 mt-1.5 text-[13px] leading-relaxed text-ink-faint">{hint}</p>
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <label
-          className={`inline-flex items-center gap-2 rounded-full border border-tide/40 bg-surface px-3.5 py-2 text-[13px] font-medium text-tide transition-colors hover:border-tide hover:bg-tide-wash ${
-            busy ? "pointer-events-none opacity-60" : "cursor-pointer"
-          }`}
-        >
-          <input
-            type="file"
-            accept=".csv,text/csv"
-            className="hidden"
-            onChange={handleFile}
-            disabled={busy}
-          />
-          {uploading && (
-            <span
-              aria-hidden="true"
-              className="size-3.5 animate-spin rounded-full border-[1.5px] border-tide/30 border-t-tide"
-            />
-          )}
-          {label}
-        </label>
-        {showClear && (
-          <button
-            type="button"
-            onClick={handleClear}
-            disabled={busy}
-            className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3.5 py-2 text-[13px] font-medium text-ink-soft transition-colors hover:border-red-600/40 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+      {canWrite && (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <label
+            className={`inline-flex items-center gap-2 rounded-full border border-tide/40 bg-surface px-3.5 py-2 text-[13px] font-medium text-tide transition-colors hover:border-tide hover:bg-tide-wash ${
+              busy ? "pointer-events-none opacity-60" : "cursor-pointer"
+            }`}
           >
-            {clearing && (
+            <input
+              type="file"
+              accept=".csv,text/csv"
+              className="hidden"
+              onChange={handleFile}
+              disabled={busy}
+            />
+            {uploading && (
               <span
                 aria-hidden="true"
-                className="size-3.5 animate-spin rounded-full border-[1.5px] border-red-600/30 border-t-red-600"
+                className="size-3.5 animate-spin rounded-full border-[1.5px] border-tide/30 border-t-tide"
               />
             )}
-            {clearing ? "Clearing…" : "Clear"}
-          </button>
-        )}
-      </div>
+            {label}
+          </label>
+          {showClear && (
+            <button
+              type="button"
+              onClick={handleClear}
+              disabled={busy}
+              className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3.5 py-2 text-[13px] font-medium text-ink-soft transition-colors hover:border-red-600/40 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {clearing && (
+                <span
+                  aria-hidden="true"
+                  className="size-3.5 animate-spin rounded-full border-[1.5px] border-red-600/30 border-t-red-600"
+                />
+              )}
+              {clearing ? "Clearing…" : "Clear"}
+            </button>
+          )}
+        </div>
+      )}
       {busy ? (
         <div
           role="progressbar"

@@ -26,6 +26,9 @@ type User = {
   linkedin_connected: boolean;
   is_admin?: boolean;
   impersonating?: boolean;
+  /* org workspace membership; absent/null (solo accounts) reads as owner.
+     Members are read-only — the per-row Remove affordance hides. */
+  org?: { name: string; role: "owner" | "admin" | "member" } | null;
 };
 
 type LeadRow = {
@@ -101,6 +104,10 @@ function LoadingView() {
 
 function LeadsView({ user }: { user: User }) {
   const displayName = user.name || user.email;
+  // Solo accounts carry no org and stay full-control; workspace members are
+  // read-only.
+  const role = user.org?.role ?? "owner";
+  const canWrite = role !== "member";
 
   async function handleLogout() {
     try {
@@ -153,7 +160,7 @@ function LeadsView({ user }: { user: User }) {
         >
           <span aria-hidden="true">←</span> Back to dashboard
         </a>
-        <LeadsTable />
+        <LeadsTable canWrite={canWrite} />
       </main>
     </>
   );
@@ -204,7 +211,7 @@ function Dash() {
   return <span className="text-ink-faint">—</span>;
 }
 
-function LeadsTable() {
+function LeadsTable({ canWrite }: { canWrite: boolean }) {
   const [state, setState] = useState<LeadsState>({ status: "loading" });
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -465,20 +472,22 @@ function LeadsTable() {
                                 {added || <Dash />}
                               </td>
                               <td className={`${TD} text-right`}>
-                                <button
-                                  type="button"
-                                  onClick={() => handleRemove(lead)}
-                                  disabled={removing}
-                                  className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-red-600/40 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-60"
-                                >
-                                  {removing && (
-                                    <span
-                                      aria-hidden="true"
-                                      className="size-3.5 animate-spin rounded-full border-[1.5px] border-red-600/30 border-t-red-600"
-                                    />
-                                  )}
-                                  {removing ? "Removing…" : "Remove"}
-                                </button>
+                                {canWrite && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemove(lead)}
+                                    disabled={removing}
+                                    className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-red-600/40 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    {removing && (
+                                      <span
+                                        aria-hidden="true"
+                                        className="size-3.5 animate-spin rounded-full border-[1.5px] border-red-600/30 border-t-red-600"
+                                      />
+                                    )}
+                                    {removing ? "Removing…" : "Remove"}
+                                  </button>
+                                )}
                               </td>
                             </tr>
                           );
