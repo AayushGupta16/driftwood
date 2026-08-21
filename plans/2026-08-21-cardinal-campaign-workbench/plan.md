@@ -223,6 +223,44 @@ Audience membership remains reusable and non-exclusive: saving a lead list never
 </design_plan>
 ```
 
+## Phase 18 · explicit discovery source and unified review queue
+
+Lead discovery names its source before the operator searches. Orange Slice is
+the default provider, its server-side connection state is visible, and the
+workspace lead index remains an explicit fallback instead of a silent one.
+Review keeps every existing decision and send-control path, but moves from its
+legacy phone-width card stack into the same full-width operating canvas as the
+rest of the customer dashboard.
+
+```yaml
+<design_plan>
+  page_job: "Find leads through a named provider and decide what is allowed to send"
+  macrostructure: "82rem workspace canvas; compact page header -> status/tabs -> filters/actions -> dense decision rows"
+  vibe:
+    anchor: "minimal"
+    wildcard: "operator canvas"
+    valid: true
+  spatial_system:
+    audience: "provider selector above the existing focused filter and result table"
+    review: "full-width queue with a compact runway strip and wider decision rows"
+    mobile: "controls wrap; rows return to a single-column reading order"
+  motion:
+    personality: "Corporate"
+    intensity: "1/3"
+    easing: "cubic-bezier(0.2, 0, 0, 1)"
+  interaction_states:
+    provider: ["checking", "connected", "unavailable", "selected"]
+    queue: ["loading", "ready", "empty", "error", "busy"]
+    button_states: ["default", "hover", "focus", "active", "disabled", "loading", "error", "success"]
+  honest_copy:
+    silent_provider_fallbacks: 0
+    fabricated_metrics: 0
+    source_of_truth: "authenticated discovery-status, reviews, and scheduled-sends APIs"
+  effects_layer: "none; operational state and copy are the visual hierarchy"
+  custom_icons: "extend the existing outlined SVG vocabulary with an Orange Slice mark"
+</design_plan>
+```
+
 ### Overview page-purpose and pre-emit verification
 
 This is an extension of the existing Workbench run rather than a new standalone page run. It keeps the logged minimal/operator-canvas direction and introduces a distinct internal anatomy: priority brief, pipeline ledger, outbound path, activity, compact channel controls, and an optional manual-import drawer.

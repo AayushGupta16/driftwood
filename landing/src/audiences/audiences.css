@@ -1,6 +1,6 @@
-/* perfect-ui · <design_plan> v2.5.0
- * Audience-to-campaign handoff uses the verified component-scope plan in
- * plans/2026-08-21-cardinal-campaign-workbench/plan.md Phase 17.
+/* perfect-ui · <design_plan> v2.6.0
+ * Explicit Orange Slice provider state uses the verified component-scope plan
+ * in plans/2026-08-21-cardinal-campaign-workbench/plan.md Phase 18.
  */
 
 .audience-page {
@@ -197,6 +197,92 @@
   background: color-mix(in srgb, var(--color-sand) 54%, white);
   padding: 1rem;
 }
+
+.audience-provider-picker {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-top: 1.7rem;
+  border-bottom: 1px solid var(--color-line);
+  padding: 0 0 0.8rem;
+}
+
+.audience-provider-label {
+  color: var(--color-ink-soft);
+  font-size: 0.68rem;
+  font-weight: 650;
+}
+
+.audience-provider-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.audience-provider-option {
+  display: inline-flex;
+  min-height: 2.45rem;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--color-line);
+  border-radius: 0.7rem;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  padding: 0.5rem 0.7rem;
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 180ms cubic-bezier(0.2, 0, 0, 1), background 180ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.audience-provider-option:hover,
+.audience-provider-option.is-selected {
+  border-color: color-mix(in srgb, var(--color-tide) 48%, var(--color-line));
+  background: color-mix(in srgb, var(--color-tide-wash) 42%, white);
+}
+
+.audience-provider-option:focus-visible {
+  outline: 2px solid var(--color-tide);
+  outline-offset: 2px;
+}
+
+.audience-provider-option strong {
+  font-size: 0.76rem;
+  font-weight: 650;
+}
+
+.audience-provider-icon {
+  display: grid;
+  width: 1.55rem;
+  height: 1.55rem;
+  place-items: center;
+  border-radius: 0.45rem;
+  background: var(--color-sand);
+  color: var(--color-tide-deep);
+}
+
+.audience-provider-option:first-child .audience-provider-icon {
+  background: #fff1e8;
+  color: #dc6327;
+}
+
+.audience-provider-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--color-alert);
+  font-size: 0.62rem;
+  font-weight: 620;
+}
+
+.audience-provider-state::before {
+  width: 0.38rem;
+  height: 0.38rem;
+  border-radius: 999px;
+  background: currentColor;
+  content: "";
+}
+
+.audience-provider-state.is-connected { color: var(--color-ok); }
 .audience-filter-title { display: flex; align-self: center; align-items: center; gap: 0.4rem; color: var(--color-ink-soft); font-size: 0.7rem; font-weight: 650; }
 .audience-filter-search > div { display: flex; min-height: 2.4rem; box-sizing: border-box; align-items: center; gap: 0.5rem; border: 1px solid var(--color-line); border-radius: 0.6rem; background: white; color: var(--color-ink-faint); padding: 0 0.65rem; }
 .audience-find { min-height: 2.4rem; }
@@ -269,6 +355,7 @@
   .audience-source,
   .audience-list-date { display: none; }
   .audience-discovery-form { grid-template-columns: 1fr 1fr; }
+  .audience-provider-picker { align-items: flex-start; flex-direction: column; }
   .audience-filter-search { grid-column: 1 / -1; }
   .audience-find { align-self: end; }
 }

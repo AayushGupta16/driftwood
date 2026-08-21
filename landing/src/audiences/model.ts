@@ -36,6 +36,17 @@ export type DiscoveryResult = {
   candidates: DiscoveryCandidate[];
 };
 
+export type DiscoveryProvider = {
+  provider: "orange_slice" | "workspace";
+  label: string;
+  configured: boolean;
+};
+
+export type DiscoveryStatus = {
+  defaultProvider: "orange_slice" | "workspace";
+  providers: DiscoveryProvider[];
+};
+
 export type AudienceFilters = {
   query: string;
   company: string;

@@ -4,6 +4,7 @@ import type {
   AudienceMember,
   AudienceSummary,
   DiscoveryCandidate,
+  DiscoveryStatus,
   DiscoveryResult,
 } from "./model";
 
@@ -135,6 +136,7 @@ export async function getAudience(id: string): Promise<Audience> {
 
 export async function discoverAudienceLeads(
   filters: AudienceFilters,
+  sourceProvider: "orange_slice" | "workspace",
 ): Promise<DiscoveryResult> {
   const body = await requestJson<{
     provider: string;
@@ -142,12 +144,27 @@ export async function discoverAudienceLeads(
     candidates: RawCandidate[];
   }>("/api/v1/dashboard/audiences/discover", {
     method: "POST",
-    body: JSON.stringify({ ...filters, limit: 100 }),
+    body: JSON.stringify({ ...filters, source_provider: sourceProvider, limit: 100 }),
   });
   return {
     provider: body.provider,
     providerLabel: body.provider_label,
     candidates: body.candidates.map(mapCandidate),
+  };
+}
+
+export async function getDiscoveryStatus(): Promise<DiscoveryStatus> {
+  const body = await requestJson<{
+    default_provider: "orange_slice" | "workspace";
+    providers: Array<{
+      provider: "orange_slice" | "workspace";
+      label: string;
+      configured: boolean;
+    }>;
+  }>("/api/v1/dashboard/audiences/discovery-status");
+  return {
+    defaultProvider: body.default_provider,
+    providers: body.providers,
   };
 }
 

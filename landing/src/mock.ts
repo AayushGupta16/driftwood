@@ -891,7 +891,33 @@ if (mockMode) {
     const method = init?.method ?? "GET";
     const pathname = new URL(url ?? location.href, location.href).pathname;
     const suffix = pathname.replace("/api/v1/dashboard/audiences", "").replace(/^\//, "");
+    if (suffix === "discovery-status" && method === "GET") {
+      return {
+        default_provider: "orange_slice",
+        providers: [
+          { provider: "orange_slice", label: "Orange Slice", configured: true },
+          { provider: "workspace", label: "Workspace leads", configured: true },
+        ],
+      };
+    }
     if (suffix === "discover" && method === "POST") {
+      const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
+      if (body.source_provider === "workspace") {
+        return {
+          provider: "workspace",
+          provider_label: "Workspace leads",
+          candidates: mockLeads.slice(0, 4).map((lead) => ({
+            provider_record_id: lead.id,
+            lead_id: lead.id,
+            name: lead.name,
+            title: lead.title,
+            company: lead.company,
+            email: lead.email,
+            linkedin_url: lead.linkedin_url,
+            stage: lead.stage,
+          })),
+        };
+      }
       return { provider: "orange_slice", provider_label: "Orange Slice", candidates: discoveryCandidates };
     }
     if (!suffix && method === "GET") return { audiences: mockAudiences.map(audienceSummary) };

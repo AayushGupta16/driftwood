@@ -9,6 +9,7 @@ import {
   createAudience,
   deleteAudience,
   discoverAudienceLeads,
+  getDiscoveryStatus,
   getAudience,
   listAudiences,
 } from "./api";
@@ -22,6 +23,7 @@ import {
   type AudienceFilters,
   type AudienceSummary,
   type DiscoveryResult,
+  type DiscoveryProvider,
 } from "./model";
 import {
   ArrowIcon,
@@ -30,6 +32,7 @@ import {
   CheckIcon,
   FilterIcon,
   PlusIcon,
+  OrangeSliceIcon,
   SearchIcon,
   TrashIcon,
 } from "./icons";
@@ -59,6 +62,9 @@ export default function Audiences() {
   const [description, setDescription] = useState("");
   const [filters, setFilters] = useState<AudienceFilters>(EMPTY_FILTERS);
   const [results, setResults] = useState<DiscoveryResult | null>(null);
+  const [sourceProvider, setSourceProvider] = useState<"orange_slice" | "workspace">("orange_slice");
+  const [providerStatuses, setProviderStatuses] = useState<DiscoveryProvider[]>([]);
+  const [providerStatusLoading, setProviderStatusLoading] = useState(true);
   const [selectedRecords, setSelectedRecords] = useState<Set<string>>(new Set());
   const [discovering, setDiscovering] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -87,6 +93,29 @@ export default function Audiences() {
     };
   }, []);
 
+  useEffect(() => {
+    let current = true;
+    getDiscoveryStatus()
+      .then((status) => {
+        if (!current) return;
+        setSourceProvider(status.defaultProvider);
+        setProviderStatuses(status.providers);
+      })
+      .catch(() => {
+        if (!current) return;
+        setProviderStatuses([
+          { provider: "orange_slice", label: "Orange Slice", configured: false },
+          { provider: "workspace", label: "Workspace leads", configured: true },
+        ]);
+      })
+      .finally(() => {
+        if (current) setProviderStatusLoading(false);
+      });
+    return () => {
+      current = false;
+    };
+  }, []);
+
   const filteredAudiences = useMemo(
     () => filterAudiences(audiences, query),
     [audiences, query],
@@ -101,6 +130,10 @@ export default function Audiences() {
     setSelectedRecords(new Set());
     setError(null);
   }
+
+  const activeProvider = providerStatuses.find(
+    (provider) => provider.provider === sourceProvider,
+  );
 
   async function openAudience(id: string) {
     setDetailLoading(true);
@@ -119,7 +152,7 @@ export default function Audiences() {
     setDiscovering(true);
     setError(null);
     try {
-      const nextResults = await discoverAudienceLeads(filters);
+      const nextResults = await discoverAudienceLeads(filters, sourceProvider);
       setResults(nextResults);
       const available = new Set(nextResults.candidates.map((candidate) => candidate.providerRecordId));
       setSelectedRecords((current) => new Set([...current].filter((id) => available.has(id))));
@@ -223,6 +256,39 @@ export default function Audiences() {
 
         {error && <div className="audience-error" role="alert">{error}</div>}
 
+        <div className="audience-provider-picker">
+          <span className="audience-provider-label">Source</span>
+          <div role="radiogroup" aria-label="Lead discovery source" className="audience-provider-options">
+            {(["orange_slice", "workspace"] as const).map((providerId) => {
+              const status = providerStatuses.find((provider) => provider.provider === providerId);
+              const selected = sourceProvider === providerId;
+              return (
+                <button
+                  key={providerId}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  className={`audience-provider-option ${selected ? "is-selected" : ""}`}
+                  onClick={() => {
+                    setSourceProvider(providerId);
+                    setResults(null);
+                    setSelectedRecords(new Set());
+                    setError(null);
+                  }}
+                >
+                  <span className="audience-provider-icon">
+                    {providerId === "orange_slice" ? <OrangeSliceIcon size={17} /> : <AudienceIcon size={17} />}
+                  </span>
+                  <strong>{status?.label ?? (providerId === "orange_slice" ? "Orange Slice" : "Workspace leads")}</strong>
+                  <span className={`audience-provider-state ${status?.configured ? "is-connected" : ""}`}>
+                    {providerStatusLoading ? "Checking" : status?.configured ? "Connected" : "Not connected"}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <form className="audience-discovery-form" onSubmit={runDiscovery}>
           <div className="audience-filter-title"><FilterIcon size={16} /><span>Discovery filters</span></div>
           <label className="audience-filter-search">
@@ -237,7 +303,7 @@ export default function Audiences() {
             <span>Role</span>
             <input value={filters.title} onChange={(event) => setFilters({ ...filters, title: event.target.value })} placeholder="Founder, VP Sales…" />
           </label>
-          <button className="audience-primary audience-find" type="submit" disabled={discovering}>
+          <button className="audience-primary audience-find" type="submit" disabled={discovering || providerStatusLoading || !activeProvider?.configured}>
             {discovering ? "Searching…" : "Find leads"}
           </button>
         </form>
@@ -246,7 +312,7 @@ export default function Audiences() {
           <div className="audience-results-head">
             <div>
               <h2>Lead discovery</h2>
-              <p>{results ? `${results.candidates.length} results from ${results.providerLabel}` : "Run a search to see available leads."}</p>
+              <p>{results ? `${results.candidates.length} results from ${results.providerLabel}` : `${activeProvider?.label ?? "Lead source"} results appear here.`}</p>
             </div>
             {selectedRecords.size > 0 && <span className="audience-selection-count">{selectedRecords.size} selected</span>}
           </div>
@@ -254,7 +320,7 @@ export default function Audiences() {
           {discovering ? (
             <div className="audience-state"><span className="audience-spinner" aria-hidden="true" /><p>Searching the connected source…</p></div>
           ) : !results ? (
-            <div className="audience-state"><SearchIcon size={23} /><h3>Start with a focused search</h3><p>Seed domains use Orange Slice lookalikes; role and result text narrow the people returned.</p></div>
+            <div className="audience-state"><SearchIcon size={23} /><h3>{activeProvider?.configured === false ? `${activeProvider.label} is not connected` : "Start a focused search"}</h3><p>{activeProvider?.configured === false ? "Choose Workspace leads or connect the server credential." : "Add a domain, role, or search term."}</p></div>
           ) : results.candidates.length === 0 ? (
             <div className="audience-state"><AudienceIcon size={24} /><h3>No matching leads</h3><p>Broaden a filter and run discovery again.</p></div>
           ) : (

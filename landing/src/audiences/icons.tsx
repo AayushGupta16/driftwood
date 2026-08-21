@@ -52,3 +52,12 @@ export function TrashIcon(props: IconProps) {
 export function ArrowIcon(props: IconProps) {
   return <Icon {...props}><path d="M5 12h14M14 7l5 5-5 5" /></Icon>;
 }
+
+export function OrangeSliceIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M4 17.5a9 9 0 0 1 16 0H4Z" />
+      <path d="M12 8.5v9M6.5 11.5l5.5 6M17.5 11.5l-5.5 6" />
+    </Icon>
+  );
+}
