@@ -22,12 +22,17 @@ migration, Orange Slice credential, and private blob storage.
 - Metrics show only observable facts. Contacted, replied, and booked can be
   drilled down to people; open/click remain visibly unavailable.
 - Review Queue and other internal cards stay in the current dashboard tab.
+- The overview is an operating brief rather than a duplicate navigation page:
+  one computed next action, an honest pipeline ledger, readiness across the
+  audience/campaign/asset/review path, recent campaigns, activity, compact
+  channel controls, and secondary manual-import tools.
 
 ## Reviewer map
 
 | Area | Primary files | Review focus |
 | --- | --- | --- |
 | App shell and routing | `src/dashboard/`, `src/main.tsx`, `src/admin-main.tsx`, `dashboard.html`, `admin.html`, `vercel.json` | Customer/admin separation, legacy route aliases, responsive focus management, lean entry documents. |
+| Overview brief | `src/Dashboard.tsx`, `src/dashboard/overview-model.ts`, `src/dashboard/overview.css` | Priority ordering, partial-data states, real inventory counts, preserved channel/import controls, responsive hierarchy. |
 | Audiences and lead database | `src/audiences/`, `src/Leads.tsx` | Discovery states, selected-only saves, membership filters, empty/error handling. |
 | Campaign workbench | `src/campaigns/` | Autosave, sequence ordering, lifecycle lock, audience application, activation disclosure. |
 | Assets | `src/assets/` | Upload/link validation states, authenticated previews, deletion and mobile layout. |
@@ -37,17 +42,19 @@ migration, Orange Slice credential, and private blob storage.
 
 ## End-to-end contract
 
-1. Search Orange Slice through the backend and select people.
-2. Save an audience; only selected candidates become canonical companies/leads
+1. Open Overview and verify its priority is derived from the actual review,
+   audience, campaign, and asset state.
+2. Search Orange Slice through the backend and select people.
+3. Save an audience; only selected candidates become canonical companies/leads
    and normalized membership edges.
-3. See that audience in the lead database and apply it to a draft campaign.
-4. Edit/reorder a sequence and persist it through authenticated autosave.
-5. Activate the campaign; verify it freezes while all send ledgers remain
+4. See that audience in the lead database and apply it to a draft campaign.
+5. Edit/reorder a sequence and persist it through authenticated autosave.
+6. Activate the campaign; verify it freezes while all send ledgers remain
    untouched.
-6. Upload an image and save a link; verify the customer agent sees only its
+7. Upload an image and save a link; verify the customer agent sees only its
    workspace assets.
-7. Open channel metrics and inspect the exact person behind a reply or booking.
-8. Open Review Queue without creating another browser tab.
+8. Open channel metrics and inspect the exact person behind a reply or booking.
+9. Open Review Queue without creating another browser tab.
 
 Mock browser QA exercises the complete presentation flow. Database and API
 evidence comes separately from an ephemeral Neon child branch; production Neon,

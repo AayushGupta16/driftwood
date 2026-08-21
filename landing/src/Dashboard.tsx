@@ -7,13 +7,24 @@ import {
   type ReactNode,
 } from "react";
 import { AdminPanelControls, ImpersonationBanner } from "./GodMode";
+import { listAssets } from "./assets/api";
+import type { CompanyAsset } from "./assets/model";
+import { listAudiences } from "./audiences/api";
+import type { AudienceSummary } from "./audiences/model";
+import { listCampaigns } from "./campaigns/api";
+import type { CampaignSummary } from "./campaigns/model";
 import AppShell from "./dashboard/AppShell";
 import { GoogleMark, LoggedOutView, ToastProvider } from "./dashboard/DashboardCommon";
+import {
+  buildOverviewSnapshot,
+  type OverviewSnapshot,
+} from "./dashboard/overview-model";
 import {
   CARD,
   relativeTime,
   useToast,
 } from "./dashboard-shared";
+import "./dashboard/overview.css";
 
 /* /dashboard — Google-login-gated shell. Talks to the same-origin /auth/*
    endpoints (vite proxy in dev, vercel rewrite in prod), so every request
@@ -274,6 +285,13 @@ type ActivityState =
   | { status: "error" }
   | { status: "ready"; events: ActivityEvent[] };
 
+type InventoryState = {
+  status: "loading" | "ready";
+  audiences: AudienceSummary[] | null;
+  campaigns: CampaignSummary[] | null;
+  assets: CompanyAsset[] | null;
+};
+
 function ApprovedView({ user }: { user: User }) {
   const firstName = user.name.split(" ")[0] || user.email;
   // Solo accounts carry no org and stay full-control. Only the owner manages
@@ -283,6 +301,12 @@ function ApprovedView({ user }: { user: User }) {
   const canWrite = role !== "member";
   const [summary, setSummary] = useState<SummaryState>({ status: "loading" });
   const [activity, setActivity] = useState<ActivityState>({ status: "loading" });
+  const [inventory, setInventory] = useState<InventoryState>({
+    status: "loading",
+    audiences: null,
+    campaigns: null,
+    assets: null,
+  });
 
   const loadActivity = useCallback(async () => {
     try {
@@ -321,170 +345,353 @@ function ApprovedView({ user }: { user: User }) {
     })();
   }, [loadSummary]);
 
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const [audiences, campaigns, assets] = await Promise.allSettled([
+        listAudiences(),
+        listCampaigns(),
+        listAssets(),
+      ]);
+      if (cancelled) return;
+      setInventory({
+        status: "ready",
+        audiences: audiences.status === "fulfilled" ? audiences.value : null,
+        campaigns: campaigns.status === "fulfilled" ? campaigns.value : null,
+        assets: assets.status === "fulfilled" ? assets.value : null,
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const snapshot = buildOverviewSnapshot(
+    summary.status === "ready" ? summary.summary.pending_reviews : null,
+    {
+      audienceCount: inventory.audiences?.length ?? null,
+      assetCount: inventory.assets?.length ?? null,
+      campaigns: inventory.campaigns,
+    },
+  );
+  const briefLoading = summary.status === "loading" || inventory.status === "loading";
+
   return (
-    <>
+    <div className="overview-page">
       <LinkedInBanner />
       <EmailBanner emailError={user.email_error ?? null} />
-      <Heading>{`Welcome back, ${firstName}.`}</Heading>
+      <header className="overview-heading">
+        <div>
+          <p className="overview-heading-kicker">Workspace overview</p>
+          <h1>{`Welcome back, ${firstName}.`}</h1>
+          <p>See what moved, clear the next blocker, and keep outreach reviewable.</p>
+        </div>
+        <div className="overview-heading-links" aria-label="Lead database shortcuts">
+          <a href="/dashboard/leads">{formatCount(summary, "leads")} leads</a>
+          <a href="/dashboard/companies">{formatCount(summary, "companies")} qualified companies</a>
+        </div>
+      </header>
 
-      {/* top bar — connect prompt when LinkedIn isn't connected, otherwise the
-          slim sending-status strip once the summary loads. Connections belong
-          to the workspace owner, so only the owner gets the connect/disconnect
-          cards; everyone still sees the status strip. */}
-      {isOwner && !user.linkedin_connected && <LinkedInCard connected={false} />}
-      {user.linkedin_connected && (
-        <StatusStrip
-          sending={summary.status === "ready" ? summary.summary.sending : null}
-          loading={summary.status === "loading"}
-          unavailable={summary.status === "error"}
-          isOwner={isOwner}
-        />
-      )}
-      {isOwner && (
-        <EmailCard
-          connected={user.email_connected ?? false}
-          emailError={user.email_error ?? null}
-        />
-      )}
-      {isOwner && (
-        <TwitterCard
-          connected={user.twitter_connected ?? false}
-          pending={user.twitter_pending ?? false}
-          chatLocked={user.twitter_chat_locked ?? false}
-        />
-      )}
+      <PriorityBrief snapshot={snapshot} loading={briefLoading} />
 
-      {/* two equal-height columns: metrics left, lists right. */}
-      <div className="mt-3.5 grid grid-cols-1 items-stretch gap-3.5 lg:grid-cols-[1.45fr_1fr]">
-        <MetricsCard state={summary} activity={activity} />
+      <div className="overview-focus-grid">
+        <MetricsCard state={summary} />
+        <AttentionPanel
+          snapshot={snapshot}
+          summary={summary}
+          inventory={inventory}
+        />
+      </div>
+
+      <WorkflowPanel snapshot={snapshot} pendingReviews={
+        summary.status === "ready" ? summary.summary.pending_reviews : null
+      } />
+
+      <div className="overview-support-grid">
+        <CampaignDesk snapshot={snapshot} inventory={inventory} />
+        <ActivityCard state={activity} />
+      </div>
+
+      <ChannelsPanel user={user} isOwner={isOwner} summary={summary} />
+
+      <details className="overview-imports">
+        <summary>
+          <span>
+            <strong>Manual imports and suppression</strong>
+            <small>Upload a CSV or manage the workspace blacklist.</small>
+          </span>
+          <span aria-hidden="true" className="overview-imports-toggle">+</span>
+        </summary>
         <ListsCard state={summary} canWrite={canWrite} onImported={loadSummary} />
-      </div>
-
-      <CampaignsEntryCard />
-      <LeadsEntryCard state={summary} />
-      <CompaniesEntryCard state={summary} />
-      <ReviewEntryCard state={summary} />
-    </>
-  );
-}
-
-/* ---------- campaign workbench entry ---------- */
-
-function CampaignsEntryCard() {
-  return (
-    <div
-      className={`mt-7 ${CARD} flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6`}
-    >
-      <div className="min-w-0">
-        <SectionLabel>Campaigns</SectionLabel>
-        <p className="m-0 mt-2 text-[14px] font-medium text-ink-soft">
-          Build a reviewed sequence across email, LinkedIn, tailored demos, and waits.
-        </p>
-      </div>
-      <a
-        href="/dashboard/campaigns"
-        className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-full bg-tide px-4.5 py-2.5 text-[14px] font-medium text-white no-underline transition-all hover:-translate-y-px hover:bg-tide-deep sm:self-auto"
-      >
-        Open campaign workbench
-      </a>
+      </details>
     </div>
   );
 }
 
-/* ---------- all leads entry (full table lives at /dashboard/leads) ---------- */
+function formatCount(state: SummaryState, key: "leads" | "companies") {
+  if (state.status !== "ready") return "—";
+  const value = key === "leads" ? state.summary.lists.leads : state.summary.companies.qualified;
+  return value.toLocaleString();
+}
 
-/* Compact card linking to the dedicated full-width leads view. Reads the
-   already-loaded summary so it can show the pipeline count without its own
-   request. Internal workspace navigation stays in the current tab. */
-function LeadsEntryCard({ state }: { state: SummaryState }) {
-  const leads = state.status === "ready" ? state.summary.lists.leads : null;
-  const line =
-    leads === null
-      ? "Loading your pipeline…"
-      : leads > 0
-        ? `${plural(leads, "lead", "leads")} in your pipeline`
-        : "No leads yet.";
-
+function PriorityBrief({
+  snapshot,
+  loading,
+}: {
+  snapshot: OverviewSnapshot;
+  loading: boolean;
+}) {
   return (
-    <div
-      className={`mt-7 ${CARD} flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6`}
-    >
-      <div className="min-w-0">
-        <SectionLabel>All leads</SectionLabel>
-        <p className="m-0 mt-2 text-[14px] font-medium text-ink-soft">{line}</p>
+    <section className="overview-priority" aria-labelledby="overview-priority-title">
+      <div>
+        <p>Next action</p>
+        <h2 id="overview-priority-title">
+          {loading ? "Reading workspace state…" : snapshot.primaryAction.title}
+        </h2>
+        <span>
+          {loading
+            ? "Checking your queue, campaigns, audiences, and assets."
+            : snapshot.primaryAction.detail}
+        </span>
       </div>
-      <a
-        href="/dashboard/leads"
-        className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-full bg-tide px-4.5 py-2.5 text-[14px] font-medium text-white no-underline transition-all hover:-translate-y-px hover:bg-tide-deep sm:self-auto"
-      >
-        View all leads
-      </a>
-    </div>
+      {loading ? (
+        <span className="overview-priority-loading" role="status">Loading</span>
+      ) : (
+        <a href={snapshot.primaryAction.href}>{snapshot.primaryAction.label}</a>
+      )}
+    </section>
   );
 }
 
-/* ---------- all companies entry (full table lives at /dashboard/companies) ---------- */
-
-/* Same compact card, linking out to the dedicated target-accounts page. Reads
-   the summary's company rollup so the line can show qualified vs screened-out
-   counts without its own request. */
-function CompaniesEntryCard({ state }: { state: SummaryState }) {
-  const companies = state.status === "ready" ? state.summary.companies : null;
-  const line =
-    companies === null
-      ? "Loading your accounts…"
-      : companies.qualified || companies.screened_out || companies.unknown
-        ? `${companies.qualified.toLocaleString()} qualified accounts · ${companies.screened_out.toLocaleString()} screened out by your AE`
-        : "No target accounts yet.";
+function AttentionPanel({
+  snapshot,
+  summary,
+  inventory,
+}: {
+  snapshot: OverviewSnapshot;
+  summary: SummaryState;
+  inventory: InventoryState;
+}) {
+  const pending = summary.status === "ready" ? summary.summary.pending_reviews : null;
+  const items = [
+    {
+      label: "Review queue",
+      value: pending === null ? "—" : pending === 0 ? "Clear" : `${pending} waiting`,
+      href: "/dashboard/review",
+      active: (pending ?? 0) > 0,
+    },
+    {
+      label: "Campaign drafts",
+      value: snapshot.draftCampaignCount === null ? "—" : `${snapshot.draftCampaignCount}`,
+      href: "/dashboard/campaigns",
+      active: (snapshot.campaignsNeedingWork ?? 0) > 0,
+    },
+    {
+      label: "Saved audiences",
+      value: snapshot.audienceCount === null ? "—" : `${snapshot.audienceCount}`,
+      href: "/dashboard/audiences",
+      active: snapshot.audienceCount === 0,
+    },
+    {
+      label: "Agent assets",
+      value: snapshot.assetCount === null ? "—" : `${snapshot.assetCount}`,
+      href: "/dashboard/assets",
+      active: snapshot.assetCount === 0,
+    },
+  ];
 
   return (
-    <div
-      className={`mt-3.5 ${CARD} flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6`}
-    >
-      <div className="min-w-0">
-        <SectionLabel>All companies</SectionLabel>
-        <p className="m-0 mt-2 text-[14px] font-medium text-ink-soft">{line}</p>
+    <section className="overview-panel overview-attention" aria-labelledby="attention-title">
+      <div className="overview-panel-heading">
+        <div>
+          <h2 id="attention-title">Readiness</h2>
+          <p>What is ready, waiting, or still unconfigured.</p>
+        </div>
+        {inventory.status === "ready" && [inventory.audiences, inventory.campaigns, inventory.assets].some((item) => item === null) && (
+          <span className="overview-partial">Partial data</span>
+        )}
       </div>
-      <a
-        href="/dashboard/companies"
-        className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-full bg-tide px-4.5 py-2.5 text-[14px] font-medium text-white no-underline transition-all hover:-translate-y-px hover:bg-tide-deep sm:self-auto"
-      >
-        View all companies
-      </a>
-    </div>
+      <div className="overview-readiness-list">
+        {items.map((item) => (
+          <a href={item.href} key={item.label}>
+            <span className={item.active ? "is-active" : ""} aria-hidden="true" />
+            <strong>{item.label}</strong>
+            <small>{item.value}</small>
+          </a>
+        ))}
+      </div>
+      <p className="overview-attention-note">
+        A saved campaign stays planning-only until the existing review path approves outreach.
+      </p>
+    </section>
   );
 }
 
-/* ---------- approval queue entry (queue lives at /dashboard/review) ---------- */
-
-/* Same compact card, linking out to the review queue. Reads the summary's
-   pending_reviews count so the line can say how many decisions are waiting
-   without its own request. */
-function ReviewEntryCard({ state }: { state: SummaryState }) {
-  const pending =
-    state.status === "ready" ? state.summary.pending_reviews : null;
-  const line =
-    pending === null
-      ? "Loading your queue…"
-      : pending > 0
-        ? `${plural(pending, "decision", "decisions")} waiting on you`
-        : "Queue is clear — nothing needs a decision.";
-
+function WorkflowPanel({
+  snapshot,
+  pendingReviews,
+}: {
+  snapshot: OverviewSnapshot;
+  pendingReviews: number | null;
+}) {
+  const steps = [
+    {
+      index: "01",
+      title: "Find the audience",
+      detail: snapshot.audienceCount === null ? "Loading saved audiences" : `${snapshot.audienceCount} saved`,
+      href: "/dashboard/audiences",
+    },
+    {
+      index: "02",
+      title: "Build the sequence",
+      detail: snapshot.campaignCount === null
+        ? "Loading campaigns"
+        : `${snapshot.campaignCount} ${snapshot.campaignCount === 1 ? "campaign" : "campaigns"}`,
+      href: "/dashboard/campaigns",
+    },
+    {
+      index: "03",
+      title: "Give agents context",
+      detail: snapshot.assetCount === null
+        ? "Loading assets"
+        : `${snapshot.assetCount} ${snapshot.assetCount === 1 ? "asset" : "assets"}`,
+      href: "/dashboard/assets",
+    },
+    {
+      index: "04",
+      title: "Review before sending",
+      detail: pendingReviews === null ? "Loading queue" : pendingReviews === 0 ? "Queue clear" : `${pendingReviews} waiting`,
+      href: "/dashboard/review",
+    },
+  ];
   return (
-    <div
-      className={`mt-3.5 ${CARD} flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6`}
-    >
-      <div className="min-w-0">
-        <SectionLabel>Approval queue</SectionLabel>
-        <p className="m-0 mt-2 text-[14px] font-medium text-ink-soft">{line}</p>
+    <section className="overview-panel overview-workflow" aria-labelledby="workflow-title">
+      <div className="overview-panel-heading">
+        <div>
+          <h2 id="workflow-title">Outbound path</h2>
+          <p>Each step stays inspectable before outreach reaches a prospect.</p>
+        </div>
+        <a href="/dashboard/campaigns/new">New campaign</a>
       </div>
-      <a
-        href="/dashboard/review"
-        className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-full bg-tide px-4.5 py-2.5 text-[14px] font-medium text-white no-underline transition-all hover:-translate-y-px hover:bg-tide-deep sm:self-auto"
-      >
-        Open review queue
-      </a>
-    </div>
+      <ol>
+        {steps.map((step) => (
+          <li key={step.index}>
+            <a href={step.href}>
+              <span aria-hidden="true">{step.index}</span>
+              <strong>{step.title}</strong>
+              <small>{step.detail}</small>
+            </a>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
+function CampaignDesk({
+  snapshot,
+  inventory,
+}: {
+  snapshot: OverviewSnapshot;
+  inventory: InventoryState;
+}) {
+  return (
+    <section className="overview-panel overview-campaign-desk" aria-labelledby="campaign-desk-title">
+      <div className="overview-panel-heading">
+        <div>
+          <h2 id="campaign-desk-title">Recent campaigns</h2>
+          <p>Return to the latest sequence without hunting through the workspace.</p>
+        </div>
+        <a href="/dashboard/campaigns">View all</a>
+      </div>
+      {inventory.status === "loading" ? (
+        <p className="overview-empty" role="status">Loading campaigns…</p>
+      ) : inventory.campaigns === null ? (
+        <p className="overview-empty" role="alert">Campaigns are temporarily unavailable.</p>
+      ) : snapshot.recentCampaigns.length === 0 ? (
+        <p className="overview-empty">No campaigns yet. Build an audience, then start a sequence.</p>
+      ) : (
+        <div className="overview-campaign-list">
+          {snapshot.recentCampaigns.map((campaign) => (
+            <a href={`/dashboard/campaigns/${encodeURIComponent(campaign.id)}`} key={campaign.id}>
+              <span className={`overview-campaign-status is-${campaign.status}`}>
+                {campaign.status}
+              </span>
+              <strong>{campaign.name}</strong>
+              <small>{campaign.contactCount} leads · {campaign.stepCount} steps</small>
+              <time dateTime={campaign.updatedAt}>{relativeTime(campaign.updatedAt) ?? "Recently"}</time>
+            </a>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function ActivityCard({ state }: { state: ActivityState }) {
+  return (
+    <section className="overview-panel overview-activity" aria-labelledby="activity-title">
+      <div className="overview-panel-heading">
+        <div>
+          <h2 id="activity-title">Latest movement</h2>
+          <p>Recent stage changes, replies, and sends.</p>
+        </div>
+      </div>
+      {state.status === "loading" && <p className="overview-empty" role="status">Loading activity…</p>}
+      {state.status === "error" && <p className="overview-empty" role="alert">Activity is temporarily unavailable.</p>}
+      {state.status === "ready" && state.events.length === 0 && <p className="overview-empty">No activity yet.</p>}
+      {state.status === "ready" && state.events.slice(0, 5).map((event, index) => (
+        <ActivityLine key={`${event.at}-${index}`} event={event} />
+      ))}
+    </section>
+  );
+}
+
+function ChannelsPanel({
+  user,
+  isOwner,
+  summary,
+}: {
+  user: User;
+  isOwner: boolean;
+  summary: SummaryState;
+}) {
+  return (
+    <section className="overview-panel overview-channels" aria-labelledby="channels-title">
+      <div className="overview-panel-heading">
+        <div>
+          <h2 id="channels-title">Channel connections</h2>
+          <p>Owner-managed access for the outreach channels agents can use.</p>
+        </div>
+      </div>
+      <div className="overview-channel-list">
+        {isOwner && !user.linkedin_connected && <LinkedInCard connected={false} />}
+        {user.linkedin_connected && (
+          <StatusStrip
+            sending={summary.status === "ready" ? summary.summary.sending : null}
+            loading={summary.status === "loading"}
+            unavailable={summary.status === "error"}
+            isOwner={isOwner}
+          />
+        )}
+        {isOwner && (
+          <EmailCard
+            connected={user.email_connected ?? false}
+            emailError={user.email_error ?? null}
+          />
+        )}
+        {isOwner && (
+          <TwitterCard
+            connected={user.twitter_connected ?? false}
+            pending={user.twitter_pending ?? false}
+            chatLocked={user.twitter_chat_locked ?? false}
+          />
+        )}
+        {!isOwner && !user.linkedin_connected && (
+          <p className="overview-empty">Channel connections are managed by the workspace owner.</p>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -530,7 +737,7 @@ function StatusStrip({
   const rel = relativeTime(sending?.last_action_at ?? null);
 
   return (
-    <div className={`mt-7 ${CARD} p-4`}>
+    <div className="overview-channel-row is-connected">
       <div className="flex items-center gap-3">
         <span
           className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-ok/25 bg-ok/10 text-ok"
@@ -602,18 +809,18 @@ function SectionLabel({ children }: { children: string }) {
   );
 }
 
-/* left column — Results (inline) + Pipeline funnel + Latest activity in one
-   card. Owns the summary's loading/error/ready states so the grid stays
-   stable; the Latest section simply stays hidden until its own fetch lands. */
-function MetricsCard({
-  state,
-  activity,
-}: {
-  state: SummaryState;
-  activity: ActivityState;
-}) {
+/* Honest summary metrics remain the overview's largest surface. Activity has
+   its own supporting panel so the funnel stays scannable at a glance. */
+function MetricsCard({ state }: { state: SummaryState }) {
   return (
-    <div className={`${CARD} flex flex-col p-5 sm:p-6`}>
+    <section className="overview-panel overview-metrics" aria-labelledby="pipeline-title">
+      <div className="overview-panel-heading">
+        <div>
+          <h2 id="pipeline-title">Pipeline movement</h2>
+          <p>Current totals from observed outreach, replies, and booked meetings.</p>
+        </div>
+        <a href="/dashboard/metrics">Open metrics</a>
+      </div>
       {state.status === "loading" && (
         <div className="flex flex-1 items-center justify-center py-12">
           <span
@@ -630,29 +837,12 @@ function MetricsCard({
       )}
       {state.status === "ready" && (
         <>
-          <SectionLabel>Results</SectionLabel>
           <InlineResults results={state.summary.results} />
-          <div className="my-4 h-px bg-line/70" />
-          <SectionLabel>Pipeline</SectionLabel>
+          <div className="overview-metrics-rule" />
           <FunnelBars funnel={state.summary.funnel} />
-          {activity.status === "ready" && (
-            <>
-              <div className="my-4 h-px bg-line/70" />
-              <SectionLabel>Latest</SectionLabel>
-              {activity.events.length > 0 ? (
-                activity.events
-                  .slice(0, 8)
-                  .map((event, i) => <ActivityLine key={i} event={event} />)
-              ) : (
-                <p className="m-0 pt-1.5 text-[12.5px] text-ink-faint">
-                  No activity yet.
-                </p>
-              )}
-            </>
-          )}
         </>
       )}
-    </div>
+    </section>
   );
 }
 
@@ -798,7 +988,7 @@ function LinkedInCard({ connected }: { connected: boolean }) {
   }
 
   return (
-    <div className={`mt-7 ${CARD} p-7 sm:p-8`}>
+    <div className="overview-channel-row">
       <div className="flex items-start gap-4">
         <span
           className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${
@@ -915,7 +1105,7 @@ function EmailCard({
   }
 
   return (
-    <div className={`mt-7 ${CARD} p-7 sm:p-8`}>
+    <div className="overview-channel-row">
       <div className="flex items-start gap-4">
         <span
           className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${
@@ -1168,7 +1358,7 @@ function TwitterCard({
   }
 
   return (
-    <div className={`mt-7 ${CARD} p-7 sm:p-8`}>
+    <div className="overview-channel-row">
       <div className="flex items-start gap-4">
         <span
           className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${
@@ -1347,7 +1537,7 @@ function ListsCard({
       : "Nothing blacklisted yet.");
 
   return (
-    <div className={`${CARD} flex flex-col p-5 sm:p-6`}>
+    <div className="overview-import-body">
       <SectionLabel>Your lists</SectionLabel>
       <p className="m-0 mt-2 text-[13px] leading-relaxed text-ink-soft">
         Optional — we source leads for you either way. Add your own contacts, or a

@@ -23,6 +23,21 @@
 4. Sequence information spread between leads, review, and queued-send pages.
 5. Large empty areas that do not help the operator understand next action.
 
+## Phase 14 overview finding
+
+The shared shell is complete, but the overview interior still exhibits the pre-redesign information architecture: channel setup dominates the first viewport, four repeated destination cards duplicate the sidebar, and the new audience/campaign/asset lifecycle is not summarized. Preserve all underlying controls and real summary data, but move them into a priority-led operating brief. Keep manual CSV import available as a secondary expandable tool instead of making it the page's main structure.
+
+## Phase 14 final audit
+
+- Result: pass for the generic dashboard rule set; no Tier 1 or Tier 2 findings introduced.
+- Macrostructure: the customer shell remains the logged Workbench run, while the overview interior now uses an asymmetric operating brief instead of a destination-card wall.
+- Honest data: priority, funnel, readiness, campaigns, and activity use authenticated APIs. The named records and counts visible under `?mock=1` are explicit QA fixtures, not production claims.
+- Typography and color: existing Public Sans, IBM Plex Mono, paper/surface/ink/tide tokens, and the single tide accent remain intact.
+- Icons and effects: no icon package, emoji icon, 3D layer, glow, glassmorphism, or decorative effect was added.
+- Motion: CSS state transitions retain the Corporate 1/3 timing and reduced-motion fallback; there is no scroll or animation library.
+- Accessibility: the view retains semantic regions and headings, descriptive current-tab links, visible focus rings, labeled loading/error states, and a native keyboard-operable details disclosure.
+- Responsive behavior: the 8/4 and 3/2 desktop splits collapse to one column; the four-step ledger becomes two columns and then a single flow; campaign metadata and import controls reduce without horizontal overflow.
+
 ## Scope
 
 Reposition the customer dashboard as a growth workspace while preserving Driftwood's visual identity. The paired feature branches introduce a campaign-centered shell, saved audiences, server-side Orange Slice discovery, organization-scoped assets, honest channel analytics, persisted versioned campaign definitions, and an inert execution ledger without changing backend delivery behavior.

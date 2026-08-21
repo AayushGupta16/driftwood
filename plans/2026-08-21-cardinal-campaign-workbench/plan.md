@@ -35,6 +35,7 @@ Add a persisted campaign workspace that makes Driftwood's lead sequencing legibl
 | 11 | Separate customer navigation from the Driftwood admin control room | complete |
 | 12 | Keep internal overview destinations in the current workspace tab | complete |
 | 13 | Engineering review documentation and disposable Neon E2E gate | complete |
+| 14 | Rebuild the customer overview as a connected operating brief | complete |
 
 ## File ownership
 
@@ -88,6 +89,9 @@ Add a persisted campaign workspace that makes Driftwood's lead sequencing legibl
 - [x] Overview links for leads, companies, and the review queue stay in the current tab; external resources retain explicit new-tab behavior.
 - [x] Frontend, backend, database, backfill, rollout, and rollback contracts are documented for human and coding-agent review.
 - [x] A disposable Neon child branch passes the real API journey, cleanup verification, migration downgrade/re-upgrade, and is deleted afterward.
+- [x] Overview prioritizes the next real action, connects audience/campaign/asset/review readiness, and removes the legacy card wall.
+- [x] Overview preserves channel connection controls, manual CSV imports, honest metrics, loading/error/empty states, and current-tab navigation.
+- [x] Overview passes model tests, lint, build, desktop browser interaction QA, and the dashboard anti-slop audit.
 
 ## Verification
 
@@ -105,6 +109,50 @@ Add a persisted campaign workspace that makes Driftwood's lead sequencing legibl
 - Persisted browser E2E at 1280×720: selected a real API-shaped lead, added a sequence step, observed Saving → Saved, reviewed the activation disclosure, and verified the frozen active version.
 - Persisted browser E2E at 390×844: enrolled-lead panel, current step, frozen controls, and revision entry point verified; no console warnings or errors.
 - Safety check: the campaign API never creates `review_items`, `scheduled_sends`, or `outbound_messages`; its DB test asserts all three remain empty after activation.
+- Overview rebuild: 27 frontend tests, ESLint, TypeScript, client/SSR production builds, and `git diff --check` pass. A clean in-app browser session rendered the computed review priority, persisted campaign, funnel, readiness ledger, channels, and expandable CSV tools with no console warnings or errors. The priority link has no `target`, so it retains current-tab workspace navigation.
+
+## Overview rebuild extension
+
+The first shell pass moved the dashboard into the left-sidebar workspace, but the overview interior still retained the old sequence of oversized connection cards and repetitive destination cards. Phase 14 replaces that interior with an asymmetric operating brief driven entirely by existing authenticated read APIs. It does not add a backend write, enqueue outreach, or alter provider settings.
+
+### Overview page-purpose and pre-emit verification
+
+This is an extension of the existing Workbench run rather than a new standalone page run. It keeps the logged minimal/operator-canvas direction and introduces a distinct internal anatomy: priority brief, pipeline ledger, outbound path, activity, compact channel controls, and an optional manual-import drawer.
+
+```yaml
+<design_plan>
+  page_purpose:
+    job: "Show the customer what moved, what is blocked, and what to do next"
+    audience: "Approved Driftwood workspace members"
+    primary_action: "Resolve the highest-priority real workflow state"
+    success: "A customer can orient and enter the right audience, campaign, review, metric, or asset surface in one decision"
+    marketing_intent: false
+  macrostructure: "existing Workbench shell with an asymmetric operating-brief interior"
+  vibe:
+    anchor: "minimal"
+    wildcard: "operator canvas"
+    valid: true
+  spatial_system:
+    desktop: "priority brief + 8/4 pipeline and attention split + lifecycle ledger"
+    mobile: "single flow with the priority action before metrics and controls"
+    card_rule: "bounded panels only for operational grouping; no equal-card destination wall"
+  motion:
+    personality: "Corporate"
+    intensity: "1/3"
+    easing: "cubic-bezier(0.2, 0, 0, 1)"
+  interaction_states:
+    button_states: ["default", "hover", "focus", "active", "disabled", "loading", "error", "success"]
+    network_states: ["loading", "ready", "partial error", "empty"]
+  honest_copy:
+    fabricated_metrics: 0
+    data_sources: ["dashboard summary", "dashboard activity", "saved audiences", "campaign summaries", "company assets"]
+  effects_layer: "none; the existing flat paper/surface hierarchy remains functional"
+  custom_icons: "existing Driftwood outlined SVG vocabulary; no icon dependency or emoji"
+  gsap_decision:
+    needed: false
+    reason: "Corporate motion at 1/3 needs only existing CSS state transitions"
+</design_plan>
+```
 
 ## Risks
 
