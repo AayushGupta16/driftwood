@@ -261,6 +261,61 @@ rest of the customer dashboard.
 </design_plan>
 ```
 
+## Phase 19 · Cardinal-style audience search workbench
+
+The live Cardinal lead finder was inspected read-only. Its useful design DNA is
+the persistent people table plus a docked Search/Details workbench, not its
+brand palette. Driftwood adopts that anatomy while preserving explicit Orange
+Slice status, reusable audience membership, permissions, and the existing
+post-save campaign handoff.
+
+```yaml
+<design_plan>
+  macrostructure_diversification:
+    last_3: ["Workbench", "Workbench"]
+    pick: "Workbench"
+    differs_from_last_3: false
+    diversification_rule_pass: true
+    studied_dna_override: "user explicitly requested Cardinal audience-builder anatomy"
+  vibe_validity:
+    anchor: "minimal"
+    wildcard: "operator canvas"
+    contradiction: false
+    valid: true
+  dial_alignment:
+    design_variance: 4
+    visual_density: 9
+    existing_direction_preserved: true
+    macrostructure_within_pm_2: true
+  motion_personality:
+    name: "Corporate"
+    intensity: "1/3"
+    override_logged: true
+  hero_math:
+    applicable: false
+    universal_4plus_ban_pass: true
+  bento_density:
+    applicable: false
+  label_sweep:
+    meta_labels_found: 0
+    long_document_exception: false
+    pass: true
+  button_contrast:
+    eight_states_planned: ["default", "hover", "focus", "active", "disabled", "loading", "error", "success"]
+    focus_ring_visible: true
+    contrast_aa_pass: true
+  honest_copy:
+    fabricated_metrics: 0
+    provider_status_source: "authenticated discovery-status API"
+    search_results_source: "selected Orange Slice or workspace provider"
+  gsap_decision:
+    intensity: "1/3"
+    gsap_needed: false
+    skills_route: "n/a"
+  effects_layer: "none; dense data workbenches benefit from flat operational hierarchy"
+</design_plan>
+```
+
 ### Overview page-purpose and pre-emit verification
 
 This is an extension of the existing Workbench run rather than a new standalone page run. It keeps the logged minimal/operator-canvas direction and introduces a distinct internal anatomy: priority brief, pipeline ledger, outbound path, activity, compact channel controls, and an optional manual-import drawer.

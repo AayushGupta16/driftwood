@@ -42,10 +42,22 @@ import { withMockMode } from "../mock-mode";
 import "./audiences.css";
 
 type View = "library" | "builder";
+type BuilderTab = "search" | "details";
+type BuilderFilter = keyof AudienceFilters;
 
 function readableProvider(provider: string) {
   return provider.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
+
+const BUILDER_FILTERS: Array<{
+  id: BuilderFilter;
+  label: string;
+  placeholder: string;
+}> = [
+  { id: "title", label: "Job title", placeholder: "Founder, VP Sales, Head of QA" },
+  { id: "company", label: "Company or seed domains", placeholder: "stripe.com, brex.com" },
+  { id: "query", label: "Person or company text", placeholder: "Name, title, industry, or company" },
+];
 
 export default function Audiences() {
   const { canWrite } = useWorkspacePermissions();
@@ -62,6 +74,9 @@ export default function Audiences() {
   const [description, setDescription] = useState("");
   const [filters, setFilters] = useState<AudienceFilters>(EMPTY_FILTERS);
   const [results, setResults] = useState<DiscoveryResult | null>(null);
+  const [builderTab, setBuilderTab] = useState<BuilderTab>("search");
+  const [activeFilter, setActiveFilter] = useState<BuilderFilter | null>("title");
+  const [resultQuery, setResultQuery] = useState("");
   const [sourceProvider, setSourceProvider] = useState<"orange_slice" | "workspace">("orange_slice");
   const [providerStatuses, setProviderStatuses] = useState<DiscoveryProvider[]>([]);
   const [providerStatusLoading, setProviderStatusLoading] = useState(true);
@@ -127,6 +142,9 @@ export default function Audiences() {
     setDescription("");
     setFilters(EMPTY_FILTERS);
     setResults(null);
+    setBuilderTab("search");
+    setActiveFilter("title");
+    setResultQuery("");
     setSelectedRecords(new Set());
     setError(null);
   }
@@ -134,6 +152,17 @@ export default function Audiences() {
   const activeProvider = providerStatuses.find(
     (provider) => provider.provider === sourceProvider,
   );
+  const visibleCandidates = useMemo(() => {
+    if (!results) return [];
+    const normalized = resultQuery.trim().toLowerCase();
+    if (!normalized) return results.candidates;
+    return results.candidates.filter((candidate) =>
+      [candidate.name, candidate.title, candidate.company]
+        .join(" ")
+        .toLowerCase()
+        .includes(normalized),
+    );
+  }, [resultQuery, results]);
 
   async function openAudience(id: string) {
     setDetailLoading(true);
@@ -232,126 +261,152 @@ export default function Audiences() {
   }
 
   if (view === "builder") {
+    const hasSearchFilter = Object.values(filters).some((value) => value.trim());
+    const allVisibleSelected =
+      visibleCandidates.length > 0 &&
+      visibleCandidates.every((candidate) => selectedRecords.has(candidate.providerRecordId));
     return (
-      <section className="audience-page audience-builder" aria-labelledby="audience-builder-heading">
-        <button className="audience-back" type="button" onClick={() => setView("library")}>
-          <BackIcon size={16} /> Back to lead lists
-        </button>
-
-        <header className="audience-heading audience-heading-builder">
-          <div>
-            <h1 id="audience-builder-heading">Build a lead list</h1>
-          </div>
-          <div className="audience-builder-fields">
-            <label>
-              <span>List name</span>
-              <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Qualified founders" maxLength={255} />
+      <section className="audience-builder-workbench" aria-labelledby="audience-builder-heading">
+        <div className="audience-builder-canvas">
+          <header className="audience-builder-bar">
+            <button className="audience-builder-back" type="button" onClick={() => setView("library")} aria-label="Back to lead lists">
+              <BackIcon size={16} />
+            </button>
+            <div>
+              <h1 id="audience-builder-heading">{name.trim() || "Untitled list"}</h1>
+              <span>{results ? `${results.candidates.length} results` : "New lead list"}</span>
+            </div>
+            <label className="audience-result-search">
+              <SearchIcon size={15} />
+              <span className="audience-visually-hidden">Search results</span>
+              <input type="search" value={resultQuery} onChange={(event) => setResultQuery(event.target.value)} placeholder="Search by name, title, or company" disabled={!results} />
             </label>
-            <label>
-              <span>Description <small>Optional</small></span>
-              <input value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Who belongs in this audience" maxLength={20000} />
-            </label>
-          </div>
-        </header>
+            {selectedRecords.size > 0 && <span className="audience-selection-count">{selectedRecords.size} selected</span>}
+          </header>
 
-        {error && <div className="audience-error" role="alert">{error}</div>}
-
-        <div className="audience-provider-picker">
-          <span className="audience-provider-label">Source</span>
-          <div role="radiogroup" aria-label="Lead discovery source" className="audience-provider-options">
-            {(["orange_slice", "workspace"] as const).map((providerId) => {
-              const status = providerStatuses.find((provider) => provider.provider === providerId);
-              const selected = sourceProvider === providerId;
-              return (
-                <button
-                  key={providerId}
-                  type="button"
-                  role="radio"
-                  aria-checked={selected}
-                  className={`audience-provider-option ${selected ? "is-selected" : ""}`}
-                  onClick={() => {
-                    setSourceProvider(providerId);
-                    setResults(null);
-                    setSelectedRecords(new Set());
-                    setError(null);
-                  }}
-                >
-                  <span className="audience-provider-icon">
-                    {providerId === "orange_slice" ? <OrangeSliceIcon size={17} /> : <AudienceIcon size={17} />}
-                  </span>
-                  <strong>{status?.label ?? (providerId === "orange_slice" ? "Orange Slice" : "Workspace leads")}</strong>
-                  <span className={`audience-provider-state ${status?.configured ? "is-connected" : ""}`}>
-                    {providerStatusLoading ? "Checking" : status?.configured ? "Connected" : "Not connected"}
-                  </span>
-                </button>
-              );
-            })}
+          <div className="audience-results audience-results-canvas" aria-live="polite" aria-busy={discovering}>
+            {discovering ? (
+              <div className="audience-table-loading" aria-label="Searching for leads">
+                {Array.from({ length: 9 }, (_, index) => <span key={index} />)}
+              </div>
+            ) : !results ? (
+              <div className="audience-state audience-builder-empty"><SearchIcon size={23} /><h2>{activeProvider?.configured === false ? `${activeProvider.label} is not connected` : "Find people for this list"}</h2><p>{activeProvider?.configured === false ? "Choose Workspace leads or connect Orange Slice." : "Set search criteria in the panel."}</p></div>
+            ) : results.candidates.length === 0 ? (
+              <div className="audience-state audience-builder-empty"><AudienceIcon size={24} /><h2>No matching leads</h2><p>Adjust a criterion and search again.</p></div>
+            ) : visibleCandidates.length === 0 ? (
+              <div className="audience-state audience-builder-empty"><SearchIcon size={23} /><h2>No results match</h2><p>Clear the table search to see all discovered people.</p></div>
+            ) : (
+              <div className="audience-table-wrap">
+                <table className="audience-table">
+                  <thead><tr><th scope="col"><label className="audience-check"><input type="checkbox" checked={allVisibleSelected} onChange={() => setSelectedRecords((current) => {
+                    const next = new Set(current);
+                    for (const candidate of visibleCandidates) {
+                      if (allVisibleSelected) next.delete(candidate.providerRecordId);
+                      else next.add(candidate.providerRecordId);
+                    }
+                    return next;
+                  })} aria-label="Select all visible leads" /><span aria-hidden="true">{allVisibleSelected && <CheckIcon size={14} />}</span></label></th><th scope="col">Name</th><th scope="col">Company</th><th scope="col">Job title</th><th scope="col">Contact</th><th scope="col">Stage</th></tr></thead>
+                  <tbody>
+                    {visibleCandidates.map((candidate) => {
+                      const selected = selectedRecords.has(candidate.providerRecordId);
+                      return (
+                        <tr key={`${candidate.providerRecordId}-${candidate.leadId}`} className={selected ? "is-selected" : ""}>
+                          <td><label className="audience-check"><input type="checkbox" checked={selected} onChange={() => setSelectedRecords((current) => toggleLead(current, candidate.providerRecordId))} /><span aria-hidden="true">{selected && <CheckIcon size={14} />}</span><span className="audience-visually-hidden">Select {candidate.name}</span></label></td>
+                          <td><strong>{candidate.name}</strong></td>
+                          <td>{candidate.company}</td>
+                          <td>{candidate.title}</td>
+                          <td><span>{candidate.email}</span>{candidate.linkedinUrl && <a href={candidate.linkedinUrl} target="_blank" rel="noreferrer">LinkedIn</a>}</td>
+                          <td><span className="audience-stage">{stageLabel(candidate.stage)}</span></td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
 
-        <form className="audience-discovery-form" onSubmit={runDiscovery}>
-          <div className="audience-filter-title"><FilterIcon size={16} /><span>Discovery filters</span></div>
-          <label className="audience-filter-search">
-            <span>Result text <small>Optional</small></span>
-            <div><SearchIcon size={16} /><input value={filters.query} onChange={(event) => setFilters({ ...filters, query: event.target.value })} placeholder="Name, title, or company text" /></div>
-          </label>
-          <label>
-            <span>Seed domains</span>
-            <input value={filters.company} onChange={(event) => setFilters({ ...filters, company: event.target.value })} placeholder="stripe.com, brex.com" />
-          </label>
-          <label>
-            <span>Role</span>
-            <input value={filters.title} onChange={(event) => setFilters({ ...filters, title: event.target.value })} placeholder="Founder, VP Sales…" />
-          </label>
-          <button className="audience-primary audience-find" type="submit" disabled={discovering || providerStatusLoading || !activeProvider?.configured}>
-            {discovering ? "Searching…" : "Find leads"}
-          </button>
-        </form>
-
-        <div className="audience-results" aria-live="polite" aria-busy={discovering}>
-          <div className="audience-results-head">
-            <div>
-              <h2>Lead discovery</h2>
-              <p>{results ? `${results.candidates.length} results from ${results.providerLabel}` : `${activeProvider?.label ?? "Lead source"} results appear here.`}</p>
-            </div>
-            {selectedRecords.size > 0 && <span className="audience-selection-count">{selectedRecords.size} selected</span>}
+        <aside className="audience-search-panel" aria-label="Lead list builder">
+          <div className="audience-panel-tabs" role="tablist" aria-label="Lead list controls">
+            <button id="audience-search-tab" type="button" role="tab" aria-controls="audience-search-panel" aria-selected={builderTab === "search"} className={builderTab === "search" ? "is-active" : ""} onClick={() => setBuilderTab("search")}>Search</button>
+            <button id="audience-details-tab" type="button" role="tab" aria-controls="audience-details-panel" aria-selected={builderTab === "details"} className={builderTab === "details" ? "is-active" : ""} onClick={() => setBuilderTab("details")}>Details</button>
           </div>
 
-          {discovering ? (
-            <div className="audience-state"><span className="audience-spinner" aria-hidden="true" /><p>Searching the connected source…</p></div>
-          ) : !results ? (
-            <div className="audience-state"><SearchIcon size={23} /><h3>{activeProvider?.configured === false ? `${activeProvider.label} is not connected` : "Start a focused search"}</h3><p>{activeProvider?.configured === false ? "Choose Workspace leads or connect the server credential." : "Add a domain, role, or search term."}</p></div>
-          ) : results.candidates.length === 0 ? (
-            <div className="audience-state"><AudienceIcon size={24} /><h3>No matching leads</h3><p>Broaden a filter and run discovery again.</p></div>
+          {error && <div className="audience-error audience-panel-error" role="alert">{error}</div>}
+
+          {builderTab === "search" ? (
+            <form id="audience-search-panel" className="audience-search-form" role="tabpanel" aria-labelledby="audience-search-tab" onSubmit={runDiscovery}>
+              <div className="audience-search-panel-head">
+                <div><AudienceIcon size={18} /><h2>Find people</h2></div>
+                <span>{results ? `${results.candidates.length} found` : "Not searched"}</span>
+              </div>
+
+              <div role="radiogroup" aria-label="Lead discovery source" className="audience-provider-options audience-provider-options-panel">
+                {(["orange_slice", "workspace"] as const).map((providerId) => {
+                  const status = providerStatuses.find((provider) => provider.provider === providerId);
+                  const selected = sourceProvider === providerId;
+                  return (
+                    <button key={providerId} type="button" role="radio" aria-checked={selected} className={`audience-provider-option ${selected ? "is-selected" : ""}`} onClick={() => {
+                      setSourceProvider(providerId);
+                      setResults(null);
+                      setSelectedRecords(new Set());
+                      setError(null);
+                    }}>
+                      <span className="audience-provider-icon">{providerId === "orange_slice" ? <OrangeSliceIcon size={16} /> : <AudienceIcon size={16} />}</span>
+                      <strong>{status?.label ?? (providerId === "orange_slice" ? "Orange Slice" : "Workspace")}</strong>
+                      <span className={`audience-provider-state ${status?.configured ? "is-connected" : ""}`}>{providerStatusLoading ? "Checking" : status?.configured ? "Connected" : "Offline"}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="audience-query-box">
+                <SearchIcon size={17} />
+                <input aria-label="Refine your search" value={filters.query} onChange={(event) => setFilters({ ...filters, query: event.target.value })} placeholder="Refine your search" />
+                <button type="submit" aria-label="Run lead search" disabled={discovering || providerStatusLoading || !activeProvider?.configured || !hasSearchFilter}><ArrowIcon size={15} /></button>
+              </div>
+
+              <div className="audience-search-examples" aria-label="Example searches">
+                <button type="button" onClick={() => setFilters({ query: "B2B SaaS", company: "", title: "Founder" })}><SearchIcon size={13} /> Find founders at B2B SaaS companies</button>
+                <button type="button" onClick={() => setFilters({ query: "software", company: "", title: "Head of QA" })}><SearchIcon size={13} /> Find QA leaders at software companies</button>
+              </div>
+
+              <div className="audience-filter-section">
+                <h3>People and company</h3>
+                {BUILDER_FILTERS.map((filter) => {
+                  const expanded = activeFilter === filter.id;
+                  const value = filters[filter.id];
+                  return (
+                    <div className={`audience-filter-row ${expanded ? "is-expanded" : ""}`} key={filter.id}>
+                      <button type="button" aria-expanded={expanded} onClick={() => setActiveFilter(expanded ? null : filter.id)}>
+                        <FilterIcon size={15} /><span>{filter.label}</span>{value && <small>{value}</small>}<ArrowIcon size={14} />
+                      </button>
+                      {expanded && <label><span className="audience-visually-hidden">{filter.label}</span><input autoFocus value={value} onChange={(event) => setFilters({ ...filters, [filter.id]: event.target.value })} placeholder={filter.placeholder} /></label>}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="audience-panel-search-action">
+                <button className="audience-secondary" type="submit" disabled={discovering || providerStatusLoading || !activeProvider?.configured || !hasSearchFilter}>{discovering ? "Searching…" : results ? "Update search" : "Find leads"}</button>
+              </div>
+            </form>
           ) : (
-            <div className="audience-table-wrap">
-              <table className="audience-table">
-                <thead><tr><th scope="col"><span className="audience-visually-hidden">Select</span></th><th scope="col">Person</th><th scope="col">Company</th><th scope="col">Contact</th><th scope="col">Stage</th></tr></thead>
-                <tbody>
-                  {results.candidates.map((candidate) => {
-                    const selected = selectedRecords.has(candidate.providerRecordId);
-                    return (
-                      <tr key={`${candidate.providerRecordId}-${candidate.leadId}`} className={selected ? "is-selected" : ""}>
-                        <td><label className="audience-check"><input type="checkbox" checked={selected} onChange={() => setSelectedRecords((current) => toggleLead(current, candidate.providerRecordId))} /><span aria-hidden="true">{selected && <CheckIcon size={14} />}</span><span className="audience-visually-hidden">Select {candidate.name}</span></label></td>
-                        <td><strong>{candidate.name}</strong><span>{candidate.title}</span></td>
-                        <td>{candidate.company}</td>
-                        <td><span>{candidate.email}</span>{candidate.linkedinUrl && <a href={candidate.linkedinUrl} target="_blank" rel="noreferrer">LinkedIn</a>}</td>
-                        <td><span className="audience-stage">{stageLabel(candidate.stage)}</span></td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+            <div id="audience-details-panel" className="audience-list-details-panel" role="tabpanel" aria-labelledby="audience-details-tab">
+              <h2>List details</h2>
+              <label><span>List name</span><input autoFocus value={name} onChange={(event) => setName(event.target.value)} placeholder="Qualified founders" maxLength={255} /></label>
+              <label><span>Description <small>Optional</small></span><textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Who belongs in this audience" maxLength={20000} rows={4} /></label>
+              <dl><div><dt>Source</dt><dd>{activeProvider?.label ?? readableProvider(sourceProvider)}</dd></div><div><dt>Selected</dt><dd>{selectedRecords.size}</dd></div><div><dt>Results</dt><dd>{results?.candidates.length ?? 0}</dd></div></dl>
             </div>
           )}
-        </div>
 
-        <footer className="audience-builder-footer">
-          <p>{selectedRecords.size === 0 ? "Select at least one lead to save this audience." : `${selectedRecords.size} selected people will be added to this audience.`}</p>
-          <button className="audience-primary" type="button" onClick={saveAudience} disabled={saving || !name.trim() || selectedRecords.size === 0}>
-            <CheckIcon size={16} /> {saving ? "Saving…" : "Create audience"}
-          </button>
-        </footer>
+          <footer className="audience-panel-footer">
+            <button className="audience-primary" type="button" onClick={saveAudience} disabled={saving || !name.trim() || selectedRecords.size === 0}>
+              <CheckIcon size={16} /> {saving ? "Saving…" : selectedRecords.size > 0 ? `Save ${selectedRecords.size} to list` : "Save to list"}
+            </button>
+          </footer>
+        </aside>
       </section>
     );
   }
