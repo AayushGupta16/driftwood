@@ -6,13 +6,9 @@ import AppShell from "./dashboard/AppShell";
 import { withMockMode } from "./mock-mode";
 import "./review-queue.css";
 
-/* /dashboard/review — the founder's review queue: one flat chronological list
-   of decisions the AE is waiting on (oldest first), per the signed-off draft
-   in site/design/review-queue.html, plus kind-filter chips so one send type
-   (e.g. connection requests) can be isolated and bulk-approved. Mobile-first:
-   the usual entry point is a Slack review link tapped on a phone, so the base
-   layout IS the ~640px single column with 44px touch targets; ≥700px only
-   adds air and right-aligns actions. */
+/* /dashboard/review — the founder's chronological decision inbox. The scan
+   list and exact-send detail stay together in the workspace; type filters and
+   bulk decisions remain available above the in-page workbench. */
 
 type User = {
   id: string;
