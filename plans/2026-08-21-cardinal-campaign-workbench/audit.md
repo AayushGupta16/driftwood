@@ -94,3 +94,13 @@ Reposition the customer dashboard as a growth workspace while preserving Driftwo
 - Customer navigation should not advertise or imply access to either tool.
 - Admins need one explicit control-room namespace containing Agents and Search visibility, plus a direct impersonation action.
 - Existing admin-only frontend and backend authorization checks remain the access boundary; the shell separation is information architecture, not a replacement for authorization.
+
+## Phase 16 clarity audit
+
+- Overview hierarchy now matches the customer check-in sequence: account setup, today&rsquo;s sending, results, adding more work, then campaign and utility management.
+- Connected channels disappear from onboarding and remain manageable in a native details disclosure; incomplete or locked connections stay visible.
+- Today&rsquo;s sending uses real daily caps, pending-review counts, and recent send events. No channel volume is inferred from unsupported data.
+- Repeated kickers, section subtitles, workflow education, tooltip instructions, and the persistent campaign activation notice were removed.
+- Lead lists, campaigns, metrics, assets, leads, companies, review, and Overview share the same 36px desktop title scale and compact title/action row.
+- The established palette, fonts, custom SVG vocabulary, visible focus, native controls, Corporate 1/3 motion, and no-effects direction remain unchanged.
+- Browser QA under fail-closed `?mock=1` confirmed the setup-to-results order, connected-card removal, import disclosure focus, sticky mock navigation, and zero horizontal page overflow at the desktop viewport.

@@ -14,6 +14,12 @@ import type { AudienceSummary } from "./audiences/model";
 import { listCampaigns } from "./campaigns/api";
 import type { CampaignSummary } from "./campaigns/model";
 import AppShell from "./dashboard/AppShell";
+import {
+  AssetsIcon,
+  AudienceIcon,
+  CampaignIcon,
+  PeopleIcon,
+} from "./dashboard/icons";
 import { withMockMode } from "./mock-mode";
 import { GoogleMark, LoggedOutView, ToastProvider } from "./dashboard/DashboardCommon";
 import {
@@ -296,7 +302,6 @@ type InventoryState = {
 };
 
 function ApprovedView({ user }: { user: User }) {
-  const firstName = user.name.split(" ")[0] || user.email;
   // Solo accounts carry no org and stay full-control. Only the owner manages
   // channel connections; members are read-only everywhere.
   const role = user.org?.role ?? "owner";
@@ -310,6 +315,8 @@ function ApprovedView({ user }: { user: User }) {
     campaigns: null,
     assets: null,
   });
+  const [importsOpen, setImportsOpen] = useState(false);
+  const importsRef = useRef<HTMLDetailsElement>(null);
 
   const loadActivity = useCallback(async () => {
     try {
@@ -377,52 +384,42 @@ function ApprovedView({ user }: { user: User }) {
       campaigns: inventory.campaigns,
     },
   );
-  const briefLoading = summary.status === "loading" || inventory.status === "loading";
+
+  function openImports() {
+    setImportsOpen(true);
+    window.requestAnimationFrame(() => {
+      importsRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      importsRef.current?.querySelector("summary")?.focus();
+    });
+  }
 
   return (
     <div className="overview-page">
       <LinkedInBanner />
       <EmailBanner emailError={user.email_error ?? null} />
       <header className="overview-heading">
-        <div>
-          <p className="overview-heading-kicker">Workspace overview</p>
-          <h1>{`Welcome back, ${firstName}.`}</h1>
-          <p>See what moved, clear the next blocker, and keep outreach reviewable.</p>
-        </div>
+        <h1>Overview</h1>
         <div className="overview-heading-links" aria-label="Lead database shortcuts">
           <a href={withMockMode("/dashboard/leads")}>{formatCount(summary, "leads")} leads</a>
           <a href={withMockMode("/dashboard/companies")}>{formatCount(summary, "companies")} qualified companies</a>
         </div>
       </header>
 
-      <PriorityBrief snapshot={snapshot} loading={briefLoading} />
+      <ConnectionSetup user={user} isOwner={isOwner} />
+      <TodaysSending summary={summary} activity={activity} />
+      <MetricsCard state={summary} />
+      {canWrite && <QuickActions onImport={openImports} />}
+      <CampaignDesk snapshot={snapshot} inventory={inventory} />
+      <ConnectedAccounts user={user} isOwner={isOwner} />
 
-      <div className="overview-focus-grid">
-        <MetricsCard state={summary} />
-        <AttentionPanel
-          snapshot={snapshot}
-          summary={summary}
-          inventory={inventory}
-        />
-      </div>
-
-      <WorkflowPanel snapshot={snapshot} canWrite={canWrite} pendingReviews={
-        summary.status === "ready" ? summary.summary.pending_reviews : null
-      } />
-
-      <div className="overview-support-grid">
-        <CampaignDesk snapshot={snapshot} inventory={inventory} />
-        <ActivityCard state={activity} />
-      </div>
-
-      <ChannelsPanel user={user} isOwner={isOwner} summary={summary} />
-
-      <details className="overview-imports">
+      <details
+        className="overview-imports"
+        open={importsOpen}
+        ref={importsRef}
+        onToggle={(event) => setImportsOpen(event.currentTarget.open)}
+      >
         <summary>
-          <span>
-            <strong>Manual imports and suppression</strong>
-            <small>Upload a CSV or manage the workspace blacklist.</small>
-          </span>
+          <strong>Imports and blacklist</strong>
           <span aria-hidden="true" className="overview-imports-toggle">+</span>
         </summary>
         <ListsCard state={summary} canWrite={canWrite} onImported={loadSummary} />
@@ -437,158 +434,119 @@ function formatCount(state: SummaryState, key: "leads" | "companies") {
   return value.toLocaleString();
 }
 
-function PriorityBrief({
-  snapshot,
-  loading,
-}: {
-  snapshot: OverviewSnapshot;
-  loading: boolean;
-}) {
+function ConnectionSetup({ user, isOwner }: { user: User; isOwner: boolean }) {
+  if (!isOwner) return null;
+  const linkedInMissing = !user.linkedin_connected;
+  const emailMissing = !(user.email_connected ?? false);
+  const xMissing = !(user.twitter_connected ?? false) || (user.twitter_chat_locked ?? false);
+  const remaining = [linkedInMissing, emailMissing, xMissing].filter(Boolean).length;
+  if (remaining === 0) return null;
+
   return (
-    <section className="overview-priority" aria-labelledby="overview-priority-title">
-      <div>
-        <p>Next action</p>
-        <h2 id="overview-priority-title">
-          {loading ? "Reading workspace state…" : snapshot.primaryAction.title}
-        </h2>
-        <span>
-          {loading
-            ? "Checking your queue, campaigns, audiences, and assets."
-            : snapshot.primaryAction.detail}
-        </span>
+    <section className="overview-connections" aria-labelledby="connections-title">
+      <div className="overview-section-heading">
+        <h2 id="connections-title">Connect accounts</h2>
+        <span>{remaining} left</span>
       </div>
-      {loading ? (
-        <span className="overview-priority-loading" role="status">Loading</span>
-      ) : (
-        <a href={withMockMode(snapshot.primaryAction.href)}>{snapshot.primaryAction.label}</a>
-      )}
-    </section>
-  );
-}
-
-function AttentionPanel({
-  snapshot,
-  summary,
-  inventory,
-}: {
-  snapshot: OverviewSnapshot;
-  summary: SummaryState;
-  inventory: InventoryState;
-}) {
-  const pending = summary.status === "ready" ? summary.summary.pending_reviews : null;
-  const items = [
-    {
-      label: "Review queue",
-      value: pending === null ? "—" : pending === 0 ? "Clear" : `${pending} waiting`,
-      href: "/dashboard/review",
-      active: (pending ?? 0) > 0,
-    },
-    {
-      label: "Campaign drafts",
-      value: snapshot.draftCampaignCount === null ? "—" : `${snapshot.draftCampaignCount}`,
-      href: "/dashboard/campaigns",
-      active: (snapshot.campaignsNeedingWork ?? 0) > 0,
-    },
-    {
-      label: "Saved audiences",
-      value: snapshot.audienceCount === null ? "—" : `${snapshot.audienceCount}`,
-      href: "/dashboard/audiences",
-      active: snapshot.audienceCount === 0,
-    },
-    {
-      label: "Agent assets",
-      value: snapshot.assetCount === null ? "—" : `${snapshot.assetCount}`,
-      href: "/dashboard/assets",
-      active: snapshot.assetCount === 0,
-    },
-  ];
-
-  return (
-    <section className="overview-panel overview-attention" aria-labelledby="attention-title">
-      <div className="overview-panel-heading">
-        <div>
-          <h2 id="attention-title">Readiness</h2>
-          <p>What is ready, waiting, or still unconfigured.</p>
-        </div>
-        {inventory.status === "ready" && [inventory.audiences, inventory.campaigns, inventory.assets].some((item) => item === null) && (
-          <span className="overview-partial">Partial data</span>
+      <div className="overview-connection-grid">
+        {linkedInMissing && <LinkedInCard connected={false} />}
+        {emailMissing && (
+          <EmailCard connected={false} emailError={user.email_error ?? null} />
+        )}
+        {xMissing && (
+          <TwitterCard
+            connected={user.twitter_connected ?? false}
+            pending={user.twitter_pending ?? false}
+            chatLocked={user.twitter_chat_locked ?? false}
+          />
         )}
       </div>
-      <div className="overview-readiness-list">
-        {items.map((item) => (
-          <a href={withMockMode(item.href)} key={item.label}>
-            <span className={item.active ? "is-active" : ""} aria-hidden="true" />
-            <strong>{item.label}</strong>
-            <small>{item.value}</small>
-          </a>
-        ))}
-      </div>
-      <p className="overview-attention-note">
-        A saved campaign stays planning-only until the existing review path approves outreach.
-      </p>
     </section>
   );
 }
 
-function WorkflowPanel({
-  snapshot,
-  pendingReviews,
-  canWrite,
+function TodaysSending({
+  summary,
+  activity,
 }: {
-  snapshot: OverviewSnapshot;
-  pendingReviews: number | null;
-  canWrite: boolean;
+  summary: SummaryState;
+  activity: ActivityState;
 }) {
-  const steps = [
-    {
-      index: "01",
-      title: "Find the audience",
-      detail: snapshot.audienceCount === null ? "Loading saved audiences" : `${snapshot.audienceCount} saved`,
-      href: "/dashboard/audiences",
-    },
-    {
-      index: "02",
-      title: "Build the sequence",
-      detail: snapshot.campaignCount === null
-        ? "Loading campaigns"
-        : `${snapshot.campaignCount} ${snapshot.campaignCount === 1 ? "campaign" : "campaigns"}`,
-      href: "/dashboard/campaigns",
-    },
-    {
-      index: "03",
-      title: "Give agents context",
-      detail: snapshot.assetCount === null
-        ? "Loading assets"
-        : `${snapshot.assetCount} ${snapshot.assetCount === 1 ? "asset" : "assets"}`,
-      href: "/dashboard/assets",
-    },
-    {
-      index: "04",
-      title: "Review before sending",
-      detail: pendingReviews === null ? "Loading queue" : pendingReviews === 0 ? "Queue clear" : `${pendingReviews} waiting`,
-      href: "/dashboard/review",
-    },
-  ];
+  const sending = summary.status === "ready" ? summary.summary.sending : null;
+  const pendingReviews = summary.status === "ready" ? summary.summary.pending_reviews : null;
+  const latestSends = activity.status === "ready"
+    ? activity.events.filter((event) => event.kind === "sent").slice(0, 3)
+    : [];
+
   return (
-    <section className="overview-panel overview-workflow" aria-labelledby="workflow-title">
+    <section className="overview-panel overview-sending" aria-labelledby="sending-title">
       <div className="overview-panel-heading">
-        <div>
-          <h2 id="workflow-title">Outbound path</h2>
-          <p>Each step stays inspectable before outreach reaches a prospect.</p>
-        </div>
-        {canWrite && <a href={withMockMode("/dashboard/campaigns/new")}>New campaign</a>}
+        <h2 id="sending-title">Today&rsquo;s sending</h2>
+        <a href={withMockMode("/dashboard/review")}>Review copy</a>
       </div>
-      <ol>
-        {steps.map((step) => (
-          <li key={step.index}>
-            <a href={withMockMode(step.href)}>
-              <span aria-hidden="true">{step.index}</span>
-              <strong>{step.title}</strong>
-              <small>{step.detail}</small>
-            </a>
-          </li>
-        ))}
-      </ol>
+      <div className="overview-sending-layout">
+        <div className="overview-sending-stats">
+          <SendingStat
+            label="LinkedIn invites"
+            value={summary.status === "loading" ? "—" : sending ? `${sending.invites_sent}/${sending.invites_cap}` : "0"}
+          />
+          <SendingStat
+            label="LinkedIn messages"
+            value={summary.status === "loading" ? "—" : sending ? `${sending.messages_sent}/${sending.messages_cap}` : "0"}
+          />
+          <SendingStat
+            label="Waiting for review"
+            value={pendingReviews === null ? "—" : pendingReviews.toLocaleString()}
+          />
+          <SendingStat
+            label="Status"
+            value={summary.status === "error" ? "Unavailable" : sending?.within_limits === false ? "Near limit" : "On track"}
+            tone={sending?.within_limits === false ? "warning" : "success"}
+          />
+        </div>
+        <div className="overview-latest-sends">
+          <h3>Latest sends</h3>
+          {activity.status === "loading" && <p className="overview-empty" role="status">Loading…</p>}
+          {activity.status === "error" && <p className="overview-empty" role="alert">Unavailable right now.</p>}
+          {activity.status === "ready" && latestSends.length === 0 && <p className="overview-empty">Nothing sent yet today.</p>}
+          {latestSends.map((event, index) => (
+            <ActivityLine key={`${event.at}-${index}`} event={event} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function SendingStat({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone?: "success" | "warning";
+}) {
+  return (
+    <div className="overview-sending-stat">
+      <span>{label}</span>
+      <strong className={tone ? `is-${tone}` : undefined}>{value}</strong>
+    </div>
+  );
+}
+
+function QuickActions({ onImport }: { onImport: () => void }) {
+  return (
+    <section className="overview-panel overview-add" aria-labelledby="add-title">
+      <div className="overview-panel-heading">
+        <h2 id="add-title">Add more</h2>
+      </div>
+      <div className="overview-action-grid">
+        <a href={withMockMode("/dashboard/audiences")}><AudienceIcon size={18} /><span>Find leads</span></a>
+        <a href={withMockMode("/dashboard/campaigns/new")}><CampaignIcon size={18} /><span>New campaign</span></a>
+        <a href={withMockMode("/dashboard/assets")}><AssetsIcon size={18} /><span>Add assets</span></a>
+        <button type="button" onClick={onImport}><PeopleIcon size={18} /><span>Import CSV</span></button>
+      </div>
     </section>
   );
 }
@@ -603,10 +561,7 @@ function CampaignDesk({
   return (
     <section className="overview-panel overview-campaign-desk" aria-labelledby="campaign-desk-title">
       <div className="overview-panel-heading">
-        <div>
-          <h2 id="campaign-desk-title">Recent campaigns</h2>
-          <p>Return to the latest sequence without hunting through the workspace.</p>
-        </div>
+        <h2 id="campaign-desk-title">Campaigns</h2>
         <a href={withMockMode("/dashboard/campaigns")}>View all</a>
       </div>
       {inventory.status === "loading" ? (
@@ -614,7 +569,7 @@ function CampaignDesk({
       ) : inventory.campaigns === null ? (
         <p className="overview-empty" role="alert">Campaigns are temporarily unavailable.</p>
       ) : snapshot.recentCampaigns.length === 0 ? (
-        <p className="overview-empty">No campaigns yet. Build an audience, then start a sequence.</p>
+        <p className="overview-empty">No campaigns yet.</p>
       ) : (
         <div className="overview-campaign-list">
           {snapshot.recentCampaigns.map((campaign) => (
@@ -633,70 +588,27 @@ function CampaignDesk({
   );
 }
 
-function ActivityCard({ state }: { state: ActivityState }) {
-  return (
-    <section className="overview-panel overview-activity" aria-labelledby="activity-title">
-      <div className="overview-panel-heading">
-        <div>
-          <h2 id="activity-title">Latest movement</h2>
-          <p>Recent stage changes, replies, and sends.</p>
-        </div>
-      </div>
-      {state.status === "loading" && <p className="overview-empty" role="status">Loading activity…</p>}
-      {state.status === "error" && <p className="overview-empty" role="alert">Activity is temporarily unavailable.</p>}
-      {state.status === "ready" && state.events.length === 0 && <p className="overview-empty">No activity yet.</p>}
-      {state.status === "ready" && state.events.slice(0, 5).map((event, index) => (
-        <ActivityLine key={`${event.at}-${index}`} event={event} />
-      ))}
-    </section>
-  );
-}
+function ConnectedAccounts({ user, isOwner }: { user: User; isOwner: boolean }) {
+  if (!isOwner) return null;
+  const linkedInConnected = user.linkedin_connected;
+  const emailConnected = user.email_connected ?? false;
+  const xConnected = (user.twitter_connected ?? false) && !(user.twitter_chat_locked ?? false);
+  const connectedCount = [linkedInConnected, emailConnected, xConnected].filter(Boolean).length;
+  if (connectedCount === 0) return null;
 
-function ChannelsPanel({
-  user,
-  isOwner,
-  summary,
-}: {
-  user: User;
-  isOwner: boolean;
-  summary: SummaryState;
-}) {
   return (
-    <section className="overview-panel overview-channels" aria-labelledby="channels-title">
-      <div className="overview-panel-heading">
-        <div>
-          <h2 id="channels-title">Channel connections</h2>
-          <p>Owner-managed access for the outreach channels agents can use.</p>
-        </div>
+    <details className="overview-account-manager">
+      <summary>
+        <strong>Connected accounts</strong>
+        <span>{connectedCount} connected</span>
+        <span aria-hidden="true" className="overview-imports-toggle">+</span>
+      </summary>
+      <div className="overview-connected-grid">
+        {linkedInConnected && <LinkedInCard connected />}
+        {emailConnected && <EmailCard connected emailError={null} />}
+        {xConnected && <TwitterCard connected pending={false} chatLocked={false} />}
       </div>
-      <div className="overview-channel-list">
-        {isOwner && !user.linkedin_connected && <LinkedInCard connected={false} />}
-        {user.linkedin_connected && (
-          <StatusStrip
-            sending={summary.status === "ready" ? summary.summary.sending : null}
-            loading={summary.status === "loading"}
-            unavailable={summary.status === "error"}
-            isOwner={isOwner}
-          />
-        )}
-        {isOwner && (
-          <EmailCard
-            connected={user.email_connected ?? false}
-            emailError={user.email_error ?? null}
-          />
-        )}
-        {isOwner && (
-          <TwitterCard
-            connected={user.twitter_connected ?? false}
-            pending={user.twitter_pending ?? false}
-            chatLocked={user.twitter_chat_locked ?? false}
-          />
-        )}
-        {!isOwner && !user.linkedin_connected && (
-          <p className="overview-empty">Channel connections are managed by the workspace owner.</p>
-        )}
-      </div>
-    </section>
+    </details>
   );
 }
 
@@ -725,105 +637,13 @@ function useDisconnect(endpoint: string) {
   return { pending, error, disconnect };
 }
 
-/* 1 · STATUS — is it on & safe. Mirrors the mockup's .status card. Everyone
-   in the workspace sees the status; only the owner gets Disconnect. */
-function StatusStrip({
-  sending,
-  loading,
-  unavailable,
-  isOwner,
-}: {
-  sending: Sending | null;
-  loading: boolean;
-  unavailable: boolean;
-  isOwner: boolean;
-}) {
-  const { pending, error, disconnect } = useDisconnect("/linkedin/disconnect");
-  const rel = relativeTime(sending?.last_action_at ?? null);
-
-  return (
-    <div className="overview-channel-row is-connected">
-      <div className="flex items-center gap-3">
-        <span
-          className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-ok/25 bg-ok/10 text-ok"
-          aria-hidden="true"
-        >
-          <CheckMark className="size-[18px]" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="text-[15px] font-semibold tracking-[-0.01em]">
-            {sending ? "LinkedIn connected & sending" : "LinkedIn connected"}
-          </div>
-          <div className="mt-1 text-[12.5px] leading-relaxed text-ink-soft">
-            {sending ? (
-              <>
-                <span className="tabular-nums">
-                  {sending.invites_sent}/{sending.invites_cap}
-                </span>{" "}
-                invites ·{" "}
-                <span className="tabular-nums">
-                  {sending.messages_sent}/{sending.messages_cap}
-                </span>{" "}
-                messages today ·{" "}
-                <span
-                  className={
-                    sending.within_limits
-                      ? "font-medium text-ok"
-                      : "font-medium text-amber-700"
-                  }
-                >
-                  {sending.within_limits ? "within safe limits" : "approaching limit"}
-                </span>
-                {rel && <> · last action {rel}</>}
-              </>
-            ) : loading ? (
-              "Loading sending status…"
-            ) : unavailable ? (
-              "Sending status is temporarily unavailable."
-            ) : (
-              "No sending activity is active."
-            )}
-          </div>
-        </div>
-        {isOwner && (
-          <button
-            type="button"
-            onClick={disconnect}
-            disabled={pending}
-            className="ml-auto shrink-0 cursor-pointer rounded-full border border-line bg-surface px-3 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {pending ? "Disconnecting…" : "Disconnect"}
-          </button>
-        )}
-      </div>
-      {error && (
-        <p className="m-0 mt-3 text-[13px] font-medium text-red-700" role="alert">
-          {error}
-        </p>
-      )}
-    </div>
-  );
-}
-
-/* small section eyebrow shared by the metrics + lists cards. */
-function SectionLabel({ children }: { children: string }) {
-  return (
-    <div className="text-[0.85rem] text-ink-faint">
-      {children}
-    </div>
-  );
-}
-
 /* Honest summary metrics remain the overview's largest surface. Activity has
    its own supporting panel so the funnel stays scannable at a glance. */
 function MetricsCard({ state }: { state: SummaryState }) {
   return (
     <section className="overview-panel overview-metrics" aria-labelledby="pipeline-title">
       <div className="overview-panel-heading">
-        <div>
-          <h2 id="pipeline-title">Pipeline movement</h2>
-          <p>Current totals from observed outreach, replies, and booked meetings.</p>
-        </div>
+        <h2 id="pipeline-title">Results</h2>
         <a href={withMockMode("/dashboard/metrics")}>Open metrics</a>
       </div>
       {state.status === "loading" && (
@@ -1010,13 +830,11 @@ function LinkedInCard({ connected }: { connected: boolean }) {
           )}
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="m-0 text-[18px] font-semibold tracking-[-0.01em]">
-            {connected ? "LinkedIn connected" : "Connect your LinkedIn"}
-          </h2>
+          <h3 className="m-0 text-[18px] font-semibold tracking-[-0.01em]">
+            {connected ? "LinkedIn" : "Connect LinkedIn"}
+          </h3>
           <p className="m-0 mt-2 text-[15px] leading-relaxed text-ink-soft">
-            {connected
-              ? "You're connected! We'll take it from here."
-              : "This is all we need to get started. You'll sign in on a secure Unipile page — we never see your password."}
+            {connected ? "Ready." : "Required for LinkedIn outreach."}
           </p>
 
           {connected ? (
@@ -1033,7 +851,7 @@ function LinkedInCard({ connected }: { connected: boolean }) {
               type="button"
               onClick={handleConnect}
               disabled={pending}
-              className="mt-5 inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-full bg-tide px-4.5 py-2.5 text-[14.5px] font-semibold text-white transition-all hover:-translate-y-px hover:bg-tide-deep disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-5 inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-full bg-tide px-4.5 py-2.5 text-[14.5px] font-semibold text-white transition-[background,transform] hover:-translate-y-px hover:bg-tide-deep disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <LinkedInMark className="size-4.5 shrink-0" />
               {pending ? "Connecting…" : "Connect LinkedIn"}
@@ -1127,13 +945,13 @@ function EmailCard({
           )}
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="m-0 text-[18px] font-semibold tracking-[-0.01em]">
-            {connected ? "Email connected" : "Connect your email"}
-          </h2>
+          <h3 className="m-0 text-[18px] font-semibold tracking-[-0.01em]">
+            {connected ? "Email" : "Connect email"}
+          </h3>
           <p className="m-0 mt-2 text-[15px] leading-relaxed text-ink-soft">
             {connected
-              ? "You're connected! We'll take it from here."
-              : "Optional — lets your AE send email as well as LinkedIn. Pick where your mailbox lives: Gmail for Google-hosted email, Outlook for Microsoft 365. We never see your password."}
+              ? "Ready."
+              : "Send from Gmail or Outlook."}
           </p>
 
           {connected ? (
@@ -1384,7 +1202,7 @@ function TwitterCard({
           )}
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="m-0 text-[18px] font-semibold tracking-[-0.01em]">
+          <h3 className="m-0 text-[18px] font-semibold tracking-[-0.01em]">
             {/* No @handle to show: the login check reads cookies, not X's
                 DOM, so nothing scrapes the handle any more. Plain
                 "Connected" until a later slice reads it back. */}
@@ -1394,36 +1212,19 @@ function TwitterCard({
                 ? "Connected"
                 : watching
                   ? "Finish in the X tab"
-                  : "Connect your X account"}
-          </h2>
+                  : "Connect X"}
+          </h3>
           <p className="m-0 mt-2 text-[15px] leading-relaxed text-ink-soft">
             {locked
-              ? "You're logged in to X, but your chat PIN wasn't entered, so your AE can't send DMs yet."
+              ? "Enter your chat PIN to enable DMs."
               : connected
-                ? "You're connected! We'll take it from here."
+                ? "Ready."
                 : watching
-                  ? "Do these in order, then come back:"
-                  : "Optional — lets your AE reach prospects on X. You'll log in and unlock Messages with your chat PIN inside a secure isolated browser session; we never see either."}
+                  ? "Complete these steps in X:"
+                  : "Send direct messages from X."}
           </p>
 
           {(watching || locked) && <TwitterSteps loggedIn={locked} />}
-
-          {/* One callout, never two stacked: during an unlock both states
-              are live at once, and the amber one is the specific message. */}
-          {watching && !locked && (
-            <p className="m-0 mt-3 rounded-lg border-l-[3px] border-tide bg-tide-wash px-3.5 py-2.5 text-[13.5px] leading-relaxed text-tide-deep">
-              Step 2 is easy to miss. X keeps DMs behind a separate passcode,
-              and if it isn&rsquo;t entered here your AE can&rsquo;t open a
-              conversation later. We never see the PIN.
-            </p>
-          )}
-          {locked && (
-            <p className="m-0 mt-3 rounded-lg border-l-[3px] border-amber-600 bg-amber-50 px-3.5 py-2.5 text-[13.5px] leading-relaxed text-amber-900">
-              Your login is saved — this only takes a few seconds. Everything
-              else on your account keeps working; it&rsquo;s DMs specifically
-              that stay blocked until this is done.
-            </p>
-          )}
 
           {locked ? (
             <div className="mt-5 flex flex-wrap items-center gap-2.5">
@@ -1431,7 +1232,7 @@ function TwitterCard({
                 type="button"
                 onClick={() => void openTab("unlock")}
                 disabled={pending}
-                className="inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-full bg-tide px-4.5 py-2.5 text-[14.5px] font-semibold text-white transition-all hover:-translate-y-px hover:bg-tide-deep disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-full bg-tide px-4.5 py-2.5 text-[14.5px] font-semibold text-white transition-[background,transform] hover:-translate-y-px hover:bg-tide-deep disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <XMark className="size-4.5 shrink-0" />
                 {state === "connecting" ? "Opening…" : "Reopen X tab"}
@@ -1459,7 +1260,7 @@ function TwitterCard({
               type="button"
               onClick={() => void openTab("connect")}
               disabled={pending}
-              className="mt-5 inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-full bg-tide px-4.5 py-2.5 text-[14.5px] font-semibold text-white transition-all hover:-translate-y-px hover:bg-tide-deep disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-5 inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-full bg-tide px-4.5 py-2.5 text-[14.5px] font-semibold text-white transition-[background,transform] hover:-translate-y-px hover:bg-tide-deep disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <XMark className="size-4.5 shrink-0" />
               {state === "connecting"
@@ -1543,16 +1344,11 @@ function ListsCard({
 
   return (
     <div className="overview-import-body">
-      <SectionLabel>Your lists</SectionLabel>
-      <p className="m-0 mt-2 text-[13px] leading-relaxed text-ink-soft">
-        Optional — we source leads for you either way. Add your own contacts, or a
-        do-not-contact list we&rsquo;ll always exclude.
-      </p>
-      <div className="mt-3.5 flex flex-1 flex-col gap-3">
+      <div className="flex flex-1 flex-col gap-3">
         <UploadField
           className="flex-1"
           title="Lead list"
-          hint="Contacts to add to your pipeline. Any CSV — name, email, or LinkedIn; we'll match on whatever columns you've got and enrich the rest."
+          hint="CSV with a name plus email or LinkedIn URL."
           endpoint="/api/v1/imports/leads"
           canWrite={canWrite}
           summarize={summarizeLeads}
@@ -1566,7 +1362,7 @@ function ListsCard({
         <UploadField
           className="flex-1"
           title="Blacklist"
-          hint="Excluded from all outreach. Emails, domains, or LinkedIn URLs — one per row."
+          hint="Emails, domains, or LinkedIn URLs to exclude."
           endpoint="/api/v1/imports/blacklist"
           canWrite={canWrite}
           summarize={summarizeBlacklist}

@@ -37,6 +37,7 @@ Add a persisted campaign workspace that makes Driftwood's lead sequencing legibl
 | 13 | Engineering review documentation and disposable Neon E2E gate | complete |
 | 14 | Rebuild the customer overview as a connected operating brief | complete |
 | 15 | Intent hardening: safe mocks, permissions, channel readiness, asset assignment, and truthful states | complete |
+| 16 | Reduce dashboard copy and reorder Overview around the customer check-in flow | complete |
 
 ## File ownership
 
@@ -98,6 +99,8 @@ Add a persisted campaign workspace that makes Driftwood's lead sequencing legibl
 - [x] Campaign saves are serialized and optimistic-lock conflicts are surfaced instead of losing newer edits.
 - [x] Campaign candidate search and analytics people drilldowns are paginated, with aggregate/detail fixtures reconciled.
 - [x] Campaign activation requires qualified companies and per-step channel reachability without changing ICP state.
+- [x] Overview leads with incomplete connections, today&rsquo;s sends, results, and quick-add actions; connected cards leave onboarding.
+- [x] Customer page titles, action rows, card spacing, and utility disclosures use one compact visual system without repeated kickers or intros.
 - [x] Asset dialogs are keyboard-modal and asset access can target all agents or an explicit selection.
 - [x] Orange Slice materialization is bounded, rate-limited, provider-deduplicated, and never requests contact enrichment.
 - [x] Unknown-company discoveries can remain in an audience for qualification, while review request, approval, and delivery all block them from outreach.
@@ -156,6 +159,36 @@ This is a component/system-state extension of the existing dashboard run, so the
     errors_distinct_from_empty: true
     permissions_visible_in_copy: true
   effects_layer: "none; preserve the flat operational hierarchy"
+</design_plan>
+```
+
+## Phase 16 · dashboard clarity pass
+
+The customer overview now follows the order operators repeatedly ask for: finish channel setup, inspect today&rsquo;s sends, read results, then add more work. Setup cards render in one compact row and leave the primary flow once connected; connected-account controls remain available in a collapsed utility. Repeated kickers, explanatory intros, workflow teaching panels, and persistent campaign-system notices are removed across the customer workspace.
+
+```yaml
+<design_plan>
+  page_job: "Show connection readiness, today's sends, results, and the fastest way to add work"
+  macrostructure: "existing Workbench shell with a compact operating stack"
+  vibe:
+    anchor: "minimal"
+    wildcard: "operator canvas"
+    valid: true
+  spatial_system:
+    desktop: "setup row -> sending ledger -> results -> action rail -> campaigns -> collapsed utilities"
+    mobile: "single column with setup and sending first"
+  motion:
+    personality: "Corporate"
+    intensity: "1/3"
+    easing: "cubic-bezier(0.2, 0, 0, 1)"
+  interaction_states:
+    button_states: ["default", "hover", "focus", "active", "disabled", "loading", "error", "success"]
+  honest_copy:
+    fabricated_metrics: 0
+    sending_source: "authenticated dashboard summary and activity APIs"
+    unavailable_states: "remain explicit rather than displaying a false zero"
+  effects_layer: "none; added effects would compete with operational clarity"
+  custom_icons: "existing outlined Driftwood SVG vocabulary; no icon package or emoji"
 </design_plan>
 ```
 

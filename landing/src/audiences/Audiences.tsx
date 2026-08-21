@@ -169,9 +169,7 @@ export default function Audiences() {
 
         <header className="audience-heading audience-heading-builder">
           <div>
-            <p className="audience-kicker">Audience builder</p>
-            <h1 id="audience-builder-heading">Find the right people, then save the list.</h1>
-            <p>Search the connected discovery source, choose canonical leads, and reuse the audience in any campaign.</p>
+            <h1 id="audience-builder-heading">Build a lead list</h1>
           </div>
           <div className="audience-builder-fields">
             <label>
@@ -257,11 +255,7 @@ export default function Audiences() {
   return (
     <section className="audience-page" aria-labelledby="audiences-heading">
       <header className="audience-heading">
-        <div>
-          <p className="audience-kicker">Audience library</p>
-          <h1 id="audiences-heading">Lead lists</h1>
-          <p>Build reusable groups of people for campaigns without duplicating or exporting lead data.</p>
-        </div>
+        <h1 id="audiences-heading">Lead lists</h1>
         {canWrite ? (
           <button className="audience-primary" type="button" onClick={startBuilder} data-testid="new-audience"><PlusIcon size={17} /> New audience</button>
         ) : (

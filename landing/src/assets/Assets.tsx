@@ -143,14 +143,7 @@ export default function Assets() {
   return (
     <section className="asset-page" aria-labelledby="assets-heading">
       <header className="asset-page-heading">
-        <div>
-          <p className="asset-kicker">Agent source library</p>
-          <h1 id="assets-heading">Assets</h1>
-          <p>
-            Keep approved proof, product visuals, and reference links in one private place.
-            Choose whether every workspace agent or only a selected set can retrieve each asset.
-          </p>
-        </div>
+        <h1 id="assets-heading">Assets</h1>
         {canWrite ? (
           <div className="asset-heading-actions">
             <button className="asset-button asset-button-secondary" type="button" onClick={() => setComposer("link")}>

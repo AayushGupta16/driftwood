@@ -676,8 +676,8 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
 
   return (
     <>
-      <div className="mt-4 flex items-end justify-between gap-3">
-        <h1 className="m-0 text-[clamp(1.65rem,6vw,2.1rem)] font-semibold leading-[1.08] tracking-[-0.015em]">
+      <div className="mt-5 flex items-end justify-between gap-3">
+        <h1 className="m-0 text-[clamp(1.7rem,3.6vw,2.25rem)] font-semibold leading-[1.08] tracking-[-0.015em]">
           Review queue
         </h1>
         {state.status === "ready" && items.length > 0 && (
@@ -686,9 +686,6 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
           </span>
         )}
       </div>
-      <p className="m-0 mt-2 text-[13px] leading-[1.5] text-ink-soft">
-        Decisions your AE is waiting on &mdash; bugs first, then sends.
-      </p>
 
       {/* Needs review = decisions still owed; Queued = approved sends waiting
           on the dispatcher. Counts fill in as each list finishes loading. */}

@@ -84,13 +84,7 @@ function CampaignsWorkspace() {
   return (
       <section className="campaign-index" aria-labelledby="campaigns-heading">
         <div className="campaign-index-heading">
-          <div>
-            <p className="campaign-kicker">Campaign workbench</p>
-            <h1 id="campaigns-heading">Campaigns</h1>
-            <p className="campaign-index-intro">
-              Build a versioned sequence, choose real leads, and keep every send behind review.
-            </p>
-          </div>
+          <h1 id="campaigns-heading">Campaigns</h1>
           {canWrite ? (
             <button
               className="campaign-primary"

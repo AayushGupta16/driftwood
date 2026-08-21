@@ -5,11 +5,9 @@
  * visible focus, and the single tide accent. No effect layer.
  */
 
-.asset-page { max-width: 78rem; margin: 0 auto; padding: 2.4rem 2rem 4rem; }
-.asset-page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 2rem; }
-.asset-kicker { margin: 0 0 0.4rem; color: var(--color-tide); font-size: 0.76rem; font-weight: 650; }
-.asset-page-heading h1 { margin: 0; font-size: clamp(2rem, 4vw, 3rem); font-weight: 620; letter-spacing: -0.025em; line-height: 1.05; }
-.asset-page-heading > div:first-child > p:last-child { max-width: 44rem; margin: 0.75rem 0 0; color: var(--color-ink-soft); font-size: 0.95rem; line-height: 1.55; }
+.asset-page { max-width: 78rem; margin: 0 auto; }
+.asset-page-heading { display: flex; min-height: 2.8rem; align-items: center; justify-content: space-between; gap: 1.5rem; }
+.asset-page-heading h1 { margin: 0; font-size: clamp(1.7rem, 3.6vw, 2.25rem); font-weight: 620; letter-spacing: -0.025em; line-height: 1.08; }
 .asset-heading-actions { display: flex; flex: 0 0 auto; gap: 0.65rem; }
 .asset-read-only { flex: 0 0 auto; border: 1px solid var(--color-line); border-radius: 999px; background: var(--color-sand); color: var(--color-ink-soft); padding: 0.55rem 0.8rem; font-size: 0.72rem; font-weight: 650; }
 .asset-button { display: inline-flex; min-height: 2.55rem; align-items: center; justify-content: center; gap: 0.5rem; border-radius: 999px; padding: 0.65rem 1rem; font: inherit; font-size: 0.82rem; font-weight: 650; cursor: pointer; transition: transform 200ms cubic-bezier(0.2, 0, 0, 1), background 200ms cubic-bezier(0.2, 0, 0, 1), border-color 200ms cubic-bezier(0.2, 0, 0, 1); }
@@ -21,7 +19,7 @@
 .asset-button:focus-visible, .asset-delete:focus-visible, .asset-filters button:focus-visible, .asset-dialog-heading button:focus-visible, .asset-dropzone:focus-visible { outline: 3px solid color-mix(in srgb, var(--color-tide) 24%, transparent); outline-offset: 2px; }
 .asset-error { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 1.25rem; border: 1px solid color-mix(in srgb, var(--color-alert) 28%, var(--color-line)); border-radius: 0.7rem; background: color-mix(in srgb, var(--color-alert) 5%, var(--color-surface)); color: var(--color-alert); padding: 0.75rem 0.9rem; font-size: 0.76rem; }
 .asset-error button { border: 0; background: transparent; color: inherit; font: inherit; font-weight: 650; text-decoration: underline; text-underline-offset: 0.2rem; cursor: pointer; }
-.asset-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 2.35rem; border-bottom: 1px solid var(--color-line); }
+.asset-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 1.35rem; border-bottom: 1px solid var(--color-line); }
 .asset-filters { display: flex; align-items: center; gap: 1.35rem; overflow-x: auto; }
 .asset-filters button { position: relative; display: inline-flex; min-height: 2.75rem; flex: 0 0 auto; align-items: center; gap: 0.45rem; border: 0; background: transparent; color: var(--color-ink-soft); padding: 0; font: inherit; font-size: 0.8rem; cursor: pointer; }
 .asset-filters button span { color: var(--color-ink-faint); font-size: 0.7rem; }
@@ -95,5 +93,5 @@
 .asset-access-warning { border-left: 2px solid var(--color-alert); color: var(--color-alert); padding-left: 0.7rem; }
 .asset-dialog-error { margin: 0; border: 1px solid color-mix(in srgb, var(--color-alert) 28%, var(--color-line)); border-radius: 0.65rem; background: color-mix(in srgb, var(--color-alert) 5%, var(--color-surface)); color: var(--color-alert); padding: 0.7rem 0.8rem; font-size: 0.73rem; line-height: 1.45; }
 @media (max-width: 900px) { .asset-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 650px) { .asset-page { padding: 2rem 1rem 3rem; } .asset-page-heading { align-items: flex-start; flex-direction: column; gap: 1.25rem; } .asset-heading-actions { width: 100%; } .asset-heading-actions .asset-button { flex: 1; } .asset-toolbar { align-items: stretch; flex-direction: column; border-bottom: 0; } .asset-filters { border-bottom: 1px solid var(--color-line); } .asset-search { width: 100%; box-sizing: border-box; transform: none; } .asset-grid { grid-template-columns: 1fr; padding-top: 1rem; } }
+@media (max-width: 650px) { .asset-page-heading { align-items: flex-start; flex-direction: column; gap: 1rem; } .asset-heading-actions { width: 100%; } .asset-heading-actions .asset-button { flex: 1; } .asset-toolbar { align-items: stretch; flex-direction: column; border-bottom: 0; } .asset-filters { border-bottom: 1px solid var(--color-line); } .asset-search { width: 100%; box-sizing: border-box; transform: none; } .asset-grid { grid-template-columns: 1fr; padding-top: 1rem; } }
 @media (prefers-reduced-motion: reduce) { .asset-button, .asset-card { transition-duration: 0.01ms !important; } .asset-spinner { animation: none; } }

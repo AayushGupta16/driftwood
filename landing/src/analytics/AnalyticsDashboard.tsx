@@ -104,13 +104,7 @@ export default function AnalyticsDashboard() {
   return (
     <section className="analytics-page" aria-labelledby="analytics-heading">
       <div className="analytics-heading-row">
-        <div>
-          <p className="analytics-kicker">Revenue signals</p>
-          <h1 id="analytics-heading">Channel performance</h1>
-          <p className="analytics-intro">
-            Follow observed outreach from first contact through replies and booked demos.
-          </p>
-        </div>
+        <h1 id="analytics-heading">Channel performance</h1>
         <div className="analytics-window-controls">
           <label>
             <span>Date range</span>
@@ -148,13 +142,7 @@ export default function AnalyticsDashboard() {
 
       <section className="analytics-matrix-section" aria-labelledby="channel-matrix-heading">
         <div className="analytics-section-heading">
-          <div>
-            <h2 id="channel-matrix-heading">Funnel by channel</h2>
-            <p>Distinct prospects observed in the selected window.</p>
-          </div>
-          <span className="analytics-definition-note">
-            <InfoIcon /> Hover unavailable metrics for their definition.
-          </span>
+          <h2 id="channel-matrix-heading">Funnel by channel</h2>
         </div>
         <div className="analytics-table-scroll">
           <table className="analytics-matrix">
@@ -191,10 +179,7 @@ export default function AnalyticsDashboard() {
 
       <section className="analytics-people-section" aria-labelledby="outcome-detail-heading">
         <div className="analytics-section-heading analytics-detail-heading">
-          <div>
-            <h2 id="outcome-detail-heading">Outcome detail</h2>
-            <p>See the people behind every defensible count.</p>
-          </div>
+          <h2 id="outcome-detail-heading">Outcome detail</h2>
           <div className="analytics-filter-row">
             <label>
               <span className="sr-only">Filter people by channel</span>
@@ -308,11 +293,7 @@ export default function AnalyticsDashboard() {
 
       <aside className="analytics-method" aria-label="Metric definitions">
         <InfoIcon />
-        <p>
-          Counts come from confirmed sends, inbound replies, and booked-stage transitions.
-          Bookings use latest-prior-send attribution. Open and click tracking will remain
-          unavailable until provider events are stored.
-        </p>
+        <p>Open and click tracking isn&rsquo;t available yet.</p>
       </aside>
     </section>
   );

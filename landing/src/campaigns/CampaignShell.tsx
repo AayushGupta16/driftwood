@@ -19,7 +19,6 @@ export default function CampaignShell({
     <WorkspacePage
       active={shellSection}
       workspace={workspace}
-      notice="Campaign activation freezes a version. Outreach still requires the existing review and approval path."
     >
       {children}
     </WorkspacePage>

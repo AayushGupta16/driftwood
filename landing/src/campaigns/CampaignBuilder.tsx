@@ -407,13 +407,8 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
   if (campaignId === "new") {
     return (
       <div className="campaign-not-found">
-        <p className="campaign-kicker">Campaign workbench</p>
         <h1>Start a new campaign</h1>
-        <p>
-          {canWrite
-            ? "Create an empty draft, then choose a saved audience and build the sequence. Nothing is sent from this step."
-            : "Read-only members cannot create campaigns."}
-        </p>
+        {!canWrite && <p>Read-only members cannot create campaigns.</p>}
         {loadError && <p className="campaign-inline-error" role="alert">{loadError}</p>}
         {canWrite && (
           <button className="campaign-primary" type="button" onClick={() => void createDraft()} disabled={actionBusy}>
