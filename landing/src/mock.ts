@@ -796,6 +796,37 @@ if (mockMode) {
     created_at: hoursAgo(48 + index),
     updated_at: hoursAgo(2 + index),
   }));
+  const leadImportsApi = (init?: RequestInit) => {
+    if ((init?.method ?? "GET") !== "POST") return { detail: "Method not allowed" };
+    const form = init?.body instanceof FormData ? init.body : null;
+    const file = form?.get("file");
+    if (!(file instanceof File)) {
+      return new Response(JSON.stringify({ detail: "Choose a CSV file." }), {
+        status: 422,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    const id = crypto.randomUUID();
+    mockLeads.push({
+      id,
+      name: "Camille Rivera",
+      company: "Atlas Relay",
+      company_id: `company-${id}`,
+      title: "Revenue operations lead",
+      email: `camille.rivera.${id.slice(0, 6)}@example.test`,
+      linkedin_url: "https://www.linkedin.com/in/camille-rivera",
+      stage: "new",
+      origin: "uploaded",
+      source: "uploaded:csv",
+      audiences: [],
+      demo_idea: null,
+      demo_artifact_id: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+    summary.lists.leads = mockLeads.length;
+    return { added: 1, skipped_duplicate: 0, skipped_suppressed: 0, errors: [] };
+  };
   const dashboardLeadsApi = (init?: RequestInit, url?: string) => {
     const method = init?.method ?? "GET";
     const parsed = new URL(url ?? location.href, location.href);
@@ -977,6 +1008,7 @@ if (mockMode) {
   // come first — /sends/cancel and /sends/dismiss (POST) would otherwise be
   // swallowed by the /sends fixture, and /reviews/decide by /reviews.
   const routes: [string, unknown][] = [
+    ["/api/v1/imports/leads", leadImportsApi],
     ["/api/v1/dashboard/audiences", audiencesApi],
     ["/api/v1/dashboard/leads", dashboardLeadsApi],
     ["/api/v1/dashboard/companies", dashboardCompaniesApi],

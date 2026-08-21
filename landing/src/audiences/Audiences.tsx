@@ -3,6 +3,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type ChangeEvent,
   type FormEvent,
 } from "react";
 import {
@@ -12,11 +13,13 @@ import {
   getDiscoveryStatus,
   getAudience,
   listAudiences,
+  uploadLeadList,
 } from "./api";
 import {
   EMPTY_FILTERS,
   filterAudiences,
   formatAudienceDate,
+  summarizeLeadImport,
   stageLabel,
   toggleLead,
   type Audience,
@@ -35,6 +38,7 @@ import {
   OrangeSliceIcon,
   SearchIcon,
   TrashIcon,
+  UploadIcon,
 } from "./icons";
 import { useWorkspacePermissions } from "../dashboard/workspace-permissions-context";
 import { createCampaign } from "../campaigns/api";
@@ -44,6 +48,7 @@ import "./audiences.css";
 type View = "library" | "builder";
 type BuilderTab = "search" | "details";
 type BuilderFilter = keyof AudienceFilters;
+type ImportNotice = { kind: "success" | "error"; message: string };
 
 function readableProvider(provider: string) {
   return provider.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
@@ -77,9 +82,10 @@ export default function Audiences() {
   const [builderTab, setBuilderTab] = useState<BuilderTab>("search");
   const [activeFilter, setActiveFilter] = useState<BuilderFilter | null>("title");
   const [resultQuery, setResultQuery] = useState("");
-  const [sourceProvider, setSourceProvider] = useState<"orange_slice" | "workspace">("orange_slice");
   const [providerStatuses, setProviderStatuses] = useState<DiscoveryProvider[]>([]);
   const [providerStatusLoading, setProviderStatusLoading] = useState(true);
+  const [importing, setImporting] = useState(false);
+  const [importNotice, setImportNotice] = useState<ImportNotice | null>(null);
   const [selectedRecords, setSelectedRecords] = useState<Set<string>>(new Set());
   const [discovering, setDiscovering] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -87,6 +93,7 @@ export default function Audiences() {
   const [campaignCreating, setCampaignCreating] = useState(false);
   const [campaignError, setCampaignError] = useState<string | null>(null);
   const campaignButtonRef = useRef<HTMLButtonElement>(null);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let current = true;
@@ -113,7 +120,6 @@ export default function Audiences() {
     getDiscoveryStatus()
       .then((status) => {
         if (!current) return;
-        setSourceProvider(status.defaultProvider);
         setProviderStatuses(status.providers);
       })
       .catch(() => {
@@ -145,12 +151,13 @@ export default function Audiences() {
     setBuilderTab("search");
     setActiveFilter("title");
     setResultQuery("");
+    setImportNotice(null);
     setSelectedRecords(new Set());
     setError(null);
   }
 
   const activeProvider = providerStatuses.find(
-    (provider) => provider.provider === sourceProvider,
+    (provider) => provider.provider === "orange_slice",
   );
   const visibleCandidates = useMemo(() => {
     if (!results) return [];
@@ -181,7 +188,7 @@ export default function Audiences() {
     setDiscovering(true);
     setError(null);
     try {
-      const nextResults = await discoverAudienceLeads(filters, sourceProvider);
+      const nextResults = await discoverAudienceLeads(filters, "orange_slice");
       setResults(nextResults);
       const available = new Set(nextResults.candidates.map((candidate) => candidate.providerRecordId));
       setSelectedRecords((current) => new Set([...current].filter((id) => available.has(id))));
@@ -189,6 +196,25 @@ export default function Audiences() {
       setError(reason instanceof Error ? reason.message : "Lead discovery could not run.");
     } finally {
       setDiscovering(false);
+    }
+  }
+
+  async function handleLeadUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || importing) return;
+    setImporting(true);
+    setImportNotice(null);
+    try {
+      const result = await uploadLeadList(file);
+      setImportNotice({ kind: "success", message: summarizeLeadImport(result) });
+    } catch (reason) {
+      setImportNotice({
+        kind: "error",
+        message: reason instanceof Error ? reason.message : "The CSV could not be imported.",
+      });
+    } finally {
+      setImporting(false);
     }
   }
 
@@ -290,7 +316,7 @@ export default function Audiences() {
                 {Array.from({ length: 9 }, (_, index) => <span key={index} />)}
               </div>
             ) : !results ? (
-              <div className="audience-state audience-builder-empty"><SearchIcon size={23} /><h2>{activeProvider?.configured === false ? `${activeProvider.label} is not connected` : "Find people for this list"}</h2><p>{activeProvider?.configured === false ? "Choose Workspace leads or connect Orange Slice." : "Set search criteria in the panel."}</p></div>
+              <div className="audience-state audience-builder-empty"><SearchIcon size={23} /><h2>{activeProvider?.configured === false ? "Lead search is unavailable" : "Find people for this list"}</h2><p>{activeProvider?.configured === false ? "Upload a CSV or ask an admin to connect Orange Slice." : "Set search criteria in the panel."}</p></div>
             ) : results.candidates.length === 0 ? (
               <div className="audience-state audience-builder-empty"><AudienceIcon size={24} /><h2>No matching leads</h2><p>Adjust a criterion and search again.</p></div>
             ) : visibleCandidates.length === 0 ? (
@@ -338,28 +364,22 @@ export default function Audiences() {
           {builderTab === "search" ? (
             <form id="audience-search-panel" className="audience-search-form" role="tabpanel" aria-labelledby="audience-search-tab" onSubmit={runDiscovery}>
               <div className="audience-search-panel-head">
-                <div><AudienceIcon size={18} /><h2>Find people</h2></div>
-                <span>{results ? `${results.candidates.length} found` : "Not searched"}</span>
+                <div className="audience-search-title">
+                  <AudienceIcon size={18} />
+                  <div><h2>Find people</h2><small className={activeProvider?.configured ? "is-connected" : ""}><OrangeSliceIcon size={12} /> {providerStatusLoading ? "Checking Orange Slice" : activeProvider?.configured ? "Orange Slice connected" : "Orange Slice offline"}</small></div>
+                </div>
+                <button className="audience-upload-button" type="button" onClick={() => uploadInputRef.current?.click()} disabled={importing}>
+                  <UploadIcon size={14} /> {importing ? "Importing…" : "Upload CSV"}
+                </button>
+                <input ref={uploadInputRef} hidden type="file" accept=".csv,text/csv" onChange={handleLeadUpload} disabled={importing} />
               </div>
 
-              <div role="radiogroup" aria-label="Lead discovery source" className="audience-provider-options audience-provider-options-panel">
-                {(["orange_slice", "workspace"] as const).map((providerId) => {
-                  const status = providerStatuses.find((provider) => provider.provider === providerId);
-                  const selected = sourceProvider === providerId;
-                  return (
-                    <button key={providerId} type="button" role="radio" aria-checked={selected} className={`audience-provider-option ${selected ? "is-selected" : ""}`} onClick={() => {
-                      setSourceProvider(providerId);
-                      setResults(null);
-                      setSelectedRecords(new Set());
-                      setError(null);
-                    }}>
-                      <span className="audience-provider-icon">{providerId === "orange_slice" ? <OrangeSliceIcon size={16} /> : <AudienceIcon size={16} />}</span>
-                      <strong>{status?.label ?? (providerId === "orange_slice" ? "Orange Slice" : "Workspace")}</strong>
-                      <span className={`audience-provider-state ${status?.configured ? "is-connected" : ""}`}>{providerStatusLoading ? "Checking" : status?.configured ? "Connected" : "Offline"}</span>
-                    </button>
-                  );
-                })}
-              </div>
+              {importNotice && (
+                <div className={`audience-import-notice is-${importNotice.kind}`} role={importNotice.kind === "error" ? "alert" : "status"}>
+                  <span>{importNotice.message}</span>
+                  {importNotice.kind === "success" && <a href={withMockMode("/dashboard/leads")}>View leads</a>}
+                </div>
+              )}
 
               <div className="audience-query-box">
                 <SearchIcon size={17} />
@@ -397,7 +417,7 @@ export default function Audiences() {
               <h2>List details</h2>
               <label><span>List name</span><input autoFocus value={name} onChange={(event) => setName(event.target.value)} placeholder="Qualified founders" maxLength={255} /></label>
               <label><span>Description <small>Optional</small></span><textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Who belongs in this audience" maxLength={20000} rows={4} /></label>
-              <dl><div><dt>Source</dt><dd>{activeProvider?.label ?? readableProvider(sourceProvider)}</dd></div><div><dt>Selected</dt><dd>{selectedRecords.size}</dd></div><div><dt>Results</dt><dd>{results?.candidates.length ?? 0}</dd></div></dl>
+              <dl><div><dt>Source</dt><dd>{results?.providerLabel ?? "Orange Slice"}</dd></div><div><dt>Selected</dt><dd>{selectedRecords.size}</dd></div><div><dt>Results</dt><dd>{results?.candidates.length ?? 0}</dd></div></dl>
             </div>
           )}
 

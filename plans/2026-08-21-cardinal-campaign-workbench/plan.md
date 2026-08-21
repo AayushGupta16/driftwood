@@ -316,6 +316,61 @@ post-save campaign handoff.
 </design_plan>
 ```
 
+## Phase 20 · implicit Orange Slice search and CSV import
+
+The wider Cardinal comparison clarifies that discovery and import are separate
+jobs. Cardinal keeps its lead finder focused on search, then exposes CSV under
+an Add contacts action in the contact library. Driftwood will use Orange Slice
+implicitly for audience discovery and expose a compact CSV upload action in the
+same workbench without presenting the lead database as a competing provider.
+
+```yaml
+<design_plan>
+  macrostructure_diversification:
+    last_3: ["Workbench", "Workbench"]
+    pick: "Workbench"
+    differs_from_last_3: false
+    diversification_rule_pass: true
+    studied_dna_override: "continuation of the user-requested Cardinal workflow study"
+  vibe_validity:
+    anchor: "minimal"
+    wildcard: "operator canvas"
+    contradiction: false
+    valid: true
+  dial_alignment:
+    design_variance: 4
+    visual_density: 8
+    existing_direction_preserved: true
+    macrostructure_within_pm_2: true
+  motion_personality:
+    name: "Corporate"
+    intensity: "1/3"
+    override_logged: true
+  hero_math:
+    applicable: false
+    universal_4plus_ban_pass: true
+  bento_density:
+    applicable: false
+  label_sweep:
+    meta_labels_found: 0
+    long_document_exception: false
+    pass: true
+  button_contrast:
+    eight_states_planned: ["default", "hover", "focus", "active", "disabled", "loading", "error", "success"]
+    focus_ring_visible: true
+    contrast_aa_pass: true
+  honest_copy:
+    fabricated_metrics: 0
+    discovery_source: "authenticated Orange Slice provider status and search API"
+    import_source: "existing authenticated CSV lead import endpoint"
+  gsap_decision:
+    intensity: "1/3"
+    gsap_needed: false
+    skills_route: "n/a"
+  effects_layer: "none; import and search state supply the hierarchy"
+</design_plan>
+```
+
 ### Overview page-purpose and pre-emit verification
 
 This is an extension of the existing Workbench run rather than a new standalone page run. It keeps the logged minimal/operator-canvas direction and introduces a distinct internal anatomy: priority brief, pipeline ledger, outbound path, activity, compact channel controls, and an optional manual-import drawer.

@@ -6,6 +6,7 @@ import type {
   DiscoveryCandidate,
   DiscoveryStatus,
   DiscoveryResult,
+  LeadImportResult,
 } from "./model";
 
 type RawAudienceSummary = {
@@ -166,6 +167,30 @@ export async function getDiscoveryStatus(): Promise<DiscoveryStatus> {
     defaultProvider: body.default_provider,
     providers: body.providers,
   };
+}
+
+export async function uploadLeadList(file: File): Promise<LeadImportResult> {
+  const body = new FormData();
+  body.append("file", file);
+  const response = await fetch("/api/v1/imports/leads", {
+    method: "POST",
+    credentials: "include",
+    body,
+  });
+  if (!response.ok) {
+    let message = "The CSV could not be imported.";
+    try {
+      const payload = (await response.json()) as {
+        error?: { detail?: string };
+        detail?: string;
+      };
+      message = payload.error?.detail ?? payload.detail ?? message;
+    } catch {
+      // Preserve the concise fallback for a non-JSON proxy response.
+    }
+    throw new AudienceApiError(message, response.status);
+  }
+  return (await response.json()) as LeadImportResult;
 }
 
 export type SaveAudienceInput = {

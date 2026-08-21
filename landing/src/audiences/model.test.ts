@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   filterAudiences,
   outreachEligibleMembers,
+  summarizeLeadImport,
   stageLabel,
   toggleLead,
   type AudienceSummary,
@@ -66,5 +67,26 @@ test("campaign eligibility stays separate from reusable audience membership", ()
   assert.deepEqual(
     outreachEligibleMembers(members).map((member) => member.leadId),
     ["qualified"],
+  );
+});
+
+test("lead import summaries report every material outcome", () => {
+  assert.equal(
+    summarizeLeadImport({
+      added: 4,
+      skipped_duplicate: 2,
+      skipped_suppressed: 1,
+      errors: [{ row: 7, reason: "missing company" }],
+    }),
+    "4 imported · 2 already added · 1 suppressed · 1 invalid row",
+  );
+  assert.equal(
+    summarizeLeadImport({
+      added: 0,
+      skipped_duplicate: 0,
+      skipped_suppressed: 0,
+      errors: [],
+    }),
+    "No new leads",
   );
 });

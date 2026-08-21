@@ -61,3 +61,7 @@ export function OrangeSliceIcon(props: IconProps) {
     </Icon>
   );
 }
+
+export function UploadIcon(props: IconProps) {
+  return <Icon {...props}><path d="M12 15V4M8 8l4-4 4 4M5 13v6h14v-6" /></Icon>;
+}

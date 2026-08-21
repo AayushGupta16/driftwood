@@ -31,7 +31,7 @@
 
 ## Verification evidence
 
-- Unit: 41/41 frontend tests pass.
+- Unit: 43/43 frontend tests pass.
 - Static: ESLint and `git diff --check` pass.
 - Build: TypeScript, Vite client/SSR, and prerender pass.
 - Desktop E2E: a lead was selected, a LinkedIn sequence step was added, debounced autosave reached Saved, the activation disclosure was reviewed, and the active version rendered frozen.
@@ -44,6 +44,8 @@
 - Admin entry Lighthouse: 98 performance, 100 accessibility, 100 best practices, LCP 2.11s, CLS 0, and TBT 0ms.
 - Cardinal-style audience builder: the local mock flow returned three Orange Slice leads, selected and saved one person, and reached the existing schedule/campaign handoff without touching live data.
 - Cardinal-style responsive pass: desktop keeps the result table beside the search workbench; at 390×844, discovery controls move ahead of the horizontally contained result table with no page overflow.
+- The discovery source is now implicit Orange Slice infrastructure rather than a customer-facing provider choice. A single custom-SVG CSV action reuses the authenticated import endpoint and reports duplicates, suppressions, and invalid rows without inventing success.
+- The broader read-only product audit covers Cardinal Home, Contacts, CSV, New Campaign, Inbox, and Tasks; the resulting feature/style decisions are recorded in `cardinal-feature-style-comparison.md`.
 
 ## Safety boundary
 

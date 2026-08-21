@@ -47,6 +47,13 @@ export type DiscoveryStatus = {
   providers: DiscoveryProvider[];
 };
 
+export type LeadImportResult = {
+  added: number;
+  skipped_duplicate: number;
+  skipped_suppressed: number;
+  errors: Array<{ row: number; reason: string }>;
+};
+
 export type AudienceFilters = {
   query: string;
   company: string;
@@ -87,6 +94,16 @@ export function outreachEligibleMembers(
   members: AudienceMember[],
 ): AudienceMember[] {
   return members.filter((member) => member.contactable && member.outreachEligible);
+}
+
+export function summarizeLeadImport(result: LeadImportResult): string {
+  const parts = [result.added ? `${result.added} imported` : "No new leads"];
+  if (result.skipped_duplicate) parts.push(`${result.skipped_duplicate} already added`);
+  if (result.skipped_suppressed) parts.push(`${result.skipped_suppressed} suppressed`);
+  if (result.errors.length) {
+    parts.push(`${result.errors.length} invalid ${result.errors.length === 1 ? "row" : "rows"}`);
+  }
+  return parts.join(" · ");
 }
 
 export function formatAudienceDate(iso: string): string {
