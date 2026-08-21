@@ -4,6 +4,7 @@ import { AdminPanelControls, ImpersonationBanner } from "./GodMode";
 import { AgentChatComposer, AgentChatThread, ImportFromSlackButton } from "./components/AgentChat";
 import { type AgentChat, agentDisplayName as displayName, readErrorDetail, useAgentChat } from "./components/useAgentChat";
 import AppShell from "./dashboard/AppShell";
+import { withMockMode } from "./mock-mode";
 import "./agents.css";
 
 type User = {
@@ -365,7 +366,7 @@ function AgentCard({
                 page; a plain click keeps you here and opens the dialog's
                 Messages tab instead of navigating away. */}
             <a
-              href={`/dashboard/admin/agents/${encodeURIComponent(agent.agent_id)}`}
+              href={withMockMode(`/dashboard/admin/agents/${encodeURIComponent(agent.agent_id)}`)}
               onClick={(event) => {
                 event.stopPropagation();
                 if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
@@ -488,7 +489,7 @@ function ConversationPanel({ agent, chat }: { agent: AgentCardData; chat: AgentC
             className="cursor-pointer border-0 bg-transparent p-0 text-[12px] font-medium text-ink-soft hover:text-tide disabled:cursor-wait disabled:opacity-60"
           />
           <a
-            href={`/dashboard/admin/agents/${encodeURIComponent(agent.agent_id)}`}
+            href={withMockMode(`/dashboard/admin/agents/${encodeURIComponent(agent.agent_id)}`)}
             target="_blank"
             rel="noreferrer"
             className="text-[12px] font-medium text-tide no-underline hover:text-tide-deep"
@@ -850,7 +851,7 @@ function AgentsView({ user }: { user: User }) {
 
   async function handleLogout() {
     try { await fetch("/auth/logout", { method: "POST", credentials: "include" }); }
-    finally { window.location.href = "/dashboard"; }
+    finally { window.location.href = withMockMode("/dashboard"); }
   }
 
   return (

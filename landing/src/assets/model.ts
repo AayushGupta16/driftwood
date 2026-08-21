@@ -1,4 +1,11 @@
 export type AssetKind = "image" | "video" | "link";
+export type AssetAssignmentMode = "all" | "selected";
+
+export type AssetAgent = {
+  id: string;
+  label: string;
+  paused: boolean;
+};
 
 export type CompanyAsset = {
   id: string;
@@ -13,7 +20,22 @@ export type CompanyAsset = {
   contentUrl: string | null;
   createdAt: string;
   updatedAt: string;
+  assignmentMode: AssetAssignmentMode;
+  assignedAgentIds: string[];
 };
+
+export function assetAssignmentsReady(loading: boolean, failed: boolean): boolean {
+  return !loading && !failed;
+}
+
+export function assetAssignmentLabel(asset: CompanyAsset, agents: AssetAgent[]): string {
+  if (asset.assignmentMode === "all") return "All workspace agents";
+  if (asset.assignedAgentIds.length === 0) return "No agent access";
+  const labels = new Map(agents.map((agent) => [agent.id, agent.label]));
+  const assigned = asset.assignedAgentIds.map((id) => labels.get(id) ?? id);
+  if (assigned.length <= 2) return assigned.join(", ");
+  return `${assigned.slice(0, 2).join(", ")} +${assigned.length - 2}`;
+}
 
 export type AssetFilter = "all" | AssetKind;
 

@@ -48,6 +48,8 @@ export type CampaignSummary = {
   name: string;
   description: string;
   audience: string;
+  audienceId: string | null;
+  lockVersion: number;
   status: CampaignStatus;
   stepCount: number;
   contactCount: number;
@@ -183,12 +185,14 @@ export function touchCampaign(
 
 export function applyAudience(
   campaign: Campaign,
+  audienceId: string,
   audienceName: string,
   leadIds: Iterable<string>,
 ): Campaign {
   const members = new Set(leadIds);
   return touchCampaign(campaign, {
     audience: audienceName,
+    audienceId,
     contacts: campaign.contacts.map((contact) => {
       const selected = contact.selectable && members.has(contact.id);
       return {
@@ -200,6 +204,55 @@ export function applyAudience(
       };
     }),
   });
+}
+
+export function mergeCampaignContactPage(
+  current: CampaignContact[],
+  incoming: CampaignContact[],
+  replaceUnselected: boolean,
+): CampaignContact[] {
+  const base = replaceUnselected
+    ? current.filter((contact) => contact.selected)
+    : current;
+  const contacts = new Map(base.map((contact) => [contact.id, contact]));
+  incoming.forEach((contact) => {
+    const existing = contacts.get(contact.id);
+    contacts.set(
+      contact.id,
+      existing
+        ? {
+            ...contact,
+            selected: existing.selected,
+            status: existing.status,
+            currentStep: existing.currentStep,
+            nextActionAt: existing.nextActionAt,
+          }
+        : contact,
+    );
+  });
+  return [...contacts.values()];
+}
+
+export function reconcileSavedCampaign(
+  local: Campaign,
+  saved: Campaign,
+): Campaign {
+  const persisted = new Map(saved.contacts.map((contact) => [contact.id, contact]));
+  const contacts = local.contacts.map((contact) => {
+    const serverContact = persisted.get(contact.id);
+    if (serverContact) {
+      persisted.delete(contact.id);
+      return serverContact;
+    }
+    return {
+      ...contact,
+      selected: false,
+      status: null,
+      currentStep: null,
+      nextActionAt: null,
+    };
+  });
+  return { ...saved, contacts: [...persisted.values(), ...contacts] };
 }
 
 export function validateCampaign(campaign: Campaign): CampaignValidation {

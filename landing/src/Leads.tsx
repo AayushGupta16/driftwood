@@ -10,6 +10,7 @@ import { ToastProvider } from "./dashboard/DashboardCommon";
 import { AdminPanelControls, ImpersonationBanner } from "./GodMode";
 import { CARD, relativeTime, useToast } from "./dashboard-shared";
 import AppShell from "./dashboard/AppShell";
+import { withMockMode } from "./mock-mode";
 
 /* /dashboard/leads — the full-width, dedicated "All leads" table. Self-contained
    page: does its own /auth/me gate (an unapproved or logged-out user is bounced
@@ -69,12 +70,12 @@ export default function Leads() {
           // Only approved users get the table; everyone else goes back to the
           // dashboard, which handles login + the pending-approval state.
           if (u.is_approved) setUser(u);
-          else window.location.href = "/dashboard";
+          else window.location.href = withMockMode("/dashboard");
         } else {
-          window.location.href = "/dashboard";
+          window.location.href = withMockMode("/dashboard");
         }
       } catch {
-        if (!cancelled) window.location.href = "/dashboard";
+        if (!cancelled) window.location.href = withMockMode("/dashboard");
       }
     })();
     return () => {
@@ -114,7 +115,7 @@ function LeadsView({ user }: { user: User }) {
     try {
       await fetch("/auth/logout", { method: "POST", credentials: "include" });
     } finally {
-      window.location.href = "/dashboard";
+      window.location.href = withMockMode("/dashboard");
     }
   }
 
@@ -126,6 +127,7 @@ function LeadsView({ user }: { user: User }) {
         identity={{ name: displayName, workspace: user.org?.name, avatarUrl: user.avatar_url }}
         onLogout={handleLogout}
         adminControl={user.is_admin ? <AdminPanelControls /> : undefined}
+        canWrite={canWrite}
       >
         <div className="mx-auto w-full max-w-7xl"><LeadsTable canWrite={canWrite} /></div>
       </AppShell>
@@ -448,7 +450,7 @@ function LeadsTable({ canWrite }: { canWrite: boolean }) {
                                     {lead.audiences.slice(0, 2).map((audience) => (
                                       <a
                                         key={audience}
-                                        href="/dashboard/audiences"
+                                        href={withMockMode("/dashboard/audiences")}
                                         className={`${STAGE_PILL} max-w-[8rem] truncate no-underline hover:border-tide/40 hover:text-tide`}
                                         title={audience}
                                       >

@@ -1,4 +1,4 @@
-import type { AssetKind, CompanyAsset } from "./model";
+import type { AssetAgent, AssetAssignmentMode, AssetKind, CompanyAsset } from "./model";
 
 type RawAsset = {
   id: string;
@@ -13,6 +13,8 @@ type RawAsset = {
   content_url: string | null;
   created_at: string;
   updated_at: string;
+  assignment_mode?: AssetAssignmentMode;
+  assigned_agent_ids?: string[];
 };
 
 export class AssetApiError extends Error {
@@ -58,6 +60,8 @@ function mapAsset(raw: RawAsset): CompanyAsset {
     contentUrl: raw.content_url,
     createdAt: raw.created_at,
     updatedAt: raw.updated_at,
+    assignmentMode: raw.assignment_mode ?? "all",
+    assignedAgentIds: raw.assigned_agent_ids ?? [],
   };
 }
 
@@ -104,4 +108,27 @@ export async function deleteAsset(id: string): Promise<void> {
     { method: "DELETE" },
   );
   if (!response.ok) throw await responseError(response);
+}
+
+export async function listAssetAgents(): Promise<AssetAgent[]> {
+  const body = await requestJson<{ agents: AssetAgent[] }>("/api/v1/dashboard/assets/agents");
+  return body.agents;
+}
+
+export async function updateAssetAssignments(
+  id: string,
+  input: { assignmentMode: AssetAssignmentMode; agentIds: string[] },
+): Promise<CompanyAsset> {
+  const raw = await requestJson<RawAsset>(
+    `/api/v1/dashboard/assets/${encodeURIComponent(id)}/assignments`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        assignment_mode: input.assignmentMode,
+        agent_ids: input.assignmentMode === "all" ? [] : input.agentIds,
+      }),
+    },
+  );
+  return mapAsset(raw);
 }

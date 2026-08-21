@@ -1,15 +1,17 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import {
   getAudience as getSavedAudience,
   listAudiences,
 } from "../audiences/api";
-import type { Audience, AudienceSummary } from "../audiences/model";
+import { outreachEligibleMembers, type Audience, type AudienceSummary } from "../audiences/model";
 import CampaignShell from "./CampaignShell";
 import {
   activateCampaign,
+  CampaignApiError,
   createCampaign,
   createCampaignRevision,
   getCampaign,
+  listCampaignContacts,
   pauseCampaign,
   resumeCampaign,
   saveCampaign,
@@ -19,7 +21,9 @@ import {
   contactStatusLabel,
   createStep,
   insertStep,
+  mergeCampaignContactPage,
   moveStep,
+  reconcileSavedCampaign,
   removeStep,
   touchCampaign,
   updateStep,
@@ -28,6 +32,10 @@ import {
   type CampaignStep,
   type StepKind,
 } from "./model";
+import { CampaignSaveQueue } from "./save-queue";
+import { disconnectedChannelIssues } from "./channel-readiness";
+import { useWorkspacePermissions } from "../dashboard/workspace-permissions-context";
+import { withMockMode } from "../mock-mode";
 import {
   BackIcon,
   CloseIcon,
@@ -46,6 +54,7 @@ import {
 
 type MobilePanel = "leads" | "flow" | "editor";
 type SaveState = "idle" | "saving" | "saved" | "error";
+const CONTACT_PAGE_SIZE = 50;
 
 const STEP_OPTIONS: Array<{
   kind: StepKind;
@@ -73,7 +82,8 @@ function detailForStep(step: CampaignStep): string {
   return step.body || "Copy needed";
 }
 
-export default function CampaignBuilder({ campaignId }: { campaignId: string }) {
+function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
+  const { canWrite, channels } = useWorkspacePermissions();
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const campaignRef = useRef<Campaign | null>(null);
   const [selectedStepId, setSelectedStepId] = useState<string | null>(null);
@@ -81,8 +91,12 @@ export default function CampaignBuilder({ campaignId }: { campaignId: string }) 
   const [reviewOpen, setReviewOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [contactQuery, setContactQuery] = useState("");
+  const [contactTotal, setContactTotal] = useState(0);
+  const [contactOffset, setContactOffset] = useState(0);
+  const [contactLoading, setContactLoading] = useState(false);
+  const [contactError, setContactError] = useState<string | null>(null);
   const [mobilePanel, setMobilePanel] = useState<MobilePanel>("flow");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(campaignId !== "new");
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [actionBusy, setActionBusy] = useState(false);
@@ -90,10 +104,13 @@ export default function CampaignBuilder({ campaignId }: { campaignId: string }) 
   const latestRevisionRef = useRef(0);
   const saveTimerRef = useRef<number | null>(null);
   const savePromiseRef = useRef<Promise<Campaign> | null>(null);
+  const saveQueueRef = useRef(new CampaignSaveQueue(saveCampaign));
+  const contactRequestRef = useRef(0);
 
   useEffect(() => {
     let current = true;
-    const load = campaignId === "new" ? createCampaign() : getCampaign(campaignId);
+    if (campaignId === "new") return () => { current = false; };
+    const load = getCampaign(campaignId);
     load
       .then((loaded) => {
         if (!current) return;
@@ -101,9 +118,6 @@ export default function CampaignBuilder({ campaignId }: { campaignId: string }) 
         setCampaign(loaded);
         setSelectedStepId(loaded.steps[0]?.id ?? null);
         setSaveState("saved");
-        if (campaignId === "new") {
-          window.history.replaceState(null, "", `/dashboard/campaigns/${loaded.id}`);
-        }
       })
       .catch((reason: unknown) => {
         if (current) {
@@ -118,38 +132,119 @@ export default function CampaignBuilder({ campaignId }: { campaignId: string }) 
     };
   }, [campaignId]);
 
+  async function createDraft() {
+    if (!canWrite || actionBusy) return;
+    setActionBusy(true);
+    setLoadError(null);
+    try {
+      const created = await createCampaign();
+      window.location.href = withMockMode(
+        `/dashboard/campaigns/${encodeURIComponent(created.id)}`,
+      );
+    } catch (reason) {
+      setLoadError(
+        reason instanceof Error ? reason.message : "Campaign could not be created.",
+      );
+      setActionBusy(false);
+    }
+  }
+
+  const loadContactPage = useCallback(async (
+    targetCampaignId: string,
+    query: string,
+    offset: number,
+    replace: boolean,
+  ) => {
+    const request = ++contactRequestRef.current;
+    setContactLoading(true);
+    setContactError(null);
+    try {
+      const page = await listCampaignContacts(targetCampaignId, {
+        query,
+        limit: CONTACT_PAGE_SIZE,
+        offset,
+      });
+      if (request !== contactRequestRef.current) return;
+      const current = campaignRef.current;
+      if (!current || current.id !== targetCampaignId) return;
+      const merged = {
+        ...current,
+        contacts: mergeCampaignContactPage(current.contacts, page.contacts, replace),
+      };
+      campaignRef.current = merged;
+      setCampaign(merged);
+      setContactTotal(page.total);
+      setContactOffset(page.offset + page.contacts.length);
+    } catch (reason) {
+      if (request !== contactRequestRef.current) return;
+      setContactError(
+        reason instanceof Error ? reason.message : "Available leads could not load.",
+      );
+    } finally {
+      if (request === contactRequestRef.current) setContactLoading(false);
+    }
+  }, []);
+
+  const contactCampaignId = campaign?.status === "draft" ? campaign.id : null;
+
+  useEffect(() => {
+    if (!contactCampaignId) return;
+    const timer = window.setTimeout(() => {
+      void loadContactPage(contactCampaignId, contactQuery.trim(), 0, true);
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [contactCampaignId, contactQuery, loadContactPage]);
+
   useEffect(() => {
     if (revision === 0) return;
-    const snapshot = campaignRef.current;
-    if (!snapshot || snapshot.status !== "draft") return;
-    const expectedRevision = latestRevisionRef.current;
-    setSaveState("saving");
     saveTimerRef.current = window.setTimeout(() => {
-      const pending = saveCampaign(snapshot);
-      savePromiseRef.current = pending;
-      pending
-        .then((saved) => {
-          if (latestRevisionRef.current !== expectedRevision) return;
-          campaignRef.current = saved;
-          setCampaign(saved);
-          setSaveState("saved");
-        })
-        .catch(() => {
-          if (latestRevisionRef.current === expectedRevision) setSaveState("error");
-        })
-        .finally(() => {
-          if (savePromiseRef.current === pending) savePromiseRef.current = null;
-        });
+      const snapshot = campaignRef.current;
+      if (!snapshot || snapshot.status !== "draft") return;
+      void persistSnapshot(snapshot, latestRevisionRef.current).catch(() => undefined);
     }, 600);
     return () => {
       if (saveTimerRef.current !== null) window.clearTimeout(saveTimerRef.current);
     };
   }, [revision]);
 
+  function persistSnapshot(snapshot: Campaign, expectedRevision: number) {
+    const pending = saveQueueRef.current.enqueue(snapshot);
+    savePromiseRef.current = pending;
+    return pending
+      .then((saved) => {
+        const current = campaignRef.current;
+        if (!current) return saved;
+        if (latestRevisionRef.current === expectedRevision) {
+          const reconciled = reconcileSavedCampaign(current, saved);
+          campaignRef.current = reconciled;
+          setCampaign(reconciled);
+        } else {
+          const versioned = { ...current, lockVersion: saved.lockVersion };
+          campaignRef.current = versioned;
+          setCampaign(versioned);
+        }
+        setSaveState("saved");
+        return campaignRef.current ?? saved;
+      })
+      .catch((reason: unknown) => {
+        if (latestRevisionRef.current === expectedRevision) {
+          setSaveState("error");
+          if (reason instanceof CampaignApiError && reason.code === "campaign_conflict") {
+            setToast("This campaign changed elsewhere. Reload before continuing.");
+          }
+        }
+        throw reason;
+      })
+      .finally(() => {
+        if (savePromiseRef.current === pending) savePromiseRef.current = null;
+      });
+  }
+
   function commit(next: Campaign) {
     if (campaignRef.current?.status !== "draft") return;
     campaignRef.current = next;
     setCampaign(next);
+    setSaveState("saving");
     latestRevisionRef.current += 1;
     setRevision(latestRevisionRef.current);
   }
@@ -217,36 +312,52 @@ export default function CampaignBuilder({ campaignId }: { campaignId: string }) 
   function selectSavedAudience(audience: Audience) {
     const current = campaignRef.current;
     if (!current) return;
-    const leadIds = audience.members
-      .filter((member) => member.contactable)
-      .map((member) => member.leadId);
-    commit(applyAudience(current, audience.name, leadIds));
+    const eligibleMembers = outreachEligibleMembers(audience.members);
+    const leadIds = eligibleMembers.map((member) => member.leadId);
+    const audienceContacts = audience.members.map((member) => ({
+      id: member.leadId,
+      name: member.name,
+      company: member.company,
+      role: member.title,
+      stage: member.stage,
+      selected: false,
+      selectable: member.contactable && member.outreachEligible,
+      status: null,
+      currentStep: null,
+      nextActionAt: null,
+    }));
+    const hydrated = {
+      ...current,
+      contacts: mergeCampaignContactPage(current.contacts, audienceContacts, false),
+    };
+    commit(applyAudience(hydrated, audience.id, audience.name, leadIds));
     setToast(
-      `${leadIds.length} contactable ${leadIds.length === 1 ? "lead" : "leads"} selected from ${audience.name}.`,
+      `${leadIds.length} outreach-eligible ${leadIds.length === 1 ? "lead" : "leads"} selected from ${audience.name}.`,
+    );
+  }
+
+  function loadMoreContacts() {
+    const current = campaignRef.current;
+    if (!current || contactLoading) return;
+    void loadContactPage(
+      current.id,
+      contactQuery.trim(),
+      contactOffset,
+      false,
     );
   }
 
   async function persistLatest(): Promise<Campaign> {
     if (saveTimerRef.current !== null) window.clearTimeout(saveTimerRef.current);
-    try {
-      await savePromiseRef.current;
-    } catch {
-      // A fresh save below supersedes an earlier autosave failure.
-    }
     const current = campaignRef.current;
     if (!current) throw new Error("Campaign is unavailable.");
     setSaveState("saving");
-    const saved = await saveCampaign(current);
-    latestRevisionRef.current += 1;
-    campaignRef.current = saved;
-    setCampaign(saved);
-    setSaveState("saved");
-    return saved;
+    return await persistSnapshot(current, latestRevisionRef.current);
   }
 
   async function activate() {
     const current = campaignRef.current;
-    if (!current || !validateCampaign(current).ready) return;
+    if (!current || !canWrite || !validateCampaign(current).ready || disconnectedChannelIssues(current, channels).length > 0) return;
     setActionBusy(true);
     try {
       const saved = await persistLatest();
@@ -264,7 +375,7 @@ export default function CampaignBuilder({ campaignId }: { campaignId: string }) 
 
   async function toggleStatus() {
     const current = campaignRef.current;
-    if (!current || (current.status !== "active" && current.status !== "paused")) return;
+    if (!current || !canWrite || (current.status !== "active" && current.status !== "paused")) return;
     setActionBusy(true);
     try {
       const updated = current.status === "active"
@@ -282,43 +393,65 @@ export default function CampaignBuilder({ campaignId }: { campaignId: string }) 
 
   async function revise() {
     const current = campaignRef.current;
-    if (!current) return;
+    if (!current || !canWrite) return;
     setActionBusy(true);
     try {
       const draft = await createCampaignRevision(current.id);
-      window.location.href = `/dashboard/campaigns/${encodeURIComponent(draft.id)}`;
+      window.location.href = withMockMode(`/dashboard/campaigns/${encodeURIComponent(draft.id)}`);
     } catch (reason) {
       setToast(reason instanceof Error ? reason.message : "A revision could not be created.");
       setActionBusy(false);
     }
   }
 
+  if (campaignId === "new") {
+    return (
+      <div className="campaign-not-found">
+        <p className="campaign-kicker">Campaign workbench</p>
+        <h1>Start a new campaign</h1>
+        <p>
+          {canWrite
+            ? "Create an empty draft, then choose a saved audience and build the sequence. Nothing is sent from this step."
+            : "Read-only members cannot create campaigns."}
+        </p>
+        {loadError && <p className="campaign-inline-error" role="alert">{loadError}</p>}
+        {canWrite && (
+          <button className="campaign-primary" type="button" onClick={() => void createDraft()} disabled={actionBusy}>
+            {actionBusy ? "Creating…" : "Create campaign draft"}
+          </button>
+        )}
+        <a className="campaign-secondary" href={withMockMode("/dashboard/campaigns")}>Back to campaigns</a>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
-      <CampaignShell active="campaigns" workspace>
-        <div className="campaign-loading campaign-loading-workspace" aria-live="polite">
-          <span aria-hidden="true" />
-          <p>Loading campaign…</p>
-        </div>
-      </CampaignShell>
+      <div className="campaign-loading campaign-loading-workspace" aria-live="polite">
+        <span aria-hidden="true" />
+        <p>Loading campaign…</p>
+      </div>
     );
   }
 
   if (!campaign || loadError) {
     return (
-      <CampaignShell active="campaigns">
-        <div className="campaign-not-found">
-          <h1>Campaign unavailable</h1>
-          <p>{loadError ?? "This campaign could not be found in your workspace."}</p>
-          <a className="campaign-primary" href="/dashboard/campaigns">Back to campaigns</a>
-        </div>
-      </CampaignShell>
+      <div className="campaign-not-found">
+        <h1>Campaign unavailable</h1>
+        <p>{loadError ?? "This campaign could not be found in your workspace."}</p>
+        <a className="campaign-primary" href={withMockMode("/dashboard/campaigns")}>Back to campaigns</a>
+      </div>
     );
   }
 
-  const editable = campaign.status === "draft";
+  const editable = canWrite && campaign.status === "draft";
   const selectedStep = campaign.steps.find((step) => step.id === selectedStepId) ?? null;
-  const validation = validateCampaign(campaign);
+  const baseValidation = validateCampaign(campaign);
+  const channelIssues = disconnectedChannelIssues(campaign, channels);
+  const validation = {
+    ready: baseValidation.ready && channelIssues.length === 0,
+    issues: [...baseValidation.issues, ...channelIssues],
+  };
   const selectedContacts = campaign.contacts.filter((contact) => contact.selected);
   const visibleContacts = campaign.contacts.filter((contact) => editable || contact.selected);
   const normalizedQuery = contactQuery.trim().toLowerCase();
@@ -332,11 +465,11 @@ export default function CampaignBuilder({ campaignId }: { campaignId: string }) 
   const waiting = selectedContacts.filter((contact) => contact.status === "waiting").length;
 
   return (
-    <CampaignShell active="campaigns" workspace>
+    <>
       <div className="campaign-workspace">
         <header className="campaign-builder-toolbar">
           <div className="campaign-builder-title">
-            <a className="campaign-icon-link" href="/dashboard/campaigns" aria-label="Back to campaigns">
+            <a className="campaign-icon-link" href={withMockMode("/dashboard/campaigns")} aria-label="Back to campaigns">
               <BackIcon size={17} />
             </a>
             <div>
@@ -354,23 +487,24 @@ export default function CampaignBuilder({ campaignId }: { campaignId: string }) 
             </div>
           </div>
           <div className="campaign-builder-actions">
-            {campaign.status === "active" || campaign.status === "paused" ? (
+            {canWrite && (campaign.status === "active" || campaign.status === "paused") ? (
               <button className="campaign-secondary" type="button" onClick={toggleStatus} disabled={actionBusy}>
                 {campaign.status === "active" ? "Pause" : "Resume"}
               </button>
             ) : null}
             <span className={`campaign-saved-state campaign-save-${saveState}`} aria-live="polite">
-              {saveState === "saving" ? "Saving…" : saveState === "error" ? "Save failed" : editable ? "Saved" : "Version frozen"}
+              {!canWrite ? "Read only" : saveState === "saving" ? "Saving…" : saveState === "error" ? "Save failed" : editable ? "Saved" : "Version frozen"}
             </span>
-            {editable ? (
+            {channelIssues.length > 0 && <span className="campaign-channel-warning">Channel setup required</span>}
+            {canWrite && editable ? (
               <button className="campaign-primary" type="button" onClick={() => setReviewOpen(true)} disabled={actionBusy} data-testid="review-campaign">
                 Review campaign
               </button>
-            ) : (
+            ) : canWrite && campaign.status !== "draft" ? (
               <button className="campaign-primary" type="button" onClick={revise} disabled={actionBusy} data-testid="revise-campaign">
                 {actionBusy ? "Creating…" : "Create revision"}
               </button>
-            )}
+            ) : null}
           </div>
         </header>
 
@@ -399,6 +533,7 @@ export default function CampaignBuilder({ campaignId }: { campaignId: string }) 
             <input
               type="search"
               placeholder="Search available leads"
+              maxLength={200}
               value={contactQuery}
               onChange={(event) => setContactQuery(event.target.value)}
             />
@@ -407,7 +542,11 @@ export default function CampaignBuilder({ campaignId }: { campaignId: string }) 
             <span>{editable ? "Select contact" : "Enrolled contact"}</span><span>Step</span>
           </div>
           <div className="campaign-contact-list" role="list">
-            {filteredContacts.length === 0 ? (
+            {contactLoading && filteredContacts.length === 0 ? (
+              <p className="campaign-contact-empty">Searching available leads…</p>
+            ) : contactError && filteredContacts.length === 0 ? (
+              <p className="campaign-contact-empty" role="alert">{contactError}</p>
+            ) : filteredContacts.length === 0 ? (
               <p className="campaign-contact-empty">No leads match this search.</p>
             ) : filteredContacts.map((contact) => (
               <label className={`campaign-contact-row ${contact.selected ? "is-selected" : ""}`} role="listitem" key={contact.id}>
@@ -432,6 +571,16 @@ export default function CampaignBuilder({ campaignId }: { campaignId: string }) 
                 </span>
               </label>
             ))}
+            {editable && contactOffset < contactTotal && (
+              <button
+                className="campaign-contact-more"
+                type="button"
+                onClick={loadMoreContacts}
+                disabled={contactLoading}
+              >
+                {contactLoading ? "Loading…" : `Load more · ${contactTotal - contactOffset} remaining`}
+              </button>
+            )}
           </div>
         </aside>
 
@@ -532,6 +681,14 @@ export default function CampaignBuilder({ campaignId }: { campaignId: string }) 
           {toast}
         </button>
       )}
+    </>
+  );
+}
+
+export default function CampaignBuilder({ campaignId }: { campaignId: string }) {
+  return (
+    <CampaignShell active="campaigns" workspace>
+      <CampaignBuilderWorkspace campaignId={campaignId} />
     </CampaignShell>
   );
 }
@@ -629,7 +786,7 @@ function AudienceEditor({
     }
   }
 
-  const selectedAudienceId =
+  const selectedAudienceId = campaign.audienceId ??
     audiences.find((audience) => audience.name === campaign.audience)?.id ?? "";
   const selectedCount = campaign.contacts.filter((contact) => contact.selected).length;
 
@@ -667,7 +824,7 @@ function AudienceEditor({
         </small>
       </label>
       {error && <div className="campaign-audience-error" role="alert">{error}</div>}
-      <a className="campaign-audience-link" href="/dashboard/audiences">
+      <a className="campaign-audience-link" href={withMockMode("/dashboard/audiences")}>
         Build or edit audiences
       </a>
       <label className="campaign-field">
@@ -754,6 +911,76 @@ function StepEditor({
   );
 }
 
+function CampaignModal({
+  labelledBy,
+  className,
+  locked = false,
+  onClose,
+  children,
+}: {
+  labelledBy: string;
+  className: string;
+  locked?: boolean;
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(
+    typeof document !== "undefined" && document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null,
+  );
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const returnFocus = returnFocusRef.current;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    dialog.showModal();
+    return () => {
+      if (dialog.open) dialog.close();
+      document.body.style.overflow = previousOverflow;
+      returnFocus?.focus();
+    };
+  }, []);
+
+  function requestClose() {
+    if (!locked) onClose();
+  }
+
+  function closeFromBackdrop(event: MouseEvent<HTMLDialogElement>) {
+    if (event.target !== event.currentTarget || locked) return;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    if (
+      event.clientX < bounds.left || event.clientX > bounds.right ||
+      event.clientY < bounds.top || event.clientY > bounds.bottom
+    ) onClose();
+  }
+
+  return (
+    <dialog
+      ref={dialogRef}
+      className={`campaign-dialog ${className}`}
+      aria-modal="true"
+      aria-labelledby={labelledBy}
+      onCancel={(event) => {
+        event.preventDefault();
+        requestClose();
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          requestClose();
+        }
+      }}
+      onMouseDown={closeFromBackdrop}
+    >
+      {children}
+    </dialog>
+  );
+}
+
 function AddStepDialog({
   onClose,
   onAdd,
@@ -762,13 +989,7 @@ function AddStepDialog({
   onAdd: (kind: StepKind) => void;
 }) {
   return (
-    <div
-      className="campaign-dialog-backdrop"
-      role="presentation"
-      onKeyDown={(event) => { if (event.key === "Escape") onClose(); }}
-      onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}
-    >
-      <section className="campaign-dialog campaign-step-dialog" role="dialog" aria-modal="true" aria-labelledby="add-step-heading">
+    <CampaignModal labelledBy="add-step-heading" className="campaign-step-dialog" onClose={onClose}>
         <div className="campaign-dialog-heading">
           <div><small>Sequence library</small><h2 id="add-step-heading">Add a step</h2></div>
           <button className="campaign-icon-button" type="button" onClick={onClose} aria-label="Close step library" autoFocus><CloseIcon size={17} /></button>
@@ -785,8 +1006,7 @@ function AddStepDialog({
             );
           })}
         </div>
-      </section>
-    </div>
+    </CampaignModal>
   );
 }
 
@@ -805,13 +1025,7 @@ function ReviewDialog({
 }) {
   const selected = campaign.contacts.filter((contact) => contact.selected).length;
   return (
-    <div
-      className="campaign-dialog-backdrop"
-      role="presentation"
-      onKeyDown={(event) => { if (event.key === "Escape" && !activating) onClose(); }}
-      onMouseDown={(event) => { if (event.target === event.currentTarget && !activating) onClose(); }}
-    >
-      <section className="campaign-dialog campaign-review-dialog" role="dialog" aria-modal="true" aria-labelledby="review-heading">
+    <CampaignModal labelledBy="review-heading" className="campaign-review-dialog" locked={activating} onClose={onClose}>
         <div className="campaign-dialog-heading">
           <div><small>Version {campaign.version} check</small><h2 id="review-heading">Review campaign</h2></div>
           <button className="campaign-icon-button" type="button" onClick={onClose} disabled={activating} aria-label="Close review" autoFocus><CloseIcon size={17} /></button>
@@ -838,7 +1052,6 @@ function ReviewDialog({
             {activating ? "Activating…" : "Activate campaign"}
           </button>
         </div>
-      </section>
-    </div>
+    </CampaignModal>
   );
 }

@@ -7,6 +7,7 @@ export type AudienceMember = {
   linkedinUrl: string | null;
   stage: string;
   contactable: boolean;
+  outreachEligible: boolean;
 };
 
 export type AudienceSummary = {
@@ -24,7 +25,7 @@ export type Audience = AudienceSummary & {
   members: AudienceMember[];
 };
 
-export type DiscoveryCandidate = Omit<AudienceMember, "contactable" | "leadId"> & {
+export type DiscoveryCandidate = Omit<AudienceMember, "contactable" | "outreachEligible" | "leadId"> & {
   providerRecordId: string;
   leadId: string | null;
 };
@@ -69,6 +70,12 @@ export function toggleLead(
   if (next.has(leadId)) next.delete(leadId);
   else next.add(leadId);
   return next;
+}
+
+export function outreachEligibleMembers(
+  members: AudienceMember[],
+): AudienceMember[] {
+  return members.filter((member) => member.contactable && member.outreachEligible);
 }
 
 export function formatAudienceDate(iso: string): string {

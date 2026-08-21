@@ -15,6 +15,8 @@ type RawCampaignSummary = {
   name: string;
   description: string;
   audience_name: string;
+  audience_id?: string | null;
+  lock_version?: number;
   status: CampaignStatus;
   step_count: number;
   contact_count: number;
@@ -55,13 +57,16 @@ type RawCampaignDetail = RawCampaignSummary & {
 
 export class CampaignApiError extends Error {
   readonly status: number;
+  readonly code: string | null;
 
   constructor(
     message: string,
     status: number,
+    code: string | null = null,
   ) {
     super(message);
     this.status = status;
+    this.code = code;
   }
 }
 
@@ -74,16 +79,18 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   });
   if (!response.ok) {
     let message = `Request failed (${response.status})`;
+    let code: string | null = null;
     try {
       const body = (await response.json()) as {
-        error?: { detail?: string };
+        error?: { detail?: string; code?: string };
         detail?: string;
       };
       message = body.error?.detail ?? body.detail ?? message;
+      code = body.error?.code ?? null;
     } catch {
       // Keep the status-based fallback for non-JSON proxy or network errors.
     }
-    throw new CampaignApiError(message, response.status);
+    throw new CampaignApiError(message, response.status, code);
   }
   return (await response.json()) as T;
 }
@@ -96,11 +103,28 @@ function mapSummary(raw: RawCampaignSummary): CampaignSummary {
     name: raw.name,
     description: raw.description,
     audience: raw.audience_name,
+    audienceId: raw.audience_id ?? null,
+    lockVersion: raw.lock_version ?? 0,
     status: raw.status,
     stepCount: raw.step_count,
     contactCount: raw.contact_count,
     createdAt: raw.created_at,
     updatedAt: raw.updated_at,
+  };
+}
+
+function mapContact(contact: RawCampaignContact): CampaignContact {
+  return {
+    id: contact.id,
+    name: contact.name ?? "Unnamed lead",
+    company: contact.company,
+    role: contact.role ?? "Role not set",
+    stage: contact.stage,
+    selected: contact.selected,
+    selectable: contact.selectable,
+    status: contact.enrollment_status,
+    currentStep: contact.current_step,
+    nextActionAt: contact.next_action_at,
   };
 }
 
@@ -113,6 +137,8 @@ export function mapCampaign(raw: RawCampaignDetail): Campaign {
     name: summary.name,
     description: summary.description,
     audience: summary.audience,
+    audienceId: summary.audienceId,
+    lockVersion: summary.lockVersion,
     status: summary.status,
     createdAt: summary.createdAt,
     updatedAt: summary.updatedAt,
@@ -127,19 +153,33 @@ export function mapCampaign(raw: RawCampaignDetail): Campaign {
       stopOnReply: step.stop_on_reply,
       attachmentSlug: step.attachment_slug ?? undefined,
     })),
-    contacts: raw.contacts.map((contact): CampaignContact => ({
-      id: contact.id,
-      name: contact.name ?? "Unnamed lead",
-      company: contact.company,
-      role: contact.role ?? "Role not set",
-      stage: contact.stage,
-      selected: contact.selected,
-      selectable: contact.selectable,
-      status: contact.enrollment_status,
-      currentStep: contact.current_step,
-      nextActionAt: contact.next_action_at,
-    })),
+    contacts: raw.contacts.map(mapContact),
   };
+}
+
+export type CampaignContactPage = {
+  contacts: CampaignContact[];
+  total: number;
+  limit: number;
+  offset: number;
+};
+
+export async function listCampaignContacts(
+  id: string,
+  options: { query?: string; limit?: number; offset?: number } = {},
+): Promise<CampaignContactPage> {
+  const query = new URLSearchParams({
+    q: options.query ?? "",
+    limit: String(options.limit ?? 50),
+    offset: String(options.offset ?? 0),
+  });
+  const raw = await requestJson<{
+    contacts: RawCampaignContact[];
+    total: number;
+    limit: number;
+    offset: number;
+  }>(`/api/v1/dashboard/campaigns/${encodeURIComponent(id)}/contacts?${query}`);
+  return { ...raw, contacts: raw.contacts.map(mapContact) };
 }
 
 export async function listCampaigns(): Promise<CampaignSummary[]> {
@@ -170,9 +210,11 @@ export async function saveCampaign(campaign: Campaign): Promise<Campaign> {
     {
       method: "PUT",
       body: JSON.stringify({
+        expected_lock_version: campaign.lockVersion,
         name: campaign.name,
         description: campaign.description,
         audience_name: campaign.audience,
+        audience_id: campaign.audienceId,
         lead_ids: campaign.contacts
           .filter((contact) => contact.selected)
           .map((contact) => contact.id),

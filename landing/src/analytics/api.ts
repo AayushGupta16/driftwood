@@ -106,13 +106,16 @@ export async function getChannelAnalytics(options: {
   end: string;
   status: AnalyticsStatus;
   channel: AnalyticsChannel | null;
+  limit?: number;
+  offset?: number;
   signal?: AbortSignal;
 }): Promise<ChannelAnalytics> {
   const query = new URLSearchParams({
     start: options.start,
     end: options.end,
     status: options.status,
-    limit: "100",
+    limit: String(options.limit ?? 100),
+    offset: String(options.offset ?? 0),
   });
   if (options.channel) query.set("channel", options.channel);
   const response = await fetch(`/api/v1/dashboard/channel-metrics?${query}`, {

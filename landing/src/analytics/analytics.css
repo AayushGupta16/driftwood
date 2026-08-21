@@ -178,6 +178,18 @@
 .analytics-empty p { margin: 0; font-size: 0.72rem; }
 
 .analytics-table-footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.7rem 0.15rem; color: var(--color-ink-faint); font-size: 0.67rem; }
+.analytics-load-more {
+  width: 100%;
+  min-height: 2.35rem;
+  border: 1px solid var(--color-line);
+  border-radius: 0.45rem;
+  background: var(--color-surface);
+  color: var(--color-ink-soft);
+  font: 600 0.7rem/1 var(--font-sans);
+  cursor: pointer;
+}
+.analytics-load-more:hover:not(:disabled) { border-color: var(--color-tide); color: var(--color-ink); }
+.analytics-load-more:disabled { cursor: wait; opacity: 0.6; }
 .analytics-method { display: flex; align-items: flex-start; gap: 0.55rem; margin-top: 2.2rem; border-top: 1px solid var(--color-line); padding-top: 1rem; color: var(--color-ink-faint); }
 .analytics-method svg { flex: 0 0 auto; margin-top: 0.15rem; }
 .analytics-method p { max-width: 56rem; margin: 0; font-size: 0.68rem; line-height: 1.55; }

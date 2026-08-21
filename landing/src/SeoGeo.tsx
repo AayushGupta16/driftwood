@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { LoggedOutView, ToastProvider } from "./dashboard/DashboardCommon";
 import { AdminPanelControls, ImpersonationBanner } from "./GodMode";
 import AppShell from "./dashboard/AppShell";
+import { withMockMode } from "./mock-mode";
 import seoQuerysetJson from "./seo-geo/queryset-seo.json";
 import geoQuerysetJson from "./seo-geo/queryset-geo.json";
 import { toTrendSeries, type HistoryPoint, type TrendPt } from "./seo-geo/trend.ts";
@@ -356,7 +357,7 @@ function SeoGeoView({ user }: { user: User }) {
     try {
       await fetch("/auth/logout", { method: "POST", credentials: "include" });
     } finally {
-      window.location.href = "/dashboard";
+      window.location.href = withMockMode("/dashboard");
     }
   }
 

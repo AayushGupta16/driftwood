@@ -26,6 +26,7 @@ type RawMember = {
   linkedin_url: string | null;
   stage: string;
   contactable: boolean;
+  outreach_eligible: boolean;
 };
 
 type RawAudience = RawAudienceSummary & {
@@ -81,6 +82,7 @@ function mapMember(raw: RawMember): AudienceMember {
     linkedinUrl: raw.linkedin_url,
     stage: raw.stage,
     contactable: raw.contactable,
+    outreachEligible: raw.outreach_eligible,
   };
 }
 

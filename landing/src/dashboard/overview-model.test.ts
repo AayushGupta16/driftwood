@@ -12,6 +12,8 @@ const campaign = (
   name: "Founder-led QA teams",
   description: "A focused sequence.",
   audience: "Qualified QA leaders",
+  audienceId: "audience-1",
+  lockVersion: 0,
   status: "draft",
   stepCount: 2,
   contactCount: 3,

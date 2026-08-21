@@ -38,6 +38,30 @@ The shared shell is complete, but the overview interior still exhibits the pre-r
 - Accessibility: the view retains semantic regions and headings, descriptive current-tab links, visible focus rings, labeled loading/error states, and a native keyboard-operable details disclosure.
 - Responsive behavior: the 8/4 and 3/2 desktop splits collapse to one column; the four-step ledger becomes two columns and then a single flow; campaign metadata and import controls reduce without horizontal overflow.
 
+## Phase 15 review findings
+
+- Explicit `?mock=1` was a page-load switch rather than a sticky QA boundary. Queryless internal links and campaign history replacement could reload without the mock interceptor and reach live APIs.
+- Mock channel totals did not reconcile with their exact-person drilldowns, even while the UI claimed every observed outcome was attributed.
+- Campaign copy/readiness validation did not include the workspace's connected channels, so an email sequence could present as ready while email was disconnected.
+- Asset composers visually resembled modals but left focus on the background trigger and handled Escape only when focus happened to be inside the dialog.
+- Audience, asset, and campaign load errors left empty arrays behind, causing outage and empty-library messages to render together.
+- Read-only membership was enforced on legacy leads, companies, and review surfaces, but the new campaign, audience, asset, and sidebar creation affordances did not yet share that permission model.
+- Company assets were workspace-scoped but did not expose agent assignment, leaving customers unable to inspect or restrict which agents could retrieve an asset.
+
+Keep the current palette, typography, custom icons, sidebar anatomy, native scrolling, and Corporate 1/3 motion. Replace ambiguous or unsafe states, not the established visual language.
+
+## Phase 15 final audit
+
+- Result: the review findings are resolved without changing the established Workbench visual direction.
+- Safety: mock mode is sticky and fail-closed, member permissions cover direct routes, campaign activation checks connected channels and qualified-company eligibility, and campaign autosave uses serialized optimistic locking.
+- Truthfulness: aggregate metrics reconcile with exact-person drilldowns; unsupported X replies, opens, and clicks remain unavailable instead of appearing as zero.
+- Scale: campaign candidates and analytics people use paginated contracts rather than unbounded workspace payloads.
+- Assets: upload reads are capped, spooled, streamed, and file-identified; deletion is tombstone-first with retry state and no storage I/O under a database lock; paused agents are gated; and customers can choose all-agent or selected-agent access.
+- Audience/ICP boundary: newly discovered unknown-company leads remain visible in reusable lists with a “Needs qualification” state, while only explicitly qualified members enter campaigns or any review/send path.
+- Accessibility: native asset dialogs move focus inside, close on Escape, restore the trigger, expose visible focus, and remain contained at 390px width.
+- States: load failures no longer co-render empty-library copy, and disconnected channels/read-only access use explicit blocking copy.
+- Visual integrity: the final scan found no emoji, icon dependency, decorative gradient, viewport-locked shell, or broad `transition: all` in the changed dashboard surfaces.
+
 ## Scope
 
 Reposition the customer dashboard as a growth workspace while preserving Driftwood's visual identity. The paired feature branches introduce a campaign-centered shell, saved audiences, server-side Orange Slice discovery, organization-scoped assets, honest channel analytics, persisted versioned campaign definitions, and an inert execution ledger without changing backend delivery behavior.

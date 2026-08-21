@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   filterAudiences,
+  outreachEligibleMembers,
   stageLabel,
   toggleLead,
   type AudienceSummary,
@@ -45,4 +46,25 @@ test("lead selection is immutable and toggles membership", () => {
 
 test("stage labels normalize stored enum slugs", () => {
   assert.equal(stageLabel("demo_built"), "Demo Built");
+});
+
+test("campaign eligibility stays separate from reusable audience membership", () => {
+  const base = {
+    name: "Ari",
+    title: "Founder",
+    company: "Northwind",
+    email: "Email not set",
+    linkedinUrl: null,
+    stage: "new",
+    contactable: true,
+  };
+  const members = [
+    { ...base, leadId: "qualified", outreachEligible: true },
+    { ...base, leadId: "unknown-company", outreachEligible: false },
+    { ...base, leadId: "suppressed", contactable: false, outreachEligible: false },
+  ];
+  assert.deepEqual(
+    outreachEligibleMembers(members).map((member) => member.leadId),
+    ["qualified"],
+  );
 });

@@ -1,13 +1,18 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { createLinkAsset, deleteAsset, listAssets, uploadAsset } from "./api";
+import { createLinkAsset, deleteAsset, listAssetAgents, listAssets, updateAssetAssignments, uploadAsset } from "./api";
 import {
+  assetAssignmentLabel,
+  assetAssignmentsReady,
   assetDestination,
   assetKindLabel,
   filterAssets,
   formatBytes,
   type AssetFilter,
+  type AssetAgent,
+  type AssetAssignmentMode,
   type CompanyAsset,
 } from "./model";
+import { useWorkspacePermissions } from "../dashboard/workspace-permissions-context";
 import {
   CloseIcon,
   ExternalIcon,
@@ -54,12 +59,19 @@ function AssetVisual({ asset }: { asset: CompanyAsset }) {
 }
 
 export default function Assets() {
+  const { canWrite } = useWorkspacePermissions();
   const [assets, setAssets] = useState<CompanyAsset[]>([]);
+  const [agents, setAgents] = useState<AssetAgent[]>([]);
   const [filter, setFilter] = useState<AssetFilter>("all");
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [composer, setComposer] = useState<Composer>(null);
+  const [assignmentAsset, setAssignmentAsset] = useState<CompanyAsset | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [agentsLoading, setAgentsLoading] = useState(true);
+  const [agentsError, setAgentsError] = useState(false);
+  const [agentsErrorVisible, setAgentsErrorVisible] = useState(false);
 
   useEffect(() => {
     let current = true;
@@ -69,6 +81,7 @@ export default function Assets() {
       })
       .catch((reason: unknown) => {
         if (current) {
+          setLoadFailed(true);
           setError(reason instanceof Error ? reason.message : "Assets could not load.");
         }
       })
@@ -80,14 +93,39 @@ export default function Assets() {
     };
   }, []);
 
+  useEffect(() => {
+    let current = true;
+    listAssetAgents()
+      .then((rows) => {
+        if (current) setAgents(rows);
+      })
+      .catch(() => {
+        if (current) {
+          setAgentsError(true);
+          setAgentsErrorVisible(true);
+        }
+      })
+      .finally(() => {
+        if (current) setAgentsLoading(false);
+      });
+    return () => { current = false; };
+  }, []);
+
   const visible = useMemo(
     () => filterAssets(assets, filter, query),
     [assets, filter, query],
   );
+  const assignmentsReady = assetAssignmentsReady(agentsLoading, agentsError);
 
   function addAsset(asset: CompanyAsset) {
     setAssets((current) => [asset, ...current]);
     setComposer(null);
+    setError(null);
+  }
+
+  function updateAsset(asset: CompanyAsset) {
+    setAssets((current) => current.map((candidate) => candidate.id === asset.id ? asset : candidate));
+    setAssignmentAsset(null);
     setError(null);
   }
 
@@ -110,23 +148,32 @@ export default function Assets() {
           <h1 id="assets-heading">Assets</h1>
           <p>
             Keep approved proof, product visuals, and reference links in one private place.
-            Every agent in this workspace can retrieve them when building outreach.
+            Choose whether every workspace agent or only a selected set can retrieve each asset.
           </p>
         </div>
-        <div className="asset-heading-actions">
-          <button className="asset-button asset-button-secondary" type="button" onClick={() => setComposer("link")}>
-            <LinkIcon size={16} /> Add link
-          </button>
-          <button className="asset-button asset-button-primary" type="button" onClick={() => setComposer("upload")}>
-            <UploadIcon size={16} /> Upload asset
-          </button>
-        </div>
+        {canWrite ? (
+          <div className="asset-heading-actions">
+            <button className="asset-button asset-button-secondary" type="button" onClick={() => setComposer("link")}>
+              <LinkIcon size={16} /> Add link
+            </button>
+            <button className="asset-button asset-button-primary" type="button" onClick={() => setComposer("upload")}>
+              <UploadIcon size={16} /> Upload asset
+            </button>
+          </div>
+        ) : <span className="asset-read-only">Read-only access</span>}
       </header>
 
-      {error && (
+      {error && !loadFailed && (
         <div className="asset-error" role="alert">
           <span>{error}</span>
           <button type="button" onClick={() => setError(null)}>Dismiss</button>
+        </div>
+      )}
+
+      {agentsErrorVisible && !loadFailed && (
+        <div className="asset-error" role="alert">
+          <span>Agent access details are temporarily unavailable. Assets remain viewable.</span>
+          <button type="button" onClick={() => setAgentsErrorVisible(false)}>Dismiss</button>
         </div>
       )}
 
@@ -165,11 +212,13 @@ export default function Assets() {
       <div className="asset-library" aria-live="polite" aria-busy={loading}>
         {loading ? (
           <div className="asset-state"><span className="asset-spinner" /><p>Loading private assets…</p></div>
+        ) : loadFailed ? (
+          <div className="asset-state" role="alert"><ImageIcon size={27} /><h2>Assets are unavailable</h2><p>We could not load the private library. Try again before adding or changing an asset.</p><button className="asset-button asset-button-secondary" type="button" onClick={() => window.location.reload()}>Try again</button></div>
         ) : visible.length === 0 ? (
           <div className="asset-state">
             <ImageIcon size={27} />
             <h2>{assets.length === 0 ? "Your asset library is empty" : "No assets match this view"}</h2>
-            <p>{assets.length === 0 ? "Upload an image or video, or add a link your agents can reference." : "Try another type or clear the search."}</p>
+            <p>{assets.length === 0 ? canWrite ? "Upload an image or video, or add a link your agents can reference." : "An owner or admin can add the first asset." : "Try another type or clear the search."}</p>
           </div>
         ) : (
           <div className="asset-grid">
@@ -191,9 +240,9 @@ export default function Assets() {
                         <span className={`asset-kind asset-kind-${asset.kind}`}>{assetKindLabel(asset.kind)}</span>
                         <h2>{asset.name}</h2>
                       </div>
-                      <button className="asset-delete" type="button" onClick={() => void removeAsset(asset)} aria-label={`Remove ${asset.name}`} title="Remove asset">
+                      {canWrite && <button className="asset-delete" type="button" onClick={() => void removeAsset(asset)} aria-label={`Remove ${asset.name}`} title="Remove asset">
                         <TrashIcon size={16} />
-                      </button>
+                      </button>}
                     </div>
                     {asset.description && <p>{asset.description}</p>}
                     {asset.tags.length > 0 && (
@@ -205,6 +254,10 @@ export default function Assets() {
                       <span>{formatBytes(asset.byteSize)}</span>
                       {asset.kind === "link" && <span>{domainFor(asset.externalUrl)}</span>}
                     </div>
+                    <div className="asset-access">
+                      <span><small>Agent access</small><strong>{agentsLoading ? "Loading agents…" : agentsError ? "Unavailable" : assetAssignmentLabel(asset, agents)}</strong></span>
+                      {canWrite && !agentsError && <button type="button" onClick={() => setAssignmentAsset(asset)} disabled={!assignmentsReady}>Manage</button>}
+                    </div>
                   </div>
                 </article>
               );
@@ -214,10 +267,19 @@ export default function Assets() {
       </div>
 
       {composer === "upload" && (
-        <UploadComposer onClose={() => setComposer(null)} onCreated={addAsset} onError={setError} />
+        <UploadComposer onClose={() => setComposer(null)} onCreated={addAsset} />
       )}
       {composer === "link" && (
-        <LinkComposer onClose={() => setComposer(null)} onCreated={addAsset} onError={setError} />
+        <LinkComposer onClose={() => setComposer(null)} onCreated={addAsset} />
+      )}
+      {assignmentAsset && (
+        <AssignmentComposer
+          asset={assignmentAsset}
+          agents={agents}
+          agentsReady={assignmentsReady}
+          onClose={() => setAssignmentAsset(null)}
+          onSaved={updateAsset}
+        />
       )}
     </section>
   );
@@ -226,7 +288,6 @@ export default function Assets() {
 type ComposerProps = {
   onClose: () => void;
   onCreated: (asset: CompanyAsset) => void;
-  onError: (message: string) => void;
 };
 
 function ComposerShell({
@@ -240,43 +301,171 @@ function ComposerShell({
   onClose: () => void;
   children: React.ReactNode;
 }) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(
+    typeof document !== "undefined" && document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null,
+  );
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const returnFocus = returnFocusRef.current;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    dialog.showModal();
+    return () => {
+      if (dialog.open) dialog.close();
+      document.body.style.overflow = previousOverflow;
+      returnFocus?.focus();
+    };
+  }, []);
+
+  function closeFromBackdrop(event: React.MouseEvent<HTMLDialogElement>) {
+    if (event.target !== event.currentTarget) return;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    if (
+      event.clientX < bounds.left || event.clientX > bounds.right ||
+      event.clientY < bounds.top || event.clientY > bounds.bottom
+    ) onClose();
+  }
+
   return (
-    <div className="asset-dialog-backdrop" onMouseDown={(event) => {
-      if (event.currentTarget === event.target) onClose();
-    }}>
-      <dialog className="asset-dialog" open aria-modal="true" aria-labelledby="asset-dialog-title" onKeyDown={(event) => {
-        if (event.key === "Escape") onClose();
-      }}>
-        <div className="asset-dialog-heading">
-          <div><h2 id="asset-dialog-title">{title}</h2><p>{intro}</p></div>
-          <button type="button" onClick={onClose} aria-label="Close"><CloseIcon size={18} /></button>
-        </div>
-        {children}
-      </dialog>
-    </div>
+    <dialog
+      ref={dialogRef}
+      className="asset-dialog"
+      aria-modal="true"
+      aria-labelledby="asset-dialog-title"
+      onCancel={(event) => { event.preventDefault(); onClose(); }}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          onClose();
+        }
+      }}
+      onMouseDown={closeFromBackdrop}
+    >
+      <div className="asset-dialog-heading">
+        <div><h2 id="asset-dialog-title">{title}</h2><p>{intro}</p></div>
+        <button type="button" onClick={onClose} aria-label="Close" autoFocus><CloseIcon size={18} /></button>
+      </div>
+      {children}
+    </dialog>
   );
 }
 
-function UploadComposer({ onClose, onCreated, onError }: ComposerProps) {
+function AssignmentComposer({
+  asset,
+  agents,
+  agentsReady,
+  onClose,
+  onSaved,
+}: {
+  asset: CompanyAsset;
+  agents: AssetAgent[];
+  agentsReady: boolean;
+  onClose: () => void;
+  onSaved: (asset: CompanyAsset) => void;
+}) {
+  const [mode, setMode] = useState<AssetAssignmentMode>(asset.assignmentMode);
+  const [selected, setSelected] = useState(() => new Set(asset.assignedAgentIds));
+  const [saving, setSaving] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    if (!agentsReady) return;
+    setSaving(true);
+    setSubmitError(null);
+    try {
+      onSaved(await updateAssetAssignments(asset.id, {
+        assignmentMode: mode,
+        agentIds: [...selected],
+      }));
+    } catch (reason) {
+      setSubmitError(reason instanceof Error ? reason.message : "Agent access could not be saved.");
+      setSaving(false);
+    }
+  }
+
+  return (
+    <ComposerShell
+      title={`Agent access for ${asset.name}`}
+      intro="Control which workspace agents can retrieve this asset while preparing outreach."
+      onClose={onClose}
+    >
+      <form className="asset-form asset-assignment-form" onSubmit={(event) => void submit(event)}>
+        <fieldset className="asset-assignment-modes">
+          <legend>Who can use this asset?</legend>
+          <label>
+            <input type="radio" name="assignment-mode" checked={mode === "all"} onChange={() => setMode("all")} />
+            <span><strong>All workspace agents</strong><small>Includes agents added later.</small></span>
+          </label>
+          <label>
+            <input type="radio" name="assignment-mode" checked={mode === "selected"} onChange={() => setMode("selected")} />
+            <span><strong>Selected agents</strong><small>Only the agents checked below.</small></span>
+          </label>
+        </fieldset>
+        {mode === "selected" && (
+          <fieldset className="asset-agent-list">
+            <legend>Selected agents</legend>
+            {!agentsReady ? (
+              <p>Loading workspace agents…</p>
+            ) : agents.length === 0 ? (
+              <p>No workspace agents are available. Saving will leave this asset inaccessible to agents.</p>
+            ) : agents.map((agent) => (
+              <label key={agent.id}>
+                <input
+                  type="checkbox"
+                  checked={selected.has(agent.id)}
+                  onChange={() => setSelected((current) => {
+                    const next = new Set(current);
+                    if (next.has(agent.id)) next.delete(agent.id);
+                    else next.add(agent.id);
+                    return next;
+                  })}
+                />
+                <span><strong>{agent.label}</strong><small>{agent.paused ? "Paused" : "Active"}</small></span>
+              </label>
+            ))}
+          </fieldset>
+        )}
+        {mode === "selected" && selected.size === 0 && (
+          <p className="asset-access-warning" role="note">No agent will be able to retrieve this asset.</p>
+        )}
+        {submitError && <p className="asset-dialog-error" role="alert">{submitError}</p>}
+        <div className="asset-form-actions">
+          <button className="asset-button asset-button-secondary" type="button" onClick={onClose} disabled={saving}>Cancel</button>
+          <button className="asset-button asset-button-primary" type="submit" disabled={saving || !agentsReady}>{saving ? "Saving…" : agentsReady ? "Save access" : "Loading agents…"}</button>
+        </div>
+      </form>
+    </ComposerShell>
+  );
+}
+
+function UploadComposer({ onClose, onCreated }: ComposerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
   const [saving, setSaving] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (!file) return;
     if (file.size > 25 * 1024 * 1024) {
-      onError("Choose a file smaller than 25 MB.");
+      setSubmitError("Choose a file smaller than 25 MB.");
       return;
     }
     setSaving(true);
+    setSubmitError(null);
     try {
       onCreated(await uploadAsset({ file, name, description, tags }));
     } catch (reason) {
-      onError(reason instanceof Error ? reason.message : "The asset could not be uploaded.");
+      setSubmitError(reason instanceof Error ? reason.message : "The asset could not be uploaded.");
       setSaving(false);
     }
   }
@@ -293,22 +482,25 @@ function UploadComposer({ onClose, onCreated, onError }: ComposerProps) {
         <label>Display name <span>Optional</span><input value={name} onChange={(event) => setName(event.target.value)} maxLength={255} placeholder={file?.name ?? "Product walkthrough"} /></label>
         <label>Description <span>Optional</span><textarea value={description} onChange={(event) => setDescription(event.target.value)} maxLength={2000} rows={3} placeholder="How should the agent use this?" /></label>
         <label>Tags <span>Comma separated</span><input value={tags} onChange={(event) => setTags(event.target.value)} maxLength={1000} placeholder="product, proof, enterprise" /></label>
+        {submitError && <p className="asset-dialog-error" role="alert">{submitError}</p>}
         <div className="asset-form-actions"><button className="asset-button asset-button-secondary" type="button" onClick={onClose}>Cancel</button><button className="asset-button asset-button-primary" type="submit" disabled={!file || saving}>{saving ? "Uploading…" : "Upload asset"}</button></div>
       </form>
     </ComposerShell>
   );
 }
 
-function LinkComposer({ onClose, onCreated, onError }: ComposerProps) {
+function LinkComposer({ onClose, onCreated }: ComposerProps) {
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
   const [saving, setSaving] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
     setSaving(true);
+    setSubmitError(null);
     try {
       onCreated(await createLinkAsset({
         name,
@@ -317,7 +509,7 @@ function LinkComposer({ onClose, onCreated, onError }: ComposerProps) {
         tags: tags.split(",").map((tag) => tag.trim()).filter(Boolean),
       }));
     } catch (reason) {
-      onError(reason instanceof Error ? reason.message : "The link could not be saved.");
+      setSubmitError(reason instanceof Error ? reason.message : "The link could not be saved.");
       setSaving(false);
     }
   }
@@ -329,6 +521,7 @@ function LinkComposer({ onClose, onCreated, onError }: ComposerProps) {
         <label>URL<input required type="url" value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://" /></label>
         <label>Description <span>Optional</span><textarea value={description} onChange={(event) => setDescription(event.target.value)} maxLength={2000} rows={3} placeholder="When should the agent use this?" /></label>
         <label>Tags <span>Comma separated</span><input value={tags} onChange={(event) => setTags(event.target.value)} maxLength={1000} placeholder="case study, proof" /></label>
+        {submitError && <p className="asset-dialog-error" role="alert">{submitError}</p>}
         <div className="asset-form-actions"><button className="asset-button asset-button-secondary" type="button" onClick={onClose}>Cancel</button><button className="asset-button asset-button-primary" type="submit" disabled={saving}>{saving ? "Saving…" : "Save link"}</button></div>
       </form>
     </ComposerShell>

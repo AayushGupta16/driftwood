@@ -27,6 +27,7 @@ import {
   SearchIcon,
   TrashIcon,
 } from "./icons";
+import { useWorkspacePermissions } from "../dashboard/workspace-permissions-context";
 import "./audiences.css";
 
 type View = "library" | "builder";
@@ -36,11 +37,13 @@ function readableProvider(provider: string) {
 }
 
 export default function Audiences() {
+  const { canWrite } = useWorkspacePermissions();
   const [view, setView] = useState<View>("library");
   const [audiences, setAudiences] = useState<AudienceSummary[]>([]);
   const [selectedAudience, setSelectedAudience] = useState<Audience | null>(null);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,7 +62,10 @@ export default function Audiences() {
         if (current) setAudiences(rows);
       })
       .catch((reason: unknown) => {
-        if (current) setError(reason instanceof Error ? reason.message : "Lead lists could not load.");
+        if (current) {
+          setLoadFailed(true);
+          setError(reason instanceof Error ? reason.message : "Lead lists could not load.");
+        }
       })
       .finally(() => {
         if (current) setLoading(false);
@@ -256,10 +262,14 @@ export default function Audiences() {
           <h1 id="audiences-heading">Lead lists</h1>
           <p>Build reusable groups of people for campaigns without duplicating or exporting lead data.</p>
         </div>
-        <button className="audience-primary" type="button" onClick={startBuilder} data-testid="new-audience"><PlusIcon size={17} /> New audience</button>
+        {canWrite ? (
+          <button className="audience-primary" type="button" onClick={startBuilder} data-testid="new-audience"><PlusIcon size={17} /> New audience</button>
+        ) : (
+          <span className="audience-read-only">Read-only access</span>
+        )}
       </header>
 
-      {error && <div className="audience-error" role="alert">{error}</div>}
+      {error && !loadFailed && <div className="audience-error" role="alert">{error}</div>}
 
       <div className="audience-library-grid">
         <div className="audience-library">
@@ -267,8 +277,10 @@ export default function Audiences() {
           <div className="audience-list" aria-busy={loading} aria-live="polite">
             {loading ? (
               <div className="audience-state"><span className="audience-spinner" aria-hidden="true" /><p>Loading lead lists…</p></div>
+            ) : loadFailed ? (
+              <div className="audience-state" role="alert"><AudienceIcon size={24} /><h2>Lead lists are unavailable</h2><p>We could not load this workspace. Try again before creating or changing an audience.</p><button className="audience-secondary" type="button" onClick={() => window.location.reload()}>Try again</button></div>
             ) : filteredAudiences.length === 0 ? (
-              <div className="audience-state"><AudienceIcon size={24} /><h2>{audiences.length === 0 ? "No lead lists yet" : "No lead lists match"}</h2><p>{audiences.length === 0 ? "Create an audience from your discovery source." : "Try a broader search."}</p>{audiences.length === 0 && <button className="audience-secondary" type="button" onClick={startBuilder}>Build the first audience</button>}</div>
+              <div className="audience-state"><AudienceIcon size={24} /><h2>{audiences.length === 0 ? "No lead lists yet" : "No lead lists match"}</h2><p>{audiences.length === 0 ? canWrite ? "Create an audience from your discovery source." : "An owner or admin can create the first audience." : "Try a broader search."}</p>{audiences.length === 0 && canWrite && <button className="audience-secondary" type="button" onClick={startBuilder}>Build the first audience</button>}</div>
             ) : filteredAudiences.map((audience) => (
               <button key={audience.id} className={`audience-list-row ${selectedAudience?.id === audience.id ? "is-active" : ""}`} type="button" onClick={() => openAudience(audience.id)}>
                 <span className="audience-list-icon"><AudienceIcon size={18} /></span>
@@ -287,14 +299,18 @@ export default function Audiences() {
             <div className="audience-state"><span className="audience-spinner" aria-hidden="true" /><p>Loading audience…</p></div>
           ) : selectedAudience ? (
             <>
-              <div className="audience-detail-head"><div><span>{readableProvider(selectedAudience.sourceProvider)}</span><h2>{selectedAudience.name}</h2><p>{selectedAudience.description || "No description added."}</p></div><button className="audience-icon-button" type="button" onClick={removeAudience} aria-label={`Delete ${selectedAudience.name}`}><TrashIcon size={17} /></button></div>
+              <div className="audience-detail-head"><div><span>{readableProvider(selectedAudience.sourceProvider)}</span><h2>{selectedAudience.name}</h2><p>{selectedAudience.description || "No description added."}</p></div>{canWrite && <button className="audience-icon-button" type="button" onClick={removeAudience} aria-label={`Delete ${selectedAudience.name}`}><TrashIcon size={17} /></button>}</div>
               <div className="audience-detail-count"><strong>{selectedAudience.memberCount}</strong><span>{selectedAudience.memberCount === 1 ? "person" : "people"} in this reusable list</span></div>
               <div className="audience-member-list">
                 {selectedAudience.members.map((member) => (
                   <div className="audience-member" key={member.leadId}>
                     <span className="audience-member-avatar" aria-hidden="true">{member.name.slice(0, 1).toUpperCase()}</span>
                     <span><strong>{member.name}</strong><small>{member.title} · {member.company}</small></span>
-                    {!member.contactable && <span className="audience-member-muted">Unavailable</span>}
+                    {!member.contactable ? (
+                      <span className="audience-member-muted">Unavailable</span>
+                    ) : !member.outreachEligible ? (
+                      <span className="audience-member-muted">Needs qualification</span>
+                    ) : null}
                   </div>
                 ))}
               </div>

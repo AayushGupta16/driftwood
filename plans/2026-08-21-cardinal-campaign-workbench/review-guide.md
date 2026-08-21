@@ -15,10 +15,12 @@ migration, Orange Slice credential, and private blob storage.
 - Orange Slice is integrated through a native server-backed discovery UI, not
   an iframe. This keeps credentials, tenant policy, provider failures, and
   selected-only persistence under Driftwood's control.
-- Campaigns are versioned plans. Activated versions are immutable and cannot
-  send; a revision creates the next editable draft.
+- Campaigns are versioned plans with optimistic draft locking and paginated
+  candidate search. Activated versions are immutable and cannot send; a
+  revision creates the next editable draft.
 - Assets are customer-approved reference material for agents. Files stay
-  private and links retain explicit external-link behavior.
+  private, access can target all or selected workspace agents, and links retain
+  explicit external-link behavior.
 - Metrics show only observable facts. Contacted, replied, and booked can be
   drilled down to people; open/click remain visibly unavailable.
 - Review Queue and other internal cards stay in the current dashboard tab.
@@ -34,11 +36,11 @@ migration, Orange Slice credential, and private blob storage.
 | App shell and routing | `src/dashboard/`, `src/main.tsx`, `src/admin-main.tsx`, `dashboard.html`, `admin.html`, `vercel.json` | Customer/admin separation, legacy route aliases, responsive focus management, lean entry documents. |
 | Overview brief | `src/Dashboard.tsx`, `src/dashboard/overview-model.ts`, `src/dashboard/overview.css` | Priority ordering, partial-data states, real inventory counts, preserved channel/import controls, responsive hierarchy. |
 | Audiences and lead database | `src/audiences/`, `src/Leads.tsx` | Discovery states, selected-only saves, membership filters, empty/error handling. |
-| Campaign workbench | `src/campaigns/` | Autosave, sequence ordering, lifecycle lock, audience application, activation disclosure. |
-| Assets | `src/assets/` | Upload/link validation states, authenticated previews, deletion and mobile layout. |
-| Metrics | `src/analytics/` | UTC window, available-vs-zero semantics, channel/person filters, data-quality messages. |
+| Campaign workbench | `src/campaigns/` | Serialized optimistic autosave, paginated candidates, sequence ordering, channel/qualification readiness, lifecycle lock, audience application, activation disclosure. |
+| Assets | `src/assets/` | Upload/link validation states, authenticated previews, agent assignment, keyboard-modal dialogs, durable deletion, and mobile layout. |
+| Metrics | `src/analytics/` | UTC window, available-vs-zero semantics, paginated channel/person filters, aggregate/detail reconciliation, and data-quality messages. |
 | Existing surface integration | `Dashboard.tsx`, `Companies.tsx`, `Review.tsx`, `Agents.tsx`, `SeoGeo.tsx`, `Conversation.tsx` | Shared shell without losing existing behavior; internal links remain same-tab. |
-| Safe fixture mode | `src/mock.ts` | Deterministic API shapes only under explicit `?mock=1`; no external writes. |
+| Safe fixture mode | `src/mock.ts`, `src/mock-mode.ts` | Sticky deterministic API shapes only under explicit `?mock=1`; unregistered API/auth requests fail closed and no external writes occur. |
 
 ## End-to-end contract
 
@@ -69,6 +71,8 @@ contracts. Rolling the site and API back is safe while leaving the additive
 tables in place; delay schema downgrade until retained audience, campaign, and
 asset metadata has been assessed.
 
-The backend change requires no historical backfill. Existing activity powers
-metrics immediately; existing leads simply have no audience memberships until
-users save them into lists.
+No aggregate or membership backfill is required. Existing activity powers
+metrics immediately, and existing leads simply have no audience memberships
+until users save them into lists. Campaign enrollment is intentionally stricter
+than lead-database visibility: unknown legacy companies remain visible for
+qualification but cannot enter outreach until explicitly marked qualified.

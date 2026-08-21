@@ -3,6 +3,7 @@ import { ToastProvider } from "./dashboard/DashboardCommon";
 import { AdminPanelControls, ImpersonationBanner } from "./GodMode";
 import { CARD, useToast } from "./dashboard-shared";
 import AppShell from "./dashboard/AppShell";
+import { withMockMode } from "./mock-mode";
 
 /* /dashboard/review — the founder's review queue: one flat chronological list
    of decisions the AE is waiting on (oldest first), per the signed-off draft
@@ -156,12 +157,12 @@ export default function Review() {
           // Only approved users get the queue; everyone else goes back to the
           // dashboard, which handles login + the pending-approval state.
           if (u.is_approved) setUser(u);
-          else window.location.href = "/dashboard";
+          else window.location.href = withMockMode("/dashboard");
         } else {
-          window.location.href = "/dashboard";
+          window.location.href = withMockMode("/dashboard");
         }
       } catch {
-        if (!cancelled) window.location.href = "/dashboard";
+        if (!cancelled) window.location.href = withMockMode("/dashboard");
       }
     })();
     return () => {
@@ -201,7 +202,7 @@ function ReviewView({ user }: { user: User }) {
     try {
       await fetch("/auth/logout", { method: "POST", credentials: "include" });
     } finally {
-      window.location.href = "/dashboard";
+      window.location.href = withMockMode("/dashboard");
     }
   }
 
@@ -213,6 +214,7 @@ function ReviewView({ user }: { user: User }) {
         identity={{ name: displayName, workspace: user.org?.name, avatarUrl: user.avatar_url }}
         onLogout={handleLogout}
         adminControl={user.is_admin ? <AdminPanelControls /> : undefined}
+        canWrite={canWrite}
       >
         <div className="mx-auto w-full max-w-[640px] pb-[70px]"><ReviewQueue canWrite={canWrite} /></div>
       </AppShell>

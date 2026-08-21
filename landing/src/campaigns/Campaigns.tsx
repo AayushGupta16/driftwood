@@ -7,6 +7,8 @@ import {
   type CampaignSummary,
 } from "./model";
 import { ArrowIcon, CampaignIcon, PlusIcon, SearchIcon } from "./icons";
+import { useWorkspacePermissions } from "../dashboard/workspace-permissions-context";
+import { withMockMode } from "../mock-mode";
 
 type CampaignTab = "all" | CampaignStatus;
 
@@ -23,16 +25,18 @@ function statusLabel(status: CampaignStatus): string {
 }
 
 function openCampaign(id: string) {
-  window.location.href = `/dashboard/campaigns/${encodeURIComponent(id)}`;
+  window.location.href = withMockMode(`/dashboard/campaigns/${encodeURIComponent(id)}`);
 }
 
-export default function Campaigns() {
+function CampaignsWorkspace() {
+  const { canWrite } = useWorkspacePermissions();
   const [campaigns, setCampaigns] = useState<CampaignSummary[]>([]);
   const [tab, setTab] = useState<CampaignTab>("all");
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
     let current = true;
@@ -42,7 +46,7 @@ export default function Campaigns() {
       })
       .catch((reason: unknown) => {
         if (current) {
-          setError(reason instanceof Error ? reason.message : "Campaigns could not load.");
+          setLoadError(reason instanceof Error ? reason.message : "Campaigns could not load.");
         }
       })
       .finally(() => {
@@ -67,18 +71,17 @@ export default function Campaigns() {
 
   async function handleCreate() {
     setCreating(true);
-    setError(null);
+    setActionError(null);
     try {
       const campaign = await createCampaign();
       openCampaign(campaign.id);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Campaign could not be created.");
+      setActionError(reason instanceof Error ? reason.message : "Campaign could not be created.");
       setCreating(false);
     }
   }
 
   return (
-    <CampaignShell active="campaigns">
       <section className="campaign-index" aria-labelledby="campaigns-heading">
         <div className="campaign-index-heading">
           <div>
@@ -88,22 +91,24 @@ export default function Campaigns() {
               Build a versioned sequence, choose real leads, and keep every send behind review.
             </p>
           </div>
-          <button
-            className="campaign-primary"
-            type="button"
-            onClick={handleCreate}
-            disabled={creating}
-            data-testid="new-campaign"
-          >
-            <PlusIcon size={17} />
-            {creating ? "Creating…" : "New campaign"}
-          </button>
+          {canWrite ? (
+            <button
+              className="campaign-primary"
+              type="button"
+              onClick={handleCreate}
+              disabled={creating}
+              data-testid="new-campaign"
+            >
+              <PlusIcon size={17} />
+              {creating ? "Creating…" : "New campaign"}
+            </button>
+          ) : <span className="campaign-read-only">Read-only access</span>}
         </div>
 
-        {error && (
+        {actionError && (
           <div className="campaign-inline-error" role="alert">
-            <span>{error}</span>
-            <button type="button" onClick={() => window.location.reload()}>Try again</button>
+            <span>{actionError}</span>
+            <button type="button" onClick={() => setActionError(null)}>Dismiss</button>
           </div>
         )}
 
@@ -146,11 +151,18 @@ export default function Campaigns() {
               <span aria-hidden="true" />
               <p>Loading campaigns…</p>
             </div>
+          ) : loadError ? (
+            <div className="campaign-empty" role="alert">
+              <CampaignIcon size={24} />
+              <h2>Campaigns are unavailable</h2>
+              <p>{loadError}</p>
+              <button className="campaign-secondary" type="button" onClick={() => window.location.reload()}>Try again</button>
+            </div>
           ) : filtered.length === 0 ? (
             <div className="campaign-empty">
               <CampaignIcon size={24} />
               <h2>{campaigns.length === 0 ? "No campaigns yet" : "No campaigns match this view"}</h2>
-              <p>{campaigns.length === 0 ? "Create a draft to build your first sequence." : "Clear the search or choose another status."}</p>
+              <p>{campaigns.length === 0 ? canWrite ? "Create a draft to build your first sequence." : "An owner or admin can create the first campaign." : "Clear the search or choose another status."}</p>
             </div>
           ) : (
             filtered.map((campaign) => (
@@ -188,6 +200,13 @@ export default function Campaigns() {
           )}
         </div>
       </section>
+  );
+}
+
+export default function Campaigns() {
+  return (
+    <CampaignShell active="campaigns">
+      <CampaignsWorkspace />
     </CampaignShell>
   );
 }

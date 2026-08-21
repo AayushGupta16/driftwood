@@ -14,6 +14,7 @@ import type { AudienceSummary } from "./audiences/model";
 import { listCampaigns } from "./campaigns/api";
 import type { CampaignSummary } from "./campaigns/model";
 import AppShell from "./dashboard/AppShell";
+import { withMockMode } from "./mock-mode";
 import { GoogleMark, LoggedOutView, ToastProvider } from "./dashboard/DashboardCommon";
 import {
   buildOverviewSnapshot,
@@ -143,7 +144,7 @@ export default function Dashboard() {
     try {
       await fetch("/auth/logout", { method: "POST", credentials: "include" });
     } finally {
-      window.location.href = "/dashboard";
+      window.location.href = withMockMode("/dashboard");
     }
   }
 
@@ -178,6 +179,7 @@ function LoggedInView({ user, onLogout }: { user: User; onLogout: () => void }) 
   const displayName = user.name || user.email;
   // Shown next to the identity when the account belongs to a named workspace.
   const orgName = user.org?.name.trim() || null;
+  const canWrite = (user.org?.role ?? "owner") !== "member";
 
   return (
     <>
@@ -187,6 +189,7 @@ function LoggedInView({ user, onLogout }: { user: User; onLogout: () => void }) 
         identity={{ name: displayName, workspace: orgName, avatarUrl: user.avatar_url }}
         onLogout={onLogout}
         adminControl={user.is_admin ? <AdminPanelControls /> : undefined}
+        canWrite={canWrite}
       >
         <div className="mx-auto w-full max-w-5xl py-5 sm:py-8">
           {user.is_approved ? <ApprovedView user={user} /> : <PendingView />}
@@ -387,8 +390,8 @@ function ApprovedView({ user }: { user: User }) {
           <p>See what moved, clear the next blocker, and keep outreach reviewable.</p>
         </div>
         <div className="overview-heading-links" aria-label="Lead database shortcuts">
-          <a href="/dashboard/leads">{formatCount(summary, "leads")} leads</a>
-          <a href="/dashboard/companies">{formatCount(summary, "companies")} qualified companies</a>
+          <a href={withMockMode("/dashboard/leads")}>{formatCount(summary, "leads")} leads</a>
+          <a href={withMockMode("/dashboard/companies")}>{formatCount(summary, "companies")} qualified companies</a>
         </div>
       </header>
 
@@ -403,7 +406,7 @@ function ApprovedView({ user }: { user: User }) {
         />
       </div>
 
-      <WorkflowPanel snapshot={snapshot} pendingReviews={
+      <WorkflowPanel snapshot={snapshot} canWrite={canWrite} pendingReviews={
         summary.status === "ready" ? summary.summary.pending_reviews : null
       } />
 
@@ -457,7 +460,7 @@ function PriorityBrief({
       {loading ? (
         <span className="overview-priority-loading" role="status">Loading</span>
       ) : (
-        <a href={snapshot.primaryAction.href}>{snapshot.primaryAction.label}</a>
+        <a href={withMockMode(snapshot.primaryAction.href)}>{snapshot.primaryAction.label}</a>
       )}
     </section>
   );
@@ -513,7 +516,7 @@ function AttentionPanel({
       </div>
       <div className="overview-readiness-list">
         {items.map((item) => (
-          <a href={item.href} key={item.label}>
+          <a href={withMockMode(item.href)} key={item.label}>
             <span className={item.active ? "is-active" : ""} aria-hidden="true" />
             <strong>{item.label}</strong>
             <small>{item.value}</small>
@@ -530,9 +533,11 @@ function AttentionPanel({
 function WorkflowPanel({
   snapshot,
   pendingReviews,
+  canWrite,
 }: {
   snapshot: OverviewSnapshot;
   pendingReviews: number | null;
+  canWrite: boolean;
 }) {
   const steps = [
     {
@@ -571,12 +576,12 @@ function WorkflowPanel({
           <h2 id="workflow-title">Outbound path</h2>
           <p>Each step stays inspectable before outreach reaches a prospect.</p>
         </div>
-        <a href="/dashboard/campaigns/new">New campaign</a>
+        {canWrite && <a href={withMockMode("/dashboard/campaigns/new")}>New campaign</a>}
       </div>
       <ol>
         {steps.map((step) => (
           <li key={step.index}>
-            <a href={step.href}>
+            <a href={withMockMode(step.href)}>
               <span aria-hidden="true">{step.index}</span>
               <strong>{step.title}</strong>
               <small>{step.detail}</small>
@@ -602,7 +607,7 @@ function CampaignDesk({
           <h2 id="campaign-desk-title">Recent campaigns</h2>
           <p>Return to the latest sequence without hunting through the workspace.</p>
         </div>
-        <a href="/dashboard/campaigns">View all</a>
+        <a href={withMockMode("/dashboard/campaigns")}>View all</a>
       </div>
       {inventory.status === "loading" ? (
         <p className="overview-empty" role="status">Loading campaigns…</p>
@@ -613,7 +618,7 @@ function CampaignDesk({
       ) : (
         <div className="overview-campaign-list">
           {snapshot.recentCampaigns.map((campaign) => (
-            <a href={`/dashboard/campaigns/${encodeURIComponent(campaign.id)}`} key={campaign.id}>
+            <a href={withMockMode(`/dashboard/campaigns/${encodeURIComponent(campaign.id)}`)} key={campaign.id}>
               <span className={`overview-campaign-status is-${campaign.status}`}>
                 {campaign.status}
               </span>
@@ -819,7 +824,7 @@ function MetricsCard({ state }: { state: SummaryState }) {
           <h2 id="pipeline-title">Pipeline movement</h2>
           <p>Current totals from observed outreach, replies, and booked meetings.</p>
         </div>
-        <a href="/dashboard/metrics">Open metrics</a>
+        <a href={withMockMode("/dashboard/metrics")}>Open metrics</a>
       </div>
       {state.status === "loading" && (
         <div className="flex flex-1 items-center justify-center py-12">

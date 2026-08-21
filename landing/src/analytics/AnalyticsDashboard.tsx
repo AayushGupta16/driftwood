@@ -4,6 +4,8 @@ import { InfoIcon, RefreshIcon, TrendIcon } from "./icons";
 import {
   AVAILABLE_STATUSES,
   CHANNELS,
+  analyticsDataAfterFailure,
+  appendAnalyticsPage,
   analyticsWindow,
   channelLabel,
   formatMetric,
@@ -44,11 +46,16 @@ export default function AnalyticsDashboard() {
   const [status, setStatus] = useState<AnalyticsStatus>("replied");
   const [data, setData] = useState<ChannelAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [offset, setOffset] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const load = useCallback(() => {
     setLoading(true);
+    setLoadingMore(false);
+    setData(null);
+    setOffset(0);
     setError(null);
     setRefreshKey((value) => value + 1);
   }, []);
@@ -56,17 +63,32 @@ export default function AnalyticsDashboard() {
   useEffect(() => {
     const controller = new AbortController();
     const window = analyticsWindow(days);
-    getChannelAnalytics({ ...window, channel, status, signal: controller.signal })
-      .then(setData)
+    getChannelAnalytics({
+      ...window,
+      channel,
+      status,
+      limit: 100,
+      offset,
+      signal: controller.signal,
+    })
+      .then((next) => {
+        setData((current) => offset > 0 && current
+          ? appendAnalyticsPage(current, next)
+          : next);
+      })
       .catch((reason: unknown) => {
         if (controller.signal.aborted) return;
+        setData((current) => analyticsDataAfterFailure(current, offset));
         setError(reason instanceof Error ? reason.message : "Analytics could not load.");
       })
       .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+          setLoadingMore(false);
+        }
       });
     return () => controller.abort();
-  }, [channel, days, refreshKey, status]);
+  }, [channel, days, offset, refreshKey, status]);
 
   const unavailable = useMemo(
     () =>
@@ -96,7 +118,9 @@ export default function AnalyticsDashboard() {
               value={days}
               onChange={(event) => {
                 setLoading(true);
+                setData(null);
                 setError(null);
+                setOffset(0);
                 setDays(Number(event.target.value));
               }}
             >
@@ -178,7 +202,9 @@ export default function AnalyticsDashboard() {
                 value={channel ?? "all"}
                 onChange={(event) => {
                   setLoading(true);
+                  setData(null);
                   setError(null);
+                  setOffset(0);
                   setChannel(
                     event.target.value === "all"
                       ? null
@@ -201,8 +227,11 @@ export default function AnalyticsDashboard() {
               aria-selected={status === option}
               className={status === option ? "is-active" : ""}
               onClick={() => {
+                if (status === option) return;
                 setLoading(true);
+                setData(null);
                 setError(null);
+                setOffset(0);
                 setStatus(option);
               }}
             >
@@ -249,7 +278,9 @@ export default function AnalyticsDashboard() {
         <div className="analytics-table-footer">
           <span>
             {data
-              ? `${data.peopleTotal} ${data.peopleTotal === 1 ? "person" : "people"}`
+              ? `Showing ${data.people.length} of ${data.peopleTotal} ${data.peopleTotal === 1 ? "person" : "people"}`
+              : error
+                ? "People unavailable for this view"
               : "Loading people…"}
           </span>
           {dataIssues > 0 ? (
@@ -260,6 +291,19 @@ export default function AnalyticsDashboard() {
             <span>All observed outcomes attributed</span>
           )}
         </div>
+        {data && data.people.length < data.peopleTotal ? (
+          <button
+            className="analytics-load-more"
+            type="button"
+            onClick={() => {
+              setLoadingMore(true);
+              setOffset(data.offset + data.limit);
+            }}
+            disabled={loadingMore}
+          >
+            {loadingMore ? "Loading more…" : `Load more people · ${data.peopleTotal - data.people.length} remaining`}
+          </button>
+        ) : null}
       </section>
 
       <aside className="analytics-method" aria-label="Metric definitions">

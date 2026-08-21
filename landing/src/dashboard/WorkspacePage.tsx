@@ -2,6 +2,9 @@ import { useEffect, useState, type ReactNode } from "react";
 import { LoggedOutView } from "./DashboardCommon";
 import { AdminPanelControls, ImpersonationBanner } from "../GodMode";
 import AppShell, { type DashboardSection } from "./AppShell";
+import { WorkspacePermissionsProvider } from "./workspace-permissions";
+import type { WorkspaceRole } from "./workspace-permissions-context";
+import { withMockMode } from "../mock-mode";
 
 type WorkspaceUser = {
   email: string;
@@ -10,7 +13,10 @@ type WorkspaceUser = {
   is_approved: boolean;
   is_admin?: boolean;
   impersonating?: boolean;
-  org?: { name: string; role: "owner" | "admin" | "member" } | null;
+  linkedin_connected?: boolean;
+  email_connected?: boolean;
+  twitter_connected?: boolean;
+  org?: { name: string; role: WorkspaceRole } | null;
 };
 
 type AuthState =
@@ -47,7 +53,7 @@ export default function WorkspacePage({
     try {
       await fetch("/auth/logout", { method: "POST", credentials: "include" });
     } finally {
-      window.location.href = "/dashboard";
+      window.location.href = withMockMode("/dashboard");
     }
   }
 
@@ -57,19 +63,28 @@ export default function WorkspacePage({
   if (auth.status === "denied") return <LoggedOutView />;
 
   const user = auth.user;
+  const role = user.org?.role ?? "owner";
+  const canWrite = role !== "member";
   return (
     <>
       {user.impersonating && <ImpersonationBanner email={user.email} />}
-      <AppShell
-        active={active}
-        workspace={workspace}
-        identity={{ name: user.name || user.email, workspace: user.org?.name, avatarUrl: user.avatar_url }}
-        onLogout={logout}
-        adminControl={user.is_admin ? <AdminPanelControls /> : undefined}
-        notice={notice}
-      >
-        {children}
-      </AppShell>
+      <WorkspacePermissionsProvider role={role} channels={{
+        linkedin: user.linkedin_connected ?? false,
+        email: user.email_connected ?? false,
+        x: user.twitter_connected ?? false,
+      }}>
+        <AppShell
+          active={active}
+          workspace={workspace}
+          identity={{ name: user.name || user.email, workspace: user.org?.name, avatarUrl: user.avatar_url }}
+          onLogout={logout}
+          adminControl={user.is_admin ? <AdminPanelControls /> : undefined}
+          notice={notice}
+          canWrite={canWrite}
+        >
+          {children}
+        </AppShell>
+      </WorkspacePermissionsProvider>
     </>
   );
 }

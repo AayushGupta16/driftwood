@@ -98,3 +98,29 @@ export function analyticsWindow(days: number, now = new Date()) {
   start.setUTCDate(start.getUTCDate() - days);
   return { start: start.toISOString(), end: end.toISOString() };
 }
+
+export function appendAnalyticsPage(
+  current: ChannelAnalytics,
+  next: ChannelAnalytics,
+): ChannelAnalytics {
+  const people = new Map(
+    current.people.map((person) => [
+      [person.leadId, person.channel, person.status, person.occurredAt, person.source].join("|"),
+      person,
+    ]),
+  );
+  next.people.forEach((person) => {
+    people.set(
+      [person.leadId, person.channel, person.status, person.occurredAt, person.source].join("|"),
+      person,
+    );
+  });
+  return { ...next, people: [...people.values()] };
+}
+
+export function analyticsDataAfterFailure(
+  current: ChannelAnalytics | null,
+  failedOffset: number,
+): ChannelAnalytics | null {
+  return failedOffset > 0 ? current : null;
+}

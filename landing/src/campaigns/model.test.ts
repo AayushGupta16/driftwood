@@ -9,7 +9,9 @@ import {
   applyAudience,
   createStep,
   insertStep,
+  mergeCampaignContactPage,
   moveStep,
+  reconcileSavedCampaign,
   removeStep,
   updateStep,
   validateCampaign,
@@ -24,6 +26,8 @@ function campaignFixture(): Campaign {
     name: "Untitled campaign",
     description: "A deliberate sequence.",
     audience: "Choose an audience",
+    audienceId: null,
+    lockVersion: 0,
     status: "draft",
     createdAt: "2026-08-21T12:00:00.000Z",
     updatedAt: "2026-08-21T12:00:00.000Z",
@@ -110,15 +114,47 @@ test("applying an audience replaces the draft contact selection", () => {
   };
   const next = applyAudience(
     { ...campaign, contacts: [campaign.contacts[0], eligible, unavailable] },
+    "audience-qa",
     "QA decision makers",
     [eligible.id, unavailable.id],
   );
 
   assert.equal(next.audience, "QA decision makers");
+  assert.equal(next.audienceId, "audience-qa");
   assert.equal(next.contacts[0].selected, false);
   assert.equal(next.contacts[1].selected, true);
   assert.equal(next.contacts[1].status, "draft");
   assert.equal(next.contacts[2].selected, false);
+});
+
+test("contact pages replace old search results while retaining selected leads", () => {
+  const campaign = campaignFixture();
+  const oldResult = { ...campaign.contacts[0], id: "old", selected: false, status: null };
+  const nextResult = { ...oldResult, id: "next", name: "Grace Hopper" };
+  const merged = mergeCampaignContactPage(
+    [campaign.contacts[0], oldResult],
+    [nextResult],
+    true,
+  );
+
+  assert.deepEqual(merged.map((contact) => contact.id), [campaign.contacts[0].id, "next"]);
+});
+
+test("a save response keeps the paged catalogue but takes persisted selection", () => {
+  const local = campaignFixture();
+  const browsed = { ...local.contacts[0], id: "browsed", selected: true };
+  const saved = {
+    ...local,
+    lockVersion: 1,
+    contacts: [local.contacts[0]],
+  };
+  const reconciled = reconcileSavedCampaign(
+    { ...local, contacts: [local.contacts[0], browsed] },
+    saved,
+  );
+
+  assert.equal(reconciled.lockVersion, 1);
+  assert.equal(reconciled.contacts.find((contact) => contact.id === "browsed")?.selected, false);
 });
 
 test("API responses map snake-case persistence fields into builder state", () => {
@@ -129,6 +165,8 @@ test("API responses map snake-case persistence fields into builder state", () =>
     name: "Founder QA",
     description: "Persisted",
     audience_name: "Qualified founders",
+    audience_id: "64dddcb7-4be5-4587-8077-08974491ff9d",
+    lock_version: 3,
     status: "draft",
     step_count: 1,
     contact_count: 1,
@@ -166,6 +204,8 @@ test("API responses map snake-case persistence fields into builder state", () =>
 
   assert.equal(mapped.version, 2);
   assert.equal(mapped.audience, "Qualified founders");
+  assert.equal(mapped.audienceId, "64dddcb7-4be5-4587-8077-08974491ff9d");
+  assert.equal(mapped.lockVersion, 3);
   assert.equal(mapped.steps[0].sendWindow, "business-hours");
   assert.equal(mapped.contacts[0].selected, true);
 });

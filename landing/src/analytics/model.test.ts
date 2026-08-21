@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { mapChannelAnalytics } from "./api.ts";
-import { analyticsWindow, channelLabel, formatMetric } from "./model.ts";
+import { analyticsDataAfterFailure, appendAnalyticsPage, analyticsWindow, channelLabel, formatMetric } from "./model.ts";
 
 test("unavailable metrics stay distinct from observed zero", () => {
   assert.equal(formatMetric({ count: null, available: false }), "—");
@@ -53,4 +53,35 @@ test("API mapping preserves people and data quality counters", () => {
   assert.equal(mapped.unmatchedReplies.linkedin, 1);
   assert.equal(mapped.unattributedDemosBooked, 2);
   assert.equal(channelLabel(mapped.people[0].channel), "LinkedIn");
+});
+
+test("analytics pages append without duplicating an overlapping person", () => {
+  const first = mapChannelAnalytics({
+    window: { start: "2026-08-01T00:00:00Z", end: "2026-09-01T00:00:00Z" },
+    channels: [], definitions: [],
+    people: [{ lead_id: "lead-1", name: "Mina", title: null, email: null, company_name: null, channel: "email", status: "replied", occurred_at: "2026-08-20T15:00:00Z", source: "email_replies" }],
+    people_status: "replied", people_channel: null, people_total: 2, limit: 1, offset: 0,
+    unmatched_replies: { linkedin: 0, email: 0, x: 0 }, unattributed_demos_booked: 0,
+  });
+  const second = {
+    ...first,
+    offset: 1,
+    people: [first.people[0], { ...first.people[0], leadId: "lead-2", name: "Ada" }],
+  };
+
+  assert.deepEqual(
+    appendAnalyticsPage(first, second).people.map((person) => person.leadId),
+    ["lead-1", "lead-2"],
+  );
+});
+
+test("a failed fresh analytics query clears stale data while pagination failure preserves it", () => {
+  const current = mapChannelAnalytics({
+    window: { start: "2026-08-01T00:00:00Z", end: "2026-09-01T00:00:00Z" },
+    channels: [], definitions: [], people: [],
+    people_status: "replied", people_channel: null, people_total: 0, limit: 100, offset: 0,
+    unmatched_replies: { linkedin: 0, email: 0, x: 0 }, unattributed_demos_booked: 0,
+  });
+  assert.equal(analyticsDataAfterFailure(current, 0), null);
+  assert.equal(analyticsDataAfterFailure(current, 100), current);
 });

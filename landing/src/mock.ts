@@ -1,8 +1,12 @@
+import { initializeMockMode, mockBlockedResponse } from "./mock-mode";
+
 /* Preview-branch mock: `?mock=1` serves canned dashboard data so the
    redesigned dashboard can be seen (and screenshotted) without the backend.
    Numbers mirror the real Autosana account. Dev/preview aid only. */
 const params = new URLSearchParams(location.search);
-if (params.has("mock")) {
+const mockMode = initializeMockMode(location.search, location.pathname);
+if (mockMode) {
+  params.set("mock", mockMode);
   const hoursAgo = (h: number) => new Date(Date.now() - h * 3600e3).toISOString();
   const me = {
     id: "mock",
@@ -15,7 +19,11 @@ if (params.has("mock")) {
     // ?mock=admin flips the admin chrome on (God mode + the SEO / GEO pill)
     // for QA'ing admin-only pages like /dashboard/admin/search-visibility. Plain ?mock=1
     // stays the customer view the baked marketing screenshots are shot from.
-    is_admin: params.get("mock") === "admin",
+    is_admin: mockMode === "admin",
+    org: {
+      name: "Example workspace",
+      role: mockMode === "member" ? "member" : "owner",
+    },
     // ?x=pending|connected|locked walks the X card's later states without a
     // real Kernel profile. "locked" is the one worth looking at: connected,
     // but sitting behind X's chat PIN wall so DMs can't go out. Omit for
@@ -34,28 +42,26 @@ if (params.has("mock")) {
       within_limits: true,
       last_action_at: hoursAgo(3),
     },
-    funnel: { active: 124, contacted: 77, replied: 7, meetings: 4 },
+    funnel: { active: 6, contacted: 6, replied: 2, meetings: 1 },
     results: {
-      meetings: 4,
-      meetings_delta_7d: 2,
-      replies: 7,
-      replies_delta_7d: 3,
-      reply_rate: 0.091,
+      meetings: 1,
+      meetings_delta_7d: 1,
+      replies: 2,
+      replies_delta_7d: 1,
+      reply_rate: 0.333,
     },
-    lists: { leads: 124, blacklist: 2 },
-    companies: { qualified: 126, screened_out: 844, unknown: 130 },
+    lists: { leads: 6, blacklist: 2 },
+    companies: { qualified: 6, screened_out: 0, unknown: 0 },
     pending_reviews: 3,
   };
   const activity = {
     events: [
       { at: hoursAgo(2), kind: "stage", lead_id: "m1", lead_name: "Dana Whitfield", company_name: "Meridian", detail: "booked" },
       { at: hoursAgo(2.4), kind: "reply", lead_id: null, lead_name: null, company_name: null, detail: null },
-      { at: hoursAgo(5), kind: "reply", lead_id: null, lead_name: null, company_name: null, detail: null },
       { at: hoursAgo(6), kind: "sent", lead_id: null, lead_name: null, company_name: null, detail: "message" },
       { at: hoursAgo(7), kind: "sent", lead_id: null, lead_name: null, company_name: null, detail: "message" },
       { at: hoursAgo(9), kind: "reply", lead_id: null, lead_name: null, company_name: null, detail: null },
       { at: hoursAgo(17), kind: "sent", lead_id: null, lead_name: null, company_name: null, detail: "connection_request" },
-      { at: hoursAgo(21), kind: "reply", lead_id: null, lead_name: null, company_name: null, detail: null },
     ],
   };
   const daysAhead = (d: number) =>
@@ -506,6 +512,23 @@ if (params.has("mock")) {
     const id = decodeURIComponent(encodedId);
     const campaign = mockCampaigns.find((row) => row.id === id);
     if (!campaign) return new Response(JSON.stringify({ error: { detail: "Campaign not found" } }), { status: 404, headers: { "Content-Type": "application/json" } });
+    if (method === "GET" && action === "contacts") {
+      const query = new URL(url ?? location.href, location.href).searchParams;
+      const search = (query.get("q") ?? "").trim().toLowerCase();
+      const limit = Math.max(1, Number(query.get("limit") ?? 50));
+      const offset = Math.max(0, Number(query.get("offset") ?? 0));
+      const contacts = search
+        ? campaign.contacts.filter((contact) =>
+          [contact.name, contact.company, contact.role].some((value) => value.toLowerCase().includes(search)),
+        )
+        : campaign.contacts;
+      return {
+        contacts: contacts.slice(offset, offset + limit),
+        total: contacts.length,
+        limit,
+        offset,
+      };
+    }
     if (method === "PUT") {
       const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
       campaign.name = String(body.name ?? campaign.name);
@@ -558,21 +581,38 @@ if (params.has("mock")) {
     tags: string[]; original_filename: string | null; content_type: string | null;
     byte_size: number | null; external_url: string | null; content_url: string | null;
     created_at: string; updated_at: string;
+    assignment_mode: "all" | "selected"; assigned_agent_ids: string[];
   };
+  const mockAssetAgents = [
+    { id: "outbound", label: "Outbound agent", paused: false },
+    { id: "demo", label: "Demo agent", paused: false },
+    { id: "research", label: "Research agent", paused: true },
+  ];
   const assetPreview = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='720' height='420' viewBox='0 0 720 420'%3E%3Crect width='720' height='420' fill='%23eaf1f7'/%3E%3Cpath d='M0 330L190 170l108 96 105-82 317 236H0z' fill='%2315557e' opacity='.72'/%3E%3Ccircle cx='555' cy='100' r='40' fill='%23fff' opacity='.8'/%3E%3C/svg%3E";
   const mockAssets: MockAsset[] = [
-    { id: "asset-product", kind: "image", name: "Product workflow", description: "Approved overview visual for outbound demos.", tags: ["product", "approved"], original_filename: "workflow.png", content_type: "image/png", byte_size: 184200, external_url: null, content_url: assetPreview, created_at: hoursAgo(72), updated_at: hoursAgo(4) },
-    { id: "asset-proof", kind: "link", name: "Enterprise customer story", description: "Use when a prospect asks for implementation proof.", tags: ["proof", "enterprise"], original_filename: null, content_type: null, byte_size: null, external_url: "https://driftwood.sh/", content_url: null, created_at: hoursAgo(96), updated_at: hoursAgo(28) },
+    { id: "asset-product", kind: "image", name: "Product workflow", description: "Approved overview visual for outbound demos.", tags: ["product", "approved"], original_filename: "workflow.png", content_type: "image/png", byte_size: 184200, external_url: null, content_url: assetPreview, created_at: hoursAgo(72), updated_at: hoursAgo(4), assignment_mode: "all", assigned_agent_ids: [] },
+    { id: "asset-proof", kind: "link", name: "Enterprise customer story", description: "Use when a prospect asks for implementation proof.", tags: ["proof", "enterprise"], original_filename: null, content_type: null, byte_size: null, external_url: "https://driftwood.sh/", content_url: null, created_at: hoursAgo(96), updated_at: hoursAgo(28), assignment_mode: "selected", assigned_agent_ids: ["outbound", "demo"] },
   ];
   const assetsApi = (init?: RequestInit, url?: string) => {
     const method = init?.method ?? "GET";
     const pathname = new URL(url ?? location.href, location.href).pathname;
     const suffix = pathname.replace("/api/v1/dashboard/assets", "").replace(/^\//, "");
+    if (suffix === "agents" && method === "GET") return { agents: mockAssetAgents };
+    const assignmentMatch = suffix.match(/^([^/]+)\/assignments$/);
+    if (assignmentMatch && method === "PUT") {
+      const asset = mockAssets.find((item) => item.id === decodeURIComponent(assignmentMatch[1]));
+      if (!asset) return new Response(JSON.stringify({ detail: "Asset not found" }), { status: 404, headers: { "Content-Type": "application/json" } });
+      const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
+      asset.assignment_mode = body.assignment_mode === "selected" ? "selected" : "all";
+      asset.assigned_agent_ids = asset.assignment_mode === "all" ? [] : Array.isArray(body.agent_ids) ? body.agent_ids : [];
+      asset.updated_at = new Date().toISOString();
+      return asset;
+    }
     if (!suffix && method === "GET") return { assets: mockAssets };
     if (suffix === "link" && method === "POST") {
       const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
       const now = new Date().toISOString();
-      const asset: MockAsset = { id: crypto.randomUUID(), kind: "link", name: String(body.name), description: String(body.description ?? ""), tags: Array.isArray(body.tags) ? body.tags : [], original_filename: null, content_type: null, byte_size: null, external_url: String(body.url), content_url: null, created_at: now, updated_at: now };
+      const asset: MockAsset = { id: crypto.randomUUID(), kind: "link", name: String(body.name), description: String(body.description ?? ""), tags: Array.isArray(body.tags) ? body.tags : [], original_filename: null, content_type: null, byte_size: null, external_url: String(body.url), content_url: null, created_at: now, updated_at: now, assignment_mode: "all", assigned_agent_ids: [] };
       mockAssets.unshift(asset);
       return asset;
     }
@@ -582,7 +622,7 @@ if (params.has("mock")) {
       const now = new Date().toISOString();
       const isFile = file instanceof File;
       const kind = isFile && file.type.startsWith("video/") ? "video" : "image";
-      const asset: MockAsset = { id: crypto.randomUUID(), kind, name: String(form.get("name") || (isFile ? file.name : "Uploaded asset")), description: String(form.get("description") ?? ""), tags: String(form.get("tags") ?? "").split(",").map((tag) => tag.trim()).filter(Boolean), original_filename: isFile ? file.name : null, content_type: isFile ? file.type : null, byte_size: isFile ? file.size : null, external_url: null, content_url: kind === "image" ? assetPreview : null, created_at: now, updated_at: now };
+      const asset: MockAsset = { id: crypto.randomUUID(), kind, name: String(form.get("name") || (isFile ? file.name : "Uploaded asset")), description: String(form.get("description") ?? ""), tags: String(form.get("tags") ?? "").split(",").map((tag) => tag.trim()).filter(Boolean), original_filename: isFile ? file.name : null, content_type: isFile ? file.type : null, byte_size: isFile ? file.size : null, external_url: null, content_url: kind === "image" ? assetPreview : null, created_at: now, updated_at: now, assignment_mode: "all", assigned_agent_ids: [] };
       mockAssets.unshift(asset);
       return asset;
     }
@@ -594,9 +634,15 @@ if (params.has("mock")) {
     return { assets: mockAssets };
   };
   const metricPeople = [
-    { lead_id: "metric-1", name: "Mara Okafor", title: "VP Operations", email: "mara@example.test", company_name: "Ternary Labs", channel: "email", status: "replied", occurred_at: hoursAgo(3), source: "email_reply" },
-    { lead_id: "metric-2", name: "Anika Shah", title: "Head of QA", email: "anika@example.test", company_name: "Northstar Health", channel: "linkedin", status: "replied", occurred_at: hoursAgo(9), source: "linkedin_reply" },
-    { lead_id: "metric-3", name: "Luca Moretti", title: "Founder", email: "luca@example.test", company_name: "Clearline", channel: "email", status: "demos_booked", occurred_at: hoursAgo(26), source: "lead_stage" },
+    { lead_id: "lead-1", name: "Mara Okafor", title: "VP Operations", email: "mara@example.test", company_name: "Ternary Labs", channel: "email", status: "contacted", occurred_at: hoursAgo(30), source: "confirmed_send" },
+    { lead_id: "lead-2", name: "Anika Shah", title: "Head of QA", email: "anika@example.test", company_name: "Northstar Health", channel: "linkedin", status: "contacted", occurred_at: hoursAgo(28), source: "confirmed_send" },
+    { lead_id: "lead-3", name: "Luca Moretti", title: "Founder", email: "luca@example.test", company_name: "Clearline", channel: "email", status: "contacted", occurred_at: hoursAgo(26), source: "confirmed_send" },
+    { lead_id: "lead-4", name: "Ines Duarte", title: "Product lead", email: "ines@example.test", company_name: "Relayworks", channel: "linkedin", status: "contacted", occurred_at: hoursAgo(24), source: "confirmed_send" },
+    { lead_id: "lead-5", name: "Owen Brooks", title: "Engineering director", email: "owen@example.test", company_name: "Juniper Systems", channel: "linkedin", status: "contacted", occurred_at: hoursAgo(20), source: "confirmed_send" },
+    { lead_id: "lead-6", name: "Nadia Rahman", title: "COO", email: "nadia@example.test", company_name: "Fieldnote", channel: "x", status: "contacted", occurred_at: hoursAgo(18), source: "confirmed_send" },
+    { lead_id: "lead-1", name: "Mara Okafor", title: "VP Operations", email: "mara@example.test", company_name: "Ternary Labs", channel: "email", status: "replied", occurred_at: hoursAgo(3), source: "email_reply" },
+    { lead_id: "lead-2", name: "Anika Shah", title: "Head of QA", email: "anika@example.test", company_name: "Northstar Health", channel: "linkedin", status: "replied", occurred_at: hoursAgo(9), source: "linkedin_reply" },
+    { lead_id: "lead-3", name: "Luca Moretti", title: "Founder", email: "luca@example.test", company_name: "Clearline", channel: "email", status: "demos_booked", occurred_at: hoursAgo(26), source: "lead_stage" },
   ];
   const channelMetricsApi = (_init?: RequestInit, url?: string) => {
     const query = new URL(url ?? location.href, location.href).searchParams;
@@ -606,9 +652,9 @@ if (params.has("mock")) {
     return {
       window: { start: query.get("start"), end: query.get("end") },
       channels: [
-        { channel: "linkedin", contacted: { count: 42, available: true }, opened: { count: null, available: false }, clicked: { count: null, available: false }, replied: { count: 6, available: true }, demos_booked: { count: 2, available: true } },
-        { channel: "email", contacted: { count: 35, available: true }, opened: { count: null, available: false }, clicked: { count: null, available: false }, replied: { count: 4, available: true }, demos_booked: { count: 2, available: true } },
-        { channel: "x", contacted: { count: 5, available: true }, opened: { count: null, available: false }, clicked: { count: null, available: false }, replied: { count: 1, available: true }, demos_booked: { count: 0, available: true } },
+        { channel: "linkedin", contacted: { count: 3, available: true }, opened: { count: null, available: false }, clicked: { count: null, available: false }, replied: { count: 1, available: true }, demos_booked: { count: 0, available: true } },
+        { channel: "email", contacted: { count: 2, available: true }, opened: { count: null, available: false }, clicked: { count: null, available: false }, replied: { count: 1, available: true }, demos_booked: { count: 1, available: true } },
+        { channel: "x", contacted: { count: 1, available: true }, opened: { count: null, available: false }, clicked: { count: null, available: false }, replied: { count: null, available: false }, demos_booked: { count: 0, available: true } },
       ],
       definitions: [
         { id: "contacted", label: "Contacted", available: true, definition: "Distinct leads with a confirmed outbound send.", note: null },
@@ -663,11 +709,44 @@ if (params.has("mock")) {
     const offset = Math.max(0, Number(parsed.searchParams.get("offset") ?? 0));
     return { leads: mockLeads.slice(offset, offset + limit), total: mockLeads.length, limit, offset };
   };
+  const mockCompanies = mockCampaignContacts.map((contact, index) => ({
+    id: `company-${index + 1}`,
+    name: contact.company,
+    domain: `${contact.company.toLowerCase().replace(/\s+/g, "")}.example`,
+    linkedin_slug: null,
+    icp_status: "qualified",
+    disqualify_reason: null,
+    qa_headcount: null,
+    employee_count: 80 + index * 25,
+    funding_stage: index < 3 ? "Series A" : "Seed",
+    location: "United States",
+    source: index < 3 ? "orange-slice:ocean" : "workspace",
+    lead_count: 1,
+    last_verified_at: hoursAgo(24 + index),
+    created_at: hoursAgo(72 + index),
+    updated_at: hoursAgo(4 + index),
+  }));
+  const dashboardCompaniesApi = (init?: RequestInit, url?: string) => {
+    const method = init?.method ?? "GET";
+    const parsed = new URL(url ?? location.href, location.href);
+    const suffix = parsed.pathname.replace("/api/v1/dashboard/companies", "").replace(/^\//, "");
+    if (method === "DELETE" && suffix) {
+      const index = mockCompanies.findIndex((item) => item.id === decodeURIComponent(suffix));
+      if (index >= 0) mockCompanies.splice(index, 1);
+      return { company_id: suffix, blacklisted_contacts: 1 };
+    }
+    const status = parsed.searchParams.get("icp_status");
+    const filtered = status ? mockCompanies.filter((item) => item.icp_status === status) : mockCompanies;
+    const limit = Math.max(1, Number(parsed.searchParams.get("limit") ?? 25));
+    const offset = Math.max(0, Number(parsed.searchParams.get("offset") ?? 0));
+    return { companies: filtered.slice(offset, offset + limit), total: filtered.length, limit, offset };
+  };
   type MockAudience = {
     id: string; name: string; description: string; source_provider: string;
     discovery_filters: Record<string, string>; members: Array<{
       lead_id: string; name: string; title: string; company: string;
       email: string | null; linkedin_url: string; stage: string; contactable: boolean;
+      outreach_eligible: boolean;
     }>; created_at: string; updated_at: string;
   };
   const audienceSummary = (audience: MockAudience) => ({
@@ -681,7 +760,8 @@ if (params.has("mock")) {
   });
   const memberFromLead = (item: MockLead) => ({
     lead_id: item.id, name: item.name, title: item.title, company: item.company,
-    email: item.email, linkedin_url: item.linkedin_url, stage: item.stage, contactable: true,
+    email: item.email, linkedin_url: item.linkedin_url, stage: item.stage,
+    contactable: true, outreach_eligible: true,
   });
   const mockAudiences: MockAudience[] = [{
     id: "audience-qualified-qa",
@@ -719,6 +799,7 @@ if (params.has("mock")) {
       const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
       const selectedProviderIds = Array.isArray(body.provider_record_ids) ? body.provider_record_ids : [];
       const selectedLeadIds = Array.isArray(body.lead_ids) ? body.lead_ids : [];
+      const newlyDiscoveredLeadIds = new Set<string>();
       for (const providerId of selectedProviderIds) {
         const candidate = discoveryCandidates.find((item) => item.provider_record_id === providerId);
         if (!candidate) continue;
@@ -731,6 +812,7 @@ if (params.has("mock")) {
           created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
         });
         selectedLeadIds.push(id);
+        newlyDiscoveredLeadIds.add(id);
       }
       const memberLeads = selectedLeadIds.flatMap((id: string) => {
         const item = mockLeads.find((leadItem) => leadItem.id === id);
@@ -740,7 +822,11 @@ if (params.has("mock")) {
       const created: MockAudience = {
         id: crypto.randomUUID(), name: String(body.name), description: String(body.description ?? ""),
         source_provider: String(body.source_provider ?? "workspace"),
-        discovery_filters: body.discovery_filters ?? {}, members: memberLeads.map(memberFromLead),
+        discovery_filters: body.discovery_filters ?? {},
+        members: memberLeads.map((item: MockLead) => ({
+          ...memberFromLead(item),
+          outreach_eligible: !newlyDiscoveredLeadIds.has(item.id),
+        })),
         created_at: now, updated_at: now,
       };
       for (const item of memberLeads) {
@@ -767,6 +853,7 @@ if (params.has("mock")) {
   const routes: [string, unknown][] = [
     ["/api/v1/dashboard/audiences", audiencesApi],
     ["/api/v1/dashboard/leads", dashboardLeadsApi],
+    ["/api/v1/dashboard/companies", dashboardCompaniesApi],
     ["/api/v1/dashboard/channel-metrics", channelMetricsApi],
     ["/api/v1/dashboard/assets", assetsApi],
     ["/api/v1/dashboard/campaigns", campaignsApi],
@@ -797,6 +884,10 @@ if (params.has("mock")) {
           }),
         );
       }
+    }
+    const parsed = new URL(url, location.origin);
+    if (parsed.origin === location.origin && (parsed.pathname.startsWith("/api/") || parsed.pathname.startsWith("/auth/"))) {
+      return Promise.resolve(mockBlockedResponse(parsed.pathname));
     }
     return realFetch(input, init);
   };

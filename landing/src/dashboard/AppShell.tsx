@@ -23,6 +23,7 @@ import {
   type DashboardSection,
   type NavigationMode,
 } from "./navigation";
+import { withMockMode } from "../mock-mode";
 import "./app-shell.css";
 
 export type { DashboardSection } from "./navigation";
@@ -43,6 +44,7 @@ type AppShellProps = {
   workspace?: boolean;
   mode?: NavigationMode;
   mainClassName?: string;
+  canWrite?: boolean;
 };
 
 const ICONS: Record<DashboardIconName, (props: DashboardIconProps) => ReactNode> = {
@@ -76,7 +78,7 @@ function NavGroup({ label, items, active }: { label?: string; items: ReturnType<
         const Icon = ICONS[item.icon];
         const current = item.id === active;
         return (
-          <a key={item.id} href={item.href} className={`app-sidebar-link ${current ? "is-active" : ""}`} aria-current={current ? "page" : undefined}>
+          <a key={item.id} href={withMockMode(item.href)} className={`app-sidebar-link ${current ? "is-active" : ""}`} aria-current={current ? "page" : undefined}>
             <Icon size={17} />
             <span>{item.label}</span>
           </a>
@@ -96,6 +98,7 @@ export default function AppShell({
   workspace = false,
   mode = "customer",
   mainClassName = "",
+  canWrite = true,
 }: AppShellProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileLayout, setMobileLayout] = useState(false);
@@ -179,8 +182,10 @@ export default function AppShell({
         </div>
         {mode === "admin" ? (
           <div className="app-sidebar-context"><span>Driftwood</span><strong>Admin panel</strong></div>
+        ) : canWrite ? (
+          <a className="app-sidebar-create" href={withMockMode("/dashboard/campaigns/new")}><PlusIcon size={16} />New campaign</a>
         ) : (
-          <a className="app-sidebar-create" href="/dashboard/campaigns/new"><PlusIcon size={16} />New campaign</a>
+          <div className="app-sidebar-context"><span>Workspace access</span><strong>Read only</strong></div>
         )}
         <Navigation active={active} mode={mode} />
         <div className="app-sidebar-footer">

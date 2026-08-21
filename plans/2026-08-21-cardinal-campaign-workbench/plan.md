@@ -36,6 +36,7 @@ Add a persisted campaign workspace that makes Driftwood's lead sequencing legibl
 | 12 | Keep internal overview destinations in the current workspace tab | complete |
 | 13 | Engineering review documentation and disposable Neon E2E gate | complete |
 | 14 | Rebuild the customer overview as a connected operating brief | complete |
+| 15 | Intent hardening: safe mocks, permissions, channel readiness, asset assignment, and truthful states | complete |
 
 ## File ownership
 
@@ -92,13 +93,22 @@ Add a persisted campaign workspace that makes Driftwood's lead sequencing legibl
 - [x] Overview prioritizes the next real action, connects audience/campaign/asset/review readiness, and removes the legacy card wall.
 - [x] Overview preserves channel connection controls, manual CSV imports, honest metrics, loading/error/empty states, and current-tab navigation.
 - [x] Overview passes model tests, lint, build, desktop browser interaction QA, and the dashboard anti-slop audit.
+- [x] Mock mode survives internal navigation and fails closed for unregistered API/auth requests.
+- [x] Read-only members cannot mutate audiences, campaigns, assets, leads, companies, or review items, including direct campaign routes.
+- [x] Campaign saves are serialized and optimistic-lock conflicts are surfaced instead of losing newer edits.
+- [x] Campaign candidate search and analytics people drilldowns are paginated, with aggregate/detail fixtures reconciled.
+- [x] Campaign activation requires qualified companies and per-step channel reachability without changing ICP state.
+- [x] Asset dialogs are keyboard-modal and asset access can target all agents or an explicit selection.
+- [x] Orange Slice materialization is bounded, rate-limited, provider-deduplicated, and never requests contact enrichment.
+- [x] Unknown-company discoveries can remain in an audience for qualification, while review request, approval, and delivery all block them from outreach.
+- [x] Impersonated review actions retain customer tenancy but attribute the decision and scheduled send to the real admin.
 
 ## Verification
 
-- Frontend: 22 tests, ESLint, TypeScript, Vite client/SSR, and prerender all pass.
-- Backend `make check`: Ruff, formatting, MyPy, and 833 non-DB tests pass (198 DB tests skipped by design).
-- Backend `make check-db`: migrations apply from zero in disposable PostgreSQL 17 and all 198 DB tests pass.
-- Disposable Neon E2E: upgraded the production-shaped child branch to `cd2465658393`, created an audience, surfaced membership on Leads, activated a planning-only campaign, exposed a link asset to the correct relay-token agent, and drilled a booked demo to its exact lead. The test verified one pending step-run and zero review/scheduled-send rows, removed its `@test.invalid` fixture, downgraded to `4dfcbaad76d3`, re-upgraded to head, and deleted the branch.
+- Frontend: 40 tests, ESLint, TypeScript, Vite client/SSR, and prerender all pass.
+- Backend `make check`: Ruff, formatting, MyPy, and 849 non-DB tests pass (200 DB tests skipped by design).
+- Backend `make check-db`: migrations apply from zero in disposable PostgreSQL 17 and all 200 DB tests pass.
+- Disposable Neon E2E: upgraded an expiring production-shaped child branch to `a819c4e52f67`, created an audience, surfaced membership on Leads, activated a planning-only campaign, exposed a link asset to the correct relay-token agent, and drilled a booked demo to its exact lead. The test verified one pending step-run and zero review/scheduled-send rows, removed its `@test.invalid` fixture, downgraded to `cd2465658393`, re-upgraded to head, and deleted the branch.
 - Live provider boundary: a server-side Orange Slice search returned people without requesting or exposing email/phone enrichment fields.
 - Growth-workspace browser E2E: discovered three leads, selected two into a saved audience, filtered the lead database by audience, applied a one-person audience to a campaign, uploaded an image, saved a link, and opened the exact person behind a booked demo.
 - Production Lighthouse: performance 98, accessibility 100, best practices 100, LCP 2.27s, CLS 0.057, and TBT 0ms.
@@ -110,10 +120,44 @@ Add a persisted campaign workspace that makes Driftwood's lead sequencing legibl
 - Persisted browser E2E at 390×844: enrolled-lead panel, current step, frozen controls, and revision entry point verified; no console warnings or errors.
 - Safety check: the campaign API never creates `review_items`, `scheduled_sends`, or `outbound_messages`; its DB test asserts all three remain empty after activation.
 - Overview rebuild: 27 frontend tests, ESLint, TypeScript, client/SSR production builds, and `git diff --check` pass. A clean in-app browser session rendered the computed review priority, persisted campaign, funnel, readiness ledger, channels, and expandable CSV tools with no console warnings or errors. The priority link has no `target`, so it retains current-tab workspace navigation.
+- Intent-hardening browser gate: mock state remained sticky across navigation; metric totals reconciled to 6 contacted, 2 replied, and 1 booked person; X replies rendered unavailable; disconnected email blocked activation; a direct read-only campaign-create route rendered the denied state; the asset assignment dialog trapped focus, closed on Escape, restored focus, and fit at 390×844 without document overflow. A clean QA tab emitted no console warnings or errors.
+- Dashboard anti-slop audit: no emoji, icon-library dependency, viewport-locked shell, decorative gradient, or broad `transition: all` was introduced in the changed workspace surfaces.
 
 ## Overview rebuild extension
 
 The first shell pass moved the dashboard into the left-sidebar workspace, but the overview interior still retained the old sequence of oversized connection cards and repetitive destination cards. Phase 14 replaces that interior with an asymmetric operating brief driven entirely by existing authenticated read APIs. It does not add a backend write, enqueue outreach, or alter provider settings.
+
+## Intent-hardening extension
+
+Phase 15 keeps the locked Workbench shell and corrects interaction contracts exposed by review. Its job is not visual restyling: explicit mock mode must remain isolated across every internal transition; read-only members must never see mutation affordances; data errors must not masquerade as empty libraries; campaign readiness must reflect required channel connections; asset dialogs must behave as keyboard-modal surfaces; and company assets must disclose and control which agents may retrieve them.
+
+### Intent-hardening pre-emit verification
+
+This is a component/system-state extension of the existing dashboard run, so the component-scope verification subset applies. The visual effect layer remains intentionally none: safety and state clarity are the visual priority.
+
+```yaml
+<design_plan>
+  vibe_validity:
+    anchor: "minimal"
+    wildcard: "operator canvas"
+    contradiction: false
+    valid: true
+  motion_personality:
+    name: "Corporate"
+    intensity: "1/3"
+    override_logged: true
+  button_contrast:
+    eight_states_planned: ["default", "hover", "focus", "active", "disabled", "loading", "error", "success"]
+    focus_ring_visible: true
+    contrast_aa_pass: true
+  honest_copy:
+    fabricated_metrics: 0
+    mock_aggregate_detail_reconciled: true
+    errors_distinct_from_empty: true
+    permissions_visible_in_copy: true
+  effects_layer: "none; preserve the flat operational hierarchy"
+</design_plan>
+```
 
 ### Overview page-purpose and pre-emit verification
 

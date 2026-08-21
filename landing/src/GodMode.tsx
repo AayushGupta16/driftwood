@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { AdminIcon, CloseIcon, OverviewIcon } from "./dashboard/icons";
 import { CARD, useToast } from "./dashboard-shared";
+import { withMockMode } from "./mock-mode";
 
 /* God mode — admin-only user impersonation. A header button opens a search
    modal to pick a user and "become" them; a sticky banner shows while
@@ -24,7 +25,7 @@ type AdminUser = {
 export function AdminPanelControls({ inAdminPanel = false }: { inAdminPanel?: boolean }) {
   return (
     <div className="admin-access-controls">
-      <a className="admin-access-action" href={inAdminPanel ? "/dashboard" : "/dashboard/admin"}>
+      <a className="admin-access-action" href={withMockMode(inAdminPanel ? "/dashboard" : "/dashboard/admin")}>
         {inAdminPanel ? <OverviewIcon size={15} /> : <AdminIcon size={15} />}
         {inAdminPanel ? "Customer workspace" : "Admin panel"}
       </a>
@@ -182,7 +183,7 @@ function UserRow({
         credentials: "include",
       });
       if (!res.ok) throw new Error("request failed");
-      window.location.href = "/dashboard";
+      window.location.href = withMockMode("/dashboard");
     } catch {
       toast("Couldn't impersonate that user. Please try again.", "error");
       onImpersonatingChange(null);
@@ -255,7 +256,7 @@ export function ImpersonationBanner({ email }: { email: string }) {
         credentials: "include",
       });
       if (!res.ok) throw new Error("request failed");
-      window.location.href = "/dashboard";
+      window.location.href = withMockMode("/dashboard");
     } catch {
       toast("Couldn't exit god mode. Please try again.", "error");
       setExiting(false);
