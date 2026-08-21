@@ -1,4 +1,10 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import {
   createAudience,
   deleteAudience,
@@ -28,6 +34,8 @@ import {
   TrashIcon,
 } from "./icons";
 import { useWorkspacePermissions } from "../dashboard/workspace-permissions-context";
+import { createCampaign } from "../campaigns/api";
+import { withMockMode } from "../mock-mode";
 import "./audiences.css";
 
 type View = "library" | "builder";
@@ -54,6 +62,10 @@ export default function Audiences() {
   const [selectedRecords, setSelectedRecords] = useState<Set<string>>(new Set());
   const [discovering, setDiscovering] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [campaignPrompt, setCampaignPrompt] = useState<Audience | null>(null);
+  const [campaignCreating, setCampaignCreating] = useState(false);
+  const [campaignError, setCampaignError] = useState<string | null>(null);
+  const campaignButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     let current = true;
@@ -139,11 +151,37 @@ export default function Audiences() {
       setAudiences((current) => [created, ...current]);
       setSelectedAudience(created);
       setView("library");
+      setCampaignError(null);
+      setCampaignPrompt(created);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "The lead list could not be saved.");
     } finally {
       setSaving(false);
     }
+  }
+
+  async function startCampaign(audience: Audience) {
+    if (!canWrite || campaignCreating) return;
+    setCampaignCreating(true);
+    setCampaignError(null);
+    try {
+      const campaign = await createCampaign({ audienceId: audience.id });
+      window.location.href = withMockMode(
+        `/dashboard/campaigns/${encodeURIComponent(campaign.id)}`,
+      );
+    } catch (reason) {
+      setCampaignError(
+        reason instanceof Error ? reason.message : "The campaign could not be created.",
+      );
+      setCampaignCreating(false);
+    }
+  }
+
+  function closeCampaignPrompt() {
+    if (campaignCreating) return;
+    setCampaignPrompt(null);
+    setCampaignError(null);
+    requestAnimationFrame(() => campaignButtonRef.current?.focus());
   }
 
   async function removeAudience() {
@@ -293,7 +331,17 @@ export default function Audiences() {
             <div className="audience-state"><span className="audience-spinner" aria-hidden="true" /><p>Loading audience…</p></div>
           ) : selectedAudience ? (
             <>
-              <div className="audience-detail-head"><div><span>{readableProvider(selectedAudience.sourceProvider)}</span><h2>{selectedAudience.name}</h2><p>{selectedAudience.description || "No description added."}</p></div>{canWrite && <button className="audience-icon-button" type="button" onClick={removeAudience} aria-label={`Delete ${selectedAudience.name}`}><TrashIcon size={17} /></button>}</div>
+              <div className="audience-detail-head">
+                <div><span>{readableProvider(selectedAudience.sourceProvider)}</span><h2>{selectedAudience.name}</h2><p>{selectedAudience.description || "No description added."}</p></div>
+                {canWrite && (
+                  <div className="audience-detail-actions">
+                    <button ref={campaignButtonRef} className="audience-secondary audience-build-campaign" type="button" onClick={() => void startCampaign(selectedAudience)} disabled={campaignCreating} data-testid="build-audience-campaign">
+                      {campaignCreating ? "Creating…" : "Build campaign"} <ArrowIcon size={15} />
+                    </button>
+                    <button className="audience-icon-button" type="button" onClick={removeAudience} aria-label={`Delete ${selectedAudience.name}`}><TrashIcon size={17} /></button>
+                  </div>
+                )}
+              </div>
               <div className="audience-detail-count"><strong>{selectedAudience.memberCount}</strong><span>{selectedAudience.memberCount === 1 ? "person" : "people"} in this reusable list</span></div>
               <div className="audience-member-list">
                 {selectedAudience.members.map((member) => (
@@ -314,6 +362,79 @@ export default function Audiences() {
           )}
         </aside>
       </div>
+
+      {campaignPrompt && (
+        <AudienceCampaignPrompt
+          audience={campaignPrompt}
+          creating={campaignCreating}
+          error={campaignError}
+          onClose={closeCampaignPrompt}
+          onCreate={() => void startCampaign(campaignPrompt)}
+        />
+      )}
     </section>
+  );
+}
+
+function AudienceCampaignPrompt({
+  audience,
+  creating,
+  error,
+  onClose,
+  onCreate,
+}: {
+  audience: Audience;
+  creating: boolean;
+  error: string | null;
+  onClose: () => void;
+  onCreate: () => void;
+}) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(
+    typeof document !== "undefined" && document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null,
+  );
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const returnFocus = returnFocusRef.current;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    dialog.showModal();
+    return () => {
+      if (dialog.open) dialog.close();
+      document.body.style.overflow = previousOverflow;
+      if (returnFocus?.isConnected) returnFocus.focus();
+    };
+  }, []);
+
+  return (
+    <dialog
+      ref={dialogRef}
+      className="audience-campaign-dialog"
+      aria-labelledby="audience-campaign-heading"
+      onCancel={(event) => {
+        event.preventDefault();
+        if (!creating) onClose();
+      }}
+      onKeyDown={(event) => {
+        if (event.key !== "Escape") return;
+        event.preventDefault();
+        if (!creating) onClose();
+      }}
+    >
+      <span className="audience-campaign-kicker"><CheckIcon size={15} /> Audience saved</span>
+      <h2 id="audience-campaign-heading">Build the campaign now?</h2>
+      <p>{audience.name} · {audience.memberCount} {audience.memberCount === 1 ? "lead" : "leads"}</p>
+      {error && <div className="audience-error" role="alert">{error}</div>}
+      <div className="audience-campaign-actions">
+        <button className="audience-secondary" type="button" onClick={onClose} disabled={creating} autoFocus>Not now</button>
+        <button className="audience-primary" type="button" onClick={onCreate} disabled={creating}>
+          {creating ? "Creating…" : "Set sequence & schedule"} <ArrowIcon size={15} />
+        </button>
+      </div>
+    </dialog>
   );
 }

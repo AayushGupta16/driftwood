@@ -104,3 +104,12 @@ Reposition the customer dashboard as a growth workspace while preserving Driftwo
 - Lead lists, campaigns, metrics, assets, leads, companies, review, and Overview share the same 36px desktop title scale and compact title/action row.
 - The established palette, fonts, custom SVG vocabulary, visible focus, native controls, Corporate 1/3 motion, and no-effects direction remain unchanged.
 - Browser QA under fail-closed `?mock=1` confirmed the setup-to-results order, connected-card removal, import disclosure focus, sticky mock navigation, and zero horizontal page overflow at the desktop viewport.
+
+## Phase 17 audience scheduling audit
+
+- Audience membership remains reusable: the same canonical lead may belong to multiple audiences and multiple campaigns. A single campaign still has one enrollment per lead so one sequence cannot double-send accidentally.
+- Saving an audience opens a compact native dialog offering a prefilled campaign; the audience detail keeps the same action available later.
+- Overlap is checked only when a draft activates or a paused campaign resumes. Unused audiences never reserve a person or create a false conflict.
+- The backend locks the selected lead rows, recomputes other active enrollments, and accepts confirmation only for the exact lead IDs the operator previewed. A newly appearing conflict therefore fails closed.
+- The browser review names each overlapping lead and campaign, disables activation until the checkbox is selected, traps focus natively, and fits at 390&times;844 without horizontal overflow.
+- Activation remains planning-only: the disposable Postgres journey asserted no review item, scheduled send, or outbound message was created.

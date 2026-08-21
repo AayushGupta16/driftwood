@@ -38,6 +38,7 @@ Add a persisted campaign workspace that makes Driftwood's lead sequencing legibl
 | 14 | Rebuild the customer overview as a connected operating brief | complete |
 | 15 | Intent hardening: safe mocks, permissions, channel readiness, asset assignment, and truthful states | complete |
 | 16 | Reduce dashboard copy and reorder Overview around the customer check-in flow | complete |
+| 17 | Hand saved audiences into campaign scheduling with explicit active-lead overlap confirmation | complete |
 
 ## File ownership
 
@@ -105,11 +106,13 @@ Add a persisted campaign workspace that makes Driftwood's lead sequencing legibl
 - [x] Orange Slice materialization is bounded, rate-limited, provider-deduplicated, and never requests contact enrichment.
 - [x] Unknown-company discoveries can remain in an audience for qualification, while review request, approval, and delivery all block them from outreach.
 - [x] Impersonated review actions retain customer tenancy but attribute the decision and scheduled send to the real admin.
+- [x] Audience membership stays non-exclusive, and saving an audience offers an immediate prefilled campaign handoff without reserving its leads.
+- [x] Campaign activation and resume require confirmation for the exact selected leads already active in another campaign.
 
 ## Verification
 
-- Frontend: 40 tests, ESLint, TypeScript, Vite client/SSR, and prerender all pass.
-- Backend `make check`: Ruff, formatting, MyPy, and 849 non-DB tests pass (200 DB tests skipped by design).
+- Frontend: 41 tests, ESLint, TypeScript, Vite client/SSR, and prerender all pass.
+- Backend `make check`: Ruff, formatting, MyPy, and 850 non-DB tests pass (200 DB tests skipped by design).
 - Backend `make check-db`: migrations apply from zero in disposable PostgreSQL 17 and all 200 DB tests pass.
 - Disposable Neon E2E: upgraded an expiring production-shaped child branch to `a819c4e52f67`, created an audience, surfaced membership on Leads, activated a planning-only campaign, exposed a link asset to the correct relay-token agent, and drilled a booked demo to its exact lead. The test verified one pending step-run and zero review/scheduled-send rows, removed its `@test.invalid` fixture, downgraded to `cd2465658393`, re-upgraded to head, and deleted the branch.
 - Live provider boundary: a server-side Orange Slice search returned people without requesting or exposing email/phone enrichment fields.
@@ -125,6 +128,7 @@ Add a persisted campaign workspace that makes Driftwood's lead sequencing legibl
 - Overview rebuild: 27 frontend tests, ESLint, TypeScript, client/SSR production builds, and `git diff --check` pass. A clean in-app browser session rendered the computed review priority, persisted campaign, funnel, readiness ledger, channels, and expandable CSV tools with no console warnings or errors. The priority link has no `target`, so it retains current-tab workspace navigation.
 - Intent-hardening browser gate: mock state remained sticky across navigation; metric totals reconciled to 6 contacted, 2 replied, and 1 booked person; X replies rendered unavailable; disconnected email blocked activation; a direct read-only campaign-create route rendered the denied state; the asset assignment dialog trapped focus, closed on Escape, restored focus, and fit at 390×844 without document overflow. A clean QA tab emitted no console warnings or errors.
 - Dashboard anti-slop audit: no emoji, icon-library dependency, viewport-locked shell, decorative gradient, or broad `transition: all` was introduced in the changed workspace surfaces.
+- Audience scheduling E2E: a saved audience opened the keyboard-modal scheduling prompt, the resulting mock draft survived full navigation with the selected audience prefilled, a second campaign surfaced three exact active-lead conflicts, activation remained disabled until confirmation, and the confirmed planning-only activation completed. The 390&times;844 prompt had zero horizontal overflow.
 
 ## Overview rebuild extension
 
@@ -189,6 +193,33 @@ The customer overview now follows the order operators repeatedly ask for: finish
     unavailable_states: "remain explicit rather than displaying a false zero"
   effects_layer: "none; added effects would compete with operational clarity"
   custom_icons: "existing outlined Driftwood SVG vocabulary; no icon package or emoji"
+</design_plan>
+```
+
+## Phase 17 · audience handoff and overlap confirmation
+
+Audience membership remains reusable and non-exclusive: saving a lead list never reserves a person or blocks another list. A saved audience prompts the operator to build a prefilled campaign. When that campaign becomes active, the backend checks the selected people against other active campaigns and requires a deliberate confirmation before allowing overlapping outreach.
+
+```yaml
+<design_plan>
+  vibe_validity:
+    anchor: "minimal"
+    wildcard: "operator canvas"
+    contradiction: false
+    valid: true
+  motion_personality:
+    name: "Corporate"
+    intensity: "1/3"
+    override_logged: true
+  button_contrast:
+    eight_states_planned: ["default", "hover", "focus", "active", "disabled", "loading", "error", "success"]
+    focus_ring_visible: true
+    contrast_aa_pass: true
+  honest_copy:
+    fabricated_metrics: 0
+    overlap_source: "organization-scoped active campaign enrollments"
+    audience_claim: "membership does not imply scheduled outreach"
+  effects_layer: "none; an atmospheric layer would compete with the safety decision"
 </design_plan>
 ```
 

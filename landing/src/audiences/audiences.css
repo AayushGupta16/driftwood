@@ -1,6 +1,6 @@
-/* Audience extension · inherits the locked Driftwood dashboard direction:
- * minimal operator canvas, Public Sans, tide accent, native scrolling,
- * custom 1.5px outline icons, and honest empty states.
+/* perfect-ui · <design_plan> v2.5.0
+ * Audience-to-campaign handoff uses the verified component-scope plan in
+ * plans/2026-08-21-cardinal-campaign-workbench/plan.md Phase 17.
  */
 
 .audience-page {
@@ -61,6 +61,7 @@
 .audience-primary:disabled { cursor: not-allowed; opacity: 0.5; transform: none; }
 .audience-secondary { border: 1px solid var(--color-line); background: var(--color-surface); color: var(--color-ink); }
 .audience-secondary:hover { border-color: var(--color-tide); background: var(--color-tide-wash); }
+.audience-secondary:disabled { cursor: not-allowed; opacity: 0.5; }
 .audience-back { min-height: auto; margin-bottom: 1.4rem; border: 0; background: transparent; color: var(--color-ink-soft); padding: 0.35rem 0; }
 .audience-back:hover { color: var(--color-tide-deep); transform: translateX(-2px); }
 
@@ -148,6 +149,8 @@
   overflow: hidden;
 }
 .audience-detail-head { display: flex; justify-content: space-between; gap: 1rem; padding: 1.25rem; }
+.audience-detail-actions { display: flex; align-items: flex-start; gap: 0.5rem; }
+.audience-build-campaign { min-height: 2.35rem; padding-block: 0.5rem; white-space: nowrap; }
 .audience-detail-head > div > span { color: var(--color-tide); font-size: 0.68rem; font-weight: 650; }
 .audience-detail-head h2 { margin: 0.35rem 0 0; font-size: 1.25rem; letter-spacing: -0.02em; }
 .audience-detail-head p { margin: 0.5rem 0 0; color: var(--color-ink-soft); font-size: 0.78rem; line-height: 1.5; }
@@ -228,6 +231,23 @@
 .audience-builder-footer { position: sticky; bottom: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-top: 1px solid var(--color-line); background: color-mix(in srgb, white 95%, transparent); backdrop-filter: blur(12px); padding: 0.85rem 0; }
 .audience-builder-footer p { margin: 0; color: var(--color-ink-soft); font-size: 0.74rem; }
 
+.audience-campaign-dialog {
+  width: min(28rem, calc(100vw - 2rem));
+  margin: auto;
+  border: 1px solid var(--color-line);
+  border-radius: 1rem;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  box-shadow: var(--shadow-win);
+  padding: 1.35rem;
+}
+.audience-campaign-dialog::backdrop { background: rgba(22, 24, 27, 0.38); }
+.audience-campaign-kicker { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--color-tide-deep); font-size: 0.7rem; font-weight: 650; }
+.audience-campaign-dialog h2 { margin: 0.65rem 0 0; font-size: 1.35rem; letter-spacing: -0.02em; }
+.audience-campaign-dialog > p { margin: 0.45rem 0 0; color: var(--color-ink-soft); font-size: 0.78rem; }
+.audience-campaign-dialog .audience-error { margin-top: 1rem; }
+.audience-campaign-actions { display: flex; justify-content: flex-end; gap: 0.55rem; margin-top: 1.25rem; border-top: 1px solid var(--color-line); padding-top: 1rem; }
+
 .audience-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
 
 @media (max-width: 72rem) {
@@ -243,6 +263,8 @@
   .audience-heading .audience-primary { align-self: flex-start; }
   .audience-builder-fields { width: 100%; }
   .audience-library-grid { gap: 1rem; }
+  .audience-detail-head { align-items: flex-start; flex-direction: column; }
+  .audience-detail-actions { width: 100%; justify-content: space-between; }
   .audience-list-row { grid-template-columns: 2.2rem minmax(0, 1fr) 3.7rem 1.25rem; }
   .audience-source,
   .audience-list-date { display: none; }
@@ -257,6 +279,8 @@
   .audience-find { width: 100%; }
   .audience-builder-footer { align-items: stretch; flex-direction: column; }
   .audience-builder-footer .audience-primary { width: 100%; }
+  .audience-campaign-actions { align-items: stretch; flex-direction: column-reverse; }
+  .audience-campaign-actions > button { width: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {

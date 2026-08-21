@@ -4,7 +4,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { mapCampaign } from "./api.ts";
+import {
+  confirmedOverlapLeadIds,
+  mapCampaign,
+  mapCampaignOverlap,
+} from "./api.ts";
 import {
   applyAudience,
   createStep,
@@ -208,4 +212,29 @@ test("API responses map snake-case persistence fields into builder state", () =>
   assert.equal(mapped.lockVersion, 3);
   assert.equal(mapped.steps[0].sendWindow, "business-hours");
   assert.equal(mapped.contacts[0].selected, true);
+});
+
+test("overlap confirmation is scoped to the exact previewed lead set", () => {
+  const mapped = mapCampaignOverlap({
+    lead_count: 1,
+    campaign_count: 2,
+    conflicts: [
+      {
+        lead_id: "lead-one",
+        lead_name: null,
+        campaign_id: "campaign-one",
+        campaign_name: "Founder follow-up",
+      },
+      {
+        lead_id: "lead-one",
+        lead_name: "Ada Lovelace",
+        campaign_id: "campaign-two",
+        campaign_name: "Product leaders",
+      },
+    ],
+  });
+
+  assert.equal(mapped.leadCount, 1);
+  assert.equal(mapped.conflicts[0].leadName, "Unnamed lead");
+  assert.deepEqual(confirmedOverlapLeadIds(mapped), ["lead-one"]);
 });

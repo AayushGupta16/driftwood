@@ -435,13 +435,15 @@ if (mockMode) {
   }));
   type MockCampaign = {
     id: string; series_id: string; version: number; name: string; description: string;
-    audience_name: string; status: string; step_count: number; contact_count: number;
+    audience_name: string; audience_id: string | null; lock_version: number;
+    status: string; step_count: number; contact_count: number;
     created_at: string; updated_at: string; steps: Record<string, unknown>[];
     contacts: MockCampaignContact[];
   };
   const campaignSummary = (campaign: MockCampaign) => ({
     id: campaign.id, series_id: campaign.series_id, version: campaign.version,
     name: campaign.name, description: campaign.description, audience_name: campaign.audience_name,
+    audience_id: campaign.audience_id, lock_version: campaign.lock_version,
     status: campaign.status, step_count: campaign.steps.length,
     contact_count: campaign.contacts.filter((contact) => contact.selected).length,
     created_at: campaign.created_at, updated_at: campaign.updated_at,
@@ -453,6 +455,8 @@ if (mockMode) {
     name: "Founder-led QA teams",
     description: "Lead with a tailored workflow demo, then follow up on LinkedIn.",
     audience_name: "Qualified QA leaders",
+    audience_id: "audience-qualified-qa",
+    lock_version: 0,
     status: "draft",
     step_count: 2,
     contact_count: 3,
@@ -473,6 +477,31 @@ if (mockMode) {
     ],
     contacts: mockCampaignContacts,
   }];
+  const mockCampaignStorageKey = "driftwood.dashboard.mock-campaigns";
+  try {
+    const stored = JSON.parse(sessionStorage.getItem(mockCampaignStorageKey) ?? "[]") as MockCampaign[];
+    for (const campaign of stored) {
+      if (
+        campaign && typeof campaign.id === "string" &&
+        Array.isArray(campaign.steps) && Array.isArray(campaign.contacts) &&
+        !mockCampaigns.some((item) => item.id === campaign.id)
+      ) {
+        mockCampaigns.unshift(campaign);
+      }
+    }
+  } catch {
+    sessionStorage.removeItem(mockCampaignStorageKey);
+  }
+  const persistMockCampaigns = () => {
+    try {
+      sessionStorage.setItem(
+        mockCampaignStorageKey,
+        JSON.stringify(mockCampaigns.filter((campaign) => campaign.id !== "founder-led-qa")),
+      );
+    } catch {
+      // The preview remains usable when storage is blocked; only reload persistence is lost.
+    }
+  };
   const campaignsApi = (init?: RequestInit, url?: string) => {
     const method = init?.method ?? "GET";
     const pathname = new URL(url ?? location.href, location.href).pathname;
@@ -480,12 +509,26 @@ if (mockMode) {
     const [encodedId, action] = suffix.split("/");
     if (!encodedId) {
       if (method === "POST") {
+        const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
+        const audienceId = typeof body.audience_id === "string" ? body.audience_id : null;
+        const audience = mockAudiences.find((item) => item.id === audienceId);
+        const selectedLeadIds = new Set(
+          audience?.members
+            .filter((member) => member.outreach_eligible)
+            .map((member) => member.lead_id) ?? [],
+        );
         const now = new Date().toISOString();
         const id = crypto.randomUUID();
         const campaign: MockCampaign = {
-          id, series_id: crypto.randomUUID(), version: 1, name: "Untitled campaign",
+          id, series_id: crypto.randomUUID(), version: 1,
+          name: String(body.name ?? "Untitled campaign") === "Untitled campaign" && audience
+            ? `${audience.name} campaign`
+            : String(body.name ?? "Untitled campaign"),
           description: "Build a deliberate sequence for a focused group of leads.",
-          audience_name: "Choose an audience", status: "draft", step_count: 2, contact_count: 0,
+          audience_name: audience?.name ?? "Choose an audience",
+          audience_id: audience?.id ?? null,
+          lock_version: 0,
+          status: "draft", step_count: 2, contact_count: selectedLeadIds.size,
           created_at: now, updated_at: now,
           steps: [
             {
@@ -501,10 +544,15 @@ if (mockMode) {
             },
           ],
           contacts: mockCampaignContacts.map((contact) => ({
-            ...contact, selected: false, enrollment_status: null, current_step: null, next_action_at: null,
+            ...contact,
+            selected: selectedLeadIds.has(contact.id),
+            enrollment_status: selectedLeadIds.has(contact.id) ? "draft" : null,
+            current_step: null,
+            next_action_at: null,
           })),
         };
         mockCampaigns.unshift(campaign);
+        persistMockCampaigns();
         return campaign;
       }
       return { campaigns: mockCampaigns.map(campaignSummary) };
@@ -529,11 +577,37 @@ if (mockMode) {
         offset,
       };
     }
+    const activeOverlaps = () => {
+      const selectedIds = new Set(
+        campaign.contacts.filter((contact) => contact.selected).map((contact) => contact.id),
+      );
+      const conflicts = mockCampaigns.flatMap((other) => {
+        if (other.id === campaign.id || other.status !== "active") return [];
+        return other.contacts.flatMap((contact) =>
+          contact.selected && selectedIds.has(contact.id)
+            ? [{
+              lead_id: contact.id,
+              lead_name: contact.name,
+              campaign_id: other.id,
+              campaign_name: other.name,
+            }]
+            : [],
+        );
+      });
+      return {
+        lead_count: new Set(conflicts.map((conflict) => conflict.lead_id)).size,
+        campaign_count: new Set(conflicts.map((conflict) => conflict.campaign_id)).size,
+        conflicts,
+      };
+    };
+    if (method === "GET" && action === "overlaps") return activeOverlaps();
     if (method === "PUT") {
       const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
       campaign.name = String(body.name ?? campaign.name);
       campaign.description = String(body.description ?? campaign.description);
       campaign.audience_name = String(body.audience_name ?? campaign.audience_name);
+      campaign.audience_id = typeof body.audience_id === "string" ? body.audience_id : null;
+      campaign.lock_version += 1;
       campaign.steps = (body.steps ?? []).map((step: Record<string, unknown>, index: number) => ({ ...step, position: index + 1 }));
       const selectedIds = new Set<string>(body.lead_ids ?? []);
       campaign.contacts = campaign.contacts.map((contact) => ({
@@ -541,10 +615,21 @@ if (mockMode) {
         enrollment_status: selectedIds.has(contact.id) ? "draft" : null,
       }));
       campaign.updated_at = new Date().toISOString();
+      persistMockCampaigns();
       return campaign;
     }
     if (method === "POST" && action === "activate") {
+      const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
+      const confirmed = new Set<string>(body.confirmed_overlap_lead_ids ?? []);
+      const overlaps = activeOverlaps();
+      if (overlaps.conflicts.some((conflict) => !confirmed.has(conflict.lead_id))) {
+        return new Response(
+          JSON.stringify({ error: { code: "campaign_lead_overlap", detail: "Confirm the active campaign overlap before continuing." } }),
+          { status: 409, headers: { "Content-Type": "application/json" } },
+        );
+      }
       campaign.status = "active";
+      campaign.lock_version += 1;
       campaign.contacts = campaign.contacts.map((contact) => ({
         ...contact,
         enrollment_status: contact.selected ? "ready" : null,
@@ -552,11 +637,24 @@ if (mockMode) {
         next_action_at: contact.selected ? new Date().toISOString() : null,
       }));
       campaign.updated_at = new Date().toISOString();
+      persistMockCampaigns();
       return { campaign, outreach_queued: false, message: "Campaign version frozen. No outreach was queued or sent." };
     }
     if (method === "POST" && (action === "pause" || action === "resume")) {
+      if (action === "resume") {
+        const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
+        const confirmed = new Set<string>(body.confirmed_overlap_lead_ids ?? []);
+        const overlaps = activeOverlaps();
+        if (overlaps.conflicts.some((conflict) => !confirmed.has(conflict.lead_id))) {
+          return new Response(
+            JSON.stringify({ error: { code: "campaign_lead_overlap", detail: "Confirm the active campaign overlap before continuing." } }),
+            { status: 409, headers: { "Content-Type": "application/json" } },
+          );
+        }
+      }
       campaign.status = action === "pause" ? "paused" : "active";
       campaign.updated_at = new Date().toISOString();
+      persistMockCampaigns();
       return campaign;
     }
     if (method === "POST" && action === "revisions") {
@@ -564,6 +662,7 @@ if (mockMode) {
       revision.id = crypto.randomUUID();
       revision.version += 1;
       revision.status = "draft";
+      revision.lock_version = 0;
       revision.created_at = new Date().toISOString();
       revision.updated_at = revision.created_at;
       revision.steps = revision.steps.map((step) => ({ ...step, id: crypto.randomUUID() }));
@@ -572,6 +671,7 @@ if (mockMode) {
         current_step: null, next_action_at: null,
       }));
       mockCampaigns.unshift(revision);
+      persistMockCampaigns();
       return revision;
     }
     return campaign;

@@ -1,6 +1,6 @@
 /* perfect-ui · <design_plan> v2.5.0
- * All campaign-workbench fields verified in
- * plans/2026-08-21-cardinal-campaign-workbench/plan.md.
+ * All campaign-workbench and overlap-confirmation fields verified in
+ * plans/2026-08-21-cardinal-campaign-workbench/plan.md Phase 17.
  */
 
 .campaign-app {
@@ -677,6 +677,19 @@
 .campaign-review-issues ul { margin: 0.5rem 0 0; padding-left: 1.1rem; }
 .campaign-review-ready { border: 1px solid color-mix(in srgb, var(--color-tide) 25%, var(--color-line)); background: var(--color-tide-wash); color: var(--color-tide-deep); }
 .campaign-review-ready p { margin: 0.35rem 0 0; }
+.campaign-review-overlap { margin: 0 1rem 1rem; border: 1px solid color-mix(in srgb, var(--color-alert) 28%, var(--color-line)); border-radius: 0.65rem; background: color-mix(in srgb, var(--color-alert) 4%, white); padding: 0.85rem; font-size: 0.7rem; }
+.campaign-review-overlap > strong { display: block; color: var(--color-ink); font-size: 0.74rem; }
+.campaign-review-overlap ul { margin: 0.65rem 0 0; padding: 0; list-style: none; }
+.campaign-review-overlap li { display: flex; justify-content: space-between; gap: 1rem; border-top: 1px solid var(--color-line); padding: 0.45rem 0; }
+.campaign-review-overlap li span { color: var(--color-ink); font-weight: 620; }
+.campaign-review-overlap li small { overflow: hidden; color: var(--color-ink-soft); text-align: right; text-overflow: ellipsis; white-space: nowrap; }
+.campaign-review-overlap > p { margin: 0.4rem 0 0; color: var(--color-ink-soft); }
+.campaign-review-overlap > label { display: flex; align-items: flex-start; gap: 0.55rem; margin-top: 0.65rem; border-top: 1px solid var(--color-line); padding-top: 0.7rem; color: var(--color-ink); font-weight: 620; cursor: pointer; }
+.campaign-review-overlap input { margin-top: 0.1rem; accent-color: var(--color-tide); }
+.campaign-review-overlap.is-loading { color: var(--color-ink-soft); }
+.campaign-review-overlap.is-error { display: flex; align-items: center; justify-content: space-between; gap: 1rem; color: var(--color-alert); }
+.campaign-review-overlap.is-error .campaign-secondary { min-height: 2rem; flex: 0 0 auto; padding: 0.35rem 0.7rem; }
+.campaign-review-overlap.is-clear { border-color: color-mix(in srgb, var(--color-tide) 25%, var(--color-line)); background: var(--color-tide-wash); color: var(--color-tide-deep); font-weight: 620; }
 .campaign-dialog-actions { display: flex; justify-content: flex-end; gap: 0.6rem; border-top: 1px solid var(--color-line); padding: 0.85rem 1rem; }
 .campaign-toast { position: fixed; right: 1rem; bottom: 1rem; z-index: 90; max-width: min(24rem, calc(100vw - 2rem)); border: 1px solid color-mix(in srgb, var(--color-tide) 25%, var(--color-line)); border-radius: 0.75rem; background: var(--color-surface); color: var(--color-ink); box-shadow: var(--shadow-win); padding: 0.8rem 1rem; font: inherit; font-size: 0.75rem; text-align: left; cursor: pointer; animation: campaign-toast-in 300ms cubic-bezier(0.2, 0, 0, 1) both; }
 .campaign-not-found { display: grid; min-height: 55dvh; place-items: center; align-content: center; gap: 0.75rem; text-align: center; }

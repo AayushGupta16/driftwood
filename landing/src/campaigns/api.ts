@@ -55,6 +55,45 @@ type RawCampaignDetail = RawCampaignSummary & {
   contacts: RawCampaignContact[];
 };
 
+type RawCampaignOverlap = {
+  lead_count: number;
+  campaign_count: number;
+  conflicts: Array<{
+    lead_id: string;
+    lead_name: string | null;
+    campaign_id: string;
+    campaign_name: string;
+  }>;
+};
+
+export type CampaignOverlap = {
+  leadCount: number;
+  campaignCount: number;
+  conflicts: Array<{
+    leadId: string;
+    leadName: string;
+    campaignId: string;
+    campaignName: string;
+  }>;
+};
+
+export function mapCampaignOverlap(raw: RawCampaignOverlap): CampaignOverlap {
+  return {
+    leadCount: raw.lead_count,
+    campaignCount: raw.campaign_count,
+    conflicts: raw.conflicts.map((conflict) => ({
+      leadId: conflict.lead_id,
+      leadName: conflict.lead_name ?? "Unnamed lead",
+      campaignId: conflict.campaign_id,
+      campaignName: conflict.campaign_name,
+    })),
+  };
+}
+
+export function confirmedOverlapLeadIds(overlap: CampaignOverlap | null): string[] {
+  return [...new Set(overlap?.conflicts.map((conflict) => conflict.leadId) ?? [])];
+}
+
 export class CampaignApiError extends Error {
   readonly status: number;
   readonly code: string | null;
@@ -189,10 +228,15 @@ export async function listCampaigns(): Promise<CampaignSummary[]> {
   return body.campaigns.map(mapSummary);
 }
 
-export async function createCampaign(): Promise<Campaign> {
+export async function createCampaign(
+  options: { audienceId?: string; name?: string } = {},
+): Promise<Campaign> {
   const raw = await requestJson<RawCampaignDetail>("/api/v1/dashboard/campaigns", {
     method: "POST",
-    body: JSON.stringify({ name: "Untitled campaign" }),
+    body: JSON.stringify({
+      name: options.name ?? "Untitled campaign",
+      audience_id: options.audienceId ?? null,
+    }),
   });
   return mapCampaign(raw);
 }
@@ -238,25 +282,45 @@ export async function saveCampaign(campaign: Campaign): Promise<Campaign> {
 async function campaignAction(
   id: string,
   action: "pause" | "resume" | "revisions",
+  confirmedOverlapLeadIds: string[] = [],
 ): Promise<Campaign> {
   const raw = await requestJson<RawCampaignDetail>(
     `/api/v1/dashboard/campaigns/${encodeURIComponent(id)}/${action}`,
-    { method: "POST" },
+    {
+      method: "POST",
+      body: action === "resume"
+        ? JSON.stringify({ confirmed_overlap_lead_ids: confirmedOverlapLeadIds })
+        : undefined,
+    },
   );
   return mapCampaign(raw);
 }
 
-export async function activateCampaign(id: string): Promise<Campaign> {
+export async function getCampaignOverlaps(id: string): Promise<CampaignOverlap> {
+  const raw = await requestJson<RawCampaignOverlap>(
+    `/api/v1/dashboard/campaigns/${encodeURIComponent(id)}/overlaps`,
+  );
+  return mapCampaignOverlap(raw);
+}
+
+export async function activateCampaign(
+  id: string,
+  confirmedOverlapLeadIds: string[] = [],
+): Promise<Campaign> {
   const raw = await requestJson<{
     campaign: RawCampaignDetail;
     outreach_queued: false;
   }>(`/api/v1/dashboard/campaigns/${encodeURIComponent(id)}/activate`, {
     method: "POST",
+    body: JSON.stringify({
+      confirmed_overlap_lead_ids: confirmedOverlapLeadIds,
+    }),
   });
   return mapCampaign(raw.campaign);
 }
 
 export const pauseCampaign = (id: string) => campaignAction(id, "pause");
-export const resumeCampaign = (id: string) => campaignAction(id, "resume");
+export const resumeCampaign = (id: string, confirmedOverlapLeadIds: string[] = []) =>
+  campaignAction(id, "resume", confirmedOverlapLeadIds);
 export const createCampaignRevision = (id: string) =>
   campaignAction(id, "revisions");
