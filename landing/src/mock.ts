@@ -13,7 +13,7 @@ if (params.has("mock")) {
     linkedin_connected: true,
     impersonating: false,
     // ?mock=admin flips the admin chrome on (God mode + the SEO / GEO pill)
-    // for QA'ing admin-only pages like /dashboard/seo-geo. Plain ?mock=1
+    // for QA'ing admin-only pages like /dashboard/admin/search-visibility. Plain ?mock=1
     // stays the customer view the baked marketing screenshots are shot from.
     is_admin: params.get("mock") === "admin",
     // ?x=pending|connected|locked walks the X card's later states without a
@@ -411,10 +411,365 @@ if (params.has("mock")) {
     if (agent && match[2] === "health") agent.customer_health = Number(body.score);
     return { agent_id: agent?.agent_id, paused: agent?.paused, customer_health: agent?.customer_health };
   };
+  type MockCampaignContact = {
+    id: string; name: string; company: string; role: string; stage: string;
+    selected: boolean; selectable: boolean; enrollment_status: string | null;
+    current_step: number | null; next_action_at: string | null;
+  };
+  const mockCampaignContacts: MockCampaignContact[] = [
+    ["c78e9104-eedd-4962-8779-d6ba9541da19", "Mara Okafor", "Ternary Labs", "VP Operations"],
+    ["235d4c45-7d22-4498-b252-2a673a390e39", "Anika Shah", "Northstar Health", "Head of QA"],
+    ["4238a3f1-b9d2-4b12-9eb0-b491bc0c9ecb", "Luca Moretti", "Clearline", "Founder"],
+    ["64d728a7-cd39-4758-99cb-6d319f5c517f", "Ines Duarte", "Relayworks", "Product lead"],
+    ["20f90c58-aa21-4c24-a7f8-aae18c1b4bf8", "Owen Brooks", "Juniper Systems", "Engineering director"],
+    ["69fac83b-6ce8-472f-a095-a1ca4a4ff680", "Nadia Rahman", "Fieldnote", "COO"],
+  ].map(([id, name, company, role], index) => ({
+    id, name, company, role, stage: "new", selected: index < 3, selectable: true,
+    enrollment_status: index < 3 ? "draft" : null, current_step: null, next_action_at: null,
+  }));
+  type MockCampaign = {
+    id: string; series_id: string; version: number; name: string; description: string;
+    audience_name: string; status: string; step_count: number; contact_count: number;
+    created_at: string; updated_at: string; steps: Record<string, unknown>[];
+    contacts: MockCampaignContact[];
+  };
+  const campaignSummary = (campaign: MockCampaign) => ({
+    id: campaign.id, series_id: campaign.series_id, version: campaign.version,
+    name: campaign.name, description: campaign.description, audience_name: campaign.audience_name,
+    status: campaign.status, step_count: campaign.steps.length,
+    contact_count: campaign.contacts.filter((contact) => contact.selected).length,
+    created_at: campaign.created_at, updated_at: campaign.updated_at,
+  });
+  const mockCampaigns: MockCampaign[] = [{
+    id: "founder-led-qa",
+    series_id: "8f909c22-8785-4877-a1ae-cc659b389de3",
+    version: 1,
+    name: "Founder-led QA teams",
+    description: "Lead with a tailored workflow demo, then follow up on LinkedIn.",
+    audience_name: "Qualified QA leaders",
+    status: "draft",
+    step_count: 2,
+    contact_count: 3,
+    created_at: hoursAgo(72),
+    updated_at: hoursAgo(1),
+    steps: [
+      {
+        id: "0b088b8b-cbc8-40fe-b167-59d2e80db846", position: 1, kind: "email",
+        label: "Tailored intro", subject: "Built this for {{company}}",
+        body: "Hi {{first_name}},\n\nI put together a short, tailored look at how this could work for {{company}}.",
+        delay_days: 0, send_window: "business-hours", stop_on_reply: true, attachment_slug: null,
+      },
+      {
+        id: "2d095dbf-517f-43df-87f7-b09fc96de314", position: 2, kind: "wait",
+        label: "Wait", subject: null, body: "", delay_days: 3,
+        send_window: "business-hours", stop_on_reply: false, attachment_slug: null,
+      },
+    ],
+    contacts: mockCampaignContacts,
+  }];
+  const campaignsApi = (init?: RequestInit, url?: string) => {
+    const method = init?.method ?? "GET";
+    const pathname = new URL(url ?? location.href, location.href).pathname;
+    const suffix = pathname.replace("/api/v1/dashboard/campaigns", "").replace(/^\//, "");
+    const [encodedId, action] = suffix.split("/");
+    if (!encodedId) {
+      if (method === "POST") {
+        const now = new Date().toISOString();
+        const id = crypto.randomUUID();
+        const campaign: MockCampaign = {
+          id, series_id: crypto.randomUUID(), version: 1, name: "Untitled campaign",
+          description: "Build a deliberate sequence for a focused group of leads.",
+          audience_name: "Choose an audience", status: "draft", step_count: 2, contact_count: 0,
+          created_at: now, updated_at: now,
+          steps: [
+            {
+              id: crypto.randomUUID(), position: 1, kind: "email", label: "Send email",
+              subject: "A quick idea for {{company}}",
+              body: "Hi {{first_name}},\n\nI put together a short, tailored look at how this could work for {{company}}.",
+              delay_days: 0, send_window: "business-hours", stop_on_reply: true, attachment_slug: null,
+            },
+            {
+              id: crypto.randomUUID(), position: 2, kind: "wait", label: "Wait", subject: null,
+              body: "", delay_days: 3, send_window: "business-hours", stop_on_reply: false,
+              attachment_slug: null,
+            },
+          ],
+          contacts: mockCampaignContacts.map((contact) => ({
+            ...contact, selected: false, enrollment_status: null, current_step: null, next_action_at: null,
+          })),
+        };
+        mockCampaigns.unshift(campaign);
+        return campaign;
+      }
+      return { campaigns: mockCampaigns.map(campaignSummary) };
+    }
+    const id = decodeURIComponent(encodedId);
+    const campaign = mockCampaigns.find((row) => row.id === id);
+    if (!campaign) return new Response(JSON.stringify({ error: { detail: "Campaign not found" } }), { status: 404, headers: { "Content-Type": "application/json" } });
+    if (method === "PUT") {
+      const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
+      campaign.name = String(body.name ?? campaign.name);
+      campaign.description = String(body.description ?? campaign.description);
+      campaign.audience_name = String(body.audience_name ?? campaign.audience_name);
+      campaign.steps = (body.steps ?? []).map((step: Record<string, unknown>, index: number) => ({ ...step, position: index + 1 }));
+      const selectedIds = new Set<string>(body.lead_ids ?? []);
+      campaign.contacts = campaign.contacts.map((contact) => ({
+        ...contact, selected: selectedIds.has(contact.id),
+        enrollment_status: selectedIds.has(contact.id) ? "draft" : null,
+      }));
+      campaign.updated_at = new Date().toISOString();
+      return campaign;
+    }
+    if (method === "POST" && action === "activate") {
+      campaign.status = "active";
+      campaign.contacts = campaign.contacts.map((contact) => ({
+        ...contact,
+        enrollment_status: contact.selected ? "ready" : null,
+        current_step: contact.selected ? 1 : null,
+        next_action_at: contact.selected ? new Date().toISOString() : null,
+      }));
+      campaign.updated_at = new Date().toISOString();
+      return { campaign, outreach_queued: false, message: "Campaign version frozen. No outreach was queued or sent." };
+    }
+    if (method === "POST" && (action === "pause" || action === "resume")) {
+      campaign.status = action === "pause" ? "paused" : "active";
+      campaign.updated_at = new Date().toISOString();
+      return campaign;
+    }
+    if (method === "POST" && action === "revisions") {
+      const revision: MockCampaign = JSON.parse(JSON.stringify(campaign));
+      revision.id = crypto.randomUUID();
+      revision.version += 1;
+      revision.status = "draft";
+      revision.created_at = new Date().toISOString();
+      revision.updated_at = revision.created_at;
+      revision.steps = revision.steps.map((step) => ({ ...step, id: crypto.randomUUID() }));
+      revision.contacts = revision.contacts.map((contact) => ({
+        ...contact, enrollment_status: contact.selected ? "draft" : null,
+        current_step: null, next_action_at: null,
+      }));
+      mockCampaigns.unshift(revision);
+      return revision;
+    }
+    return campaign;
+  };
+  type MockAsset = {
+    id: string; kind: "image" | "video" | "link"; name: string; description: string;
+    tags: string[]; original_filename: string | null; content_type: string | null;
+    byte_size: number | null; external_url: string | null; content_url: string | null;
+    created_at: string; updated_at: string;
+  };
+  const assetPreview = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='720' height='420' viewBox='0 0 720 420'%3E%3Crect width='720' height='420' fill='%23eaf1f7'/%3E%3Cpath d='M0 330L190 170l108 96 105-82 317 236H0z' fill='%2315557e' opacity='.72'/%3E%3Ccircle cx='555' cy='100' r='40' fill='%23fff' opacity='.8'/%3E%3C/svg%3E";
+  const mockAssets: MockAsset[] = [
+    { id: "asset-product", kind: "image", name: "Product workflow", description: "Approved overview visual for outbound demos.", tags: ["product", "approved"], original_filename: "workflow.png", content_type: "image/png", byte_size: 184200, external_url: null, content_url: assetPreview, created_at: hoursAgo(72), updated_at: hoursAgo(4) },
+    { id: "asset-proof", kind: "link", name: "Enterprise customer story", description: "Use when a prospect asks for implementation proof.", tags: ["proof", "enterprise"], original_filename: null, content_type: null, byte_size: null, external_url: "https://driftwood.sh/", content_url: null, created_at: hoursAgo(96), updated_at: hoursAgo(28) },
+  ];
+  const assetsApi = (init?: RequestInit, url?: string) => {
+    const method = init?.method ?? "GET";
+    const pathname = new URL(url ?? location.href, location.href).pathname;
+    const suffix = pathname.replace("/api/v1/dashboard/assets", "").replace(/^\//, "");
+    if (!suffix && method === "GET") return { assets: mockAssets };
+    if (suffix === "link" && method === "POST") {
+      const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
+      const now = new Date().toISOString();
+      const asset: MockAsset = { id: crypto.randomUUID(), kind: "link", name: String(body.name), description: String(body.description ?? ""), tags: Array.isArray(body.tags) ? body.tags : [], original_filename: null, content_type: null, byte_size: null, external_url: String(body.url), content_url: null, created_at: now, updated_at: now };
+      mockAssets.unshift(asset);
+      return asset;
+    }
+    if (suffix === "upload" && method === "POST") {
+      const form = init?.body instanceof FormData ? init.body : new FormData();
+      const file = form.get("file");
+      const now = new Date().toISOString();
+      const isFile = file instanceof File;
+      const kind = isFile && file.type.startsWith("video/") ? "video" : "image";
+      const asset: MockAsset = { id: crypto.randomUUID(), kind, name: String(form.get("name") || (isFile ? file.name : "Uploaded asset")), description: String(form.get("description") ?? ""), tags: String(form.get("tags") ?? "").split(",").map((tag) => tag.trim()).filter(Boolean), original_filename: isFile ? file.name : null, content_type: isFile ? file.type : null, byte_size: isFile ? file.size : null, external_url: null, content_url: kind === "image" ? assetPreview : null, created_at: now, updated_at: now };
+      mockAssets.unshift(asset);
+      return asset;
+    }
+    if (method === "DELETE") {
+      const index = mockAssets.findIndex((asset) => asset.id === decodeURIComponent(suffix));
+      if (index >= 0) mockAssets.splice(index, 1);
+      return {};
+    }
+    return { assets: mockAssets };
+  };
+  const metricPeople = [
+    { lead_id: "metric-1", name: "Mara Okafor", title: "VP Operations", email: "mara@example.test", company_name: "Ternary Labs", channel: "email", status: "replied", occurred_at: hoursAgo(3), source: "email_reply" },
+    { lead_id: "metric-2", name: "Anika Shah", title: "Head of QA", email: "anika@example.test", company_name: "Northstar Health", channel: "linkedin", status: "replied", occurred_at: hoursAgo(9), source: "linkedin_reply" },
+    { lead_id: "metric-3", name: "Luca Moretti", title: "Founder", email: "luca@example.test", company_name: "Clearline", channel: "email", status: "demos_booked", occurred_at: hoursAgo(26), source: "lead_stage" },
+  ];
+  const channelMetricsApi = (_init?: RequestInit, url?: string) => {
+    const query = new URL(url ?? location.href, location.href).searchParams;
+    const status = query.get("status") ?? "replied";
+    const channel = query.get("channel");
+    const people = metricPeople.filter((person) => person.status === status && (!channel || person.channel === channel));
+    return {
+      window: { start: query.get("start"), end: query.get("end") },
+      channels: [
+        { channel: "linkedin", contacted: { count: 42, available: true }, opened: { count: null, available: false }, clicked: { count: null, available: false }, replied: { count: 6, available: true }, demos_booked: { count: 2, available: true } },
+        { channel: "email", contacted: { count: 35, available: true }, opened: { count: null, available: false }, clicked: { count: null, available: false }, replied: { count: 4, available: true }, demos_booked: { count: 2, available: true } },
+        { channel: "x", contacted: { count: 5, available: true }, opened: { count: null, available: false }, clicked: { count: null, available: false }, replied: { count: 1, available: true }, demos_booked: { count: 0, available: true } },
+      ],
+      definitions: [
+        { id: "contacted", label: "Contacted", available: true, definition: "Distinct leads with a confirmed outbound send.", note: null },
+        { id: "opened", label: "Opened", available: false, definition: "Distinct leads with a provider open event.", note: "Provider open events are not stored yet." },
+        { id: "clicked", label: "Clicked", available: false, definition: "Distinct leads with a provider click event.", note: "Provider click events are not stored yet." },
+        { id: "replied", label: "Replied", available: true, definition: "Distinct leads matched to an inbound reply.", note: null },
+        { id: "demos_booked", label: "Demos booked", available: true, definition: "Distinct booked leads attributed to the latest prior send.", note: null },
+      ],
+      people,
+      people_status: status,
+      people_channel: channel,
+      people_total: people.length,
+      limit: 100,
+      offset: 0,
+      unmatched_replies: { linkedin: 0, email: 0, x: 0 },
+      unattributed_demos_booked: 0,
+    };
+  };
+  type MockLead = {
+    id: string; name: string; company: string; company_id: string; title: string;
+    email: string | null; linkedin_url: string; stage: string; origin: string;
+    source: string; audiences: string[]; demo_idea: string | null;
+    demo_artifact_id: string | null; created_at: string; updated_at: string;
+  };
+  const mockLeads: MockLead[] = mockCampaignContacts.map((contact, index) => ({
+    id: contact.id,
+    name: contact.name,
+    company: contact.company,
+    company_id: `company-${index + 1}`,
+    title: contact.role,
+    email: `${contact.name.toLowerCase().replace(/\s+/g, ".")}@example.test`,
+    linkedin_url: `https://www.linkedin.com/in/${contact.name.toLowerCase().replace(/\s+/g, "-")}`,
+    stage: contact.stage,
+    origin: "generated",
+    source: index < 3 ? "orange-slice:ocean" : "workspace",
+    audiences: index < 3 ? ["Qualified QA leaders"] : index === 3 ? ["Product-led teams"] : [],
+    demo_idea: null,
+    demo_artifact_id: null,
+    created_at: hoursAgo(48 + index),
+    updated_at: hoursAgo(2 + index),
+  }));
+  const dashboardLeadsApi = (init?: RequestInit, url?: string) => {
+    const method = init?.method ?? "GET";
+    const parsed = new URL(url ?? location.href, location.href);
+    const suffix = parsed.pathname.replace("/api/v1/dashboard/leads", "").replace(/^\//, "");
+    if (method === "DELETE" && suffix) {
+      const index = mockLeads.findIndex((item) => item.id === decodeURIComponent(suffix));
+      if (index >= 0) mockLeads.splice(index, 1);
+      return { lead_id: suffix, blacklisted: true };
+    }
+    const limit = Math.max(1, Number(parsed.searchParams.get("limit") ?? 25));
+    const offset = Math.max(0, Number(parsed.searchParams.get("offset") ?? 0));
+    return { leads: mockLeads.slice(offset, offset + limit), total: mockLeads.length, limit, offset };
+  };
+  type MockAudience = {
+    id: string; name: string; description: string; source_provider: string;
+    discovery_filters: Record<string, string>; members: Array<{
+      lead_id: string; name: string; title: string; company: string;
+      email: string | null; linkedin_url: string; stage: string; contactable: boolean;
+    }>; created_at: string; updated_at: string;
+  };
+  const audienceSummary = (audience: MockAudience) => ({
+    id: audience.id,
+    name: audience.name,
+    description: audience.description,
+    source_provider: audience.source_provider,
+    member_count: audience.members.length,
+    created_at: audience.created_at,
+    updated_at: audience.updated_at,
+  });
+  const memberFromLead = (item: MockLead) => ({
+    lead_id: item.id, name: item.name, title: item.title, company: item.company,
+    email: item.email, linkedin_url: item.linkedin_url, stage: item.stage, contactable: true,
+  });
+  const mockAudiences: MockAudience[] = [{
+    id: "audience-qualified-qa",
+    name: "Qualified QA leaders",
+    description: "QA and operations leaders at teams with a live release workflow.",
+    source_provider: "orange_slice",
+    discovery_filters: { query: "quality", company: "", title: "Head of QA" },
+    members: mockLeads.slice(0, 3).map(memberFromLead),
+    created_at: hoursAgo(72),
+    updated_at: hoursAgo(2),
+  }, {
+    id: "audience-product-led",
+    name: "Product-led teams",
+    description: "Product leaders evaluating a hands-on launch workflow.",
+    source_provider: "workspace",
+    discovery_filters: { query: "product", company: "", title: "Product" },
+    members: [memberFromLead(mockLeads[3])],
+    created_at: hoursAgo(120),
+    updated_at: hoursAgo(24),
+  }];
+  const discoveryCandidates = [
+    { provider_record_id: "orange-person-1", lead_id: null, name: "Talia Morgan", title: "VP Quality", company: "Proofline", email: null, linkedin_url: "https://www.linkedin.com/in/talia-morgan", stage: "new" },
+    { provider_record_id: "orange-person-2", lead_id: null, name: "Ravi Menon", title: "Director of Engineering", company: "SignalNest", email: null, linkedin_url: "https://www.linkedin.com/in/ravi-menon", stage: "new" },
+    { provider_record_id: "orange-person-3", lead_id: null, name: "Elena Park", title: "Founder", company: "Releasewise", email: null, linkedin_url: "https://www.linkedin.com/in/elena-park", stage: "new" },
+  ];
+  const audiencesApi = (init?: RequestInit, url?: string) => {
+    const method = init?.method ?? "GET";
+    const pathname = new URL(url ?? location.href, location.href).pathname;
+    const suffix = pathname.replace("/api/v1/dashboard/audiences", "").replace(/^\//, "");
+    if (suffix === "discover" && method === "POST") {
+      return { provider: "orange_slice", provider_label: "Orange Slice", candidates: discoveryCandidates };
+    }
+    if (!suffix && method === "GET") return { audiences: mockAudiences.map(audienceSummary) };
+    if (!suffix && method === "POST") {
+      const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
+      const selectedProviderIds = Array.isArray(body.provider_record_ids) ? body.provider_record_ids : [];
+      const selectedLeadIds = Array.isArray(body.lead_ids) ? body.lead_ids : [];
+      for (const providerId of selectedProviderIds) {
+        const candidate = discoveryCandidates.find((item) => item.provider_record_id === providerId);
+        if (!candidate) continue;
+        const id = crypto.randomUUID();
+        mockLeads.unshift({
+          id, name: candidate.name, company: candidate.company, company_id: crypto.randomUUID(),
+          title: candidate.title, email: null, linkedin_url: candidate.linkedin_url,
+          stage: candidate.stage, origin: "generated", source: "orange-slice:ocean",
+          audiences: [], demo_idea: null, demo_artifact_id: null,
+          created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+        });
+        selectedLeadIds.push(id);
+      }
+      const memberLeads = selectedLeadIds.flatMap((id: string) => {
+        const item = mockLeads.find((leadItem) => leadItem.id === id);
+        return item ? [item] : [];
+      });
+      const now = new Date().toISOString();
+      const created: MockAudience = {
+        id: crypto.randomUUID(), name: String(body.name), description: String(body.description ?? ""),
+        source_provider: String(body.source_provider ?? "workspace"),
+        discovery_filters: body.discovery_filters ?? {}, members: memberLeads.map(memberFromLead),
+        created_at: now, updated_at: now,
+      };
+      for (const item of memberLeads) {
+        if (!item.audiences.includes(created.name)) item.audiences.push(created.name);
+      }
+      mockAudiences.unshift(created);
+      return { ...audienceSummary(created), discovery_filters: created.discovery_filters, members: created.members };
+    }
+    const audienceId = decodeURIComponent(suffix);
+    const audience = mockAudiences.find((item) => item.id === audienceId);
+    if (method === "DELETE") {
+      const index = mockAudiences.findIndex((item) => item.id === audienceId);
+      if (index >= 0) {
+        const [removed] = mockAudiences.splice(index, 1);
+        for (const item of mockLeads) item.audiences = item.audiences.filter((name) => name !== removed.name);
+      }
+      return {};
+    }
+    return audience ? { ...audienceSummary(audience), discovery_filters: audience.discovery_filters, members: audience.members } : {};
+  };
   // Matching is startsWith with NO method check, so more-specific paths must
   // come first — /sends/cancel and /sends/dismiss (POST) would otherwise be
   // swallowed by the /sends fixture, and /reviews/decide by /reviews.
   const routes: [string, unknown][] = [
+    ["/api/v1/dashboard/audiences", audiencesApi],
+    ["/api/v1/dashboard/leads", dashboardLeadsApi],
+    ["/api/v1/dashboard/channel-metrics", channelMetricsApi],
+    ["/api/v1/dashboard/assets", assetsApi],
+    ["/api/v1/dashboard/campaigns", campaignsApi],
     ["/api/v1/admin/agents/dashboard", agentDashboard],
     ["/api/v1/admin/agents/", mutateAgent],
     ["/api/v1/admin/probes/dashboard", probesNotFound],

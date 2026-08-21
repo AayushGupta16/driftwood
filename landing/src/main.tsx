@@ -3,10 +3,9 @@ import './mock'
 import { StrictMode, Suspense, lazy } from 'react'
 import { createRoot, hydrateRoot } from 'react-dom/client'
 import { Analytics } from '@vercel/analytics/react'
-import posthog from 'posthog-js'
 import './index.css'
-import App from './App.tsx'
 // dashboard pages are code-split: landing visitors only download the landing
+const App = lazy(() => import('./App.tsx'))
 const OgCard = lazy(() => import('./OgCard.tsx'))
 const Dashboard = lazy(() => import('./Dashboard.tsx'))
 const Leads = lazy(() => import('./Leads.tsx'))
@@ -15,15 +14,36 @@ const Review = lazy(() => import('./Review.tsx'))
 const SeoGeo = lazy(() => import('./SeoGeo.tsx'))
 const Agents = lazy(() => import('./Agents.tsx'))
 const Conversation = lazy(() => import('./Conversation.tsx'))
+const Campaigns = lazy(() => import('./campaigns/Campaigns.tsx'))
+const CampaignBuilder = lazy(() => import('./campaigns/CampaignBuilder.tsx'))
+const Audiences = lazy(() => import('./audiences/Audiences.tsx'))
+const Assets = lazy(() => import('./assets/Assets.tsx'))
+const AnalyticsDashboard = lazy(() => import('./analytics/AnalyticsDashboard.tsx'))
+const WorkspacePage = lazy(() => import('./dashboard/WorkspacePage.tsx'))
 // Pricing is parked for now; re-enable by restoring the route below.
 // const Pricing = lazy(() => import('./Pricing.tsx'))
 
-const path = window.location.pathname.replace(/\/+$/, '')
+const requestedPath = window.location.pathname.replace(/\/+$/, '')
+// Vercel rewrites every /dashboard route to the lean dashboard document while
+// preserving the public URL. Opening that document directly should still land
+// on the workspace overview instead of rendering the marketing page.
+const path = requestedPath === '/dashboard.html' ? '/dashboard' : requestedPath
+const campaignPathMatch = path.match(/^\/dashboard\/campaigns\/([^/]+)$/)
 // const page = path === '/pricing' ? <Pricing /> : <App />
 // /og renders the social card; screenshot it at 1200x630 (dpr 2) to refresh public/og-5.png
 const page =
   path === '/og' ? (
     <OgCard />
+  ) : path === '/dashboard/audiences' || path === '/dashboard/lead-lists' ? (
+    <WorkspacePage active="audiences"><Audiences /></WorkspacePage>
+  ) : path === '/dashboard/assets' ? (
+    <WorkspacePage active="assets"><Assets /></WorkspacePage>
+  ) : path === '/dashboard/metrics' || path === '/dashboard/analytics' ? (
+    <WorkspacePage active="metrics"><AnalyticsDashboard /></WorkspacePage>
+  ) : path === '/dashboard/campaigns' ? (
+    <Campaigns />
+  ) : campaignPathMatch ? (
+    <CampaignBuilder campaignId={decodeURIComponent(campaignPathMatch[1])} />
   ) : path === '/dashboard/leads' ? (
     <Leads />
   ) : path === '/dashboard/companies' ? (
@@ -32,11 +52,11 @@ const page =
     // /reviews (plural) is aliased — it's a natural guess for the URL and
     // falling through to the landing page reads as "the queue is gone".
     <Review />
-  ) : path === '/dashboard/seo-geo' ? (
+  ) : path === '/dashboard/admin/search-visibility' || path === '/dashboard/seo-geo' ? (
     <SeoGeo />
-  ) : path === '/dashboard/agents' ? (
+  ) : path === '/dashboard/admin' || path === '/dashboard/admin/agents' || path === '/dashboard/agents' ? (
     <Agents />
-  ) : path.startsWith('/dashboard/agents/') ? (
+  ) : path.startsWith('/dashboard/admin/agents/') || path.startsWith('/dashboard/agents/') ? (
     <Conversation />
   ) : path === '/dashboard' ? (
     <Dashboard />
@@ -51,11 +71,13 @@ const isLanding = !(path === '/og' || path === '/dashboard' || path.startsWith('
 // vercel.json, so ad-blockers don't eat events and the CSP stays 'self'.
 // The project key is public by design (client-side token).
 if (isLanding) {
-  posthog.init('phc_zJTpnFWJ5h9YAE3y55jmXEbSCcffw96EYPnLRhMtGJGm', {
-    api_host: '/ingest',
-    ui_host: 'https://us.posthog.com',
-    defaults: '2025-05-24',
-    person_profiles: 'identified_only',
+  void import('posthog-js').then(({ default: posthog }) => {
+    posthog.init('phc_zJTpnFWJ5h9YAE3y55jmXEbSCcffw96EYPnLRhMtGJGm', {
+      api_host: '/ingest',
+      ui_host: 'https://us.posthog.com',
+      defaults: '2025-05-24',
+      person_profiles: 'identified_only',
+    })
   })
 }
 
@@ -63,7 +85,7 @@ const root = document.getElementById('root')!
 const tree = (
   <StrictMode>
     <Suspense fallback={null}>{page}</Suspense>
-    <Analytics />
+    {isLanding && <Analytics />}
   </StrictMode>
 )
 

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 // State for the founder↔agent conversation, shared by the full page at
-// /dashboard/agents/<id> and the panel inside an agent card's dialog. One
+// /dashboard/admin/agents/<id> and the panel inside an agent card's dialog. One
 // implementation on purpose: the send guards and the refusal reasons are the
 // fiddly part, and two copies would drift.
 

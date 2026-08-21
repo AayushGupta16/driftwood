@@ -6,22 +6,21 @@ import {
   type ChangeEvent,
   type ReactNode,
 } from "react";
-import { Wordmark } from "./components/Chrome";
-import { GodModeButton, ImpersonationBanner } from "./GodMode";
+import { AdminPanelControls, ImpersonationBanner } from "./GodMode";
+import AppShell from "./dashboard/AppShell";
+import { GoogleMark, LoggedOutView, ToastProvider } from "./dashboard/DashboardCommon";
 import {
   CARD,
-  ToastContext,
   relativeTime,
   useToast,
-  type ToastVariant,
 } from "./dashboard-shared";
 
 /* /dashboard — Google-login-gated shell. Talks to the same-origin /auth/*
    endpoints (vite proxy in dev, vercel rewrite in prod), so every request
    must send the first-party session cookie.
 
-   Deliberately bare-bones: the page exists to let approved users connect
-   their accounts. Campaigns, demos and updates go out over Slack, not here. */
+   The dashboard remains the control surface for account connections and the
+   entry point for browser-based campaign planning. */
 
 type User = {
   id: string;
@@ -61,29 +60,6 @@ type AuthState =
   | { status: "loading" }
   | { status: "logged-out" }
   | { status: "logged-in"; user: User };
-
-export function GoogleMark({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 18 18" aria-hidden="true" className={className}>
-      <path
-        fill="#4285F4"
-        d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"
-      />
-      <path
-        fill="#34A853"
-        d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.81.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18z"
-      />
-      <path
-        fill="#FBBC05"
-        d="M3.97 10.72a5.4 5.4 0 0 1 0-3.44V4.95H.96a9 9 0 0 0 0 8.1l3.01-2.33z"
-      />
-      <path
-        fill="#EA4335"
-        d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58A9 9 0 0 0 .96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"
-      />
-    </svg>
-  );
-}
 
 function LinkedInMark({ className }: { className?: string }) {
   return (
@@ -128,65 +104,6 @@ function LockMark({ className }: { className?: string }) {
   );
 }
 
-/* ---------- toasts ---------- */
-
-type ToastItem = { id: number; message: string; variant: ToastVariant };
-
-export function ToastProvider({ children }: { children: ReactNode }) {
-  const [toasts, setToasts] = useState<ToastItem[]>([]);
-  const nextId = useRef(0);
-
-  const dismiss = useCallback((id: number) => {
-    setToasts((ts) => ts.filter((t) => t.id !== id));
-  }, []);
-
-  const push = useCallback(
-    (message: string, variant: ToastVariant = "info") => {
-      const id = nextId.current++;
-      setToasts((ts) => [...ts, { id, message, variant }]);
-      window.setTimeout(() => dismiss(id), 5000);
-    },
-    [dismiss],
-  );
-
-  return (
-    <ToastContext.Provider value={push}>
-      {children}
-      <div
-        className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex flex-col items-center gap-2 px-4 pb-5 sm:items-end sm:px-6"
-        aria-live="polite"
-      >
-        {toasts.map((t) => (
-          <Toast key={t.id} toast={t} onDismiss={() => dismiss(t.id)} />
-        ))}
-      </div>
-    </ToastContext.Provider>
-  );
-}
-
-const TOAST_STYLE: Record<ToastVariant, { ring: string; glyph: string; tint: string }> =
-  {
-    success: { ring: "border-ok/30", glyph: "✓", tint: "text-ok" },
-    error: { ring: "border-red-600/30", glyph: "✕", tint: "text-red-600" },
-    info: { ring: "border-tide/30", glyph: "•", tint: "text-tide" },
-  };
-
-function Toast({ toast, onDismiss }: { toast: ToastItem; onDismiss: () => void }) {
-  const s = TOAST_STYLE[toast.variant];
-  return (
-    <div
-      role="status"
-      onClick={onDismiss}
-      className={`toast-in pointer-events-auto flex w-full max-w-sm cursor-pointer items-start gap-2.5 rounded-xl border bg-surface px-4 py-3 text-[13.5px] font-medium text-ink shadow-win ${s.ring}`}
-    >
-      <span aria-hidden="true" className={`mt-px shrink-0 text-[15px] leading-none ${s.tint}`}>
-        {s.glyph}
-      </span>
-      <span className="leading-snug">{toast.message}</span>
-    </div>
-  );
-}
-
 export default function Dashboard() {
   const [auth, setAuth] = useState<AuthState>({ status: "loading" });
 
@@ -221,7 +138,7 @@ export default function Dashboard() {
 
   return (
     <ToastProvider>
-      <div className="relative flex min-h-screen flex-col overflow-x-clip">
+      <div className="relative flex min-h-[100dvh] flex-col overflow-x-clip">
         {auth.status === "loading" && <LoadingView />}
         {auth.status === "logged-out" && <LoggedOutView />}
         {auth.status === "logged-in" && (
@@ -244,34 +161,6 @@ function LoadingView() {
   );
 }
 
-export function LoggedOutView() {
-  return (
-    <main className="flex flex-1 items-center justify-center px-5 py-16 sm:px-8">
-      <div className="w-full max-w-sm rounded-xl border border-line bg-surface p-8 text-center shadow-win">
-        <a href="/" className="inline-flex justify-center text-ink no-underline">
-          <Wordmark markSize="size-8" className="text-[18px]" />
-        </a>
-        <h1 className="m-0 mt-6 text-[24px] font-semibold tracking-[-0.015em]">
-          Sign in to your dashboard
-        </h1>
-        <p className="mx-auto mt-2.5 max-w-[30ch] text-[15px] leading-relaxed text-ink-soft">
-          Connect your accounts and we&rsquo;ll take it from there.
-        </p>
-        <a
-          href="/auth/login"
-          className="mt-6 inline-flex w-full items-center justify-center gap-3 rounded-full border border-line bg-paper px-4.5 py-3 text-[14.5px] font-medium text-ink no-underline transition-all hover:-translate-y-px hover:border-ink-faint/50"
-        >
-          <GoogleMark className="size-4.5 shrink-0" />
-          Continue with Google
-        </a>
-        <p className="m-0 mt-4.5 text-[12.5px] text-ink-faint">
-          Invite-only · approved accounts
-        </p>
-      </div>
-    </main>
-  );
-}
-
 /* ---------- logged-in shell ---------- */
 
 function LoggedInView({ user, onLogout }: { user: User; onLogout: () => void }) {
@@ -282,63 +171,16 @@ function LoggedInView({ user, onLogout }: { user: User; onLogout: () => void }) 
   return (
     <>
       {user.impersonating && <ImpersonationBanner email={user.email} />}
-      <header className="sticky top-0 z-40 border-b border-line bg-paper/95 backdrop-blur-md">
-        <nav className="mx-auto flex h-16 max-w-5xl items-center justify-between px-5 sm:px-8">
-          <a href="/" className="text-[18px] text-ink no-underline">
-            <Wordmark markSize="size-8" />
-          </a>
-          <div className="flex items-center gap-3">
-            {user.avatar_url ? (
-              <img
-                src={user.avatar_url}
-                alt={`${displayName}'s avatar`}
-                className="size-8 shrink-0 rounded-full border border-line object-cover"
-                referrerPolicy="no-referrer"
-              />
-            ) : (
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-tide text-[13px] font-semibold text-white">
-                {displayName[0]?.toUpperCase()}
-              </span>
-            )}
-            <span className="hidden text-[14px] font-medium text-ink sm:inline">
-              {displayName}
-            </span>
-            {orgName && (
-              <span className="hidden text-[13px] text-ink-faint sm:inline">
-                {orgName}
-              </span>
-            )}
-            {user.is_admin && (
-              <>
-                <GodModeButton />
-                <a
-                  href="/dashboard/seo-geo"
-                  className="inline-flex items-center rounded-full border border-tide/40 bg-surface px-3.5 py-2 text-[13.5px] font-medium text-tide no-underline transition-colors hover:border-tide hover:bg-tide-wash"
-                >
-                  SEO / GEO
-                </a>
-                <a
-                  href="/dashboard/agents"
-                  className="inline-flex items-center rounded-full border border-tide/40 bg-surface px-3.5 py-2 text-[13.5px] font-medium text-tide no-underline transition-colors hover:border-tide hover:bg-tide-wash"
-                >
-                  Agents
-                </a>
-              </>
-            )}
-            <button
-              type="button"
-              onClick={onLogout}
-              className="cursor-pointer rounded-full border border-line bg-surface px-3.5 py-2 text-[13.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink"
-            >
-              Log out
-            </button>
-          </div>
-        </nav>
-      </header>
-
-      <main className="mx-auto w-full max-w-5xl flex-1 px-5 py-14 sm:px-8 sm:py-18">
-        {user.is_approved ? <ApprovedView user={user} /> : <PendingView />}
-      </main>
+      <AppShell
+        active="home"
+        identity={{ name: displayName, workspace: orgName, avatarUrl: user.avatar_url }}
+        onLogout={onLogout}
+        adminControl={user.is_admin ? <AdminPanelControls /> : undefined}
+      >
+        <div className="mx-auto w-full max-w-5xl py-5 sm:py-8">
+          {user.is_approved ? <ApprovedView user={user} /> : <PendingView />}
+        </div>
+      </AppShell>
     </>
   );
 }
@@ -490,11 +332,14 @@ function ApprovedView({ user }: { user: User }) {
           to the workspace owner, so only the owner gets the connect/disconnect
           cards; everyone still sees the status strip. */}
       {isOwner && !user.linkedin_connected && <LinkedInCard connected={false} />}
-      {user.linkedin_connected &&
-        summary.status === "ready" &&
-        summary.summary.sending && (
-          <StatusStrip sending={summary.summary.sending} isOwner={isOwner} />
-        )}
+      {user.linkedin_connected && (
+        <StatusStrip
+          sending={summary.status === "ready" ? summary.summary.sending : null}
+          loading={summary.status === "loading"}
+          unavailable={summary.status === "error"}
+          isOwner={isOwner}
+        />
+      )}
       {isOwner && (
         <EmailCard
           connected={user.email_connected ?? false}
@@ -515,6 +360,7 @@ function ApprovedView({ user }: { user: User }) {
         <ListsCard state={summary} canWrite={canWrite} onImported={loadSummary} />
       </div>
 
+      <CampaignsEntryCard />
       <LeadsEntryCard state={summary} />
       <CompaniesEntryCard state={summary} />
       <ReviewEntryCard state={summary} />
@@ -522,11 +368,34 @@ function ApprovedView({ user }: { user: User }) {
   );
 }
 
+/* ---------- campaign workbench entry ---------- */
+
+function CampaignsEntryCard() {
+  return (
+    <div
+      className={`mt-7 ${CARD} flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6`}
+    >
+      <div className="min-w-0">
+        <SectionLabel>Campaigns</SectionLabel>
+        <p className="m-0 mt-2 text-[14px] font-medium text-ink-soft">
+          Build a reviewed sequence across email, LinkedIn, tailored demos, and waits.
+        </p>
+      </div>
+      <a
+        href="/dashboard/campaigns"
+        className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-full bg-tide px-4.5 py-2.5 text-[14px] font-medium text-white no-underline transition-all hover:-translate-y-px hover:bg-tide-deep sm:self-auto"
+      >
+        Open campaign workbench
+      </a>
+    </div>
+  );
+}
+
 /* ---------- all leads entry (full table lives at /dashboard/leads) ---------- */
 
-/* Compact card linking out to the dedicated full-width leads page. Reads the
+/* Compact card linking to the dedicated full-width leads view. Reads the
    already-loaded summary so it can show the pipeline count without its own
-   request. The link opens the leads page in a new tab. */
+   request. Internal workspace navigation stays in the current tab. */
 function LeadsEntryCard({ state }: { state: SummaryState }) {
   const leads = state.status === "ready" ? state.summary.lists.leads : null;
   const line =
@@ -546,8 +415,6 @@ function LeadsEntryCard({ state }: { state: SummaryState }) {
       </div>
       <a
         href="/dashboard/leads"
-        target="_blank"
-        rel="noreferrer"
         className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-full bg-tide px-4.5 py-2.5 text-[14px] font-medium text-white no-underline transition-all hover:-translate-y-px hover:bg-tide-deep sm:self-auto"
       >
         View all leads
@@ -580,8 +447,6 @@ function CompaniesEntryCard({ state }: { state: SummaryState }) {
       </div>
       <a
         href="/dashboard/companies"
-        target="_blank"
-        rel="noreferrer"
         className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-full bg-tide px-4.5 py-2.5 text-[14px] font-medium text-white no-underline transition-all hover:-translate-y-px hover:bg-tide-deep sm:self-auto"
       >
         View all companies
@@ -615,8 +480,6 @@ function ReviewEntryCard({ state }: { state: SummaryState }) {
       </div>
       <a
         href="/dashboard/review"
-        target="_blank"
-        rel="noreferrer"
         className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-full bg-tide px-4.5 py-2.5 text-[14px] font-medium text-white no-underline transition-all hover:-translate-y-px hover:bg-tide-deep sm:self-auto"
       >
         Open review queue
@@ -652,9 +515,19 @@ function useDisconnect(endpoint: string) {
 
 /* 1 · STATUS — is it on & safe. Mirrors the mockup's .status card. Everyone
    in the workspace sees the status; only the owner gets Disconnect. */
-function StatusStrip({ sending, isOwner }: { sending: Sending; isOwner: boolean }) {
+function StatusStrip({
+  sending,
+  loading,
+  unavailable,
+  isOwner,
+}: {
+  sending: Sending | null;
+  loading: boolean;
+  unavailable: boolean;
+  isOwner: boolean;
+}) {
   const { pending, error, disconnect } = useDisconnect("/linkedin/disconnect");
-  const rel = relativeTime(sending.last_action_at);
+  const rel = relativeTime(sending?.last_action_at ?? null);
 
   return (
     <div className={`mt-7 ${CARD} p-4`}>
@@ -667,27 +540,37 @@ function StatusStrip({ sending, isOwner }: { sending: Sending; isOwner: boolean 
         </span>
         <div className="min-w-0 flex-1">
           <div className="text-[15px] font-semibold tracking-[-0.01em]">
-            LinkedIn connected &amp; sending
+            {sending ? "LinkedIn connected & sending" : "LinkedIn connected"}
           </div>
           <div className="mt-1 text-[12.5px] leading-relaxed text-ink-soft">
-            <span className="tabular-nums">
-              {sending.invites_sent}/{sending.invites_cap}
-            </span>{" "}
-            invites ·{" "}
-            <span className="tabular-nums">
-              {sending.messages_sent}/{sending.messages_cap}
-            </span>{" "}
-            messages today ·{" "}
-            <span
-              className={
-                sending.within_limits
-                  ? "font-medium text-ok"
-                  : "font-medium text-amber-700"
-              }
-            >
-              {sending.within_limits ? "within safe limits" : "approaching limit"}
-            </span>
-            {rel && <> · last action {rel}</>}
+            {sending ? (
+              <>
+                <span className="tabular-nums">
+                  {sending.invites_sent}/{sending.invites_cap}
+                </span>{" "}
+                invites ·{" "}
+                <span className="tabular-nums">
+                  {sending.messages_sent}/{sending.messages_cap}
+                </span>{" "}
+                messages today ·{" "}
+                <span
+                  className={
+                    sending.within_limits
+                      ? "font-medium text-ok"
+                      : "font-medium text-amber-700"
+                  }
+                >
+                  {sending.within_limits ? "within safe limits" : "approaching limit"}
+                </span>
+                {rel && <> · last action {rel}</>}
+              </>
+            ) : loading ? (
+              "Loading sending status…"
+            ) : unavailable ? (
+              "Sending status is temporarily unavailable."
+            ) : (
+              "No sending activity is active."
+            )}
           </div>
         </div>
         {isOwner && (

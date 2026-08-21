@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { Wordmark } from "./components/Chrome";
-import { ToastProvider } from "./Dashboard";
-import { GodModeButton, ImpersonationBanner } from "./GodMode";
+import { ToastProvider } from "./dashboard/DashboardCommon";
+import { AdminPanelControls, ImpersonationBanner } from "./GodMode";
 import { CARD, useToast } from "./dashboard-shared";
+import AppShell from "./dashboard/AppShell";
 
 /* /dashboard/review — the founder's review queue: one flat chronological list
    of decisions the AE is waiting on (oldest first), per the signed-off draft
@@ -171,7 +171,7 @@ export default function Review() {
 
   return (
     <ToastProvider>
-      <div className="grain relative flex min-h-screen flex-col overflow-x-clip">
+      <div className="grain relative flex min-h-[100dvh] flex-col overflow-x-clip">
         {user ? <ReviewView user={user} /> : <LoadingView />}
       </div>
     </ToastProvider>
@@ -208,48 +208,14 @@ function ReviewView({ user }: { user: User }) {
   return (
     <>
       {user.impersonating && <ImpersonationBanner email={user.email} />}
-      <header className="sticky top-0 z-40 border-b border-line/70 bg-paper/85 shadow-[0_10px_28px_-24px_rgba(22,24,29,0.5)] backdrop-blur-md">
-        <nav className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between px-5 sm:px-8">
-          <a href="/" className="text-[18px] text-ink no-underline">
-            <Wordmark markSize="size-8" />
-          </a>
-          <div className="flex items-center gap-3">
-            {user.avatar_url ? (
-              <img
-                src={user.avatar_url}
-                alt={`${displayName}'s avatar`}
-                className="size-8 shrink-0 rounded-full border border-line object-cover"
-                referrerPolicy="no-referrer"
-              />
-            ) : (
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-tide font-mono text-[13px] font-semibold text-white">
-                {displayName[0]?.toUpperCase()}
-              </span>
-            )}
-            <span className="hidden text-[14px] font-medium text-ink sm:inline">
-              {displayName}
-            </span>
-            {user.is_admin && <GodModeButton />}
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="cursor-pointer rounded-xl border border-line bg-surface px-3.5 py-2 text-[13.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink"
-            >
-              Log out
-            </button>
-          </div>
-        </nav>
-      </header>
-
-      <main className="mx-auto w-full max-w-[640px] flex-1 px-4 pb-[110px] pt-5 min-[700px]:px-8 min-[700px]:pb-[120px] min-[700px]:pt-11">
-        <a
-          href="/dashboard"
-          className="inline-flex items-center gap-1.5 text-[13.5px] font-medium text-ink-soft no-underline transition-colors hover:text-ink"
-        >
-          <span aria-hidden="true">←</span> Back to dashboard
-        </a>
-        <ReviewQueue canWrite={canWrite} />
-      </main>
+      <AppShell
+        active="review"
+        identity={{ name: displayName, workspace: user.org?.name, avatarUrl: user.avatar_url }}
+        onLogout={handleLogout}
+        adminControl={user.is_admin ? <AdminPanelControls /> : undefined}
+      >
+        <div className="mx-auto w-full max-w-[640px] pb-[70px]"><ReviewQueue canWrite={canWrite} /></div>
+      </AppShell>
     </>
   );
 }

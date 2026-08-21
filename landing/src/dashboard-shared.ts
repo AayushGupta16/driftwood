@@ -4,7 +4,7 @@ import { createContext, useContext } from "react";
    toast context. Deliberately component-free so both /dashboard and
    /dashboard/leads can import it without tripping react-refresh's
    only-export-components rule (that rule only fires on files exporting
-   components). The <ToastProvider> component itself lives in Dashboard.tsx. */
+   components). The <ToastProvider> component lives in dashboard/DashboardCommon.tsx. */
 
 export const CARD = "rounded-xl border border-line bg-surface shadow-win";
 

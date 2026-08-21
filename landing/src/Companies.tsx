@@ -6,10 +6,10 @@ import {
   useState,
 } from "react";
 import Fuse from "fuse.js";
-import { Wordmark } from "./components/Chrome";
-import { ToastProvider } from "./Dashboard";
-import { GodModeButton, ImpersonationBanner } from "./GodMode";
+import { ToastProvider } from "./dashboard/DashboardCommon";
+import { AdminPanelControls, ImpersonationBanner } from "./GodMode";
 import { CARD, relativeTime, useToast } from "./dashboard-shared";
+import AppShell from "./dashboard/AppShell";
 
 /* /dashboard/companies — the full-width, dedicated "All companies" table.
    Self-contained page: does its own /auth/me gate (an unapproved or logged-out
@@ -85,7 +85,7 @@ export default function Companies() {
 
   return (
     <ToastProvider>
-      <div className="relative flex min-h-screen flex-col overflow-x-clip">
+      <div className="relative flex min-h-[100dvh] flex-col overflow-x-clip">
         {user ? <CompaniesView user={user} /> : <LoadingView />}
       </div>
     </ToastProvider>
@@ -122,48 +122,14 @@ function CompaniesView({ user }: { user: User }) {
   return (
     <>
       {user.impersonating && <ImpersonationBanner email={user.email} />}
-      <header className="sticky top-0 z-40 border-b border-line bg-paper/95 backdrop-blur-md">
-        <nav className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-5 sm:px-8">
-          <a href="/" className="text-[18px] text-ink no-underline">
-            <Wordmark markSize="size-8" />
-          </a>
-          <div className="flex items-center gap-3">
-            {user.avatar_url ? (
-              <img
-                src={user.avatar_url}
-                alt={`${displayName}'s avatar`}
-                className="size-8 shrink-0 rounded-full border border-line object-cover"
-                referrerPolicy="no-referrer"
-              />
-            ) : (
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-tide text-[13px] font-semibold text-white">
-                {displayName[0]?.toUpperCase()}
-              </span>
-            )}
-            <span className="hidden text-[14px] font-medium text-ink sm:inline">
-              {displayName}
-            </span>
-            {user.is_admin && <GodModeButton />}
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="cursor-pointer rounded-full border border-line bg-surface px-3.5 py-2 text-[13.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink"
-            >
-              Log out
-            </button>
-          </div>
-        </nav>
-      </header>
-
-      <main className="mx-auto w-full max-w-7xl flex-1 px-5 py-10 sm:px-8">
-        <a
-          href="/dashboard"
-          className="inline-flex items-center gap-1.5 text-[13.5px] font-medium text-ink-soft no-underline transition-colors hover:text-ink"
-        >
-          <span aria-hidden="true">←</span> Back to dashboard
-        </a>
-        <CompaniesTable canWrite={canWrite} />
-      </main>
+      <AppShell
+        active="companies"
+        identity={{ name: displayName, workspace: user.org?.name, avatarUrl: user.avatar_url }}
+        onLogout={handleLogout}
+        adminControl={user.is_admin ? <AdminPanelControls /> : undefined}
+      >
+        <div className="mx-auto w-full max-w-7xl"><CompaniesTable canWrite={canWrite} /></div>
+      </AppShell>
     </>
   );
 }

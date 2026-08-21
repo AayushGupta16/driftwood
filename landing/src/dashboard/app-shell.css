@@ -1,0 +1,284 @@
+/* perfect-ui · shared extension of plans/2026-08-21-cardinal-campaign-workbench */
+
+.dashboard-app-shell {
+  min-height: 100dvh;
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
+.dashboard-skip {
+  position: fixed;
+  top: .5rem;
+  left: .5rem;
+  z-index: 100;
+  transform: translateY(-160%);
+  border-radius: 999px;
+  background: var(--color-tide);
+  color: var(--color-surface);
+  padding: .55rem .9rem;
+  font-size: .8rem;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.dashboard-skip:focus { transform: translateY(0); }
+
+.app-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 60;
+  display: flex;
+  width: 15.25rem;
+  flex-direction: column;
+  border-right: 1px solid var(--color-line);
+  background: color-mix(in srgb, var(--color-paper) 98%, var(--color-tide-wash));
+  padding: 1rem .8rem .8rem;
+}
+
+.app-sidebar-brand-row {
+  display: flex;
+  min-height: 2.6rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 .55rem;
+}
+
+.app-sidebar-brand,
+.app-mobile-brand {
+  display: inline-flex;
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.app-sidebar-close { display: none; }
+
+.app-sidebar-create {
+  display: flex;
+  min-height: 2.45rem;
+  align-items: center;
+  justify-content: center;
+  gap: .45rem;
+  margin: .9rem .25rem .7rem;
+  border: 1px solid var(--color-tide);
+  border-radius: .65rem;
+  background: var(--color-tide);
+  color: var(--color-surface);
+  font-size: .78rem;
+  font-weight: 650;
+  text-decoration: none;
+  transition: background 200ms cubic-bezier(.2, 0, 0, 1), transform 200ms cubic-bezier(.2, 0, 0, 1);
+}
+
+.app-sidebar-create:hover { background: var(--color-tide-deep); transform: translateY(-1px); }
+
+.app-sidebar-context {
+  display: flex;
+  min-height: 3.8rem;
+  flex-direction: column;
+  justify-content: center;
+  gap: .15rem;
+  margin: .9rem .25rem .7rem;
+  border: 1px solid var(--color-line);
+  border-radius: .65rem;
+  background: var(--color-surface);
+  padding: .65rem .8rem;
+}
+
+.app-sidebar-context span { color: var(--color-ink-faint); font-size: .63rem; }
+.app-sidebar-context strong { font-size: .84rem; font-weight: 650; }
+
+.app-sidebar-nav {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  padding: .15rem .25rem 1rem;
+}
+
+.app-sidebar-group + .app-sidebar-group { margin-top: 1.15rem; }
+
+.app-sidebar-label {
+  margin: 0 0 .35rem;
+  padding: 0 .65rem;
+  color: var(--color-ink-faint);
+  font-size: .65rem;
+  font-weight: 650;
+  letter-spacing: .035em;
+  text-transform: uppercase;
+}
+
+.app-sidebar-link {
+  position: relative;
+  display: flex;
+  min-height: 2.25rem;
+  align-items: center;
+  gap: .65rem;
+  border-radius: .55rem;
+  color: var(--color-ink-soft);
+  padding: 0 .65rem;
+  font-size: .79rem;
+  font-weight: 520;
+  text-decoration: none;
+  transition: color 200ms cubic-bezier(.2, 0, 0, 1), background 200ms cubic-bezier(.2, 0, 0, 1);
+}
+
+.app-sidebar-link svg { flex: 0 0 auto; }
+.app-sidebar-link:hover { background: var(--color-tide-wash); color: var(--color-tide-deep); }
+.app-sidebar-link.is-active { background: var(--color-tide-wash); color: var(--color-tide-deep); font-weight: 650; }
+.app-sidebar-link.is-active::before {
+  position: absolute;
+  top: .55rem;
+  bottom: .55rem;
+  left: -.25rem;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--color-tide);
+  content: "";
+}
+
+.app-sidebar-footer { border-top: 1px solid var(--color-line); padding: .7rem .25rem 0; }
+.app-sidebar-admin { padding: 0 .3rem .6rem; }
+.admin-access-controls { display: grid; gap: .4rem; }
+.admin-access-action {
+  display: flex;
+  width: 100%;
+  min-height: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  gap: .45rem;
+  border: 1px solid var(--color-line);
+  border-radius: .55rem;
+  background: var(--color-surface);
+  color: var(--color-ink-soft);
+  padding: .45rem .65rem;
+  font: inherit;
+  font-size: .72rem;
+  font-weight: 620;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 200ms cubic-bezier(.2, 0, 0, 1), color 200ms cubic-bezier(.2, 0, 0, 1), background 200ms cubic-bezier(.2, 0, 0, 1);
+}
+.admin-access-action:hover { border-color: color-mix(in srgb, var(--color-tide) 45%, var(--color-line)); background: var(--color-tide-wash); color: var(--color-tide-deep); }
+.admin-access-action:focus-visible { outline: 2px solid var(--color-tide); outline-offset: 2px; }
+
+.app-sidebar-identity {
+  display: grid;
+  grid-template-columns: 1.85rem minmax(0, 1fr) 1.85rem;
+  align-items: center;
+  gap: .55rem;
+  border-radius: .6rem;
+  padding: .4rem;
+}
+
+.app-sidebar-identity > img,
+.app-sidebar-identity > span {
+  display: grid;
+  width: 1.85rem;
+  height: 1.85rem;
+  place-items: center;
+  border-radius: .45rem;
+  background: var(--color-tide);
+  color: var(--color-surface);
+  object-fit: cover;
+  font-size: .7rem;
+  font-weight: 700;
+}
+
+.app-sidebar-identity div { display: flex; min-width: 0; flex-direction: column; gap: .1rem; }
+.app-sidebar-identity strong,
+.app-sidebar-identity small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.app-sidebar-identity strong { font-size: .72rem; font-weight: 650; }
+.app-sidebar-identity small { color: var(--color-ink-faint); font-size: .63rem; }
+.app-sidebar-identity button {
+  display: grid;
+  width: 1.85rem;
+  height: 1.85rem;
+  place-items: center;
+  border: 0;
+  border-radius: .45rem;
+  background: transparent;
+  color: var(--color-ink-faint);
+  cursor: pointer;
+}
+.app-sidebar-identity button:hover { background: var(--color-sand); color: var(--color-ink); }
+
+.app-shell-stage { min-height: 100dvh; margin-left: 15.25rem; }
+.app-shell-notice {
+  border-bottom: 1px solid color-mix(in srgb, var(--color-tide) 17%, var(--color-line));
+  background: var(--color-tide-wash);
+  color: var(--color-tide-deep);
+  padding: .48rem 1.5rem;
+  font-size: .7rem;
+  line-height: 1.4;
+  text-align: center;
+}
+.app-shell-main { width: min(100%, 90rem); margin: 0 auto; padding: 2.4rem 2rem 4rem; }
+.app-shell-main.is-workspace { width: 100%; max-width: none; padding: 0; }
+
+.app-mobile-masthead,
+.app-sidebar-scrim { display: none; }
+
+@media (max-width: 959px) {
+  .app-mobile-masthead {
+    position: sticky;
+    top: 0;
+    z-index: 45;
+    display: grid;
+    min-height: 3.5rem;
+    grid-template-columns: 2.25rem 1fr 2.25rem;
+    align-items: center;
+    border-bottom: 1px solid var(--color-line);
+    background: color-mix(in srgb, var(--color-paper) 96%, transparent);
+    padding: 0 .85rem;
+    backdrop-filter: blur(14px);
+  }
+  .app-mobile-menu,
+  .app-sidebar-close {
+    display: grid;
+    width: 2.25rem;
+    height: 2.25rem;
+    place-items: center;
+    border: 0;
+    border-radius: .55rem;
+    background: transparent;
+    color: var(--color-ink);
+    cursor: pointer;
+  }
+  .app-mobile-brand { justify-self: center; }
+  .app-mobile-avatar {
+    display: grid;
+    width: 1.85rem;
+    height: 1.85rem;
+    place-self: center end;
+    place-items: center;
+    border-radius: .45rem;
+    background: var(--color-tide);
+    color: var(--color-surface);
+    font-size: .7rem;
+    font-weight: 700;
+  }
+  .app-sidebar { width: min(18rem, 86vw); transform: translateX(-105%); box-shadow: 18px 0 45px -28px rgba(22, 24, 27, .45); transition: transform 300ms cubic-bezier(.2, 0, 0, 1); }
+  .app-sidebar.is-open { transform: translateX(0); }
+  .app-sidebar-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 55;
+    display: block;
+    visibility: hidden;
+    border: 0;
+    background: rgba(22, 24, 27, .34);
+    opacity: 0;
+    transition: opacity 300ms cubic-bezier(.2, 0, 0, 1), visibility 300ms;
+  }
+  .app-sidebar-scrim.is-open { visibility: visible; opacity: 1; }
+  .app-shell-stage { min-height: calc(100dvh - 3.5rem); margin-left: 0; }
+  .app-shell-main { padding: 1.75rem 1rem 3rem; }
+  .app-shell-main.is-workspace { padding: 0; }
+  .app-shell-notice { padding-inline: 1rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-sidebar,
+  .app-sidebar-scrim,
+  .app-sidebar-create,
+  .app-sidebar-link { transition: none; }
+}

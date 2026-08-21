@@ -1,0 +1,287 @@
+---
+name: cardinal-campaign-workbench
+status: complete
+priority: high
+created: 2026-08-21
+target: dashboard redesign
+blockedBy: []
+blocks: []
+---
+
+# Plan: Campaign workbench
+
+## Source of truth
+
+[brief.md](./brief.md) · [visual-direction.md](./visual-direction.md) · [audit.md](./audit.md)
+
+## Goal
+
+Add a persisted campaign workspace that makes Driftwood's lead sequencing legible and editable while preserving the existing approval-first outbound model. The branches must build, test, and pass a browser end-to-end flow without touching live campaign settings.
+
+## Phases
+
+| # | Phase | Status |
+|---|---|---|
+| 1 | Campaign domain, preview persistence, and custom icon vocabulary | complete |
+| 2 | Shared tabbed shell and campaign index | complete |
+| 3 | Three-pane sequence builder and review flow | complete |
+| 4 | Automated tests, responsive polish, and audit | complete |
+| 5 | Campaign persistence models, API, revisions, and safe lifecycle | complete |
+| 6 | Authenticated frontend integration and persisted browser verification | complete |
+| 7 | Persisted audiences and Orange Slice lead discovery adapter | complete |
+| 8 | Company asset library, blob-storage adapter, and agent consumption contract | complete |
+| 9 | Real channel metrics and person-level reply/demo drilldowns | complete |
+| 10 | Shared left-sidebar shell, consolidated migration, and cross-feature E2E | complete |
+| 11 | Separate customer navigation from the Driftwood admin control room | complete |
+| 12 | Keep internal overview destinations in the current workspace tab | complete |
+| 13 | Engineering review documentation and disposable Neon E2E gate | complete |
+
+## File ownership
+
+| File | Owner phase | Action |
+|---|---|---|
+| `landing/src/campaigns/model.ts` | 1 | create |
+| `landing/src/campaigns/icons.tsx` | 1 | create |
+| `landing/src/campaigns/CampaignShell.tsx` | 2 | create |
+| `landing/src/campaigns/Campaigns.tsx` | 2 | create |
+| `landing/src/campaigns/CampaignBuilder.tsx` | 3 | create |
+| `landing/src/campaigns/campaigns.css` | 2/3 shared integrator: phase 3 | create |
+| `landing/src/main.tsx` | 2 shared integrator | modify |
+| `landing/src/Dashboard.tsx` | 2 | modify |
+| `landing/src/campaigns/model.test.ts` | 4 | create |
+| Browser-controlled desktop/mobile flow | 4 | execute against local Vite app |
+| Backend campaign models, migration, data layer, schemas, router, tests | 5 | create/modify on backend branch |
+| `landing/src/campaigns/api.ts` | 6 | create |
+| Campaign index, builder, model, styles, mocks, and tests | 6 | replace preview persistence with API state |
+| `landing/src/audiences/`, audience backend modules and tests | 7 | create |
+| `landing/src/assets/`, company-asset backend modules and tests | 8 | create |
+| `landing/src/analytics/`, dashboard-metrics backend modules and tests | 9 | create |
+| `landing/src/dashboard/`, shared routes/exports, one Alembic migration, mocks | 10 shared integrator | create/modify |
+| Admin navigation model, admin shell variant, internal routes, and impersonation entry | 11 | create/modify |
+
+## Success criteria
+
+- [x] Campaigns are discoverable from the existing customer dashboard.
+- [x] Campaign index supports status tabs, search, opening, and creating a draft.
+- [x] Builder supports selecting, adding, editing, reordering, and deleting sequence steps.
+- [x] Audience and contactable-lead enrollment state are visible alongside the sequence.
+- [x] Review flow validates the campaign and freezes a persisted campaign version.
+- [x] No campaign action can send outreach or mutate Cardinal or Autosana settings.
+- [x] Desktop and 390px mobile layouts are usable with keyboard-visible focus.
+- [x] Unit, lint, build, and browser-controlled checks pass.
+- [x] Draft campaigns, steps, and selected leads persist through the authenticated API.
+- [x] Active campaign versions are immutable; edits require a cloned draft revision.
+- [x] Activation records enrollment state but does not queue or send outreach.
+- [x] Campaign data is organization-scoped and mutations are audit logged.
+- [x] Backend and frontend checks pass on their isolated feature branches.
+- [x] Approved customers can discover leads through a server-side Orange Slice adapter and save selected people as a persisted audience.
+- [x] Orange Slice credentials never reach the frontend, and the integration does not mutate Orange Slice organization settings.
+- [x] Customers can upload image/video assets or add work links to an organization-scoped company library.
+- [x] Agents have a tenant-scoped read contract for the assets associated with their company/workspace.
+- [x] Metrics show defensible contacted, replied, and demos-booked totals by channel with exact-person drilldowns; untracked opens and clicks are explicitly unavailable.
+- [x] Dashboard navigation uses a persistent left sidebar on desktop and an accessible drawer on mobile.
+- [x] Leads expose reusable audience membership as a column and filter without changing the workspace ICP definition.
+- [x] All feature slices pass focused tests, full frontend/backend checks, migrations from zero, and desktop/mobile browser E2E.
+- [x] Customer navigation contains no Agents or Search visibility links.
+- [x] Admins can enter a clearly separate panel with Agents and Search visibility navigation.
+- [x] Admins can start impersonation from either the customer workspace or admin panel, and non-admin routes remain gated.
+- [x] Overview links for leads, companies, and the review queue stay in the current tab; external resources retain explicit new-tab behavior.
+- [x] Frontend, backend, database, backfill, rollout, and rollback contracts are documented for human and coding-agent review.
+- [x] A disposable Neon child branch passes the real API journey, cleanup verification, migration downgrade/re-upgrade, and is deleted afterward.
+
+## Verification
+
+- Frontend: 22 tests, ESLint, TypeScript, Vite client/SSR, and prerender all pass.
+- Backend `make check`: Ruff, formatting, MyPy, and 833 non-DB tests pass (198 DB tests skipped by design).
+- Backend `make check-db`: migrations apply from zero in disposable PostgreSQL 17 and all 198 DB tests pass.
+- Disposable Neon E2E: upgraded the production-shaped child branch to `cd2465658393`, created an audience, surfaced membership on Leads, activated a planning-only campaign, exposed a link asset to the correct relay-token agent, and drilled a booked demo to its exact lead. The test verified one pending step-run and zero review/scheduled-send rows, removed its `@test.invalid` fixture, downgraded to `4dfcbaad76d3`, re-upgraded to head, and deleted the branch.
+- Live provider boundary: a server-side Orange Slice search returned people without requesting or exposing email/phone enrichment fields.
+- Growth-workspace browser E2E: discovered three leads, selected two into a saved audience, filtered the lead database by audience, applied a one-person audience to a campaign, uploaded an image, saved a link, and opened the exact person behind a booked demo.
+- Production Lighthouse: performance 98, accessibility 100, best practices 100, LCP 2.27s, CLS 0.057, and TBT 0ms.
+- Admin control-room E2E: non-admin customer navigation omitted both internal tools; admin customer navigation exposed Admin panel and Impersonate user; the admin shell exposed only Agents and Search visibility; direct non-admin access rendered the denied state; the impersonation dialog opened and closed successfully.
+- Admin production entry: dedicated `/admin.html` routing removes the dashboard lazy-load chain. Lighthouse scored performance 98, accessibility 100, best practices 100, LCP 2.11s, CLS 0, and TBT 0ms.
+- Internal-navigation contract: overview entry links no longer declare `target="_blank"`; browser QA verifies the link targets `/dashboard/review`, declares no target, and clicking does not increase the tab count.
+- Final mock browser gate: all customer routes render in the shared shell without Agents/Search visibility; a discovered lead saves into a new audience; a link saves into Assets; Review Queue keeps one tab; and console warning/error logs are empty.
+- Persisted browser E2E at 1280×720: selected a real API-shaped lead, added a sequence step, observed Saving → Saved, reviewed the activation disclosure, and verified the frozen active version.
+- Persisted browser E2E at 390×844: enrolled-lead panel, current step, frozen controls, and revision entry point verified; no console warnings or errors.
+- Safety check: the campaign API never creates `review_items`, `scheduled_sends`, or `outbound_messages`; its DB test asserts all three remain empty after activation.
+
+## Risks
+
+| Risk | Mitigation |
+|---|---|
+| An active campaign is mistaken for a live sending surface | Persistent approval-path banner and explicit no-send copy in activation review |
+| Builder UI outruns the backend model | Typed snake-case API adapter with shared lifecycle and validation tests |
+| Dense canvas becomes unusable on mobile | Switchable Flow, leads, and editor panels under 760px |
+| Editing loses work | Debounced authenticated autosave with explicit saving, saved, and error states |
+| Activation is mistaken for authorization to send | Activation only freezes a campaign version and initializes enrollment ledgers; it never creates review items, scheduled sends, or outbound messages |
+| Active edits make execution nondeterministic | Active versions are immutable; a revision clones them into a new draft version |
+| Lead selection crosses workspace boundaries | Available and enrollable leads come only from the existing organization-scoped `contactable_leads` query |
+
+## Persistence extension contract
+
+The persistence branch replaces the preview store with four database tables:
+
+- `campaigns` owns immutable versions in a campaign series and carries lifecycle state.
+- `campaign_steps` stores the ordered sequence definition for one version.
+- `campaign_enrollments` binds contactable leads to that exact version.
+- `campaign_step_runs` is the future execution ledger. Activation initializes the first pending run, but does not create review items or sends.
+
+API lifecycle:
+
+- Drafts may update metadata, replace steps, and replace selected leads atomically.
+- `draft -> active` validates the definition, freezes the version, and initializes enrollment state.
+- `active -> paused -> active` controls campaign readiness only; it does not dispatch work.
+- Editing an active or paused version requires creating a revision with the same series id and the next version number.
+- Future execution may turn a due step run into a `review_item`; only the existing approval path may create a `scheduled_send` and later an `outbound_message`.
+
+No endpoint in this extension talks to Cardinal, modifies Autosana, or sends outreach.
+
+## Growth workspace extension contract
+
+- `audiences` and `audience_members` persist a workspace-owned snapshot of selected people. Discovery is read-only and routed through a backend Orange Slice provider using centrally configured `ORANGESLICE_API_KEY`; the browser never receives that credential.
+- Orange Slice is not iframe-embedded. A native Driftwood lead-list UI calls a narrow search contract so tenant policy, failure states, pagination, and saved membership remain under our control.
+- `company_assets` stores tenant/company ownership, media metadata, optional source links, and opaque blob keys. A storage adapter handles upload/delete/read URLs; the agent-facing query returns only assets visible to the authenticated workspace.
+- Metrics aggregate existing outbound, reply, and meeting records. Missing event coverage must show zero or an explicit unavailable definition, never an invented conversion.
+- Shared exports, router registration, routes, mocks, and one consolidated migration are integrated centrally after the three isolated feature slices finish.
+
+## Admin control-room extension contract
+
+- The customer shell contains only customer work: overview, audiences, campaigns, metrics, leads, companies, assets, and review.
+- Agents and SEO/GEO remain admin-gated internal tools and move into an explicit admin shell under `/dashboard/admin`.
+- Admins see entry points for both the admin panel and impersonation; impersonated sessions keep the existing exit banner.
+- Legacy internal URLs remain compatible, but all new in-app links use the admin namespace.
+- This is an information-architecture extension of the existing Workbench run. It preserves the locked minimal/operator-canvas direction, Corporate motion at 1/3, native scrolling, custom SVG icons, and no visual-effect layer.
+
+### Admin page-purpose and pre-emit verification
+
+```yaml
+page_purpose:
+  job: "Navigate and display internal operational data"
+  audience: "Authenticated Driftwood admins"
+  primary_action: "Move between agent operations, search visibility, and user impersonation"
+  success: "No internal tool appears in customer navigation; admins retain fast access"
+  marketing_intent: false
+design_plan:
+  macrostructure: "existing Workbench shell with an explicit admin mode"
+  vibe_validity:
+    anchor: "minimal"
+    wildcard: "operator canvas"
+    contradiction: false
+    valid: true
+  motion_personality:
+    name: "Corporate"
+    intensity: "1/3"
+    override_logged: true
+  button_contrast:
+    states: ["default", "hover", "focus", "active", "disabled", "loading", "error", "success"]
+    focus_ring_visible: true
+    contrast_aa_pass: true
+  honest_copy:
+    fabricated_metrics: 0
+    placeholders_required: 0
+```
+
+## Growth workspace pre-emit verification
+
+This is an extension of the same product/workbench design run, not a new standalone page run, so the existing Workbench macrostructure and `.perfect-ui/log.json` entry remain the diversification record.
+
+```yaml
+<design_plan>
+  macrostructure: "existing Workbench expanded with persistent left-sidebar app shell"
+  vibe:
+    anchor: "minimal"
+    wildcard: "operator canvas"
+    valid: true
+  spatial_system:
+    desktop: "15rem fixed sidebar + fluid work surface"
+    mobile: "compact masthead + modal navigation drawer"
+    page_modes: ["lead data grid", "asset library", "metric funnel + people drilldown", "campaign canvas"]
+  motion:
+    personality: "Corporate"
+    intensity: "1/3"
+    easing: "cubic-bezier(0.2, 0, 0, 1)"
+  interaction_states:
+    button_states: ["default", "hover", "focus", "active", "disabled", "loading", "error", "success"]
+    network_states: ["loading", "saving", "saved", "error", "empty"]
+  honest_copy:
+    fabricated_metrics: 0
+    discovery_source: "Orange Slice through server-side adapter"
+    metric_source: "organization-scoped outbound/reply/meeting records"
+  effects_layer: "none"
+  custom_icons: "reuse and extend Driftwood's outlined SVG vocabulary; no icon package or emoji"
+</design_plan>
+```
+
+## Persistence pre-emit verification
+
+```yaml
+<design_plan>
+  macrostructure: "existing three-pane Workbench; no new page archetype"
+  vibe:
+    anchor: "minimal"
+    wildcard: "operator canvas"
+    valid: true
+  motion:
+    personality: "Corporate"
+    intensity: "1/3"
+    easing: "cubic-bezier(0.2, 0, 0, 1)"
+  interaction_states:
+    button_states: ["default", "hover", "focus", "active", "disabled", "loading", "error", "success"]
+    network_states: ["loading", "saving", "saved", "error", "empty"]
+  honest_copy:
+    fabricated_metrics: 0
+    data_source: "authenticated campaign and contactable-lead APIs"
+    activation_disclosure: "freezes the version; does not queue or send outreach"
+  effects_layer: "none"
+  custom_icons: "reuse the existing outlined campaign SVG vocabulary"
+</design_plan>
+```
+
+## Pre-emit verification
+
+```yaml
+<design_plan>
+  macrostructure_diversification:
+    last_3: ["Workbench"]
+    pick: "Workbench"
+    differs_from_last_3: false
+    override_logged: true
+    diversification_rule_pass: true
+  vibe_validity:
+    anchor: "minimal"
+    wildcard: "operator canvas"
+    contradiction: false
+    valid: true
+  dial_alignment:
+    design_variance: 5
+    visual_density: 9
+    workbench_default_diff: [1, 2]
+    macrostructure_within_pm_2: true
+  motion_personality:
+    name: "Corporate"
+    vibe_default_match: false
+    override_logged: true
+  hero_math:
+    applicable: false
+    universal_4plus_ban_pass: true
+  bento_density:
+    applicable: false
+  label_sweep:
+    meta_labels_found: 0
+    long_document_exception: false
+    pass: true
+  button_contrast:
+    eight_states_planned: ["default", "hover", "focus", "active", "disabled", "loading", "error", "success"]
+    focus_ring_visible: true
+    contrast_aa_pass: true
+  honest_copy:
+    fabricated_metrics: 0
+    fixture_data_label: "Mock data is limited to the explicit ?mock=1 QA mode"
+    placeholders_required: 0
+  gsap_decision:
+    intensity: "1/3"
+    gsap_needed: false
+    skills_route: "n/a"
+</design_plan>
+```

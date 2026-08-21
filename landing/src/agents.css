@@ -29,7 +29,7 @@
 }
 
 .agent-summary-clamp {
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
 }
 
 .agent-two-line-clamp {

@@ -48,13 +48,13 @@
   --color-surface: #ffffff;
   --color-ink: #16181b;
   --color-ink-soft: #6a737d;
-  --color-ink-faint: #9aa2ab;
+  --color-ink-faint: #6f7780;
   --color-tide: #15557e;
   --color-tide-deep: #0d3c5b;
   --color-tide-wash: #eaf1f7;
   --color-sand: #eef2f5;
   --color-line: #e9ebee;
-  --color-ok: #2a9d5c;
+  --color-ok: #197142;
   --color-alert: #b42318;
   --shadow-win: 0 1px 2px rgba(22, 24, 27, 0.05), 0 24px 48px -24px rgba(22, 24, 27, 0.18);
   --shadow-win-sm: 0 1px 2px rgba(22, 24, 27, 0.04), 0 10px 20px -14px rgba(22, 24, 27, 0.12);

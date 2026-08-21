@@ -1,0 +1,844 @@
+import { useEffect, useRef, useState } from "react";
+import {
+  getAudience as getSavedAudience,
+  listAudiences,
+} from "../audiences/api";
+import type { Audience, AudienceSummary } from "../audiences/model";
+import CampaignShell from "./CampaignShell";
+import {
+  activateCampaign,
+  createCampaign,
+  createCampaignRevision,
+  getCampaign,
+  pauseCampaign,
+  resumeCampaign,
+  saveCampaign,
+} from "./api";
+import {
+  applyAudience,
+  contactStatusLabel,
+  createStep,
+  insertStep,
+  moveStep,
+  removeStep,
+  touchCampaign,
+  updateStep,
+  validateCampaign,
+  type Campaign,
+  type CampaignStep,
+  type StepKind,
+} from "./model";
+import {
+  BackIcon,
+  CloseIcon,
+  DemoIcon,
+  EditIcon,
+  LinkedInIcon,
+  MailIcon,
+  MoveDownIcon,
+  MoveUpIcon,
+  PeopleIcon,
+  PlusIcon,
+  SearchIcon,
+  TrashIcon,
+  WaitIcon,
+} from "./icons";
+
+type MobilePanel = "leads" | "flow" | "editor";
+type SaveState = "idle" | "saving" | "saved" | "error";
+
+const STEP_OPTIONS: Array<{
+  kind: StepKind;
+  label: string;
+  detail: string;
+  icon: typeof MailIcon;
+}> = [
+  { kind: "email", label: "Email", detail: "Subject and personalized body", icon: MailIcon },
+  { kind: "demo", label: "Tailored demo", detail: "Share an approved prospect demo", icon: DemoIcon },
+  { kind: "wait", label: "Wait", detail: "Delay the next action", icon: WaitIcon },
+  { kind: "linkedin-connect", label: "Connection request", detail: "Request a LinkedIn connection", icon: LinkedInIcon },
+  { kind: "linkedin-message", label: "LinkedIn message", detail: "Message a connected lead", icon: LinkedInIcon },
+];
+
+function StepGlyph({ kind, size = 18 }: { kind: StepKind; size?: number }) {
+  if (kind === "email") return <MailIcon size={size} />;
+  if (kind === "wait") return <WaitIcon size={size} />;
+  if (kind === "demo") return <DemoIcon size={size} />;
+  return <LinkedInIcon size={size} />;
+}
+
+function detailForStep(step: CampaignStep): string {
+  if (step.kind === "wait") return `${step.delayDays} ${step.delayDays === 1 ? "day" : "days"}`;
+  if (step.kind === "email") return step.subject || "Subject needed";
+  return step.body || "Copy needed";
+}
+
+export default function CampaignBuilder({ campaignId }: { campaignId: string }) {
+  const [campaign, setCampaign] = useState<Campaign | null>(null);
+  const campaignRef = useRef<Campaign | null>(null);
+  const [selectedStepId, setSelectedStepId] = useState<string | null>(null);
+  const [addAfterStepId, setAddAfterStepId] = useState<string | null | undefined>(undefined);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const [contactQuery, setContactQuery] = useState("");
+  const [mobilePanel, setMobilePanel] = useState<MobilePanel>("flow");
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [saveState, setSaveState] = useState<SaveState>("idle");
+  const [actionBusy, setActionBusy] = useState(false);
+  const [revision, setRevision] = useState(0);
+  const latestRevisionRef = useRef(0);
+  const saveTimerRef = useRef<number | null>(null);
+  const savePromiseRef = useRef<Promise<Campaign> | null>(null);
+
+  useEffect(() => {
+    let current = true;
+    const load = campaignId === "new" ? createCampaign() : getCampaign(campaignId);
+    load
+      .then((loaded) => {
+        if (!current) return;
+        campaignRef.current = loaded;
+        setCampaign(loaded);
+        setSelectedStepId(loaded.steps[0]?.id ?? null);
+        setSaveState("saved");
+        if (campaignId === "new") {
+          window.history.replaceState(null, "", `/dashboard/campaigns/${loaded.id}`);
+        }
+      })
+      .catch((reason: unknown) => {
+        if (current) {
+          setLoadError(reason instanceof Error ? reason.message : "Campaign could not load.");
+        }
+      })
+      .finally(() => {
+        if (current) setLoading(false);
+      });
+    return () => {
+      current = false;
+    };
+  }, [campaignId]);
+
+  useEffect(() => {
+    if (revision === 0) return;
+    const snapshot = campaignRef.current;
+    if (!snapshot || snapshot.status !== "draft") return;
+    const expectedRevision = latestRevisionRef.current;
+    setSaveState("saving");
+    saveTimerRef.current = window.setTimeout(() => {
+      const pending = saveCampaign(snapshot);
+      savePromiseRef.current = pending;
+      pending
+        .then((saved) => {
+          if (latestRevisionRef.current !== expectedRevision) return;
+          campaignRef.current = saved;
+          setCampaign(saved);
+          setSaveState("saved");
+        })
+        .catch(() => {
+          if (latestRevisionRef.current === expectedRevision) setSaveState("error");
+        })
+        .finally(() => {
+          if (savePromiseRef.current === pending) savePromiseRef.current = null;
+        });
+    }, 600);
+    return () => {
+      if (saveTimerRef.current !== null) window.clearTimeout(saveTimerRef.current);
+    };
+  }, [revision]);
+
+  function commit(next: Campaign) {
+    if (campaignRef.current?.status !== "draft") return;
+    campaignRef.current = next;
+    setCampaign(next);
+    latestRevisionRef.current += 1;
+    setRevision(latestRevisionRef.current);
+  }
+
+  function patchCampaign(patch: Partial<Campaign>) {
+    const current = campaignRef.current;
+    if (!current) return;
+    commit(touchCampaign(current, patch));
+  }
+
+  function patchStep(patch: Partial<CampaignStep>) {
+    const current = campaignRef.current;
+    if (!current || !selectedStepId) return;
+    commit(updateStep(current, selectedStepId, patch));
+  }
+
+  function addStep(kind: StepKind) {
+    const current = campaignRef.current;
+    if (!current) return;
+    const step = createStep(kind);
+    const next = insertStep(current, step, addAfterStepId ?? undefined);
+    commit(next);
+    setSelectedStepId(step.id);
+    setAddAfterStepId(undefined);
+    setMobilePanel("editor");
+    setToast(`${step.label} added to the sequence.`);
+  }
+
+  function handleMove(stepId: string, direction: -1 | 1) {
+    const current = campaignRef.current;
+    if (current) commit(moveStep(current, stepId, direction));
+  }
+
+  function handleRemove() {
+    const current = campaignRef.current;
+    if (!current || !selectedStepId) return;
+    const index = current.steps.findIndex((step) => step.id === selectedStepId);
+    const next = removeStep(current, selectedStepId);
+    commit(next);
+    setSelectedStepId(next.steps[Math.max(0, index - 1)]?.id ?? null);
+    setMobilePanel("flow");
+    setToast("Step removed from the sequence.");
+  }
+
+  function toggleContact(contactId: string) {
+    const current = campaignRef.current;
+    if (!current) return;
+    const contact = current.contacts.find((candidate) => candidate.id === contactId);
+    if (!contact?.selectable) return;
+    commit(touchCampaign(current, {
+      contacts: current.contacts.map((candidate) => {
+        if (candidate.id !== contactId) return candidate;
+        const selected = !candidate.selected;
+        return {
+          ...candidate,
+          selected,
+          status: selected ? "draft" : null,
+          currentStep: null,
+          nextActionAt: null,
+        };
+      }),
+    }));
+  }
+
+  function selectSavedAudience(audience: Audience) {
+    const current = campaignRef.current;
+    if (!current) return;
+    const leadIds = audience.members
+      .filter((member) => member.contactable)
+      .map((member) => member.leadId);
+    commit(applyAudience(current, audience.name, leadIds));
+    setToast(
+      `${leadIds.length} contactable ${leadIds.length === 1 ? "lead" : "leads"} selected from ${audience.name}.`,
+    );
+  }
+
+  async function persistLatest(): Promise<Campaign> {
+    if (saveTimerRef.current !== null) window.clearTimeout(saveTimerRef.current);
+    try {
+      await savePromiseRef.current;
+    } catch {
+      // A fresh save below supersedes an earlier autosave failure.
+    }
+    const current = campaignRef.current;
+    if (!current) throw new Error("Campaign is unavailable.");
+    setSaveState("saving");
+    const saved = await saveCampaign(current);
+    latestRevisionRef.current += 1;
+    campaignRef.current = saved;
+    setCampaign(saved);
+    setSaveState("saved");
+    return saved;
+  }
+
+  async function activate() {
+    const current = campaignRef.current;
+    if (!current || !validateCampaign(current).ready) return;
+    setActionBusy(true);
+    try {
+      const saved = await persistLatest();
+      const active = await activateCampaign(saved.id);
+      campaignRef.current = active;
+      setCampaign(active);
+      setReviewOpen(false);
+      setToast("Campaign activated. No outreach was queued or sent.");
+    } catch (reason) {
+      setToast(reason instanceof Error ? reason.message : "Campaign could not be activated.");
+    } finally {
+      setActionBusy(false);
+    }
+  }
+
+  async function toggleStatus() {
+    const current = campaignRef.current;
+    if (!current || (current.status !== "active" && current.status !== "paused")) return;
+    setActionBusy(true);
+    try {
+      const updated = current.status === "active"
+        ? await pauseCampaign(current.id)
+        : await resumeCampaign(current.id);
+      campaignRef.current = updated;
+      setCampaign(updated);
+      setToast(updated.status === "paused" ? "Campaign paused." : "Campaign resumed. Nothing was sent.");
+    } catch (reason) {
+      setToast(reason instanceof Error ? reason.message : "Campaign status could not change.");
+    } finally {
+      setActionBusy(false);
+    }
+  }
+
+  async function revise() {
+    const current = campaignRef.current;
+    if (!current) return;
+    setActionBusy(true);
+    try {
+      const draft = await createCampaignRevision(current.id);
+      window.location.href = `/dashboard/campaigns/${encodeURIComponent(draft.id)}`;
+    } catch (reason) {
+      setToast(reason instanceof Error ? reason.message : "A revision could not be created.");
+      setActionBusy(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <CampaignShell active="campaigns" workspace>
+        <div className="campaign-loading campaign-loading-workspace" aria-live="polite">
+          <span aria-hidden="true" />
+          <p>Loading campaign…</p>
+        </div>
+      </CampaignShell>
+    );
+  }
+
+  if (!campaign || loadError) {
+    return (
+      <CampaignShell active="campaigns">
+        <div className="campaign-not-found">
+          <h1>Campaign unavailable</h1>
+          <p>{loadError ?? "This campaign could not be found in your workspace."}</p>
+          <a className="campaign-primary" href="/dashboard/campaigns">Back to campaigns</a>
+        </div>
+      </CampaignShell>
+    );
+  }
+
+  const editable = campaign.status === "draft";
+  const selectedStep = campaign.steps.find((step) => step.id === selectedStepId) ?? null;
+  const validation = validateCampaign(campaign);
+  const selectedContacts = campaign.contacts.filter((contact) => contact.selected);
+  const visibleContacts = campaign.contacts.filter((contact) => editable || contact.selected);
+  const normalizedQuery = contactQuery.trim().toLowerCase();
+  const filteredContacts = visibleContacts.filter((contact) =>
+    [contact.name, contact.company, contact.role]
+      .join(" ")
+      .toLowerCase()
+      .includes(normalizedQuery),
+  );
+  const replied = selectedContacts.filter((contact) => contact.status === "replied").length;
+  const waiting = selectedContacts.filter((contact) => contact.status === "waiting").length;
+
+  return (
+    <CampaignShell active="campaigns" workspace>
+      <div className="campaign-workspace">
+        <header className="campaign-builder-toolbar">
+          <div className="campaign-builder-title">
+            <a className="campaign-icon-link" href="/dashboard/campaigns" aria-label="Back to campaigns">
+              <BackIcon size={17} />
+            </a>
+            <div>
+              <span className={`campaign-status campaign-status-${campaign.status}`}>
+                {campaign.status} · v{campaign.version}
+              </span>
+              <input
+                className="campaign-name-input"
+                value={campaign.name}
+                aria-label="Campaign name"
+                data-testid="campaign-name"
+                disabled={!editable}
+                onChange={(event) => patchCampaign({ name: event.target.value })}
+              />
+            </div>
+          </div>
+          <div className="campaign-builder-actions">
+            {campaign.status === "active" || campaign.status === "paused" ? (
+              <button className="campaign-secondary" type="button" onClick={toggleStatus} disabled={actionBusy}>
+                {campaign.status === "active" ? "Pause" : "Resume"}
+              </button>
+            ) : null}
+            <span className={`campaign-saved-state campaign-save-${saveState}`} aria-live="polite">
+              {saveState === "saving" ? "Saving…" : saveState === "error" ? "Save failed" : editable ? "Saved" : "Version frozen"}
+            </span>
+            {editable ? (
+              <button className="campaign-primary" type="button" onClick={() => setReviewOpen(true)} disabled={actionBusy} data-testid="review-campaign">
+                Review campaign
+              </button>
+            ) : (
+              <button className="campaign-primary" type="button" onClick={revise} disabled={actionBusy} data-testid="revise-campaign">
+                {actionBusy ? "Creating…" : "Create revision"}
+              </button>
+            )}
+          </div>
+        </header>
+
+        <div className="campaign-mobile-switcher" role="group" aria-label="Campaign workspace panels">
+          {(["leads", "flow", "editor"] as MobilePanel[]).map((panel) => (
+            <button
+              key={panel}
+              type="button"
+              className={mobilePanel === panel ? "is-active" : ""}
+              onClick={() => setMobilePanel(panel)}
+            >
+              {panel === "leads" ? "Leads" : panel === "flow" ? "Sequence" : "Editor"}
+            </button>
+          ))}
+        </div>
+
+        <aside className={`campaign-lead-rail ${mobilePanel === "leads" ? "is-mobile-current" : ""}`} aria-label="Campaign leads">
+          <div className="campaign-rail-summary">
+            <span><strong>{selectedContacts.length}</strong> selected</span>
+            <span><strong>{replied}</strong> replied</span>
+            <span><strong>{waiting}</strong> waiting</span>
+          </div>
+          <label className="campaign-rail-search">
+            <SearchIcon size={15} />
+            <span className="sr-only">Search campaign leads</span>
+            <input
+              type="search"
+              placeholder="Search available leads"
+              value={contactQuery}
+              onChange={(event) => setContactQuery(event.target.value)}
+            />
+          </label>
+          <div className="campaign-contact-head" aria-hidden="true">
+            <span>{editable ? "Select contact" : "Enrolled contact"}</span><span>Step</span>
+          </div>
+          <div className="campaign-contact-list" role="list">
+            {filteredContacts.length === 0 ? (
+              <p className="campaign-contact-empty">No leads match this search.</p>
+            ) : filteredContacts.map((contact) => (
+              <label className={`campaign-contact-row ${contact.selected ? "is-selected" : ""}`} role="listitem" key={contact.id}>
+                <input
+                  className="campaign-contact-check"
+                  type="checkbox"
+                  checked={contact.selected}
+                  disabled={!editable || !contact.selectable}
+                  onChange={() => toggleContact(contact.id)}
+                  aria-label={`${contact.selected ? "Remove" : "Add"} ${contact.name}`}
+                />
+                <span className="campaign-contact-monogram" aria-hidden="true">
+                  {contact.name.split(" ").map((part) => part[0]).join("").slice(0, 2)}
+                </span>
+                <span className="campaign-contact-copy">
+                  <strong>{contact.name}</strong>
+                  <span>{contact.company} · {contact.role}</span>
+                  <small className={`campaign-journey-${contact.status ?? "unselected"}`}>{contactStatusLabel(contact)}</small>
+                </span>
+                <span className="campaign-contact-step">
+                  {contact.currentStep ? `${contact.currentStep}/${campaign.steps.length}` : "Not started"}
+                </span>
+              </label>
+            ))}
+          </div>
+        </aside>
+
+        <section className={`campaign-canvas ${mobilePanel === "flow" ? "is-mobile-current" : ""}`} aria-label="Campaign sequence">
+          <div className="campaign-canvas-head">
+            <div>
+              <span>Sequence</span>
+              <small>{campaign.steps.length} steps · persisted version {campaign.version}</small>
+            </div>
+            {editable && (
+              <button className="campaign-secondary campaign-compact-button" type="button" onClick={() => setAddAfterStepId(null)}>
+                <PlusIcon size={15} /> Add step
+              </button>
+            )}
+          </div>
+          <div className="campaign-flow" data-testid="campaign-flow">
+            <button
+              type="button"
+              className="campaign-audience-node"
+              data-testid="audience-node"
+              onClick={() => {
+                setSelectedStepId(null);
+                setMobilePanel("editor");
+              }}
+            >
+              <span className="campaign-node-icon"><PeopleIcon size={18} /></span>
+              <span>
+                <small>Audience</small>
+                <strong>{campaign.audience}</strong>
+                <span>
+                  {selectedContacts.length} selected {selectedContacts.length === 1 ? "lead" : "leads"}
+                </span>
+              </span>
+              <EditIcon size={15} />
+            </button>
+
+            {campaign.steps.map((step, index) => (
+              <SequenceNode
+                key={step.id}
+                step={step}
+                index={index}
+                total={campaign.steps.length}
+                selected={selectedStepId === step.id}
+                editable={editable}
+                onSelect={() => {
+                  setSelectedStepId(step.id);
+                  setMobilePanel("editor");
+                }}
+                onMove={(direction) => handleMove(step.id, direction)}
+                onAdd={() => setAddAfterStepId(step.id)}
+              />
+            ))}
+
+            {editable && (
+              <button className="campaign-flow-add-final" type="button" onClick={() => setAddAfterStepId(campaign.steps.at(-1)?.id ?? null)}>
+                <PlusIcon size={16} />
+                Add another step
+              </button>
+            )}
+          </div>
+        </section>
+
+        <aside className={`campaign-inspector ${mobilePanel === "editor" ? "is-mobile-current" : ""}`} aria-label="Campaign editor">
+          {selectedStep ? (
+            <StepEditor
+              step={selectedStep}
+              editable={editable}
+              onChange={patchStep}
+              onRemove={handleRemove}
+            />
+          ) : (
+            <AudienceEditor
+              campaign={campaign}
+              editable={editable}
+              onChange={patchCampaign}
+              onApply={selectSavedAudience}
+            />
+          )}
+        </aside>
+      </div>
+
+      {addAfterStepId !== undefined && editable && (
+        <AddStepDialog onClose={() => setAddAfterStepId(undefined)} onAdd={addStep} />
+      )}
+
+      {reviewOpen && editable && (
+        <ReviewDialog
+          campaign={campaign}
+          issues={validation.issues}
+          activating={actionBusy}
+          onClose={() => setReviewOpen(false)}
+          onActivate={activate}
+        />
+      )}
+
+      {toast && (
+        <button className="campaign-toast" type="button" onClick={() => setToast(null)} role="status">
+          {toast}
+        </button>
+      )}
+    </CampaignShell>
+  );
+}
+
+function SequenceNode({
+  step,
+  index,
+  total,
+  selected,
+  editable,
+  onSelect,
+  onMove,
+  onAdd,
+}: {
+  step: CampaignStep;
+  index: number;
+  total: number;
+  selected: boolean;
+  editable: boolean;
+  onSelect: () => void;
+  onMove: (direction: -1 | 1) => void;
+  onAdd: () => void;
+}) {
+  return (
+    <div className="campaign-flow-item">
+      <div className="campaign-flow-connector">
+        {step.kind === "wait" ? <span>always · wait {step.delayDays}d</span> : <span>continue</span>}
+        {editable && <button type="button" onClick={onAdd} aria-label={`Add step before ${step.label}`}><PlusIcon size={13} /></button>}
+      </div>
+      <div className={`campaign-sequence-node ${selected ? "is-selected" : ""}`} data-testid={`sequence-step-${step.kind}`}>
+        <button className="campaign-node-main" type="button" onClick={onSelect} aria-pressed={selected}>
+          <span className="campaign-node-icon"><StepGlyph kind={step.kind} /></span>
+          <span className="campaign-node-copy">
+            <small>Step {index + 1}</small>
+            <strong>{step.label}</strong>
+            <span>{detailForStep(step)}</span>
+          </span>
+        </button>
+        {editable && (
+          <div className="campaign-node-controls">
+            <button type="button" onClick={() => onMove(-1)} disabled={index === 0} aria-label={`Move ${step.label} up`}><MoveUpIcon size={14} /></button>
+            <button type="button" onClick={() => onMove(1)} disabled={index === total - 1} aria-label={`Move ${step.label} down`}><MoveDownIcon size={14} /></button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AudienceEditor({
+  campaign,
+  editable,
+  onChange,
+  onApply,
+}: {
+  campaign: Campaign;
+  editable: boolean;
+  onChange: (patch: Partial<Campaign>) => void;
+  onApply: (audience: Audience) => void;
+}) {
+  const [audiences, setAudiences] = useState<AudienceSummary[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [applying, setApplying] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let current = true;
+    listAudiences()
+      .then((rows) => {
+        if (current) setAudiences(rows);
+      })
+      .catch((reason: unknown) => {
+        if (current) {
+          setError(reason instanceof Error ? reason.message : "Audiences could not load.");
+        }
+      })
+      .finally(() => {
+        if (current) setLoading(false);
+      });
+    return () => {
+      current = false;
+    };
+  }, []);
+
+  async function chooseAudience(id: string) {
+    if (!id) return;
+    setApplying(true);
+    setError(null);
+    try {
+      onApply(await getSavedAudience(id));
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "This audience could not be applied.");
+    } finally {
+      setApplying(false);
+    }
+  }
+
+  const selectedAudienceId =
+    audiences.find((audience) => audience.name === campaign.audience)?.id ?? "";
+  const selectedCount = campaign.contacts.filter((contact) => contact.selected).length;
+
+  return (
+    <div className="campaign-editor-form">
+      <div className="campaign-editor-heading">
+        <span className="campaign-node-icon"><PeopleIcon size={18} /></span>
+        <div><small>Audience</small><h2>Who enters this campaign</h2></div>
+      </div>
+      <label className="campaign-field">
+        <span>Saved audience</span>
+        <select
+          disabled={!editable || loading || applying}
+          value={selectedAudienceId}
+          data-testid="campaign-audience"
+          onChange={(event) => void chooseAudience(event.target.value)}
+        >
+          <option value="">
+            {loading
+              ? "Loading audiences…"
+              : audiences.length
+                ? "Choose a saved audience"
+                : "No saved audiences yet"}
+          </option>
+          {audiences.map((audience) => (
+            <option key={audience.id} value={audience.id}>
+              {audience.name} · {audience.memberCount} {audience.memberCount === 1 ? "lead" : "leads"}
+            </option>
+          ))}
+        </select>
+        <small>
+          {applying
+            ? "Applying the exact contactable membership…"
+            : `${selectedCount} ${selectedCount === 1 ? "lead" : "leads"} selected for this version.`}
+        </small>
+      </label>
+      {error && <div className="campaign-audience-error" role="alert">{error}</div>}
+      <a className="campaign-audience-link" href="/dashboard/audiences">
+        Build or edit audiences
+      </a>
+      <label className="campaign-field">
+        <span>Campaign description</span>
+        <textarea disabled={!editable} rows={5} value={campaign.description} onChange={(event) => onChange({ description: event.target.value })} />
+      </label>
+      <div className="campaign-editor-note">
+        Lead selection stores enrollment for this exact version. It does not change lead stages or queue outreach.
+      </div>
+    </div>
+  );
+}
+
+function StepEditor({
+  step,
+  editable,
+  onChange,
+  onRemove,
+}: {
+  step: CampaignStep;
+  editable: boolean;
+  onChange: (patch: Partial<CampaignStep>) => void;
+  onRemove: () => void;
+}) {
+  const isMessage = step.kind !== "wait";
+  return (
+    <div className="campaign-editor-form">
+      <div className="campaign-editor-heading">
+        <span className="campaign-node-icon"><StepGlyph kind={step.kind} /></span>
+        <div><small>Sequence step</small><h2>{step.label}</h2></div>
+      </div>
+      <label className="campaign-field">
+        <span>Step name</span>
+        <input disabled={!editable} value={step.label} onChange={(event) => onChange({ label: event.target.value })} data-testid="step-label" />
+      </label>
+      {step.kind === "email" && (
+        <label className="campaign-field">
+          <span>Subject</span>
+          <input disabled={!editable} value={step.subject} onChange={(event) => onChange({ subject: event.target.value })} data-testid="step-subject" />
+        </label>
+      )}
+      {isMessage ? (
+        <label className="campaign-field">
+          <span>Message</span>
+          <textarea disabled={!editable} rows={8} value={step.body} onChange={(event) => onChange({ body: event.target.value })} data-testid="step-body" />
+          <small>Available variables: {"{{first_name}}"}, {"{{company}}"}, {"{{demo_link}}"}</small>
+        </label>
+      ) : (
+        <label className="campaign-field">
+          <span>Wait time in days</span>
+          <input
+            disabled={!editable}
+            type="number"
+            min={1}
+            max={30}
+            value={step.delayDays}
+            onChange={(event) => onChange({ delayDays: Math.max(1, Number(event.target.value) || 1) })}
+            data-testid="step-delay"
+          />
+        </label>
+      )}
+      {isMessage && (
+        <>
+          <label className="campaign-field">
+            <span>Send window</span>
+            <select disabled={!editable} value={step.sendWindow} onChange={(event) => onChange({ sendWindow: event.target.value as CampaignStep["sendWindow"] })}>
+              <option value="business-hours">Weekdays, 9 AM to 6 PM</option>
+              <option value="morning">Weekdays, 8 AM to noon</option>
+              <option value="anytime">Any protected send window</option>
+            </select>
+          </label>
+          <label className="campaign-check-field">
+            <input disabled={!editable} type="checkbox" checked={step.stopOnReply} onChange={(event) => onChange({ stopOnReply: event.target.checked })} />
+            <span><strong>Stop on reply</strong><small>Do not continue this lead after a reply.</small></span>
+          </label>
+        </>
+      )}
+      {editable && (
+        <button className="campaign-danger-button campaign-editor-remove" type="button" onClick={onRemove}>
+          <TrashIcon size={15} /> Remove step
+        </button>
+      )}
+    </div>
+  );
+}
+
+function AddStepDialog({
+  onClose,
+  onAdd,
+}: {
+  onClose: () => void;
+  onAdd: (kind: StepKind) => void;
+}) {
+  return (
+    <div
+      className="campaign-dialog-backdrop"
+      role="presentation"
+      onKeyDown={(event) => { if (event.key === "Escape") onClose(); }}
+      onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}
+    >
+      <section className="campaign-dialog campaign-step-dialog" role="dialog" aria-modal="true" aria-labelledby="add-step-heading">
+        <div className="campaign-dialog-heading">
+          <div><small>Sequence library</small><h2 id="add-step-heading">Add a step</h2></div>
+          <button className="campaign-icon-button" type="button" onClick={onClose} aria-label="Close step library" autoFocus><CloseIcon size={17} /></button>
+        </div>
+        <div className="campaign-step-options">
+          {STEP_OPTIONS.map((option) => {
+            const OptionIcon = option.icon;
+            return (
+              <button type="button" key={option.kind} onClick={() => onAdd(option.kind)} data-testid={`add-step-${option.kind}`}>
+                <span className="campaign-node-icon"><OptionIcon size={18} /></span>
+                <span><strong>{option.label}</strong><small>{option.detail}</small></span>
+                <PlusIcon size={15} />
+              </button>
+            );
+          })}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function ReviewDialog({
+  campaign,
+  issues,
+  activating,
+  onClose,
+  onActivate,
+}: {
+  campaign: Campaign;
+  issues: string[];
+  activating: boolean;
+  onClose: () => void;
+  onActivate: () => void;
+}) {
+  const selected = campaign.contacts.filter((contact) => contact.selected).length;
+  return (
+    <div
+      className="campaign-dialog-backdrop"
+      role="presentation"
+      onKeyDown={(event) => { if (event.key === "Escape" && !activating) onClose(); }}
+      onMouseDown={(event) => { if (event.target === event.currentTarget && !activating) onClose(); }}
+    >
+      <section className="campaign-dialog campaign-review-dialog" role="dialog" aria-modal="true" aria-labelledby="review-heading">
+        <div className="campaign-dialog-heading">
+          <div><small>Version {campaign.version} check</small><h2 id="review-heading">Review campaign</h2></div>
+          <button className="campaign-icon-button" type="button" onClick={onClose} disabled={activating} aria-label="Close review" autoFocus><CloseIcon size={17} /></button>
+        </div>
+        <div className="campaign-review-summary">
+          <div><span>Audience</span><strong>{campaign.audience}</strong></div>
+          <div><span>Selected leads</span><strong>{selected}</strong></div>
+          <div><span>Sequence steps</span><strong>{campaign.steps.length}</strong></div>
+        </div>
+        {issues.length > 0 ? (
+          <div className="campaign-review-issues" role="alert">
+            <strong>Finish these items before activation</strong>
+            <ul>{issues.map((issue) => <li key={issue}>{issue}</li>)}</ul>
+          </div>
+        ) : (
+          <div className="campaign-review-ready">
+            <strong>Ready to freeze this version</strong>
+            <p>Activation stores the version and initializes a pending ledger. It does not approve, queue, or send outreach.</p>
+          </div>
+        )}
+        <div className="campaign-dialog-actions">
+          <button className="campaign-secondary" type="button" onClick={onClose} disabled={activating}>Keep editing</button>
+          <button className="campaign-primary" type="button" onClick={onActivate} disabled={issues.length > 0 || activating} data-testid="activate-campaign">
+            {activating ? "Activating…" : "Activate campaign"}
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
