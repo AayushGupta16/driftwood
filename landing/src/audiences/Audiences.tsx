@@ -383,13 +383,13 @@ export default function Audiences() {
 
               <div className="audience-query-box">
                 <SearchIcon size={17} />
-                <input aria-label="Refine your search" value={filters.query} onChange={(event) => setFilters({ ...filters, query: event.target.value })} placeholder="Refine your search" />
+                <input aria-label="Describe who you're looking for" value={filters.prompt} onChange={(event) => setFilters({ ...filters, prompt: event.target.value })} placeholder="Describe who you're looking for" />
                 <button type="submit" aria-label="Run lead search" disabled={discovering || providerStatusLoading || !activeProvider?.configured || !hasSearchFilter}><ArrowIcon size={15} /></button>
               </div>
 
               <div className="audience-search-examples" aria-label="Example searches">
-                <button type="button" onClick={() => setFilters({ query: "B2B SaaS", company: "", title: "Founder" })}><SearchIcon size={13} /> Find founders at B2B SaaS companies</button>
-                <button type="button" onClick={() => setFilters({ query: "software", company: "", title: "Head of QA" })}><SearchIcon size={13} /> Find QA leaders at software companies</button>
+                <button type="button" onClick={() => setFilters({ ...EMPTY_FILTERS, prompt: "Founders at seed-stage B2B SaaS companies in the US" })}><SearchIcon size={13} /> Founders at seed-stage B2B SaaS companies in the US</button>
+                <button type="button" onClick={() => setFilters({ ...EMPTY_FILTERS, prompt: "QA leaders at Series A consumer software companies" })}><SearchIcon size={13} /> QA leaders at Series A consumer software companies</button>
               </div>
 
               <div className="audience-filter-section">

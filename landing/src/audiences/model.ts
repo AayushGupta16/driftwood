@@ -55,12 +55,17 @@ export type LeadImportResult = {
 };
 
 export type AudienceFilters = {
+  // A non-empty prompt drives the search server-side (LLM-translated into
+  // Orange Slice queries); the three structured fields are the legacy lane
+  // and are ignored while a prompt is present.
+  prompt: string;
   query: string;
   company: string;
   title: string;
 };
 
 export const EMPTY_FILTERS: AudienceFilters = {
+  prompt: "",
   query: "",
   company: "",
   title: "",
