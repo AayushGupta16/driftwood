@@ -55,15 +55,13 @@ export type LeadImportResult = {
 };
 
 export type AudienceFilters = {
-  query: string;
-  company: string;
-  title: string;
+  // The search is one sentence, translated server-side into Orange Slice
+  // queries. Saved audiences persist it for reproducible re-runs.
+  prompt: string;
 };
 
 export const EMPTY_FILTERS: AudienceFilters = {
-  query: "",
-  company: "",
-  title: "",
+  prompt: "",
 };
 
 export function filterAudiences(

@@ -33,7 +33,6 @@ import {
   AudienceIcon,
   BackIcon,
   CheckIcon,
-  FilterIcon,
   PlusIcon,
   OrangeSliceIcon,
   SearchIcon,
@@ -47,22 +46,11 @@ import "./audiences.css";
 
 type View = "library" | "builder";
 type BuilderTab = "search" | "details";
-type BuilderFilter = keyof AudienceFilters;
 type ImportNotice = { kind: "success" | "error"; message: string };
 
 function readableProvider(provider: string) {
   return provider.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
-
-const BUILDER_FILTERS: Array<{
-  id: BuilderFilter;
-  label: string;
-  placeholder: string;
-}> = [
-  { id: "title", label: "Job title", placeholder: "Founder, VP Sales, Head of QA" },
-  { id: "company", label: "Company or seed domains", placeholder: "stripe.com, brex.com" },
-  { id: "query", label: "Person or company text", placeholder: "Name, title, industry, or company" },
-];
 
 export default function Audiences() {
   const { canWrite } = useWorkspacePermissions();
@@ -80,7 +68,6 @@ export default function Audiences() {
   const [filters, setFilters] = useState<AudienceFilters>(EMPTY_FILTERS);
   const [results, setResults] = useState<DiscoveryResult | null>(null);
   const [builderTab, setBuilderTab] = useState<BuilderTab>("search");
-  const [activeFilter, setActiveFilter] = useState<BuilderFilter | null>("title");
   const [resultQuery, setResultQuery] = useState("");
   const [providerStatuses, setProviderStatuses] = useState<DiscoveryProvider[]>([]);
   const [providerStatusLoading, setProviderStatusLoading] = useState(true);
@@ -104,7 +91,7 @@ export default function Audiences() {
       .catch((reason: unknown) => {
         if (current) {
           setLoadFailed(true);
-          setError(reason instanceof Error ? reason.message : "Lead lists could not load.");
+          setError(reason instanceof Error ? reason.message : "Audiences could not load.");
         }
       })
       .finally(() => {
@@ -149,7 +136,6 @@ export default function Audiences() {
     setFilters(EMPTY_FILTERS);
     setResults(null);
     setBuilderTab("search");
-    setActiveFilter("title");
     setResultQuery("");
     setImportNotice(null);
     setSelectedRecords(new Set());
@@ -177,7 +163,7 @@ export default function Audiences() {
     try {
       setSelectedAudience(await getAudience(id));
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "This lead list could not load.");
+      setError(reason instanceof Error ? reason.message : "This audience could not load.");
     } finally {
       setDetailLoading(false);
     }
@@ -242,7 +228,7 @@ export default function Audiences() {
       setCampaignError(null);
       setCampaignPrompt(created);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "The lead list could not be saved.");
+      setError(reason instanceof Error ? reason.message : "The audience could not be saved.");
     } finally {
       setSaving(false);
     }
@@ -282,7 +268,7 @@ export default function Audiences() {
       setAudiences((current) => current.filter((item) => item.id !== selectedAudience.id));
       setSelectedAudience(null);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "The lead list could not be deleted.");
+      setError(reason instanceof Error ? reason.message : "The audience could not be deleted.");
     }
   }
 
@@ -295,12 +281,12 @@ export default function Audiences() {
       <section className="audience-builder-workbench" aria-labelledby="audience-builder-heading">
         <div className="audience-builder-canvas">
           <header className="audience-builder-bar">
-            <button className="audience-builder-back" type="button" onClick={() => setView("library")} aria-label="Back to lead lists">
+            <button className="audience-builder-back" type="button" onClick={() => setView("library")} aria-label="Back to audiences">
               <BackIcon size={16} />
             </button>
             <div>
-              <h1 id="audience-builder-heading">{name.trim() || "Untitled list"}</h1>
-              <span>{results ? `${results.candidates.length} results` : "New lead list"}</span>
+              <h1 id="audience-builder-heading">{name.trim() || "Untitled audience"}</h1>
+              <span>{results ? `${results.candidates.length} results` : "New audience"}</span>
             </div>
             <label className="audience-result-search">
               <SearchIcon size={15} />
@@ -316,7 +302,7 @@ export default function Audiences() {
                 {Array.from({ length: 9 }, (_, index) => <span key={index} />)}
               </div>
             ) : !results ? (
-              <div className="audience-state audience-builder-empty"><SearchIcon size={23} /><h2>{activeProvider?.configured === false ? "Lead search is unavailable" : "Find people for this list"}</h2><p>{activeProvider?.configured === false ? "Upload a CSV or ask an admin to connect Orange Slice." : "Set search criteria in the panel."}</p></div>
+              <div className="audience-state audience-builder-empty"><SearchIcon size={23} /><h2>{activeProvider?.configured === false ? "Lead search is unavailable" : "Find people for this audience"}</h2><p>{activeProvider?.configured === false ? "Upload a CSV or ask an admin to connect Orange Slice." : "Describe who you're looking for in the panel."}</p></div>
             ) : results.candidates.length === 0 ? (
               <div className="audience-state audience-builder-empty"><AudienceIcon size={24} /><h2>No matching leads</h2><p>Adjust a criterion and search again.</p></div>
             ) : visibleCandidates.length === 0 ? (
@@ -353,8 +339,8 @@ export default function Audiences() {
           </div>
         </div>
 
-        <aside className="audience-search-panel" aria-label="Lead list builder">
-          <div className="audience-panel-tabs" role="tablist" aria-label="Lead list controls">
+        <aside className="audience-search-panel" aria-label="Audience builder">
+          <div className="audience-panel-tabs" role="tablist" aria-label="Audience controls">
             <button id="audience-search-tab" type="button" role="tab" aria-controls="audience-search-panel" aria-selected={builderTab === "search"} className={builderTab === "search" ? "is-active" : ""} onClick={() => setBuilderTab("search")}>Search</button>
             <button id="audience-details-tab" type="button" role="tab" aria-controls="audience-details-panel" aria-selected={builderTab === "details"} className={builderTab === "details" ? "is-active" : ""} onClick={() => setBuilderTab("details")}>Details</button>
           </div>
@@ -383,29 +369,13 @@ export default function Audiences() {
 
               <div className="audience-query-box">
                 <SearchIcon size={17} />
-                <input aria-label="Refine your search" value={filters.query} onChange={(event) => setFilters({ ...filters, query: event.target.value })} placeholder="Refine your search" />
+                <input aria-label="Describe who you're looking for" value={filters.prompt} onChange={(event) => setFilters({ ...filters, prompt: event.target.value })} placeholder="Describe who you're looking for" />
                 <button type="submit" aria-label="Run lead search" disabled={discovering || providerStatusLoading || !activeProvider?.configured || !hasSearchFilter}><ArrowIcon size={15} /></button>
               </div>
 
               <div className="audience-search-examples" aria-label="Example searches">
-                <button type="button" onClick={() => setFilters({ query: "B2B SaaS", company: "", title: "Founder" })}><SearchIcon size={13} /> Find founders at B2B SaaS companies</button>
-                <button type="button" onClick={() => setFilters({ query: "software", company: "", title: "Head of QA" })}><SearchIcon size={13} /> Find QA leaders at software companies</button>
-              </div>
-
-              <div className="audience-filter-section">
-                <h3>People and company</h3>
-                {BUILDER_FILTERS.map((filter) => {
-                  const expanded = activeFilter === filter.id;
-                  const value = filters[filter.id];
-                  return (
-                    <div className={`audience-filter-row ${expanded ? "is-expanded" : ""}`} key={filter.id}>
-                      <button type="button" aria-expanded={expanded} onClick={() => setActiveFilter(expanded ? null : filter.id)}>
-                        <FilterIcon size={15} /><span>{filter.label}</span>{value && <small>{value}</small>}<ArrowIcon size={14} />
-                      </button>
-                      {expanded && <label><span className="audience-visually-hidden">{filter.label}</span><input autoFocus value={value} onChange={(event) => setFilters({ ...filters, [filter.id]: event.target.value })} placeholder={filter.placeholder} /></label>}
-                    </div>
-                  );
-                })}
+                <button type="button" onClick={() => setFilters({ ...EMPTY_FILTERS, prompt: "Founders at seed-stage B2B SaaS companies in the US" })}><SearchIcon size={13} /> Founders at seed-stage B2B SaaS companies in the US</button>
+                <button type="button" onClick={() => setFilters({ ...EMPTY_FILTERS, prompt: "QA leaders at Series A consumer software companies" })}><SearchIcon size={13} /> QA leaders at Series A consumer software companies</button>
               </div>
 
               <div className="audience-panel-search-action">
@@ -414,8 +384,8 @@ export default function Audiences() {
             </form>
           ) : (
             <div id="audience-details-panel" className="audience-list-details-panel" role="tabpanel" aria-labelledby="audience-details-tab">
-              <h2>List details</h2>
-              <label><span>List name</span><input autoFocus value={name} onChange={(event) => setName(event.target.value)} placeholder="Qualified founders" maxLength={255} /></label>
+              <h2>Audience details</h2>
+              <label><span>Audience name</span><input autoFocus value={name} onChange={(event) => setName(event.target.value)} placeholder="Qualified founders" maxLength={255} /></label>
               <label><span>Description <small>Optional</small></span><textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Who belongs in this audience" maxLength={20000} rows={4} /></label>
               <dl><div><dt>Source</dt><dd>{results?.providerLabel ?? "Orange Slice"}</dd></div><div><dt>Selected</dt><dd>{selectedRecords.size}</dd></div><div><dt>Results</dt><dd>{results?.candidates.length ?? 0}</dd></div></dl>
             </div>
@@ -423,7 +393,7 @@ export default function Audiences() {
 
           <footer className="audience-panel-footer">
             <button className="audience-primary" type="button" onClick={saveAudience} disabled={saving || !name.trim() || selectedRecords.size === 0}>
-              <CheckIcon size={16} /> {saving ? "Saving…" : selectedRecords.size > 0 ? `Save ${selectedRecords.size} to list` : "Save to list"}
+              <CheckIcon size={16} /> {saving ? "Saving…" : selectedRecords.size > 0 ? `Save ${selectedRecords.size} to audience` : "Save to audience"}
             </button>
           </footer>
         </aside>
@@ -434,7 +404,7 @@ export default function Audiences() {
   return (
     <section className="audience-page" aria-labelledby="audiences-heading">
       <header className="audience-heading">
-        <h1 id="audiences-heading">Lead lists</h1>
+        <h1 id="audiences-heading">Audiences</h1>
         {canWrite ? (
           <button className="audience-primary" type="button" onClick={startBuilder} data-testid="new-audience"><PlusIcon size={17} /> New audience</button>
         ) : (
@@ -446,14 +416,14 @@ export default function Audiences() {
 
       <div className="audience-library-grid">
         <div className="audience-library">
-          <label className="audience-library-search"><SearchIcon size={16} /><span className="audience-visually-hidden">Search lead lists</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search lead lists" /></label>
+          <label className="audience-library-search"><SearchIcon size={16} /><span className="audience-visually-hidden">Search audiences</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search audiences" /></label>
           <div className="audience-list" aria-busy={loading} aria-live="polite">
             {loading ? (
-              <div className="audience-state"><span className="audience-spinner" aria-hidden="true" /><p>Loading lead lists…</p></div>
+              <div className="audience-state"><span className="audience-spinner" aria-hidden="true" /><p>Loading audiences…</p></div>
             ) : loadFailed ? (
-              <div className="audience-state" role="alert"><AudienceIcon size={24} /><h2>Lead lists are unavailable</h2><p>We could not load this workspace. Try again before creating or changing an audience.</p><button className="audience-secondary" type="button" onClick={() => window.location.reload()}>Try again</button></div>
+              <div className="audience-state" role="alert"><AudienceIcon size={24} /><h2>Audiences are unavailable</h2><p>We could not load this workspace. Try again before creating or changing an audience.</p><button className="audience-secondary" type="button" onClick={() => window.location.reload()}>Try again</button></div>
             ) : filteredAudiences.length === 0 ? (
-              <div className="audience-state"><AudienceIcon size={24} /><h2>{audiences.length === 0 ? "No lead lists yet" : "No lead lists match"}</h2><p>{audiences.length === 0 ? canWrite ? "Create an audience from your discovery source." : "An owner or admin can create the first audience." : "Try a broader search."}</p>{audiences.length === 0 && canWrite && <button className="audience-secondary" type="button" onClick={startBuilder}>Build the first audience</button>}</div>
+              <div className="audience-state"><AudienceIcon size={24} /><h2>{audiences.length === 0 ? "No audiences yet" : "No audiences match"}</h2><p>{audiences.length === 0 ? canWrite ? "Create an audience from your discovery source." : "An owner or admin can create the first audience." : "Try a broader search."}</p>{audiences.length === 0 && canWrite && <button className="audience-secondary" type="button" onClick={startBuilder}>Build the first audience</button>}</div>
             ) : filteredAudiences.map((audience) => (
               <button key={audience.id} className={`audience-list-row ${selectedAudience?.id === audience.id ? "is-active" : ""}`} type="button" onClick={() => openAudience(audience.id)}>
                 <span className="audience-list-icon"><AudienceIcon size={18} /></span>
@@ -467,7 +437,7 @@ export default function Audiences() {
           </div>
         </div>
 
-        <aside className={`audience-detail ${selectedAudience ? "has-audience" : ""}`} aria-label="Lead list details" aria-busy={detailLoading}>
+        <aside className={`audience-detail ${selectedAudience ? "has-audience" : ""}`} aria-label="Audience details" aria-busy={detailLoading}>
           {detailLoading ? (
             <div className="audience-state"><span className="audience-spinner" aria-hidden="true" /><p>Loading audience…</p></div>
           ) : selectedAudience ? (
@@ -499,7 +469,7 @@ export default function Audiences() {
               </div>
             </>
           ) : (
-            <div className="audience-state audience-detail-empty"><AudienceIcon size={24} /><h2>Select a lead list</h2><p>Open an audience to review exactly who it contains.</p></div>
+            <div className="audience-state audience-detail-empty"><AudienceIcon size={24} /><h2>Select an audience</h2><p>Open an audience to review exactly who it contains.</p></div>
           )}
         </aside>
       </div>

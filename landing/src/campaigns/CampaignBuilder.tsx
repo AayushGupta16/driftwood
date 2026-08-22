@@ -87,6 +87,7 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
   const [selectedStepId, setSelectedStepId] = useState<string | null>(null);
   const [addAfterStepId, setAddAfterStepId] = useState<string | null | undefined>(undefined);
   const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewMode, setReviewMode] = useState<"activate" | "resume">("activate");
   const [overlap, setOverlap] = useState<CampaignOverlap | null>(null);
   const [overlapLoading, setOverlapLoading] = useState(false);
   const [overlapError, setOverlapError] = useState<string | null>(null);
@@ -297,6 +298,7 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
   async function openReview() {
     const current = campaignRef.current;
     if (!current || !canWrite || current.status !== "draft") return;
+    setReviewMode("activate");
     setReviewOpen(true);
     setOverlap(null);
     setOverlapConfirmed(false);
@@ -314,6 +316,47 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
     }
   }
 
+  async function openResumeReview() {
+    const current = campaignRef.current;
+    if (!current || !canWrite || current.status !== "paused") return;
+    setReviewMode("resume");
+    setReviewOpen(true);
+    setOverlap(null);
+    setOverlapConfirmed(false);
+    setOverlapError(null);
+    setOverlapLoading(true);
+    try {
+      setOverlap(await getCampaignOverlaps(current.id));
+    } catch (reason) {
+      setOverlapError(
+        reason instanceof Error ? reason.message : "Lead overlap could not be checked.",
+      );
+    } finally {
+      setOverlapLoading(false);
+    }
+  }
+
+  async function resume() {
+    const current = campaignRef.current;
+    if (
+      !current || !canWrite || current.status !== "paused" ||
+      overlapLoading || overlapError || (overlap?.leadCount && !overlapConfirmed)
+    ) return;
+    setActionBusy(true);
+    try {
+      const confirmedLeadIds = overlapConfirmed ? confirmedOverlapLeadIds(overlap) : [];
+      const resumed = await resumeCampaign(current.id, confirmedLeadIds);
+      campaignRef.current = resumed;
+      setCampaign(resumed);
+      closeReview();
+      setToast("Campaign resumed. Nothing was sent.");
+    } catch (reason) {
+      setToast(reason instanceof Error ? reason.message : "Campaign status could not change.");
+    } finally {
+      setActionBusy(false);
+    }
+  }
+
   function closeReview() {
     setReviewOpen(false);
     setOverlap(null);
@@ -324,28 +367,16 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
   async function toggleStatus() {
     const current = campaignRef.current;
     if (!current || !canWrite || (current.status !== "active" && current.status !== "paused")) return;
+    if (current.status === "paused") {
+      await openResumeReview();
+      return;
+    }
     setActionBusy(true);
     try {
-      let updated: Campaign;
-      if (current.status === "active") {
-        updated = await pauseCampaign(current.id);
-      } else {
-        const currentOverlap = await getCampaignOverlaps(current.id);
-        const confirmedLeadIds = confirmedOverlapLeadIds(currentOverlap);
-        if (
-          currentOverlap.leadCount > 0 &&
-          !window.confirm(
-            `${currentOverlap.leadCount} audience ${currentOverlap.leadCount === 1 ? "member is" : "members are"} active in another campaign. Resume anyway?`,
-          )
-        ) {
-          setActionBusy(false);
-          return;
-        }
-        updated = await resumeCampaign(current.id, confirmedLeadIds);
-      }
+      const updated = await pauseCampaign(current.id);
       campaignRef.current = updated;
       setCampaign(updated);
-      setToast(updated.status === "paused" ? "Campaign paused." : "Campaign resumed. Nothing was sent.");
+      setToast("Campaign paused.");
     } catch (reason) {
       setToast(reason instanceof Error ? reason.message : "Campaign status could not change.");
     } finally {
@@ -550,19 +581,20 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
         <AddStepDialog onClose={() => setAddAfterStepId(undefined)} onAdd={addStep} />
       )}
 
-      {reviewOpen && editable && (
+      {reviewOpen && (reviewMode === "resume" ? canWrite && campaign.status === "paused" : editable) && (
         <ReviewDialog
+          mode={reviewMode}
           campaign={campaign}
-          issues={validation.issues}
-          activating={actionBusy}
+          issues={reviewMode === "resume" ? [] : validation.issues}
+          busy={actionBusy}
           overlap={overlap}
           overlapLoading={overlapLoading}
           overlapError={overlapError}
           overlapConfirmed={overlapConfirmed}
           onOverlapConfirmed={setOverlapConfirmed}
-          onRetryOverlap={() => void openReview()}
+          onRetryOverlap={() => void (reviewMode === "resume" ? openResumeReview() : openReview())}
           onClose={closeReview}
-          onActivate={activate}
+          onConfirm={reviewMode === "resume" ? resume : activate}
         />
       )}
 
@@ -901,9 +933,10 @@ function AddStepDialog({
 }
 
 function ReviewDialog({
+  mode,
   campaign,
   issues,
-  activating,
+  busy,
   overlap,
   overlapLoading,
   overlapError,
@@ -911,11 +944,12 @@ function ReviewDialog({
   onOverlapConfirmed,
   onRetryOverlap,
   onClose,
-  onActivate,
+  onConfirm,
 }: {
+  mode: "activate" | "resume";
   campaign: Campaign;
   issues: string[];
-  activating: boolean;
+  busy: boolean;
   overlap: CampaignOverlap | null;
   overlapLoading: boolean;
   overlapError: string | null;
@@ -923,16 +957,17 @@ function ReviewDialog({
   onOverlapConfirmed: (confirmed: boolean) => void;
   onRetryOverlap: () => void;
   onClose: () => void;
-  onActivate: () => void;
+  onConfirm: () => void;
 }) {
+  const resuming = mode === "resume";
   const selected = campaign.contacts.filter((contact) => contact.selected).length;
   const needsOverlapConfirmation = (overlap?.leadCount ?? 0) > 0;
   const overlapReady = !overlapLoading && !overlapError && overlap !== null;
   return (
-    <CampaignModal labelledBy="review-heading" className="campaign-review-dialog" locked={activating} onClose={onClose}>
+    <CampaignModal labelledBy="review-heading" className="campaign-review-dialog" locked={busy} onClose={onClose}>
         <div className="campaign-dialog-heading">
-          <div><small>Version {campaign.version} check</small><h2 id="review-heading">Review campaign</h2></div>
-          <button className="campaign-icon-button" type="button" onClick={onClose} disabled={activating} aria-label="Close review" autoFocus><CloseIcon size={17} /></button>
+          <div><small>Version {campaign.version} check</small><h2 id="review-heading">{resuming ? "Resume campaign" : "Review campaign"}</h2></div>
+          <button className="campaign-icon-button" type="button" onClick={onClose} disabled={busy} aria-label="Close review" autoFocus><CloseIcon size={17} /></button>
         </div>
         <div className="campaign-review-summary">
           <div><span>Audience</span><strong>{campaign.audience}</strong></div>
@@ -946,8 +981,12 @@ function ReviewDialog({
           </div>
         ) : (
           <div className="campaign-review-ready">
-            <strong>Ready to freeze this version</strong>
-            <p>Activation stores the version and initializes a pending ledger. It does not approve, queue, or send outreach.</p>
+            <strong>{resuming ? "Ready to resume this version" : "Ready to freeze this version"}</strong>
+            <p>
+              {resuming
+                ? "Resuming reopens this stored version's pending ledger. It does not approve, queue, or send outreach."
+                : "Activation stores the version and initializes a pending ledger. It does not approve, queue, or send outreach."}
+            </p>
           </div>
         )}
         {overlapLoading ? (
@@ -983,9 +1022,9 @@ function ReviewDialog({
           </div>
         ) : null}
         <div className="campaign-dialog-actions">
-          <button className="campaign-secondary" type="button" onClick={onClose} disabled={activating}>Keep editing</button>
-          <button className="campaign-primary" type="button" onClick={onActivate} disabled={issues.length > 0 || activating || !overlapReady || (needsOverlapConfirmation && !overlapConfirmed)} data-testid="activate-campaign">
-            {activating ? "Activating…" : "Activate campaign"}
+          <button className="campaign-secondary" type="button" onClick={onClose} disabled={busy}>{resuming ? "Keep paused" : "Keep editing"}</button>
+          <button className="campaign-primary" type="button" onClick={onConfirm} disabled={issues.length > 0 || busy || !overlapReady || (needsOverlapConfirmation && !overlapConfirmed)} data-testid={resuming ? "resume-campaign" : "activate-campaign"}>
+            {busy ? (resuming ? "Resuming…" : "Activating…") : resuming ? "Resume campaign" : "Activate campaign"}
           </button>
         </div>
     </CampaignModal>

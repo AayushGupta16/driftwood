@@ -482,7 +482,73 @@ if (mockMode) {
       },
     ],
     contacts: mockCampaignContacts,
+  }, {
+    // Paused fixture: resuming it previews an overlap with the active
+    // "Expansion outreach" campaign below (Ines Duarte and Owen Brooks).
+    id: "warm-intro-revival",
+    series_id: "3d1a06a4-19cf-4f2a-9f8e-1f0a3f6f9c21",
+    version: 1,
+    name: "Warm intro revival",
+    description: "Follow up with product leaders who went quiet after the first touch.",
+    audience_name: "Product-led teams",
+    audience_id: null,
+    lock_version: 2,
+    status: "paused",
+    step_count: 2,
+    contact_count: 3,
+    created_at: hoursAgo(120),
+    updated_at: hoursAgo(6),
+    steps: [
+      {
+        id: "8f4de0cb-6cf0-4a34-9f0f-6a4f6f5cfd1a", position: 1, kind: "email",
+        label: "Reintro email", subject: "Picking this back up for {{company}}",
+        body: "Hi {{first_name}},\n\nCircling back with the tailored walkthrough I promised for {{company}}.",
+        delay_days: 0, send_window: "business-hours", stop_on_reply: true, attachment_slug: null,
+      },
+      {
+        id: "b0a4c7de-30a4-4f56-8e0e-2a7f3c1d9b42", position: 2, kind: "wait",
+        label: "Wait", subject: null, body: "", delay_days: 4,
+        send_window: "business-hours", stop_on_reply: false, attachment_slug: null,
+      },
+    ],
+    contacts: mockCampaignContacts.map((contact, index) => ({
+      ...contact,
+      selected: index >= 3,
+      enrollment_status: index >= 3 ? "waiting" : null,
+      current_step: index >= 3 ? 1 : null,
+      next_action_at: null,
+    })),
+  }, {
+    id: "expansion-outreach",
+    series_id: "5be0f7d3-4a91-4dd1-a2b4-8c50c3f8ab77",
+    version: 1,
+    name: "Expansion outreach",
+    description: "Active sequence for operations leaders at growth-stage teams.",
+    audience_name: "Operations leaders",
+    audience_id: null,
+    lock_version: 3,
+    status: "active",
+    step_count: 1,
+    contact_count: 2,
+    created_at: hoursAgo(96),
+    updated_at: hoursAgo(2),
+    steps: [
+      {
+        id: "e1c9a2f6-7b8d-4c3e-9a51-0d2f4b6c8e13", position: 1, kind: "email",
+        label: "Send email", subject: "An operations idea for {{company}}",
+        body: "Hi {{first_name}},\n\nSharing a short workflow idea built around {{company}}.",
+        delay_days: 0, send_window: "business-hours", stop_on_reply: true, attachment_slug: null,
+      },
+    ],
+    contacts: mockCampaignContacts.map((contact, index) => ({
+      ...contact,
+      selected: index === 3 || index === 4,
+      enrollment_status: index === 3 || index === 4 ? "ready" : null,
+      current_step: index === 3 || index === 4 ? 1 : null,
+      next_action_at: index === 3 || index === 4 ? hoursAgo(-4) : null,
+    })),
   }];
+  const mockFixtureCampaignIds = new Set(mockCampaigns.map((campaign) => campaign.id));
   const mockCampaignStorageKey = "driftwood.dashboard.mock-campaigns";
   try {
     const stored = JSON.parse(sessionStorage.getItem(mockCampaignStorageKey) ?? "[]") as MockCampaign[];
@@ -502,7 +568,7 @@ if (mockMode) {
     try {
       sessionStorage.setItem(
         mockCampaignStorageKey,
-        JSON.stringify(mockCampaigns.filter((campaign) => campaign.id !== "founder-led-qa")),
+        JSON.stringify(mockCampaigns.filter((campaign) => !mockFixtureCampaignIds.has(campaign.id))),
       );
     } catch {
       // The preview remains usable when storage is blocked; only reload persistence is lost.
@@ -909,7 +975,7 @@ if (mockMode) {
     name: "Qualified QA leaders",
     description: "QA and operations leaders at teams with a live release workflow.",
     source_provider: "orange_slice",
-    discovery_filters: { query: "quality", company: "", title: "Head of QA" },
+    discovery_filters: { prompt: "QA and operations leaders at teams with a live release workflow" },
     members: mockLeads.slice(0, 3).map(memberFromLead),
     created_at: hoursAgo(72),
     updated_at: hoursAgo(2),
@@ -918,7 +984,7 @@ if (mockMode) {
     name: "Product-led teams",
     description: "Product leaders evaluating a hands-on launch workflow.",
     source_provider: "workspace",
-    discovery_filters: { query: "product", company: "", title: "Product" },
+    discovery_filters: { prompt: "Product leaders evaluating a hands-on QA workflow" },
     members: [memberFromLead(mockLeads[3])],
     created_at: hoursAgo(120),
     updated_at: hoursAgo(24),

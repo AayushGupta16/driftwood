@@ -76,7 +76,7 @@
 
 .audience-library-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.55fr) minmax(18rem, 0.75fr);
+  grid-template-columns: minmax(0, 1.55fr) minmax(21rem, 0.75fr);
   gap: 2rem;
   margin-top: 1.35rem;
   align-items: start;
@@ -145,7 +145,8 @@
   box-shadow: var(--shadow-win-sm);
   overflow: hidden;
 }
-.audience-detail-head { display: flex; justify-content: space-between; gap: 1rem; padding: 1.25rem; }
+.audience-detail-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem; padding: 1.25rem; }
+.audience-detail-head > div:first-child { flex: 1 1 12rem; min-width: 0; }
 .audience-detail-actions { display: flex; align-items: flex-start; gap: 0.5rem; }
 .audience-build-campaign { min-height: 2.35rem; padding-block: 0.5rem; white-space: nowrap; }
 .audience-detail-head > div > span { color: var(--color-tide); font-size: 0.68rem; font-weight: 650; }
@@ -418,21 +419,7 @@
 .audience-search-examples { display: grid; gap: 0.35rem; margin-top: 0.65rem; }
 .audience-search-examples button { display: flex; min-height: 2rem; align-items: center; gap: 0.35rem; overflow: hidden; border: 1px dashed var(--color-line); border-radius: 0.45rem; background: transparent; color: var(--color-ink-soft); padding: 0.35rem 0.55rem; font: inherit; font-size: 0.66rem; text-align: left; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
 .audience-search-examples button:hover { border-color: color-mix(in srgb, var(--color-tide) 40%, var(--color-line)); color: var(--color-ink); }
-.audience-search-examples button:focus-visible,
-.audience-filter-row > button:focus-visible { outline: 2px solid var(--color-tide); outline-offset: -2px; }
-
-.audience-filter-section { margin-top: 1rem; border-top: 1px solid var(--color-line); }
-.audience-filter-section h3 { margin: 0; padding: 0.85rem 0 0.45rem; font-size: 0.73rem; font-weight: 650; }
-.audience-filter-row { border-bottom: 1px solid var(--color-line); }
-.audience-filter-row > button { display: grid; width: 100%; min-height: 2.8rem; grid-template-columns: auto minmax(0, auto) minmax(0, 1fr) auto; align-items: center; gap: 0.5rem; border: 0; background: transparent; color: var(--color-ink); padding: 0 0.55rem; font: inherit; text-align: left; cursor: pointer; }
-.audience-filter-row > button:hover { background: color-mix(in srgb, var(--color-sand) 66%, white); }
-.audience-filter-row > button > span { font-size: 0.75rem; font-weight: 580; }
-.audience-filter-row > button > small { overflow: hidden; color: var(--color-tide-deep); font-size: 0.61rem; text-align: right; text-overflow: ellipsis; white-space: nowrap; }
-.audience-filter-row > button > svg:last-child { justify-self: end; transform: rotate(0deg); transition: transform 180ms cubic-bezier(0.2, 0, 0, 1); }
-.audience-filter-row.is-expanded > button > svg:last-child { transform: rotate(90deg); }
-.audience-filter-row > label { display: block; padding: 0 0.45rem 0.65rem; }
-.audience-filter-row input { width: 100%; min-height: 2.25rem; box-sizing: border-box; border: 1px solid var(--color-line); border-radius: 0.45rem; outline: 0; background: var(--color-paper); color: var(--color-ink); padding: 0 0.65rem; font: inherit; font-size: 0.72rem; }
-.audience-filter-row input:focus { border-color: var(--color-tide); box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-tide) 13%, transparent); }
+.audience-search-examples button:focus-visible { outline: 2px solid var(--color-tide); outline-offset: -2px; }
 .audience-panel-search-action { margin-top: auto; padding: 0.9rem 0; }
 .audience-panel-search-action .audience-secondary { width: 100%; border-radius: 0.55rem; }
 
@@ -472,9 +459,14 @@
 
 .audience-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
 
-@media (max-width: 72rem) {
+/* Below this width the sidebar leaves too little room for the list columns
+ * plus a readable detail panel, so the library stacks early. */
+@media (max-width: 79rem) {
   .audience-library-grid { grid-template-columns: 1fr; }
   .audience-detail { position: static; }
+}
+
+@media (max-width: 72rem) {
   .audience-builder-workbench { grid-template-columns: minmax(0, 1fr) minmax(19rem, 21rem); }
   .audience-builder-bar { grid-template-columns: 2.2rem minmax(7rem, 1fr) minmax(10rem, 15rem); }
   .audience-builder-bar .audience-selection-count { display: none; }
