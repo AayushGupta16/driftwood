@@ -302,7 +302,7 @@ export default function Audiences() {
                 {Array.from({ length: 9 }, (_, index) => <span key={index} />)}
               </div>
             ) : !results ? (
-              <div className="audience-state audience-builder-empty"><SearchIcon size={23} /><h2>{activeProvider?.configured === false ? "Lead search is unavailable" : "Find people for this audience"}</h2><p>{activeProvider?.configured === false ? "Upload a CSV or ask an admin to connect Orange Slice." : "Set search criteria in the panel."}</p></div>
+              <div className="audience-state audience-builder-empty"><SearchIcon size={23} /><h2>{activeProvider?.configured === false ? "Lead search is unavailable" : "Find people for this audience"}</h2><p>{activeProvider?.configured === false ? "Upload a CSV or ask an admin to connect Orange Slice." : "Describe who you're looking for in the panel."}</p></div>
             ) : results.candidates.length === 0 ? (
               <div className="audience-state audience-builder-empty"><AudienceIcon size={24} /><h2>No matching leads</h2><p>Adjust a criterion and search again.</p></div>
             ) : visibleCandidates.length === 0 ? (
