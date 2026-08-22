@@ -108,11 +108,22 @@ if (mockMode) {
         decision_reason: null, decided_at: null, scheduled_batch_id: null,
         created_at: hoursAgo(1.1),
       },
+      {
+        id: "r4", batch_id: "b3", agent_id: "demo", kind: "send_email",
+        title: "Autosana — Yuvan Kumar (email)",
+        subject: "Two outreach fixes from this week",
+        body: "Hey Yuvan,\n\nI pulled the two workflow changes into one short walkthrough.\n\n[![Autosana outreach workflow](https://driftwood.sh/case-autosana-poster.webp)](https://driftwood.sh/customers/autosana)\n\nWorth a look before our next check-in?\n\nBest,\nAayush",
+        lead: lead("Yuvan Kumar", "CEO", "Autosana"),
+        attachment_slug: null, evidence: null, status: "pending",
+        decision_reason: null, decided_at: null, scheduled_batch_id: null,
+        created_at: hoursAgo(1.4),
+      },
     ],
-    decided: [], total_pending: 3, limit: 25, offset: 0,
+    decided: [], total_pending: 4, limit: 25, offset: 0,
     queue_stats: [
       { kind: "connection_request", queued: 2, sent_24h: 3, cap: 20, runs_through: dateAhead(2), failed: 2 },
       { kind: "message", queued: 3, sent_24h: 6, cap: 25, runs_through: dateAhead(2), failed: 0 },
+      { kind: "email", queued: 1, sent_24h: 2, cap: 20, runs_through: dateAhead(1), failed: 0 },
     ],
   };
   // Approved-but-undelivered ScheduledSends (the review page's Queued tab),
@@ -171,9 +182,17 @@ if (mockMode) {
         status: "pending", error: null, error_class: null,
         due_at: daysAhead(2.5), projected_date: null, created_at: hoursAgo(4),
       },
+      {
+        id: "s8", batch_id: "sb4", kind: "email",
+        subject: "Two outreach fixes from this week",
+        note: "Hey Yuvan,\n\nI pulled the two workflow changes into one short walkthrough.\n\n[![Autosana outreach workflow](https://driftwood.sh/case-autosana-poster.webp)](https://driftwood.sh/customers/autosana)\n\nWorth a look before our next check-in?\n\nBest,\nAayush",
+        attachment_slug: null, lead: lead("Yuvan Kumar", "CEO", "Autosana"),
+        status: "pending", error: null, error_class: null,
+        due_at: daysAhead(1.5), projected_date: dateAhead(1), created_at: hoursAgo(8),
+      },
     ],
-    total: 7, limit: 100, offset: 0,
-    counts: { pending: 4, sending: 1, failed: 2 },
+    total: 8, limit: 100, offset: 0,
+    counts: { pending: 5, sending: 1, failed: 2 },
   };
   // Bodies may be functions of the request init so POST results can echo the
   // request (e.g. cancel reports how many ids it was sent).

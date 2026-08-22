@@ -3,6 +3,8 @@ import { ToastProvider } from "./dashboard/DashboardCommon";
 import { AdminPanelControls, ImpersonationBanner } from "./GodMode";
 import { CARD, useToast } from "./dashboard-shared";
 import AppShell from "./dashboard/AppShell";
+import { EmailPreview } from "./EmailPreview";
+import { emailBodySummary } from "./email-preview";
 import { withMockMode } from "./mock-mode";
 import "./review-queue.css";
 
@@ -1397,6 +1399,7 @@ function QueuedRow({
   onDismiss: () => void;
 }) {
   const failed = send.status === "failed";
+  const isEmail = send.kind === "email";
   return (
     <article className="review-queued-row">
       <div className="flex items-center gap-2">
@@ -1423,31 +1426,45 @@ function QueuedRow({
 
       {/* the frozen copy — the review card's mono block, clamped to three
           lines; tapping the block toggles it open (list rows stay short) */}
-      <button
-        type="button"
-        onClick={onToggleExpand}
-        aria-expanded={expanded}
-        aria-label={expanded ? "Collapse note" : "Expand note"}
-        className={`block w-full cursor-pointer rounded-[10px] border border-line bg-paper px-3.5 py-[13px] text-left ${
-          send.lead ? "" : "mt-3"
-        }`}
-      >
-        {/* emails lead with their subject line, above the (clamped) copy */}
-        {send.subject && (
-          <span className="mb-1 block font-mono text-[12.75px] font-semibold leading-[1.65] text-ink">
-            Subject: {send.subject}
-          </span>
-        )}
-        {/* line-clamp sets its own display (-webkit-box), so `block` only
-            applies to the expanded state — stacking both breaks the clamp */}
-        <span
-          className={`whitespace-pre-wrap break-words font-mono text-[12.75px] leading-[1.65] text-ink ${
-            expanded ? "block" : "line-clamp-3"
+      {isEmail && expanded ? (
+        <div className={send.lead ? "" : "mt-3"}>
+          <EmailPreview subject={send.subject} body={send.note} />
+          <button
+            type="button"
+            onClick={onToggleExpand}
+            aria-expanded="true"
+            className="email-preview-toggle"
+          >
+            Collapse email
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={onToggleExpand}
+          aria-expanded={expanded}
+          aria-label={expanded ? "Collapse note" : isEmail ? "Preview email" : "Expand note"}
+          className={`block w-full cursor-pointer rounded-[10px] border border-line bg-paper px-3.5 py-[13px] text-left ${
+            send.lead ? "" : "mt-3"
           }`}
         >
-          {send.note}
-        </span>
-      </button>
+          {/* emails lead with their subject line, above the clamped summary */}
+          {send.subject && (
+            <span className="mb-1 block font-mono text-[12.75px] font-semibold leading-[1.65] text-ink">
+              Subject: {send.subject}
+            </span>
+          )}
+          {/* line-clamp sets its own display (-webkit-box), so `block` only
+              applies to the expanded state — stacking both breaks the clamp */}
+          <span
+            className={`whitespace-pre-wrap break-words font-mono text-[12.75px] leading-[1.65] text-ink ${
+              expanded ? "block" : "line-clamp-3"
+            }`}
+          >
+            {isEmail ? emailBodySummary(send.note) : send.note}
+          </span>
+        </button>
+      )}
 
       {send.attachment_slug && (
         <p className="m-0 mt-1.5 font-mono text-[10.5px] text-ink-faint">
@@ -1639,6 +1656,8 @@ function ItemCard({
           </p>
           {evidence && <EvidenceBlock evidence={evidence} />}
         </>
+      ) : item.kind === "send_email" ? (
+        <EmailPreview subject={item.subject} body={item.body} />
       ) : (
         <>
           {/* the exact frozen payload — mono, primary ink, no truncation;
