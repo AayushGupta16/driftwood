@@ -1,16 +1,14 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { Wordmark } from "./components/Chrome";
-import { ToastProvider } from "./Dashboard";
-import { GodModeButton, ImpersonationBanner } from "./GodMode";
+import { ToastProvider } from "./dashboard/DashboardCommon";
+import { AdminPanelControls, ImpersonationBanner } from "./GodMode";
 import { CARD, useToast } from "./dashboard-shared";
+import AppShell from "./dashboard/AppShell";
+import { withMockMode } from "./mock-mode";
+import "./review-queue.css";
 
-/* /dashboard/review — the founder's review queue: one flat chronological list
-   of decisions the AE is waiting on (oldest first), per the signed-off draft
-   in site/design/review-queue.html, plus kind-filter chips so one send type
-   (e.g. connection requests) can be isolated and bulk-approved. Mobile-first:
-   the usual entry point is a Slack review link tapped on a phone, so the base
-   layout IS the ~640px single column with 44px touch targets; ≥700px only
-   adds air and right-aligns actions. */
+/* /dashboard/review — the founder's chronological decision inbox. The scan
+   list and exact-send detail stay together in the workspace; type filters and
+   bulk decisions remain available above the in-page workbench. */
 
 type User = {
   id: string;
@@ -156,12 +154,12 @@ export default function Review() {
           // Only approved users get the queue; everyone else goes back to the
           // dashboard, which handles login + the pending-approval state.
           if (u.is_approved) setUser(u);
-          else window.location.href = "/dashboard";
+          else window.location.href = withMockMode("/dashboard");
         } else {
-          window.location.href = "/dashboard";
+          window.location.href = withMockMode("/dashboard");
         }
       } catch {
-        if (!cancelled) window.location.href = "/dashboard";
+        if (!cancelled) window.location.href = withMockMode("/dashboard");
       }
     })();
     return () => {
@@ -171,7 +169,7 @@ export default function Review() {
 
   return (
     <ToastProvider>
-      <div className="grain relative flex min-h-screen flex-col overflow-x-clip">
+      <div className="grain relative flex min-h-[100dvh] flex-col overflow-x-clip">
         {user ? <ReviewView user={user} /> : <LoadingView />}
       </div>
     </ToastProvider>
@@ -201,55 +199,22 @@ function ReviewView({ user }: { user: User }) {
     try {
       await fetch("/auth/logout", { method: "POST", credentials: "include" });
     } finally {
-      window.location.href = "/dashboard";
+      window.location.href = withMockMode("/dashboard");
     }
   }
 
   return (
     <>
       {user.impersonating && <ImpersonationBanner email={user.email} />}
-      <header className="sticky top-0 z-40 border-b border-line/70 bg-paper/85 shadow-[0_10px_28px_-24px_rgba(22,24,29,0.5)] backdrop-blur-md">
-        <nav className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between px-5 sm:px-8">
-          <a href="/" className="text-[18px] text-ink no-underline">
-            <Wordmark markSize="size-8" />
-          </a>
-          <div className="flex items-center gap-3">
-            {user.avatar_url ? (
-              <img
-                src={user.avatar_url}
-                alt={`${displayName}'s avatar`}
-                className="size-8 shrink-0 rounded-full border border-line object-cover"
-                referrerPolicy="no-referrer"
-              />
-            ) : (
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-tide font-mono text-[13px] font-semibold text-white">
-                {displayName[0]?.toUpperCase()}
-              </span>
-            )}
-            <span className="hidden text-[14px] font-medium text-ink sm:inline">
-              {displayName}
-            </span>
-            {user.is_admin && <GodModeButton />}
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="cursor-pointer rounded-xl border border-line bg-surface px-3.5 py-2 text-[13.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink"
-            >
-              Log out
-            </button>
-          </div>
-        </nav>
-      </header>
-
-      <main className="mx-auto w-full max-w-[640px] flex-1 px-4 pb-[110px] pt-5 min-[700px]:px-8 min-[700px]:pb-[120px] min-[700px]:pt-11">
-        <a
-          href="/dashboard"
-          className="inline-flex items-center gap-1.5 text-[13.5px] font-medium text-ink-soft no-underline transition-colors hover:text-ink"
-        >
-          <span aria-hidden="true">←</span> Back to dashboard
-        </a>
-        <ReviewQueue canWrite={canWrite} />
-      </main>
+      <AppShell
+        active="review"
+        identity={{ name: displayName, workspace: user.org?.name, avatarUrl: user.avatar_url }}
+        onLogout={handleLogout}
+        adminControl={user.is_admin ? <AdminPanelControls /> : undefined}
+        canWrite={canWrite}
+      >
+        <div className="review-page"><ReviewQueue canWrite={canWrite} /></div>
+      </AppShell>
     </>
   );
 }
@@ -427,6 +392,7 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
   const [confirmAll, setConfirmAll] = useState(false);
   const [confirmDenyAll, setConfirmDenyAll] = useState(false);
   const [kindFilter, setKindFilter] = useState<string | null>(null);
+  const [activeReviewId, setActiveReviewId] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>(tabFromUrl);
   const [sendsState, setSendsState] = useState<SendsState>({
     status: "loading",
@@ -623,6 +589,8 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
     activeKind === null
       ? items
       : items.filter((item) => item.kind === activeKind);
+  const activeReviewItem =
+    visible.find((item) => item.id === activeReviewId) ?? visible[0] ?? null;
 
   const busy = busyIds.size > 0;
   const allSelected = visible.length > 0 && selected.size === visible.length;
@@ -708,8 +676,8 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
 
   return (
     <>
-      <div className="mt-4 flex items-end justify-between gap-3">
-        <h1 className="m-0 text-[clamp(1.65rem,6vw,2.1rem)] font-semibold leading-[1.08] tracking-[-0.015em]">
+      <div className="review-page-header">
+        <h1 className="m-0 text-[clamp(1.7rem,3.6vw,2.25rem)] font-semibold leading-[1.08] tracking-[-0.015em]">
           Review queue
         </h1>
         {state.status === "ready" && items.length > 0 && (
@@ -718,16 +686,13 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
           </span>
         )}
       </div>
-      <p className="m-0 mt-2 text-[13px] leading-[1.5] text-ink-soft">
-        Decisions your AE is waiting on &mdash; bugs first, then sends.
-      </p>
 
       {/* Needs review = decisions still owed; Queued = approved sends waiting
           on the dispatcher. Counts fill in as each list finishes loading. */}
       <div
         role="group"
         aria-label="Queue sections"
-        className="mt-[18px] inline-flex items-center gap-1 rounded-full border border-line bg-sand p-1"
+        className="review-tabs"
       >
         <TabButton
           label="Needs review"
@@ -773,7 +738,7 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
             <div
               role="group"
               aria-label="Filter by type"
-              className="mx-0.5 mt-[18px] flex flex-wrap items-center gap-2"
+              className="review-filters"
             >
               <FilterChip
                 label="all"
@@ -796,7 +761,7 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
 
             {/* read-only members keep the count line; the selection +
                 decide affordances only exist for writers */}
-            <div className="mx-0.5 mb-2.5 mt-[14px] flex flex-wrap items-center gap-2.5">
+            <div className="review-toolbar">
               {canWrite && (
                 <>
                   <label className="inline-flex cursor-pointer items-center gap-[9px] text-[13.5px] font-medium text-ink-soft">
@@ -881,46 +846,41 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
               </p>
             )}
 
-            <div className="grid gap-3.5">
-              {visible.map((item) => (
-                <ItemCard
-                  key={item.id}
-                  item={item}
-                  canWrite={canWrite}
-                  checked={selected.has(item.id)}
-                  busy={busyIds.has(item.id)}
-                  denyReason={deny?.id === item.id ? deny.reason : null}
-                  error={
-                    decideError?.itemId === item.id ? decideError.message : null
-                  }
-                  onToggleSelect={() => toggleSelect(item.id)}
-                  onApprove={() =>
-                    void decide(
-                      [{ item_id: item.id, decision: "approve" }],
-                      item.id,
-                    )
-                  }
-                  onToggleDeny={() =>
-                    setDeny((prev) =>
-                      prev?.id === item.id ? null : { id: item.id, reason: "" },
-                    )
-                  }
-                  onReasonChange={(reason) => setDeny({ id: item.id, reason })}
-                  onCancelDeny={() => setDeny(null)}
-                  onConfirmDeny={() =>
-                    void decide(
-                      [
-                        {
-                          item_id: item.id,
-                          decision: "deny",
-                          reason: deny?.reason.trim() ?? "",
-                        },
-                      ],
-                      item.id,
-                    )
-                  }
-                />
-              ))}
+            <div className="review-workbench">
+              <div className="review-inbox" role="list" aria-label="Items awaiting review">
+                {visible.map((item) => (
+                  <ReviewListRow
+                    key={item.id}
+                    item={item}
+                    active={activeReviewItem?.id === item.id}
+                    canWrite={canWrite}
+                    checked={selected.has(item.id)}
+                    busy={busyIds.has(item.id)}
+                    onOpen={() => {
+                      setActiveReviewId(item.id);
+                      setDeny(null);
+                    }}
+                    onToggleSelect={() => toggleSelect(item.id)}
+                  />
+                ))}
+              </div>
+              <div className="review-detail" aria-live="polite">
+                {activeReviewItem && (
+                  <ItemCard
+                    key={activeReviewItem.id}
+                    item={activeReviewItem}
+                    canWrite={canWrite}
+                    busy={busyIds.has(activeReviewItem.id)}
+                    denyReason={deny?.id === activeReviewItem.id ? deny.reason : null}
+                    error={decideError?.itemId === activeReviewItem.id ? decideError.message : null}
+                    onApprove={() => void decide([{ item_id: activeReviewItem.id, decision: "approve" }], activeReviewItem.id)}
+                    onToggleDeny={() => setDeny((prev) => prev?.id === activeReviewItem.id ? null : { id: activeReviewItem.id, reason: "" })}
+                    onReasonChange={(reason) => setDeny({ id: activeReviewItem.id, reason })}
+                    onCancelDeny={() => setDeny(null)}
+                    onConfirmDeny={() => void decide([{ item_id: activeReviewItem.id, decision: "deny", reason: deny?.reason.trim() ?? "" }], activeReviewItem.id)}
+                  />
+                )}
+              </div>
             </div>
           </>
         ))}
@@ -1065,7 +1025,7 @@ function QueueStatsStrip({ stats }: { stats: QueueStats[] }) {
   );
   if (live.length === 0) return null;
   return (
-    <div className="mt-4 grid gap-1.5 rounded-[10px] border border-line bg-paper px-3.5 py-2.5">
+    <div className="review-runway">
       {live.map((s) => (
         <p
           key={s.kind}
@@ -1388,7 +1348,7 @@ function QueuedList({
         </p>
       )}
 
-      <div className="grid gap-3">
+      <div className="review-queued-grid">
         {visible.map((send) => (
           <QueuedRow
             key={send.id}
@@ -1438,7 +1398,7 @@ function QueuedRow({
 }) {
   const failed = send.status === "failed";
   return (
-    <article className="rounded-xl border border-line bg-surface p-3.5 shadow-win-sm min-[700px]:px-[18px] min-[700px]:py-4">
+    <article className="review-queued-row">
       <div className="flex items-center gap-2">
         {/* selection only feeds the bulk cancel, so it hides with it */}
         {canWrite && (
@@ -1572,14 +1532,56 @@ function SendStatus({ send }: { send: SendRow }) {
 
 /* ---------- one review item ---------- */
 
-function ItemCard({
+function ReviewListRow({
   item,
+  active,
   canWrite,
   checked,
   busy,
+  onOpen,
+  onToggleSelect,
+}: {
+  item: ReviewItemRow;
+  active: boolean;
+  canWrite: boolean;
+  checked: boolean;
+  busy: boolean;
+  onOpen: () => void;
+  onToggleSelect: () => void;
+}) {
+  const context = item.lead
+    ? [item.lead.name, item.lead.title, item.lead.company].filter(Boolean).join(" · ")
+    : item.body;
+  return (
+    <article className={`review-list-row ${active ? "is-active" : ""}`} role="listitem">
+      {canWrite && (
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={onToggleSelect}
+          disabled={busy}
+          aria-label={`Select: ${item.title}`}
+          className="review-list-check"
+        />
+      )}
+      <button type="button" onClick={onOpen} className="review-list-open" aria-current={active ? "true" : undefined}>
+        <span className="review-list-topline">
+          <span className="review-list-kind">{kindLabel(item.kind)}</span>
+          <span>{shortAge(item.created_at)}</span>
+        </span>
+        <strong>{item.title}</strong>
+        <span className="review-list-context">{context}</span>
+      </button>
+    </article>
+  );
+}
+
+function ItemCard({
+  item,
+  canWrite,
+  busy,
   denyReason,
   error,
-  onToggleSelect,
   onApprove,
   onToggleDeny,
   onReasonChange,
@@ -1588,12 +1590,10 @@ function ItemCard({
 }: {
   item: ReviewItemRow;
   canWrite: boolean;
-  checked: boolean;
   busy: boolean;
   /** null = deny box closed; string = the in-progress reason text. */
   denyReason: string | null;
   error: string | null;
-  onToggleSelect: () => void;
   onApprove: () => void;
   onToggleDeny: () => void;
   onReasonChange: (reason: string) => void;
@@ -1601,7 +1601,6 @@ function ItemCard({
   onConfirmDeny: () => void;
 }) {
   const isBug = item.kind === "bug_validation";
-  const isFollow = item.kind === "follow_x_account";
   const isSend =
     item.kind === "send_message" ||
     item.kind === "send_connection" ||
@@ -1615,19 +1614,8 @@ function ItemCard({
   const videoSlug = item.attachment_slug || salvagedDemoSlug(item);
 
   return (
-    <article className={`${CARD} p-4 min-[700px]:px-[22px] min-[700px]:py-5`}>
+    <article className="review-decision-card">
       <div className="flex items-center gap-2">
-        {/* selection only feeds the bulk decide, so it hides with it */}
-        {canWrite && (
-          <input
-            type="checkbox"
-            checked={checked}
-            onChange={onToggleSelect}
-            disabled={busy}
-            aria-label={`Select: ${item.title}`}
-            className="size-5 shrink-0 accent-tide"
-          />
-        )}
         <span className="rounded-full border border-line bg-paper px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] text-ink-soft">
           {kindLabel(item.kind)}
         </span>
@@ -1653,17 +1641,6 @@ function ItemCard({
         </>
       ) : (
         <>
-          <span className={`${MICROLABEL} mb-1.5 mt-[3px] block`}>
-            {item.kind === "send_connection"
-              ? "Connection note — sends exactly as shown"
-              : item.kind === "send_email"
-                ? "Outgoing email — sends exactly as shown"
-                : item.kind === "send_x_dm"
-                  ? "Outgoing X DM — sends exactly as shown"
-                  : isFollow
-                    ? "Follow this X account — rationale below, not sent as a message"
-                    : "Outgoing message — sends exactly as shown"}
-          </span>
           {/* the exact frozen payload — mono, primary ink, no truncation;
               emails lead with their subject line */}
           <pre className="m-0 mb-3.5 whitespace-pre-wrap break-words rounded-[10px] border border-line bg-paper px-3.5 py-[13px] font-mono text-[12.75px] leading-[1.65] text-ink">

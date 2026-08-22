@@ -1,12 +1,13 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Wordmark } from "./components/Chrome";
-import { LoggedOutView, ToastProvider } from "./Dashboard";
-import { GodModeButton, ImpersonationBanner } from "./GodMode";
+import { LoggedOutView, ToastProvider } from "./dashboard/DashboardCommon";
+import { AdminPanelControls, ImpersonationBanner } from "./GodMode";
+import AppShell from "./dashboard/AppShell";
+import { withMockMode } from "./mock-mode";
 import seoQuerysetJson from "./seo-geo/queryset-seo.json";
 import geoQuerysetJson from "./seo-geo/queryset-geo.json";
 import { toTrendSeries, type HistoryPoint, type TrendPt } from "./seo-geo/trend.ts";
 
-/* /dashboard/seo-geo — admin-only SEO/GEO metrics page, ported from
+/* /dashboard/admin/search-visibility — admin-only SEO/GEO metrics page, ported from
    design/draft-godmode-seo-geo.html (rev 4). Ground truth first (PostHog
    views + demos per channel), then the probe hit rates as leading
    indicators, one combined trend chart, per-tier query tables, and the two
@@ -304,7 +305,7 @@ export default function SeoGeo() {
 
   return (
     <ToastProvider>
-      <div className="relative flex min-h-screen flex-col overflow-x-clip">
+      <div className="relative flex min-h-[100dvh] flex-col overflow-x-clip">
         {auth.status === "loading" && <LoadingView />}
         {auth.status === "denied" && <LoggedOutView />}
         {auth.status === "ok" && <SeoGeoView user={auth.user} />}
@@ -356,67 +357,22 @@ function SeoGeoView({ user }: { user: User }) {
     try {
       await fetch("/auth/logout", { method: "POST", credentials: "include" });
     } finally {
-      window.location.href = "/dashboard";
+      window.location.href = withMockMode("/dashboard");
     }
   }
 
   return (
     <>
       {user.impersonating && <ImpersonationBanner email={user.email} />}
-      <header className="sticky top-0 z-40 border-b border-line bg-paper/95 backdrop-blur-md">
-        <nav className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-5 sm:px-8">
-          <a href="/" className="text-[18px] text-ink no-underline">
-            <Wordmark markSize="size-8" />
-          </a>
-          <div className="flex items-center gap-3">
-            {user.avatar_url ? (
-              <img
-                src={user.avatar_url}
-                alt={`${displayName}'s avatar`}
-                className="size-8 shrink-0 rounded-full border border-line object-cover"
-                referrerPolicy="no-referrer"
-              />
-            ) : (
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-tide text-[13px] font-semibold text-white">
-                {displayName[0]?.toUpperCase()}
-              </span>
-            )}
-            <span className="hidden text-[14px] font-medium text-ink sm:inline">
-              {displayName}
-            </span>
-            <GodModeButton />
-            <a
-              href="/dashboard/seo-geo"
-              aria-current="page"
-              className="inline-flex items-center rounded-full border border-tide bg-tide-wash px-3.5 py-2 text-[13.5px] font-medium text-tide no-underline"
-            >
-              SEO / GEO
-            </a>
-            <a
-              href="/dashboard/agents"
-              className="inline-flex items-center rounded-full border border-tide/40 bg-surface px-3.5 py-2 text-[13.5px] font-medium text-tide no-underline transition-colors hover:border-tide hover:bg-tide-wash"
-            >
-              Agents
-            </a>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="cursor-pointer rounded-full border border-line bg-surface px-3.5 py-2 text-[13.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink"
-            >
-              Log out
-            </button>
-          </div>
-        </nav>
-      </header>
-
-      <main className="mx-auto w-full max-w-7xl flex-1 px-5 pb-14 pt-10 sm:px-8">
-        <a
-          href="/dashboard"
-          className="inline-flex items-center gap-1.5 text-[13.5px] font-medium text-ink-soft no-underline transition-colors hover:text-ink"
-        >
-          <span aria-hidden="true">←</span> Back to dashboard
-        </a>
-        <h1 className="m-0 mt-5 text-[clamp(1.7rem,3.6vw,2.2rem)] font-semibold leading-[1.08] tracking-[-0.015em]">
+      <AppShell
+        active="admin-search"
+        mode="admin"
+        identity={{ name: displayName, workspace: "Admin workspace", avatarUrl: user.avatar_url }}
+        onLogout={handleLogout}
+        adminControl={<AdminPanelControls inAdminPanel />}
+      >
+      <div className="mx-auto w-full max-w-7xl">
+        <h1 className="m-0 text-[clamp(1.7rem,3.6vw,2.2rem)] font-semibold leading-[1.08] tracking-[-0.015em]">
           Search visibility
         </h1>
         {data.status === "loading" ? (
@@ -430,7 +386,8 @@ function SeoGeoView({ user }: { user: User }) {
         ) : (
           <Metrics payload={data.payload} />
         )}
-      </main>
+      </div>
+      </AppShell>
     </>
   );
 }

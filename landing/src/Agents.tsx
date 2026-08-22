@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { LoggedOutView, ToastProvider } from "./Dashboard";
-import { GodModeButton, ImpersonationBanner } from "./GodMode";
-import { Wordmark } from "./components/Chrome";
+import { LoggedOutView, ToastProvider } from "./dashboard/DashboardCommon";
+import { AdminPanelControls, ImpersonationBanner } from "./GodMode";
 import { AgentChatComposer, AgentChatThread, ImportFromSlackButton } from "./components/AgentChat";
 import { type AgentChat, agentDisplayName as displayName, readErrorDetail, useAgentChat } from "./components/useAgentChat";
+import AppShell from "./dashboard/AppShell";
+import { withMockMode } from "./mock-mode";
 import "./agents.css";
 
 type User = {
@@ -365,7 +366,7 @@ function AgentCard({
                 page; a plain click keeps you here and opens the dialog's
                 Messages tab instead of navigating away. */}
             <a
-              href={`/dashboard/agents/${encodeURIComponent(agent.agent_id)}`}
+              href={withMockMode(`/dashboard/admin/agents/${encodeURIComponent(agent.agent_id)}`)}
               onClick={(event) => {
                 event.stopPropagation();
                 if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
@@ -471,7 +472,7 @@ function AgentDetail({
   );
 }
 
-// The same conversation as /dashboard/agents/<id>, in the dialog you get from
+// The same conversation as /dashboard/admin/agents/<id>, in the dialog you get from
 // clicking a card — so answering an agent never costs a page load.
 function ConversationPanel({ agent, chat }: { agent: AgentCardData; chat: AgentChat }) {
   return (
@@ -488,7 +489,7 @@ function ConversationPanel({ agent, chat }: { agent: AgentCardData; chat: AgentC
             className="cursor-pointer border-0 bg-transparent p-0 text-[12px] font-medium text-ink-soft hover:text-tide disabled:cursor-wait disabled:opacity-60"
           />
           <a
-            href={`/dashboard/agents/${encodeURIComponent(agent.agent_id)}`}
+            href={withMockMode(`/dashboard/admin/agents/${encodeURIComponent(agent.agent_id)}`)}
             target="_blank"
             rel="noreferrer"
             className="text-[12px] font-medium text-tide no-underline hover:text-tide-deep"
@@ -850,35 +851,23 @@ function AgentsView({ user }: { user: User }) {
 
   async function handleLogout() {
     try { await fetch("/auth/logout", { method: "POST", credentials: "include" }); }
-    finally { window.location.href = "/dashboard"; }
+    finally { window.location.href = withMockMode("/dashboard"); }
   }
 
   return (
     <>
       {user.impersonating && <ImpersonationBanner email={user.email} />}
-      <header className="sticky top-0 z-40 border-b border-line bg-paper/95 backdrop-blur-md">
-        <nav className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-5 sm:px-8">
-          <a href="/" className="text-[18px] text-ink no-underline"><Wordmark markSize="size-8" /></a>
-          <div className="flex items-center gap-3">
-            {user.avatar_url ? (
-              <img src={user.avatar_url} alt={`${displayUserName}'s avatar`} className="hidden size-8 rounded-full border border-line object-cover sm:block" referrerPolicy="no-referrer" />
-            ) : (
-              <span className="hidden size-8 items-center justify-center rounded-full bg-tide text-[13px] font-semibold text-white sm:flex">{displayUserName[0]?.toUpperCase()}</span>
-            )}
-            <span className="hidden text-[14px] font-medium text-ink sm:inline">{displayUserName}</span>
-            <span className="hidden sm:inline-flex"><GodModeButton /></span>
-            <a href="/dashboard/seo-geo" className="hidden rounded-full border border-line bg-surface px-3.5 py-2 text-[13px] font-medium text-ink-soft no-underline hover:border-tide/40 hover:text-tide md:inline-flex">SEO / GEO</a>
-            <a href="/dashboard/agents" aria-current="page" className="inline-flex rounded-full border border-tide bg-tide-wash px-3.5 py-2 text-[13px] font-medium text-tide no-underline">Agents</a>
-            <button type="button" onClick={handleLogout} className="hidden cursor-pointer rounded-full border border-line bg-surface px-3.5 py-2 text-[13px] font-medium text-ink-soft hover:text-ink sm:inline-flex">Log out</button>
-          </div>
-        </nav>
-      </header>
-
-      <main id="agents-main" className="mx-auto w-full max-w-7xl flex-1 px-5 pb-14 pt-10 sm:px-8">
+      <AppShell
+        active="admin-agents"
+        mode="admin"
+        identity={{ name: displayUserName, workspace: "Admin workspace", avatarUrl: user.avatar_url }}
+        onLogout={handleLogout}
+        adminControl={<AdminPanelControls inAdminPanel />}
+      >
+      <div id="agents-main" className="mx-auto w-full max-w-7xl">
         <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <a href="/dashboard" className="text-[13.5px] font-medium text-ink-soft no-underline hover:text-ink">Back to dashboard</a>
-            <h1 className="m-0 mt-5 text-[clamp(1.7rem,3.6vw,2.2rem)] font-semibold leading-[1.08] tracking-[-0.015em]">
+          <div className="min-w-[16rem] flex-1">
+            <h1 className="m-0 flex min-h-16 items-center text-[clamp(1.7rem,3.6vw,2.2rem)] font-semibold leading-[1.08] tracking-[-0.015em]">
               Agents
               {/* The signal survives scrolling past a card. */}
               {waitingCount > 0 && (
@@ -888,6 +877,9 @@ function AgentsView({ user }: { user: User }) {
                 </span>
               )}
             </h1>
+            <p className="m-0 max-w-xl text-[15px] leading-[1.5] text-ink-soft">
+              Monitor the internal agent fleet, review work that needs a decision, and open conversations without entering a customer workspace.
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <button type="button" onClick={() => setArchivedOpen((open) => !open)} className="cursor-pointer rounded-full border border-line bg-surface px-3.5 py-2 text-[12.5px] font-medium text-ink-soft hover:text-ink" aria-expanded={archivedOpen}>
@@ -946,7 +938,8 @@ function AgentsView({ user }: { user: User }) {
             {payload && active.length === 0 && <p className="m-0 text-[13px] text-ink-soft">All customer agents are archived.</p>}
           </section>
         )}
-      </main>
+      </div>
+      </AppShell>
       {selected && (
         <AgentDetail
           key={selected.agent_id}

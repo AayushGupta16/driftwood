@@ -1,5 +1,5 @@
 /* Pure data transform for the "Tier-1 score by run" trend chart on
-   /dashboard/seo-geo.
+   /dashboard/admin/search-visibility.
 
    The canonical comparability rule (site/GEO.md): probe results are
    COMPARABLE ONLY WITHIN ONE RUNNER TOOL — every run records its tool and

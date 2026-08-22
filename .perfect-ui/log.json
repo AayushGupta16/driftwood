@@ -1,5 +1,17 @@
 [
   {
+    "date": "2026-08-21",
+    "brief": "Cardinal-inspired campaign workbench",
+    "vibe": "minimal",
+    "wildcard": "operator canvas",
+    "macrostructure": "Workbench",
+    "design_variance": 5,
+    "visual_density": 9,
+    "motion_personality": "Corporate",
+    "motion_intensity": 1,
+    "illustration_style": "none"
+  },
+  {
     "date": "2026-07-25",
     "brief": "Admin fleet status dashboard",
     "vibe": "minimal",

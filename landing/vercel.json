@@ -41,6 +41,22 @@
       "destination": "https://us.i.posthog.com/:ppath"
     },
     {
+      "source": "/dashboard/admin",
+      "destination": "/admin.html"
+    },
+    {
+      "source": "/dashboard/admin/:path*",
+      "destination": "/admin.html"
+    },
+    {
+      "source": "/dashboard",
+      "destination": "/dashboard.html"
+    },
+    {
+      "source": "/dashboard/:path*",
+      "destination": "/dashboard.html"
+    },
+    {
       "source": "/((?!_vercel/|ingest/).*)",
       "destination": "/index.html"
     }

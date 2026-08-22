@@ -1,8 +1,12 @@
+import { initializeMockMode, mockBlockedResponse } from "./mock-mode";
+
 /* Preview-branch mock: `?mock=1` serves canned dashboard data so the
    redesigned dashboard can be seen (and screenshotted) without the backend.
    Numbers mirror the real Autosana account. Dev/preview aid only. */
 const params = new URLSearchParams(location.search);
-if (params.has("mock")) {
+const mockMode = initializeMockMode(location.search, location.pathname);
+if (mockMode) {
+  params.set("mock", mockMode);
   const hoursAgo = (h: number) => new Date(Date.now() - h * 3600e3).toISOString();
   const me = {
     id: "mock",
@@ -13,9 +17,13 @@ if (params.has("mock")) {
     linkedin_connected: true,
     impersonating: false,
     // ?mock=admin flips the admin chrome on (God mode + the SEO / GEO pill)
-    // for QA'ing admin-only pages like /dashboard/seo-geo. Plain ?mock=1
+    // for QA'ing admin-only pages like /dashboard/admin/search-visibility. Plain ?mock=1
     // stays the customer view the baked marketing screenshots are shot from.
-    is_admin: params.get("mock") === "admin",
+    is_admin: mockMode === "admin",
+    org: {
+      name: "Example workspace",
+      role: mockMode === "member" ? "member" : "owner",
+    },
     // ?x=pending|connected|locked walks the X card's later states without a
     // real Kernel profile. "locked" is the one worth looking at: connected,
     // but sitting behind X's chat PIN wall so DMs can't go out. Omit for
@@ -34,28 +42,26 @@ if (params.has("mock")) {
       within_limits: true,
       last_action_at: hoursAgo(3),
     },
-    funnel: { active: 124, contacted: 77, replied: 7, meetings: 4 },
+    funnel: { active: 6, contacted: 6, replied: 2, meetings: 1 },
     results: {
-      meetings: 4,
-      meetings_delta_7d: 2,
-      replies: 7,
-      replies_delta_7d: 3,
-      reply_rate: 0.091,
+      meetings: 1,
+      meetings_delta_7d: 1,
+      replies: 2,
+      replies_delta_7d: 1,
+      reply_rate: 0.333,
     },
-    lists: { leads: 124, blacklist: 2 },
-    companies: { qualified: 126, screened_out: 844, unknown: 130 },
+    lists: { leads: 6, blacklist: 2 },
+    companies: { qualified: 6, screened_out: 0, unknown: 0 },
     pending_reviews: 3,
   };
   const activity = {
     events: [
       { at: hoursAgo(2), kind: "stage", lead_id: "m1", lead_name: "Dana Whitfield", company_name: "Meridian", detail: "booked" },
       { at: hoursAgo(2.4), kind: "reply", lead_id: null, lead_name: null, company_name: null, detail: null },
-      { at: hoursAgo(5), kind: "reply", lead_id: null, lead_name: null, company_name: null, detail: null },
       { at: hoursAgo(6), kind: "sent", lead_id: null, lead_name: null, company_name: null, detail: "message" },
       { at: hoursAgo(7), kind: "sent", lead_id: null, lead_name: null, company_name: null, detail: "message" },
       { at: hoursAgo(9), kind: "reply", lead_id: null, lead_name: null, company_name: null, detail: null },
       { at: hoursAgo(17), kind: "sent", lead_id: null, lead_name: null, company_name: null, detail: "connection_request" },
-      { at: hoursAgo(21), kind: "reply", lead_id: null, lead_name: null, company_name: null, detail: null },
     ],
   };
   const daysAhead = (d: number) =>
@@ -411,10 +417,670 @@ if (params.has("mock")) {
     if (agent && match[2] === "health") agent.customer_health = Number(body.score);
     return { agent_id: agent?.agent_id, paused: agent?.paused, customer_health: agent?.customer_health };
   };
+  type MockCampaignContact = {
+    id: string; name: string; company: string; role: string; stage: string;
+    selected: boolean; selectable: boolean; enrollment_status: string | null;
+    current_step: number | null; next_action_at: string | null;
+  };
+  const mockCampaignContacts: MockCampaignContact[] = [
+    ["c78e9104-eedd-4962-8779-d6ba9541da19", "Mara Okafor", "Ternary Labs", "VP Operations"],
+    ["235d4c45-7d22-4498-b252-2a673a390e39", "Anika Shah", "Northstar Health", "Head of QA"],
+    ["4238a3f1-b9d2-4b12-9eb0-b491bc0c9ecb", "Luca Moretti", "Clearline", "Founder"],
+    ["64d728a7-cd39-4758-99cb-6d319f5c517f", "Ines Duarte", "Relayworks", "Product lead"],
+    ["20f90c58-aa21-4c24-a7f8-aae18c1b4bf8", "Owen Brooks", "Juniper Systems", "Engineering director"],
+    ["69fac83b-6ce8-472f-a095-a1ca4a4ff680", "Nadia Rahman", "Fieldnote", "COO"],
+  ].map(([id, name, company, role], index) => ({
+    id, name, company, role, stage: "new", selected: index < 3, selectable: true,
+    enrollment_status: index < 3 ? "draft" : null, current_step: null, next_action_at: null,
+  }));
+  type MockCampaign = {
+    id: string; series_id: string; version: number; name: string; description: string;
+    audience_name: string; audience_id: string | null; lock_version: number;
+    status: string; step_count: number; contact_count: number;
+    created_at: string; updated_at: string; steps: Record<string, unknown>[];
+    contacts: MockCampaignContact[];
+  };
+  const campaignSummary = (campaign: MockCampaign) => ({
+    id: campaign.id, series_id: campaign.series_id, version: campaign.version,
+    name: campaign.name, description: campaign.description, audience_name: campaign.audience_name,
+    audience_id: campaign.audience_id, lock_version: campaign.lock_version,
+    status: campaign.status, step_count: campaign.steps.length,
+    contact_count: campaign.contacts.filter((contact) => contact.selected).length,
+    created_at: campaign.created_at, updated_at: campaign.updated_at,
+  });
+  const mockCampaigns: MockCampaign[] = [{
+    id: "founder-led-qa",
+    series_id: "8f909c22-8785-4877-a1ae-cc659b389de3",
+    version: 1,
+    name: "Founder-led QA teams",
+    description: "Lead with a tailored workflow demo, then follow up on LinkedIn.",
+    audience_name: "Qualified QA leaders",
+    audience_id: "audience-qualified-qa",
+    lock_version: 0,
+    status: "draft",
+    step_count: 2,
+    contact_count: 3,
+    created_at: hoursAgo(72),
+    updated_at: hoursAgo(1),
+    steps: [
+      {
+        id: "0b088b8b-cbc8-40fe-b167-59d2e80db846", position: 1, kind: "email",
+        label: "Tailored intro", subject: "Built this for {{company}}",
+        body: "Hi {{first_name}},\n\nI put together a short, tailored look at how this could work for {{company}}.",
+        delay_days: 0, send_window: "business-hours", stop_on_reply: true, attachment_slug: null,
+      },
+      {
+        id: "2d095dbf-517f-43df-87f7-b09fc96de314", position: 2, kind: "wait",
+        label: "Wait", subject: null, body: "", delay_days: 3,
+        send_window: "business-hours", stop_on_reply: false, attachment_slug: null,
+      },
+    ],
+    contacts: mockCampaignContacts,
+  }, {
+    // Paused fixture: resuming it previews an overlap with the active
+    // "Expansion outreach" campaign below (Ines Duarte and Owen Brooks).
+    id: "warm-intro-revival",
+    series_id: "3d1a06a4-19cf-4f2a-9f8e-1f0a3f6f9c21",
+    version: 1,
+    name: "Warm intro revival",
+    description: "Follow up with product leaders who went quiet after the first touch.",
+    audience_name: "Product-led teams",
+    audience_id: null,
+    lock_version: 2,
+    status: "paused",
+    step_count: 2,
+    contact_count: 3,
+    created_at: hoursAgo(120),
+    updated_at: hoursAgo(6),
+    steps: [
+      {
+        id: "8f4de0cb-6cf0-4a34-9f0f-6a4f6f5cfd1a", position: 1, kind: "email",
+        label: "Reintro email", subject: "Picking this back up for {{company}}",
+        body: "Hi {{first_name}},\n\nCircling back with the tailored walkthrough I promised for {{company}}.",
+        delay_days: 0, send_window: "business-hours", stop_on_reply: true, attachment_slug: null,
+      },
+      {
+        id: "b0a4c7de-30a4-4f56-8e0e-2a7f3c1d9b42", position: 2, kind: "wait",
+        label: "Wait", subject: null, body: "", delay_days: 4,
+        send_window: "business-hours", stop_on_reply: false, attachment_slug: null,
+      },
+    ],
+    contacts: mockCampaignContacts.map((contact, index) => ({
+      ...contact,
+      selected: index >= 3,
+      enrollment_status: index >= 3 ? "waiting" : null,
+      current_step: index >= 3 ? 1 : null,
+      next_action_at: null,
+    })),
+  }, {
+    id: "expansion-outreach",
+    series_id: "5be0f7d3-4a91-4dd1-a2b4-8c50c3f8ab77",
+    version: 1,
+    name: "Expansion outreach",
+    description: "Active sequence for operations leaders at growth-stage teams.",
+    audience_name: "Operations leaders",
+    audience_id: null,
+    lock_version: 3,
+    status: "active",
+    step_count: 1,
+    contact_count: 2,
+    created_at: hoursAgo(96),
+    updated_at: hoursAgo(2),
+    steps: [
+      {
+        id: "e1c9a2f6-7b8d-4c3e-9a51-0d2f4b6c8e13", position: 1, kind: "email",
+        label: "Send email", subject: "An operations idea for {{company}}",
+        body: "Hi {{first_name}},\n\nSharing a short workflow idea built around {{company}}.",
+        delay_days: 0, send_window: "business-hours", stop_on_reply: true, attachment_slug: null,
+      },
+    ],
+    contacts: mockCampaignContacts.map((contact, index) => ({
+      ...contact,
+      selected: index === 3 || index === 4,
+      enrollment_status: index === 3 || index === 4 ? "ready" : null,
+      current_step: index === 3 || index === 4 ? 1 : null,
+      next_action_at: index === 3 || index === 4 ? hoursAgo(-4) : null,
+    })),
+  }];
+  const mockFixtureCampaignIds = new Set(mockCampaigns.map((campaign) => campaign.id));
+  const mockCampaignStorageKey = "driftwood.dashboard.mock-campaigns";
+  try {
+    const stored = JSON.parse(sessionStorage.getItem(mockCampaignStorageKey) ?? "[]") as MockCampaign[];
+    for (const campaign of stored) {
+      if (
+        campaign && typeof campaign.id === "string" &&
+        Array.isArray(campaign.steps) && Array.isArray(campaign.contacts) &&
+        !mockCampaigns.some((item) => item.id === campaign.id)
+      ) {
+        mockCampaigns.unshift(campaign);
+      }
+    }
+  } catch {
+    sessionStorage.removeItem(mockCampaignStorageKey);
+  }
+  const persistMockCampaigns = () => {
+    try {
+      sessionStorage.setItem(
+        mockCampaignStorageKey,
+        JSON.stringify(mockCampaigns.filter((campaign) => !mockFixtureCampaignIds.has(campaign.id))),
+      );
+    } catch {
+      // The preview remains usable when storage is blocked; only reload persistence is lost.
+    }
+  };
+  const campaignsApi = (init?: RequestInit, url?: string) => {
+    const method = init?.method ?? "GET";
+    const pathname = new URL(url ?? location.href, location.href).pathname;
+    const suffix = pathname.replace("/api/v1/dashboard/campaigns", "").replace(/^\//, "");
+    const [encodedId, action] = suffix.split("/");
+    if (!encodedId) {
+      if (method === "POST") {
+        const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
+        const audienceId = typeof body.audience_id === "string" ? body.audience_id : null;
+        const audience = mockAudiences.find((item) => item.id === audienceId);
+        const selectedLeadIds = new Set(
+          audience?.members
+            .filter((member) => member.outreach_eligible)
+            .map((member) => member.lead_id) ?? [],
+        );
+        const now = new Date().toISOString();
+        const id = crypto.randomUUID();
+        const campaign: MockCampaign = {
+          id, series_id: crypto.randomUUID(), version: 1,
+          name: String(body.name ?? "Untitled campaign") === "Untitled campaign" && audience
+            ? `${audience.name} campaign`
+            : String(body.name ?? "Untitled campaign"),
+          description: "Build a deliberate sequence for a focused group of leads.",
+          audience_name: audience?.name ?? "Choose an audience",
+          audience_id: audience?.id ?? null,
+          lock_version: 0,
+          status: "draft", step_count: 2, contact_count: selectedLeadIds.size,
+          created_at: now, updated_at: now,
+          steps: [
+            {
+              id: crypto.randomUUID(), position: 1, kind: "email", label: "Send email",
+              subject: "A quick idea for {{company}}",
+              body: "Hi {{first_name}},\n\nI put together a short, tailored look at how this could work for {{company}}.",
+              delay_days: 0, send_window: "business-hours", stop_on_reply: true, attachment_slug: null,
+            },
+            {
+              id: crypto.randomUUID(), position: 2, kind: "wait", label: "Wait", subject: null,
+              body: "", delay_days: 3, send_window: "business-hours", stop_on_reply: false,
+              attachment_slug: null,
+            },
+          ],
+          contacts: mockCampaignContacts.map((contact) => ({
+            ...contact,
+            selected: selectedLeadIds.has(contact.id),
+            enrollment_status: selectedLeadIds.has(contact.id) ? "draft" : null,
+            current_step: null,
+            next_action_at: null,
+          })),
+        };
+        mockCampaigns.unshift(campaign);
+        persistMockCampaigns();
+        return campaign;
+      }
+      return { campaigns: mockCampaigns.map(campaignSummary) };
+    }
+    const id = decodeURIComponent(encodedId);
+    const campaign = mockCampaigns.find((row) => row.id === id);
+    if (!campaign) return new Response(JSON.stringify({ error: { detail: "Campaign not found" } }), { status: 404, headers: { "Content-Type": "application/json" } });
+    if (method === "GET" && action === "contacts") {
+      const query = new URL(url ?? location.href, location.href).searchParams;
+      const search = (query.get("q") ?? "").trim().toLowerCase();
+      const limit = Math.max(1, Number(query.get("limit") ?? 50));
+      const offset = Math.max(0, Number(query.get("offset") ?? 0));
+      const contacts = search
+        ? campaign.contacts.filter((contact) =>
+          [contact.name, contact.company, contact.role].some((value) => value.toLowerCase().includes(search)),
+        )
+        : campaign.contacts;
+      return {
+        contacts: contacts.slice(offset, offset + limit),
+        total: contacts.length,
+        limit,
+        offset,
+      };
+    }
+    const activeOverlaps = () => {
+      const selectedIds = new Set(
+        campaign.contacts.filter((contact) => contact.selected).map((contact) => contact.id),
+      );
+      const conflicts = mockCampaigns.flatMap((other) => {
+        if (other.id === campaign.id || other.status !== "active") return [];
+        return other.contacts.flatMap((contact) =>
+          contact.selected && selectedIds.has(contact.id)
+            ? [{
+              lead_id: contact.id,
+              lead_name: contact.name,
+              campaign_id: other.id,
+              campaign_name: other.name,
+            }]
+            : [],
+        );
+      });
+      return {
+        lead_count: new Set(conflicts.map((conflict) => conflict.lead_id)).size,
+        campaign_count: new Set(conflicts.map((conflict) => conflict.campaign_id)).size,
+        conflicts,
+      };
+    };
+    if (method === "GET" && action === "overlaps") return activeOverlaps();
+    if (method === "PUT") {
+      const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
+      campaign.name = String(body.name ?? campaign.name);
+      campaign.description = String(body.description ?? campaign.description);
+      campaign.audience_name = String(body.audience_name ?? campaign.audience_name);
+      campaign.audience_id = typeof body.audience_id === "string" ? body.audience_id : null;
+      campaign.lock_version += 1;
+      campaign.steps = (body.steps ?? []).map((step: Record<string, unknown>, index: number) => ({ ...step, position: index + 1 }));
+      const selectedIds = new Set<string>(body.lead_ids ?? []);
+      campaign.contacts = campaign.contacts.map((contact) => ({
+        ...contact, selected: selectedIds.has(contact.id),
+        enrollment_status: selectedIds.has(contact.id) ? "draft" : null,
+      }));
+      campaign.updated_at = new Date().toISOString();
+      persistMockCampaigns();
+      return campaign;
+    }
+    if (method === "POST" && action === "activate") {
+      const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
+      const confirmed = new Set<string>(body.confirmed_overlap_lead_ids ?? []);
+      const overlaps = activeOverlaps();
+      if (overlaps.conflicts.some((conflict) => !confirmed.has(conflict.lead_id))) {
+        return new Response(
+          JSON.stringify({ error: { code: "campaign_lead_overlap", detail: "Confirm the active campaign overlap before continuing." } }),
+          { status: 409, headers: { "Content-Type": "application/json" } },
+        );
+      }
+      campaign.status = "active";
+      campaign.lock_version += 1;
+      campaign.contacts = campaign.contacts.map((contact) => ({
+        ...contact,
+        enrollment_status: contact.selected ? "ready" : null,
+        current_step: contact.selected ? 1 : null,
+        next_action_at: contact.selected ? new Date().toISOString() : null,
+      }));
+      campaign.updated_at = new Date().toISOString();
+      persistMockCampaigns();
+      return { campaign, outreach_queued: false, message: "Campaign version frozen. No outreach was queued or sent." };
+    }
+    if (method === "POST" && (action === "pause" || action === "resume")) {
+      if (action === "resume") {
+        const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
+        const confirmed = new Set<string>(body.confirmed_overlap_lead_ids ?? []);
+        const overlaps = activeOverlaps();
+        if (overlaps.conflicts.some((conflict) => !confirmed.has(conflict.lead_id))) {
+          return new Response(
+            JSON.stringify({ error: { code: "campaign_lead_overlap", detail: "Confirm the active campaign overlap before continuing." } }),
+            { status: 409, headers: { "Content-Type": "application/json" } },
+          );
+        }
+      }
+      campaign.status = action === "pause" ? "paused" : "active";
+      campaign.updated_at = new Date().toISOString();
+      persistMockCampaigns();
+      return campaign;
+    }
+    if (method === "POST" && action === "revisions") {
+      const revision: MockCampaign = JSON.parse(JSON.stringify(campaign));
+      revision.id = crypto.randomUUID();
+      revision.version += 1;
+      revision.status = "draft";
+      revision.lock_version = 0;
+      revision.created_at = new Date().toISOString();
+      revision.updated_at = revision.created_at;
+      revision.steps = revision.steps.map((step) => ({ ...step, id: crypto.randomUUID() }));
+      revision.contacts = revision.contacts.map((contact) => ({
+        ...contact, enrollment_status: contact.selected ? "draft" : null,
+        current_step: null, next_action_at: null,
+      }));
+      mockCampaigns.unshift(revision);
+      persistMockCampaigns();
+      return revision;
+    }
+    return campaign;
+  };
+  type MockAsset = {
+    id: string; kind: "image" | "video" | "link"; name: string; description: string;
+    tags: string[]; original_filename: string | null; content_type: string | null;
+    byte_size: number | null; external_url: string | null; content_url: string | null;
+    created_at: string; updated_at: string;
+    assignment_mode: "all" | "selected"; assigned_agent_ids: string[];
+  };
+  const mockAssetAgents = [
+    { id: "outbound", label: "Outbound agent", paused: false },
+    { id: "demo", label: "Demo agent", paused: false },
+    { id: "research", label: "Research agent", paused: true },
+  ];
+  const assetPreview = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='720' height='420' viewBox='0 0 720 420'%3E%3Crect width='720' height='420' fill='%23eaf1f7'/%3E%3Cpath d='M0 330L190 170l108 96 105-82 317 236H0z' fill='%2315557e' opacity='.72'/%3E%3Ccircle cx='555' cy='100' r='40' fill='%23fff' opacity='.8'/%3E%3C/svg%3E";
+  const mockAssets: MockAsset[] = [
+    { id: "asset-product", kind: "image", name: "Product workflow", description: "Approved overview visual for outbound demos.", tags: ["product", "approved"], original_filename: "workflow.png", content_type: "image/png", byte_size: 184200, external_url: null, content_url: assetPreview, created_at: hoursAgo(72), updated_at: hoursAgo(4), assignment_mode: "all", assigned_agent_ids: [] },
+    { id: "asset-proof", kind: "link", name: "Enterprise customer story", description: "Use when a prospect asks for implementation proof.", tags: ["proof", "enterprise"], original_filename: null, content_type: null, byte_size: null, external_url: "https://driftwood.sh/", content_url: null, created_at: hoursAgo(96), updated_at: hoursAgo(28), assignment_mode: "selected", assigned_agent_ids: ["outbound", "demo"] },
+  ];
+  const assetsApi = (init?: RequestInit, url?: string) => {
+    const method = init?.method ?? "GET";
+    const pathname = new URL(url ?? location.href, location.href).pathname;
+    const suffix = pathname.replace("/api/v1/dashboard/assets", "").replace(/^\//, "");
+    if (suffix === "agents" && method === "GET") return { agents: mockAssetAgents };
+    const assignmentMatch = suffix.match(/^([^/]+)\/assignments$/);
+    if (assignmentMatch && method === "PUT") {
+      const asset = mockAssets.find((item) => item.id === decodeURIComponent(assignmentMatch[1]));
+      if (!asset) return new Response(JSON.stringify({ detail: "Asset not found" }), { status: 404, headers: { "Content-Type": "application/json" } });
+      const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
+      asset.assignment_mode = body.assignment_mode === "selected" ? "selected" : "all";
+      asset.assigned_agent_ids = asset.assignment_mode === "all" ? [] : Array.isArray(body.agent_ids) ? body.agent_ids : [];
+      asset.updated_at = new Date().toISOString();
+      return asset;
+    }
+    if (!suffix && method === "GET") return { assets: mockAssets };
+    if (suffix === "link" && method === "POST") {
+      const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
+      const now = new Date().toISOString();
+      const asset: MockAsset = { id: crypto.randomUUID(), kind: "link", name: String(body.name), description: String(body.description ?? ""), tags: Array.isArray(body.tags) ? body.tags : [], original_filename: null, content_type: null, byte_size: null, external_url: String(body.url), content_url: null, created_at: now, updated_at: now, assignment_mode: "all", assigned_agent_ids: [] };
+      mockAssets.unshift(asset);
+      return asset;
+    }
+    if (suffix === "upload" && method === "POST") {
+      const form = init?.body instanceof FormData ? init.body : new FormData();
+      const file = form.get("file");
+      const now = new Date().toISOString();
+      const isFile = file instanceof File;
+      const kind = isFile && file.type.startsWith("video/") ? "video" : "image";
+      const asset: MockAsset = { id: crypto.randomUUID(), kind, name: String(form.get("name") || (isFile ? file.name : "Uploaded asset")), description: String(form.get("description") ?? ""), tags: String(form.get("tags") ?? "").split(",").map((tag) => tag.trim()).filter(Boolean), original_filename: isFile ? file.name : null, content_type: isFile ? file.type : null, byte_size: isFile ? file.size : null, external_url: null, content_url: kind === "image" ? assetPreview : null, created_at: now, updated_at: now, assignment_mode: "all", assigned_agent_ids: [] };
+      mockAssets.unshift(asset);
+      return asset;
+    }
+    if (method === "DELETE") {
+      const index = mockAssets.findIndex((asset) => asset.id === decodeURIComponent(suffix));
+      if (index >= 0) mockAssets.splice(index, 1);
+      return {};
+    }
+    return { assets: mockAssets };
+  };
+  const metricPeople = [
+    { lead_id: "lead-1", name: "Mara Okafor", title: "VP Operations", email: "mara@example.test", company_name: "Ternary Labs", channel: "email", status: "contacted", occurred_at: hoursAgo(30), source: "confirmed_send" },
+    { lead_id: "lead-2", name: "Anika Shah", title: "Head of QA", email: "anika@example.test", company_name: "Northstar Health", channel: "linkedin", status: "contacted", occurred_at: hoursAgo(28), source: "confirmed_send" },
+    { lead_id: "lead-3", name: "Luca Moretti", title: "Founder", email: "luca@example.test", company_name: "Clearline", channel: "email", status: "contacted", occurred_at: hoursAgo(26), source: "confirmed_send" },
+    { lead_id: "lead-4", name: "Ines Duarte", title: "Product lead", email: "ines@example.test", company_name: "Relayworks", channel: "linkedin", status: "contacted", occurred_at: hoursAgo(24), source: "confirmed_send" },
+    { lead_id: "lead-5", name: "Owen Brooks", title: "Engineering director", email: "owen@example.test", company_name: "Juniper Systems", channel: "linkedin", status: "contacted", occurred_at: hoursAgo(20), source: "confirmed_send" },
+    { lead_id: "lead-6", name: "Nadia Rahman", title: "COO", email: "nadia@example.test", company_name: "Fieldnote", channel: "x", status: "contacted", occurred_at: hoursAgo(18), source: "confirmed_send" },
+    { lead_id: "lead-1", name: "Mara Okafor", title: "VP Operations", email: "mara@example.test", company_name: "Ternary Labs", channel: "email", status: "replied", occurred_at: hoursAgo(3), source: "email_reply" },
+    { lead_id: "lead-2", name: "Anika Shah", title: "Head of QA", email: "anika@example.test", company_name: "Northstar Health", channel: "linkedin", status: "replied", occurred_at: hoursAgo(9), source: "linkedin_reply" },
+    { lead_id: "lead-3", name: "Luca Moretti", title: "Founder", email: "luca@example.test", company_name: "Clearline", channel: "email", status: "demos_booked", occurred_at: hoursAgo(26), source: "lead_stage" },
+  ];
+  const channelMetricsApi = (_init?: RequestInit, url?: string) => {
+    const query = new URL(url ?? location.href, location.href).searchParams;
+    const status = query.get("status") ?? "replied";
+    const channel = query.get("channel");
+    const people = metricPeople.filter((person) => person.status === status && (!channel || person.channel === channel));
+    return {
+      window: { start: query.get("start"), end: query.get("end") },
+      channels: [
+        { channel: "linkedin", contacted: { count: 3, available: true }, opened: { count: null, available: false }, clicked: { count: null, available: false }, replied: { count: 1, available: true }, demos_booked: { count: 0, available: true } },
+        { channel: "email", contacted: { count: 2, available: true }, opened: { count: null, available: false }, clicked: { count: null, available: false }, replied: { count: 1, available: true }, demos_booked: { count: 1, available: true } },
+        { channel: "x", contacted: { count: 1, available: true }, opened: { count: null, available: false }, clicked: { count: null, available: false }, replied: { count: null, available: false }, demos_booked: { count: 0, available: true } },
+      ],
+      definitions: [
+        { id: "contacted", label: "Contacted", available: true, definition: "Distinct leads with a confirmed outbound send.", note: null },
+        { id: "opened", label: "Opened", available: false, definition: "Distinct leads with a provider open event.", note: "Provider open events are not stored yet." },
+        { id: "clicked", label: "Clicked", available: false, definition: "Distinct leads with a provider click event.", note: "Provider click events are not stored yet." },
+        { id: "replied", label: "Replied", available: true, definition: "Distinct leads matched to an inbound reply.", note: null },
+        { id: "demos_booked", label: "Demos booked", available: true, definition: "Distinct booked leads attributed to the latest prior send.", note: null },
+      ],
+      people,
+      people_status: status,
+      people_channel: channel,
+      people_total: people.length,
+      limit: 100,
+      offset: 0,
+      unmatched_replies: { linkedin: 0, email: 0, x: 0 },
+      unattributed_demos_booked: 0,
+    };
+  };
+  type MockLead = {
+    id: string; name: string; company: string; company_id: string; title: string;
+    email: string | null; linkedin_url: string; stage: string; origin: string;
+    source: string; audiences: string[]; demo_idea: string | null;
+    demo_artifact_id: string | null; created_at: string; updated_at: string;
+  };
+  const mockLeads: MockLead[] = mockCampaignContacts.map((contact, index) => ({
+    id: contact.id,
+    name: contact.name,
+    company: contact.company,
+    company_id: `company-${index + 1}`,
+    title: contact.role,
+    email: `${contact.name.toLowerCase().replace(/\s+/g, ".")}@example.test`,
+    linkedin_url: `https://www.linkedin.com/in/${contact.name.toLowerCase().replace(/\s+/g, "-")}`,
+    stage: contact.stage,
+    origin: "generated",
+    source: index < 3 ? "orange-slice:ocean" : "workspace",
+    audiences: index < 3 ? ["Qualified QA leaders"] : index === 3 ? ["Product-led teams"] : [],
+    demo_idea: null,
+    demo_artifact_id: null,
+    created_at: hoursAgo(48 + index),
+    updated_at: hoursAgo(2 + index),
+  }));
+  const leadImportsApi = (init?: RequestInit) => {
+    if ((init?.method ?? "GET") !== "POST") return { detail: "Method not allowed" };
+    const form = init?.body instanceof FormData ? init.body : null;
+    const file = form?.get("file");
+    if (!(file instanceof File)) {
+      return new Response(JSON.stringify({ detail: "Choose a CSV file." }), {
+        status: 422,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    const id = crypto.randomUUID();
+    mockLeads.push({
+      id,
+      name: "Camille Rivera",
+      company: "Atlas Relay",
+      company_id: `company-${id}`,
+      title: "Revenue operations lead",
+      email: `camille.rivera.${id.slice(0, 6)}@example.test`,
+      linkedin_url: "https://www.linkedin.com/in/camille-rivera",
+      stage: "new",
+      origin: "uploaded",
+      source: "uploaded:csv",
+      audiences: [],
+      demo_idea: null,
+      demo_artifact_id: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+    summary.lists.leads = mockLeads.length;
+    return { added: 1, skipped_duplicate: 0, skipped_suppressed: 0, errors: [] };
+  };
+  const dashboardLeadsApi = (init?: RequestInit, url?: string) => {
+    const method = init?.method ?? "GET";
+    const parsed = new URL(url ?? location.href, location.href);
+    const suffix = parsed.pathname.replace("/api/v1/dashboard/leads", "").replace(/^\//, "");
+    if (method === "DELETE" && suffix) {
+      const index = mockLeads.findIndex((item) => item.id === decodeURIComponent(suffix));
+      if (index >= 0) mockLeads.splice(index, 1);
+      return { lead_id: suffix, blacklisted: true };
+    }
+    const limit = Math.max(1, Number(parsed.searchParams.get("limit") ?? 25));
+    const offset = Math.max(0, Number(parsed.searchParams.get("offset") ?? 0));
+    return { leads: mockLeads.slice(offset, offset + limit), total: mockLeads.length, limit, offset };
+  };
+  const mockCompanies = mockCampaignContacts.map((contact, index) => ({
+    id: `company-${index + 1}`,
+    name: contact.company,
+    domain: `${contact.company.toLowerCase().replace(/\s+/g, "")}.example`,
+    linkedin_slug: null,
+    icp_status: "qualified",
+    disqualify_reason: null,
+    qa_headcount: null,
+    employee_count: 80 + index * 25,
+    funding_stage: index < 3 ? "Series A" : "Seed",
+    location: "United States",
+    source: index < 3 ? "orange-slice:ocean" : "workspace",
+    lead_count: 1,
+    last_verified_at: hoursAgo(24 + index),
+    created_at: hoursAgo(72 + index),
+    updated_at: hoursAgo(4 + index),
+  }));
+  const dashboardCompaniesApi = (init?: RequestInit, url?: string) => {
+    const method = init?.method ?? "GET";
+    const parsed = new URL(url ?? location.href, location.href);
+    const suffix = parsed.pathname.replace("/api/v1/dashboard/companies", "").replace(/^\//, "");
+    if (method === "DELETE" && suffix) {
+      const index = mockCompanies.findIndex((item) => item.id === decodeURIComponent(suffix));
+      if (index >= 0) mockCompanies.splice(index, 1);
+      return { company_id: suffix, blacklisted_contacts: 1 };
+    }
+    const status = parsed.searchParams.get("icp_status");
+    const filtered = status ? mockCompanies.filter((item) => item.icp_status === status) : mockCompanies;
+    const limit = Math.max(1, Number(parsed.searchParams.get("limit") ?? 25));
+    const offset = Math.max(0, Number(parsed.searchParams.get("offset") ?? 0));
+    return { companies: filtered.slice(offset, offset + limit), total: filtered.length, limit, offset };
+  };
+  type MockAudience = {
+    id: string; name: string; description: string; source_provider: string;
+    discovery_filters: Record<string, string>; members: Array<{
+      lead_id: string; name: string; title: string; company: string;
+      email: string | null; linkedin_url: string; stage: string; contactable: boolean;
+      outreach_eligible: boolean;
+    }>; created_at: string; updated_at: string;
+  };
+  const audienceSummary = (audience: MockAudience) => ({
+    id: audience.id,
+    name: audience.name,
+    description: audience.description,
+    source_provider: audience.source_provider,
+    member_count: audience.members.length,
+    created_at: audience.created_at,
+    updated_at: audience.updated_at,
+  });
+  const memberFromLead = (item: MockLead) => ({
+    lead_id: item.id, name: item.name, title: item.title, company: item.company,
+    email: item.email, linkedin_url: item.linkedin_url, stage: item.stage,
+    contactable: true, outreach_eligible: true,
+  });
+  const mockAudiences: MockAudience[] = [{
+    id: "audience-qualified-qa",
+    name: "Qualified QA leaders",
+    description: "QA and operations leaders at teams with a live release workflow.",
+    source_provider: "orange_slice",
+    discovery_filters: { prompt: "QA and operations leaders at teams with a live release workflow" },
+    members: mockLeads.slice(0, 3).map(memberFromLead),
+    created_at: hoursAgo(72),
+    updated_at: hoursAgo(2),
+  }, {
+    id: "audience-product-led",
+    name: "Product-led teams",
+    description: "Product leaders evaluating a hands-on launch workflow.",
+    source_provider: "workspace",
+    discovery_filters: { prompt: "Product leaders evaluating a hands-on QA workflow" },
+    members: [memberFromLead(mockLeads[3])],
+    created_at: hoursAgo(120),
+    updated_at: hoursAgo(24),
+  }];
+  const discoveryCandidates = [
+    { provider_record_id: "orange-person-1", lead_id: null, name: "Talia Morgan", title: "VP Quality", company: "Proofline", email: null, linkedin_url: "https://www.linkedin.com/in/talia-morgan", stage: "new" },
+    { provider_record_id: "orange-person-2", lead_id: null, name: "Ravi Menon", title: "Director of Engineering", company: "SignalNest", email: null, linkedin_url: "https://www.linkedin.com/in/ravi-menon", stage: "new" },
+    { provider_record_id: "orange-person-3", lead_id: null, name: "Elena Park", title: "Founder", company: "Releasewise", email: null, linkedin_url: "https://www.linkedin.com/in/elena-park", stage: "new" },
+  ];
+  const audiencesApi = (init?: RequestInit, url?: string) => {
+    const method = init?.method ?? "GET";
+    const pathname = new URL(url ?? location.href, location.href).pathname;
+    const suffix = pathname.replace("/api/v1/dashboard/audiences", "").replace(/^\//, "");
+    if (suffix === "discovery-status" && method === "GET") {
+      return {
+        default_provider: "orange_slice",
+        providers: [
+          { provider: "orange_slice", label: "Orange Slice", configured: true },
+          { provider: "workspace", label: "Workspace leads", configured: true },
+        ],
+      };
+    }
+    if (suffix === "discover" && method === "POST") {
+      const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
+      if (body.source_provider === "workspace") {
+        return {
+          provider: "workspace",
+          provider_label: "Workspace leads",
+          candidates: mockLeads.slice(0, 4).map((lead) => ({
+            provider_record_id: lead.id,
+            lead_id: lead.id,
+            name: lead.name,
+            title: lead.title,
+            company: lead.company,
+            email: lead.email,
+            linkedin_url: lead.linkedin_url,
+            stage: lead.stage,
+          })),
+        };
+      }
+      return { provider: "orange_slice", provider_label: "Orange Slice", candidates: discoveryCandidates };
+    }
+    if (!suffix && method === "GET") return { audiences: mockAudiences.map(audienceSummary) };
+    if (!suffix && method === "POST") {
+      const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
+      const selectedProviderIds = Array.isArray(body.provider_record_ids) ? body.provider_record_ids : [];
+      const selectedLeadIds = Array.isArray(body.lead_ids) ? body.lead_ids : [];
+      const newlyDiscoveredLeadIds = new Set<string>();
+      for (const providerId of selectedProviderIds) {
+        const candidate = discoveryCandidates.find((item) => item.provider_record_id === providerId);
+        if (!candidate) continue;
+        const id = crypto.randomUUID();
+        mockLeads.unshift({
+          id, name: candidate.name, company: candidate.company, company_id: crypto.randomUUID(),
+          title: candidate.title, email: null, linkedin_url: candidate.linkedin_url,
+          stage: candidate.stage, origin: "generated", source: "orange-slice:ocean",
+          audiences: [], demo_idea: null, demo_artifact_id: null,
+          created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+        });
+        selectedLeadIds.push(id);
+        newlyDiscoveredLeadIds.add(id);
+      }
+      const memberLeads = selectedLeadIds.flatMap((id: string) => {
+        const item = mockLeads.find((leadItem) => leadItem.id === id);
+        return item ? [item] : [];
+      });
+      const now = new Date().toISOString();
+      const created: MockAudience = {
+        id: crypto.randomUUID(), name: String(body.name), description: String(body.description ?? ""),
+        source_provider: String(body.source_provider ?? "workspace"),
+        discovery_filters: body.discovery_filters ?? {},
+        members: memberLeads.map((item: MockLead) => ({
+          ...memberFromLead(item),
+          outreach_eligible: !newlyDiscoveredLeadIds.has(item.id),
+        })),
+        created_at: now, updated_at: now,
+      };
+      for (const item of memberLeads) {
+        if (!item.audiences.includes(created.name)) item.audiences.push(created.name);
+      }
+      mockAudiences.unshift(created);
+      return { ...audienceSummary(created), discovery_filters: created.discovery_filters, members: created.members };
+    }
+    const audienceId = decodeURIComponent(suffix);
+    const audience = mockAudiences.find((item) => item.id === audienceId);
+    if (method === "DELETE") {
+      const index = mockAudiences.findIndex((item) => item.id === audienceId);
+      if (index >= 0) {
+        const [removed] = mockAudiences.splice(index, 1);
+        for (const item of mockLeads) item.audiences = item.audiences.filter((name) => name !== removed.name);
+      }
+      return {};
+    }
+    return audience ? { ...audienceSummary(audience), discovery_filters: audience.discovery_filters, members: audience.members } : {};
+  };
   // Matching is startsWith with NO method check, so more-specific paths must
   // come first — /sends/cancel and /sends/dismiss (POST) would otherwise be
   // swallowed by the /sends fixture, and /reviews/decide by /reviews.
   const routes: [string, unknown][] = [
+    ["/api/v1/imports/leads", leadImportsApi],
+    ["/api/v1/dashboard/audiences", audiencesApi],
+    ["/api/v1/dashboard/leads", dashboardLeadsApi],
+    ["/api/v1/dashboard/companies", dashboardCompaniesApi],
+    ["/api/v1/dashboard/channel-metrics", channelMetricsApi],
+    ["/api/v1/dashboard/assets", assetsApi],
+    ["/api/v1/dashboard/campaigns", campaignsApi],
     ["/api/v1/admin/agents/dashboard", agentDashboard],
     ["/api/v1/admin/agents/", mutateAgent],
     ["/api/v1/admin/probes/dashboard", probesNotFound],
@@ -442,6 +1108,10 @@ if (params.has("mock")) {
           }),
         );
       }
+    }
+    const parsed = new URL(url, location.origin);
+    if (parsed.origin === location.origin && (parsed.pathname.startsWith("/api/") || parsed.pathname.startsWith("/auth/"))) {
+      return Promise.resolve(mockBlockedResponse(parsed.pathname));
     }
     return realFetch(input, init);
   };

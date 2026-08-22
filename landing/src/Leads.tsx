@@ -6,10 +6,11 @@ import {
   useState,
 } from "react";
 import Fuse from "fuse.js";
-import { Wordmark } from "./components/Chrome";
-import { ToastProvider } from "./Dashboard";
-import { GodModeButton, ImpersonationBanner } from "./GodMode";
+import { ToastProvider } from "./dashboard/DashboardCommon";
+import { AdminPanelControls, ImpersonationBanner } from "./GodMode";
 import { CARD, relativeTime, useToast } from "./dashboard-shared";
+import AppShell from "./dashboard/AppShell";
+import { withMockMode } from "./mock-mode";
 
 /* /dashboard/leads — the full-width, dedicated "All leads" table. Self-contained
    page: does its own /auth/me gate (an unapproved or logged-out user is bounced
@@ -41,6 +42,7 @@ type LeadRow = {
   stage: string;
   origin: string;
   source: string | null;
+  audiences: string[];
   demo_idea: string | null;
   demo_artifact_id: string | null;
   created_at: string;
@@ -68,12 +70,12 @@ export default function Leads() {
           // Only approved users get the table; everyone else goes back to the
           // dashboard, which handles login + the pending-approval state.
           if (u.is_approved) setUser(u);
-          else window.location.href = "/dashboard";
+          else window.location.href = withMockMode("/dashboard");
         } else {
-          window.location.href = "/dashboard";
+          window.location.href = withMockMode("/dashboard");
         }
       } catch {
-        if (!cancelled) window.location.href = "/dashboard";
+        if (!cancelled) window.location.href = withMockMode("/dashboard");
       }
     })();
     return () => {
@@ -83,7 +85,7 @@ export default function Leads() {
 
   return (
     <ToastProvider>
-      <div className="relative flex min-h-screen flex-col overflow-x-clip">
+      <div className="relative flex min-h-[100dvh] flex-col overflow-x-clip">
         {user ? <LeadsView user={user} /> : <LoadingView />}
       </div>
     </ToastProvider>
@@ -113,55 +115,22 @@ function LeadsView({ user }: { user: User }) {
     try {
       await fetch("/auth/logout", { method: "POST", credentials: "include" });
     } finally {
-      window.location.href = "/dashboard";
+      window.location.href = withMockMode("/dashboard");
     }
   }
 
   return (
     <>
       {user.impersonating && <ImpersonationBanner email={user.email} />}
-      <header className="sticky top-0 z-40 border-b border-line bg-paper/95 backdrop-blur-md">
-        <nav className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-5 sm:px-8">
-          <a href="/" className="text-[18px] text-ink no-underline">
-            <Wordmark markSize="size-8" />
-          </a>
-          <div className="flex items-center gap-3">
-            {user.avatar_url ? (
-              <img
-                src={user.avatar_url}
-                alt={`${displayName}'s avatar`}
-                className="size-8 shrink-0 rounded-full border border-line object-cover"
-                referrerPolicy="no-referrer"
-              />
-            ) : (
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-tide text-[13px] font-semibold text-white">
-                {displayName[0]?.toUpperCase()}
-              </span>
-            )}
-            <span className="hidden text-[14px] font-medium text-ink sm:inline">
-              {displayName}
-            </span>
-            {user.is_admin && <GodModeButton />}
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="cursor-pointer rounded-full border border-line bg-surface px-3.5 py-2 text-[13.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink"
-            >
-              Log out
-            </button>
-          </div>
-        </nav>
-      </header>
-
-      <main className="mx-auto w-full max-w-7xl flex-1 px-5 py-10 sm:px-8">
-        <a
-          href="/dashboard"
-          className="inline-flex items-center gap-1.5 text-[13.5px] font-medium text-ink-soft no-underline transition-colors hover:text-ink"
-        >
-          <span aria-hidden="true">←</span> Back to dashboard
-        </a>
-        <LeadsTable canWrite={canWrite} />
-      </main>
+      <AppShell
+        active="leads"
+        identity={{ name: displayName, workspace: user.org?.name, avatarUrl: user.avatar_url }}
+        onLogout={handleLogout}
+        adminControl={user.is_admin ? <AdminPanelControls /> : undefined}
+        canWrite={canWrite}
+      >
+        <div className="mx-auto w-full max-w-7xl"><LeadsTable canWrite={canWrite} /></div>
+      </AppShell>
     </>
   );
 }
@@ -185,6 +154,7 @@ const SEARCH_KEYS = [
   { name: "email", weight: 2 },
   { name: "title", weight: 1 },
   { name: "source", weight: 1 },
+  { name: "audiences", weight: 2 },
 ];
 
 type LeadsState =
@@ -215,6 +185,7 @@ function LeadsTable({ canWrite }: { canWrite: boolean }) {
   const [state, setState] = useState<LeadsState>({ status: "loading" });
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [audienceFilter, setAudienceFilter] = useState("all");
   const [page, setPage] = useState(0);
   const toast = useToast();
 
@@ -230,7 +201,12 @@ function LeadsTable({ canWrite }: { canWrite: boolean }) {
         );
         if (!res.ok) throw new Error("request failed");
         const pageData = (await res.json()) as LeadsPage;
-        all.push(...pageData.leads);
+        all.push(
+          ...pageData.leads.map((lead) => ({
+            ...lead,
+            audiences: lead.audiences ?? [],
+          })),
+        );
         if (pageData.leads.length === 0 || all.length >= pageData.total) break;
       }
       setState({ status: "ready", leads: all });
@@ -285,6 +261,13 @@ function LeadsTable({ canWrite }: { canWrite: boolean }) {
     [state],
   );
   const allCount = allLeads.length;
+  const audienceOptions = useMemo(
+    () =>
+      [...new Set(allLeads.flatMap((lead) => lead.audiences))].sort((a, b) =>
+        a.localeCompare(b),
+      ),
+    [allLeads],
+  );
 
   // useDeferredValue keeps typing snappy: the input updates immediately while
   // the (cheap, but non-blocking) Fuse pass runs against the deferred value.
@@ -306,9 +289,10 @@ function LeadsTable({ canWrite }: { canWrite: boolean }) {
   );
 
   const filtered = useMemo(() => {
-    if (!trimmed) return allLeads;
-    return fuse.search(trimmed).map((r) => r.item);
-  }, [fuse, trimmed, allLeads]);
+    const searched = trimmed ? fuse.search(trimmed).map((r) => r.item) : allLeads;
+    if (audienceFilter === "all") return searched;
+    return searched.filter((lead) => lead.audiences.includes(audienceFilter));
+  }, [fuse, trimmed, allLeads, audienceFilter]);
 
   // A new search resets to the first page — handled in the input's onChange
   // (below) rather than an effect, so we don't trigger a cascading render.
@@ -357,8 +341,8 @@ function LeadsTable({ canWrite }: { canWrite: boolean }) {
             </p>
           ) : (
             <>
-              <div className="mb-4 flex items-center gap-3">
-                <div className="relative flex-1">
+              <div className="mb-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_13rem_auto] sm:items-center">
+                <div className="relative min-w-0">
                   <svg
                     aria-hidden="true"
                     viewBox="0 0 20 20"
@@ -392,12 +376,30 @@ function LeadsTable({ canWrite }: { canWrite: boolean }) {
                         setPage(0);
                       }
                     }}
-                    placeholder="Search by name, company, email, title…"
+                    placeholder="Search name, company, audience, email…"
                     aria-label="Search leads"
                     className="w-full rounded-xl border border-line bg-paper py-2.5 pl-10 pr-3 text-[13.5px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-tide"
                   />
                 </div>
-                {trimmed && (
+                <label>
+                  <span className="sr-only">Filter leads by audience</span>
+                  <select
+                    value={audienceFilter}
+                    onChange={(event) => {
+                      setAudienceFilter(event.target.value);
+                      setPage(0);
+                    }}
+                    className="w-full rounded-xl border border-line bg-paper px-3 py-2.5 text-[13.5px] text-ink outline-none transition-colors focus:border-tide"
+                  >
+                    <option value="all">All audiences</option>
+                    {audienceOptions.map((audience) => (
+                      <option key={audience} value={audience}>
+                        {audience}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {(trimmed || audienceFilter !== "all") && (
                   <span className="shrink-0 text-[12.5px] text-ink-faint tabular-nums">
                     {total.toLocaleString()} {total === 1 ? "match" : "matches"}
                   </span>
@@ -416,6 +418,7 @@ function LeadsTable({ canWrite }: { canWrite: boolean }) {
                         <tr>
                           <th className={TH}>Name</th>
                           <th className={TH}>Company</th>
+                          <th className={TH}>Audiences</th>
                           <th className={TH}>Title</th>
                           <th className={TH}>Email</th>
                           <th className={TH}>LinkedIn</th>
@@ -441,6 +444,27 @@ function LeadsTable({ canWrite }: { canWrite: boolean }) {
                                 {lead.name || <Dash />}
                               </td>
                               <td className={TD}>{lead.company || <Dash />}</td>
+                              <td className={TD}>
+                                {lead.audiences.length ? (
+                                  <span className="flex max-w-[18rem] items-center gap-1.5">
+                                    {lead.audiences.slice(0, 2).map((audience) => (
+                                      <a
+                                        key={audience}
+                                        href={withMockMode("/dashboard/audiences")}
+                                        className={`${STAGE_PILL} max-w-[8rem] truncate no-underline hover:border-tide/40 hover:text-tide`}
+                                        title={audience}
+                                      >
+                                        {audience}
+                                      </a>
+                                    ))}
+                                    {lead.audiences.length > 2 && (
+                                      <span className="text-[11px] text-ink-faint">+{lead.audiences.length - 2}</span>
+                                    )}
+                                  </span>
+                                ) : (
+                                  <Dash />
+                                )}
+                              </td>
                               <td className={TD}>{lead.title || <Dash />}</td>
                               <td className={TD}>{lead.email || <Dash />}</td>
                               <td className={TD}>

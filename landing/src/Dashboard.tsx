@@ -6,22 +6,39 @@ import {
   type ChangeEvent,
   type ReactNode,
 } from "react";
-import { Wordmark } from "./components/Chrome";
-import { GodModeButton, ImpersonationBanner } from "./GodMode";
+import { AdminPanelControls, ImpersonationBanner } from "./GodMode";
+import { listAssets } from "./assets/api";
+import type { CompanyAsset } from "./assets/model";
+import { listAudiences } from "./audiences/api";
+import type { AudienceSummary } from "./audiences/model";
+import { listCampaigns } from "./campaigns/api";
+import type { CampaignSummary } from "./campaigns/model";
+import AppShell from "./dashboard/AppShell";
+import {
+  AssetsIcon,
+  AudienceIcon,
+  CampaignIcon,
+  PeopleIcon,
+} from "./dashboard/icons";
+import { withMockMode } from "./mock-mode";
+import { GoogleMark, LoggedOutView, ToastProvider } from "./dashboard/DashboardCommon";
+import {
+  buildOverviewSnapshot,
+  type OverviewSnapshot,
+} from "./dashboard/overview-model";
 import {
   CARD,
-  ToastContext,
   relativeTime,
   useToast,
-  type ToastVariant,
 } from "./dashboard-shared";
+import "./dashboard/overview.css";
 
 /* /dashboard — Google-login-gated shell. Talks to the same-origin /auth/*
    endpoints (vite proxy in dev, vercel rewrite in prod), so every request
    must send the first-party session cookie.
 
-   Deliberately bare-bones: the page exists to let approved users connect
-   their accounts. Campaigns, demos and updates go out over Slack, not here. */
+   The dashboard remains the control surface for account connections and the
+   entry point for browser-based campaign planning. */
 
 type User = {
   id: string;
@@ -61,29 +78,6 @@ type AuthState =
   | { status: "loading" }
   | { status: "logged-out" }
   | { status: "logged-in"; user: User };
-
-export function GoogleMark({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 18 18" aria-hidden="true" className={className}>
-      <path
-        fill="#4285F4"
-        d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"
-      />
-      <path
-        fill="#34A853"
-        d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.81.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18z"
-      />
-      <path
-        fill="#FBBC05"
-        d="M3.97 10.72a5.4 5.4 0 0 1 0-3.44V4.95H.96a9 9 0 0 0 0 8.1l3.01-2.33z"
-      />
-      <path
-        fill="#EA4335"
-        d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58A9 9 0 0 0 .96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"
-      />
-    </svg>
-  );
-}
 
 function LinkedInMark({ className }: { className?: string }) {
   return (
@@ -128,65 +122,6 @@ function LockMark({ className }: { className?: string }) {
   );
 }
 
-/* ---------- toasts ---------- */
-
-type ToastItem = { id: number; message: string; variant: ToastVariant };
-
-export function ToastProvider({ children }: { children: ReactNode }) {
-  const [toasts, setToasts] = useState<ToastItem[]>([]);
-  const nextId = useRef(0);
-
-  const dismiss = useCallback((id: number) => {
-    setToasts((ts) => ts.filter((t) => t.id !== id));
-  }, []);
-
-  const push = useCallback(
-    (message: string, variant: ToastVariant = "info") => {
-      const id = nextId.current++;
-      setToasts((ts) => [...ts, { id, message, variant }]);
-      window.setTimeout(() => dismiss(id), 5000);
-    },
-    [dismiss],
-  );
-
-  return (
-    <ToastContext.Provider value={push}>
-      {children}
-      <div
-        className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex flex-col items-center gap-2 px-4 pb-5 sm:items-end sm:px-6"
-        aria-live="polite"
-      >
-        {toasts.map((t) => (
-          <Toast key={t.id} toast={t} onDismiss={() => dismiss(t.id)} />
-        ))}
-      </div>
-    </ToastContext.Provider>
-  );
-}
-
-const TOAST_STYLE: Record<ToastVariant, { ring: string; glyph: string; tint: string }> =
-  {
-    success: { ring: "border-ok/30", glyph: "✓", tint: "text-ok" },
-    error: { ring: "border-red-600/30", glyph: "✕", tint: "text-red-600" },
-    info: { ring: "border-tide/30", glyph: "•", tint: "text-tide" },
-  };
-
-function Toast({ toast, onDismiss }: { toast: ToastItem; onDismiss: () => void }) {
-  const s = TOAST_STYLE[toast.variant];
-  return (
-    <div
-      role="status"
-      onClick={onDismiss}
-      className={`toast-in pointer-events-auto flex w-full max-w-sm cursor-pointer items-start gap-2.5 rounded-xl border bg-surface px-4 py-3 text-[13.5px] font-medium text-ink shadow-win ${s.ring}`}
-    >
-      <span aria-hidden="true" className={`mt-px shrink-0 text-[15px] leading-none ${s.tint}`}>
-        {s.glyph}
-      </span>
-      <span className="leading-snug">{toast.message}</span>
-    </div>
-  );
-}
-
 export default function Dashboard() {
   const [auth, setAuth] = useState<AuthState>({ status: "loading" });
 
@@ -215,13 +150,13 @@ export default function Dashboard() {
     try {
       await fetch("/auth/logout", { method: "POST", credentials: "include" });
     } finally {
-      window.location.href = "/dashboard";
+      window.location.href = withMockMode("/dashboard");
     }
   }
 
   return (
     <ToastProvider>
-      <div className="relative flex min-h-screen flex-col overflow-x-clip">
+      <div className="relative flex min-h-[100dvh] flex-col overflow-x-clip">
         {auth.status === "loading" && <LoadingView />}
         {auth.status === "logged-out" && <LoggedOutView />}
         {auth.status === "logged-in" && (
@@ -244,101 +179,28 @@ function LoadingView() {
   );
 }
 
-export function LoggedOutView() {
-  return (
-    <main className="flex flex-1 items-center justify-center px-5 py-16 sm:px-8">
-      <div className="w-full max-w-sm rounded-xl border border-line bg-surface p-8 text-center shadow-win">
-        <a href="/" className="inline-flex justify-center text-ink no-underline">
-          <Wordmark markSize="size-8" className="text-[18px]" />
-        </a>
-        <h1 className="m-0 mt-6 text-[24px] font-semibold tracking-[-0.015em]">
-          Sign in to your dashboard
-        </h1>
-        <p className="mx-auto mt-2.5 max-w-[30ch] text-[15px] leading-relaxed text-ink-soft">
-          Connect your accounts and we&rsquo;ll take it from there.
-        </p>
-        <a
-          href="/auth/login"
-          className="mt-6 inline-flex w-full items-center justify-center gap-3 rounded-full border border-line bg-paper px-4.5 py-3 text-[14.5px] font-medium text-ink no-underline transition-all hover:-translate-y-px hover:border-ink-faint/50"
-        >
-          <GoogleMark className="size-4.5 shrink-0" />
-          Continue with Google
-        </a>
-        <p className="m-0 mt-4.5 text-[12.5px] text-ink-faint">
-          Invite-only · approved accounts
-        </p>
-      </div>
-    </main>
-  );
-}
-
 /* ---------- logged-in shell ---------- */
 
 function LoggedInView({ user, onLogout }: { user: User; onLogout: () => void }) {
   const displayName = user.name || user.email;
   // Shown next to the identity when the account belongs to a named workspace.
   const orgName = user.org?.name.trim() || null;
+  const canWrite = (user.org?.role ?? "owner") !== "member";
 
   return (
     <>
       {user.impersonating && <ImpersonationBanner email={user.email} />}
-      <header className="sticky top-0 z-40 border-b border-line bg-paper/95 backdrop-blur-md">
-        <nav className="mx-auto flex h-16 max-w-5xl items-center justify-between px-5 sm:px-8">
-          <a href="/" className="text-[18px] text-ink no-underline">
-            <Wordmark markSize="size-8" />
-          </a>
-          <div className="flex items-center gap-3">
-            {user.avatar_url ? (
-              <img
-                src={user.avatar_url}
-                alt={`${displayName}'s avatar`}
-                className="size-8 shrink-0 rounded-full border border-line object-cover"
-                referrerPolicy="no-referrer"
-              />
-            ) : (
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-tide text-[13px] font-semibold text-white">
-                {displayName[0]?.toUpperCase()}
-              </span>
-            )}
-            <span className="hidden text-[14px] font-medium text-ink sm:inline">
-              {displayName}
-            </span>
-            {orgName && (
-              <span className="hidden text-[13px] text-ink-faint sm:inline">
-                {orgName}
-              </span>
-            )}
-            {user.is_admin && (
-              <>
-                <GodModeButton />
-                <a
-                  href="/dashboard/seo-geo"
-                  className="inline-flex items-center rounded-full border border-tide/40 bg-surface px-3.5 py-2 text-[13.5px] font-medium text-tide no-underline transition-colors hover:border-tide hover:bg-tide-wash"
-                >
-                  SEO / GEO
-                </a>
-                <a
-                  href="/dashboard/agents"
-                  className="inline-flex items-center rounded-full border border-tide/40 bg-surface px-3.5 py-2 text-[13.5px] font-medium text-tide no-underline transition-colors hover:border-tide hover:bg-tide-wash"
-                >
-                  Agents
-                </a>
-              </>
-            )}
-            <button
-              type="button"
-              onClick={onLogout}
-              className="cursor-pointer rounded-full border border-line bg-surface px-3.5 py-2 text-[13.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink"
-            >
-              Log out
-            </button>
-          </div>
-        </nav>
-      </header>
-
-      <main className="mx-auto w-full max-w-5xl flex-1 px-5 py-14 sm:px-8 sm:py-18">
-        {user.is_approved ? <ApprovedView user={user} /> : <PendingView />}
-      </main>
+      <AppShell
+        active="home"
+        identity={{ name: displayName, workspace: orgName, avatarUrl: user.avatar_url }}
+        onLogout={onLogout}
+        adminControl={user.is_admin ? <AdminPanelControls /> : undefined}
+        canWrite={canWrite}
+      >
+        <div className="mx-auto w-full max-w-5xl py-5 sm:py-8">
+          {user.is_approved ? <ApprovedView user={user} /> : <PendingView />}
+        </div>
+      </AppShell>
     </>
   );
 }
@@ -432,8 +294,14 @@ type ActivityState =
   | { status: "error" }
   | { status: "ready"; events: ActivityEvent[] };
 
+type InventoryState = {
+  status: "loading" | "ready";
+  audiences: AudienceSummary[] | null;
+  campaigns: CampaignSummary[] | null;
+  assets: CompanyAsset[] | null;
+};
+
 function ApprovedView({ user }: { user: User }) {
-  const firstName = user.name.split(" ")[0] || user.email;
   // Solo accounts carry no org and stay full-control. Only the owner manages
   // channel connections; members are read-only everywhere.
   const role = user.org?.role ?? "owner";
@@ -441,6 +309,14 @@ function ApprovedView({ user }: { user: User }) {
   const canWrite = role !== "member";
   const [summary, setSummary] = useState<SummaryState>({ status: "loading" });
   const [activity, setActivity] = useState<ActivityState>({ status: "loading" });
+  const [inventory, setInventory] = useState<InventoryState>({
+    status: "loading",
+    audiences: null,
+    campaigns: null,
+    assets: null,
+  });
+  const [importsOpen, setImportsOpen] = useState(false);
+  const importsRef = useRef<HTMLDetailsElement>(null);
 
   const loadActivity = useCallback(async () => {
     try {
@@ -479,149 +355,260 @@ function ApprovedView({ user }: { user: User }) {
     })();
   }, [loadSummary]);
 
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const [audiences, campaigns, assets] = await Promise.allSettled([
+        listAudiences(),
+        listCampaigns(),
+        listAssets(),
+      ]);
+      if (cancelled) return;
+      setInventory({
+        status: "ready",
+        audiences: audiences.status === "fulfilled" ? audiences.value : null,
+        campaigns: campaigns.status === "fulfilled" ? campaigns.value : null,
+        assets: assets.status === "fulfilled" ? assets.value : null,
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const snapshot = buildOverviewSnapshot(
+    summary.status === "ready" ? summary.summary.pending_reviews : null,
+    {
+      audienceCount: inventory.audiences?.length ?? null,
+      assetCount: inventory.assets?.length ?? null,
+      campaigns: inventory.campaigns,
+    },
+  );
+
+  function openImports() {
+    setImportsOpen(true);
+    window.requestAnimationFrame(() => {
+      importsRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      importsRef.current?.querySelector("summary")?.focus();
+    });
+  }
+
   return (
-    <>
+    <div className="overview-page">
       <LinkedInBanner />
       <EmailBanner emailError={user.email_error ?? null} />
-      <Heading>{`Welcome back, ${firstName}.`}</Heading>
+      <header className="overview-heading">
+        <h1>Overview</h1>
+        <div className="overview-heading-links" aria-label="Lead database shortcuts">
+          <a href={withMockMode("/dashboard/leads")}>{formatCount(summary, "leads")} leads</a>
+          <a href={withMockMode("/dashboard/companies")}>{formatCount(summary, "companies")} qualified companies</a>
+        </div>
+      </header>
 
-      {/* top bar — connect prompt when LinkedIn isn't connected, otherwise the
-          slim sending-status strip once the summary loads. Connections belong
-          to the workspace owner, so only the owner gets the connect/disconnect
-          cards; everyone still sees the status strip. */}
-      {isOwner && !user.linkedin_connected && <LinkedInCard connected={false} />}
-      {user.linkedin_connected &&
-        summary.status === "ready" &&
-        summary.summary.sending && (
-          <StatusStrip sending={summary.summary.sending} isOwner={isOwner} />
-        )}
-      {isOwner && (
-        <EmailCard
-          connected={user.email_connected ?? false}
-          emailError={user.email_error ?? null}
-        />
-      )}
-      {isOwner && (
-        <TwitterCard
-          connected={user.twitter_connected ?? false}
-          pending={user.twitter_pending ?? false}
-          chatLocked={user.twitter_chat_locked ?? false}
-        />
-      )}
+      <ConnectionSetup user={user} isOwner={isOwner} />
+      <TodaysSending summary={summary} activity={activity} />
+      <MetricsCard state={summary} />
+      {canWrite && <QuickActions onImport={openImports} />}
+      <CampaignDesk snapshot={snapshot} inventory={inventory} />
+      <ConnectedAccounts user={user} isOwner={isOwner} />
 
-      {/* two equal-height columns: metrics left, lists right. */}
-      <div className="mt-3.5 grid grid-cols-1 items-stretch gap-3.5 lg:grid-cols-[1.45fr_1fr]">
-        <MetricsCard state={summary} activity={activity} />
+      <details
+        className="overview-imports"
+        open={importsOpen}
+        ref={importsRef}
+        onToggle={(event) => setImportsOpen(event.currentTarget.open)}
+      >
+        <summary>
+          <strong>Imports and blacklist</strong>
+          <span aria-hidden="true" className="overview-imports-toggle">+</span>
+        </summary>
         <ListsCard state={summary} canWrite={canWrite} onImported={loadSummary} />
-      </div>
-
-      <LeadsEntryCard state={summary} />
-      <CompaniesEntryCard state={summary} />
-      <ReviewEntryCard state={summary} />
-    </>
-  );
-}
-
-/* ---------- all leads entry (full table lives at /dashboard/leads) ---------- */
-
-/* Compact card linking out to the dedicated full-width leads page. Reads the
-   already-loaded summary so it can show the pipeline count without its own
-   request. The link opens the leads page in a new tab. */
-function LeadsEntryCard({ state }: { state: SummaryState }) {
-  const leads = state.status === "ready" ? state.summary.lists.leads : null;
-  const line =
-    leads === null
-      ? "Loading your pipeline…"
-      : leads > 0
-        ? `${plural(leads, "lead", "leads")} in your pipeline`
-        : "No leads yet.";
-
-  return (
-    <div
-      className={`mt-7 ${CARD} flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6`}
-    >
-      <div className="min-w-0">
-        <SectionLabel>All leads</SectionLabel>
-        <p className="m-0 mt-2 text-[14px] font-medium text-ink-soft">{line}</p>
-      </div>
-      <a
-        href="/dashboard/leads"
-        target="_blank"
-        rel="noreferrer"
-        className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-full bg-tide px-4.5 py-2.5 text-[14px] font-medium text-white no-underline transition-all hover:-translate-y-px hover:bg-tide-deep sm:self-auto"
-      >
-        View all leads
-      </a>
+      </details>
     </div>
   );
 }
 
-/* ---------- all companies entry (full table lives at /dashboard/companies) ---------- */
+function formatCount(state: SummaryState, key: "leads" | "companies") {
+  if (state.status !== "ready") return "—";
+  const value = key === "leads" ? state.summary.lists.leads : state.summary.companies.qualified;
+  return value.toLocaleString();
+}
 
-/* Same compact card, linking out to the dedicated target-accounts page. Reads
-   the summary's company rollup so the line can show qualified vs screened-out
-   counts without its own request. */
-function CompaniesEntryCard({ state }: { state: SummaryState }) {
-  const companies = state.status === "ready" ? state.summary.companies : null;
-  const line =
-    companies === null
-      ? "Loading your accounts…"
-      : companies.qualified || companies.screened_out || companies.unknown
-        ? `${companies.qualified.toLocaleString()} qualified accounts · ${companies.screened_out.toLocaleString()} screened out by your AE`
-        : "No target accounts yet.";
+function ConnectionSetup({ user, isOwner }: { user: User; isOwner: boolean }) {
+  if (!isOwner) return null;
+  const linkedInMissing = !user.linkedin_connected;
+  const emailMissing = !(user.email_connected ?? false);
+  const xMissing = !(user.twitter_connected ?? false) || (user.twitter_chat_locked ?? false);
+  const remaining = [linkedInMissing, emailMissing, xMissing].filter(Boolean).length;
+  if (remaining === 0) return null;
 
   return (
-    <div
-      className={`mt-3.5 ${CARD} flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6`}
-    >
-      <div className="min-w-0">
-        <SectionLabel>All companies</SectionLabel>
-        <p className="m-0 mt-2 text-[14px] font-medium text-ink-soft">{line}</p>
+    <section className="overview-connections" aria-labelledby="connections-title">
+      <div className="overview-section-heading">
+        <h2 id="connections-title">Connect accounts</h2>
+        <span>{remaining} left</span>
       </div>
-      <a
-        href="/dashboard/companies"
-        target="_blank"
-        rel="noreferrer"
-        className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-full bg-tide px-4.5 py-2.5 text-[14px] font-medium text-white no-underline transition-all hover:-translate-y-px hover:bg-tide-deep sm:self-auto"
-      >
-        View all companies
-      </a>
+      <div className="overview-connection-grid">
+        {linkedInMissing && <LinkedInCard connected={false} />}
+        {emailMissing && (
+          <EmailCard connected={false} emailError={user.email_error ?? null} />
+        )}
+        {xMissing && (
+          <TwitterCard
+            connected={user.twitter_connected ?? false}
+            pending={user.twitter_pending ?? false}
+            chatLocked={user.twitter_chat_locked ?? false}
+          />
+        )}
+      </div>
+    </section>
+  );
+}
+
+function TodaysSending({
+  summary,
+  activity,
+}: {
+  summary: SummaryState;
+  activity: ActivityState;
+}) {
+  const sending = summary.status === "ready" ? summary.summary.sending : null;
+  const pendingReviews = summary.status === "ready" ? summary.summary.pending_reviews : null;
+  const latestSends = activity.status === "ready"
+    ? activity.events.filter((event) => event.kind === "sent").slice(0, 3)
+    : [];
+
+  return (
+    <section className="overview-panel overview-sending" aria-labelledby="sending-title">
+      <div className="overview-panel-heading">
+        <h2 id="sending-title">Today&rsquo;s sending</h2>
+        <a href={withMockMode("/dashboard/review")}>Review copy</a>
+      </div>
+      <div className="overview-sending-layout">
+        <div className="overview-sending-stats">
+          <SendingStat
+            label="LinkedIn invites"
+            value={summary.status === "loading" ? "—" : sending ? `${sending.invites_sent}/${sending.invites_cap}` : "0"}
+          />
+          <SendingStat
+            label="LinkedIn messages"
+            value={summary.status === "loading" ? "—" : sending ? `${sending.messages_sent}/${sending.messages_cap}` : "0"}
+          />
+          <SendingStat
+            label="Waiting for review"
+            value={pendingReviews === null ? "—" : pendingReviews.toLocaleString()}
+          />
+          <SendingStat
+            label="Status"
+            value={summary.status === "error" ? "Unavailable" : sending?.within_limits === false ? "Near limit" : "On track"}
+            tone={sending?.within_limits === false ? "warning" : "success"}
+          />
+        </div>
+        <div className="overview-latest-sends">
+          <h3>Latest sends</h3>
+          {activity.status === "loading" && <p className="overview-empty" role="status">Loading…</p>}
+          {activity.status === "error" && <p className="overview-empty" role="alert">Unavailable right now.</p>}
+          {activity.status === "ready" && latestSends.length === 0 && <p className="overview-empty">Nothing sent yet today.</p>}
+          {latestSends.map((event, index) => (
+            <ActivityLine key={`${event.at}-${index}`} event={event} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function SendingStat({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone?: "success" | "warning";
+}) {
+  return (
+    <div className="overview-sending-stat">
+      <span>{label}</span>
+      <strong className={tone ? `is-${tone}` : undefined}>{value}</strong>
     </div>
   );
 }
 
-/* ---------- approval queue entry (queue lives at /dashboard/review) ---------- */
+function QuickActions({ onImport }: { onImport: () => void }) {
+  return (
+    <section className="overview-panel overview-add" aria-labelledby="add-title">
+      <div className="overview-panel-heading">
+        <h2 id="add-title">Add more</h2>
+      </div>
+      <div className="overview-action-grid">
+        <a href={withMockMode("/dashboard/audiences")}><AudienceIcon size={18} /><span>Find leads</span></a>
+        <a href={withMockMode("/dashboard/campaigns/new")}><CampaignIcon size={18} /><span>New campaign</span></a>
+        <a href={withMockMode("/dashboard/assets")}><AssetsIcon size={18} /><span>Add assets</span></a>
+        <button type="button" onClick={onImport}><PeopleIcon size={18} /><span>Import CSV</span></button>
+      </div>
+    </section>
+  );
+}
 
-/* Same compact card, linking out to the review queue. Reads the summary's
-   pending_reviews count so the line can say how many decisions are waiting
-   without its own request. */
-function ReviewEntryCard({ state }: { state: SummaryState }) {
-  const pending =
-    state.status === "ready" ? state.summary.pending_reviews : null;
-  const line =
-    pending === null
-      ? "Loading your queue…"
-      : pending > 0
-        ? `${plural(pending, "decision", "decisions")} waiting on you`
-        : "Queue is clear — nothing needs a decision.";
+function CampaignDesk({
+  snapshot,
+  inventory,
+}: {
+  snapshot: OverviewSnapshot;
+  inventory: InventoryState;
+}) {
+  return (
+    <section className="overview-panel overview-campaign-desk" aria-labelledby="campaign-desk-title">
+      <div className="overview-panel-heading">
+        <h2 id="campaign-desk-title">Campaigns</h2>
+        <a href={withMockMode("/dashboard/campaigns")}>View all</a>
+      </div>
+      {inventory.status === "loading" ? (
+        <p className="overview-empty" role="status">Loading campaigns…</p>
+      ) : inventory.campaigns === null ? (
+        <p className="overview-empty" role="alert">Campaigns are temporarily unavailable.</p>
+      ) : snapshot.recentCampaigns.length === 0 ? (
+        <p className="overview-empty">No campaigns yet.</p>
+      ) : (
+        <div className="overview-campaign-list">
+          {snapshot.recentCampaigns.map((campaign) => (
+            <a href={withMockMode(`/dashboard/campaigns/${encodeURIComponent(campaign.id)}`)} key={campaign.id}>
+              <span className={`overview-campaign-status is-${campaign.status}`}>
+                {campaign.status}
+              </span>
+              <strong>{campaign.name}</strong>
+              <small>{campaign.contactCount} leads · {campaign.stepCount} steps</small>
+              <time dateTime={campaign.updatedAt}>{relativeTime(campaign.updatedAt) ?? "Recently"}</time>
+            </a>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function ConnectedAccounts({ user, isOwner }: { user: User; isOwner: boolean }) {
+  if (!isOwner) return null;
+  const linkedInConnected = user.linkedin_connected;
+  const emailConnected = user.email_connected ?? false;
+  const xConnected = (user.twitter_connected ?? false) && !(user.twitter_chat_locked ?? false);
+  const connectedCount = [linkedInConnected, emailConnected, xConnected].filter(Boolean).length;
+  if (connectedCount === 0) return null;
 
   return (
-    <div
-      className={`mt-3.5 ${CARD} flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6`}
-    >
-      <div className="min-w-0">
-        <SectionLabel>Approval queue</SectionLabel>
-        <p className="m-0 mt-2 text-[14px] font-medium text-ink-soft">{line}</p>
+    <details className="overview-account-manager">
+      <summary>
+        <strong>Connected accounts</strong>
+        <span>{connectedCount} connected</span>
+        <span aria-hidden="true" className="overview-imports-toggle">+</span>
+      </summary>
+      <div className="overview-connected-grid">
+        {linkedInConnected && <LinkedInCard connected />}
+        {emailConnected && <EmailCard connected emailError={null} />}
+        {xConnected && <TwitterCard connected pending={false} chatLocked={false} />}
       </div>
-      <a
-        href="/dashboard/review"
-        target="_blank"
-        rel="noreferrer"
-        className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-full bg-tide px-4.5 py-2.5 text-[14px] font-medium text-white no-underline transition-all hover:-translate-y-px hover:bg-tide-deep sm:self-auto"
-      >
-        Open review queue
-      </a>
-    </div>
+    </details>
   );
 }
 
@@ -650,87 +637,15 @@ function useDisconnect(endpoint: string) {
   return { pending, error, disconnect };
 }
 
-/* 1 · STATUS — is it on & safe. Mirrors the mockup's .status card. Everyone
-   in the workspace sees the status; only the owner gets Disconnect. */
-function StatusStrip({ sending, isOwner }: { sending: Sending; isOwner: boolean }) {
-  const { pending, error, disconnect } = useDisconnect("/linkedin/disconnect");
-  const rel = relativeTime(sending.last_action_at);
-
+/* Honest summary metrics remain the overview's largest surface. Activity has
+   its own supporting panel so the funnel stays scannable at a glance. */
+function MetricsCard({ state }: { state: SummaryState }) {
   return (
-    <div className={`mt-7 ${CARD} p-4`}>
-      <div className="flex items-center gap-3">
-        <span
-          className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-ok/25 bg-ok/10 text-ok"
-          aria-hidden="true"
-        >
-          <CheckMark className="size-[18px]" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="text-[15px] font-semibold tracking-[-0.01em]">
-            LinkedIn connected &amp; sending
-          </div>
-          <div className="mt-1 text-[12.5px] leading-relaxed text-ink-soft">
-            <span className="tabular-nums">
-              {sending.invites_sent}/{sending.invites_cap}
-            </span>{" "}
-            invites ·{" "}
-            <span className="tabular-nums">
-              {sending.messages_sent}/{sending.messages_cap}
-            </span>{" "}
-            messages today ·{" "}
-            <span
-              className={
-                sending.within_limits
-                  ? "font-medium text-ok"
-                  : "font-medium text-amber-700"
-              }
-            >
-              {sending.within_limits ? "within safe limits" : "approaching limit"}
-            </span>
-            {rel && <> · last action {rel}</>}
-          </div>
-        </div>
-        {isOwner && (
-          <button
-            type="button"
-            onClick={disconnect}
-            disabled={pending}
-            className="ml-auto shrink-0 cursor-pointer rounded-full border border-line bg-surface px-3 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {pending ? "Disconnecting…" : "Disconnect"}
-          </button>
-        )}
+    <section className="overview-panel overview-metrics" aria-labelledby="pipeline-title">
+      <div className="overview-panel-heading">
+        <h2 id="pipeline-title">Results</h2>
+        <a href={withMockMode("/dashboard/metrics")}>Open metrics</a>
       </div>
-      {error && (
-        <p className="m-0 mt-3 text-[13px] font-medium text-red-700" role="alert">
-          {error}
-        </p>
-      )}
-    </div>
-  );
-}
-
-/* small section eyebrow shared by the metrics + lists cards. */
-function SectionLabel({ children }: { children: string }) {
-  return (
-    <div className="text-[0.85rem] text-ink-faint">
-      {children}
-    </div>
-  );
-}
-
-/* left column — Results (inline) + Pipeline funnel + Latest activity in one
-   card. Owns the summary's loading/error/ready states so the grid stays
-   stable; the Latest section simply stays hidden until its own fetch lands. */
-function MetricsCard({
-  state,
-  activity,
-}: {
-  state: SummaryState;
-  activity: ActivityState;
-}) {
-  return (
-    <div className={`${CARD} flex flex-col p-5 sm:p-6`}>
       {state.status === "loading" && (
         <div className="flex flex-1 items-center justify-center py-12">
           <span
@@ -747,29 +662,12 @@ function MetricsCard({
       )}
       {state.status === "ready" && (
         <>
-          <SectionLabel>Results</SectionLabel>
           <InlineResults results={state.summary.results} />
-          <div className="my-4 h-px bg-line/70" />
-          <SectionLabel>Pipeline</SectionLabel>
+          <div className="overview-metrics-rule" />
           <FunnelBars funnel={state.summary.funnel} />
-          {activity.status === "ready" && (
-            <>
-              <div className="my-4 h-px bg-line/70" />
-              <SectionLabel>Latest</SectionLabel>
-              {activity.events.length > 0 ? (
-                activity.events
-                  .slice(0, 8)
-                  .map((event, i) => <ActivityLine key={i} event={event} />)
-              ) : (
-                <p className="m-0 pt-1.5 text-[12.5px] text-ink-faint">
-                  No activity yet.
-                </p>
-              )}
-            </>
-          )}
         </>
       )}
-    </div>
+    </section>
   );
 }
 
@@ -915,7 +813,7 @@ function LinkedInCard({ connected }: { connected: boolean }) {
   }
 
   return (
-    <div className={`mt-7 ${CARD} p-7 sm:p-8`}>
+    <div className="overview-channel-row">
       <div className="flex items-start gap-4">
         <span
           className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${
@@ -932,13 +830,11 @@ function LinkedInCard({ connected }: { connected: boolean }) {
           )}
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="m-0 text-[18px] font-semibold tracking-[-0.01em]">
-            {connected ? "LinkedIn connected" : "Connect your LinkedIn"}
-          </h2>
+          <h3 className="m-0 text-[18px] font-semibold tracking-[-0.01em]">
+            {connected ? "LinkedIn" : "Connect LinkedIn"}
+          </h3>
           <p className="m-0 mt-2 text-[15px] leading-relaxed text-ink-soft">
-            {connected
-              ? "You're connected! We'll take it from here."
-              : "This is all we need to get started. You'll sign in on a secure Unipile page — we never see your password."}
+            {connected ? "Ready." : "Required for LinkedIn outreach."}
           </p>
 
           {connected ? (
@@ -955,7 +851,7 @@ function LinkedInCard({ connected }: { connected: boolean }) {
               type="button"
               onClick={handleConnect}
               disabled={pending}
-              className="mt-5 inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-full bg-tide px-4.5 py-2.5 text-[14.5px] font-semibold text-white transition-all hover:-translate-y-px hover:bg-tide-deep disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-5 inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-full bg-tide px-4.5 py-2.5 text-[14.5px] font-semibold text-white transition-[background,transform] hover:-translate-y-px hover:bg-tide-deep disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <LinkedInMark className="size-4.5 shrink-0" />
               {pending ? "Connecting…" : "Connect LinkedIn"}
@@ -1032,7 +928,7 @@ function EmailCard({
   }
 
   return (
-    <div className={`mt-7 ${CARD} p-7 sm:p-8`}>
+    <div className="overview-channel-row">
       <div className="flex items-start gap-4">
         <span
           className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${
@@ -1049,13 +945,13 @@ function EmailCard({
           )}
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="m-0 text-[18px] font-semibold tracking-[-0.01em]">
-            {connected ? "Email connected" : "Connect your email"}
-          </h2>
+          <h3 className="m-0 text-[18px] font-semibold tracking-[-0.01em]">
+            {connected ? "Email" : "Connect email"}
+          </h3>
           <p className="m-0 mt-2 text-[15px] leading-relaxed text-ink-soft">
             {connected
-              ? "You're connected! We'll take it from here."
-              : "Optional — lets your AE send email as well as LinkedIn. Pick where your mailbox lives: Gmail for Google-hosted email, Outlook for Microsoft 365. We never see your password."}
+              ? "Ready."
+              : "Send from Gmail or Outlook."}
           </p>
 
           {connected ? (
@@ -1285,7 +1181,7 @@ function TwitterCard({
   }
 
   return (
-    <div className={`mt-7 ${CARD} p-7 sm:p-8`}>
+    <div className="overview-channel-row">
       <div className="flex items-start gap-4">
         <span
           className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${
@@ -1306,7 +1202,7 @@ function TwitterCard({
           )}
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="m-0 text-[18px] font-semibold tracking-[-0.01em]">
+          <h3 className="m-0 text-[18px] font-semibold tracking-[-0.01em]">
             {/* No @handle to show: the login check reads cookies, not X's
                 DOM, so nothing scrapes the handle any more. Plain
                 "Connected" until a later slice reads it back. */}
@@ -1316,36 +1212,19 @@ function TwitterCard({
                 ? "Connected"
                 : watching
                   ? "Finish in the X tab"
-                  : "Connect your X account"}
-          </h2>
+                  : "Connect X"}
+          </h3>
           <p className="m-0 mt-2 text-[15px] leading-relaxed text-ink-soft">
             {locked
-              ? "You're logged in to X, but your chat PIN wasn't entered, so your AE can't send DMs yet."
+              ? "Enter your chat PIN to enable DMs."
               : connected
-                ? "You're connected! We'll take it from here."
+                ? "Ready."
                 : watching
-                  ? "Do these in order, then come back:"
-                  : "Optional — lets your AE reach prospects on X. You'll log in and unlock Messages with your chat PIN inside a secure isolated browser session; we never see either."}
+                  ? "Complete these steps in X:"
+                  : "Send direct messages from X."}
           </p>
 
           {(watching || locked) && <TwitterSteps loggedIn={locked} />}
-
-          {/* One callout, never two stacked: during an unlock both states
-              are live at once, and the amber one is the specific message. */}
-          {watching && !locked && (
-            <p className="m-0 mt-3 rounded-lg border-l-[3px] border-tide bg-tide-wash px-3.5 py-2.5 text-[13.5px] leading-relaxed text-tide-deep">
-              Step 2 is easy to miss. X keeps DMs behind a separate passcode,
-              and if it isn&rsquo;t entered here your AE can&rsquo;t open a
-              conversation later. We never see the PIN.
-            </p>
-          )}
-          {locked && (
-            <p className="m-0 mt-3 rounded-lg border-l-[3px] border-amber-600 bg-amber-50 px-3.5 py-2.5 text-[13.5px] leading-relaxed text-amber-900">
-              Your login is saved — this only takes a few seconds. Everything
-              else on your account keeps working; it&rsquo;s DMs specifically
-              that stay blocked until this is done.
-            </p>
-          )}
 
           {locked ? (
             <div className="mt-5 flex flex-wrap items-center gap-2.5">
@@ -1353,7 +1232,7 @@ function TwitterCard({
                 type="button"
                 onClick={() => void openTab("unlock")}
                 disabled={pending}
-                className="inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-full bg-tide px-4.5 py-2.5 text-[14.5px] font-semibold text-white transition-all hover:-translate-y-px hover:bg-tide-deep disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-full bg-tide px-4.5 py-2.5 text-[14.5px] font-semibold text-white transition-[background,transform] hover:-translate-y-px hover:bg-tide-deep disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <XMark className="size-4.5 shrink-0" />
                 {state === "connecting" ? "Opening…" : "Reopen X tab"}
@@ -1381,7 +1260,7 @@ function TwitterCard({
               type="button"
               onClick={() => void openTab("connect")}
               disabled={pending}
-              className="mt-5 inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-full bg-tide px-4.5 py-2.5 text-[14.5px] font-semibold text-white transition-all hover:-translate-y-px hover:bg-tide-deep disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-5 inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-full bg-tide px-4.5 py-2.5 text-[14.5px] font-semibold text-white transition-[background,transform] hover:-translate-y-px hover:bg-tide-deep disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <XMark className="size-4.5 shrink-0" />
               {state === "connecting"
@@ -1464,17 +1343,12 @@ function ListsCard({
       : "Nothing blacklisted yet.");
 
   return (
-    <div className={`${CARD} flex flex-col p-5 sm:p-6`}>
-      <SectionLabel>Your lists</SectionLabel>
-      <p className="m-0 mt-2 text-[13px] leading-relaxed text-ink-soft">
-        Optional — we source leads for you either way. Add your own contacts, or a
-        do-not-contact list we&rsquo;ll always exclude.
-      </p>
-      <div className="mt-3.5 flex flex-1 flex-col gap-3">
+    <div className="overview-import-body">
+      <div className="flex flex-1 flex-col gap-3">
         <UploadField
           className="flex-1"
           title="Lead list"
-          hint="Contacts to add to your pipeline. Any CSV — name, email, or LinkedIn; we'll match on whatever columns you've got and enrich the rest."
+          hint="CSV with a name plus email or LinkedIn URL."
           endpoint="/api/v1/imports/leads"
           canWrite={canWrite}
           summarize={summarizeLeads}
@@ -1488,7 +1362,7 @@ function ListsCard({
         <UploadField
           className="flex-1"
           title="Blacklist"
-          hint="Excluded from all outreach. Emails, domains, or LinkedIn URLs — one per row."
+          hint="Emails, domains, or LinkedIn URLs to exclude."
           endpoint="/api/v1/imports/blacklist"
           canWrite={canWrite}
           summarize={summarizeBlacklist}

@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { AdminIcon, CloseIcon, OverviewIcon } from "./dashboard/icons";
 import { CARD, useToast } from "./dashboard-shared";
+import { withMockMode } from "./mock-mode";
 
 /* God mode — admin-only user impersonation. A header button opens a search
    modal to pick a user and "become" them; a sticky banner shows while
@@ -20,6 +22,18 @@ type AdminUser = {
 
 /* ---------- header button + modal ---------- */
 
+export function AdminPanelControls({ inAdminPanel = false }: { inAdminPanel?: boolean }) {
+  return (
+    <div className="admin-access-controls">
+      <a className="admin-access-action" href={withMockMode(inAdminPanel ? "/dashboard" : "/dashboard/admin")}>
+        {inAdminPanel ? <OverviewIcon size={15} /> : <AdminIcon size={15} />}
+        {inAdminPanel ? "Customer workspace" : "Admin panel"}
+      </a>
+      <GodModeButton />
+    </div>
+  );
+}
+
 export function GodModeButton() {
   const [open, setOpen] = useState(false);
 
@@ -28,12 +42,12 @@ export function GodModeButton() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-tide/40 bg-surface px-3.5 py-2 text-[13.5px] font-medium text-tide transition-colors hover:border-tide hover:bg-tide-wash"
+        className="admin-access-action"
       >
         <svg viewBox="0 0 16 16" className="size-3.5" aria-hidden="true">
           <path d="M9.6 1.5 4.2 8.2h3.4l-1.1 6.3 5.3-7H8.5l1.1-6Z" fill="none" stroke="currentColor" strokeWidth="1.35" strokeLinejoin="round" />
         </svg>
-        God mode
+        Impersonate user
       </button>
       {open && <ImpersonateModal onClose={() => setOpen(false)} />}
     </>
@@ -100,9 +114,9 @@ function ImpersonateModal({ onClose }: { onClose: () => void }) {
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="-mr-1 -mt-1 cursor-pointer rounded-lg p-1 text-[18px] leading-none text-ink-faint transition-colors hover:text-ink"
+            className="-mr-1 -mt-1 grid size-9 cursor-pointer place-items-center rounded-lg border-0 bg-transparent text-ink-faint transition-colors hover:text-ink"
           >
-            ✕
+            <CloseIcon size={17} />
           </button>
         </div>
 
@@ -169,7 +183,7 @@ function UserRow({
         credentials: "include",
       });
       if (!res.ok) throw new Error("request failed");
-      window.location.href = "/dashboard";
+      window.location.href = withMockMode("/dashboard");
     } catch {
       toast("Couldn't impersonate that user. Please try again.", "error");
       onImpersonatingChange(null);
@@ -242,7 +256,7 @@ export function ImpersonationBanner({ email }: { email: string }) {
         credentials: "include",
       });
       if (!res.ok) throw new Error("request failed");
-      window.location.href = "/dashboard";
+      window.location.href = withMockMode("/dashboard");
     } catch {
       toast("Couldn't exit god mode. Please try again.", "error");
       setExiting(false);

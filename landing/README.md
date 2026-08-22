@@ -1,73 +1,79 @@
-# React + TypeScript + Vite
+# Driftwood site and customer dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React 19, TypeScript, and Vite power the marketing site and the authenticated
+customer dashboard deployed on Vercel. The FastAPI/Neon control plane lives in
+the separate `AayushGupta16/driftwood-backend` repository.
 
-Currently, two official plugins are available:
+## Local development
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The dashboard can run against deterministic browser-only fixtures without a
+login or external write:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```text
+http://127.0.0.1:4174/dashboard?mock=1
 ```
+
+`?mock=1` intercepts the dashboard API in `src/mock.ts`. It does not call
+Orange Slice, Neon, GCS, Cardinal, Autosana, or any outreach provider. Never
+use mock mode as evidence that a backend migration works; use the isolated
+Neon procedure in the backend review guide for that.
+
+## Dashboard architecture
+
+- `dashboard.html` is the lean customer-dashboard entry document.
+- `admin.html` and `src/admin-main.tsx` are the separate internal admin entry,
+  avoiding the customer bundle's route chain for Agents and Search visibility.
+- `src/dashboard/AppShell.tsx` owns the responsive left sidebar, mobile focus
+  trap, identity footer, and customer/admin navigation modes.
+- `src/dashboard/WorkspacePage.tsx` owns auth/workspace resolution for the new
+  customer pages.
+- `src/audiences/` is the lead discovery and reusable audience library.
+- `src/campaigns/` is the persisted, versioned sequence builder.
+- `src/assets/` is the private image/video/link library.
+- `src/analytics/` is the channel funnel and exact-person drilldown.
+- Existing Leads, Companies, Review, Agents, and Search visibility pages are
+  wrapped in the same shell without changing their backend contracts beyond
+  the documented lead-audience field.
+
+The route table is explicit in `src/main.tsx`. Customer navigation contains
+Overview, Audiences, Campaigns, Metrics, All leads, Companies, Assets, and
+Review queue. Agents and Search visibility exist only in the admin shell.
+Internal dashboard destinations stay in the current browser tab; external
+evidence, LinkedIn profiles, and asset URLs may open separately.
+
+## Backend contracts
+
+Vercel proxies `/api/*` and auth/provider paths to the backend so the signed
+session cookie remains first-party. The new UI uses:
+
+| UI | Backend contract |
+| --- | --- |
+| Audiences | `/api/v1/dashboard/audiences*` |
+| Campaigns | `/api/v1/dashboard/campaigns*` |
+| Assets | `/api/v1/dashboard/assets*` |
+| Metrics | `/api/v1/dashboard/channel-metrics` |
+| Leads | existing `/api/v1/dashboard/leads`, now including `audiences` |
+
+The campaign activation dialog is intentionally explicit: activation freezes a
+version and initializes planning ledgers, but does not queue or send outreach.
+Open/click metrics render as unavailable because the current backend has no
+defensible event source for them.
+
+## Quality gate
+
+```bash
+npm test
+npm run lint
+npm run build
+```
+
+Browser QA covers desktop and mobile navigation, audiences, lead filtering,
+campaign editing/activation, assets, metric drilldowns, admin gating, and the
+same-tab review-queue transition. The full implementation rationale, visual
+decisions, risks, and recorded evidence are in
+`../plans/2026-08-21-cardinal-campaign-workbench/plan.md`.
