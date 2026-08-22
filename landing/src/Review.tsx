@@ -274,6 +274,7 @@ function kindLabel(kind: string): string {
   if (kind === "send_x_dm") return "X DM";
   if (kind === "follow_x_account") return "X follow";
   if (kind === "bug_validation") return "bug";
+  if (kind === "drift_task_install") return "drift task";
   return kind;
 }
 
