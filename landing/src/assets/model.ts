@@ -1,4 +1,4 @@
-export type AssetKind = "image" | "video" | "link";
+export type AssetKind = "image" | "video" | "audio" | "link";
 export type AssetAssignmentMode = "all" | "selected";
 
 export type AssetAgent = {
@@ -76,6 +76,7 @@ export function formatBytes(bytes: number | null): string {
 export function assetKindLabel(kind: AssetKind): string {
   if (kind === "image") return "Image";
   if (kind === "video") return "Video";
+  if (kind === "audio") return "Audio";
   return "Link";
 }
 

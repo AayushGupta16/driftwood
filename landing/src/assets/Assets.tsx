@@ -14,6 +14,7 @@ import {
 } from "./model";
 import { useWorkspacePermissions } from "../dashboard/workspace-permissions-context";
 import {
+  AudioIcon,
   CloseIcon,
   ExternalIcon,
   ImageIcon,
@@ -29,6 +30,7 @@ const FILTERS: Array<{ id: AssetFilter; label: string }> = [
   { id: "all", label: "All assets" },
   { id: "image", label: "Images" },
   { id: "video", label: "Videos" },
+  { id: "audio", label: "Audio" },
   { id: "link", label: "Links" },
 ];
 
@@ -49,6 +51,9 @@ function AssetVisual({ asset }: { asset: CompanyAsset }) {
   }
   if (asset.kind === "video") {
     return <div className="asset-visual-placeholder"><VideoIcon size={27} /><span>Video</span></div>;
+  }
+  if (asset.kind === "audio") {
+    return <div className="asset-visual-placeholder"><AudioIcon size={27} /><span>Audio</span></div>;
   }
   return (
     <div className="asset-visual-placeholder asset-link-visual">
@@ -211,7 +216,7 @@ export default function Assets() {
           <div className="asset-state">
             <ImageIcon size={27} />
             <h2>{assets.length === 0 ? "Your asset library is empty" : "No assets match this view"}</h2>
-            <p>{assets.length === 0 ? canWrite ? "Upload an image or video, or add a link your agents can reference." : "An owner or admin can add the first asset." : "Try another type or clear the search."}</p>
+            <p>{assets.length === 0 ? canWrite ? "Upload an image, video, or audio file, or add a link your agents can reference." : "An owner or admin can add the first asset." : "Try another type or clear the search."}</p>
           </div>
         ) : (
           <div className="asset-grid">
@@ -464,14 +469,14 @@ function UploadComposer({ onClose, onCreated }: ComposerProps) {
   }
 
   return (
-    <ComposerShell title="Upload an asset" intro="Images and videos stay private to this workspace." onClose={onClose}>
+    <ComposerShell title="Upload an asset" intro="Images, videos, and audio stay private to this workspace." onClose={onClose}>
       <form className="asset-form" onSubmit={(event) => void submit(event)}>
         <button className="asset-dropzone" type="button" onClick={() => inputRef.current?.click()}>
           <UploadIcon size={23} />
-          <strong>{file ? file.name : "Choose an image or video"}</strong>
-          <span>{file ? formatBytes(file.size) : "PNG, JPEG, GIF, WebP, MP4, MOV, or WebM · up to 25 MB"}</span>
+          <strong>{file ? file.name : "Choose an image, video, or audio file"}</strong>
+          <span>{file ? formatBytes(file.size) : "PNG, JPEG, GIF, WebP, MP4, MOV, WebM, MP3, WAV, M4A, or OGG · up to 25 MB"}</span>
         </button>
-        <input ref={inputRef} className="sr-only" type="file" accept="image/png,image/jpeg,image/gif,image/webp,video/mp4,video/quicktime,video/webm" onChange={(event) => setFile(event.target.files?.[0] ?? null)} />
+        <input ref={inputRef} className="sr-only" type="file" accept="image/png,image/jpeg,image/gif,image/webp,video/mp4,video/quicktime,video/webm,audio/mpeg,audio/wav,audio/x-wav,audio/mp4,audio/x-m4a,audio/ogg,audio/webm" onChange={(event) => setFile(event.target.files?.[0] ?? null)} />
         <label>Display name <span>Optional</span><input value={name} onChange={(event) => setName(event.target.value)} maxLength={255} placeholder={file?.name ?? "Product walkthrough"} /></label>
         <label>Description <span>Optional</span><textarea value={description} onChange={(event) => setDescription(event.target.value)} maxLength={2000} rows={3} placeholder="How should the agent use this?" /></label>
         <label>Tags <span>Comma separated</span><input value={tags} onChange={(event) => setTags(event.target.value)} maxLength={1000} placeholder="product, proof, enterprise" /></label>

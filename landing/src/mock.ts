@@ -15,7 +15,8 @@ if (mockMode) {
     avatar_url: null,
     is_approved: true,
     linkedin_connected: true,
-    impersonating: false,
+    email_connected: true,
+    impersonating: params.get("impersonating") === "1",
     // ?mock=admin flips the admin chrome on (God mode + the SEO / GEO pill)
     // for QA'ing admin-only pages like /dashboard/admin/search-visibility. Plain ?mock=1
     // stays the customer view the baked marketing screenshots are shot from.
@@ -42,6 +43,11 @@ if (mockMode) {
       within_limits: true,
       last_action_at: hoursAgo(3),
     },
+    email_sending: {
+      emails_sent: 7,
+      emails_cap: 40,
+      within_limits: true,
+    },
     funnel: { active: 6, contacted: 6, replied: 2, meetings: 1 },
     results: {
       meetings: 1,
@@ -58,7 +64,7 @@ if (mockMode) {
     events: [
       { at: hoursAgo(2), kind: "stage", lead_id: "m1", lead_name: "Dana Whitfield", company_name: "Meridian", detail: "booked" },
       { at: hoursAgo(2.4), kind: "reply", lead_id: null, lead_name: null, company_name: null, detail: null },
-      { at: hoursAgo(6), kind: "sent", lead_id: null, lead_name: null, company_name: null, detail: "message" },
+      { at: hoursAgo(6), kind: "sent", lead_id: null, lead_name: null, company_name: null, detail: "email" },
       { at: hoursAgo(7), kind: "sent", lead_id: null, lead_name: null, company_name: null, detail: "message" },
       { at: hoursAgo(9), kind: "reply", lead_id: null, lead_name: null, company_name: null, detail: null },
       { at: hoursAgo(17), kind: "sent", lead_id: null, lead_name: null, company_name: null, detail: "connection_request" },
@@ -677,7 +683,7 @@ if (mockMode) {
     return campaign;
   };
   type MockAsset = {
-    id: string; kind: "image" | "video" | "link"; name: string; description: string;
+    id: string; kind: "image" | "video" | "audio" | "link"; name: string; description: string;
     tags: string[]; original_filename: string | null; content_type: string | null;
     byte_size: number | null; external_url: string | null; content_url: string | null;
     created_at: string; updated_at: string;
@@ -721,7 +727,11 @@ if (mockMode) {
       const file = form.get("file");
       const now = new Date().toISOString();
       const isFile = file instanceof File;
-      const kind = isFile && file.type.startsWith("video/") ? "video" : "image";
+      const kind = isFile && file.type.startsWith("audio/")
+        ? "audio"
+        : isFile && file.type.startsWith("video/")
+          ? "video"
+          : "image";
       const asset: MockAsset = { id: crypto.randomUUID(), kind, name: String(form.get("name") || (isFile ? file.name : "Uploaded asset")), description: String(form.get("description") ?? ""), tags: String(form.get("tags") ?? "").split(",").map((tag) => tag.trim()).filter(Boolean), original_filename: isFile ? file.name : null, content_type: isFile ? file.type : null, byte_size: isFile ? file.size : null, external_url: null, content_url: kind === "image" ? assetPreview : null, created_at: now, updated_at: now, assignment_mode: "all", assigned_agent_ids: [] };
       mockAssets.unshift(asset);
       return asset;

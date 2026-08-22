@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import {
   getAudience as getSavedAudience,
   listAudiences,
@@ -13,7 +13,6 @@ import {
   createCampaignRevision,
   getCampaign,
   getCampaignOverlaps,
-  listCampaignContacts,
   pauseCampaign,
   resumeCampaign,
   saveCampaign,
@@ -21,10 +20,8 @@ import {
 } from "./api";
 import {
   applyAudience,
-  contactStatusLabel,
   createStep,
   insertStep,
-  mergeCampaignContactPage,
   moveStep,
   reconcileSavedCampaign,
   removeStep,
@@ -50,14 +47,12 @@ import {
   MoveUpIcon,
   PeopleIcon,
   PlusIcon,
-  SearchIcon,
   TrashIcon,
   WaitIcon,
 } from "./icons";
 
-type MobilePanel = "leads" | "flow" | "editor";
+type MobilePanel = "flow" | "editor";
 type SaveState = "idle" | "saving" | "saved" | "error";
-const CONTACT_PAGE_SIZE = 50;
 
 const STEP_OPTIONS: Array<{
   kind: StepKind;
@@ -97,11 +92,6 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
   const [overlapError, setOverlapError] = useState<string | null>(null);
   const [overlapConfirmed, setOverlapConfirmed] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-  const [contactQuery, setContactQuery] = useState("");
-  const [contactTotal, setContactTotal] = useState(0);
-  const [contactOffset, setContactOffset] = useState(0);
-  const [contactLoading, setContactLoading] = useState(false);
-  const [contactError, setContactError] = useState<string | null>(null);
   const [mobilePanel, setMobilePanel] = useState<MobilePanel>("flow");
   const [loading, setLoading] = useState(campaignId !== "new");
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -112,7 +102,6 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
   const saveTimerRef = useRef<number | null>(null);
   const savePromiseRef = useRef<Promise<Campaign> | null>(null);
   const saveQueueRef = useRef(new CampaignSaveQueue(saveCampaign));
-  const contactRequestRef = useRef(0);
 
   useEffect(() => {
     let current = true;
@@ -155,52 +144,6 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
       setActionBusy(false);
     }
   }
-
-  const loadContactPage = useCallback(async (
-    targetCampaignId: string,
-    query: string,
-    offset: number,
-    replace: boolean,
-  ) => {
-    const request = ++contactRequestRef.current;
-    setContactLoading(true);
-    setContactError(null);
-    try {
-      const page = await listCampaignContacts(targetCampaignId, {
-        query,
-        limit: CONTACT_PAGE_SIZE,
-        offset,
-      });
-      if (request !== contactRequestRef.current) return;
-      const current = campaignRef.current;
-      if (!current || current.id !== targetCampaignId) return;
-      const merged = {
-        ...current,
-        contacts: mergeCampaignContactPage(current.contacts, page.contacts, replace),
-      };
-      campaignRef.current = merged;
-      setCampaign(merged);
-      setContactTotal(page.total);
-      setContactOffset(page.offset + page.contacts.length);
-    } catch (reason) {
-      if (request !== contactRequestRef.current) return;
-      setContactError(
-        reason instanceof Error ? reason.message : "Available leads could not load.",
-      );
-    } finally {
-      if (request === contactRequestRef.current) setContactLoading(false);
-    }
-  }, []);
-
-  const contactCampaignId = campaign?.status === "draft" ? campaign.id : null;
-
-  useEffect(() => {
-    if (!contactCampaignId) return;
-    const timer = window.setTimeout(() => {
-      void loadContactPage(contactCampaignId, contactQuery.trim(), 0, true);
-    }, 250);
-    return () => window.clearTimeout(timer);
-  }, [contactCampaignId, contactQuery, loadContactPage]);
 
   useEffect(() => {
     if (revision === 0) return;
@@ -296,26 +239,6 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
     setToast("Step removed from the sequence.");
   }
 
-  function toggleContact(contactId: string) {
-    const current = campaignRef.current;
-    if (!current) return;
-    const contact = current.contacts.find((candidate) => candidate.id === contactId);
-    if (!contact?.selectable) return;
-    commit(touchCampaign(current, {
-      contacts: current.contacts.map((candidate) => {
-        if (candidate.id !== contactId) return candidate;
-        const selected = !candidate.selected;
-        return {
-          ...candidate,
-          selected,
-          status: selected ? "draft" : null,
-          currentStep: null,
-          nextActionAt: null,
-        };
-      }),
-    }));
-  }
-
   function selectSavedAudience(audience: Audience) {
     const current = campaignRef.current;
     if (!current) return;
@@ -333,24 +256,10 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
       currentStep: null,
       nextActionAt: null,
     }));
-    const hydrated = {
-      ...current,
-      contacts: mergeCampaignContactPage(current.contacts, audienceContacts, false),
-    };
+    const hydrated = { ...current, contacts: audienceContacts };
     commit(applyAudience(hydrated, audience.id, audience.name, leadIds));
     setToast(
-      `${leadIds.length} outreach-eligible ${leadIds.length === 1 ? "lead" : "leads"} selected from ${audience.name}.`,
-    );
-  }
-
-  function loadMoreContacts() {
-    const current = campaignRef.current;
-    if (!current || contactLoading) return;
-    void loadContactPage(
-      current.id,
-      contactQuery.trim(),
-      contactOffset,
-      false,
+      `${audience.name} applied with ${leadIds.length} outreach-eligible ${leadIds.length === 1 ? "member" : "members"}.`,
     );
   }
 
@@ -426,7 +335,7 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
         if (
           currentOverlap.leadCount > 0 &&
           !window.confirm(
-            `${currentOverlap.leadCount} selected ${currentOverlap.leadCount === 1 ? "lead is" : "leads are"} active in another campaign. Resume anyway?`,
+            `${currentOverlap.leadCount} audience ${currentOverlap.leadCount === 1 ? "member is" : "members are"} active in another campaign. Resume anyway?`,
           )
         ) {
           setActionBusy(false);
@@ -501,16 +410,6 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
     issues: [...baseValidation.issues, ...channelIssues],
   };
   const selectedContacts = campaign.contacts.filter((contact) => contact.selected);
-  const visibleContacts = campaign.contacts.filter((contact) => editable || contact.selected);
-  const normalizedQuery = contactQuery.trim().toLowerCase();
-  const filteredContacts = visibleContacts.filter((contact) =>
-    [contact.name, contact.company, contact.role]
-      .join(" ")
-      .toLowerCase()
-      .includes(normalizedQuery),
-  );
-  const replied = selectedContacts.filter((contact) => contact.status === "replied").length;
-  const waiting = selectedContacts.filter((contact) => contact.status === "waiting").length;
 
   return (
     <>
@@ -557,80 +456,17 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
         </header>
 
         <div className="campaign-mobile-switcher" role="group" aria-label="Campaign workspace panels">
-          {(["leads", "flow", "editor"] as MobilePanel[]).map((panel) => (
+          {(["flow", "editor"] as MobilePanel[]).map((panel) => (
             <button
               key={panel}
               type="button"
               className={mobilePanel === panel ? "is-active" : ""}
               onClick={() => setMobilePanel(panel)}
             >
-              {panel === "leads" ? "Leads" : panel === "flow" ? "Sequence" : "Editor"}
+              {panel === "flow" ? "Sequence" : "Editor"}
             </button>
           ))}
         </div>
-
-        <aside className={`campaign-lead-rail ${mobilePanel === "leads" ? "is-mobile-current" : ""}`} aria-label="Campaign leads">
-          <div className="campaign-rail-summary">
-            <span><strong>{selectedContacts.length}</strong> selected</span>
-            <span><strong>{replied}</strong> replied</span>
-            <span><strong>{waiting}</strong> waiting</span>
-          </div>
-          <label className="campaign-rail-search">
-            <SearchIcon size={15} />
-            <span className="sr-only">Search campaign leads</span>
-            <input
-              type="search"
-              placeholder="Search available leads"
-              maxLength={200}
-              value={contactQuery}
-              onChange={(event) => setContactQuery(event.target.value)}
-            />
-          </label>
-          <div className="campaign-contact-head" aria-hidden="true">
-            <span>{editable ? "Select contact" : "Enrolled contact"}</span><span>Step</span>
-          </div>
-          <div className="campaign-contact-list" role="list">
-            {contactLoading && filteredContacts.length === 0 ? (
-              <p className="campaign-contact-empty">Searching available leads…</p>
-            ) : contactError && filteredContacts.length === 0 ? (
-              <p className="campaign-contact-empty" role="alert">{contactError}</p>
-            ) : filteredContacts.length === 0 ? (
-              <p className="campaign-contact-empty">No leads match this search.</p>
-            ) : filteredContacts.map((contact) => (
-              <label className={`campaign-contact-row ${contact.selected ? "is-selected" : ""}`} role="listitem" key={contact.id}>
-                <input
-                  className="campaign-contact-check"
-                  type="checkbox"
-                  checked={contact.selected}
-                  disabled={!editable || !contact.selectable}
-                  onChange={() => toggleContact(contact.id)}
-                  aria-label={`${contact.selected ? "Remove" : "Add"} ${contact.name}`}
-                />
-                <span className="campaign-contact-monogram" aria-hidden="true">
-                  {contact.name.split(" ").map((part) => part[0]).join("").slice(0, 2)}
-                </span>
-                <span className="campaign-contact-copy">
-                  <strong>{contact.name}</strong>
-                  <span>{contact.company} · {contact.role}</span>
-                  <small className={`campaign-journey-${contact.status ?? "unselected"}`}>{contactStatusLabel(contact)}</small>
-                </span>
-                <span className="campaign-contact-step">
-                  {contact.currentStep ? `${contact.currentStep}/${campaign.steps.length}` : "Not started"}
-                </span>
-              </label>
-            ))}
-            {editable && contactOffset < contactTotal && (
-              <button
-                className="campaign-contact-more"
-                type="button"
-                onClick={loadMoreContacts}
-                disabled={contactLoading}
-              >
-                {contactLoading ? "Loading…" : `Load more · ${contactTotal - contactOffset} remaining`}
-              </button>
-            )}
-          </div>
-        </aside>
 
         <section className={`campaign-canvas ${mobilePanel === "flow" ? "is-mobile-current" : ""}`} aria-label="Campaign sequence">
           <div className="campaign-canvas-head">
@@ -659,7 +495,7 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
                 <small>Audience</small>
                 <strong>{campaign.audience}</strong>
                 <span>
-                  {selectedContacts.length} selected {selectedContacts.length === 1 ? "lead" : "leads"}
+                  {selectedContacts.length} outreach-eligible {selectedContacts.length === 1 ? "member" : "members"}
                 </span>
               </span>
               <EditIcon size={15} />
@@ -867,14 +703,14 @@ function AudienceEditor({
           </option>
           {audiences.map((audience) => (
             <option key={audience.id} value={audience.id}>
-              {audience.name} · {audience.memberCount} {audience.memberCount === 1 ? "lead" : "leads"}
+              {audience.name} · {audience.memberCount} {audience.memberCount === 1 ? "member" : "members"}
             </option>
           ))}
         </select>
         <small>
           {applying
-            ? "Applying the exact contactable membership…"
-            : `${selectedCount} ${selectedCount === 1 ? "lead" : "leads"} selected for this version.`}
+            ? "Applying eligible audience membership…"
+            : `${selectedCount} outreach-eligible ${selectedCount === 1 ? "member" : "members"} in this audience.`}
         </small>
       </label>
       {error && <div className="campaign-audience-error" role="alert">{error}</div>}
@@ -886,7 +722,7 @@ function AudienceEditor({
         <textarea disabled={!editable} rows={5} value={campaign.description} onChange={(event) => onChange({ description: event.target.value })} />
       </label>
       <div className="campaign-editor-note">
-        Lead selection stores enrollment for this exact version. It does not change lead stages or queue outreach.
+        Audience membership is copied into this campaign version. It does not change lead stages or queue outreach.
       </div>
     </div>
   );
@@ -1100,7 +936,7 @@ function ReviewDialog({
         </div>
         <div className="campaign-review-summary">
           <div><span>Audience</span><strong>{campaign.audience}</strong></div>
-          <div><span>Selected leads</span><strong>{selected}</strong></div>
+          <div><span>Audience members</span><strong>{selected}</strong></div>
           <div><span>Sequence steps</span><strong>{campaign.steps.length}</strong></div>
         </div>
         {issues.length > 0 ? (

@@ -41,6 +41,10 @@ export function VideoIcon(props: IconProps) {
   return <Icon {...props}><rect x="3.5" y="5.5" width="13" height="13" rx="1.5" /><path d="m16.5 10 4-2v8l-4-2" /><path d="m9 10 4 2-4 2Z" /></Icon>;
 }
 
+export function AudioIcon(props: IconProps) {
+  return <Icon {...props}><path d="M5 14v-4M9 17V7M13 20V4M17 16V8M21 13v-2" /></Icon>;
+}
+
 export function ExternalIcon(props: IconProps) {
   return <Icon {...props}><path d="M13 5h6v6M19 5l-8 8" /><path d="M17 13v6H5V7h6" /></Icon>;
 }

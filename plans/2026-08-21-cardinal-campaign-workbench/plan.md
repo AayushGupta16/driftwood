@@ -589,3 +589,38 @@ This is an extension of the same product/workbench design run, not a new standal
     skills_route: "n/a"
 </design_plan>
 ```
+
+## Phase 21 · feedback reconciliation
+
+This pass keeps the existing Workbench direction and changes only the operating surfaces named in product feedback: account visibility and email volume on Overview, audience-only campaign enrollment, centered impersonation status, and audio assets.
+
+```yaml
+<design_plan>
+  macrostructure: "existing Workbench shell; no new page archetype"
+  vibe_validity:
+    anchor: "minimal"
+    wildcard: "operator canvas"
+    contradiction: false
+    valid: true
+  motion_personality:
+    name: "Corporate"
+    intensity: "1/3"
+    override_logged: true
+  button_contrast:
+    eight_states_planned: ["default", "hover", "focus", "active", "disabled", "loading", "error", "success"]
+    focus_ring_visible: true
+    contrast_aa_pass: true
+  honest_copy:
+    fabricated_metrics: 0
+    data_sources: ["authenticated connection state", "outbound-message ledger", "saved audience membership", "validated asset MIME type"]
+    unavailable_value: "Not connected"
+  effects_layer: "none"
+  custom_icons: "extend the existing outlined Driftwood SVG vocabulary for audio"
+</design_plan>
+```
+
+### Phase 21 verification
+
+- Browser QA passed at 1440×1000 and 390×844 for Overview, Campaign Builder, and Assets.
+- Account state, email volume, audience membership, and audio formats all render from explicit API or mock fields; no metric was fabricated.
+- The generic-dashboard anti-slop audit found no new icon-library imports, viewport-locked shells, decorative gradients, generic easing, or broad `transition: all`.

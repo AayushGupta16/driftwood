@@ -264,11 +264,12 @@ export function ImpersonationBanner({ email }: { email: string }) {
   }
 
   return (
-    <div className="sticky top-0 z-50 border-b border-amber-600/25 bg-amber-500/10 text-amber-800 backdrop-blur-md">
-      <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-5 py-2.5 sm:px-8">
-        <span className="min-w-0 truncate text-[13.5px] font-medium">
-          <svg viewBox="0 0 16 16" fill="none" aria-hidden="true" className="mr-1 inline-block size-3.5 align-[-2px]">
-            <path d="M9.3 1.8 4.7 8h3l-1 6.2 4.6-7h-3l1-5.4Z" stroke="currentColor" strokeWidth="1.35" strokeLinejoin="round" />
+    <div className="god-mode-banner">
+      <div className="god-mode-banner-content">
+        <span className="god-mode-banner-label">
+          <svg viewBox="0 0 18 18" fill="none" aria-hidden="true">
+            <path d="M2.2 9s2.6-4.2 6.8-4.2S15.8 9 15.8 9s-2.6 4.2-6.8 4.2S2.2 9 2.2 9Z" stroke="currentColor" strokeWidth="1.4" />
+            <circle cx="9" cy="9" r="2.2" stroke="currentColor" strokeWidth="1.4" />
           </svg>
           God mode — viewing as {email}.
         </span>
@@ -276,7 +277,7 @@ export function ImpersonationBanner({ email }: { email: string }) {
           type="button"
           onClick={handleExit}
           disabled={exiting}
-          className="shrink-0 cursor-pointer rounded-full border border-amber-600/40 bg-amber-500/10 px-3.5 py-1.5 text-[13px] font-medium text-amber-800 transition-colors hover:bg-amber-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+          className="god-mode-banner-exit"
         >
           {exiting ? "Exiting…" : "Exit god mode"}
         </button>

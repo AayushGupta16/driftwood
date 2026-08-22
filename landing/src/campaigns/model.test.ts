@@ -82,7 +82,7 @@ test("an unknown insertion anchor safely appends the step", () => {
   assert.equal(inserted.steps.at(-1)?.id, added.id);
 });
 
-test("validation blocks vague drafts and requires a selected lead", () => {
+test("validation blocks vague drafts and requires an eligible audience member", () => {
   const draft = campaignFixture();
   const invalid = validateCampaign({
     ...draft,
@@ -92,7 +92,11 @@ test("validation blocks vague drafts and requires a selected lead", () => {
   assert.equal(invalid.ready, false);
   assert.ok(invalid.issues.includes("Give the campaign a specific name."));
   assert.ok(invalid.issues.includes("Choose an audience before review."));
-  assert.ok(invalid.issues.includes("Select at least one contactable lead."));
+  assert.ok(
+    invalid.issues.includes(
+      "Choose an audience with at least one outreach-eligible member.",
+    ),
+  );
 
   const ready = validateCampaign({
     ...draft,

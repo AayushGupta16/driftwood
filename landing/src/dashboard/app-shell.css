@@ -1,5 +1,56 @@
 /* perfect-ui · shared extension of plans/2026-08-21-cardinal-campaign-workbench */
 
+.god-mode-banner {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  width: calc(100% - 15.25rem);
+  margin-left: 15.25rem;
+  border-bottom: 1px solid rgba(180, 83, 9, .24);
+  background: color-mix(in srgb, #f59e0b 10%, var(--color-paper));
+  color: #92400e;
+}
+
+.god-mode-banner-content {
+  display: flex;
+  min-height: 3.35rem;
+  align-items: center;
+  justify-content: center;
+  gap: .8rem;
+  padding: .5rem 1rem;
+  text-align: center;
+}
+
+.god-mode-banner-label {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: .4rem;
+  font-size: .76rem;
+  font-weight: 620;
+}
+
+.god-mode-banner-label svg { width: 1rem; height: 1rem; flex: none; }
+
+.god-mode-banner-exit {
+  flex: none;
+  min-height: 2rem;
+  border: 1px solid rgba(180, 83, 9, .36);
+  border-radius: 999px;
+  background: rgba(245, 158, 11, .08);
+  color: #92400e;
+  padding: .35rem .75rem;
+  font: inherit;
+  font-size: .72rem;
+  font-weight: 620;
+  cursor: pointer;
+  transition: background 200ms cubic-bezier(.2, 0, 0, 1), border-color 200ms cubic-bezier(.2, 0, 0, 1);
+}
+
+.god-mode-banner-exit:hover { border-color: rgba(180, 83, 9, .54); background: rgba(245, 158, 11, .16); }
+.god-mode-banner-exit:focus-visible { outline: 2px solid rgba(180, 83, 9, .6); outline-offset: 2px; }
+.god-mode-banner-exit:disabled { cursor: not-allowed; opacity: .6; }
+
 .dashboard-app-shell {
   min-height: 100dvh;
   background: var(--color-paper);
@@ -218,6 +269,9 @@
 .app-sidebar-scrim { display: none; }
 
 @media (max-width: 959px) {
+  .god-mode-banner { position: relative; width: 100%; margin-left: 0; }
+  .god-mode-banner-content { flex-wrap: wrap; row-gap: .35rem; }
+  .god-mode-banner-label { overflow-wrap: anywhere; }
   .app-mobile-masthead {
     position: sticky;
     top: 0;
@@ -280,5 +334,6 @@
   .app-sidebar,
   .app-sidebar-scrim,
   .app-sidebar-create,
-  .app-sidebar-link { transition: none; }
+  .app-sidebar-link,
+  .god-mode-banner-exit { transition: none; }
 }

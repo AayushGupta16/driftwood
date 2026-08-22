@@ -241,6 +241,11 @@ type Sending = {
   within_limits: boolean;
   last_action_at: string | null;
 };
+type EmailSending = {
+  emails_sent: number;
+  emails_cap: number;
+  within_limits: boolean;
+};
 type Funnel = {
   active: number;
   contacted: number;
@@ -266,6 +271,7 @@ type Companies = {
 type DashboardSummary = {
   linkedin_connected: boolean;
   sending: Sending | null;
+  email_sending?: EmailSending | null;
   funnel: Funnel;
   results: Results;
   lists: Lists;
@@ -410,7 +416,6 @@ function ApprovedView({ user }: { user: User }) {
       <MetricsCard state={summary} />
       {canWrite && <QuickActions onImport={openImports} />}
       <CampaignDesk snapshot={snapshot} inventory={inventory} />
-      <ConnectedAccounts user={user} isOwner={isOwner} />
 
       <details
         className="overview-imports"
@@ -440,26 +445,25 @@ function ConnectionSetup({ user, isOwner }: { user: User; isOwner: boolean }) {
   const emailMissing = !(user.email_connected ?? false);
   const xMissing = !(user.twitter_connected ?? false) || (user.twitter_chat_locked ?? false);
   const remaining = [linkedInMissing, emailMissing, xMissing].filter(Boolean).length;
-  if (remaining === 0) return null;
+  const connected = 3 - remaining;
 
   return (
     <section className="overview-connections" aria-labelledby="connections-title">
       <div className="overview-section-heading">
-        <h2 id="connections-title">Connect accounts</h2>
-        <span>{remaining} left</span>
+        <h2 id="connections-title">Sending accounts</h2>
+        <span>{connected} of 3 connected{remaining > 0 ? ` · ${remaining} left` : ""}</span>
       </div>
       <div className="overview-connection-grid">
-        {linkedInMissing && <LinkedInCard connected={false} />}
-        {emailMissing && (
-          <EmailCard connected={false} emailError={user.email_error ?? null} />
-        )}
-        {xMissing && (
-          <TwitterCard
-            connected={user.twitter_connected ?? false}
-            pending={user.twitter_pending ?? false}
-            chatLocked={user.twitter_chat_locked ?? false}
-          />
-        )}
+        <LinkedInCard connected={!linkedInMissing} />
+        <EmailCard
+          connected={!emailMissing}
+          emailError={user.email_error ?? null}
+        />
+        <TwitterCard
+          connected={user.twitter_connected ?? false}
+          pending={user.twitter_pending ?? false}
+          chatLocked={user.twitter_chat_locked ?? false}
+        />
       </div>
     </section>
   );
@@ -473,7 +477,18 @@ function TodaysSending({
   activity: ActivityState;
 }) {
   const sending = summary.status === "ready" ? summary.summary.sending : null;
+  const emailSending = summary.status === "ready" ? summary.summary.email_sending ?? null : null;
   const pendingReviews = summary.status === "ready" ? summary.summary.pending_reviews : null;
+  const statusValue = summary.status === "loading"
+    ? "—"
+    : summary.status === "error"
+      ? "Unavailable"
+      : sending?.within_limits === false || emailSending?.within_limits === false
+        ? "Near limit"
+        : sending === null && emailSending === null
+          ? "Setup needed"
+          : "On track";
+  const statusTone = statusValue === "On track" ? "success" : statusValue === "—" || statusValue === "Unavailable" ? undefined : "warning";
   const latestSends = activity.status === "ready"
     ? activity.events.filter((event) => event.kind === "sent").slice(0, 3)
     : [];
@@ -488,11 +503,15 @@ function TodaysSending({
         <div className="overview-sending-stats">
           <SendingStat
             label="LinkedIn invites"
-            value={summary.status === "loading" ? "—" : sending ? `${sending.invites_sent}/${sending.invites_cap}` : "0"}
+            value={summary.status !== "ready" ? "—" : sending ? `${sending.invites_sent}/${sending.invites_cap}` : "Not connected"}
           />
           <SendingStat
             label="LinkedIn messages"
-            value={summary.status === "loading" ? "—" : sending ? `${sending.messages_sent}/${sending.messages_cap}` : "0"}
+            value={summary.status !== "ready" ? "—" : sending ? `${sending.messages_sent}/${sending.messages_cap}` : "Not connected"}
+          />
+          <SendingStat
+            label="Emails sent"
+            value={summary.status !== "ready" ? "—" : emailSending ? `${emailSending.emails_sent}/${emailSending.emails_cap}` : "Not connected"}
           />
           <SendingStat
             label="Waiting for review"
@@ -500,8 +519,8 @@ function TodaysSending({
           />
           <SendingStat
             label="Status"
-            value={summary.status === "error" ? "Unavailable" : sending?.within_limits === false ? "Near limit" : "On track"}
-            tone={sending?.within_limits === false ? "warning" : "success"}
+            value={statusValue}
+            tone={statusTone}
           />
         </div>
         <div className="overview-latest-sends">
@@ -530,7 +549,7 @@ function SendingStat({
   return (
     <div className="overview-sending-stat">
       <span>{label}</span>
-      <strong className={tone ? `is-${tone}` : undefined}>{value}</strong>
+      <strong className={tone ? `is-${tone}` : value === "Not connected" ? "is-muted" : undefined}>{value}</strong>
     </div>
   );
 }
@@ -585,30 +604,6 @@ function CampaignDesk({
         </div>
       )}
     </section>
-  );
-}
-
-function ConnectedAccounts({ user, isOwner }: { user: User; isOwner: boolean }) {
-  if (!isOwner) return null;
-  const linkedInConnected = user.linkedin_connected;
-  const emailConnected = user.email_connected ?? false;
-  const xConnected = (user.twitter_connected ?? false) && !(user.twitter_chat_locked ?? false);
-  const connectedCount = [linkedInConnected, emailConnected, xConnected].filter(Boolean).length;
-  if (connectedCount === 0) return null;
-
-  return (
-    <details className="overview-account-manager">
-      <summary>
-        <strong>Connected accounts</strong>
-        <span>{connectedCount} connected</span>
-        <span aria-hidden="true" className="overview-imports-toggle">+</span>
-      </summary>
-      <div className="overview-connected-grid">
-        {linkedInConnected && <LinkedInCard connected />}
-        {emailConnected && <EmailCard connected emailError={null} />}
-        {xConnected && <TwitterCard connected pending={false} chatLocked={false} />}
-      </div>
-    </details>
   );
 }
 
@@ -685,8 +680,17 @@ function ActivityLine({ event }: { event: ActivityEvent }) {
   if (event.kind === "reply") {
     body = who ? <>{who} replied</> : "New LinkedIn reply";
   } else if (event.kind === "sent") {
-    const verb =
-      event.detail === "message" ? "Message sent" : "Connection sent";
+    const verb = event.detail === "email"
+      ? "Email sent"
+      : event.detail === "message"
+        ? "LinkedIn message sent"
+        : event.detail === "connection_request"
+          ? "LinkedIn invite sent"
+          : event.detail === "x_dm"
+            ? "X DM sent"
+            : event.detail === "x_follow"
+              ? "X follow sent"
+              : "Outreach sent";
     body = who ? (
       <>
         {verb} to {who}
@@ -1204,12 +1208,11 @@ function TwitterCard({
         <div className="min-w-0 flex-1">
           <h3 className="m-0 text-[18px] font-semibold tracking-[-0.01em]">
             {/* No @handle to show: the login check reads cookies, not X's
-                DOM, so nothing scrapes the handle any more. Plain
-                "Connected" until a later slice reads it back. */}
+                DOM, so nothing scrapes the handle any more. */}
             {locked
               ? "Almost there — Messages is locked"
               : connected
-                ? "Connected"
+                ? "X"
                 : watching
                   ? "Finish in the X tab"
                   : "Connect X"}

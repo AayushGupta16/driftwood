@@ -95,7 +95,7 @@ export function buildOverviewSnapshot(
       href: "/dashboard/campaigns",
       label: "Finish campaign setup",
       title: `${campaignsNeedingWork} ${campaignsNeedingWork === 1 ? "draft needs" : "drafts need"} work`,
-      detail: "Complete the audience, sequence, or lead selection before review.",
+      detail: "Complete the audience or sequence before review.",
     };
   } else {
     primaryAction = {

@@ -7,6 +7,7 @@
   motion: Corporate 1/3; 200ms cubic-bezier(.2, 0, 0, 1); native scroll
   interaction_states: default, hover, focus, active, disabled, loading, error, success
   honest_copy: dashboard summary/activity and persisted audience/campaign/asset APIs only
+  phase_21: show every sending-account state and ledger-backed email volume
   effects_layer: none; extra effects would compete with the requested operational clarity
   custom_icons: existing outlined Driftwood SVG vocabulary; no icon dependency or emoji
   mobile: single column; connections and sending remain first
@@ -139,7 +140,7 @@
 
 .overview-sending-stats {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   border: 1px solid var(--color-line);
   border-radius: .7rem;
   overflow: hidden;
@@ -158,6 +159,7 @@
 .overview-sending-stat + .overview-sending-stat { border-left: 1px solid var(--color-line); }
 .overview-sending-stat span { color: var(--color-ink-faint); font-size: .65rem; line-height: 1.35; }
 .overview-sending-stat strong { font-size: 1.3rem; font-weight: 650; letter-spacing: -.025em; font-variant-numeric: tabular-nums; }
+.overview-sending-stat strong.is-muted { color: var(--color-ink-faint); font-size: .72rem; letter-spacing: 0; }
 .overview-sending-stat strong.is-success { color: var(--color-ok); font-size: .84rem; letter-spacing: 0; }
 .overview-sending-stat strong.is-warning { color: #a45f10; font-size: .84rem; letter-spacing: 0; }
 
@@ -323,8 +325,8 @@
   .overview-heading { align-items: flex-start; flex-direction: column; gap: .7rem; }
   .overview-sending-stats,
   .overview-action-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .overview-sending-stat:nth-child(3) { border-top: 1px solid var(--color-line); border-left: 0; }
-  .overview-sending-stat:nth-child(4) { border-top: 1px solid var(--color-line); }
+  .overview-sending-stat:nth-child(n + 3) { border-top: 1px solid var(--color-line); }
+  .overview-sending-stat:nth-child(odd) { border-left: 0; }
 }
 
 @media (max-width: 520px) {

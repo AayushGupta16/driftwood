@@ -265,7 +265,7 @@ export function validateCampaign(campaign: Campaign): CampaignValidation {
   }
   if (campaign.steps.length === 0) issues.push("Add at least one sequence step.");
   if (!campaign.contacts.some((contact) => contact.selected)) {
-    issues.push("Select at least one contactable lead.");
+    issues.push("Choose an audience with at least one outreach-eligible member.");
   }
   campaign.steps.forEach((step, index) => {
     if (step.kind !== "wait" && !step.body.trim()) {
