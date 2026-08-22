@@ -33,7 +33,6 @@ import {
   AudienceIcon,
   BackIcon,
   CheckIcon,
-  FilterIcon,
   PlusIcon,
   OrangeSliceIcon,
   SearchIcon,
@@ -47,22 +46,11 @@ import "./audiences.css";
 
 type View = "library" | "builder";
 type BuilderTab = "search" | "details";
-type BuilderFilter = keyof AudienceFilters;
 type ImportNotice = { kind: "success" | "error"; message: string };
 
 function readableProvider(provider: string) {
   return provider.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
-
-const BUILDER_FILTERS: Array<{
-  id: BuilderFilter;
-  label: string;
-  placeholder: string;
-}> = [
-  { id: "title", label: "Job title", placeholder: "Founder, VP Sales, Head of QA" },
-  { id: "company", label: "Company or seed domains", placeholder: "stripe.com, brex.com" },
-  { id: "query", label: "Person or company text", placeholder: "Name, title, industry, or company" },
-];
 
 export default function Audiences() {
   const { canWrite } = useWorkspacePermissions();
@@ -80,7 +68,6 @@ export default function Audiences() {
   const [filters, setFilters] = useState<AudienceFilters>(EMPTY_FILTERS);
   const [results, setResults] = useState<DiscoveryResult | null>(null);
   const [builderTab, setBuilderTab] = useState<BuilderTab>("search");
-  const [activeFilter, setActiveFilter] = useState<BuilderFilter | null>("title");
   const [resultQuery, setResultQuery] = useState("");
   const [providerStatuses, setProviderStatuses] = useState<DiscoveryProvider[]>([]);
   const [providerStatusLoading, setProviderStatusLoading] = useState(true);
@@ -149,7 +136,6 @@ export default function Audiences() {
     setFilters(EMPTY_FILTERS);
     setResults(null);
     setBuilderTab("search");
-    setActiveFilter("title");
     setResultQuery("");
     setImportNotice(null);
     setSelectedRecords(new Set());
@@ -390,22 +376,6 @@ export default function Audiences() {
               <div className="audience-search-examples" aria-label="Example searches">
                 <button type="button" onClick={() => setFilters({ ...EMPTY_FILTERS, prompt: "Founders at seed-stage B2B SaaS companies in the US" })}><SearchIcon size={13} /> Founders at seed-stage B2B SaaS companies in the US</button>
                 <button type="button" onClick={() => setFilters({ ...EMPTY_FILTERS, prompt: "QA leaders at Series A consumer software companies" })}><SearchIcon size={13} /> QA leaders at Series A consumer software companies</button>
-              </div>
-
-              <div className="audience-filter-section">
-                <h3>People and company</h3>
-                {BUILDER_FILTERS.map((filter) => {
-                  const expanded = activeFilter === filter.id;
-                  const value = filters[filter.id];
-                  return (
-                    <div className={`audience-filter-row ${expanded ? "is-expanded" : ""}`} key={filter.id}>
-                      <button type="button" aria-expanded={expanded} onClick={() => setActiveFilter(expanded ? null : filter.id)}>
-                        <FilterIcon size={15} /><span>{filter.label}</span>{value && <small>{value}</small>}<ArrowIcon size={14} />
-                      </button>
-                      {expanded && <label><span className="audience-visually-hidden">{filter.label}</span><input autoFocus value={value} onChange={(event) => setFilters({ ...filters, [filter.id]: event.target.value })} placeholder={filter.placeholder} /></label>}
-                    </div>
-                  );
-                })}
               </div>
 
               <div className="audience-panel-search-action">

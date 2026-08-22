@@ -55,20 +55,13 @@ export type LeadImportResult = {
 };
 
 export type AudienceFilters = {
-  // A non-empty prompt drives the search server-side (LLM-translated into
-  // Orange Slice queries); the three structured fields are the legacy lane
-  // and are ignored while a prompt is present.
+  // The search is one sentence, translated server-side into Orange Slice
+  // queries. Saved audiences persist it for reproducible re-runs.
   prompt: string;
-  query: string;
-  company: string;
-  title: string;
 };
 
 export const EMPTY_FILTERS: AudienceFilters = {
   prompt: "",
-  query: "",
-  company: "",
-  title: "",
 };
 
 export function filterAudiences(
