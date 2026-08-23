@@ -75,3 +75,34 @@
 .drift-node text { pointer-events: none; fill: var(--color-ink-soft); font-size: 11px; }
 .drift-node .drift-label-big { fill: var(--color-ink); font-size: 13px; font-weight: 700; }
 .drift-node .drift-label-run { fill: var(--color-ink); font-size: 12px; font-weight: 600; }
+
+/* selection focus: everything outside the traced run recedes */
+.drift-edge.is-dimmed { opacity: 0.25; }
+.drift-node.is-dimmed { opacity: 0.22; }
+
+/* the pipeline strip above the graph */
+.flow-strip { padding: 0.7rem 1rem 0.8rem; }
+.flow-strip-title { font-size: 0.78rem; font-weight: 600; color: var(--color-ink-soft); margin-bottom: 0.5rem; }
+.flow-strip-row { display: flex; align-items: stretch; gap: 0.4rem; flex-wrap: wrap; }
+.flow-strip-item { display: flex; align-items: center; gap: 0.4rem; }
+.flow-strip-arrow { color: var(--color-ink-faint); font-size: 0.85rem; }
+.flow-strip-stage {
+  border: 1.5px solid var(--color-line);
+  border-radius: 10px;
+  padding: 0.35rem 0.7rem;
+  min-width: 118px;
+  background: var(--color-surface);
+}
+.flow-strip-terminal { border-radius: 999px; display: flex; flex-direction: column; justify-content: center; }
+.flow-strip-name { font-size: 0.8rem; font-weight: 650; color: var(--color-ink); }
+.flow-strip-sub { font-size: 0.68rem; color: var(--color-ink-faint); }
+.flow-strip-verdict { font-size: 0.68rem; font-weight: 600; margin-top: 1px; }
+.flow-strip-stage.tone-neutral { border-color: var(--color-line); }
+.flow-strip-stage.tone-good { border-color: var(--color-ok); background: color-mix(in srgb, var(--color-ok) 8%, var(--color-surface)); }
+.flow-strip-stage.tone-good .flow-strip-verdict { color: var(--color-ok); }
+.flow-strip-stage.tone-retried { border-color: var(--color-ok); background: color-mix(in srgb, var(--color-ok) 8%, var(--color-surface)); }
+.flow-strip-stage.tone-retried .flow-strip-verdict { color: var(--color-ink-soft); }
+.flow-strip-stage.tone-bad { border-color: var(--color-alert); background: color-mix(in srgb, var(--color-alert) 7%, var(--color-surface)); }
+.flow-strip-stage.tone-bad .flow-strip-verdict { color: var(--color-alert); }
+.flow-strip-stage.tone-unreached { opacity: 0.5; }
+.flow-strip-stage.tone-unreached .flow-strip-verdict { color: var(--color-ink-faint); }

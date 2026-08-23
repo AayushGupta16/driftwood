@@ -22,11 +22,13 @@ import {
 } from "./api";
 import {
   buildGraph,
+  classifyRun,
   fitView,
   layoutRadial,
   relaxGraph,
   runDuration,
   terminalFor,
+  type StageStatus,
   type DriftRun,
   type FlowManifest,
   type Graph,
@@ -235,6 +237,12 @@ function DriftView({ user }: { user: User }) {
               runs
             </div>
           )}
+          {agentId && runs && runs.length > 0 && manifest && (
+            <FlowStrip
+              manifest={manifest}
+              run={selected ? (runs.find((r) => selected.startsWith(`run:${r.id}`)) ?? null) : null}
+            />
+          )}
           {agentId && runs && runs.length > 0 && (
             <GraphCanvas
               key={`${agentId}:${runs.length}`}
@@ -266,6 +274,76 @@ function DriftView({ user }: { user: User }) {
   );
 }
 
+/* The pipeline itself, drawn once above the graph: the task's stages from
+   flow.json, left to right. With no run selected it is the neutral legend
+   ("this is what every spoke walks through"); with a run selected it lights
+   up as that run's progress — green passed, amber retried, red where it
+   died, grey never reached — ending in the run's terminal chip. */
+function FlowStrip({
+  manifest,
+  run,
+}: {
+  manifest: FlowManifest;
+  run: DriftRun | null;
+}) {
+  const staged = run ? classifyRun(run, manifest) : null;
+  const terminal = run ? terminalFor(run, manifest) : null;
+  const tone = (status: StageStatus | null): string =>
+    status === "passed" || status === "emitted"
+      ? "tone-good"
+      : status === "retried"
+        ? "tone-retried"
+        : status === "failed"
+          ? "tone-bad"
+          : status === "unreached"
+            ? "tone-unreached"
+            : "tone-neutral";
+  return (
+    <div className={`${CARD} flow-strip`}>
+      <div className="flow-strip-title">
+        {run
+          ? `${String(run.parameters?.slug ?? run.task)} — how this run walked the flow`
+          : "The flow every run walks (click a run in the graph to trace it)"}
+      </div>
+      <div className="flow-strip-row">
+        {manifest.stages.map((stage, i) => {
+          const sr = staged?.[i] ?? null;
+          const retries = sr && sr.judgeCount > 1 ? ` ×${sr.judgeCount}` : "";
+          return (
+            <div key={stage.id} className="flow-strip-item">
+              <div className={`flow-strip-stage ${tone(sr ? sr.status : null)}`}>
+                <div className="flow-strip-name">
+                  {stage.name}
+                  {retries}
+                </div>
+                {stage.sub && <div className="flow-strip-sub">{stage.sub}</div>}
+                {sr && (
+                  <div className="flow-strip-verdict">
+                    {sr.status === "passed" && "gate passed"}
+                    {sr.status === "retried" && "passed after retries"}
+                    {sr.status === "failed" && "gate exhausted"}
+                    {sr.status === "emitted" && "recorded"}
+                    {sr.status === "unreached" && "never reached"}
+                  </div>
+                )}
+              </div>
+              <span className="flow-strip-arrow">→</span>
+            </div>
+          );
+        })}
+        <div
+          className={`flow-strip-stage flow-strip-terminal ${
+            terminal ? (terminal.tone === "good" ? "tone-good" : terminal.tone === "bad" ? "tone-bad" : "tone-neutral") : "tone-neutral"
+          }`}
+        >
+          <div className="flow-strip-name">{terminal ? terminal.label : "end state"}</div>
+          {!terminal && <div className="flow-strip-sub">done / quarantined / …</div>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function chipTone(state: string): string {
   if (state === "done" || state === "already_done") return "is-good";
   if (ACTIVE_STATES.has(state)) return "is-tide";
@@ -290,6 +368,9 @@ function GraphCanvas({
     layoutRadial(g);
     return g;
   }, [agentId, runs, manifest]);
+  // "run:<id>:" — the whole chain of the selected run (or the run node
+  // itself, without the trailing colon).
+  const selectedRunPrefix = selected ? selected.split(":").slice(0, 2).join(":") + ":" : null;
 
   // Initial view fits the whole layout; the canvas remounts (see its key in
   // DriftView) when the graph changes shape, so no refit effect is needed.
@@ -395,10 +476,13 @@ function GraphCanvas({
           {graph.edges.map((e, i) => {
             const a = graph.byId.get(e.a)!;
             const b = graph.byId.get(e.b)!;
+            const inChain =
+              selectedRunPrefix !== null &&
+              (e.a.startsWith(selectedRunPrefix) || e.b.startsWith(selectedRunPrefix) || e.b === selectedRunPrefix.slice(0, -1));
             return (
               <line
                 key={i}
-                className={`drift-edge ${e.spine ? "is-spine" : ""}`}
+                className={`drift-edge ${e.spine ? "is-spine" : ""} ${selectedRunPrefix && !inChain ? "is-dimmed" : ""}`}
                 x1={a.x}
                 y1={a.y}
                 x2={b.x}
@@ -407,11 +491,18 @@ function GraphCanvas({
             );
           })}
           {graph.nodes.map((n) => {
-            // Stage labels only once zoomed in — at overview scale they
-            // collide; run names and outcomes always show.
-            const showLabel = n.type !== "stage" || view.k >= 0.9 || selected === n.id;
+            const inChain =
+              selectedRunPrefix === null ||
+              n.id.startsWith(selectedRunPrefix) ||
+              n.id === selectedRunPrefix.slice(0, -1) ||
+              n.type === "agent" ||
+              n.type === "task";
+            // Stage labels once zoomed in, or along the selected run's whole
+            // chain — the trace you clicked should read end to end.
+            const showLabel =
+              n.type !== "stage" || view.k >= 0.9 || (selectedRunPrefix !== null && n.id.startsWith(selectedRunPrefix));
             return (
-              <g key={n.id} className={`drift-node tone-${nodeTone(n)} ${selected === n.id ? "is-selected" : ""}`}>
+              <g key={n.id} className={`drift-node tone-${nodeTone(n)} ${selected === n.id ? "is-selected" : ""} ${!inChain ? "is-dimmed" : ""}`}>
                 <circle cx={n.x} cy={n.y} r={n.r}>
                   <title>{n.label}</title>
                 </circle>
