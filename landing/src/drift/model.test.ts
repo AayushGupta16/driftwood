@@ -8,6 +8,7 @@ import {
   fallbackStages,
   fitView,
   layoutRadial,
+  relaxGraph,
   runDuration,
   terminalFor,
   type DriftRun,
@@ -163,4 +164,30 @@ test("fitView centers and scales the layout into the viewport", () => {
 test("runDuration formats and rejects missing timestamps", () => {
   assert.equal(runDuration(run("done", [])), "2m 30s");
   assert.equal(runDuration({ ...run("done", []), finished_at: null }), null);
+});
+
+test("relaxGraph springs a dragged node's chain and settles back home", () => {
+  const g = buildGraph("acme", "demo", [run("done", [["research-judge-acme-co", true]])], MANIFEST);
+  layoutRadial(g);
+  const runNode = g.byId.get("run:r1")!;
+  const stage = g.byId.get("run:r1:research")!;
+  const stageHome = { x: stage.hx, y: stage.hy };
+  // Hold the run node far off its spoke: its chain must get pulled along.
+  runNode.x += 150;
+  runNode.y += 150;
+  for (let i = 0; i < 30; i++) relaxGraph(g, runNode.id);
+  assert.ok(
+    Math.hypot(stage.x - stageHome.x, stage.y - stageHome.y) > 10,
+    "chain neighbor did not react to the drag",
+  );
+  // Release: everything relaxes back to the radial home.
+  let moving = Infinity;
+  for (let i = 0; i < 600 && moving > 0.05; i++) moving = relaxGraph(g, null);
+  assert.ok(moving <= 0.05, "graph never settled");
+  for (const n of g.nodes) {
+    assert.ok(
+      Math.hypot(n.x - n.hx, n.y - n.hy) < 8,
+      `${n.id} ended ${Math.hypot(n.x - n.hx, n.y - n.hy).toFixed(1)}px from home`,
+    );
+  }
 });

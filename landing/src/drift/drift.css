@@ -49,6 +49,9 @@
   cursor: grab;
   touch-action: none;
   display: block;
+  /* dragging nodes must never turn into text selection */
+  user-select: none;
+  -webkit-user-select: none;
 }
 .drift-canvas:active { cursor: grabbing; }
 .drift-canvas-hint {

@@ -130,6 +130,11 @@ export type GraphNode = {
   y: number;
   vx: number;
   vy: number;
+  /* Home position from layoutRadial — the elastic simulation (relaxGraph)
+     always pulls back toward it, so dragging deforms the starburst instead
+     of destroying it. */
+  hx: number;
+  hy: number;
 };
 
 export type GraphEdge = { a: string; b: string; spine: boolean };
@@ -145,8 +150,8 @@ export function buildGraph(
   const nodes: GraphNode[] = [];
   const edges: GraphEdge[] = [];
   const byId = new Map<string, GraphNode>();
-  const add = (n: Omit<GraphNode, "x" | "y" | "vx" | "vy">) => {
-    const node = { ...n, x: 0, y: 0, vx: 0, vy: 0 };
+  const add = (n: Omit<GraphNode, "x" | "y" | "vx" | "vy" | "hx" | "hy">) => {
+    const node = { ...n, x: 0, y: 0, vx: 0, vy: 0, hx: 0, hy: 0 };
     nodes.push(node);
     byId.set(node.id, node);
     return node;
@@ -192,29 +197,93 @@ export function layoutRadial(graph: Graph): void {
   const agent = byId.get("agent");
   const task = byId.get("task");
   if (task) {
-    task.x = 0;
-    task.y = 0;
+    task.x = task.hx = 0;
+    task.y = task.hy = 0;
   }
   if (agent) {
-    agent.x = -92;
-    agent.y = 0;
+    agent.x = agent.hx = -92;
+    agent.y = agent.hy = 0;
   }
   const runNodes = nodes.filter((n) => n.type === "run");
   runNodes.forEach((runNode, i) => {
     const angle = -Math.PI / 2 + (i / Math.max(1, runNodes.length)) * Math.PI * 2;
     const dx = Math.cos(angle);
     const dy = Math.sin(angle);
-    runNode.x = dx * RUN_RADIUS;
-    runNode.y = dy * RUN_RADIUS;
+    runNode.x = runNode.hx = dx * RUN_RADIUS;
+    runNode.y = runNode.hy = dy * RUN_RADIUS;
     // Chain members share the run's id prefix and were added in chain order.
     const chain = nodes.filter(
       (n) => n.id.startsWith(runNode.id + ":") && (n.type === "stage" || n.type === "end"),
     );
     chain.forEach((n, k) => {
-      n.x = dx * (RUN_RADIUS + STAGE_STEP * (k + 1));
-      n.y = dy * (RUN_RADIUS + STAGE_STEP * (k + 1));
+      n.x = n.hx = dx * (RUN_RADIUS + STAGE_STEP * (k + 1));
+      n.y = n.hy = dy * (RUN_RADIUS + STAGE_STEP * (k + 1));
     });
   });
+}
+
+/* One tick of the elastic simulation: every node is anchored to its radial
+   home by a soft spring, edges are springs at their home length (drag a run
+   and its chain follows), and close nodes shove each other apart. Returns
+   the largest displacement this tick so the caller can stop animating once
+   the graph has settled (~< 0.1). `pinnedId` is the node under the pointer:
+   it moves only where the pointer puts it. Pure and deterministic. */
+const K_HOME = 0.028;
+const K_EDGE = 0.06;
+const REPEL = 900;
+const REPEL_CUTOFF = 120;
+const DAMPING = 0.86;
+
+export function relaxGraph(graph: Graph, pinnedId: string | null): number {
+  const { nodes, edges, byId } = graph;
+  for (const n of nodes) {
+    if (n.id === pinnedId) continue;
+    n.vx += (n.hx - n.x) * K_HOME;
+    n.vy += (n.hy - n.y) * K_HOME;
+  }
+  for (const e of edges) {
+    const a = byId.get(e.a)!;
+    const b = byId.get(e.b)!;
+    const rest = Math.hypot(a.hx - b.hx, a.hy - b.hy);
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const d = Math.max(1, Math.hypot(dx, dy));
+    const f = K_EDGE * (d - rest);
+    a.vx += (dx / d) * f;
+    a.vy += (dy / d) * f;
+    b.vx -= (dx / d) * f;
+    b.vy -= (dy / d) * f;
+  }
+  for (let i = 0; i < nodes.length; i++) {
+    for (let j = i + 1; j < nodes.length; j++) {
+      const a = nodes[i];
+      const b = nodes[j];
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const d2 = dx * dx + dy * dy;
+      if (d2 > REPEL_CUTOFF * REPEL_CUTOFF || d2 === 0) continue;
+      const d = Math.sqrt(d2);
+      const f = REPEL / d2;
+      a.vx -= (dx / d) * f;
+      a.vy -= (dy / d) * f;
+      b.vx += (dx / d) * f;
+      b.vy += (dy / d) * f;
+    }
+  }
+  let maxMove = 0;
+  for (const n of nodes) {
+    if (n.id === pinnedId) {
+      n.vx = 0;
+      n.vy = 0;
+      continue;
+    }
+    n.vx *= DAMPING;
+    n.vy *= DAMPING;
+    n.x += n.vx;
+    n.y += n.vy;
+    maxMove = Math.max(maxMove, Math.hypot(n.vx, n.vy));
+  }
+  return maxMove;
 }
 
 /* The pan/zoom transform that centers the laid-out graph in a viewport with

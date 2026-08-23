@@ -24,6 +24,7 @@ import {
   buildGraph,
   fitView,
   layoutRadial,
+  relaxGraph,
   runDuration,
   terminalFor,
   type DriftRun,
@@ -299,6 +300,29 @@ function GraphCanvas({
     py: 0,
     moved: false,
   });
+
+  /* The elastic loop: run relaxGraph frames while a node is held or until
+     the graph settles back onto its radial homes. Started by pointer
+     handlers, self-stopping — no interval lives past the settle. */
+  const raf = useRef<number | null>(null);
+  const animate = useCallback(
+    function tick() {
+      raf.current = null;
+      const moving = relaxGraph(graph, drag.current.node?.id ?? null);
+      force((v) => v + 1);
+      if (moving > 0.08 || drag.current.node) raf.current = requestAnimationFrame(tick);
+    },
+    [graph],
+  );
+  const wake = useCallback(() => {
+    if (raf.current === null) raf.current = requestAnimationFrame(animate);
+  }, [animate]);
+  useEffect(
+    () => () => {
+      if (raf.current !== null) cancelAnimationFrame(raf.current);
+    },
+    [],
+  );
   const svgRef = useRef<SVGSVGElement | null>(null);
 
   /* Client coords -> viewBox coords (the svg has a viewBox, so CSS pixels
@@ -339,8 +363,10 @@ function GraphCanvas({
             const p = toWorld(mx, my);
             d.node.x = p.x;
             d.node.y = p.y;
+            d.node.vx = 0;
+            d.node.vy = 0;
             d.moved = true;
-            force((v) => v + 1);
+            wake();
           } else if (d.panning && (e.buttons & 1) === 1) {
             setView((v) => ({ ...v, x: v.x + (mx - d.px), y: v.y + (my - d.py) }));
             d.px = mx;
@@ -354,6 +380,7 @@ function GraphCanvas({
             const { x: mx, y: my } = toCanvas(e.clientX, e.clientY);
             onSelect(findNode(mx, my));
           }
+          if (d.node) wake();
           drag.current = { node: null, panning: false, px: 0, py: 0, moved: false };
         }}
         onWheel={(e) => {
