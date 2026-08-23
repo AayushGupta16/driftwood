@@ -22,6 +22,8 @@
   font-weight: 600;
 }
 .drift-pill-count { font-size: 0.72rem; color: var(--color-ink-faint); }
+.drift-pill.is-empty { opacity: 0.55; }
+.drift-pill.is-empty.is-active { opacity: 1; }
 .drift-pill-live {
   font-size: 0.7rem;
   font-weight: 600;

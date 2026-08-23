@@ -186,7 +186,9 @@ function DriftView({ user }: { user: User }) {
 
           {(overview?.agents.length ?? 0) > 0 && (
             <div className="flex flex-wrap gap-2">
-              {overview!.agents.map((a) => (
+              {[...overview!.agents]
+                .sort((a, b) => b.total - a.total || a.agent_id.localeCompare(b.agent_id))
+                .map((a) => (
                 <button
                   key={a.agent_id}
                   onClick={() => {
@@ -195,13 +197,13 @@ function DriftView({ user }: { user: User }) {
                     setDetail(null);
                     setSelected(null);
                   }}
-                  className={`drift-pill ${a.agent_id === agentId ? "is-active" : ""}`}
+                  className={`drift-pill ${a.agent_id === agentId ? "is-active" : ""} ${a.total === 0 ? "is-empty" : ""}`}
                 >
                   {a.agent_id}
-                  <span className="drift-pill-count">{a.total}</span>
+                  <span className="drift-pill-count">{a.total === 0 ? "no runs" : a.total}</span>
                   {a.in_flight > 0 && <span className="drift-pill-live">{a.in_flight} live</span>}
                 </button>
-              ))}
+                ))}
             </div>
           )}
 
