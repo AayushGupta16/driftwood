@@ -178,79 +178,74 @@ export function buildGraph(
   return { nodes, edges, byId };
 }
 
-/* Deterministic force layout: seeded ring placement (index-based, no
-   Math.random so tests and reloads agree), repulsion + springs + weak
-   centering, agent pinned at the center. Mutates node positions. */
-export function layoutGraph(graph: Graph, width: number, height: number, iterations = 320): void {
-  const { nodes, edges, byId } = graph;
-  const cx = width / 2;
-  const cy = height / 2;
-  nodes.forEach((n, i) => {
-    const a = (i / Math.max(1, nodes.length)) * Math.PI * 2;
-    const ring = n.type === "agent" ? 0 : n.type === "task" ? 40 : n.type === "run" ? 230 + (i % 5) * 26 : 300 + (i % 7) * 24;
-    n.x = cx + Math.cos(a) * ring;
-    n.y = cy + Math.sin(a) * ring;
-    n.vx = 0;
-    n.vy = 0;
-  });
-  const springLen = (e: GraphEdge): number => {
-    const a = byId.get(e.a)!;
-    const b = byId.get(e.b)!;
-    if (a.type === "agent" || b.type === "agent") return 85;
-    if (a.type === "task" && b.type === "run") return 165;
-    return 44;
-  };
-  for (let step = 0; step < iterations; step++) {
-    for (let i = 0; i < nodes.length; i++) {
-      for (let j = i + 1; j < nodes.length; j++) {
-        const a = nodes[i];
-        const b = nodes[j];
-        let dx = b.x - a.x;
-        let dy = b.y - a.y;
-        let d2 = dx * dx + dy * dy;
-        if (d2 < 1) {
-          d2 = 1;
-          dx = ((i * 13 + j * 7) % 11) - 5;
-          dy = ((i * 5 + j * 3) % 11) - 5;
-        }
-        const d = Math.sqrt(d2);
-        const rep = (1400 / d2) * (a.type === "run" && b.type === "run" ? 4.5 : 1);
-        const fx = (dx / d) * rep;
-        const fy = (dy / d) * rep;
-        a.vx -= fx;
-        a.vy -= fy;
-        b.vx += fx;
-        b.vy += fy;
-      }
-    }
-    for (const e of edges) {
-      const a = byId.get(e.a)!;
-      const b = byId.get(e.b)!;
-      const dx = b.x - a.x;
-      const dy = b.y - a.y;
-      const d = Math.max(1, Math.hypot(dx, dy));
-      const k = 0.04 * (d - springLen(e));
-      a.vx += (dx / d) * k;
-      a.vy += (dy / d) * k;
-      b.vx -= (dx / d) * k;
-      b.vy -= (dy / d) * k;
-    }
-    for (const n of nodes) {
-      if (n.type === "agent") {
-        n.x = cx;
-        n.y = cy;
-        n.vx = 0;
-        n.vy = 0;
-        continue;
-      }
-      n.vx += (cx - n.x) * 0.0012;
-      n.vy += (cy - n.y) * 0.0012;
-      n.vx *= 0.82;
-      n.vy *= 0.82;
-      n.x += n.vx;
-      n.y += n.vy;
-    }
+/* Deterministic radial layout: the task hub sits at the origin with the
+   agent beside it, every run takes its own evenly-spaced spoke (newest first,
+   starting at 12 o'clock), and the run's stage chain walks outward along the
+   spoke to its terminal. No force simulation — the shape is stable at any
+   run count and never tangles. Mutates node positions; coordinates are
+   centered on (0,0) so the view fits them afterwards (fitView). */
+const RUN_RADIUS = 190;
+const STAGE_STEP = 58;
+
+export function layoutRadial(graph: Graph): void {
+  const { nodes, byId } = graph;
+  const agent = byId.get("agent");
+  const task = byId.get("task");
+  if (task) {
+    task.x = 0;
+    task.y = 0;
   }
+  if (agent) {
+    agent.x = -92;
+    agent.y = 0;
+  }
+  const runNodes = nodes.filter((n) => n.type === "run");
+  runNodes.forEach((runNode, i) => {
+    const angle = -Math.PI / 2 + (i / Math.max(1, runNodes.length)) * Math.PI * 2;
+    const dx = Math.cos(angle);
+    const dy = Math.sin(angle);
+    runNode.x = dx * RUN_RADIUS;
+    runNode.y = dy * RUN_RADIUS;
+    // Chain members share the run's id prefix and were added in chain order.
+    const chain = nodes.filter(
+      (n) => n.id.startsWith(runNode.id + ":") && (n.type === "stage" || n.type === "end"),
+    );
+    chain.forEach((n, k) => {
+      n.x = dx * (RUN_RADIUS + STAGE_STEP * (k + 1));
+      n.y = dy * (RUN_RADIUS + STAGE_STEP * (k + 1));
+    });
+  });
+}
+
+/* The pan/zoom transform that centers the laid-out graph in a viewport with
+   some breathing room. Pure so the initial view is testable. */
+export function fitView(
+  graph: Graph,
+  width: number,
+  height: number,
+  padding = 40,
+): { x: number; y: number; k: number } {
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+  for (const n of graph.nodes) {
+    minX = Math.min(minX, n.x - n.r);
+    maxX = Math.max(maxX, n.x + n.r);
+    minY = Math.min(minY, n.y - n.r);
+    maxY = Math.max(maxY, n.y + n.r);
+  }
+  if (!Number.isFinite(minX)) return { x: width / 2, y: height / 2, k: 1 };
+  const k = Math.min(
+    (width - padding * 2) / Math.max(1, maxX - minX),
+    (height - padding * 2) / Math.max(1, maxY - minY),
+    1.4,
+  );
+  return {
+    x: width / 2 - ((minX + maxX) / 2) * k,
+    y: height / 2 - ((minY + maxY) / 2) * k,
+    k,
+  };
 }
 
 export function runDuration(run: DriftRun): string | null {

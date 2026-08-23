@@ -6,7 +6,8 @@ import {
   buildGraph,
   classifyRun,
   fallbackStages,
-  layoutGraph,
+  fitView,
+  layoutRadial,
   runDuration,
   terminalFor,
   type DriftRun,
@@ -125,21 +126,38 @@ test("buildGraph chains reached stages between run and terminal", () => {
   assert.equal(g.byId.get("run:r1:end")!.tone, "bad");
 });
 
-test("layoutGraph is deterministic and keeps coordinates finite", () => {
-  const make = () =>
-    buildGraph("acme", "demo", [run("done", [["research-judge-acme-co", true]])], MANIFEST);
-  const g1 = make();
-  const g2 = make();
-  layoutGraph(g1, 1200, 800, 120);
-  layoutGraph(g2, 1200, 800, 120);
-  for (let i = 0; i < g1.nodes.length; i++) {
-    assert.ok(Number.isFinite(g1.nodes[i].x) && Number.isFinite(g1.nodes[i].y));
-    assert.equal(g1.nodes[i].x, g2.nodes[i].x);
-    assert.equal(g1.nodes[i].y, g2.nodes[i].y);
+test("layoutRadial puts each run on its own spoke, chain walking outward", () => {
+  const runs = [
+    run("done", [["research-judge-acme-co", true]]),
+    { ...run("quarantined", [["research-judge-acme-co", false]]), id: "r2" },
+  ];
+  const g = buildGraph("acme", "demo", runs, MANIFEST);
+  layoutRadial(g);
+  // hub at origin, agent beside it
+  assert.deepEqual([g.byId.get("task")!.x, g.byId.get("task")!.y], [0, 0]);
+  assert.ok(g.byId.get("agent")!.x < 0);
+  // first run at 12 o'clock, second at 6 o'clock (two spokes)
+  const r1 = g.byId.get("run:r1")!;
+  const r2 = g.byId.get("run:r2")!;
+  assert.ok(Math.abs(r1.x) < 1e-9 && r1.y < 0);
+  assert.ok(Math.abs(r2.x) < 1e-9 && r2.y > 0);
+  // r1's chain extends along the same ray, monotonically farther out
+  const stage = g.byId.get("run:r1:research")!;
+  const end = g.byId.get("run:r1:end")!;
+  assert.ok(stage.y < r1.y && end.y < stage.y);
+  for (const n of g.nodes) assert.ok(Number.isFinite(n.x) && Number.isFinite(n.y));
+});
+
+test("fitView centers and scales the layout into the viewport", () => {
+  const g = buildGraph("acme", "demo", [run("done", [["research-judge-acme-co", true]])], MANIFEST);
+  layoutRadial(g);
+  const v = fitView(g, 1200, 720);
+  assert.ok(v.k > 0 && v.k <= 1.4);
+  for (const n of g.nodes) {
+    const sx = n.x * v.k + v.x;
+    const sy = n.y * v.k + v.y;
+    assert.ok(sx >= 0 && sx <= 1200 && sy >= 0 && sy <= 720, `${n.id} at ${sx},${sy}`);
   }
-  // agent stays pinned at center
-  assert.equal(g1.byId.get("agent")!.x, 600);
-  assert.equal(g1.byId.get("agent")!.y, 400);
 });
 
 test("runDuration formats and rejects missing timestamps", () => {

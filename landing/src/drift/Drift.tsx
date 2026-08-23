@@ -22,7 +22,8 @@ import {
 } from "./api";
 import {
   buildGraph,
-  layoutGraph,
+  fitView,
+  layoutRadial,
   runDuration,
   terminalFor,
   type DriftRun,
@@ -105,6 +106,7 @@ function DriftView({ user }: { user: User }) {
     new URLSearchParams(window.location.search).get("agent"),
   );
   const [runs, setRuns] = useState<DriftRun[] | null>(null);
+  const [shown, setShown] = useState(12);
   const [detail, setDetail] = useState<DriftRunDetail | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
 
@@ -128,9 +130,9 @@ function DriftView({ user }: { user: User }) {
 
   const loadRuns = useCallback(async () => {
     if (!agentId) return;
-    const page = await fetchAgentRuns(agentId);
+    const page = await fetchAgentRuns(agentId, shown);
     if (page) setRuns(page.runs);
-  }, [agentId]);
+  }, [agentId, shown]);
 
   useEffect(() => {
     const initial = window.setTimeout(() => void loadRuns(), 0);
@@ -216,8 +218,23 @@ function DriftView({ user }: { user: User }) {
           )}
 
           {agentId && runs && runs.length > 0 && (
+            <div className="flex items-center gap-2 text-xs text-ink-soft">
+              showing latest
+              {[12, 25, 50].map((n) => (
+                <button
+                  key={n}
+                  onClick={() => setShown(n)}
+                  className={`drift-pill ${shown === n ? "is-active" : ""}`}
+                >
+                  {n}
+                </button>
+              ))}
+              runs
+            </div>
+          )}
+          {agentId && runs && runs.length > 0 && (
             <GraphCanvas
-              key={agentId}
+              key={`${agentId}:${runs.length}`}
               agentId={agentId}
               runs={runs}
               manifest={manifest}
@@ -267,11 +284,13 @@ function GraphCanvas({
 }) {
   const graph: Graph = useMemo(() => {
     const g = buildGraph(agentId, runs[0]?.task ?? "drift", runs, manifest);
-    layoutGraph(g, 1200, 720);
+    layoutRadial(g);
     return g;
   }, [agentId, runs, manifest]);
 
-  const [view, setView] = useState({ x: 0, y: 0, k: 1 });
+  // Initial view fits the whole layout; the canvas remounts (see its key in
+  // DriftView) when the graph changes shape, so no refit effect is needed.
+  const [view, setView] = useState(() => fitView(graph, 1200, 720));
   const [, force] = useState(0);
   const drag = useRef<{ node: GraphNode | null; panning: boolean; px: number; py: number; moved: boolean }>({
     node: null,
@@ -358,19 +377,30 @@ function GraphCanvas({
               />
             );
           })}
-          {graph.nodes.map((n) => (
-            <g key={n.id} className={`drift-node tone-${nodeTone(n)} ${selected === n.id ? "is-selected" : ""}`}>
-              <circle cx={n.x} cy={n.y} r={n.r} />
-              <text
-                className={n.type === "agent" || n.type === "task" ? "drift-label-big" : n.type === "run" ? "drift-label-run" : "drift-label"}
-                x={n.x}
-                y={n.type === "agent" ? n.y + n.r + 15 : n.y - n.r - 5}
-                textAnchor="middle"
-              >
-                {n.label}
-              </text>
-            </g>
-          ))}
+          {graph.nodes.map((n) => {
+            // Stage labels only once zoomed in — at overview scale they
+            // collide; run names and outcomes always show.
+            const showLabel = n.type !== "stage" || view.k >= 0.9 || selected === n.id;
+            return (
+              <g key={n.id} className={`drift-node tone-${nodeTone(n)} ${selected === n.id ? "is-selected" : ""}`}>
+                <circle cx={n.x} cy={n.y} r={n.r}>
+                  <title>{n.label}</title>
+                </circle>
+                {showLabel && (
+                  <text
+                    className={n.type === "agent" || n.type === "task" ? "drift-label-big" : n.type === "run" ? "drift-label-run" : "drift-label"}
+                    x={n.x}
+                    y={n.type === "agent" ? n.y + n.r + 15 : n.y - n.r - 5}
+                    textAnchor="middle"
+                    // Counter-scale so text stays readable at the fitted zoom.
+                    style={{ fontSize: `${Math.min(((n.type === "agent" || n.type === "task" ? 13 : n.type === "run" ? 12 : 11) / view.k) * 0.9, 26)}px` }}
+                  >
+                    {n.label}
+                  </text>
+                )}
+              </g>
+            );
+          })}
         </g>
       </svg>
       <p className="drift-canvas-hint">drag nodes · drag background to pan · scroll to zoom · click a run or stage for detail</p>
