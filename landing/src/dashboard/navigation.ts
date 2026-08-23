@@ -8,7 +8,9 @@ export type DashboardSection =
   | "assets"
   | "review"
   | "admin-agents"
-  | "admin-search";
+  | "admin-search"
+  | "admin-fleet"
+  | "admin-drift";
 
 export type NavigationMode = "customer" | "admin";
 
@@ -22,7 +24,9 @@ export type DashboardIconName =
   | "assets"
   | "review"
   | "agents"
-  | "search";
+  | "search"
+  | "fleet"
+  | "drift";
 
 export type NavItem = {
   id: DashboardSection;
@@ -48,7 +52,9 @@ const CUSTOMER_WORKSPACE: NavItem[] = [
 ];
 
 const ADMIN_INTERNAL: NavItem[] = [
+  { id: "admin-fleet", label: "Fleet", href: "/dashboard/admin/fleet", icon: "fleet" },
   { id: "admin-agents", label: "Agents", href: "/dashboard/admin/agents", icon: "agents" },
+  { id: "admin-drift", label: "Drift runs", href: "/dashboard/admin/drift", icon: "drift" },
   { id: "admin-search", label: "Search visibility", href: "/dashboard/admin/search-visibility", icon: "search" },
 ];
 

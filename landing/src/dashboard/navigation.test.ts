@@ -18,7 +18,9 @@ test("admin navigation contains only the current internal workstreams", () => {
   assert.deepEqual(
     items.map(({ label, href }) => ({ label, href })),
     [
+      { label: "Fleet", href: "/dashboard/admin/fleet" },
       { label: "Agents", href: "/dashboard/admin/agents" },
+      { label: "Drift runs", href: "/dashboard/admin/drift" },
       { label: "Search visibility", href: "/dashboard/admin/search-visibility" },
     ],
   );

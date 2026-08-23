@@ -14,6 +14,8 @@ const Review = lazy(() => import('./Review.tsx'))
 const SeoGeo = lazy(() => import('./SeoGeo.tsx'))
 const Agents = lazy(() => import('./Agents.tsx'))
 const Conversation = lazy(() => import('./Conversation.tsx'))
+const Fleet = lazy(() => import('./fleet/Fleet.tsx'))
+const Drift = lazy(() => import('./drift/Drift.tsx'))
 const Campaigns = lazy(() => import('./campaigns/Campaigns.tsx'))
 const CampaignBuilder = lazy(() => import('./campaigns/CampaignBuilder.tsx'))
 const Audiences = lazy(() => import('./audiences/Audiences.tsx'))
@@ -54,6 +56,10 @@ const page =
     <Review />
   ) : path === '/dashboard/admin/search-visibility' || path === '/dashboard/seo-geo' ? (
     <SeoGeo />
+  ) : path === '/dashboard/admin/fleet' ? (
+    <Fleet />
+  ) : path === '/dashboard/admin/drift' ? (
+    <Drift />
   ) : path === '/dashboard/admin' || path === '/dashboard/admin/agents' || path === '/dashboard/agents' ? (
     <Agents />
   ) : path.startsWith('/dashboard/admin/agents/') || path.startsWith('/dashboard/agents/') ? (

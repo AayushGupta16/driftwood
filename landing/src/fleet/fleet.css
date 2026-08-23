@@ -1,0 +1,61 @@
+/* Admin fleet switchboard rows. The attention dot is the sanctioned
+   --alert exception (design-language.md §1) — internal dashboard only. */
+
+.fleet-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.4fr) minmax(150px, 1fr) minmax(180px, 1.4fr) minmax(140px, 1fr);
+  gap: 1rem;
+  align-items: center;
+  padding: 0.7rem 1rem;
+}
+@media (max-width: 800px) {
+  .fleet-row { grid-template-columns: 1fr 1fr; row-gap: 0.4rem; }
+}
+
+.fleet-cell { display: flex; align-items: center; gap: 0.6rem; min-width: 0; }
+
+.fleet-customer img,
+.fleet-avatar-fallback {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex: none;
+}
+.fleet-avatar-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-tide-wash);
+  color: var(--color-tide);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.fleet-attention-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-alert);
+  margin-left: 0.45rem;
+  vertical-align: middle;
+}
+
+.fleet-state {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-line);
+}
+.fleet-state.is-good { color: var(--color-ok); }
+.fleet-state.is-bad { color: var(--color-alert); }
+.fleet-state.is-muted { color: var(--color-ink-faint); }
+
+.fleet-links { justify-content: flex-end; flex-wrap: wrap; }
+.fleet-link {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-tide);
+  text-decoration: underline;
+}

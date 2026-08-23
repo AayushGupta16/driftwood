@@ -1099,6 +1099,120 @@ if (mockMode) {
     }
     return audience ? { ...audienceSummary(audience), discovery_filters: audience.discovery_filters, members: audience.members } : {};
   };
+
+  // --- admin fleet + drift fixtures (mock=admin pages) -----------------------
+  const fleetPage = {
+    refreshed_at: new Date().toISOString(),
+    rows: agentDashboard.agents.map((agent, i) => ({
+      customer: {
+        user_id: `mock-user-${i}`,
+        email: `${agent.agent_id}@example.com`,
+        name: agent.agent_id.charAt(0).toUpperCase() + agent.agent_id.slice(1),
+        avatar_url: null,
+        is_approved: true,
+        created_at: new Date(Date.now() - 86400000 * (14 + i)).toISOString(),
+      },
+      agent,
+      agent_slack_channel_id: `C0AGENT${i}`,
+      customer_slack_channel_id: `C0CUST${i}`,
+      pipeline: { live: 40 - i * 9, contacted: 18 - i * 4, replied: 5 - i, booked: i === 0 ? 2 : 0, pending_reviews: agent.attention_required ? 3 : 0 },
+      attention_required: agent.attention_required,
+      attention_reasons: agent.attention_required ? ["waiting on founder review"] : [],
+    })),
+  };
+  const driftFlow = {
+    task: "behavior_ci_demo",
+    stages: [
+      { id: "research", name: "Flagship research", sub: "agent browse + judge", gate: true, judge_prefixes: ["official-flagship-robot-research-judge-"], emit_prefixes: ["official-robot-research-"] },
+      { id: "accepted", name: "Research accepted", emit_prefixes: ["accepted-research-"] },
+      { id: "still", name: "Still generation", gate: true, judge_prefixes: ["still-customization-judge-"] },
+      { id: "page", name: "Demo page", gate: true, judge_prefixes: ["demo-page-judge-"] },
+      { id: "published", name: "Page published", emit_prefixes: ["demo-page-"], exclude_prefixes: ["demo-page-judge-"] },
+    ],
+    terminals: {
+      done: { label: "done", tone: "good" },
+      research_exhausted: { label: "research exhausted", tone: "bad", at: "research" },
+      quarantined: { label: "quarantined", tone: "bad", at: "still" },
+      runner_error: { label: "runner error", tone: "bad" },
+    },
+  };
+  const driftJudgment = (label: string, passed: boolean | null, minutesAgo: number) => ({
+    label, passed, created_at: new Date(Date.now() - minutesAgo * 60000).toISOString(),
+  });
+  const driftRunRows = [
+    {
+      id: "11111111-1111-4111-8111-111111111111", agent_id: "autosana", task: "behavior_ci_demo",
+      state: "done", parameters: { slug: "agility-robotics", company_name: "Agility Robotics" },
+      result: { state: "done", demo_url: "https://driftwood.sh/d/mock-demo" },
+      created_at: new Date(Date.now() - 7200000).toISOString(), claimed_at: new Date(Date.now() - 7190000).toISOString(),
+      started_at: new Date(Date.now() - 7140000).toISOString(), finished_at: new Date(Date.now() - 6870000).toISOString(),
+      judgments: [
+        driftJudgment("official-robot-research-agility-robotics-transcript", null, 120),
+        driftJudgment("official-flagship-robot-research-judge-agility-robotics-scores", false, 118),
+        driftJudgment("official-robot-research-agility-robotics-transcript", null, 117),
+        driftJudgment("official-flagship-robot-research-judge-agility-robotics-scores", true, 116),
+        driftJudgment("accepted-research-agility-robotics", null, 115),
+        driftJudgment("still-customization-judge-agility-robotics-scores", true, 114),
+        driftJudgment("demo-page-judge-agility-robotics-scores", true, 113),
+        driftJudgment("demo-page-agility-robotics", null, 113),
+      ],
+    },
+    {
+      id: "22222222-2222-4222-8222-222222222222", agent_id: "autosana", task: "behavior_ci_demo",
+      state: "quarantined", parameters: { slug: "zoox", company_name: "Zoox" },
+      result: { state: "quarantined" },
+      created_at: new Date(Date.now() - 5400000).toISOString(), claimed_at: new Date(Date.now() - 5390000).toISOString(),
+      started_at: new Date(Date.now() - 5340000).toISOString(), finished_at: new Date(Date.now() - 4830000).toISOString(),
+      judgments: [
+        driftJudgment("official-robot-research-zoox-transcript", null, 88),
+        driftJudgment("official-flagship-robot-research-judge-zoox-scores", true, 86),
+        driftJudgment("accepted-research-zoox", null, 85),
+        driftJudgment("still-customization-judge-zoox-scores", false, 83),
+        driftJudgment("still-customization-judge-zoox-scores", false, 81),
+      ],
+    },
+    {
+      id: "33333333-3333-4333-8333-333333333333", agent_id: "autosana", task: "behavior_ci_demo",
+      state: "running", parameters: { slug: "apptronik", company_name: "Apptronik" },
+      result: null,
+      created_at: new Date(Date.now() - 600000).toISOString(), claimed_at: new Date(Date.now() - 590000).toISOString(),
+      started_at: new Date(Date.now() - 540000).toISOString(), finished_at: null,
+      judgments: [
+        driftJudgment("official-robot-research-apptronik-transcript", null, 6),
+        driftJudgment("official-flagship-robot-research-judge-apptronik-scores", true, 4),
+      ],
+    },
+  ];
+  const driftOverview = {
+    refreshed_at: new Date().toISOString(),
+    agents: [
+      { agent_id: "autosana", states: { done: 1, quarantined: 1, running: 1 }, total: 3, in_flight: 1 },
+      { agent_id: "oruk", states: {}, total: 0, in_flight: 0 },
+    ],
+    flows: { behavior_ci_demo: driftFlow },
+    tasks: ["behavior_ci_demo"],
+  };
+  const driftAgentRuns = (_init?: RequestInit, url?: string) => {
+    const agentId = decodeURIComponent(url?.split("/agents/")[1]?.split("/")[0]?.split("?")[0] ?? "");
+    return {
+      agent_id: agentId,
+      refreshed_at: new Date().toISOString(),
+      runs: driftRunRows.filter((r) => r.agent_id === agentId),
+    };
+  };
+  const driftRunDetail = (_init?: RequestInit, url?: string) => {
+    const runId = decodeURIComponent(url?.split("/runs/")[1]?.split("?")[0] ?? "");
+    const row = driftRunRows.find((r) => r.id === runId);
+    if (!row) return {};
+    return {
+      ...row,
+      judgments: row.judgments.map((j) => ({
+        ...j,
+        detail: j.passed === null ? null : { rows: [{ criterion: "identity", score: "6 (agree)", verdict: j.passed ? "pass" : "fail" }] },
+      })),
+    };
+  };
+
   // Matching is startsWith with NO method check, so more-specific paths must
   // come first — /sends/cancel and /sends/dismiss (POST) would otherwise be
   // swallowed by the /sends fixture, and /reviews/decide by /reviews.
@@ -1111,7 +1225,11 @@ if (mockMode) {
     ["/api/v1/dashboard/assets", assetsApi],
     ["/api/v1/dashboard/campaigns", campaignsApi],
     ["/api/v1/admin/agents/dashboard", agentDashboard],
+    ["/api/v1/admin/agents/fleet", fleetPage],
     ["/api/v1/admin/agents/", mutateAgent],
+    ["/api/v1/admin/drift/overview", driftOverview],
+    ["/api/v1/admin/drift/agents/", driftAgentRuns],
+    ["/api/v1/admin/drift/runs/", driftRunDetail],
     ["/api/v1/admin/probes/dashboard", probesNotFound],
     ["/api/v1/dashboard/sends/cancel", cancelSends],
     ["/api/v1/dashboard/sends/dismiss", dismissSends],

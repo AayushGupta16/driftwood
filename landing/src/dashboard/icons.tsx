@@ -80,3 +80,11 @@ export function CloseIcon(props: DashboardIconProps) {
 export function LogoutIcon(props: DashboardIconProps) {
   return <Icon {...props}><path d="M10 5H5v14h5M14 8l4 4-4 4M8 12h10" /></Icon>;
 }
+
+export function FleetIcon(props: DashboardIconProps) {
+  return <Icon {...props}><circle cx="7" cy="7" r="2.5" /><circle cx="17" cy="7" r="2.5" /><circle cx="7" cy="17" r="2.5" /><circle cx="17" cy="17" r="2.5" /><path d="M9.5 7h5M7 9.5v5M17 9.5v5M9.5 17h5" /></Icon>;
+}
+
+export function DriftIcon(props: DashboardIconProps) {
+  return <Icon {...props}><circle cx="6" cy="12" r="2.5" /><circle cx="15.5" cy="6" r="2" /><circle cx="16.5" cy="17" r="2" /><path d="M8.2 10.6 13.7 7M8.3 13.3l6.3 3M17 8l-0.5 7" /></Icon>;
+}

@@ -15,11 +15,11 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/auth': { target: 'http://localhost:8000', changeOrigin: true },
-      '/linkedin': { target: 'http://localhost:8000', changeOrigin: true },
-      '/email': { target: 'http://localhost:8000', changeOrigin: true },
-      '/twitter': { target: 'http://localhost:8000', changeOrigin: true },
-      '/api': { target: 'http://localhost:8000', changeOrigin: true },
+      '/auth': { target: 'http://127.0.0.1:8000', changeOrigin: true },
+      '/linkedin': { target: 'http://127.0.0.1:8000', changeOrigin: true },
+      '/email': { target: 'http://127.0.0.1:8000', changeOrigin: true },
+      '/twitter': { target: 'http://127.0.0.1:8000', changeOrigin: true },
+      '/api': { target: 'http://127.0.0.1:8000', changeOrigin: true },
     },
   },
 })
