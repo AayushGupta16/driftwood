@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { initializeMockMode, mockBlockedResponse, withMockMode } from "./mock-mode.ts";
+import { mockAudienceNameFromFile, mockLeadImportResult } from "./mock.ts";
 
 function memoryStorage(initial: Record<string, string> = {}) {
   const values = new Map(Object.entries(initial));
@@ -44,4 +45,35 @@ test("dashboard links carry the active mock mode across history and navigation",
   );
   assert.equal(withMockMode("/", "1", origin), "/");
   assert.equal(withMockMode("https://example.com/dashboard", "1", origin), "https://example.com/dashboard");
+});
+
+test("the mocked CSV upload names its audience after the file", () => {
+  assert.equal(
+    mockAudienceNameFromFile("AI-Faire_Approved Guest List.csv"),
+    "ai faire approved guest list",
+  );
+  assert.equal(mockAudienceNameFromFile(".csv"), "uploaded leads");
+});
+
+test("a first mocked upload reports the audience it created", () => {
+  const result = mockLeadImportResult("leads.csv", null);
+  assert.equal(result.added, 1);
+  assert.equal(result.skipped_duplicate, 0);
+  assert.equal(result.skipped_suppressed, 0);
+  assert.deepEqual(result.errors, []);
+  assert.equal(result.audience.created, true);
+  assert.equal(result.audience.name, "leads");
+  assert.equal(result.audience.member_count, 1);
+  assert.ok(result.audience.id);
+});
+
+test("re-uploading the same mocked file reports an all-duplicate refresh", () => {
+  const result = mockLeadImportResult("leads.csv", { id: "audience-1", memberCount: 3 });
+  assert.deepEqual(result, {
+    added: 0,
+    skipped_duplicate: 3,
+    skipped_suppressed: 0,
+    errors: [],
+    audience: { id: "audience-1", name: "leads", member_count: 3, created: false },
+  });
 });

@@ -19,6 +19,7 @@ import {
   EMPTY_FILTERS,
   filterAudiences,
   formatAudienceDate,
+  providerLabel,
   summarizeLeadImport,
   stageLabel,
   toggleLead,
@@ -27,6 +28,7 @@ import {
   type AudienceSummary,
   type DiscoveryResult,
   type DiscoveryProvider,
+  type LeadImportNotice,
 } from "./model";
 import {
   ArrowIcon,
@@ -46,11 +48,6 @@ import "./audiences.css";
 
 type View = "library" | "builder";
 type BuilderTab = "search" | "details";
-type ImportNotice = { kind: "success" | "error"; message: string };
-
-function readableProvider(provider: string) {
-  return provider.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
 
 export default function Audiences() {
   const { canWrite } = useWorkspacePermissions();
@@ -72,7 +69,7 @@ export default function Audiences() {
   const [providerStatuses, setProviderStatuses] = useState<DiscoveryProvider[]>([]);
   const [providerStatusLoading, setProviderStatusLoading] = useState(true);
   const [importing, setImporting] = useState(false);
-  const [importNotice, setImportNotice] = useState<ImportNotice | null>(null);
+  const [importNotice, setImportNotice] = useState<LeadImportNotice | null>(null);
   const [selectedRecords, setSelectedRecords] = useState<Set<string>>(new Set());
   const [discovering, setDiscovering] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -193,7 +190,21 @@ export default function Audiences() {
     setImportNotice(null);
     try {
       const result = await uploadLeadList(file);
-      setImportNotice({ kind: "success", message: summarizeLeadImport(result) });
+      setImportNotice(summarizeLeadImport(result));
+      const audience = result.audience;
+      if (audience) {
+        // The upload created or refreshed an audience: land the reader on the
+        // library with that audience open, so the import visibly changes the
+        // page it happened on.
+        setView("library");
+        void openAudience(audience.id);
+        try {
+          setAudiences(await listAudiences());
+        } catch {
+          // The import itself succeeded; a failed library refresh must not
+          // repaint the outcome as an error.
+        }
+      }
     } catch (reason) {
       setImportNotice({
         kind: "error",
@@ -360,12 +371,7 @@ export default function Audiences() {
                 <input ref={uploadInputRef} hidden type="file" accept=".csv,text/csv" onChange={handleLeadUpload} disabled={importing} />
               </div>
 
-              {importNotice && (
-                <div className={`audience-import-notice is-${importNotice.kind}`} role={importNotice.kind === "error" ? "alert" : "status"}>
-                  <span>{importNotice.message}</span>
-                  {importNotice.kind === "success" && <a href={withMockMode("/dashboard/leads")}>View leads</a>}
-                </div>
-              )}
+              {importNotice && <ImportNoticeCard notice={importNotice} />}
 
               <div className="audience-query-box">
                 <SearchIcon size={17} />
@@ -412,6 +418,8 @@ export default function Audiences() {
         )}
       </header>
 
+      {importNotice && <ImportNoticeCard notice={importNotice} banner />}
+
       {error && !loadFailed && <div className="audience-error" role="alert">{error}</div>}
 
       <div className="audience-library-grid">
@@ -429,7 +437,7 @@ export default function Audiences() {
                 <span className="audience-list-icon"><AudienceIcon size={18} /></span>
                 <span className="audience-list-copy"><strong>{audience.name}</strong><span>{audience.description || "No description"}</span></span>
                 <span className="audience-list-meta"><strong>{audience.memberCount}</strong><small>{audience.memberCount === 1 ? "lead" : "leads"}</small></span>
-                <span className="audience-list-meta audience-source"><strong>{readableProvider(audience.sourceProvider)}</strong><small>source</small></span>
+                <span className="audience-list-meta audience-source"><strong>{providerLabel(audience.sourceProvider)}</strong><small>source</small></span>
                 <span className="audience-list-date"><small>Updated</small><span>{formatAudienceDate(audience.updatedAt)}</span></span>
                 <ArrowIcon size={16} />
               </button>
@@ -443,7 +451,7 @@ export default function Audiences() {
           ) : selectedAudience ? (
             <>
               <div className="audience-detail-head">
-                <div><span>{readableProvider(selectedAudience.sourceProvider)}</span><h2>{selectedAudience.name}</h2><p>{selectedAudience.description || "No description added."}</p></div>
+                <div><span>{providerLabel(selectedAudience.sourceProvider)}</span><h2>{selectedAudience.name}</h2><p>{selectedAudience.description || "No description added."}</p></div>
                 {canWrite && (
                   <div className="audience-detail-actions">
                     <button ref={campaignButtonRef} className="audience-secondary audience-build-campaign" type="button" onClick={() => void startCampaign(selectedAudience)} disabled={campaignCreating} data-testid="build-audience-campaign">
@@ -484,6 +492,34 @@ export default function Audiences() {
         />
       )}
     </section>
+  );
+}
+
+function ImportNoticeCard({
+  notice,
+  banner = false,
+}: {
+  notice: LeadImportNotice;
+  banner?: boolean;
+}) {
+  return (
+    <div
+      className={`audience-import-notice${banner ? " audience-import-banner" : ""} is-${notice.kind}`}
+      role={notice.kind === "error" ? "alert" : "status"}
+    >
+      <div className="audience-import-copy">
+        <span>{notice.message}</span>
+        {notice.details && notice.details.length > 0 && (
+          <ul>
+            {notice.details.map((detail, index) => (
+              <li key={index}>{detail}</li>
+            ))}
+          </ul>
+        )}
+        {notice.hint && <small>{notice.hint}</small>}
+      </div>
+      {notice.kind === "success" && <a href={withMockMode("/dashboard/leads")}>View leads</a>}
+    </div>
   );
 }
 

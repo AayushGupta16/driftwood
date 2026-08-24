@@ -378,7 +378,7 @@
 
 .audience-import-notice {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 0.65rem;
   margin-top: 0.65rem;
@@ -387,9 +387,41 @@
   color: var(--color-ink-soft);
   padding: 0.55rem 0.1rem;
   font-size: 0.65rem;
+  line-height: 1.45;
 }
 
-.audience-import-notice.is-error { color: var(--color-alert); }
+.audience-import-copy { display: grid; min-width: 0; gap: 0.3rem; }
+.audience-import-copy ul { display: grid; gap: 0.18rem; margin: 0; padding-left: 1.05rem; }
+.audience-import-copy small { color: var(--color-ink-soft); font-size: 0.63rem; }
+
+/* Import outcome tiers: created/updated = success, an all-duplicate re-upload
+ * = neutral info (it is not a failure), an unusable file = error. */
+.audience-import-notice.is-success {
+  border-color: color-mix(in srgb, var(--color-ok) 26%, var(--color-line));
+  background: color-mix(in srgb, var(--color-ok) 6%, white);
+  color: color-mix(in srgb, var(--color-ok) 88%, var(--color-ink));
+}
+.audience-import-notice.is-info {
+  border-color: color-mix(in srgb, var(--color-tide) 22%, var(--color-line));
+  background: color-mix(in srgb, var(--color-tide-wash) 55%, white);
+  color: var(--color-tide-deep);
+}
+.audience-import-notice.is-error {
+  border-color: color-mix(in srgb, var(--color-alert) 24%, var(--color-line));
+  background: color-mix(in srgb, var(--color-alert) 5%, white);
+  color: var(--color-alert);
+}
+
+/* The same notice shown on the library view after an upload lands there. */
+.audience-import-banner {
+  margin-top: 1.25rem;
+  border: 1px solid var(--color-line);
+  border-radius: 0.65rem;
+  padding: 0.8rem 1rem;
+  font-size: 0.78rem;
+}
+.audience-import-banner .audience-import-copy small { font-size: 0.72rem; }
+
 .audience-import-notice a { flex: 0 0 auto; color: var(--color-tide-deep); font-weight: 650; text-decoration: none; }
 .audience-import-notice a:hover { text-decoration: underline; }
 .audience-import-notice a:focus-visible { outline: 2px solid var(--color-tide); outline-offset: 2px; }

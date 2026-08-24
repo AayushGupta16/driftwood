@@ -22,6 +22,7 @@ test("lead-list upload uses the authenticated CSV import contract", async (t) =>
       skipped_duplicate: 1,
       skipped_suppressed: 0,
       errors: [],
+      audience: { id: "aud-1", name: "leads", member_count: 3, created: true },
     }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
@@ -37,5 +38,32 @@ test("lead-list upload uses the authenticated CSV import contract", async (t) =>
     skipped_duplicate: 1,
     skipped_suppressed: 0,
     errors: [],
+    audience: { id: "aud-1", name: "leads", member_count: 3, created: true },
   });
+});
+
+test("an upload with no resolvable rows carries the null audience through", async (t) => {
+  const originalFetch = globalThis.fetch;
+  t.after(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  globalThis.fetch = (async () =>
+    new Response(JSON.stringify({
+      added: 0,
+      skipped_duplicate: 0,
+      skipped_suppressed: 0,
+      errors: [{ row: 2, reason: "missing company" }],
+      audience: null,
+    }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    })) as typeof fetch;
+
+  const result = await uploadLeadList(new File(["name\nCamille\n"], "leads.csv", {
+    type: "text/csv",
+  }));
+
+  assert.equal(result.audience, null);
+  assert.deepEqual(result.errors, [{ row: 2, reason: "missing company" }]);
 });

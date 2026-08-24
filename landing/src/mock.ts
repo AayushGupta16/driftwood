@@ -1,10 +1,58 @@
-import { initializeMockMode, mockBlockedResponse } from "./mock-mode";
+import { initializeMockMode, mockBlockedResponse } from "./mock-mode.ts";
 
 /* Preview-branch mock: `?mock=1` serves canned dashboard data so the
    redesigned dashboard can be seen (and screenshotted) without the backend.
    Numbers mirror the real Autosana account. Dev/preview aid only. */
-const params = new URLSearchParams(location.search);
-const mockMode = initializeMockMode(location.search, location.pathname);
+
+/* The CSV import fixture mirrors the backend contract: an upload creates a
+   `csv_upload` audience named after the file, and re-uploading the same file
+   reports every row as already imported. These two helpers are pure and
+   exported so node tests can pin the mocked upload's response shape. */
+export function mockAudienceNameFromFile(fileName: string): string {
+  const name = fileName
+    .replace(/\.[^.]*$/, "")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+  return name || "uploaded leads";
+}
+
+export type MockLeadImportResult = {
+  added: number;
+  skipped_duplicate: number;
+  skipped_suppressed: number;
+  errors: Array<{ row: number; reason: string }>;
+  audience: { id: string; name: string; member_count: number; created: boolean };
+};
+
+export function mockLeadImportResult(
+  fileName: string,
+  existing: { id: string; memberCount: number } | null,
+): MockLeadImportResult {
+  const name = mockAudienceNameFromFile(fileName);
+  if (existing) {
+    return {
+      added: 0,
+      skipped_duplicate: existing.memberCount,
+      skipped_suppressed: 0,
+      errors: [],
+      audience: { id: existing.id, name, member_count: existing.memberCount, created: false },
+    };
+  }
+  return {
+    added: 1,
+    skipped_duplicate: 0,
+    skipped_suppressed: 0,
+    errors: [],
+    audience: { id: crypto.randomUUID(), name, member_count: 1, created: true },
+  };
+}
+
+// Guarded so importing this module under node (tests) stays a no-op.
+const search = typeof location === "undefined" ? "" : location.search;
+const params = new URLSearchParams(search);
+const mockMode = typeof location === "undefined" ? null : initializeMockMode(search, location.pathname);
 if (mockMode) {
   params.set("mock", mockMode);
   const hoursAgo = (h: number) => new Date(Date.now() - h * 3600e3).toISOString();
@@ -901,8 +949,21 @@ if (mockMode) {
         headers: { "Content-Type": "application/json" },
       });
     }
+    const audienceName = mockAudienceNameFromFile(file.name);
+    const existing = mockAudiences.find(
+      (item) => item.source_provider === "csv_upload" && item.name === audienceName,
+    );
+    const result = mockLeadImportResult(
+      file.name,
+      existing ? { id: existing.id, memberCount: existing.members.length } : null,
+    );
+    const now = new Date().toISOString();
+    if (existing) {
+      existing.updated_at = now;
+      return result;
+    }
     const id = crypto.randomUUID();
-    mockLeads.push({
+    const lead: MockLead = {
       id,
       name: "Camille Rivera",
       company: "Atlas Relay",
@@ -913,14 +974,25 @@ if (mockMode) {
       stage: "new",
       origin: "uploaded",
       source: "uploaded:csv",
-      audiences: [],
+      audiences: [audienceName],
       demo_idea: null,
       demo_artifact_id: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    });
+      created_at: now,
+      updated_at: now,
+    };
+    mockLeads.push(lead);
     summary.lists.leads = mockLeads.length;
-    return { added: 1, skipped_duplicate: 0, skipped_suppressed: 0, errors: [] };
+    mockAudiences.unshift({
+      id: result.audience.id,
+      name: audienceName,
+      description: `Imported from ${file.name}`,
+      source_provider: "csv_upload",
+      discovery_filters: {},
+      members: [memberFromLead(lead)],
+      created_at: now,
+      updated_at: now,
+    });
+    return result;
   };
   const dashboardLeadsApi = (init?: RequestInit, url?: string) => {
     const method = init?.method ?? "GET";

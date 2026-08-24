@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   filterAudiences,
   outreachEligibleMembers,
+  providerLabel,
   summarizeLeadImport,
   stageLabel,
   toggleLead,
@@ -70,23 +71,119 @@ test("campaign eligibility stays separate from reusable audience membership", ()
   );
 });
 
-test("lead import summaries report every material outcome", () => {
-  assert.equal(
+test("a first upload says what it imported and which audience holds it", () => {
+  assert.deepEqual(
+    summarizeLeadImport({
+      added: 550,
+      skipped_duplicate: 4,
+      skipped_suppressed: 0,
+      errors: [],
+      audience: {
+        id: "aud-1",
+        name: "ai faire approved guest list from screenshots",
+        member_count: 551,
+        created: true,
+      },
+    }),
+    {
+      kind: "success",
+      message:
+        "Imported 550 people into “ai faire approved guest list from screenshots” · 4 duplicates skipped",
+    },
+  );
+  assert.deepEqual(
+    summarizeLeadImport({
+      added: 1,
+      skipped_duplicate: 0,
+      skipped_suppressed: 2,
+      errors: [{ row: 9, reason: "missing company" }],
+      audience: { id: "aud-1", name: "warm intros", member_count: 1, created: true },
+    }),
+    {
+      kind: "success",
+      message: "Imported 1 person into “warm intros” · 2 suppressed · 1 invalid row",
+    },
+  );
+});
+
+test("an upload into an existing audience reports the new total", () => {
+  assert.deepEqual(
+    summarizeLeadImport({
+      added: 12,
+      skipped_duplicate: 539,
+      skipped_suppressed: 0,
+      errors: [],
+      audience: { id: "aud-1", name: "conference wave two", member_count: 551, created: false },
+    }),
+    {
+      kind: "success",
+      message: "Added 12 people to “conference wave two” (551 total) · 539 duplicates skipped",
+    },
+  );
+});
+
+test("an all-duplicate re-upload reads as already done, not as a failure", () => {
+  const notice = summarizeLeadImport({
+    added: 0,
+    skipped_duplicate: 551,
+    skipped_suppressed: 0,
+    errors: [],
+    audience: {
+      id: "aud-1",
+      name: "ai faire approved guest list from screenshots",
+      member_count: 551,
+      created: false,
+    },
+  });
+  assert.deepEqual(notice, {
+    kind: "info",
+    message:
+      "Everything in this file is already imported · “ai faire approved guest list from screenshots” has all 551 people",
+  });
+  assert.notEqual(notice.kind, "error");
+  assert.notEqual(notice.message, "No new leads");
+});
+
+test("a file with no resolvable rows is an error with the first row reasons", () => {
+  assert.deepEqual(
+    summarizeLeadImport({
+      added: 0,
+      skipped_duplicate: 0,
+      skipped_suppressed: 0,
+      errors: [
+        { row: 2, reason: "missing company" },
+        { row: 3, reason: "missing company" },
+        { row: 4, reason: "empty row" },
+        { row: 5, reason: "missing company" },
+      ],
+      audience: null,
+    }),
+    {
+      kind: "error",
+      message: "Nothing imported · 4 invalid rows",
+      details: ["Row 2: missing company", "Row 3: missing company", "Row 4: empty row"],
+      hint: "Every row needs a company. Add a company column and upload the file again.",
+    },
+  );
+});
+
+test("a response without the audience field still summarizes sensibly", () => {
+  assert.deepEqual(
     summarizeLeadImport({
       added: 4,
       skipped_duplicate: 2,
       skipped_suppressed: 1,
       errors: [{ row: 7, reason: "missing company" }],
     }),
-    "4 imported · 2 already added · 1 suppressed · 1 invalid row",
+    {
+      kind: "success",
+      message: "Imported 4 people · 2 duplicates skipped · 1 suppressed · 1 invalid row",
+    },
   );
-  assert.equal(
-    summarizeLeadImport({
-      added: 0,
-      skipped_duplicate: 0,
-      skipped_suppressed: 0,
-      errors: [],
-    }),
-    "No new leads",
-  );
+});
+
+test("provider slugs render as human labels", () => {
+  assert.equal(providerLabel("csv_upload"), "CSV upload");
+  assert.equal(providerLabel("orange_slice"), "Orange Slice");
+  assert.equal(providerLabel("workspace"), "Workspace");
 });
