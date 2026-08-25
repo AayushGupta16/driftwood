@@ -66,6 +66,7 @@ type SendRow = {
   due_at: string; // ISO; the API orders by this asc (the send order)
   projected_date: string | null; // "YYYY-MM-DD"
   created_at: string;
+  sent_at: string | null; // set on ledger rows (view=sent); null on live ones
 };
 
 type SendsPageData = {
@@ -73,7 +74,7 @@ type SendsPageData = {
   total: number;
   limit: number;
   offset: number;
-  counts: { pending: number; sending: number; failed: number };
+  counts: { pending: number; sending: number; failed: number; sent?: number };
 };
 
 type CancelResult = {
@@ -123,6 +124,15 @@ type ReviewsPageData = {
   limit: number;
   offset: number;
   queue_stats?: QueueStats[]; // optional: tolerate a backend that predates it
+  counts?: ReviewQueueCounts; // optional: tolerate a backend that predates it
+};
+
+type ReviewQueueCounts = {
+  pending: number;
+  pending_sends: number;
+  pending_system: number;
+  approved_7d: number;
+  denied_7d: number;
 };
 
 type DecideItem = {
@@ -232,12 +242,22 @@ const FETCH_GUARD = 100; // hard ceiling on load-all iterations
 type QueueState =
   | { status: "loading" }
   | { status: "error" }
-  | { status: "ready"; items: ReviewItemRow[]; stats: QueueStats[] };
+  | {
+      status: "ready";
+      items: ReviewItemRow[];
+      stats: QueueStats[];
+      counts: ReviewQueueCounts | null;
+    };
 
 type SendsState =
   | { status: "loading" }
   | { status: "error" }
   | { status: "ready"; sends: SendRow[] };
+
+type SentState =
+  | { status: "loading" }
+  | { status: "error" }
+  | { status: "ready"; sends: SendRow[]; total: number };
 
 type DecideError = { message: string; itemId: string | null };
 
@@ -306,6 +326,7 @@ const ERROR_CLASS_LABEL: Record<string, string> = {
    oldest-first within each kind); unknown kinds trail in queue order. */
 const KIND_ORDER = [
   "bug_validation",
+  "drift_task_install",
   "send_connection",
   "send_message",
   "send_email",
@@ -313,9 +334,40 @@ const KIND_ORDER = [
   "follow_x_account",
 ];
 
+/* Real outreach vs system items (bug validations, drift installs): the
+   queue leads with sends — the things a founder is here to approve — and
+   system items live behind their own chip so they never crowd the emails. */
+const SEND_ITEM_KINDS = new Set([
+  "send_message",
+  "send_connection",
+  "send_email",
+  "send_x_dm",
+  "follow_x_account",
+]);
+const SYSTEM_CHIP = "__system";
+
 function kindRank(kind: string): number {
   const i = KIND_ORDER.indexOf(kind);
   return i === -1 ? KIND_ORDER.length : i;
+}
+
+type SortMode = "kind" | "oldest" | "newest" | "company";
+
+/* The list's sort control. "kind" is the historical default (KIND_ORDER
+   groups, oldest-first inside each — the API's order is preserved by the
+   stable sort); the rest are what a founder reaches for when triaging by
+   arrival time or clearing one account's items together. */
+function sortItems(items: ReviewItemRow[], mode: SortMode): ReviewItemRow[] {
+  const sorted = [...items];
+  if (mode === "kind")
+    return sorted.sort((a, b) => kindRank(a.kind) - kindRank(b.kind));
+  if (mode === "oldest")
+    return sorted.sort((a, b) => a.created_at.localeCompare(b.created_at));
+  if (mode === "newest")
+    return sorted.sort((a, b) => b.created_at.localeCompare(a.created_at));
+  return sorted.sort((a, b) =>
+    (a.lead?.company ?? "").localeCompare(b.lead?.company ?? ""),
+  );
 }
 
 /* Bug demos are hosted at /d/<slug>. Items should carry attachment_slug,
@@ -377,13 +429,14 @@ function summarizeDismiss(r: DismissResult): string {
   return `${parts.join(" · ") || "Nothing to dismiss"}.`;
 }
 
-type Tab = "review" | "queued";
+type Tab = "review" | "queued" | "sent";
 
-/* `?tab=queued` deep-links the queued view (the digest link's target);
-   anything else lands on needs-review. */
+/* `?tab=queued` / `?tab=sent` deep-link those views (the digest link and
+   the overview's "View all" respectively); anything else lands on
+   needs-review. */
 function tabFromUrl(): Tab {
   const tab = new URLSearchParams(window.location.search).get("tab");
-  return tab === "queued" ? "queued" : "review";
+  return tab === "queued" ? "queued" : tab === "sent" ? "sent" : "review";
 }
 
 function ReviewQueue({ canWrite }: { canWrite: boolean }) {
@@ -400,6 +453,8 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
   const [sendsState, setSendsState] = useState<SendsState>({
     status: "loading",
   });
+  const [sentState, setSentState] = useState<SentState>({ status: "loading" });
+  const [sortMode, setSortMode] = useState<SortMode>("kind");
   const toast = useToast();
 
   /* An armed "Approve all" disarms itself after a beat — no stale confirm
@@ -423,6 +478,7 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
     try {
       const all: ReviewItemRow[] = [];
       let stats: QueueStats[] = [];
+      let counts: ReviewQueueCounts | null = null;
       for (let i = 0; i < FETCH_GUARD; i++) {
         const res = await fetch(
           `/api/v1/dashboard/reviews?limit=${FETCH_CHUNK}&offset=${all.length}`,
@@ -430,12 +486,15 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
         );
         if (!res.ok) throw new Error("request failed");
         const page = (await res.json()) as ReviewsPageData;
-        if (i === 0) stats = page.queue_stats ?? [];
+        if (i === 0) {
+          stats = page.queue_stats ?? [];
+          counts = page.counts ?? null;
+        }
         all.push(...page.pending);
         if (page.pending.length === 0 || all.length >= page.total_pending)
           break;
       }
-      setState({ status: "ready", items: all, stats });
+      setState({ status: "ready", items: all, stats, counts });
     } catch {
       setState((prev) => (prev.status === "ready" ? prev : { status: "error" }));
     }
@@ -466,11 +525,28 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
     }
   }, []);
 
+  /* The delivered ledger (view=sent): first page is enough for the tab —
+     newest 100 with the all-time total in the label. */
+  const loadSent = useCallback(async () => {
+    try {
+      const res = await fetch("/api/v1/dashboard/sends?view=sent&limit=100", {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("request failed");
+      const page = (await res.json()) as SendsPageData;
+      setSentState({ status: "ready", sends: page.sends, total: page.total });
+    } catch {
+      setSentState((prev) =>
+        prev.status === "ready" ? prev : { status: "error" },
+      );
+    }
+  }, []);
+
   useEffect(() => {
     void (async () => {
-      await Promise.all([loadAll(), loadAllSends()]);
+      await Promise.all([loadAll(), loadAllSends(), loadSent()]);
     })();
-  }, [loadAll, loadAllSends]);
+  }, [loadAll, loadAllSends, loadSent]);
 
   /* Re-pull just the stats strip after a decide — approvals turn into
      ScheduledSend rows server-side, so "queued" moves immediately. Items are
@@ -553,8 +629,8 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
   function switchTab(next: Tab) {
     setTab(next);
     const params = new URLSearchParams(window.location.search);
-    if (next === "queued") params.set("tab", "queued");
-    else params.delete("tab");
+    if (next === "review") params.delete("tab");
+    else params.set("tab", next);
     const qs = params.toString();
     window.history.replaceState(
       null,
@@ -563,12 +639,17 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
     );
   }
 
-  /* Stable sort: bugs lead the default view (KIND_ORDER), and the API's
-     oldest-first order is preserved within each kind. */
-  const items =
-    state.status === "ready"
-      ? [...state.items].sort((a, b) => kindRank(a.kind) - kindRank(b.kind))
-      : [];
+  /* Sends and system items are separate populations: the queue leads with
+     the outreach a founder is here to approve, and bug validations / drift
+     installs sit behind their own chip. Within the send list the sort
+     control applies; "by type" (default) keeps the historical KIND_ORDER
+     grouping with the API's oldest-first order inside each kind. */
+  const allItems = state.status === "ready" ? state.items : [];
+  const systemItems = allItems.filter((item) => !SEND_ITEM_KINDS.has(item.kind));
+  const items = sortItems(
+    allItems.filter((item) => SEND_ITEM_KINDS.has(item.kind)),
+    sortMode,
+  );
   /* Sends load in full (same guard), so the row list IS
      counts.pending + counts.sending + counts.failed. */
   const queuedCount =
@@ -587,11 +668,19 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
     (a, b) => kindRank(a) - kindRank(b),
   );
   const activeKind =
-    kindFilter !== null && kindCounts.has(kindFilter) ? kindFilter : null;
+    kindFilter === SYSTEM_CHIP
+      ? systemItems.length > 0
+        ? SYSTEM_CHIP
+        : null
+      : kindFilter !== null && kindCounts.has(kindFilter)
+        ? kindFilter
+        : null;
   const visible =
-    activeKind === null
-      ? items
-      : items.filter((item) => item.kind === activeKind);
+    activeKind === SYSTEM_CHIP
+      ? sortItems(systemItems, sortMode)
+      : activeKind === null
+        ? items
+        : items.filter((item) => item.kind === activeKind);
   const activeReviewItem =
     visible.find((item) => item.id === activeReviewId) ?? visible[0] ?? null;
 
@@ -683,9 +772,10 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
         <h1 className="m-0 text-[clamp(1.7rem,3.6vw,2.25rem)] font-semibold leading-[1.08] tracking-[-0.015em]">
           Review queue
         </h1>
-        {state.status === "ready" && items.length > 0 && (
+        {state.status === "ready" && (items.length > 0 || state.counts) && (
           <span className="mb-[5px] shrink-0 font-mono text-[11px] tracking-[0.06em] text-ink-faint tabular-nums">
             {items.length} pending
+            {state.counts ? ` · ${state.counts.approved_7d} approved this week` : ""}
           </span>
         )}
       </div>
@@ -709,6 +799,12 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
           active={tab === "queued"}
           onClick={() => switchTab("queued")}
         />
+        <TabButton
+          label="Sent"
+          count={sentState.status === "ready" ? sentState.total : null}
+          active={tab === "sent"}
+          onClick={() => switchTab("sent")}
+        />
       </div>
 
       {state.status === "ready" && <QueueStatsStrip stats={state.stats} />}
@@ -731,7 +827,7 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
 
       {tab === "review" &&
         state.status === "ready" &&
-        (items.length === 0 ? (
+        (items.length === 0 && systemItems.length === 0 ? (
           <EmptyQueue />
         ) : (
           <>
@@ -760,6 +856,29 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
                   }
                 />
               ))}
+              {systemItems.length > 0 && (
+                <FilterChip
+                  label="system"
+                  count={systemItems.length}
+                  active={activeKind === SYSTEM_CHIP}
+                  onClick={() =>
+                    switchFilter(activeKind === SYSTEM_CHIP ? null : SYSTEM_CHIP)
+                  }
+                />
+              )}
+              <label className="ml-auto inline-flex items-center gap-2 text-[12.5px] text-ink-soft">
+                sort
+                <select
+                  value={sortMode}
+                  onChange={(e) => setSortMode(e.target.value as SortMode)}
+                  className="rounded-lg border border-line bg-surface px-2 py-1 text-[12.5px] text-ink"
+                >
+                  <option value="kind">by type</option>
+                  <option value="oldest">oldest first</option>
+                  <option value="newest">newest first</option>
+                  <option value="company">by company</option>
+                </select>
+              </label>
             </div>
 
             {/* read-only members keep the count line; the selection +
@@ -916,8 +1035,95 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
             refreshStats={refreshStats}
           />
         ))}
+
+      {tab === "sent" && sentState.status === "loading" && (
+        <div className="flex items-center justify-center py-16">
+          <span
+            className="size-6 animate-spin rounded-full border-2 border-line border-t-tide"
+            role="status"
+            aria-label="Loading sent ledger"
+          />
+        </div>
+      )}
+
+      {tab === "sent" && sentState.status === "error" && (
+        <p className="m-0 mt-6 text-[14px] font-medium text-red-700" role="alert">
+          Couldn&rsquo;t load your sent history. Please refresh.
+        </p>
+      )}
+
+      {tab === "sent" &&
+        sentState.status === "ready" &&
+        (sentState.sends.length === 0 ? (
+          <p className="m-0 mt-8 text-[14px] text-ink-soft">
+            Nothing delivered yet — approved sends land here once the
+            dispatcher delivers them.
+          </p>
+        ) : (
+          <SentLedger sends={sentState.sends} total={sentState.total} />
+        ))}
     </>
   );
+}
+
+/* ---------- the delivered ledger (Sent tab) ---------- */
+
+/* Every delivered send, newest first: who it went to, through what channel,
+   and the exact frozen copy that went out — the after-the-fact answer to
+   "what did we actually say to these people". */
+function SentLedger({ sends, total }: { sends: SendRow[]; total: number }) {
+  return (
+    <div className="mt-4 flex flex-col gap-2">
+      {total > sends.length && (
+        <p className="m-0 text-[12.5px] text-ink-faint">
+          Showing the latest {sends.length} of {total} delivered sends.
+        </p>
+      )}
+      {sends.map((send) => (
+        <details
+          key={send.id}
+          className="rounded-xl border border-line bg-surface px-4 py-3 shadow-win"
+        >
+          <summary className="flex cursor-pointer list-none flex-wrap items-baseline gap-x-3 gap-y-1">
+            <span className="text-[13.5px] font-semibold text-ink">
+              {send.lead?.name ?? "(removed lead)"}
+            </span>
+            {send.lead?.company && (
+              <span className="text-[12.5px] text-ink-soft">
+                {send.lead.company}
+              </span>
+            )}
+            <span className="rounded-full border border-line px-2 py-0.5 text-[11px] font-medium text-ink-soft">
+              {sendKindLabel(send.kind)}
+            </span>
+            {send.subject && (
+              <span className="min-w-0 flex-1 truncate text-[12.5px] text-ink-soft">
+                {send.subject}
+              </span>
+            )}
+            <span className="ml-auto font-mono text-[11px] text-ink-faint tabular-nums">
+              {send.sent_at ? statsTime(send.sent_at) : "sent"}
+            </span>
+          </summary>
+          <pre className="mt-3 whitespace-pre-wrap border-t border-line pt-3 font-sans text-[13px] leading-relaxed text-ink">
+            {send.note}
+          </pre>
+        </details>
+      ))}
+    </div>
+  );
+}
+
+/* "Aug 23, 4:12 PM" — absolute, because a ledger is a record, not a feed. */
+function statsTime(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "sent";
+  return d.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 
 /* ---------- tab control ---------- */

@@ -277,6 +277,7 @@ type DashboardSummary = {
   lists: Lists;
   companies: Companies;
   pending_reviews: number;
+  queued_sends?: number; // optional: tolerate a backend that predates it
 };
 
 type SummaryState =
@@ -479,6 +480,10 @@ function TodaysSending({
   const sending = summary.status === "ready" ? summary.summary.sending : null;
   const emailSending = summary.status === "ready" ? summary.summary.email_sending ?? null : null;
   const pendingReviews = summary.status === "ready" ? summary.summary.pending_reviews : null;
+  const queuedSends = summary.status === "ready" ? summary.summary.queued_sends ?? null : null;
+  /* "On track" means approved outreach is actually queued and flowing — not
+     merely "under cap". No queued sends but items waiting on the founder is
+     an approval bottleneck; neither queued nor pending is an empty pipe. */
   const statusValue = summary.status === "loading"
     ? "—"
     : summary.status === "error"
@@ -487,17 +492,23 @@ function TodaysSending({
         ? "Near limit"
         : sending === null && emailSending === null
           ? "Setup needed"
-          : "On track";
+          : queuedSends === null
+            ? "On track"
+            : queuedSends > 0
+              ? "On track"
+              : (pendingReviews ?? 0) > 0
+                ? "Awaiting review"
+                : "Nothing queued";
   const statusTone = statusValue === "On track" ? "success" : statusValue === "—" || statusValue === "Unavailable" ? undefined : "warning";
   const latestSends = activity.status === "ready"
-    ? activity.events.filter((event) => event.kind === "sent").slice(0, 3)
+    ? activity.events.filter((event) => event.kind === "sent").slice(0, 6)
     : [];
 
   return (
     <section className="overview-panel overview-sending" aria-labelledby="sending-title">
       <div className="overview-panel-heading">
         <h2 id="sending-title">Today&rsquo;s sending</h2>
-        <a href={withMockMode("/dashboard/review")}>Review copy</a>
+        <a href={withMockMode("/dashboard/review")}>Open review queue</a>
       </div>
       <div className="overview-sending-layout">
         <div className="overview-sending-stats">
@@ -524,7 +535,15 @@ function TodaysSending({
           />
         </div>
         <div className="overview-latest-sends">
-          <h3>Latest sends</h3>
+          <h3>
+            Latest sends
+            <a
+              className="overview-latest-sends-all"
+              href={withMockMode("/dashboard/review?tab=sent")}
+            >
+              View all
+            </a>
+          </h3>
           {activity.status === "loading" && <p className="overview-empty" role="status">Loading…</p>}
           {activity.status === "error" && <p className="overview-empty" role="alert">Unavailable right now.</p>}
           {activity.status === "ready" && latestSends.length === 0 && <p className="overview-empty">Nothing sent yet today.</p>}
@@ -1296,6 +1315,7 @@ type LeadImportResult = {
   skipped_duplicate: number;
   skipped_suppressed: number;
   errors: RowError[];
+  audience?: { id: string; name: string; member_count: number; created: boolean } | null;
 };
 type BlacklistImportResult = {
   added: number;
@@ -1309,6 +1329,10 @@ const plural = (n: number, one: string, many: string) =>
 
 function summarizeLeads(r: LeadImportResult): string {
   const parts = [`Added ${plural(r.added, "lead", "leads")}`];
+  if (r.audience)
+    parts.push(
+      `${r.audience.created ? "created" : "updated"} audience “${r.audience.name}” (${r.audience.member_count})`,
+    );
   if (r.skipped_duplicate)
     parts.push(`${r.skipped_duplicate} already in your pipeline`);
   if (r.skipped_suppressed) parts.push(`${r.skipped_suppressed} on your blacklist`);

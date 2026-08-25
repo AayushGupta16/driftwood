@@ -107,6 +107,7 @@ if (mockMode) {
     lists: { leads: 6, blacklist: 2 },
     companies: { qualified: 6, screened_out: 0, unknown: 0 },
     pending_reviews: 3,
+    queued_sends: 5,
   };
   const activity = {
     events: [
@@ -127,8 +128,44 @@ if (mockMode) {
     linkedin_url: `https://www.linkedin.com/in/${name.toLowerCase().replace(/\s+/g, "-")}`,
     stage: "new", prior_sends: 0, last_sent_at: null,
   });
+  const sentLedger = [
+    {
+      id: "sl1", batch_id: "sb0", kind: "email",
+      note: "hi dana \u2014 built meridian a working demo of the same-day booking fix. 19 seconds, real data: https://driftwood.sh/d/meridian-demo. worth a look?",
+      subject: "same-day booking fix \u2014 live demo",
+      attachment_slug: null, lead: lead("Dana Whitfield", "VP Ops", "Meridian"),
+      status: "sent", error: null, error_class: null,
+      due_at: hoursAgo(30), projected_date: null, created_at: hoursAgo(31),
+      sent_at: hoursAgo(28),
+    },
+    {
+      id: "sl2", batch_id: "sb0", kind: "message",
+      note: "hey jordan, the brex one-pager is live \u2014 entity-by-entity rollout and the yield math. link below.",
+      subject: null, attachment_slug: null,
+      lead: lead("Jordan Reyes", "Head of Growth", "Brex"),
+      status: "sent", error: null, error_class: null,
+      due_at: hoursAgo(50), projected_date: null, created_at: hoursAgo(52),
+      sent_at: hoursAgo(49),
+    },
+  ];
   const reviews = {
+    counts: {
+      pending: 5,
+      pending_sends: 4,
+      pending_system: 1,
+      approved_7d: 12,
+      denied_7d: 2,
+    },
     pending: [
+      {
+        id: "rb1", batch_id: "b9", agent_id: "demo", kind: "bug_validation",
+        title: "Meridian — booking flow bug",
+        body: "Selecting a same-day slot on meridian.com/book throws a 500 and drops the reservation.",
+        lead: null, attachment_slug: null,
+        evidence: { device: "Pixel 9", video_timestamp: "0:12" },
+        status: "pending", decision_reason: null, decided_at: null,
+        scheduled_batch_id: null, created_at: hoursAgo(1.2),
+      },
       {
         id: "r1", batch_id: "b1", agent_id: "demo", kind: "send_message",
         title: "Brex \u2014 Jordan Reyes (message)",
@@ -240,7 +277,7 @@ if (mockMode) {
       },
     ],
     total: 8, limit: 100, offset: 0,
-    counts: { pending: 5, sending: 1, failed: 2 },
+    counts: { pending: 5, sending: 1, failed: 2, sent: 2 },
   };
   // Bodies may be functions of the request init so POST results can echo the
   // request (e.g. cancel reports how many ids it was sent).
@@ -270,7 +307,10 @@ if (mockMode) {
           else if (d.decision === "deny") denied++;
         }
     } catch { /* malformed body — report nothing decided */ }
-    return { approved, denied, skipped: [], queued: [], agent_woken: true };
+    const queued = approved
+      ? [`queued ${approved} message${approved === 1 ? "" : "s"}: delivery over ~${Math.max(approved * 2, 1)} min`]
+      : [];
+    return { approved, denied, skipped: [], queued, agent_woken: true };
   };
   // /api/v1/admin/probes/dashboard deliberately mocks a 404, not data: that
   // exercises the SEO/GEO page's run-zero empty state (its launch state)
@@ -949,7 +989,12 @@ if (mockMode) {
         headers: { "Content-Type": "application/json" },
       });
     }
-    const audienceName = mockAudienceNameFromFile(file.name);
+    const typedName = form?.get("audience_name");
+    // A typed name beats the filename-derived default, like the real API.
+    const audienceName =
+      typeof typedName === "string" && typedName.trim()
+        ? typedName.trim()
+        : mockAudienceNameFromFile(file.name);
     const existing = mockAudiences.find(
       (item) => item.source_provider === "csv_upload" && item.name === audienceName,
     );
@@ -1305,7 +1350,14 @@ if (mockMode) {
     ["/api/v1/admin/probes/dashboard", probesNotFound],
     ["/api/v1/dashboard/sends/cancel", cancelSends],
     ["/api/v1/dashboard/sends/dismiss", dismissSends],
-    ["/api/v1/dashboard/sends", sends],
+    [
+      "/api/v1/dashboard/sends",
+      (_init?: RequestInit, url?: string) =>
+        url?.includes("view=sent")
+          ? { sends: sentLedger, total: sentLedger.length, limit: 100, offset: 0,
+              counts: { ...sends.counts, sent: sentLedger.length } }
+          : sends,
+    ],
     ["/api/v1/dashboard/reviews/decide", decideReviews],
     ["/api/v1/dashboard/reviews", reviews],
     ["/auth/me", me],

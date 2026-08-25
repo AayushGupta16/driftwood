@@ -69,6 +69,7 @@ export default function Audiences() {
   const [providerStatuses, setProviderStatuses] = useState<DiscoveryProvider[]>([]);
   const [providerStatusLoading, setProviderStatusLoading] = useState(true);
   const [importing, setImporting] = useState(false);
+  const [importName, setImportName] = useState("");
   const [importNotice, setImportNotice] = useState<LeadImportNotice | null>(null);
   const [selectedRecords, setSelectedRecords] = useState<Set<string>>(new Set());
   const [discovering, setDiscovering] = useState(false);
@@ -189,7 +190,7 @@ export default function Audiences() {
     setImporting(true);
     setImportNotice(null);
     try {
-      const result = await uploadLeadList(file);
+      const result = await uploadLeadList(file, importName);
       setImportNotice(summarizeLeadImport(result));
       const audience = result.audience;
       if (audience) {
@@ -365,6 +366,15 @@ export default function Audiences() {
                   <AudienceIcon size={18} />
                   <div><h2>Find people</h2><small className={activeProvider?.configured ? "is-connected" : ""}><OrangeSliceIcon size={12} /> {providerStatusLoading ? "Checking Orange Slice" : activeProvider?.configured ? "Orange Slice connected" : "Orange Slice offline"}</small></div>
                 </div>
+                <input
+                  className="audience-upload-name"
+                  type="text"
+                  value={importName}
+                  onChange={(e) => setImportName(e.target.value)}
+                  placeholder="Audience name (optional)"
+                  aria-label="Audience name for CSV upload"
+                  disabled={importing}
+                />
                 <button className="audience-upload-button" type="button" onClick={() => uploadInputRef.current?.click()} disabled={importing}>
                   <UploadIcon size={14} /> {importing ? "Importing…" : "Upload CSV"}
                 </button>

@@ -169,9 +169,14 @@ export async function getDiscoveryStatus(): Promise<DiscoveryStatus> {
   };
 }
 
-export async function uploadLeadList(file: File): Promise<LeadImportResult> {
+export async function uploadLeadList(
+  file: File,
+  audienceName = "",
+): Promise<LeadImportResult> {
   const body = new FormData();
   body.append("file", file);
+  // A typed name beats the filename-derived default server-side.
+  if (audienceName.trim()) body.append("audience_name", audienceName.trim());
   const response = await fetch("/api/v1/imports/leads", {
     method: "POST",
     credentials: "include",
