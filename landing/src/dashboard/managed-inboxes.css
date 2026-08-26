@@ -1,30 +1,51 @@
 /* Managed inboxes — the EmailCard's compact pool view (managed-inboxes.ts).
-   The two summary lines ride the tile's own typography; this file styles
-   only the collapsed-by-default inbox list and its state chips (the chip
-   recipe matches the overview campaign chip). Green stays reserved for
-   live/ok; warming rides the tide wash; paused is amber, never red. */
+   The count line itself is the expand/collapse control for the inbox list;
+   it reads as body text with a quiet inline caret, never as a button. This
+   file styles that control, the collapsed-by-default list, and its state
+   chips (the chip recipe matches the overview campaign chip). Green stays
+   reserved for live/ok; warming rides the tide wash; paused is amber,
+   never red. */
 
-.managed-inboxes { margin-top: .55rem; }
-
-/* quiet text toggle — undoes the tile-wide button recipe from
-   overview.css (.overview-channel-row button) */
-.overview-channel-row button.managed-inboxes-toggle {
+/* body-text button — undoes the tile-wide button recipe from overview.css
+   (.overview-channel-row button) and matches the tile's paragraph voice
+   (.overview-channel-row p: .72rem/1.45, ink-soft, mt-2 = .5rem) */
+.overview-channel-row button.managed-inboxes-count {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
   min-height: 0;
-  margin-top: 0;
+  margin: .5rem 0 0;
   border: 0;
   background: transparent;
-  color: var(--color-ink-faint);
-  padding: .2rem 0;
+  color: var(--color-ink-soft);
+  padding: 0;
   font: inherit;
-  font-size: .68rem;
-  font-weight: 600;
+  font-size: .72rem;
+  line-height: 1.45;
+  text-align: left;
   cursor: pointer;
 }
 
-.overview-channel-row button.managed-inboxes-toggle:hover { color: var(--color-ink); }
+.overview-channel-row button.managed-inboxes-count:hover { color: var(--color-ink); }
+
+.managed-inboxes-caret {
+  width: .6rem;
+  height: .6rem;
+  flex: none;
+  color: var(--color-ink-faint);
+  transition: transform 200ms cubic-bezier(.2, 0, 0, 1);
+}
+
+.overview-channel-row button.managed-inboxes-count:hover .managed-inboxes-caret {
+  color: var(--color-ink);
+}
+
+.managed-inboxes-count[aria-expanded="true"] .managed-inboxes-caret {
+  transform: rotate(90deg);
+}
 
 .managed-inboxes-list {
-  margin: .2rem 0 0;
+  margin: .45rem 0 0;
   padding: 0;
   list-style: none;
 }
@@ -74,4 +95,8 @@
 .managed-inboxes-chip.is-paused {
   background: color-mix(in srgb, #f59e0b 12%, var(--color-surface));
   color: #92400e;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .managed-inboxes-caret { transition: none; }
 }

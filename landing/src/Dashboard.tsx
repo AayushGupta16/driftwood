@@ -989,12 +989,55 @@ function EmailCard({
           </h3>
           {showPool ? (
             <>
-              <p className="m-0 mt-2 text-[15px] leading-relaxed text-ink-soft">
-                {boxCount} email {boxCount === 1 ? "box" : "boxes"} connected
-              </p>
+              {/* the count line is itself the expand/collapse control for
+                  the inbox list — a real button for keyboard reach, styled
+                  to read as body text with a quiet inline caret */}
+              {pool.mailboxes.length > 0 ? (
+                <button
+                  type="button"
+                  className="managed-inboxes-count"
+                  aria-expanded={inboxesOpen}
+                  onClick={() => setInboxesOpen((open) => !open)}
+                >
+                  {boxCount} email {boxCount === 1 ? "box" : "boxes"} connected
+                  <svg
+                    className="managed-inboxes-caret"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="m9 6 6 6-6 6" />
+                  </svg>
+                </button>
+              ) : (
+                <p className="m-0 mt-2 text-[15px] leading-relaxed text-ink-soft">
+                  {boxCount} email {boxCount === 1 ? "box" : "boxes"} connected
+                </p>
+              )}
               <p className="m-0 mt-0.5 text-[15px] leading-relaxed text-ink-soft">
                 Up to {dailyCap} emails/day
               </p>
+              {inboxesOpen && pool.mailboxes.length > 0 && (
+                <ul className="managed-inboxes-list">
+                  {pool.mailboxes.map((box) => {
+                    const chip = managedInboxChip(box);
+                    return (
+                      <li key={box.address}>
+                        <span className="managed-inboxes-addr">
+                          {box.address}
+                        </span>
+                        <span className={`managed-inboxes-chip${chip.tone}`}>
+                          {chip.label}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </>
           ) : (
             <p className="m-0 mt-2 text-[15px] leading-relaxed text-ink-soft">
@@ -1054,36 +1097,6 @@ function EmailCard({
             >
               {error}
             </p>
-          )}
-
-          {showPool && pool.mailboxes.length > 0 && (
-            <div className="managed-inboxes">
-              <button
-                type="button"
-                className="managed-inboxes-toggle"
-                aria-expanded={inboxesOpen}
-                onClick={() => setInboxesOpen((open) => !open)}
-              >
-                {inboxesOpen ? "Hide inboxes" : "Show inboxes"}
-              </button>
-              {inboxesOpen && (
-                <ul className="managed-inboxes-list">
-                  {pool.mailboxes.map((box) => {
-                    const chip = managedInboxChip(box);
-                    return (
-                      <li key={box.address}>
-                        <span className="managed-inboxes-addr">
-                          {box.address}
-                        </span>
-                        <span className={`managed-inboxes-chip${chip.tone}`}>
-                          {chip.label}
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
           )}
         </div>
       </div>
