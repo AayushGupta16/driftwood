@@ -14,7 +14,11 @@ import type { AudienceSummary } from "./audiences/model";
 import { listCampaigns } from "./campaigns/api";
 import type { CampaignSummary } from "./campaigns/model";
 import AppShell from "./dashboard/AppShell";
-import ManagedInboxes from "./dashboard/ManagedInboxes";
+import {
+  managedInboxCap,
+  managedInboxChip,
+  useManagedInboxes,
+} from "./dashboard/managed-inboxes";
 import {
   AssetsIcon,
   AudienceIcon,
@@ -33,6 +37,7 @@ import {
   useToast,
 } from "./dashboard-shared";
 import "./dashboard/overview.css";
+import "./dashboard/managed-inboxes.css";
 
 /* /dashboard — Google-login-gated shell. Talks to the same-origin /auth/*
    endpoints (vite proxy in dev, vercel rewrite in prod), so every request
@@ -414,7 +419,6 @@ function ApprovedView({ user }: { user: User }) {
       </header>
 
       <ConnectionSetup user={user} isOwner={isOwner} />
-      <ManagedInboxes emailConnected={user.email_connected ?? false} />
       <TodaysSending summary={summary} activity={activity} />
       <MetricsCard state={summary} />
       {canWrite && <QuickActions onImport={openImports} />}
@@ -925,6 +929,16 @@ function EmailCard({
     null,
   );
   const [connectError, setConnectError] = useState<string | null>(null);
+  /* the managed pool (null for every customer without one, and on any
+     fetch error — the tile then renders exactly as it did before the
+     feature existed). Shown only alongside the customer's own connected
+     mailbox. */
+  const pool = useManagedInboxes();
+  const [inboxesOpen, setInboxesOpen] = useState(false);
+  const showPool = connected && pool !== null;
+  // own connected mailbox + the managed pool
+  const boxCount = 1 + (pool?.mailboxes.length ?? 0);
+  const dailyCap = 20 + managedInboxCap(pool?.mailboxes ?? []);
   const {
     pending: disconnectPending,
     error: disconnectError,
@@ -973,11 +987,22 @@ function EmailCard({
           <h3 className="m-0 text-[18px] font-semibold tracking-[-0.01em]">
             {connected ? "Email" : "Connect email"}
           </h3>
-          <p className="m-0 mt-2 text-[15px] leading-relaxed text-ink-soft">
-            {connected
-              ? "Ready."
-              : "Send from Gmail or Outlook."}
-          </p>
+          {showPool ? (
+            <>
+              <p className="m-0 mt-2 text-[15px] leading-relaxed text-ink-soft">
+                {boxCount} email {boxCount === 1 ? "box" : "boxes"} connected
+              </p>
+              <p className="m-0 mt-0.5 text-[15px] leading-relaxed text-ink-soft">
+                Up to {dailyCap} emails/day
+              </p>
+            </>
+          ) : (
+            <p className="m-0 mt-2 text-[15px] leading-relaxed text-ink-soft">
+              {connected
+                ? "Ready."
+                : "Send from Gmail or Outlook."}
+            </p>
+          )}
 
           {connected ? (
             <button
@@ -1029,6 +1054,36 @@ function EmailCard({
             >
               {error}
             </p>
+          )}
+
+          {showPool && pool.mailboxes.length > 0 && (
+            <div className="managed-inboxes">
+              <button
+                type="button"
+                className="managed-inboxes-toggle"
+                aria-expanded={inboxesOpen}
+                onClick={() => setInboxesOpen((open) => !open)}
+              >
+                {inboxesOpen ? "Hide inboxes" : "Show inboxes"}
+              </button>
+              {inboxesOpen && (
+                <ul className="managed-inboxes-list">
+                  {pool.mailboxes.map((box) => {
+                    const chip = managedInboxChip(box);
+                    return (
+                      <li key={box.address}>
+                        <span className="managed-inboxes-addr">
+                          {box.address}
+                        </span>
+                        <span className={`managed-inboxes-chip${chip.tone}`}>
+                          {chip.label}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
           )}
         </div>
       </div>
