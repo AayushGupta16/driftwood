@@ -145,6 +145,32 @@ if (mockMode) {
         ],
       }
     : { capacity: { current_per_day: 0, projected_per_day: 0 }, domains: [], mailboxes: [] };
+  // The add-inboxes flow's two endpoints. Availability marks everything
+  // available except getautosana.com, so the domain search lists whatever
+  // gets typed (the Autosana slate included) and the taken path is
+  // demoable by searching getautosana.com exactly. Purchase always
+  // succeeds, echoing the requested domains back in their registering
+  // state — the tile's optimistic merge takes it from there.
+  const mailboxAvailability = (_init?: RequestInit, url?: string) => {
+    const domain = new URL(url ?? "", location.origin).searchParams.get("domain") ?? "";
+    return { domain, available: domain !== "getautosana.com" };
+  };
+  const mailboxPurchase = (init?: RequestInit) => {
+    try {
+      const body = JSON.parse(String(init?.body ?? "{}")) as {
+        domains?: string[];
+        senders?: { username: string }[];
+      };
+      const domains = body.domains ?? [];
+      const senders = body.senders ?? [];
+      return {
+        domains: domains.map((name) => ({ name, status: "registering" })),
+        mailboxes_planned: domains.length * senders.length,
+      };
+    } catch {
+      return { domains: [], mailboxes_planned: 0 };
+    }
+  };
   const daysAhead = (d: number) =>
     new Date(Date.now() + d * 86400e3).toISOString();
   const dateAhead = (d: number) =>
@@ -1389,6 +1415,8 @@ if (mockMode) {
     ["/auth/me", me],
     ["/api/v1/dashboard/summary", summary],
     ["/api/v1/dashboard/activity", activity],
+    ["/mailboxes/availability", mailboxAvailability],
+    ["/mailboxes/purchase", mailboxPurchase],
     ["/mailboxes/overview", managedInboxes],
   ];
   const realFetch = window.fetch.bind(window);

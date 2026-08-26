@@ -13,11 +13,17 @@ import { listAudiences } from "./audiences/api";
 import type { AudienceSummary } from "./audiences/model";
 import { listCampaigns } from "./campaigns/api";
 import type { CampaignSummary } from "./campaigns/model";
+import AddInboxes from "./dashboard/AddInboxes";
 import AppShell from "./dashboard/AppShell";
+import InboxListOverlay from "./dashboard/InboxListOverlay";
 import {
+  DOMAIN_CAP,
+  INBOX_CAP,
   managedInboxCap,
-  managedInboxChip,
   useManagedInboxes,
+  type MailboxesOverview,
+  type PurchaseResult,
+  type SenderInput,
 } from "./dashboard/managed-inboxes";
 import {
   AssetsIcon,
@@ -320,6 +326,9 @@ function ApprovedView({ user }: { user: User }) {
   const role = user.org?.role ?? "owner";
   const isOwner = role === "owner";
   const canWrite = role !== "member";
+  // The managed pool feeds two surfaces: the email tile (count + add flow)
+  // and the quiet capacity line on Today's sending — so it lives here.
+  const { pool, applyPurchase } = useManagedInboxes();
   const [summary, setSummary] = useState<SummaryState>({ status: "loading" });
   const [activity, setActivity] = useState<ActivityState>({ status: "loading" });
   const [inventory, setInventory] = useState<InventoryState>({
@@ -398,6 +407,14 @@ function ApprovedView({ user }: { user: User }) {
     },
   );
 
+  /* the email channel's daily ceiling — own connected mailbox (20/day)
+     plus what the managed pool carries today. Shown quietly where the
+     dashboard already talks send volume; absent whenever there is no pool
+     (or the fetch failed). */
+  const emailCapLine = pool
+    ? `Up to ${((user.email_connected ?? false) ? 20 : 0) + managedInboxCap(pool.mailboxes)} emails/day`
+    : null;
+
   function openImports() {
     setImportsOpen(true);
     window.requestAnimationFrame(() => {
@@ -418,8 +435,13 @@ function ApprovedView({ user }: { user: User }) {
         </div>
       </header>
 
-      <ConnectionSetup user={user} isOwner={isOwner} />
-      <TodaysSending summary={summary} activity={activity} />
+      <ConnectionSetup
+        user={user}
+        isOwner={isOwner}
+        pool={pool}
+        applyPurchase={applyPurchase}
+      />
+      <TodaysSending summary={summary} activity={activity} emailCapLine={emailCapLine} />
       <MetricsCard state={summary} />
       {canWrite && <QuickActions onImport={openImports} />}
       <CampaignDesk snapshot={snapshot} inventory={inventory} />
@@ -446,7 +468,17 @@ function formatCount(state: SummaryState, key: "leads" | "companies") {
   return value.toLocaleString();
 }
 
-function ConnectionSetup({ user, isOwner }: { user: User; isOwner: boolean }) {
+function ConnectionSetup({
+  user,
+  isOwner,
+  pool,
+  applyPurchase,
+}: {
+  user: User;
+  isOwner: boolean;
+  pool: MailboxesOverview | null;
+  applyPurchase: (result: PurchaseResult, senders: SenderInput[]) => void;
+}) {
   if (!isOwner) return null;
   const linkedInMissing = !user.linkedin_connected;
   const emailMissing = !(user.email_connected ?? false);
@@ -465,6 +497,9 @@ function ConnectionSetup({ user, isOwner }: { user: User; isOwner: boolean }) {
         <EmailCard
           connected={!emailMissing}
           emailError={user.email_error ?? null}
+          companyName={user.org?.name ?? null}
+          pool={pool}
+          applyPurchase={applyPurchase}
         />
         <TwitterCard
           connected={user.twitter_connected ?? false}
@@ -479,9 +514,13 @@ function ConnectionSetup({ user, isOwner }: { user: User; isOwner: boolean }) {
 function TodaysSending({
   summary,
   activity,
+  emailCapLine,
 }: {
   summary: SummaryState;
   activity: ActivityState;
+  /** the email channel's daily ceiling (own mailbox + managed pool);
+   *  null when there is no managed pool */
+  emailCapLine: string | null;
 }) {
   const sending = summary.status === "ready" ? summary.summary.sending : null;
   const emailSending = summary.status === "ready" ? summary.summary.email_sending ?? null : null;
@@ -529,6 +568,7 @@ function TodaysSending({
           <SendingStat
             label="Emails sent"
             value={summary.status !== "ready" ? "—" : emailSending ? `${emailSending.emails_sent}/${emailSending.emails_cap}` : "Not connected"}
+            sub={emailCapLine}
           />
           <SendingStat
             label="Waiting for review"
@@ -566,15 +606,22 @@ function SendingStat({
   label,
   value,
   tone,
+  sub,
 }: {
   label: string;
   value: string;
   tone?: "success" | "warning";
+  /** quiet context line under the figure (e.g. the email channel's daily
+   *  ceiling when a managed pool exists) */
+  sub?: string | null;
 }) {
   return (
     <div className="overview-sending-stat">
       <span>{label}</span>
-      <strong className={tone ? `is-${tone}` : value === "Not connected" ? "is-muted" : undefined}>{value}</strong>
+      <div>
+        <strong className={tone ? `is-${tone}` : value === "Not connected" ? "is-muted" : undefined}>{value}</strong>
+        {sub && <small>{sub}</small>}
+      </div>
     </div>
   );
 }
@@ -921,24 +968,33 @@ type EmailProvider = "gmail" | "outlook";
 function EmailCard({
   connected,
   emailError,
+  companyName,
+  pool,
+  applyPurchase,
 }: {
   connected: boolean;
   emailError: string | null;
+  companyName: string | null;
+  pool: MailboxesOverview | null;
+  applyPurchase: (result: PurchaseResult, senders: SenderInput[]) => void;
 }) {
   const [connectPending, setConnectPending] = useState<EmailProvider | null>(
     null,
   );
   const [connectError, setConnectError] = useState<string | null>(null);
-  /* the managed pool (null for every customer without one, and on any
-     fetch error — the tile then renders exactly as it did before the
-     feature existed). Shown only alongside the customer's own connected
-     mailbox. */
-  const pool = useManagedInboxes();
-  const [inboxesOpen, setInboxesOpen] = useState(false);
+  /* the managed pool is null for every customer without one (and on any
+     fetch error) — the tile then renders exactly as it did before the
+     feature existed. Shown only alongside the customer's own connected
+     mailbox. The tile itself never grows past its siblings: the inbox
+     list and the add flow both float over the grid as overlays. */
+  const [listOpen, setListOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
   const showPool = connected && pool !== null;
   // own connected mailbox + the managed pool
   const boxCount = 1 + (pool?.mailboxes.length ?? 0);
-  const dailyCap = 20 + managedInboxCap(pool?.mailboxes ?? []);
+  const underCaps =
+    (pool?.domains.length ?? 0) < DOMAIN_CAP &&
+    (pool?.mailboxes.length ?? 0) < INBOX_CAP;
   const {
     pending: disconnectPending,
     error: disconnectError,
@@ -988,57 +1044,35 @@ function EmailCard({
             {connected ? "Email" : "Connect email"}
           </h3>
           {showPool ? (
-            <>
-              {/* the count line is itself the expand/collapse control for
-                  the inbox list — a real button for keyboard reach, styled
-                  to read as body text with a quiet inline caret */}
-              {pool.mailboxes.length > 0 ? (
-                <button
-                  type="button"
-                  className="managed-inboxes-count"
-                  aria-expanded={inboxesOpen}
-                  onClick={() => setInboxesOpen((open) => !open)}
+            /* exactly one body line — the count, doubling as the way into
+               the inbox list, which floats over the grid so the tile never
+               grows past its siblings */
+            pool.mailboxes.length > 0 ? (
+              <button
+                type="button"
+                className="managed-inboxes-count"
+                aria-haspopup="dialog"
+                onClick={() => setListOpen(true)}
+              >
+                {boxCount} email {boxCount === 1 ? "box" : "boxes"} connected
+                <svg
+                  className="managed-inboxes-caret"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
                 >
-                  {boxCount} email {boxCount === 1 ? "box" : "boxes"} connected
-                  <svg
-                    className="managed-inboxes-caret"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.4"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <path d="m9 6 6 6-6 6" />
-                  </svg>
-                </button>
-              ) : (
-                <p className="m-0 mt-2 text-[15px] leading-relaxed text-ink-soft">
-                  {boxCount} email {boxCount === 1 ? "box" : "boxes"} connected
-                </p>
-              )}
-              <p className="m-0 mt-0.5 text-[15px] leading-relaxed text-ink-soft">
-                Up to {dailyCap} emails/day
+                  <path d="m9 6 6 6-6 6" />
+                </svg>
+              </button>
+            ) : (
+              <p className="m-0 mt-2 text-[15px] leading-relaxed text-ink-soft">
+                {boxCount} email {boxCount === 1 ? "box" : "boxes"} connected
               </p>
-              {inboxesOpen && pool.mailboxes.length > 0 && (
-                <ul className="managed-inboxes-list">
-                  {pool.mailboxes.map((box) => {
-                    const chip = managedInboxChip(box);
-                    return (
-                      <li key={box.address}>
-                        <span className="managed-inboxes-addr">
-                          {box.address}
-                        </span>
-                        <span className={`managed-inboxes-chip${chip.tone}`}>
-                          {chip.label}
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </>
+            )
           ) : (
             <p className="m-0 mt-2 text-[15px] leading-relaxed text-ink-soft">
               {connected
@@ -1048,14 +1082,27 @@ function EmailCard({
           )}
 
           {connected ? (
-            <button
-              type="button"
-              onClick={handleDisconnect}
-              disabled={pending}
-              className="mt-5 cursor-pointer rounded-full border border-line bg-surface px-3.5 py-2 text-[13.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {pending ? "Disconnecting…" : "Disconnect"}
-            </button>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <button
+                type="button"
+                onClick={handleDisconnect}
+                disabled={pending}
+                className="cursor-pointer rounded-full border border-line bg-surface px-3.5 py-2 text-[13.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {pending ? "Disconnecting…" : "Disconnect"}
+              </button>
+              {underCaps && (
+                <button
+                  type="button"
+                  aria-haspopup="dialog"
+                  disabled={pending}
+                  onClick={() => setAddOpen(true)}
+                  className="cursor-pointer rounded-full border border-line bg-surface px-3.5 py-2 text-[13.5px] font-medium text-ink-soft transition-colors hover:border-tide/40 hover:bg-tide-wash hover:text-tide-deep disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Add inboxes
+                </button>
+              )}
+            </div>
           ) : (
             <div className="mt-5 flex flex-wrap gap-2.5">
               <button
@@ -1097,6 +1144,26 @@ function EmailCard({
             >
               {error}
             </p>
+          )}
+
+          {listOpen && pool && (
+            <InboxListOverlay
+              mailboxes={pool.mailboxes}
+              onClose={() => setListOpen(false)}
+            />
+          )}
+          {addOpen && (
+            <AddInboxes
+              companyName={companyName}
+              ownedDomains={pool?.domains.map((d) => d.name) ?? []}
+              existingDomains={pool?.domains.length ?? 0}
+              existingInboxes={pool?.mailboxes.length ?? 0}
+              onClose={() => setAddOpen(false)}
+              onPurchased={(result, senders) => {
+                applyPurchase(result, senders);
+                setAddOpen(false);
+              }}
+            />
           )}
         </div>
       </div>

@@ -1,10 +1,11 @@
-/* Managed inboxes — the EmailCard's compact pool view (managed-inboxes.ts).
-   The count line itself is the expand/collapse control for the inbox list;
-   it reads as body text with a quiet inline caret, never as a button. This
-   file styles that control, the collapsed-by-default list, and its state
-   chips (the chip recipe matches the overview campaign chip). Green stays
-   reserved for live/ok; warming rides the tide wash; paused is amber,
-   never red. */
+/* Managed inboxes — the EmailCard's compact pool view and its sender-first
+   add flow (managed-inboxes.ts, AddInboxes.tsx, InboxListOverlay.tsx).
+   The tile keeps exactly one body line; everything deeper floats over the
+   grid on the shared overlay surface so the tile never grows past its
+   siblings. Green stays reserved for live/ok; warming rides the tide wash;
+   paused is amber, never red. No prices anywhere. */
+
+/* ---------- the tile's count line (opens the inbox list overlay) ---------- */
 
 /* body-text button — undoes the tile-wide button recipe from overview.css
    (.overview-channel-row button) and matches the tile's paragraph voice
@@ -33,19 +34,82 @@
   height: .6rem;
   flex: none;
   color: var(--color-ink-faint);
-  transition: transform 200ms cubic-bezier(.2, 0, 0, 1);
 }
 
 .overview-channel-row button.managed-inboxes-count:hover .managed-inboxes-caret {
   color: var(--color-ink);
 }
 
-.managed-inboxes-count[aria-expanded="true"] .managed-inboxes-caret {
-  transform: rotate(90deg);
+/* ---------- shared overlay surface ---------- */
+
+.managed-overlay-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(22, 24, 27, .32);
+  padding: 1rem;
 }
 
+.managed-overlay-panel {
+  width: min(26.5rem, 100%);
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  border: 1px solid var(--color-line);
+  border-radius: .75rem;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-win);
+  padding: 1rem 1.05rem 1.05rem;
+}
+
+.managed-overlay-panel.is-narrow { width: min(21rem, 100%); }
+
+.managed-overlay-panel h3 {
+  margin: 0;
+  font-size: .85rem;
+  font-weight: 650;
+  letter-spacing: -.01em;
+}
+
+/* the tile-wide button recipe (.overview-channel-row button) leaks into
+   overlays rendered from the tile — reset every panel button, then style
+   the specific ones below */
+.managed-overlay-panel button {
+  min-height: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.managed-overlay-panel button:disabled { cursor: not-allowed; opacity: .55; }
+
+.managed-overlay-panel input[type="text"] {
+  min-width: 0;
+  border: 1px solid var(--color-line);
+  border-radius: .5rem;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  padding: .42rem .55rem;
+  font: inherit;
+  font-size: .74rem;
+}
+
+.managed-overlay-panel input[type="text"]::placeholder { color: var(--color-ink-faint); }
+
+.managed-overlay-panel :is(input, button):focus-visible {
+  outline: 2px solid var(--color-tide);
+  outline-offset: 1px;
+}
+
+/* ---------- the inbox list (overlay rows) ---------- */
+
 .managed-inboxes-list {
-  margin: .45rem 0 0;
+  margin: .5rem 0 0;
   padding: 0;
   list-style: none;
 }
@@ -64,7 +128,7 @@
 .managed-inboxes-addr {
   min-width: 0;
   overflow: hidden;
-  font-size: .7rem;
+  font-size: .72rem;
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -97,6 +161,188 @@
   color: #92400e;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .managed-inboxes-caret { transition: none; }
+/* ---------- the add-inboxes flow ---------- */
+
+.add-inboxes-sub {
+  margin: .3rem 0 0;
+  color: var(--color-ink-soft);
+  font-size: .7rem;
+  line-height: 1.5;
+}
+
+.add-inboxes-section {
+  margin: .9rem 0 .35rem;
+  color: var(--color-ink-faint);
+  font-size: .68rem;
+  font-weight: 620;
+}
+
+/* one sender = one input, previewed inline as name@domain */
+.add-inboxes-sender {
+  display: flex;
+  align-items: center;
+  gap: .3rem;
+  margin-top: .4rem;
+}
+
+.add-inboxes-sender input { width: 9rem; }
+
+.add-inboxes-at {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-ink-faint);
+  font-size: .72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.managed-overlay-panel .add-inboxes-remove {
+  flex: none;
+  color: var(--color-ink-faint);
+  font-size: .85rem;
+  line-height: 1;
+  padding: .2rem .3rem;
+}
+
+.managed-overlay-panel .add-inboxes-remove:hover:not(:disabled) { color: var(--color-ink); }
+
+.managed-overlay-panel .add-inboxes-quiet {
+  margin-top: .45rem;
+  color: var(--color-ink-faint);
+  font-size: .68rem;
+  font-weight: 600;
+  padding: .2rem 0;
+}
+
+.managed-overlay-panel .add-inboxes-quiet:hover:not(:disabled) { color: var(--color-ink); }
+
+/* picked domains collect above the search box */
+.add-inboxes-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem;
+  margin: 0 0 .45rem;
+  padding: 0;
+  list-style: none;
+}
+
+.add-inboxes-chips li {
+  display: inline-flex;
+  align-items: center;
+  gap: .15rem;
+  border: 1px solid color-mix(in srgb, var(--color-tide) 38%, var(--color-line));
+  border-radius: .5rem;
+  background: var(--color-tide-wash);
+  padding: .24rem .3rem .24rem .5rem;
+}
+
+.add-inboxes-chip-name {
+  color: var(--color-tide-deep);
+  font-size: .7rem;
+  font-weight: 630;
+}
+
+.managed-overlay-panel input.add-inboxes-search { width: 100%; }
+
+.add-inboxes-results {
+  margin-top: .4rem;
+  border: 1px solid var(--color-line);
+  border-radius: .6rem;
+  overflow: hidden;
+}
+
+.managed-overlay-panel .add-inboxes-result {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: .55rem;
+  padding: .48rem .6rem;
+  text-align: left;
+}
+
+.managed-overlay-panel .add-inboxes-result + .add-inboxes-result {
+  border-top: 1px solid var(--color-line);
+}
+
+.managed-overlay-panel .add-inboxes-result:hover:not(:disabled) {
+  background: var(--color-tide-wash);
+}
+
+.add-inboxes-domain-name {
+  min-width: 0;
+  overflow: hidden;
+  font-size: .74rem;
+  font-weight: 630;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.add-inboxes-mark {
+  flex: none;
+  color: var(--color-tide);
+  font-size: .64rem;
+  font-weight: 620;
+}
+
+.add-inboxes-hint {
+  margin: .4rem 0 0;
+  color: var(--color-ink-faint);
+  font-size: .68rem;
+  line-height: 1.45;
+}
+
+.add-inboxes-math {
+  margin: .9rem 0 0;
+  border-top: 1px solid var(--color-line);
+  padding-top: .7rem;
+  font-size: .76rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.add-inboxes-reason,
+.add-inboxes-error {
+  margin: .35rem 0 0;
+  color: #a45f10;
+  font-size: .68rem;
+  line-height: 1.45;
+}
+
+.add-inboxes-actions {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  margin-top: .75rem;
+}
+
+.add-inboxes-actions .add-inboxes-quiet { margin-top: 0; }
+
+.managed-overlay-panel .add-inboxes-done {
+  min-height: 2rem;
+  border: 1px solid var(--color-tide);
+  border-radius: 999px;
+  background: var(--color-tide);
+  color: #fff;
+  padding: .45rem .95rem;
+  font-size: .72rem;
+  font-weight: 620;
+}
+
+.managed-overlay-panel .add-inboxes-done:hover:not(:disabled) {
+  border-color: var(--color-tide-deep);
+  background: var(--color-tide-deep);
+}
+
+/* ---------- the capacity line on Today's sending ---------- */
+
+/* "Up to X emails/day" rides the Emails sent stat quietly — the overview's
+   existing send-volume surface — fed from the same overview payload. */
+.overview-sending-stat small {
+  display: block;
+  margin-top: .25rem;
+  color: var(--color-ink-faint);
+  font-size: .6rem;
+  line-height: 1.35;
+  font-variant-numeric: tabular-nums;
 }
