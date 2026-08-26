@@ -21,6 +21,10 @@
       "destination": "https://driftwood-backend-767736087356.us-central1.run.app/twitter/:path*"
     },
     {
+      "source": "/mailboxes/:path*",
+      "destination": "https://driftwood-backend-767736087356.us-central1.run.app/mailboxes/:path*"
+    },
+    {
       "source": "/triage",
       "destination": "https://driftwood-backend-767736087356.us-central1.run.app/triage"
     },
@@ -76,7 +80,7 @@
       ]
     },
     {
-      "source": "/((?!d/|api/|auth/|linkedin/|email/|twitter/|triage|triage/|_vercel/).*)",
+      "source": "/((?!d/|api/|auth/|linkedin/|email/|twitter/|mailboxes/|triage|triage/|_vercel/).*)",
       "headers": [
         {
           "key": "Content-Security-Policy",

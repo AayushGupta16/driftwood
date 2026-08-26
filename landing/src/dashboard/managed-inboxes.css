@@ -1,0 +1,171 @@
+/* Managed inboxes — the overview's view-only pool panel (ManagedInboxes.tsx).
+   Recipes lifted from the 2026-08-25 design draft
+   (design/managed-inboxes-2026-08-25.html) and mapped onto the dashboard
+   @theme tokens: overview-panel shell, capacity meter, hairline mailbox
+   rows, and the campaign-status chip recipe. Green stays reserved for
+   live/ok; warming rides the tide wash; paused is amber, never red. */
+
+.overview-mailboxes-label {
+  display: block;
+  margin-top: .55rem;
+  color: var(--color-ink-faint);
+  font-size: .65rem;
+  line-height: 1.35;
+}
+
+.overview-mailboxes-meter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: .45rem;
+  margin-top: .2rem;
+}
+
+.overview-mailboxes-now {
+  font-size: 1.35rem;
+  font-weight: 650;
+  letter-spacing: -.025em;
+  font-variant-numeric: tabular-nums;
+}
+
+.overview-mailboxes-now small {
+  color: var(--color-ink-soft);
+  font-size: .78rem;
+  font-weight: 630;
+  letter-spacing: 0;
+}
+
+.overview-mailboxes-proj {
+  color: var(--color-tide);
+  font-size: .78rem;
+  font-weight: 630;
+  font-variant-numeric: tabular-nums;
+}
+
+.overview-mailboxes-aside {
+  color: var(--color-ink-faint);
+  font-size: .7rem;
+}
+
+.overview-mailboxes-explain {
+  margin: .3rem 0 0;
+  color: var(--color-ink-soft);
+  font-size: .72rem;
+  line-height: 1.45;
+}
+
+.overview-mailboxes-bar {
+  height: 6px;
+  max-width: 21rem;
+  margin-top: .6rem;
+  border-radius: 4px;
+  background: var(--color-sand);
+  overflow: hidden;
+}
+
+.overview-mailboxes-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--color-tide);
+}
+
+.overview-mailboxes-domain {
+  display: flex;
+  align-items: baseline;
+  gap: .4rem;
+  margin: .9rem 0 .1rem;
+  color: var(--color-ink-faint);
+  font-size: .62rem;
+  font-weight: 620;
+}
+
+.overview-mailboxes-domain span { font-weight: 400; }
+
+.overview-mailboxes-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 3.8rem 3.6rem .9rem;
+  align-items: center;
+  gap: .6rem;
+  min-height: 2.15rem;
+  padding: .22rem 0;
+}
+
+.overview-mailboxes-row + .overview-mailboxes-row,
+.overview-mailboxes-note + .overview-mailboxes-row {
+  border-top: 1px solid var(--color-line);
+}
+
+.overview-mailboxes-addr {
+  min-width: 0;
+  overflow: hidden;
+  font-size: .74rem;
+  font-weight: 630;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.overview-mailboxes-cap,
+.overview-mailboxes-sent {
+  color: var(--color-ink-soft);
+  font-size: .7rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.overview-mailboxes-cap.is-na { color: var(--color-ink-faint); }
+
+.overview-mailboxes-chip {
+  width: fit-content;
+  justify-self: start;
+  border-radius: .35rem;
+  background: var(--color-sand);
+  color: var(--color-ink-soft);
+  padding: .24rem .38rem;
+  font-family: var(--font-mono);
+  font-size: .58rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.overview-mailboxes-chip.is-active {
+  background: color-mix(in srgb, var(--color-ok) 10%, var(--color-surface));
+  color: var(--color-ok);
+}
+
+.overview-mailboxes-chip.is-warming {
+  background: var(--color-tide-wash);
+  color: var(--color-tide-deep);
+}
+
+.overview-mailboxes-chip.is-paused {
+  background: color-mix(in srgb, #f59e0b 12%, var(--color-surface));
+  color: #92400e;
+}
+
+.overview-mailboxes-dot {
+  width: .5rem;
+  height: .5rem;
+  justify-self: end;
+  border-radius: 999px;
+  background: var(--color-ok);
+}
+
+.overview-mailboxes-dot.is-warning { background: #b45309; }
+.overview-mailboxes-dot.is-unknown { background: var(--color-ink-faint); }
+
+/* the paused row's reason — a quiet line, amber not red */
+.overview-mailboxes-note {
+  margin: 0;
+  padding: 0 0 .35rem;
+  color: #a45f10;
+  font-size: .68rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  .overview-mailboxes-row { grid-template-columns: minmax(0, 1fr) auto .9rem; }
+  .overview-mailboxes-cap,
+  .overview-mailboxes-sent { display: none; }
+}

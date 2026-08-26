@@ -19,6 +19,7 @@ export default defineConfig({
       '/linkedin': { target: 'http://127.0.0.1:8000', changeOrigin: true },
       '/email': { target: 'http://127.0.0.1:8000', changeOrigin: true },
       '/twitter': { target: 'http://127.0.0.1:8000', changeOrigin: true },
+      '/mailboxes': { target: 'http://127.0.0.1:8000', changeOrigin: true },
       '/api': { target: 'http://127.0.0.1:8000', changeOrigin: true },
     },
   },

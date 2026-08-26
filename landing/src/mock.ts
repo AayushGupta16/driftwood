@@ -119,6 +119,32 @@ if (mockMode) {
       { at: hoursAgo(17), kind: "sent", lead_id: null, lead_name: null, company_name: null, detail: "connection_request" },
     ],
   };
+  // Managed inboxes (GET /mailboxes/overview) are opt-in via ?mock=1&inboxes=1
+  // so the default mock view — the one the baked marketing screenshots are
+  // shot from — stays exactly as it was. Without the flag the fixture serves
+  // an empty pool, which keeps the panel absent (and keeps mock mode from
+  // ever reaching the real backend on this path). Capacity counts the managed
+  // pool only; the UI adds 20/day for the connected mailbox. Each managed
+  // inbox ramps to 20/day over 14 days: 20 active + 20 ready + 10 + 10
+  // warming = 60 now, 80 when warm (the paused inbox carries nothing).
+  const inboxesFlag = params.get("inboxes");
+  const managedInboxes = inboxesFlag && !["0", "off", "false"].includes(inboxesFlag.toLowerCase())
+    ? {
+        capacity: { current_per_day: 60, projected_per_day: 80 },
+        domains: [
+          { name: "autosana-ai.com", status: "active", registered_at: hoursAgo(24 * 40) },
+          { name: "autosanahq.com", status: "active", registered_at: hoursAgo(24 * 6) },
+          { name: "useautosana.com", status: "active", registered_at: hoursAgo(24 * 40) },
+        ],
+        mailboxes: [
+          { address: "yuvan@autosana-ai.com", domain: "autosana-ai.com", status: "active", warming_day: null, warming_days_total: 14, todays_cap: 20, sent_today: 14, health: "good", paused_reason: null },
+          { address: "yuvan.sundrani@autosana-ai.com", domain: "autosana-ai.com", status: "ready", warming_day: null, warming_days_total: 14, todays_cap: 20, sent_today: 0, health: "good", paused_reason: null },
+          { address: "yuvan@autosanahq.com", domain: "autosanahq.com", status: "warming", warming_day: 5, warming_days_total: 14, todays_cap: 10, sent_today: 8, health: "good", paused_reason: null },
+          { address: "yuvan.sundrani@autosanahq.com", domain: "autosanahq.com", status: "warming", warming_day: 5, warming_days_total: 14, todays_cap: 10, sent_today: 7, health: "unknown", paused_reason: null },
+          { address: "yuvan@useautosana.com", domain: "useautosana.com", status: "paused", warming_day: null, warming_days_total: 14, todays_cap: 0, sent_today: 0, health: "warning", paused_reason: "Paused Aug 24 after a bounce spike on this address. Sending resumes automatically once bounce rates settle." },
+        ],
+      }
+    : { capacity: { current_per_day: 0, projected_per_day: 0 }, domains: [], mailboxes: [] };
   const daysAhead = (d: number) =>
     new Date(Date.now() + d * 86400e3).toISOString();
   const dateAhead = (d: number) =>
@@ -1363,6 +1389,7 @@ if (mockMode) {
     ["/auth/me", me],
     ["/api/v1/dashboard/summary", summary],
     ["/api/v1/dashboard/activity", activity],
+    ["/mailboxes/overview", managedInboxes],
   ];
   const realFetch = window.fetch.bind(window);
   window.fetch = (input, init) => {

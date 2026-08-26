@@ -14,6 +14,7 @@ import type { AudienceSummary } from "./audiences/model";
 import { listCampaigns } from "./campaigns/api";
 import type { CampaignSummary } from "./campaigns/model";
 import AppShell from "./dashboard/AppShell";
+import ManagedInboxes from "./dashboard/ManagedInboxes";
 import {
   AssetsIcon,
   AudienceIcon,
@@ -413,6 +414,7 @@ function ApprovedView({ user }: { user: User }) {
       </header>
 
       <ConnectionSetup user={user} isOwner={isOwner} />
+      <ManagedInboxes emailConnected={user.email_connected ?? false} />
       <TodaysSending summary={summary} activity={activity} />
       <MetricsCard state={summary} />
       {canWrite && <QuickActions onImport={openImports} />}
