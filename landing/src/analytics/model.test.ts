@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { mapChannelAnalytics } from "./api.ts";
-import { analyticsDataAfterFailure, appendAnalyticsPage, analyticsWindow, channelLabel, formatMetric } from "./model.ts";
+import { analyticsDataAfterFailure, appendAnalyticsPage, analyticsWindow, channelLabel, formatMetric, formatReplyBody } from "./model.ts";
 
 test("unavailable metrics stay distinct from observed zero", () => {
   assert.equal(formatMetric({ count: null, available: false }), "—");
@@ -38,10 +38,23 @@ test("API mapping preserves people and data quality counters", () => {
       status: "replied",
       occurred_at: "2026-08-20T15:00:00Z",
       source: "linkedin_replies",
+      reply_subject: null,
+      reply_text: "Sure, send it over.",
+    }, {
+      // A backend without reply content omits the fields entirely.
+      lead_id: "lead-2",
+      name: "Ada Osei",
+      title: null,
+      email: null,
+      company_name: null,
+      channel: "email",
+      status: "replied",
+      occurred_at: "2026-08-19T15:00:00Z",
+      source: "email_replies",
     }],
     people_status: "replied",
     people_channel: null,
-    people_total: 1,
+    people_total: 2,
     limit: 100,
     offset: 0,
     unmatched_replies: { linkedin: 1, email: 0, x: 0 },
@@ -53,6 +66,17 @@ test("API mapping preserves people and data quality counters", () => {
   assert.equal(mapped.unmatchedReplies.linkedin, 1);
   assert.equal(mapped.unattributedDemosBooked, 2);
   assert.equal(channelLabel(mapped.people[0].channel), "LinkedIn");
+  assert.equal(mapped.people[0].replySubject, null);
+  assert.equal(mapped.people[0].replyText, "Sure, send it over.");
+  assert.equal(mapped.people[1].replySubject, null);
+  assert.equal(mapped.people[1].replyText, null);
+});
+
+test("reply bodies normalize CRLF and blank-line runs for pre-line rendering", () => {
+  assert.equal(
+    formatReplyBody("Hi,\r\n\r\n\r\n\r\nThanks for reaching out.\r\nBest,\r\nMina\r\n\r\n"),
+    "Hi,\n\nThanks for reaching out.\nBest,\nMina",
+  );
 });
 
 test("analytics pages append without duplicating an overlapping person", () => {

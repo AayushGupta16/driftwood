@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { getChannelAnalytics } from "./api";
 import { InfoIcon, RefreshIcon, TrendIcon } from "./icons";
 import {
@@ -10,6 +10,7 @@ import {
   channelLabel,
   formatMetric,
   formatObservedAt,
+  formatReplyBody,
   statusLabel,
   type AnalyticsChannel,
   type AnalyticsStatus,
@@ -40,6 +41,41 @@ function MetricCell({ metric, unavailable }: { metric: MetricValue; unavailable:
   );
 }
 
+function ReplyContent({ subject, body, expanded, onToggle }: {
+  subject: string | null;
+  body: string;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  const bodyRef = useRef<HTMLParagraphElement | null>(null);
+  const [clamped, setClamped] = useState(false);
+
+  /* Only offer "Show more" when the two-line clamp is actually hiding text. */
+  useLayoutEffect(() => {
+    const element = bodyRef.current;
+    if (!element || expanded) return;
+    const measure = () => setClamped(element.scrollHeight > element.clientHeight + 1);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [body, expanded]);
+
+  return (
+    <div className="analytics-reply">
+      {subject ? <p className="analytics-reply-subject">{subject}</p> : null}
+      <p ref={bodyRef} className={expanded ? "analytics-reply-body is-expanded" : "analytics-reply-body"}>
+        {body}
+      </p>
+      {expanded || clamped ? (
+        <button type="button" className="analytics-reply-toggle" aria-expanded={expanded} onClick={onToggle}>
+          {expanded ? "Show less" : "Show more"}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 export default function AnalyticsDashboard() {
   const [days, setDays] = useState(30);
   const [channel, setChannel] = useState<AnalyticsChannel | null>(null);
@@ -50,13 +86,26 @@ export default function AnalyticsDashboard() {
   const [offset, setOffset] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [expandedReplies, setExpandedReplies] = useState<ReadonlySet<string>>(new Set());
 
+  const toggleReply = useCallback((key: string) => {
+    setExpandedReplies((current) => {
+      const next = new Set(current);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }, []);
+
+  /* Every fresh load (refresh, window, filters) collapses the replies again;
+     paging in more people (offset) keeps what the reader opened. */
   const load = useCallback(() => {
     setLoading(true);
     setLoadingMore(false);
     setData(null);
     setOffset(0);
     setError(null);
+    setExpandedReplies(new Set());
     setRefreshKey((value) => value + 1);
   }, []);
 
@@ -115,6 +164,7 @@ export default function AnalyticsDashboard() {
                 setData(null);
                 setError(null);
                 setOffset(0);
+                setExpandedReplies(new Set());
                 setDays(Number(event.target.value));
               }}
             >
@@ -190,6 +240,7 @@ export default function AnalyticsDashboard() {
                   setData(null);
                   setError(null);
                   setOffset(0);
+                  setExpandedReplies(new Set());
                   setChannel(
                     event.target.value === "all"
                       ? null
@@ -217,6 +268,7 @@ export default function AnalyticsDashboard() {
                 setData(null);
                 setError(null);
                 setOffset(0);
+                setExpandedReplies(new Set());
                 setStatus(option);
               }}
             >
@@ -237,17 +289,35 @@ export default function AnalyticsDashboard() {
               </tr>
             </thead>
             <tbody aria-busy={loading}>
-              {data?.people.map((person, index) => (
-                <tr key={`${person.leadId ?? "unmatched"}-${person.channel}-${index}`}>
-                  <td>
-                    <strong>{person.name ?? "Removed lead"}</strong>
-                    <span>{person.title ?? person.email ?? "Details unavailable"}</span>
-                  </td>
-                  <td>{person.companyName ?? "—"}</td>
-                  <td><span className={`analytics-channel-tag is-${person.channel ?? "unknown"}`}>{channelLabel(person.channel)}</span></td>
-                  <td>{formatObservedAt(person.occurredAt)}</td>
-                </tr>
-              ))}
+              {data?.people.map((person, index) => {
+                const rowKey = `${person.leadId ?? "unmatched"}-${person.channel}-${index}`;
+                const replyBody = person.replyText ? formatReplyBody(person.replyText) : "";
+                return (
+                  <Fragment key={rowKey}>
+                    <tr className={replyBody ? "analytics-has-reply" : undefined}>
+                      <td>
+                        <strong>{person.name ?? "Removed lead"}</strong>
+                        <span>{person.title ?? person.email ?? "Details unavailable"}</span>
+                      </td>
+                      <td>{person.companyName ?? "—"}</td>
+                      <td><span className={`analytics-channel-tag is-${person.channel ?? "unknown"}`}>{channelLabel(person.channel)}</span></td>
+                      <td>{formatObservedAt(person.occurredAt)}</td>
+                    </tr>
+                    {replyBody ? (
+                      <tr className="analytics-reply-row">
+                        <td colSpan={4}>
+                          <ReplyContent
+                            subject={person.replySubject}
+                            body={replyBody}
+                            expanded={expandedReplies.has(rowKey)}
+                            onToggle={() => toggleReply(rowKey)}
+                          />
+                        </td>
+                      </tr>
+                    ) : null}
+                  </Fragment>
+                );
+              })}
             </tbody>
           </table>
         </div>

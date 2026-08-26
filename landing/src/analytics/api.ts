@@ -32,6 +32,9 @@ type RawMetricPerson = {
   status: AnalyticsStatus;
   occurred_at: string;
   source: string;
+  /* Optional so the UI tolerates a backend that predates reply content. */
+  reply_subject?: string | null;
+  reply_text?: string | null;
 };
 
 type RawChannelAnalytics = {
@@ -79,6 +82,8 @@ function mapPerson(row: RawMetricPerson): MetricPerson {
     status: row.status,
     occurredAt: row.occurred_at,
     source: row.source,
+    replySubject: row.reply_subject ?? null,
+    replyText: row.reply_text ?? null,
   };
 }
 
