@@ -39,6 +39,8 @@ export type MetricPerson = {
   status: AnalyticsStatus;
   occurredAt: string;
   source: string;
+  replySubject: string | null;
+  replyText: string | null;
 };
 
 export type ChannelAnalytics = {
@@ -90,6 +92,12 @@ export function formatObservedAt(value: string): string {
     hour: "numeric",
     minute: "2-digit",
   }).format(date);
+}
+
+/* Reply bodies arrive with \r\n line endings and auto-replies pad with runs
+   of blank lines; normalize so `white-space: pre-line` renders them sanely. */
+export function formatReplyBody(text: string): string {
+  return text.replace(/\r\n?/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
 }
 
 export function analyticsWindow(days: number, now = new Date()) {

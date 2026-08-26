@@ -157,6 +157,40 @@
 .analytics-channel-tag.is-linkedin { border-color: color-mix(in srgb, var(--color-tide) 26%, var(--color-line)); color: var(--color-tide-deep); }
 .analytics-channel-tag.is-email { border-color: color-mix(in srgb, var(--color-ok) 30%, var(--color-line)); color: var(--color-ok); }
 
+/* Reply content under a Replied row: a quiet quote block, clamped until opened. */
+.analytics-people-table tr.analytics-has-reply td { border-bottom: 0; padding-bottom: 0.35rem; }
+.analytics-people-table .analytics-reply-row td { padding-top: 0; }
+.analytics-reply {
+  max-width: 46rem;
+  border-left: 2px solid color-mix(in srgb, var(--color-tide) 30%, var(--color-line));
+  padding: 0.1rem 0 0.1rem 0.75rem;
+}
+.analytics-reply p { margin: 0; }
+.analytics-reply-subject { color: var(--color-ink); font-size: 0.72rem; font-weight: 620; }
+.analytics-reply-subject + .analytics-reply-body { margin-top: 0.25rem; }
+.analytics-reply-body {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  color: var(--color-ink-soft);
+  font-size: 0.73rem;
+  line-height: 1.55;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.analytics-reply-body.is-expanded { display: block; overflow: visible; }
+.analytics-reply-toggle {
+  margin-top: 0.3rem;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--color-tide);
+  font: 600 0.68rem/1 var(--font-sans);
+  cursor: pointer;
+}
+.analytics-reply-toggle:hover { color: var(--color-tide-deep); }
+
 .analytics-empty { display: grid; min-height: 11rem; place-items: center; align-content: center; gap: 0.45rem; color: var(--color-ink-soft); text-align: center; }
 .analytics-empty strong { color: var(--color-ink); font-size: 0.82rem; }
 .analytics-empty p { margin: 0; font-size: 0.72rem; }
