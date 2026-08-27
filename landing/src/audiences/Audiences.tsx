@@ -14,6 +14,7 @@ import {
   getAudience,
   listAudiences,
   uploadLeadList,
+  renameAudience,
 } from "./api";
 import {
   EMPTY_FILTERS,
@@ -70,6 +71,9 @@ export default function Audiences() {
   const [providerStatusLoading, setProviderStatusLoading] = useState(true);
   const [importing, setImporting] = useState(false);
   const [importName, setImportName] = useState("");
+  const [renameDraft, setRenameDraft] = useState<string | null>(null);
+  const [dragActive, setDragActive] = useState(false);
+  const [renaming, setRenaming] = useState(false);
   const [importNotice, setImportNotice] = useState<LeadImportNotice | null>(null);
   const [selectedRecords, setSelectedRecords] = useState<Set<string>>(new Set());
   const [discovering, setDiscovering] = useState(false);
@@ -183,10 +187,43 @@ export default function Audiences() {
     }
   }
 
-  async function handleLeadUpload(event: ChangeEvent<HTMLInputElement>) {
+  async function submitRename(audience: Audience) {
+    const name = (renameDraft ?? "").trim();
+    setRenameDraft(null);
+    if (!name || name === audience.name || renaming) return;
+    setRenaming(true);
+    setError(null);
+    try {
+      const updated = await renameAudience(audience.id, name);
+      setSelectedAudience(updated);
+      setAudiences(await listAudiences());
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Rename failed.");
+    } finally {
+      setRenaming(false);
+    }
+  }
+
+  function handleLeadUpload(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     event.target.value = "";
-    if (!file || importing) return;
+    if (file) void importLeadFile(file);
+  }
+
+  /* Drag-and-drop: any .csv dropped anywhere on the builder workbench runs
+     the same import as the Upload CSV button. */
+  function handleBuilderDrop(event: React.DragEvent<HTMLElement>) {
+    event.preventDefault();
+    setDragActive(false);
+    const file = [...(event.dataTransfer?.files ?? [])].find((f) =>
+      f.name.toLowerCase().endsWith(".csv"),
+    );
+    if (file) void importLeadFile(file);
+    else setImportNotice({ kind: "error", message: "Drop a .csv file." });
+  }
+
+  async function importLeadFile(file: File) {
+    if (importing) return;
     setImporting(true);
     setImportNotice(null);
     try {
@@ -290,7 +327,25 @@ export default function Audiences() {
       visibleCandidates.length > 0 &&
       visibleCandidates.every((candidate) => selectedRecords.has(candidate.providerRecordId));
     return (
-      <section className="audience-builder-workbench" aria-labelledby="audience-builder-heading">
+      <section
+        className={`audience-builder-workbench ${dragActive ? "is-dropping" : ""}`}
+        aria-labelledby="audience-builder-heading"
+        onDragOver={(e) => {
+          if ([...(e.dataTransfer?.items ?? [])].some((i) => i.kind === "file")) {
+            e.preventDefault();
+            setDragActive(true);
+          }
+        }}
+        onDragLeave={(e) => {
+          if (e.currentTarget === e.target) setDragActive(false);
+        }}
+        onDrop={handleBuilderDrop}
+      >
+        {dragActive && (
+          <div className="audience-dropzone-overlay" aria-hidden="true">
+            Drop CSV to import leads
+          </div>
+        )}
         <div className="audience-builder-canvas">
           <header className="audience-builder-bar">
             <button className="audience-builder-back" type="button" onClick={() => setView("library")} aria-label="Back to audiences">
@@ -461,7 +516,38 @@ export default function Audiences() {
           ) : selectedAudience ? (
             <>
               <div className="audience-detail-head">
-                <div><span>{providerLabel(selectedAudience.sourceProvider)}</span><h2>{selectedAudience.name}</h2><p>{selectedAudience.description || "No description added."}</p></div>
+                <div>
+                  <span>{providerLabel(selectedAudience.sourceProvider)}</span>
+                  {canWrite && renameDraft !== null ? (
+                    <input
+                      className="audience-rename-input"
+                      value={renameDraft}
+                      autoFocus
+                      aria-label="Audience name"
+                      onChange={(e) => setRenameDraft(e.target.value)}
+                      onBlur={() => void submitRename(selectedAudience)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") void submitRename(selectedAudience);
+                        if (e.key === "Escape") setRenameDraft(null);
+                      }}
+                    />
+                  ) : (
+                    <h2>
+                      {selectedAudience.name}
+                      {canWrite && (
+                        <button
+                          className="audience-rename-button"
+                          type="button"
+                          aria-label={`Rename ${selectedAudience.name}`}
+                          onClick={() => setRenameDraft(selectedAudience.name)}
+                        >
+                          rename
+                        </button>
+                      )}
+                    </h2>
+                  )}
+                  <p>{selectedAudience.description || "No description added."}</p>
+                </div>
                 {canWrite && (
                   <div className="audience-detail-actions">
                     <button ref={campaignButtonRef} className="audience-secondary audience-build-campaign" type="button" onClick={() => void startCampaign(selectedAudience)} disabled={campaignCreating} data-testid="build-audience-campaign">

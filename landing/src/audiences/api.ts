@@ -226,6 +226,17 @@ export async function createAudience(input: SaveAudienceInput): Promise<Audience
   return mapAudience(body);
 }
 
+export async function renameAudience(
+  id: string,
+  name: string,
+): Promise<Audience> {
+  const body = await requestJson<RawAudience>(
+    `/api/v1/dashboard/audiences/${encodeURIComponent(id)}`,
+    { method: "PATCH", body: JSON.stringify({ name }) },
+  );
+  return mapAudience(body);
+}
+
 export async function updateAudience(
   id: string,
   input: SaveAudienceInput,

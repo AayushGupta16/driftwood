@@ -1258,6 +1258,15 @@ if (mockMode) {
     }
     const audienceId = decodeURIComponent(suffix);
     const audience = mockAudiences.find((item) => item.id === audienceId);
+    if (method === "PATCH" && audience) {
+      const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
+      if (typeof body.name === "string" && body.name.trim())
+        audience.name = body.name.trim();
+      if (typeof body.description === "string")
+        audience.description = body.description;
+      audience.updated_at = new Date().toISOString();
+      return { ...audienceSummary(audience), discovery_filters: audience.discovery_filters, members: audience.members };
+    }
     if (method === "DELETE") {
       const index = mockAudiences.findIndex((item) => item.id === audienceId);
       if (index >= 0) {
