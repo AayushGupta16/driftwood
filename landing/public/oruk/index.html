@@ -23,7 +23,9 @@ input:focus{outline:2px solid var(--accent);outline-offset:1px}
 #result{display:none;flex-direction:column;gap:1rem}#result.on{display:flex}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:1rem 1.1rem}
 .card .k{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-.card h2{margin:.2rem 0 0;font-family:"Instrument Serif",Georgia,serif;font-weight:400;font-size:1.7rem}
+.rh{display:flex;align-items:center;gap:.7rem;margin-top:.3rem}
+.rh img{width:44px;height:44px;border-radius:10px;background:#fff;object-fit:contain;padding:5px;box-sizing:border-box;flex:none}
+.card h2{margin:0;font-family:"Instrument Serif",Georgia,serif;font-weight:400;font-size:1.7rem}
 .card p{margin:.4rem 0 0;color:var(--muted);font-size:.9rem;line-height:1.45}
 video{width:100%;border-radius:18px;background:#000;display:block;aspect-ratio:9/16}
 @media (orientation: landscape) and (min-width: 700px){ main{max-width:64rem} video{aspect-ratio:16/9} }
@@ -40,7 +42,7 @@ video{width:100%;border-radius:18px;background:#000;display:block;aspect-ratio:9
 <div><h1>See oruk hear your customers.</h1><p class="sub">Type your company. We made a 30-second demo of oruk running on it.</p></div>
 <div class="field"><input id="q" type="text" placeholder="Your company" autocomplete="off" autocapitalize="words" aria-label="Your company"><div class="list" id="list"></div></div>
 <div id="result">
-  <div class="card"><span class="k" id="rk">Your demo</span><h2 id="rn"></h2><p id="rp"></p></div>
+  <div class="card"><span class="k" id="rk">Your demo</span><div class="rh"><img id="rlogo" alt="" style="display:none"><h2 id="rn"></h2></div><p id="rp"></p></div>
   <video id="v" controls playsinline preload="metadata"></video>
   <div class="cta"><a class="btn" href="https://oruk.ai/waitlist">Get $50 of oruk credit, no card</a><a class="btn ghost" href="mailto:nathan@oruk.ai?subject=oruk%20demo">Talk to Nathan</a></div>
   <div class="capture" id="cap"><input id="em" type="email" placeholder="Email for your company’s demo"><a class="btn" href="#" id="capSend">Send</a></div>
