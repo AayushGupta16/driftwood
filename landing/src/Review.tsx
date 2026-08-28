@@ -6,6 +6,15 @@ import AppShell from "./dashboard/AppShell";
 import { EmailPreview } from "./EmailPreview";
 import { emailBodySummary } from "./email-preview";
 import { withMockMode } from "./mock-mode";
+import {
+  DEFAULT_SENT_QUERY,
+  sendKindChips,
+  sendKindLabel,
+  sendKindRank,
+  sentLedgerQuery,
+  type SentOrder,
+  type SentQuery,
+} from "./sends-model";
 import "./review-queue.css";
 
 /* /dashboard/review — the founder's chronological decision inbox. The scan
@@ -75,6 +84,10 @@ type SendsPageData = {
   limit: number;
   offset: number;
   counts: { pending: number; sending: number; failed: number; sent?: number };
+  // Per-kind census of the requested view's whole population (filter- and
+  // pagination-independent). Optional: tolerate a backend that predates it —
+  // the sent tab's filter controls only render when it's present.
+  kind_counts?: Record<string, number>;
 };
 
 type CancelResult = {
@@ -298,17 +311,6 @@ function kindLabel(kind: string): string {
   return kind;
 }
 
-/* ScheduledSend kinds use the stats-strip vocabulary, not the review-item
-   one — same human labels either way. */
-function sendKindLabel(kind: string): string {
-  if (kind === "message") return "message";
-  if (kind === "connection_request") return "connection";
-  if (kind === "email") return "email";
-  if (kind === "x_dm") return "X DM";
-  if (kind === "x_follow") return "X follow";
-  return kind;
-}
-
 /* Failure classes → the human tail of the red status line ("failed ·
    already connected"); null (rows from before classification) renders bare
    "failed". Quota failures now defer server-side instead of failing, so
@@ -381,14 +383,6 @@ function salvagedDemoSlug(item: ReviewItemRow): string | null {
   return match ? match[1] : null;
 }
 
-/* Same convention for the queued tab's send kinds. */
-const SEND_KIND_ORDER = ["connection_request", "message", "email"];
-
-function sendKindRank(kind: string): number {
-  const i = SEND_KIND_ORDER.indexOf(kind);
-  return i === -1 ? SEND_KIND_ORDER.length : i;
-}
-
 /* Pull the human-readable error out of the backend's envelope
    ({"error": {"code", "detail"}}) — e.g. the 409 linkedin_not_connected
    message — falling back to a generic line. Decide and cancel share the
@@ -454,6 +448,16 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
     status: "loading",
   });
   const [sentState, setSentState] = useState<SentState>({ status: "loading" });
+  const [sentQuery, setSentQuery] = useState<SentQuery>(DEFAULT_SENT_QUERY);
+  /* The ledger's census + all-time total live outside sentState so the
+     chips and the tab count hold steady while a filter refetch is in
+     flight. null until the first load (or on a backend that predates
+     kind_counts — the controls stay hidden then). */
+  const [sentKindCounts, setSentKindCounts] = useState<Record<
+    string,
+    number
+  > | null>(null);
+  const [sentAllTotal, setSentAllTotal] = useState<number | null>(null);
   const [sortMode, setSortMode] = useState<SortMode>("kind");
   const toast = useToast();
 
@@ -525,28 +529,47 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
     }
   }, []);
 
-  /* The delivered ledger (view=sent): first page is enough for the tab —
-     newest 100 with the all-time total in the label. */
-  const loadSent = useCallback(async () => {
+  /* The delivered ledger (view=sent): one page is enough for the tab —
+     100 rows with the all-time total in the label. The ledger pages, so the
+     kind filter and sort are server-side (`kind`/`order` params) — a
+     client-side filter over the newest 100 would lie about the rest. */
+  const loadSent = useCallback(async (query: SentQuery) => {
     try {
-      const res = await fetch("/api/v1/dashboard/sends?view=sent&limit=100", {
-        credentials: "include",
-      });
+      const res = await fetch(
+        `/api/v1/dashboard/sends?${sentLedgerQuery(query, 100)}`,
+        { credentials: "include" },
+      );
       if (!res.ok) throw new Error("request failed");
       const page = (await res.json()) as SendsPageData;
       setSentState({ status: "ready", sends: page.sends, total: page.total });
+      setSentKindCounts(page.kind_counts ?? null);
+      setSentAllTotal(page.counts.sent ?? page.total);
     } catch {
-      setSentState((prev) =>
-        prev.status === "ready" ? prev : { status: "error" },
-      );
+      setSentState({ status: "error" });
     }
   }, []);
 
   useEffect(() => {
     void (async () => {
-      await Promise.all([loadAll(), loadAllSends(), loadSent()]);
+      await Promise.all([loadAll(), loadAllSends()]);
     })();
-  }, [loadAll, loadAllSends, loadSent]);
+  }, [loadAll, loadAllSends]);
+
+  /* Re-fetches on every filter/sort change; the first run doubles as the
+     initial load. The loading flip lives in changeSentQuery (an event
+     handler), so the effect itself never sets state synchronously. */
+  useEffect(() => {
+    void (async () => {
+      await loadSent(sentQuery);
+    })();
+  }, [loadSent, sentQuery]);
+
+  /* Filter/sort switch: show the spinner for the refetch instead of the
+     previous query's rows. */
+  function changeSentQuery(next: SentQuery) {
+    setSentQuery(next);
+    setSentState({ status: "loading" });
+  }
 
   /* Re-pull just the stats strip after a decide — approvals turn into
      ScheduledSend rows server-side, so "queued" moves immediately. Items are
@@ -801,7 +824,7 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
         />
         <TabButton
           label="Sent"
-          count={sentState.status === "ready" ? sentState.total : null}
+          count={sentAllTotal}
           active={tab === "sent"}
           onClick={() => switchTab("sent")}
         />
@@ -1036,6 +1059,18 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
           />
         ))}
 
+      {/* The filter/sort strip renders once the census is known (and stays
+          put during filter refetches); an empty ledger needs no controls. */}
+      {tab === "sent" &&
+        sentKindCounts !== null &&
+        (sentAllTotal ?? 0) > 0 && (
+          <SentControls
+            kindCounts={sentKindCounts}
+            query={sentQuery}
+            onChange={changeSentQuery}
+          />
+        )}
+
       {tab === "sent" && sentState.status === "loading" && (
         <div className="flex items-center justify-center py-16">
           <span
@@ -1056,8 +1091,9 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
         sentState.status === "ready" &&
         (sentState.sends.length === 0 ? (
           <p className="m-0 mt-8 text-[14px] text-ink-soft">
-            Nothing delivered yet — approved sends land here once the
-            dispatcher delivers them.
+            {sentQuery.kind !== null
+              ? "No delivered sends of this type."
+              : "Nothing delivered yet — approved sends land here once the dispatcher delivers them."}
           </p>
         ) : (
           <SentLedger sends={sentState.sends} total={sentState.total} />
@@ -1067,6 +1103,61 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
 }
 
 /* ---------- the delivered ledger (Sent tab) ---------- */
+
+/* The ledger's filter/sort strip: the queued tab's kind chips (narrowing is
+   server-side — the ledger pages) plus a newest/oldest sort. Chip counts are
+   the whole ledger's per-kind census, so they hold steady under an active
+   filter; tapping the active chip clears it. */
+function SentControls({
+  kindCounts,
+  query,
+  onChange,
+}: {
+  kindCounts: Record<string, number>;
+  query: SentQuery;
+  onChange: (query: SentQuery) => void;
+}) {
+  const chips = sendKindChips(kindCounts);
+  const total = chips.reduce((sum, chip) => sum + chip.count, 0);
+  return (
+    <div
+      role="group"
+      aria-label="Filter by type"
+      className="mx-0.5 mt-[18px] flex flex-wrap items-center gap-2"
+    >
+      <FilterChip
+        label="all"
+        count={total}
+        active={query.kind === null}
+        onClick={() => onChange({ ...query, kind: null })}
+      />
+      {chips.map(({ kind, count }) => (
+        <FilterChip
+          key={kind}
+          label={sendKindLabel(kind)}
+          count={count}
+          active={query.kind === kind}
+          onClick={() =>
+            onChange({ ...query, kind: query.kind === kind ? null : kind })
+          }
+        />
+      ))}
+      <label className="ml-auto inline-flex items-center gap-2 text-[12.5px] text-ink-soft">
+        sort
+        <select
+          value={query.order}
+          onChange={(e) =>
+            onChange({ ...query, order: e.target.value as SentOrder })
+          }
+          className="rounded-lg border border-line bg-surface px-2 py-1 text-[12.5px] text-ink"
+        >
+          <option value="newest">newest first</option>
+          <option value="oldest">oldest first</option>
+        </select>
+      </label>
+    </div>
+  );
+}
 
 /* Every delivered send, newest first: who it went to, through what channel,
    and the exact frozen copy that went out — the after-the-fact answer to
@@ -1105,9 +1196,18 @@ function SentLedger({ sends, total }: { sends: SendRow[]; total: number }) {
               {send.sent_at ? statsTime(send.sent_at) : "sent"}
             </span>
           </summary>
-          <pre className="mt-3 whitespace-pre-wrap border-t border-line pt-3 font-sans text-[13px] leading-relaxed text-ink">
-            {send.note}
-          </pre>
+          {/* Emails render through the recipient-facing preview (the queued
+              tab's renderer) — the ledger shows what the recipient saw, not
+              the raw transport text with its image markers. */}
+          {send.kind === "email" ? (
+            <div className="mt-3 border-t border-line pt-3">
+              <EmailPreview subject={send.subject} body={send.note} />
+            </div>
+          ) : (
+            <pre className="mt-3 whitespace-pre-wrap border-t border-line pt-3 font-sans text-[13px] leading-relaxed text-ink">
+              {send.note}
+            </pre>
+          )}
         </details>
       ))}
     </div>

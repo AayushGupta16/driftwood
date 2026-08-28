@@ -199,6 +199,27 @@ if (mockMode) {
       due_at: hoursAgo(50), projected_date: null, created_at: hoursAgo(52),
       sent_at: hoursAgo(49),
     },
+    {
+      id: "sl3", batch_id: "sb0", kind: "connection_request",
+      note: "hey riley \u2014 saw anchorpoint's reconciliation launch. building agents that do outbound the way founders do it by hand. would love to connect.",
+      subject: null, attachment_slug: null,
+      lead: lead("Riley Chen", "Cofounder", "Anchorpoint"),
+      status: "sent", error: null, error_class: null,
+      due_at: hoursAgo(75), projected_date: null, created_at: hoursAgo(76),
+      sent_at: hoursAgo(74),
+    },
+    // An email whose body carries the linked-image transport marker \u2014 the
+    // sent ledger must render it as recipient-facing media, never as the
+    // raw markdown line.
+    {
+      id: "sl4", batch_id: "sb0", kind: "email",
+      subject: "Working demo of the checkout fix",
+      note: "Hey Priya,\n\nBuilt Northstar a working demo of the checkout fix \u2014 19 seconds, real data.\n\n[![Northstar checkout demo](https://driftwood.sh/case-autosana-poster.webp)](https://driftwood.sh/customers/autosana)\n\nWorth a look?\n\nBest,\nYuvan",
+      attachment_slug: null, lead: lead("Priya Patel", "Head of Growth", "Northstar"),
+      status: "sent", error: null, error_class: null,
+      due_at: hoursAgo(100), projected_date: null, created_at: hoursAgo(101),
+      sent_at: hoursAgo(99),
+    },
   ];
   const reviews = {
     counts: {
@@ -330,6 +351,33 @@ if (mockMode) {
     ],
     total: 8, limit: 100, offset: 0,
     counts: { pending: 5, sending: 1, failed: 2, sent: 2 },
+  };
+  // GET /sends mirrors the real endpoint's contract: view=sent serves the
+  // delivered ledger with server-side kind filtering + newest/oldest order,
+  // and both views carry kind_counts (the census behind the filter chips,
+  // kind-filter- and pagination-independent).
+  const kindCensus = (rows: { kind: string }[]) => {
+    const census: Record<string, number> = {};
+    for (const row of rows) census[row.kind] = (census[row.kind] ?? 0) + 1;
+    return census;
+  };
+  const sendsApi = (_init?: RequestInit, url?: string) => {
+    const params = new URL(url ?? "", location.origin).searchParams;
+    if (params.get("view") !== "sent")
+      return { ...sends, kind_counts: kindCensus(sends.sends) };
+    const kind = params.get("kind");
+    const rows = sentLedger
+      .filter((row) => kind === null || row.kind === kind)
+      .sort((a, b) =>
+        params.get("order") === "oldest"
+          ? a.sent_at.localeCompare(b.sent_at)
+          : b.sent_at.localeCompare(a.sent_at),
+      );
+    return {
+      sends: rows, total: rows.length, limit: 100, offset: 0,
+      counts: { ...sends.counts, sent: sentLedger.length },
+      kind_counts: kindCensus(sentLedger),
+    };
   };
   // Bodies may be functions of the request init so POST results can echo the
   // request (e.g. cancel reports how many ids it was sent).
@@ -1499,14 +1547,7 @@ if (mockMode) {
     ["/api/v1/admin/probes/dashboard", probesNotFound],
     ["/api/v1/dashboard/sends/cancel", cancelSends],
     ["/api/v1/dashboard/sends/dismiss", dismissSends],
-    [
-      "/api/v1/dashboard/sends",
-      (_init?: RequestInit, url?: string) =>
-        url?.includes("view=sent")
-          ? { sends: sentLedger, total: sentLedger.length, limit: 100, offset: 0,
-              counts: { ...sends.counts, sent: sentLedger.length } }
-          : sends,
-    ],
+    ["/api/v1/dashboard/sends", sendsApi],
     ["/api/v1/dashboard/reviews/decide", decideReviews],
     ["/api/v1/dashboard/reviews", reviews],
     ["/auth/me", me],
