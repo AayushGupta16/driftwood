@@ -7,6 +7,7 @@ export type DashboardSection =
   | "companies"
   | "assets"
   | "review"
+  | "team"
   | "admin-agents"
   | "admin-search"
   | "admin-fleet"
@@ -49,6 +50,7 @@ const CUSTOMER_WORKSPACE: NavItem[] = [
   { id: "companies", label: "Companies", href: "/dashboard/companies", icon: "companies" },
   { id: "assets", label: "Assets", href: "/dashboard/assets", icon: "assets" },
   { id: "review", label: "Review queue", href: "/dashboard/review", icon: "review" },
+  { id: "team", label: "Team", href: "/dashboard/team", icon: "people" },
 ];
 
 const ADMIN_INTERNAL: NavItem[] = [

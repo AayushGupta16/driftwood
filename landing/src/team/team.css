@@ -1,0 +1,52 @@
+/* Workspace team panel */
+.team-members { padding: 0.4rem 1rem; }
+.team-member-row {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--color-line);
+}
+.team-member-row:last-child { border-bottom: none; }
+.team-member-row > div:first-child { flex: 1; }
+.team-role {
+  font-size: 0.7rem;
+  font-weight: 650;
+  padding: 0.1rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-line);
+  color: var(--color-ink-soft);
+}
+.team-role.is-owner { color: var(--color-tide); border-color: var(--color-tide); }
+.team-invited { font-size: 0.72rem; color: var(--color-ink-faint); }
+.team-remove {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-alert);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.team-invite { padding: 0.9rem 1rem; display: flex; flex-direction: column; gap: 0.55rem; }
+.team-invite-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.team-invite-row input, .team-invite-row select {
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.85rem;
+  color: var(--color-ink);
+  background: var(--color-surface);
+}
+.team-invite-row input { min-width: 240px; }
+.team-invite-row button {
+  border-radius: 999px;
+  border: none;
+  background: var(--color-tide);
+  color: white;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.35rem 1.1rem;
+  cursor: pointer;
+}
+.team-invite-row button:disabled { opacity: 0.5; cursor: default; }

@@ -22,6 +22,7 @@ const Audiences = lazy(() => import('./audiences/Audiences.tsx'))
 const Assets = lazy(() => import('./assets/Assets.tsx'))
 const AnalyticsDashboard = lazy(() => import('./analytics/AnalyticsDashboard.tsx'))
 const WorkspacePage = lazy(() => import('./dashboard/WorkspacePage.tsx'))
+const Team = lazy(() => import('./team/Team.tsx'))
 // Pricing is parked for now; re-enable by restoring the route below.
 // const Pricing = lazy(() => import('./Pricing.tsx'))
 
@@ -46,6 +47,8 @@ const page =
     <Campaigns />
   ) : campaignPathMatch ? (
     <CampaignBuilder campaignId={decodeURIComponent(campaignPathMatch[1])} />
+  ) : path === '/dashboard/team' ? (
+    <WorkspacePage active="team"><Team /></WorkspacePage>
   ) : path === '/dashboard/leads' ? (
     <Leads />
   ) : path === '/dashboard/companies' ? (

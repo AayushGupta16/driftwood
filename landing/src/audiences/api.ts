@@ -226,6 +226,39 @@ export async function createAudience(input: SaveAudienceInput): Promise<Audience
   return mapAudience(body);
 }
 
+export async function findSimilarPeople(id: string): Promise<DiscoveryResult> {
+  const body = await requestJson<{
+    provider: string;
+    provider_label: string;
+    candidates: RawCandidate[];
+  }>(`/api/v1/dashboard/audiences/${encodeURIComponent(id)}/similar`, {
+    method: "POST",
+    body: JSON.stringify({}),
+  });
+  return {
+    provider: body.provider,
+    providerLabel: body.provider_label,
+    candidates: body.candidates.map(mapCandidate),
+  };
+}
+
+export async function growAudience(
+  id: string,
+  input: { providerRecordIds: string[]; leadIds: string[] },
+): Promise<Audience> {
+  const body = await requestJson<RawAudience>(
+    `/api/v1/dashboard/audiences/${encodeURIComponent(id)}/grow`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        provider_record_ids: input.providerRecordIds,
+        lead_ids: input.leadIds,
+      }),
+    },
+  );
+  return mapAudience(body);
+}
+
 export async function renameAudience(
   id: string,
   name: string,

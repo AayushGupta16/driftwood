@@ -45,6 +45,8 @@ type CompanyRow = {
   location: string | null;
   source: string | null;
   lead_count: number;
+  contacted_lead_count: number;
+  last_sent_at: string | null;
   last_verified_at: string | null;
   created_at: string;
   updated_at: string;
@@ -437,6 +439,8 @@ function CompaniesTable({ canWrite }: { canWrite: boolean }) {
                           <th className={TH}>Employees</th>
                           <th className={TH}>Funding stage</th>
                           <th className={TH}>QA headcount</th>
+                          <th className={TH}>Contacted</th>
+                          <th className={TH}>Last sent</th>
                           <th className={TH}>Leads</th>
                           <th className={TH}>Last verified</th>
                           <th className={`${TH} text-right`}>
@@ -492,6 +496,20 @@ function CompaniesTable({ canWrite }: { canWrite: boolean }) {
                               <td className={`${TD} tabular-nums`}>
                                 {company.qa_headcount !== null ? (
                                   company.qa_headcount.toLocaleString()
+                                ) : (
+                                  <Dash />
+                                )}
+                              </td>
+                              <td className={`${TD} tabular-nums`}>
+                                {company.contacted_lead_count > 0 ? (
+                                  `${company.contacted_lead_count.toLocaleString()}/${company.lead_count.toLocaleString()}`
+                                ) : (
+                                  <Dash />
+                                )}
+                              </td>
+                              <td className={TD}>
+                                {company.last_sent_at ? (
+                                  relativeTime(company.last_sent_at)
                                 ) : (
                                   <Dash />
                                 )}

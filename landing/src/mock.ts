@@ -1117,6 +1117,8 @@ if (mockMode) {
     location: "United States",
     source: index < 3 ? "orange-slice:ocean" : "workspace",
     lead_count: 1,
+    contacted_lead_count: index < 3 ? 1 : 0,
+    last_sent_at: index < 3 ? hoursAgo(6 + index * 3) : null,
     last_verified_at: hoursAgo(24 + index),
     created_at: hoursAgo(72 + index),
     updated_at: hoursAgo(4 + index),
@@ -1256,6 +1258,46 @@ if (mockMode) {
       mockAudiences.unshift(created);
       return { ...audienceSummary(created), discovery_filters: created.discovery_filters, members: created.members };
     }
+    if (suffix.endsWith("/similar")) {
+      return {
+        provider: "orange_slice",
+        provider_label: "Orange Slice",
+        candidates: [
+          {
+            provider_record_id: "sim-1", lead_id: null, name: "Robin Lookalike",
+            title: "Fleet Operations Lead", company: "Parallel Rentals",
+            company_domain: "parallelrentals.example", email: null,
+            linkedin_url: "https://www.linkedin.com/in/robin-lookalike", stage: "new",
+          },
+          {
+            provider_record_id: "sim-2", lead_id: null, name: "Jules Adjacent",
+            title: "Head of Growth", company: "Nearmiss Mobility",
+            company_domain: "nearmiss.example", email: null,
+            linkedin_url: "https://www.linkedin.com/in/jules-adjacent", stage: "new",
+          },
+        ],
+      };
+    }
+    if (suffix.endsWith("/grow")) {
+      const audienceId = decodeURIComponent(suffix.replace(/\/grow$/, ""));
+      const audience = mockAudiences.find((item) => item.id === audienceId);
+      if (!audience) return {};
+      const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
+      const ids: string[] = Array.isArray(body.provider_record_ids) ? body.provider_record_ids : [];
+      for (const rid of ids) {
+        if (audience.members.some((m) => m.linkedin_url?.includes(rid))) continue;
+        audience.members.push({
+          lead_id: crypto.randomUUID(),
+          name: rid === "sim-1" ? "Robin Lookalike" : "Jules Adjacent",
+          title: rid === "sim-1" ? "Fleet Operations Lead" : "Head of Growth",
+          company: rid === "sim-1" ? "Parallel Rentals" : "Nearmiss Mobility",
+          email: null, linkedin_url: `https://mock/${rid}`, stage: "new",
+          contactable: true, outreach_eligible: true,
+        });
+      }
+      audience.updated_at = new Date().toISOString();
+      return { ...audienceSummary(audience), discovery_filters: audience.discovery_filters, members: audience.members };
+    }
     const audienceId = decodeURIComponent(suffix);
     const audience = mockAudiences.find((item) => item.id === audienceId);
     if (method === "PATCH" && audience) {
@@ -1391,11 +1433,57 @@ if (mockMode) {
     };
   };
 
+  const mockOrg = {
+    id: "org-1",
+    name: "Example workspace",
+    domain: null as string | null,
+    members: [
+      { membership_id: "m-1", email: "sam@example.com", name: "Sam Field", role: "admin", status: "active", invited_at: hoursAgo(400) },
+      { membership_id: "m-2", email: "new-hire@example.com", name: null, role: "member", status: "invited", invited_at: hoursAgo(20) },
+    ] as { membership_id: string | null; email: string; name: string | null; role: string; status: string; invited_at: string | null }[],
+  };
+  const orgPage = () => ({
+    id: mockOrg.id,
+    name: mockOrg.name,
+    domain: mockOrg.domain,
+    your_role: mockMode === "member" ? "member" : "owner",
+    members: [
+      { membership_id: null, email: "marc@example.com", name: "Marc Andreessen", role: "owner", status: "active", invited_at: null },
+      ...mockOrg.members,
+    ],
+  });
+  const orgApi = (init?: RequestInit, url?: string) => {
+    const method = init?.method ?? "GET";
+    const parsed = new URL(url ?? location.href, location.href);
+    const path = parsed.pathname;
+    if (method === "POST" && path.endsWith("/members")) {
+      const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
+      mockOrg.members.push({
+        membership_id: crypto.randomUUID(), email: String(body.email ?? ""),
+        name: null, role: String(body.role ?? "member"), status: "invited",
+        invited_at: new Date().toISOString(),
+      });
+      return orgPage();
+    }
+    if (method === "DELETE" && path.includes("/members/")) {
+      const id = decodeURIComponent(path.split("/members/")[1] ?? "");
+      mockOrg.members = mockOrg.members.filter((m) => m.membership_id !== id);
+      return orgPage();
+    }
+    if (method === "PUT" && path.endsWith("/domain")) {
+      const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
+      mockOrg.domain = typeof body.domain === "string" && body.domain.trim() ? body.domain.trim().toLowerCase() : null;
+      return orgPage();
+    }
+    return orgPage();
+  };
+
   // Matching is startsWith with NO method check, so more-specific paths must
   // come first — /sends/cancel and /sends/dismiss (POST) would otherwise be
   // swallowed by the /sends fixture, and /reviews/decide by /reviews.
   const routes: [string, unknown][] = [
     ["/api/v1/imports/leads", leadImportsApi],
+    ["/api/v1/dashboard/org", orgApi],
     ["/api/v1/dashboard/audiences", audiencesApi],
     ["/api/v1/dashboard/leads", dashboardLeadsApi],
     ["/api/v1/dashboard/companies", dashboardCompaniesApi],

@@ -15,6 +15,8 @@ import {
   listAudiences,
   uploadLeadList,
   renameAudience,
+  findSimilarPeople,
+  growAudience,
 } from "./api";
 import {
   EMPTY_FILTERS,
@@ -73,6 +75,8 @@ export default function Audiences() {
   const [importName, setImportName] = useState("");
   const [renameDraft, setRenameDraft] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [growTarget, setGrowTarget] = useState<Audience | null>(null);
+  const [findingSimilar, setFindingSimilar] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [importNotice, setImportNotice] = useState<LeadImportNotice | null>(null);
   const [selectedRecords, setSelectedRecords] = useState<Set<string>>(new Set());
@@ -187,6 +191,27 @@ export default function Audiences() {
     }
   }
 
+  async function findSimilar(audience: Audience) {
+    if (findingSimilar) return;
+    setFindingSimilar(true);
+    setError(null);
+    try {
+      const similar = await findSimilarPeople(audience.id);
+      setGrowTarget(audience);
+      setName(audience.name);
+      setResults(similar);
+      setSelectedRecords(new Set());
+      setView("builder");
+      setBuilderTab("search");
+    } catch (reason) {
+      setError(
+        reason instanceof Error ? reason.message : "Similar-people search failed.",
+      );
+    } finally {
+      setFindingSimilar(false);
+    }
+  }
+
   async function submitRename(audience: Audience) {
     const name = (renameDraft ?? "").trim();
     setRenameDraft(null);
@@ -254,13 +279,32 @@ export default function Audiences() {
   }
 
   async function saveAudience() {
-    if (!name.trim() || selectedRecords.size === 0 || !results) return;
+    if (selectedRecords.size === 0 || !results) return;
+    if (!growTarget && !name.trim()) return;
     setSaving(true);
     setError(null);
     try {
       const selected = results.candidates.filter((candidate) =>
         selectedRecords.has(candidate.providerRecordId),
       );
+      if (growTarget) {
+        // Growing an existing audience: additive save, back to its detail.
+        const grown = await growAudience(growTarget.id, {
+          providerRecordIds: selected
+            .filter((candidate) => candidate.leadId === null)
+            .map((candidate) => candidate.providerRecordId),
+          leadIds: selected.flatMap((candidate) =>
+            candidate.leadId ? [candidate.leadId] : [],
+          ),
+        });
+        setAudiences(await listAudiences());
+        setSelectedAudience(grown);
+        setGrowTarget(null);
+        setResults(null);
+        setSelectedRecords(new Set());
+        setView("library");
+        return;
+      }
       const created = await createAudience({
         name: name.trim(),
         description: description.trim(),
@@ -348,7 +392,7 @@ export default function Audiences() {
         )}
         <div className="audience-builder-canvas">
           <header className="audience-builder-bar">
-            <button className="audience-builder-back" type="button" onClick={() => setView("library")} aria-label="Back to audiences">
+            <button className="audience-builder-back" type="button" onClick={() => { setGrowTarget(null); setView("library"); }} aria-label="Back to audiences">
               <BackIcon size={16} />
             </button>
             <div>
@@ -550,6 +594,9 @@ export default function Audiences() {
                 </div>
                 {canWrite && (
                   <div className="audience-detail-actions">
+                    <button className="audience-secondary" type="button" onClick={() => void findSimilar(selectedAudience)} disabled={findingSimilar} data-testid="find-similar-people">
+                      {findingSimilar ? "Searching…" : "Find similar"}
+                    </button>
                     <button ref={campaignButtonRef} className="audience-secondary audience-build-campaign" type="button" onClick={() => void startCampaign(selectedAudience)} disabled={campaignCreating} data-testid="build-audience-campaign">
                       {campaignCreating ? "Creating…" : "Build campaign"} <ArrowIcon size={15} />
                     </button>
