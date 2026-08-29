@@ -41,7 +41,10 @@ export type NavGroup = { label?: string; items: NavItem[] };
 const CUSTOMER_PRIMARY: NavItem[] = [
   { id: "home", label: "Overview", href: "/dashboard", icon: "overview" },
   { id: "audiences", label: "Audiences", href: "/dashboard/audiences", icon: "audience" },
-  { id: "campaigns", label: "Campaigns", href: "/dashboard/campaigns", icon: "campaign" },
+  // "Sequences" is the customer-facing name for the campaign workbench —
+  // the lemlist-style node canvas plus per-person progress. Routes and
+  // internal naming stay "campaigns".
+  { id: "campaigns", label: "Sequences", href: "/dashboard/campaigns", icon: "campaign" },
   { id: "metrics", label: "Metrics", href: "/dashboard/metrics", icon: "metrics" },
 ];
 

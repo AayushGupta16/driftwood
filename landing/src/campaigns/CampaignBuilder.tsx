@@ -13,18 +13,23 @@ import {
   createCampaignRevision,
   getCampaign,
   getCampaignOverlaps,
+  listCampaignEnrollments,
   pauseCampaign,
   resumeCampaign,
   saveCampaign,
+  type CampaignEnrollment,
   type CampaignOverlap,
 } from "./api";
 import {
   applyAudience,
   createStep,
+  enrollmentStatusLabel,
   insertStep,
   moveStep,
   reconcileSavedCampaign,
   removeStep,
+  stepProgressSummary,
+  stepRunCounts,
   touchCampaign,
   updateStep,
   validateCampaign,
@@ -103,6 +108,26 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
   const saveTimerRef = useRef<number | null>(null);
   const savePromiseRef = useRef<Promise<Campaign> | null>(null);
   const saveQueueRef = useRef(new CampaignSaveQueue(saveCampaign));
+  /* Per-person progress, loaded once a live (non-draft) campaign is on
+     screen. null = not loaded (drafts, load failure) — the view falls back
+     to the plan-only rendering it always had. */
+  const [enrollments, setEnrollments] = useState<CampaignEnrollment[] | null>(null);
+  const campaignStatus = campaign?.status ?? null;
+
+  useEffect(() => {
+    if (campaignStatus === null || campaignStatus === "draft") return;
+    let current = true;
+    listCampaignEnrollments(campaignId)
+      .then((rows) => {
+        if (current) setEnrollments(rows);
+      })
+      .catch(() => {
+        // Progress is an overlay; the builder stays fully usable without it.
+      });
+    return () => {
+      current = false;
+    };
+  }, [campaignId, campaignStatus]);
 
   useEffect(() => {
     let current = true;
@@ -113,7 +138,11 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
         if (!current) return;
         campaignRef.current = loaded;
         setCampaign(loaded);
-        setSelectedStepId(loaded.steps[0]?.id ?? null);
+        // Drafts open on the first step (editing is the job); live
+        // campaigns open on the inspector's People panel (progress is).
+        setSelectedStepId(
+          loaded.status === "draft" ? (loaded.steps[0]?.id ?? null) : null,
+        );
         setSaveState("saved");
       })
       .catch((reason: unknown) => {
@@ -441,6 +470,8 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
     issues: [...baseValidation.issues, ...channelIssues],
   };
   const selectedContacts = campaign.contacts.filter((contact) => contact.selected);
+  const progressByPosition = stepRunCounts(enrollments ?? []);
+  const showProgress = campaign.status !== "draft" && enrollments !== null;
 
   return (
     <>
@@ -540,6 +571,11 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
                 total={campaign.steps.length}
                 selected={selectedStepId === step.id}
                 editable={editable}
+                progress={
+                  showProgress && step.kind !== "wait"
+                    ? stepProgressSummary(progressByPosition.get(index + 1))
+                    : ""
+                }
                 onSelect={() => {
                   setSelectedStepId(step.id);
                   setMobilePanel("editor");
@@ -566,6 +602,8 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
               onChange={patchStep}
               onRemove={handleRemove}
             />
+          ) : showProgress ? (
+            <PeopleProgressPanel campaign={campaign} enrollments={enrollments} />
           ) : (
             <AudienceEditor
               campaign={campaign}
@@ -621,6 +659,7 @@ function SequenceNode({
   total,
   selected,
   editable,
+  progress = "",
   onSelect,
   onMove,
   onAdd,
@@ -630,6 +669,8 @@ function SequenceNode({
   total: number;
   selected: boolean;
   editable: boolean;
+  /** "3 sent · 1 up next" — live campaigns only; empty hides the badge. */
+  progress?: string;
   onSelect: () => void;
   onMove: (direction: -1 | 1) => void;
   onAdd: () => void;
@@ -647,6 +688,9 @@ function SequenceNode({
             <small>Step {index + 1}</small>
             <strong>{step.label}</strong>
             <span>{detailForStep(step)}</span>
+            {progress && (
+              <span className="campaign-node-progress">{progress}</span>
+            )}
           </span>
         </button>
         {editable && (
@@ -755,6 +799,96 @@ function AudienceEditor({
       </label>
       <div className="campaign-editor-note">
         Audience membership is copied into this campaign version. It does not change lead stages or queue outreach.
+      </div>
+    </div>
+  );
+}
+
+/* Live-campaign inspector default: every enrolled person and where they
+   are in the sequence. One dot per actionable step (waits fold away) —
+   filled by that person's run outcome, hollow when the step hasn't been
+   reached. Replaces the audience editor once the version is frozen. */
+function PeopleProgressPanel({
+  campaign,
+  enrollments,
+}: {
+  campaign: Campaign;
+  enrollments: CampaignEnrollment[];
+}) {
+  const actionableSteps = campaign.steps
+    .map((step, index) => ({ step, position: index + 1 }))
+    .filter(({ step }) => step.kind !== "wait");
+  return (
+    <div className="campaign-editor-form">
+      <div className="campaign-editor-heading">
+        <span className="campaign-node-icon"><PeopleIcon size={18} /></span>
+        <div>
+          <small>People</small>
+          <h2>Where each person is</h2>
+        </div>
+      </div>
+      {enrollments.length === 0 ? (
+        <div className="campaign-editor-note">
+          No one is enrolled in this version yet.
+        </div>
+      ) : (
+        <ul className="campaign-people-progress">
+          {enrollments.map((enrollment) => {
+            const runByPosition = new Map(
+              enrollment.runs.map((run) => [run.position, run]),
+            );
+            return (
+              <li key={enrollment.enrollmentId}>
+                <div className="campaign-people-row">
+                  <div className="campaign-people-who">
+                    <strong>{enrollment.name}</strong>
+                    <small>
+                      {[enrollment.role, enrollment.company]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </small>
+                  </div>
+                  <span
+                    className={`campaign-people-status is-${enrollment.status}`}
+                  >
+                    {enrollmentStatusLabel(enrollment.status)}
+                  </span>
+                </div>
+                <ol className="campaign-people-steps" aria-label={`Steps for ${enrollment.name}`}>
+                  {actionableSteps.map(({ step, position }) => {
+                    const run = runByPosition.get(position);
+                    const state = run
+                      ? run.status === "sent"
+                        ? "sent"
+                        : run.status === "failed"
+                          ? "failed"
+                          : run.status === "skipped"
+                            ? "skipped"
+                            : "in-motion"
+                      : "unreached";
+                    const stateLabel = run ? run.status.replace("_", " ") : "not reached";
+                    return (
+                      <li
+                        key={step.id}
+                        className={`is-${state}`}
+                        title={`${step.label}: ${stateLabel}`}
+                      >
+                        <span className="sr-only">{`${step.label}: ${stateLabel}`}</span>
+                      </li>
+                    );
+                  })}
+                </ol>
+                {enrollment.stopReason && (
+                  <p className="campaign-people-stop">{enrollment.stopReason}</p>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      <div className="campaign-editor-note">
+        Waits fold into the next step&rsquo;s timing, so they don&rsquo;t get a
+        dot. Sends still go through your review queue before anything leaves.
       </div>
     </div>
   );

@@ -202,8 +202,8 @@ if (mockMode) {
   ];
   const reviews = {
     counts: {
-      pending: 5,
-      pending_sends: 4,
+      pending: 7,
+      pending_sends: 6,
       pending_system: 1,
       approved_7d: 12,
       denied_7d: 2,
@@ -225,7 +225,7 @@ if (mockMode) {
         lead: lead("Jordan Reyes", "Head of Growth", "Brex"),
         attachment_slug: null, evidence: null, status: "pending",
         decision_reason: null, decided_at: null, scheduled_batch_id: null,
-        created_at: hoursAgo(0.15),
+        scheduled_for: dateAhead(1), created_at: hoursAgo(0.15),
       },
       {
         id: "r2", batch_id: "b1", agent_id: "demo", kind: "send_message",
@@ -234,7 +234,7 @@ if (mockMode) {
         lead: lead("Priya Patel", "Head of Growth", "Northstar"),
         attachment_slug: null, evidence: null, status: "pending",
         decision_reason: null, decided_at: null, scheduled_batch_id: null,
-        created_at: hoursAgo(0.4),
+        scheduled_for: dateAhead(1), created_at: hoursAgo(0.4),
       },
       {
         id: "r3", batch_id: "b2", agent_id: "demo", kind: "send_connection",
@@ -243,7 +243,25 @@ if (mockMode) {
         lead: lead("Sam Okafor", "CTO", "Ledgerline"),
         attachment_slug: null, evidence: null, status: "pending",
         decision_reason: null, decided_at: null, scheduled_batch_id: null,
-        created_at: hoursAgo(1.1),
+        scheduled_for: dateAhead(2), created_at: hoursAgo(1.1),
+      },
+      {
+        id: "r5", batch_id: "b1", agent_id: "demo", kind: "send_message",
+        title: "Anchorpoint \u2014 Riley Chen (message)",
+        body: "hey riley, anchorpoint's onboarding flow drops mobile users at the KYC step \u2014 built a working demo of the fix, 22 seconds, link below. worth a look?",
+        lead: lead("Riley Chen", "Cofounder", "Anchorpoint"),
+        attachment_slug: null, evidence: null, status: "pending",
+        decision_reason: null, decided_at: null, scheduled_batch_id: null,
+        scheduled_for: dateAhead(2), created_at: hoursAgo(1.15),
+      },
+      {
+        id: "r6", batch_id: "b1", agent_id: "demo", kind: "send_message",
+        title: "Tidewater \u2014 Marcus Hale (message)",
+        body: "hey marcus, the tidewater incident postmortem mentioned flaky release gates \u2014 we catch exactly that class of bug before it ships. short walkthrough below.",
+        lead: lead("Marcus Hale", "Cofounder", "Tidewater"),
+        attachment_slug: null, evidence: null, status: "pending",
+        decision_reason: null, decided_at: null, scheduled_batch_id: null,
+        scheduled_for: dateAhead(4), created_at: hoursAgo(1.2),
       },
       {
         id: "r4", batch_id: "b3", agent_id: "demo", kind: "send_email",
@@ -253,10 +271,10 @@ if (mockMode) {
         lead: lead("Yuvan Kumar", "CEO", "Autosana"),
         attachment_slug: null, evidence: null, status: "pending",
         decision_reason: null, decided_at: null, scheduled_batch_id: null,
-        created_at: hoursAgo(1.4),
+        scheduled_for: dateAhead(3), created_at: hoursAgo(1.4),
       },
     ],
-    decided: [], total_pending: 4, limit: 25, offset: 0,
+    decided: [], total_pending: 7, limit: 25, offset: 0,
     queue_stats: [
       { kind: "connection_request", queued: 2, sent_24h: 3, cap: 20, runs_through: dateAhead(2), failed: 2 },
       { kind: "message", queued: 3, sent_24h: 6, cap: 25, runs_through: dateAhead(2), failed: 0 },
@@ -295,21 +313,21 @@ if (mockMode) {
         id: "s3", batch_id: "sb2", kind: "message",
         note: "hey priya, found a dead link on northstar's pricing page. built you a working demo of the fix, 19 seconds, link below. worth a look?",
         attachment_slug: "northstar-pricing-fix", lead: lead("Priya Patel", "Head of Growth", "Northstar"),
-        status: "pending", error: null, error_class: null,
+        status: "pending", error: null, error_class: null, scheduled_for: null,
         due_at: daysAhead(0.2), projected_date: dateAhead(0), created_at: hoursAgo(21),
       },
       {
         id: "s4", batch_id: "sb2", kind: "connection_request",
         note: "hey sam — saw ledgerline's reconciliation launch on hn. we're building agents that do outbound the way founders do it by hand. would love to connect.",
         attachment_slug: null, lead: lead("Sam Okafor", "CTO", "Ledgerline"),
-        status: "pending", error: null, error_class: null,
+        status: "pending", error: null, error_class: null, scheduled_for: dateAhead(1),
         due_at: daysAhead(1), projected_date: dateAhead(1), created_at: hoursAgo(21),
       },
       {
         id: "s5", batch_id: "sb2", kind: "message",
         note: "hey jordan, notion is one of ramp's flagship case studies. built the one-pager brex could send notion's finance team to flip it: entity-by-entity rollout, the yield math against their current sweep setup, and the migration path their controllers would actually sign off on. live page linked below — took a real pass at the numbers, not a template. if it's useful, i can rework it against whatever deck your team already runs with. worth a look?",
         attachment_slug: null, lead: lead("Jordan Reyes", "Head of Growth", "Brex"),
-        status: "pending", error: null, error_class: null,
+        status: "pending", error: null, error_class: null, scheduled_for: dateAhead(2),
         due_at: daysAhead(2), projected_date: dateAhead(2), created_at: hoursAgo(20),
       },
       {
@@ -324,7 +342,7 @@ if (mockMode) {
         subject: "Two outreach fixes from this week",
         note: "Hey Yuvan,\n\nI pulled the two workflow changes into one short walkthrough.\n\n[![Autosana outreach workflow](https://driftwood.sh/case-autosana-poster.webp)](https://driftwood.sh/customers/autosana)\n\nWorth a look before our next check-in?\n\nBest,\nAayush",
         attachment_slug: null, lead: lead("Yuvan Kumar", "CEO", "Autosana"),
-        status: "pending", error: null, error_class: null,
+        status: "pending", error: null, error_class: null, scheduled_for: dateAhead(1),
         due_at: daysAhead(1.5), projected_date: dateAhead(1), created_at: hoursAgo(8),
       },
     ],
@@ -831,6 +849,48 @@ if (mockMode) {
         conflicts,
       };
     };
+    if (method === "GET" && action === "enrollments") {
+      // Per-person progress for the Sequences view. Enrolled = selected
+      // contacts on a non-draft version; runs cover the actionable steps
+      // (waits fold away), with a spread of outcomes for the demo.
+      const actionable = campaign.steps
+        .map((step, index) => ({ step, position: index + 1 }))
+        .filter(({ step }) => step.kind !== "wait");
+      const enrolled = campaign.status === "draft"
+        ? []
+        : campaign.contacts.filter((contact) => contact.selected);
+      const runStatusFor = (personIndex: number, stepIndex: number): string | null => {
+        const reached = personIndex % 3 === 0 ? actionable.length : 1 + (personIndex % actionable.length || 0);
+        if (stepIndex >= reached) return null;
+        if (stepIndex < reached - 1) return "sent";
+        return personIndex % 4 === 1 ? "queued" : personIndex % 4 === 2 ? "review_required" : "pending";
+      };
+      return {
+        enrollments: enrolled.map((contact, personIndex) => ({
+          enrollment_id: `enr-${contact.id}`,
+          lead_id: contact.id,
+          name: contact.name,
+          email: null,
+          company: contact.company,
+          role: contact.role,
+          status: contact.enrollment_status ?? "ready",
+          current_step: contact.current_step,
+          next_action_at: contact.next_action_at,
+          stop_reason: null,
+          runs: actionable.flatMap(({ step, position }, stepIndex) => {
+            const status = runStatusFor(personIndex, stepIndex);
+            return status === null ? [] : [{
+              step_id: String(step.id),
+              position,
+              status,
+              due_at: status === "pending" ? daysAhead(1 + stepIndex) : null,
+              completed_at: status === "sent" ? hoursAgo(6 * (stepIndex + 1)) : null,
+            }];
+          }),
+        })),
+        total: enrolled.length,
+      };
+    }
     if (method === "GET" && action === "overlaps") return activeOverlaps();
     if (method === "PUT") {
       const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");

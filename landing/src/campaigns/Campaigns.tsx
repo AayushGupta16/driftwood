@@ -84,7 +84,7 @@ function CampaignsWorkspace() {
   return (
       <section className="campaign-index" aria-labelledby="campaigns-heading">
         <div className="campaign-index-heading">
-          <h1 id="campaigns-heading">Campaigns</h1>
+          <h1 id="campaigns-heading">Sequences</h1>
           {canWrite ? (
             <button
               className="campaign-primary"

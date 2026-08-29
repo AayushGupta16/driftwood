@@ -221,6 +221,79 @@ export async function listCampaignContacts(
   return { ...raw, contacts: raw.contacts.map(mapContact) };
 }
 
+/* Per-person progress (GET .../enrollments) — the Sequences view's read.
+   Wait steps never have runs (their delay folds into the next actionable
+   step), so a step position missing from `runs` is normal. */
+
+type RawEnrollmentStepRun = {
+  step_id: string;
+  position: number;
+  status: string;
+  due_at: string | null;
+  completed_at: string | null;
+};
+
+type RawCampaignEnrollment = {
+  enrollment_id: string;
+  lead_id: string;
+  name: string | null;
+  email: string | null;
+  company: string;
+  role: string | null;
+  status: string;
+  current_step: number | null;
+  next_action_at: string | null;
+  stop_reason: string | null;
+  runs: RawEnrollmentStepRun[];
+};
+
+export type EnrollmentStepRun = {
+  stepId: string;
+  position: number;
+  status: string;
+  dueAt: string | null;
+  completedAt: string | null;
+};
+
+export type CampaignEnrollment = {
+  enrollmentId: string;
+  leadId: string;
+  name: string;
+  company: string;
+  role: string | null;
+  status: string;
+  currentStep: number | null;
+  nextActionAt: string | null;
+  stopReason: string | null;
+  runs: EnrollmentStepRun[];
+};
+
+export async function listCampaignEnrollments(
+  id: string,
+): Promise<CampaignEnrollment[]> {
+  const raw = await requestJson<{ enrollments: RawCampaignEnrollment[]; total: number }>(
+    `/api/v1/dashboard/campaigns/${encodeURIComponent(id)}/enrollments`,
+  );
+  return raw.enrollments.map((row) => ({
+    enrollmentId: row.enrollment_id,
+    leadId: row.lead_id,
+    name: row.name ?? row.email ?? "Unnamed lead",
+    company: row.company,
+    role: row.role,
+    status: row.status,
+    currentStep: row.current_step,
+    nextActionAt: row.next_action_at,
+    stopReason: row.stop_reason,
+    runs: row.runs.map((run) => ({
+      stepId: run.step_id,
+      position: run.position,
+      status: run.status,
+      dueAt: run.due_at,
+      completedAt: run.completed_at,
+    })),
+  }));
+}
+
 export async function listCampaigns(): Promise<CampaignSummary[]> {
   const body = await requestJson<{ campaigns: RawCampaignSummary[] }>(
     "/api/v1/dashboard/campaigns",
