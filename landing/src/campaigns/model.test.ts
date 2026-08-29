@@ -12,6 +12,9 @@ import {
 import {
   applyAudience,
   createStep,
+  enrollmentStatusLabel,
+  stepProgressSummary,
+  stepRunCounts,
   insertStep,
   mergeCampaignContactPage,
   moveStep,
@@ -241,4 +244,32 @@ test("overlap confirmation is scoped to the exact previewed lead set", () => {
   assert.equal(mapped.leadCount, 1);
   assert.equal(mapped.conflicts[0].leadName, "Unnamed lead");
   assert.deepEqual(confirmedOverlapLeadIds(mapped), ["lead-one"]);
+});
+
+test("stepRunCounts folds run statuses into per-position buckets", () => {
+  const counts = stepRunCounts([
+    { runs: [{ position: 1, status: "sent" }, { position: 3, status: "pending" }] },
+    { runs: [{ position: 1, status: "sent" }, { position: 3, status: "queued" }] },
+    { runs: [{ position: 1, status: "failed" }] },
+    { runs: [{ position: 1, status: "review_required" }] },
+    { runs: [{ position: 1, status: "skipped" }] }, // no badge
+  ]);
+  assert.deepEqual(counts.get(1), { sent: 2, inMotion: 1, upNext: 0, failed: 1 });
+  assert.deepEqual(counts.get(3), { sent: 0, inMotion: 1, upNext: 1, failed: 0 });
+  assert.equal(counts.get(2), undefined); // wait steps never have runs
+});
+
+test("stepProgressSummary reads only the non-zero buckets in outcome order", () => {
+  assert.equal(
+    stepProgressSummary({ sent: 3, inMotion: 0, upNext: 1, failed: 0 }),
+    "3 sent · 1 up next",
+  );
+  assert.equal(stepProgressSummary({ sent: 0, inMotion: 0, upNext: 0, failed: 0 }), "");
+  assert.equal(stepProgressSummary(undefined), "");
+});
+
+test("enrollmentStatusLabel names every journey state and passes unknowns through", () => {
+  assert.equal(enrollmentStatusLabel("ready"), "Ready");
+  assert.equal(enrollmentStatusLabel("review"), "In review");
+  assert.equal(enrollmentStatusLabel("mystery"), "mystery");
 });

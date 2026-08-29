@@ -187,7 +187,7 @@ export default function AppShell({
         {mode === "admin" ? (
           <div className="app-sidebar-context"><span>Driftwood</span><strong>Admin panel</strong></div>
         ) : canWrite ? (
-          <a className="app-sidebar-create" href={withMockMode("/dashboard/campaigns/new")}><PlusIcon size={16} />New campaign</a>
+          <a className="app-sidebar-create" href={withMockMode("/dashboard/campaigns/new")}><PlusIcon size={16} />New sequence</a>
         ) : (
           <div className="app-sidebar-context"><span>Workspace access</span><strong>Read only</strong></div>
         )}

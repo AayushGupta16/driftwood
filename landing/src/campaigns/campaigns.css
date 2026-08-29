@@ -663,3 +663,36 @@
   .campaign-dialog,
   .campaign-toast { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* ---- Sequences progress (live campaigns) -------------------------------- */
+
+.campaign-node-progress {
+  overflow: hidden;
+  margin-top: 0.1rem;
+  color: var(--color-tide);
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.campaign-people-progress { margin: 0; padding: 0; list-style: none; }
+.campaign-people-progress > li { border-bottom: 1px solid var(--color-line); padding: 0.7rem 0 0.75rem; }
+.campaign-people-progress > li:last-child { border-bottom: 0; }
+.campaign-people-row { display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem; }
+.campaign-people-who { display: flex; min-width: 0; flex-direction: column; gap: 0.1rem; }
+.campaign-people-who strong { overflow: hidden; font-size: 0.78rem; text-overflow: ellipsis; white-space: nowrap; }
+.campaign-people-who small { overflow: hidden; color: var(--color-ink-faint); font-size: 0.62rem; text-overflow: ellipsis; white-space: nowrap; }
+.campaign-people-status { flex: 0 0 auto; border: 1px solid var(--color-line); border-radius: 999px; background: var(--color-paper); color: var(--color-ink-soft); padding: 0.14rem 0.5rem; font-size: 0.58rem; font-weight: 600; }
+.campaign-people-status.is-replied { border-color: color-mix(in srgb, var(--color-ok) 45%, var(--color-line)); color: var(--color-ok); }
+.campaign-people-status.is-stopped { color: var(--color-ink-faint); }
+
+/* One dot per actionable step: hollow = not reached, tide = in motion,
+   ok-green = sent, red = failed, faint = skipped. */
+.campaign-people-steps { display: flex; margin: 0.45rem 0 0; padding: 0; gap: 0.3rem; list-style: none; }
+.campaign-people-steps li { width: 0.62rem; height: 0.62rem; border: 1.5px solid var(--color-line); border-radius: 50%; background: transparent; }
+.campaign-people-steps li.is-in-motion { border-color: var(--color-tide); background: color-mix(in srgb, var(--color-tide) 30%, white); }
+.campaign-people-steps li.is-sent { border-color: var(--color-ok); background: var(--color-ok); }
+.campaign-people-steps li.is-failed { border-color: var(--color-alert); background: var(--color-alert); }
+.campaign-people-steps li.is-skipped { border-color: var(--color-line); background: var(--color-line); }
+.campaign-people-stop { margin: 0.4rem 0 0; color: var(--color-ink-faint); font-size: 0.62rem; }

@@ -6,6 +6,12 @@ import AppShell from "./dashboard/AppShell";
 import { EmailPreview } from "./EmailPreview";
 import { emailBodySummary } from "./email-preview";
 import { withMockMode } from "./mock-mode";
+import {
+  dayGroupLabel,
+  groupByDay,
+  hasScheduledDays,
+  type DayGroup,
+} from "./review-batching";
 import "./review-queue.css";
 
 /* /dashboard/review — the founder's chronological decision inbox. The scan
@@ -65,6 +71,9 @@ type SendRow = {
   error_class: string | null;
   due_at: string; // ISO; the API orders by this asc (the send order)
   projected_date: string | null; // "YYYY-MM-DD"
+  // The founder-approved send day ("YYYY-MM-DD"); null on undated rows.
+  // Optional so a backend that predates week batching still parses.
+  scheduled_for?: string | null;
   created_at: string;
   sent_at: string | null; // set on ledger rows (view=sent); null on live ones
 };
@@ -114,6 +123,9 @@ type ReviewItemRow = {
   decision_reason: string | null;
   decided_at: string | null;
   scheduled_batch_id: string | null;
+  // The agent's proposed send day ("YYYY-MM-DD"); null = as pacing allows.
+  // Optional so a backend that predates week batching still parses.
+  scheduled_for?: string | null;
   created_at: string;
 };
 
@@ -455,6 +467,9 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
   });
   const [sentState, setSentState] = useState<SentState>({ status: "loading" });
   const [sortMode, setSortMode] = useState<SortMode>("kind");
+  /* Armed "Approve <day>" — the day key, one at a time (arming a day disarms
+     the bulk buttons and vice versa, same fat-finger guard as Approve all). */
+  const [confirmDay, setConfirmDay] = useState<string | null>(null);
   const toast = useToast();
 
   /* An armed "Approve all" disarms itself after a beat — no stale confirm
@@ -473,6 +488,13 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
     const t = window.setTimeout(() => setConfirmDenyAll(false), 5000);
     return () => window.clearTimeout(t);
   }, [confirmDenyAll]);
+
+  /* And for an armed per-day approve. */
+  useEffect(() => {
+    if (confirmDay === null) return;
+    const t = window.setTimeout(() => setConfirmDay(null), 5000);
+    return () => window.clearTimeout(t);
+  }, [confirmDay]);
 
   const loadAll = useCallback(async () => {
     try {
@@ -684,6 +706,15 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
   const activeReviewItem =
     visible.find((item) => item.id === activeReviewId) ?? visible[0] ?? null;
 
+  /* Week batching: when the agent proposed send days, the inbox groups by
+     day (chronological, undated last) with an "Approve <day>" per dated
+     group — one sitting approves the whole week, day by day. A queue with
+     no dates renders exactly as before. */
+  const dayGrouped = hasScheduledDays(visible, (i) => i.scheduled_for);
+  const dayGroups: DayGroup<ReviewItemRow>[] = dayGrouped
+    ? groupByDay(visible, (i) => i.scheduled_for)
+    : [{ day: null, items: visible }];
+
   const busy = busyIds.size > 0;
   const allSelected = visible.length > 0 && selected.size === visible.length;
 
@@ -695,6 +726,7 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
     setSelected(EMPTY_SET);
     setConfirmAll(false);
     setConfirmDenyAll(false);
+    setConfirmDay(null);
   }
 
   function toggleSelect(id: string) {
@@ -722,6 +754,7 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
   function handleApproveAll() {
     if (!confirmAll) {
       setConfirmDenyAll(false);
+      setConfirmDay(null);
       setConfirmAll(true);
       return;
     }
@@ -752,6 +785,7 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
   function handleDenyAll() {
     if (!confirmDenyAll) {
       setConfirmAll(false);
+      setConfirmDay(null);
       setConfirmDenyAll(true);
       return;
     }
@@ -761,6 +795,26 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
         item_id: item.id,
         decision: "deny" as const,
         reason: BULK_DENY_REASON,
+      })),
+      null,
+    );
+  }
+
+  /* Approve one scheduled day's items — armed like Approve all, keyed by
+     the day so two day headers can't share a confirm state. */
+  function handleApproveDay(group: DayGroup<ReviewItemRow>) {
+    const key = group.day ?? "__undated";
+    if (confirmDay !== key) {
+      setConfirmAll(false);
+      setConfirmDenyAll(false);
+      setConfirmDay(key);
+      return;
+    }
+    setConfirmDay(null);
+    void decide(
+      group.items.map((item) => ({
+        item_id: item.id,
+        decision: "approve" as const,
       })),
       null,
     );
@@ -970,20 +1024,50 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
 
             <div className="review-workbench">
               <div className="review-inbox" role="list" aria-label="Items awaiting review">
-                {visible.map((item) => (
-                  <ReviewListRow
-                    key={item.id}
-                    item={item}
-                    active={activeReviewItem?.id === item.id}
-                    canWrite={canWrite}
-                    checked={selected.has(item.id)}
-                    busy={busyIds.has(item.id)}
-                    onOpen={() => {
-                      setActiveReviewId(item.id);
-                      setDeny(null);
-                    }}
-                    onToggleSelect={() => toggleSelect(item.id)}
-                  />
+                {dayGroups.map((group) => (
+                  <div key={group.day ?? "__undated"} className="review-inbox-day">
+                    {dayGrouped && (
+                      <div className="review-inbox-day-head">
+                        <span className={MICROLABEL}>
+                          {dayGroupLabel(group.day)}
+                          <span className="ml-1.5 tabular-nums">
+                            &middot; {group.items.length}
+                          </span>
+                        </span>
+                        {canWrite && group.day !== null && (
+                          <button
+                            type="button"
+                            onClick={() => handleApproveDay(group)}
+                            disabled={busy}
+                            className={`cursor-pointer rounded-lg px-2 py-1 text-[11.5px] transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+                              confirmDay === group.day
+                                ? "bg-tide font-semibold text-white hover:bg-tide-deep"
+                                : "border border-line bg-surface font-medium text-ink-soft hover:border-ink-faint hover:text-ink"
+                            }`}
+                          >
+                            {confirmDay === group.day
+                              ? `Approve ${group.items.length}? Confirm`
+                              : `Approve day`}
+                          </button>
+                        )}
+                      </div>
+                    )}
+                    {group.items.map((item) => (
+                      <ReviewListRow
+                        key={item.id}
+                        item={item}
+                        active={activeReviewItem?.id === item.id}
+                        canWrite={canWrite}
+                        checked={selected.has(item.id)}
+                        busy={busyIds.has(item.id)}
+                        onOpen={() => {
+                          setActiveReviewId(item.id);
+                          setDeny(null);
+                        }}
+                        onToggleSelect={() => toggleSelect(item.id)}
+                      />
+                    ))}
+                  </div>
                 ))}
               </div>
               <div className="review-detail" aria-live="polite">
@@ -1387,6 +1471,37 @@ function QueuedList({
   /* Failed rows have nothing left to cancel. Sending rows can still be
      posted — the API reports the ones that beat us as skipped. */
   const cancelable = visible.filter((s) => s.status !== "failed");
+
+  /* Week view: once any pending row carries a founder-approved day, the
+     grid splits into day sections — the calendar of what actually goes out
+     when. Pending rows group by their day (scheduled_for, else the pacing
+     projection); in-flight and failed rows lead in their own section. An
+     undated queue renders as the single flat grid it always was. */
+  const pendingRows = visible.filter((s) => s.status === "pending");
+  const attentionRows = visible.filter((s) => s.status !== "pending");
+  const sendsGrouped = hasScheduledDays(pendingRows, (s) => s.scheduled_for);
+  const sendDayGroups: Array<{ key: string; label: string; items: SendRow[] }> =
+    sendsGrouped
+      ? [
+          ...(attentionRows.length > 0
+            ? [
+                {
+                  key: "__attention",
+                  label: "Sending & failed",
+                  items: attentionRows,
+                },
+              ]
+            : []),
+          ...groupByDay(
+            pendingRows,
+            (s) => s.scheduled_for ?? s.projected_date,
+          ).map((group) => ({
+            key: group.day ?? "__undated",
+            label: dayGroupLabel(group.day),
+            items: group.items,
+          })),
+        ]
+      : [{ key: "__all", label: "", items: visible }];
   /* Failed rows get dismissed instead; the bulk button only earns its spot
      when there's more than one of them under the current filter. */
   const failedVisible = visible.filter((s) => s.status === "failed");
@@ -1557,23 +1672,33 @@ function QueuedList({
         </p>
       )}
 
-      <div className="review-queued-grid">
-        {visible.map((send) => (
-          <QueuedRow
-            key={send.id}
-            send={send}
-            canWrite={canWrite}
-            checked={selected.has(send.id)}
-            busy={busyIds.has(send.id)}
-            expanded={expanded.has(send.id)}
-            error={actionError?.sendId === send.id ? actionError.message : null}
-            onToggleSelect={() => toggleSelect(send.id)}
-            onToggleExpand={() => toggleExpand(send.id)}
-            onCancel={() => void cancel([send.id], send.id)}
-            onDismiss={() => void dismiss([send.id], send.id)}
-          />
-        ))}
-      </div>
+      {sendDayGroups.map((group) => (
+        <div key={group.key}>
+          {sendsGrouped && (
+            <p className={`m-0 mb-2 mt-4 first:mt-0 ${MICROLABEL}`}>
+              {group.label}
+              <span className="ml-1.5 tabular-nums">&middot; {group.items.length}</span>
+            </p>
+          )}
+          <div className="review-queued-grid">
+            {group.items.map((send) => (
+              <QueuedRow
+                key={send.id}
+                send={send}
+                canWrite={canWrite}
+                checked={selected.has(send.id)}
+                busy={busyIds.has(send.id)}
+                expanded={expanded.has(send.id)}
+                error={actionError?.sendId === send.id ? actionError.message : null}
+                onToggleSelect={() => toggleSelect(send.id)}
+                onToggleExpand={() => toggleExpand(send.id)}
+                onCancel={() => void cancel([send.id], send.id)}
+                onDismiss={() => void dismiss([send.id], send.id)}
+              />
+            ))}
+          </div>
+        </div>
+      ))}
     </>
   );
 }
@@ -1791,6 +1916,11 @@ function ReviewListRow({
       <button type="button" onClick={onOpen} className="review-list-open" aria-current={active ? "true" : undefined}>
         <span className="review-list-topline">
           <span className="review-list-kind">{kindLabel(item.kind)}</span>
+          {item.scheduled_for && (
+            <span className="text-ink-soft">
+              &rarr; {dayGroupLabel(item.scheduled_for)}
+            </span>
+          )}
           <span>{shortAge(item.created_at)}</span>
         </span>
         <strong>{item.title}</strong>
@@ -1843,6 +1973,11 @@ function ItemCard({
         <span className="rounded-full border border-line bg-paper px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] text-ink-soft">
           {kindLabel(item.kind)}
         </span>
+        {item.scheduled_for && (
+          <span className="rounded-full border border-line bg-paper px-2 py-0.5 font-mono text-[10px] tracking-[0.04em] text-ink-soft tabular-nums">
+            sends {dayGroupLabel(item.scheduled_for)}
+          </span>
+        )}
         <span className="ml-auto shrink-0 font-mono text-[10.5px] text-ink-faint tabular-nums">
           {shortAge(item.created_at)}
         </span>

@@ -7,7 +7,7 @@ test("customer navigation excludes Driftwood internal tools", () => {
   const items = navigationGroups("customer").flatMap((group) => group.items);
   assert.deepEqual(
     items.map((item) => item.label),
-    ["Overview", "Audiences", "Campaigns", "Metrics", "All leads", "Companies", "Assets", "Review queue", "Team"],
+    ["Overview", "Audiences", "Sequences", "Metrics", "All leads", "Companies", "Assets", "Review queue", "Team"],
   );
   assert.equal(items.some((item) => item.label === "Agents"), false);
   assert.equal(items.some((item) => item.label === "Search visibility"), false);

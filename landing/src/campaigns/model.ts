@@ -292,6 +292,66 @@ export function formatUpdatedAt(iso: string): string {
   }).format(date);
 }
 
+/* ---- per-step progress (the Sequences view) --------------------------- */
+
+/* Run statuses folded into the four buckets a founder reads at a glance.
+   `review_required` and `queued` are both "in motion" from the sequence's
+   point of view; pending/waiting runs are simply up next. */
+export type StepProgressBucket = "sent" | "inMotion" | "upNext" | "failed";
+
+export type StepProgress = Record<StepProgressBucket, number>;
+
+const EMPTY_PROGRESS: StepProgress = { sent: 0, inMotion: 0, upNext: 0, failed: 0 };
+
+function bucketForRunStatus(status: string): StepProgressBucket | null {
+  if (status === "sent") return "sent";
+  if (status === "queued" || status === "review_required") return "inMotion";
+  if (status === "pending" || status === "waiting") return "upNext";
+  if (status === "failed") return "failed";
+  return null; // skipped and unknown statuses don't earn a badge
+}
+
+/* Counts each step position's runs across every enrolled person. Positions
+   with no runs (wait steps, steps nobody reached yet) are simply absent. */
+export function stepRunCounts(
+  enrollments: Array<{ runs: Array<{ position: number; status: string }> }>,
+): Map<number, StepProgress> {
+  const counts = new Map<number, StepProgress>();
+  for (const enrollment of enrollments) {
+    for (const run of enrollment.runs) {
+      const bucket = bucketForRunStatus(run.status);
+      if (!bucket) continue;
+      const progress = counts.get(run.position) ?? { ...EMPTY_PROGRESS };
+      progress[bucket] += 1;
+      counts.set(run.position, progress);
+    }
+  }
+  return counts;
+}
+
+/* "3 sent · 2 in review · 1 up next" — only non-zero buckets, in outcome
+   order. Empty string when the step has no countable runs. */
+export function stepProgressSummary(progress: StepProgress | undefined): string {
+  if (!progress) return "";
+  const parts: string[] = [];
+  if (progress.sent) parts.push(`${progress.sent} sent`);
+  if (progress.inMotion) parts.push(`${progress.inMotion} in motion`);
+  if (progress.upNext) parts.push(`${progress.upNext} up next`);
+  if (progress.failed) parts.push(`${progress.failed} failed`);
+  return parts.join(" · ");
+}
+
+export function enrollmentStatusLabel(status: string): string {
+  if (status === "ready") return "Ready";
+  if (status === "waiting") return "Waiting";
+  if (status === "review") return "In review";
+  if (status === "replied") return "Replied";
+  if (status === "completed") return "Completed";
+  if (status === "stopped") return "Stopped";
+  if (status === "draft") return "Draft";
+  return status;
+}
+
 export function contactStatusLabel(contact: CampaignContact): string {
   if (!contact.selected) return "Not selected";
   if (contact.status === "draft") return "Selected for this draft";
