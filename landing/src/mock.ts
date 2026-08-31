@@ -130,6 +130,7 @@ if (mockMode) {
   const inboxesFlag = params.get("inboxes");
   const managedInboxes = inboxesFlag && !["0", "off", "false"].includes(inboxesFlag.toLowerCase())
     ? {
+        own_mailbox: { connected: true, address: "yuvan@autosana.ai" },
         capacity: { current_per_day: 60, projected_per_day: 80 },
         domains: [
           { name: "autosana-ai.com", status: "active", registered_at: hoursAgo(24 * 40) },

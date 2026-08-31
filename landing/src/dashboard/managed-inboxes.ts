@@ -32,12 +32,25 @@ export type ManagedDomain = {
   registered_at: string | null;
 };
 
+/* The customer's own Composio-connected mailbox, as the overview reports
+   it. `address` is null whenever the backend can't learn it from Composio
+   (which today is always — the connected-account payload carries no
+   address); the row then shows a generic label, never the login email. */
+export type OwnMailbox = {
+  connected: boolean;
+  address: string | null;
+};
+
 export type MailboxesOverview = {
-  /* managed pool only — the customer's own connected mailbox adds 20/day
-     client-side, from the same email_connected flag the EmailCard uses. */
+  /* capacity covers the managed pool only — the customer's own connected
+     mailbox adds 20/day client-side, from the same email_connected flag
+     the EmailCard uses. */
   capacity: { current_per_day: number; projected_per_day: number };
   domains: ManagedDomain[];
   mailboxes: ManagedMailbox[];
+  /* absent on payloads from a backend that predates the field — the
+     overlay then renders managed rows only, exactly as before. */
+  own_mailbox?: OwnMailbox;
 };
 
 export type SenderInput = {
@@ -129,6 +142,8 @@ export function useManagedInboxes(): {
           },
           domains,
           mailboxes,
+          // carry the own-mailbox row through the optimistic rebuild
+          own_mailbox: prev?.own_mailbox,
         };
       });
     },
@@ -142,6 +157,16 @@ export function useManagedInboxes(): {
    inboxes warm is the feature's whole visible behavior. */
 export const managedInboxCap = (mailboxes: ManagedMailbox[]) =>
   mailboxes.reduce((sum, box) => sum + box.todays_cap, 0);
+
+/* The overlay's FIRST row: the customer's own connected mailbox, so the
+   list adds up to the tile's count. No row when own_mailbox is absent (a
+   backend that predates the field) or the grant is disconnected — the
+   overlay then reads exactly as it did before. A null address falls back
+   to a generic label. */
+export const ownMailboxRow = (
+  own: OwnMailbox | null | undefined,
+): { label: string } | null =>
+  own?.connected ? { label: own.address ?? "Your connected mailbox" } : null;
 
 /* One small state chip per inbox. Sentence case in the string — the chip
    deliberately carries no text-transform, so "Warming · day 5" can't get

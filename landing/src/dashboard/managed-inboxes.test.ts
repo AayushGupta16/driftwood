@@ -1,7 +1,33 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { domainVariations, hasMoreDomains } from "./managed-inboxes.ts";
+import {
+  domainVariations,
+  hasMoreDomains,
+  ownMailboxRow,
+} from "./managed-inboxes.ts";
+
+test("ownMailboxRow: a connected grant with an address leads with it", () => {
+  assert.deepEqual(
+    ownMailboxRow({ connected: true, address: "yuvan@autosana.ai" }),
+    { label: "yuvan@autosana.ai" },
+  );
+});
+
+test("ownMailboxRow: a null address falls back to the generic label", () => {
+  // the backend can't learn the address from Composio today — the row
+  // still renders, never with the login email
+  assert.deepEqual(ownMailboxRow({ connected: true, address: null }), {
+    label: "Your connected mailbox",
+  });
+});
+
+test("ownMailboxRow: disconnected or pre-field payloads render no row", () => {
+  assert.equal(ownMailboxRow({ connected: false, address: null }), null);
+  // own_mailbox absent from the response (older backend): today's overlay
+  assert.equal(ownMailboxRow(undefined), null);
+  assert.equal(ownMailboxRow(null), null);
+});
 
 test("domainVariations: the proven five lead, all .com, seed cleaned", () => {
   const names = domainVariations("Acme Corp");

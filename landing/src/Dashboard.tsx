@@ -1149,6 +1149,7 @@ function EmailCard({
           {listOpen && pool && (
             <InboxListOverlay
               mailboxes={pool.mailboxes}
+              ownMailbox={pool.own_mailbox}
               onClose={() => setListOpen(false)}
             />
           )}
