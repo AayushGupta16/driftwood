@@ -246,11 +246,16 @@ function ReviewView({ user }: { user: User }) {
 
 /* ---------- the queue (GET /api/v1/dashboard/reviews) ---------- */
 
-/* Pending items are loaded in full via a paged loop against the 100-cap
-   endpoint (the Leads.tsx pattern) — queues are dozens of items, not
-   thousands, so the upfront load is sub-second and select-all is honest. */
+/* Pending items load against the 100-cap endpoint: the first page paints the
+   moment it lands, then the rest fetch in parallel (a real queue is ~1,000
+   items = ~10 pages, and a serial loop held first paint for the whole ride).
+   Stats/counts come from the offset=0 response ONLY — the backend may return
+   them empty on later pages. Until every page lands, `complete` is false:
+   bulk approve/deny stay parked (so "all" can never silently mean "the
+   subset that had loaded") and the count label reads loaded-of-total. */
 const FETCH_CHUNK = 100;
-const FETCH_GUARD = 100; // hard ceiling on load-all iterations
+const FETCH_GUARD = 100; // hard ceiling on total pages fetched per list
+const FETCH_PARALLEL = 5; // later pages in flight at once
 
 type QueueState =
   | { status: "loading" }
@@ -260,12 +265,27 @@ type QueueState =
       items: ReviewItemRow[];
       stats: QueueStats[];
       counts: ReviewQueueCounts | null;
+      /* total_pending from the first page — the denominator for the
+         loaded-of-total label while the rest streams in. */
+      totalPending: number;
+      /* Later pages still in flight (drives the quiet spinner line). */
+      loadingMore: boolean;
+      /* Every page landed. False while loading more — and it stays false
+         if a later page failed, so bulk actions never operate on a list
+         that is silently missing a chunk. */
+      complete: boolean;
     };
 
 type SendsState =
   | { status: "loading" }
   | { status: "error" }
-  | { status: "ready"; sends: SendRow[] };
+  | {
+      status: "ready";
+      sends: SendRow[];
+      total: number;
+      loadingMore: boolean;
+      complete: boolean;
+    };
 
 type SentState =
   | { status: "loading" }
@@ -400,6 +420,34 @@ async function readErrorDetail(res: Response, fallback: string): Promise<string>
   return fallback;
 }
 
+/* Fetch the post-first pages of a list with FETCH_PARALLEL in flight at
+   once; results come back in offset order, `null` where a page failed — a
+   failed later page must never blank the already-painted first page, so
+   per-page errors are swallowed here and read back as an incomplete load. */
+async function fetchInWaves<T>(
+  offsets: number[],
+  fetchPage: (offset: number) => Promise<T>,
+): Promise<(T | null)[]> {
+  const results: (T | null)[] = new Array<T | null>(offsets.length).fill(null);
+  let next = 0;
+  const workers = Array.from(
+    { length: Math.min(FETCH_PARALLEL, offsets.length) },
+    async () => {
+      while (next < offsets.length) {
+        const i = next;
+        next += 1;
+        try {
+          results[i] = await fetchPage(offsets[i]);
+        } catch {
+          results[i] = null;
+        }
+      }
+    },
+  );
+  await Promise.all(workers);
+  return results;
+}
+
 function summarizeDecide(r: DecideResult): string {
   const parts: string[] = [];
   if (r.approved) parts.push(`${r.approved} approved`);
@@ -480,48 +528,128 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
 
   const loadAll = useCallback(async () => {
     try {
-      const all: ReviewItemRow[] = [];
-      let stats: QueueStats[] = [];
-      let counts: ReviewQueueCounts | null = null;
-      for (let i = 0; i < FETCH_GUARD; i++) {
-        const res = await fetch(
-          `/api/v1/dashboard/reviews?limit=${FETCH_CHUNK}&offset=${all.length}`,
+      const res = await fetch(
+        `/api/v1/dashboard/reviews?limit=${FETCH_CHUNK}&offset=0`,
+        { credentials: "include" },
+      );
+      if (!res.ok) throw new Error("request failed");
+      const first = (await res.json()) as ReviewsPageData;
+      // Stats + counts come from the offset=0 response only — later pages
+      // may legitimately return them empty.
+      const stats = first.queue_stats ?? [];
+      const counts = first.counts ?? null;
+      const totalPending = first.total_pending;
+      // Same ceiling as the old serial loop: FETCH_GUARD pages in total.
+      const pageCount =
+        first.pending.length === 0
+          ? 1
+          : Math.min(Math.ceil(totalPending / FETCH_CHUNK), FETCH_GUARD);
+      const done = pageCount <= 1 || first.pending.length >= totalPending;
+      // Paint now — the rest of the queue streams in behind this.
+      setState({
+        status: "ready",
+        items: first.pending,
+        stats,
+        counts,
+        totalPending,
+        loadingMore: !done,
+        complete: done,
+      });
+      if (done) return;
+
+      const offsets: number[] = [];
+      for (let p = 1; p < pageCount; p++) offsets.push(p * FETCH_CHUNK);
+      const pages = await fetchInWaves(offsets, async (offset) => {
+        const r = await fetch(
+          `/api/v1/dashboard/reviews?limit=${FETCH_CHUNK}&offset=${offset}`,
           { credentials: "include" },
         );
-        if (!res.ok) throw new Error("request failed");
-        const page = (await res.json()) as ReviewsPageData;
-        if (i === 0) {
-          stats = page.queue_stats ?? [];
-          counts = page.counts ?? null;
-        }
-        all.push(...page.pending);
-        if (page.pending.length === 0 || all.length >= page.total_pending)
-          break;
-      }
-      setState({ status: "ready", items: all, stats, counts });
+        if (!r.ok) throw new Error("request failed");
+        return (await r.json()) as ReviewsPageData;
+      });
+      const complete = pages.every((page) => page !== null);
+      // Merge in offset order so the server's oldest-first order holds.
+      const rest: ReviewItemRow[] = [];
+      for (const page of pages) if (page) rest.push(...page.pending);
+      setState((prev) => {
+        if (prev.status !== "ready") return prev;
+        // Dedupe by id: items decided mid-load shift server offsets, so
+        // pages can overlap each other and the already-painted list.
+        const seen = new Set(prev.items.map((item) => item.id));
+        const fresh = rest.filter((item) => {
+          if (seen.has(item.id)) return false;
+          seen.add(item.id);
+          return true;
+        });
+        return {
+          ...prev,
+          items: [...prev.items, ...fresh],
+          loadingMore: false,
+          complete,
+        };
+      });
     } catch {
       setState((prev) => (prev.status === "ready" ? prev : { status: "error" }));
     }
   }, []);
 
   /* The queued tab's data loads up front alongside the reviews (its count
-     sits in the tab label, so it can't wait for a tab switch) — same paged
-     loop, same guard, against GET /dashboard/sends (due_at asc = send
-     order; the page keeps that order). */
+     sits in the tab label, so it can't wait for a tab switch) — same
+     first-page-paints-then-parallel treatment, same guard, against
+     GET /dashboard/sends (due_at asc = send order; the offset-order merge
+     keeps that order). */
   const loadAllSends = useCallback(async () => {
     try {
-      const all: SendRow[] = [];
-      for (let i = 0; i < FETCH_GUARD; i++) {
-        const res = await fetch(
-          `/api/v1/dashboard/sends?limit=${FETCH_CHUNK}&offset=${all.length}`,
+      const res = await fetch(
+        `/api/v1/dashboard/sends?limit=${FETCH_CHUNK}&offset=0`,
+        { credentials: "include" },
+      );
+      if (!res.ok) throw new Error("request failed");
+      const first = (await res.json()) as SendsPageData;
+      const total = first.total;
+      const pageCount =
+        first.sends.length === 0
+          ? 1
+          : Math.min(Math.ceil(total / FETCH_CHUNK), FETCH_GUARD);
+      const done = pageCount <= 1 || first.sends.length >= total;
+      setSendsState({
+        status: "ready",
+        sends: first.sends,
+        total,
+        loadingMore: !done,
+        complete: done,
+      });
+      if (done) return;
+
+      const offsets: number[] = [];
+      for (let p = 1; p < pageCount; p++) offsets.push(p * FETCH_CHUNK);
+      const pages = await fetchInWaves(offsets, async (offset) => {
+        const r = await fetch(
+          `/api/v1/dashboard/sends?limit=${FETCH_CHUNK}&offset=${offset}`,
           { credentials: "include" },
         );
-        if (!res.ok) throw new Error("request failed");
-        const page = (await res.json()) as SendsPageData;
-        all.push(...page.sends);
-        if (page.sends.length === 0 || all.length >= page.total) break;
-      }
-      setSendsState({ status: "ready", sends: all });
+        if (!r.ok) throw new Error("request failed");
+        return (await r.json()) as SendsPageData;
+      });
+      const complete = pages.every((page) => page !== null);
+      const rest: SendRow[] = [];
+      for (const page of pages) if (page) rest.push(...page.sends);
+      setSendsState((prev) => {
+        if (prev.status !== "ready") return prev;
+        // Same dedupe as the reviews: cancels mid-load shift offsets.
+        const seen = new Set(prev.sends.map((s) => s.id));
+        const fresh = rest.filter((s) => {
+          if (seen.has(s.id)) return false;
+          seen.add(s.id);
+          return true;
+        });
+        return {
+          ...prev,
+          sends: [...prev.sends, ...fresh],
+          loadingMore: false,
+          complete,
+        };
+      });
     } catch {
       setSendsState((prev) =>
         prev.status === "ready" ? prev : { status: "error" },
@@ -673,10 +801,12 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
     allItems.filter((item) => SEND_ITEM_KINDS.has(item.kind)),
     sortMode,
   );
-  /* Sends load in full (same guard), so the row list IS
-     counts.pending + counts.sending + counts.failed. */
+  /* Tab counts wait for the full list — a partially loaded count in the
+     label would lie about how much is actually queued. */
   const queuedCount =
-    sendsState.status === "ready" ? sendsState.sends.length : null;
+    sendsState.status === "ready" && sendsState.complete
+      ? sendsState.sends.length
+      : null;
 
   /* Kind filter: chips narrow the list so "select all → approve" can clear
      one send type (e.g. every connection request) without hand-sorting.
@@ -709,6 +839,10 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
 
   const busy = busyIds.size > 0;
   const allSelected = visible.length > 0 && selected.size === visible.length;
+  /* Bulk approve/deny stay parked until the whole queue is loaded —
+     "all" must never silently mean "the subset that had loaded". Per-item
+     and selected-item decisions stay live throughout. */
+  const queueComplete = state.status === "ready" && state.complete;
 
   /* Selection resets on every filter change so a card hidden by the filter
      can never ride along into a bulk approve; the armed Approve all disarms
@@ -743,6 +877,7 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
      every visible pending item as one decide POST. Real outreach gets queued
      on approve — never off a single click. */
   function handleApproveAll() {
+    if (!queueComplete) return; // parked while the rest of the queue loads
     if (!confirmAll) {
       setConfirmDenyAll(false);
       setConfirmAll(true);
@@ -773,6 +908,7 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
      leaves hundreds of pending items that would otherwise need one tap each,
      and the per-item deny box does not scale to that. */
   function handleDenyAll() {
+    if (!queueComplete) return; // parked while the rest of the queue loads
     if (!confirmDenyAll) {
       setConfirmAll(false);
       setConfirmDenyAll(true);
@@ -795,9 +931,13 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
         <h1 className="m-0 text-[clamp(1.7rem,3.6vw,2.25rem)] font-semibold leading-[1.08] tracking-[-0.015em]">
           Review queue
         </h1>
-        {state.status === "ready" && (items.length > 0 || state.counts) && (
+        {state.status === "ready" && (allItems.length > 0 || state.counts) && (
           <span className="mb-[5px] shrink-0 font-mono text-[11px] tracking-[0.06em] text-ink-faint tabular-nums">
-            {items.length} pending
+            {/* Until every page lands, the count is loaded-of-total —
+                a bare number would lie about the queue's size. */}
+            {state.complete
+              ? `${items.length} pending`
+              : `${allItems.length.toLocaleString()} of ${state.totalPending.toLocaleString()} pending`}
             {state.counts ? ` · ${state.counts.approved_7d} approved this week` : ""}
           </span>
         )}
@@ -812,7 +952,9 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
       >
         <TabButton
           label="Needs review"
-          count={state.status === "ready" ? items.length : null}
+          count={
+            state.status === "ready" && state.complete ? items.length : null
+          }
           active={tab === "review"}
           onClick={() => switchTab("review")}
         />
@@ -831,6 +973,12 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
       </div>
 
       {state.status === "ready" && <QueueStatsStrip stats={state.stats} />}
+
+      {/* Quiet "more is coming" line: the first page is already interactive;
+          this explains the growing list and the parked bulk buttons. */}
+      {tab === "review" && state.status === "ready" && state.loadingMore && (
+        <LoadingMoreLine>Loading the rest of the queue</LoadingMoreLine>
+      )}
 
       {tab === "review" && state.status === "loading" && (
         <div className="flex items-center justify-center py-16">
@@ -948,7 +1096,12 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
                   <button
                     type="button"
                     onClick={handleApproveAll}
-                    disabled={busy}
+                    disabled={busy || !queueComplete}
+                    title={
+                      queueComplete
+                        ? undefined
+                        : "Available once the full queue loads"
+                    }
                     className={`min-h-9 cursor-pointer rounded-[10px] px-3.5 py-2 text-[13px] transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
                       confirmAll
                         ? "bg-tide font-semibold text-white shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] hover:bg-tide-deep"
@@ -962,7 +1115,12 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
                   <button
                     type="button"
                     onClick={handleDenyAll}
-                    disabled={busy}
+                    disabled={busy || !queueComplete}
+                    title={
+                      queueComplete
+                        ? undefined
+                        : "Available once the full queue loads"
+                    }
                     className={`min-h-9 cursor-pointer rounded-[10px] px-3.5 py-2 text-[13px] transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
                       confirmDenyAll
                         ? "bg-red-700 font-semibold text-white shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] hover:bg-red-800"
@@ -977,7 +1135,9 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
               )}
               <span className="ml-auto shrink-0 font-mono text-[11px] tracking-[0.06em] text-ink-faint tabular-nums">
                 {activeKind === null
-                  ? `${items.length} pending`
+                  ? state.complete
+                    ? `${items.length} pending`
+                    : `${allItems.length.toLocaleString()} of ${state.totalPending.toLocaleString()} pending`
                   : `${visible.length} of ${items.length}`}
               </span>
             </div>
@@ -1030,6 +1190,12 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
           </>
         ))}
 
+      {tab === "queued" &&
+        sendsState.status === "ready" &&
+        sendsState.loadingMore && (
+          <LoadingMoreLine>Loading the rest of the queued sends</LoadingMoreLine>
+        )}
+
       {tab === "queued" && sendsState.status === "loading" && (
         <div className="flex items-center justify-center py-16">
           <span
@@ -1053,6 +1219,8 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
         ) : (
           <QueuedList
             sends={sendsState.sends}
+            total={sendsState.total}
+            complete={sendsState.complete}
             canWrite={canWrite}
             onRemove={removeSends}
             refreshStats={refreshStats}
@@ -1357,6 +1525,27 @@ function QueueStatsStrip({ stats }: { stats: QueueStats[] }) {
   );
 }
 
+/* ---------- partial-load affordance ---------- */
+
+/* Quiet line under the count/stats strip while later pages stream in — the
+   first page is already interactive; this only explains the growing list
+   and the parked bulk buttons. Same spinner idiom as the full-page loader,
+   scaled down. */
+function LoadingMoreLine({ children }: { children: ReactNode }) {
+  return (
+    <p
+      role="status"
+      className="mx-0.5 mb-0 mt-3 flex items-center gap-2 font-mono text-[11px] tracking-[0.06em] text-ink-faint"
+    >
+      <span
+        aria-hidden="true"
+        className="size-3 shrink-0 animate-spin rounded-full border-2 border-line border-t-tide"
+      />
+      {children}
+    </p>
+  );
+}
+
 /* ---------- the queued tab (GET /api/v1/dashboard/sends) ---------- */
 
 /* Cancel and dismiss failures share one channel — same render spot, same
@@ -1365,11 +1554,19 @@ type ActionError = { message: string; sendId: string | null };
 
 function QueuedList({
   sends,
+  total,
+  complete,
   canWrite,
   onRemove,
   refreshStats,
 }: {
   sends: SendRow[];
+  /* Server total from the first page — the loaded-of-total denominator. */
+  total: number;
+  /* False while later pages load (or after one failed): bulk cancel /
+     dismiss stay parked so "all" never means "the subset that had loaded".
+     Per-row and selected-row actions stay live throughout. */
+  complete: boolean;
   canWrite: boolean;
   onRemove: (ids: ReadonlySet<string>) => void;
   refreshStats: () => Promise<void>;
@@ -1530,6 +1727,7 @@ function QueuedList({
   /* First tap arms ("Cancel all N? Confirm"); the second posts every
      visible cancelable send as one call. */
   function handleCancelAll() {
+    if (!complete) return; // parked while the rest of the sends load
     if (confirmAll !== "cancel") {
       setConfirmAll("cancel");
       return;
@@ -1543,6 +1741,7 @@ function QueuedList({
 
   /* Same arm-then-confirm for clearing every visible failed row. */
   function handleDismissAllFailed() {
+    if (!complete) return; // parked while the rest of the sends load
     if (confirmAll !== "dismiss") {
       setConfirmAll("dismiss");
       return;
@@ -1612,7 +1811,10 @@ function QueuedList({
             <button
               type="button"
               onClick={handleCancelAll}
-              disabled={busy || cancelable.length === 0}
+              disabled={busy || cancelable.length === 0 || !complete}
+              title={
+                complete ? undefined : "Available once every queued send loads"
+              }
               className={`min-h-9 cursor-pointer rounded-[10px] px-3.5 py-2 text-[13px] transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
                 confirmAll === "cancel"
                   ? "bg-tide font-semibold text-white shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] hover:bg-tide-deep"
@@ -1627,7 +1829,12 @@ function QueuedList({
               <button
                 type="button"
                 onClick={handleDismissAllFailed}
-                disabled={busy}
+                disabled={busy || !complete}
+                title={
+                  complete
+                    ? undefined
+                    : "Available once every queued send loads"
+                }
                 className={`min-h-9 cursor-pointer rounded-[10px] px-3.5 py-2 text-[13px] transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
                   confirmAll === "dismiss"
                     ? "bg-tide font-semibold text-white shadow-[0_3px_12px_-5px_rgba(22,24,29,0.45)] hover:bg-tide-deep"
@@ -1643,7 +1850,9 @@ function QueuedList({
         )}
         <span className="ml-auto shrink-0 font-mono text-[11px] tracking-[0.06em] text-ink-faint tabular-nums">
           {activeKind === null
-            ? `${sends.length} queued`
+            ? complete
+              ? `${sends.length} queued`
+              : `${sends.length.toLocaleString()} of ${total.toLocaleString()} queued`
             : `${visible.length} of ${sends.length}`}
         </span>
       </div>
