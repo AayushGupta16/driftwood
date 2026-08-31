@@ -394,3 +394,6 @@ The signature. ASCII character sea on 2D canvas — never rendered 3D.
   window image gets `fetchPriority="high"`.
 - When adding a token/pattern, add it here; when deviating, say why in the
   commit message.
+- Dashboard *behavior* (loading states, action feedback, consistency) has its
+  own testable bar: `design/ux-principles.md`. Audit and fix against that
+  file; tokens and voice stay here.
