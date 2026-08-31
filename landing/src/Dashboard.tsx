@@ -469,7 +469,7 @@ function ApprovedView({ user }: { user: User }) {
       <TodaysSending summary={summary} activity={activity} emailCapLine={emailCapLine} />
       <MetricsCard state={summary} />
       {canWrite && <QuickActions onImport={openImports} />}
-      <CampaignDesk snapshot={snapshot} inventory={inventory} />
+      <CampaignDesk snapshot={snapshot} inventory={inventory} canWrite={canWrite} />
 
       <details
         className="overview-imports"
@@ -615,7 +615,16 @@ function TodaysSending({
               View all
             </a>
           </h3>
-          {activity.status === "loading" && <p className="overview-empty" role="status">Loading…</p>}
+          {activity.status === "loading" && (
+            <div role="status" aria-label="Loading latest sends">
+              {["78%", "62%", "70%"].map((width) => (
+                <div key={width} className="overview-skeleton-line" aria-hidden="true">
+                  <span className="overview-skeleton" style={{ width, height: "0.7rem" }} />
+                  <span className="overview-skeleton" style={{ width: "2.2rem", height: "0.6rem" }} />
+                </div>
+              ))}
+            </div>
+          )}
           {activity.status === "error" && <p className="overview-empty" role="alert">Unavailable right now.</p>}
           {activity.status === "ready" && latestSends.length === 0 && <p className="overview-empty">Nothing sent yet today.</p>}
           {latestSends.map((event, index) => (
@@ -670,9 +679,11 @@ function QuickActions({ onImport }: { onImport: () => void }) {
 function CampaignDesk({
   snapshot,
   inventory,
+  canWrite,
 }: {
   snapshot: OverviewSnapshot;
   inventory: InventoryState;
+  canWrite: boolean;
 }) {
   return (
     <section className="overview-panel overview-campaign-desk" aria-labelledby="campaign-desk-title">
@@ -681,11 +692,30 @@ function CampaignDesk({
         <a href={withMockMode("/dashboard/campaigns")}>View all</a>
       </div>
       {inventory.status === "loading" ? (
-        <p className="overview-empty" role="status">Loading campaigns…</p>
+        <div className="overview-campaign-list" role="status" aria-label="Loading campaigns">
+          {[0, 1, 2].map((row) => (
+            <div key={row} className="overview-campaign-skeleton-row" aria-hidden="true">
+              <span className="overview-skeleton" style={{ width: "3.2rem", height: "0.7rem" }} />
+              <span className="overview-skeleton" style={{ width: `${46 - row * 8}%`, height: "0.75rem" }} />
+              <span className="overview-skeleton overview-skeleton-meta" style={{ width: "5.4rem", height: "0.65rem" }} />
+              <span className="overview-skeleton" style={{ width: "2.6rem", height: "0.65rem" }} />
+            </div>
+          ))}
+        </div>
       ) : inventory.campaigns === null ? (
         <p className="overview-empty" role="alert">Campaigns are temporarily unavailable.</p>
       ) : snapshot.recentCampaigns.length === 0 ? (
-        <p className="overview-empty">No campaigns yet.</p>
+        <p className="overview-empty">
+          {canWrite ? (
+            <>
+              No campaigns yet.{" "}
+              <a href={withMockMode("/dashboard/campaigns/new")}>Create your first campaign</a>{" "}
+              to start sending.
+            </>
+          ) : (
+            <>No campaigns yet. An owner or admin can create the first campaign.</>
+          )}
+        </p>
       ) : (
         <div className="overview-campaign-list">
           {snapshot.recentCampaigns.map((campaign) => (
@@ -738,15 +768,7 @@ function MetricsCard({ state }: { state: SummaryState }) {
         <h2 id="pipeline-title">Results</h2>
         <a href={withMockMode("/dashboard/metrics")}>Open metrics</a>
       </div>
-      {state.status === "loading" && (
-        <div className="flex flex-1 items-center justify-center py-12">
-          <span
-            className="size-6 animate-spin rounded-full border-2 border-line border-t-tide"
-            role="status"
-            aria-label="Loading metrics"
-          />
-        </div>
-      )}
+      {state.status === "loading" && <MetricsSkeleton />}
       {state.status === "error" && (
         <p className="m-0 text-[14px] font-medium text-red-700" role="alert">
           Couldn&rsquo;t load your metrics. Please refresh.
@@ -760,6 +782,40 @@ function MetricsCard({ state }: { state: SummaryState }) {
         </>
       )}
     </section>
+  );
+}
+
+/* Mirrors the ready layout — three result columns over the funnel rows —
+   so nothing jumps when the summary lands. Blocks are sand-toned with the
+   shared slow pulse; reduced motion gets static blocks (overview.css). */
+function MetricsSkeleton() {
+  return (
+    <div role="status" aria-label="Loading metrics">
+      <div className="mt-2.5 flex gap-4" aria-hidden="true">
+        <div className="flex-1">
+          <span className="overview-skeleton" style={{ width: "6rem", height: "0.7rem" }} />
+          <span className="overview-skeleton mt-2" style={{ width: "3.4rem", height: "2rem" }} />
+        </div>
+        <div className="flex-1 border-l border-line pl-4">
+          <span className="overview-skeleton" style={{ width: "3.6rem", height: "0.7rem" }} />
+          <span className="overview-skeleton mt-2" style={{ width: "2.6rem", height: "1.375rem" }} />
+        </div>
+        <div className="flex-1 border-l border-line pl-4">
+          <span className="overview-skeleton" style={{ width: "3.6rem", height: "0.7rem" }} />
+          <span className="overview-skeleton mt-2" style={{ width: "2.6rem", height: "1.375rem" }} />
+        </div>
+      </div>
+      <div className="overview-metrics-rule" aria-hidden="true" />
+      <div className="mt-2.5 flex flex-col gap-2" aria-hidden="true">
+        {[0, 1, 2, 3].map((row) => (
+          <div key={row} className="grid grid-cols-[74px_1fr_auto] items-center gap-3">
+            <span className="overview-skeleton" style={{ width: "3.4rem", height: "0.7rem" }} />
+            <span className="overview-skeleton rounded-md" style={{ height: "18px" }} />
+            <span className="overview-skeleton" style={{ width: "1.8rem", height: "0.7rem" }} />
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -1385,7 +1441,7 @@ function TwitterCard({
         <span
           className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${
             locked
-              ? "bg-amber-500/10 text-amber-700"
+              ? "bg-alert/10 text-alert"
               : connected
                 ? "bg-ok/10 text-ok"
                 : "bg-tide/10 text-tide"
@@ -1559,7 +1615,8 @@ function ListsCard({
           onImported={onImported}
           clearEndpoint="/api/v1/imports/leads"
           clearCount={lists?.leads ?? 0}
-          clearConfirm="Clear every lead in your pipeline? This can't be undone."
+          clearArmedLabel={(n) => `Clear ${plural(n, "lead", "leads")}? Confirm`}
+          clearNote="This removes every lead in your pipeline and can't be undone."
           summarizeClear={(n) => `Cleared ${plural(n, "lead", "leads")}.`}
         />
         <UploadField
@@ -1573,7 +1630,8 @@ function ListsCard({
           onImported={onImported}
           clearEndpoint="/api/v1/imports/blacklist"
           clearCount={lists?.blacklist ?? 0}
-          clearConfirm="Clear your uploaded blacklist? Unsubscribes and bounces are kept. This can't be undone."
+          clearArmedLabel={(n) => `Clear ${plural(n, "entry", "entries")}? Confirm`}
+          clearNote="Unsubscribes and bounces are kept. This can't be undone."
           summarizeClear={(n) => `Cleared ${plural(n, "entry", "entries")}.`}
         />
       </div>
@@ -1594,7 +1652,8 @@ function UploadField<T>({
   onImported,
   clearEndpoint,
   clearCount = 0,
-  clearConfirm,
+  clearArmedLabel,
+  clearNote,
   summarizeClear,
 }: {
   className?: string;
@@ -1613,20 +1672,35 @@ function UploadField<T>({
   clearEndpoint?: string;
   /** How many rows exist now — the Clear button hides when this is 0. */
   clearCount?: number;
-  /** Confirmation prompt shown before clearing. */
-  clearConfirm?: string;
+  /** Armed-state button label ("Clear 240 leads? Confirm"). */
+  clearArmedLabel?: (count: number) => string;
+  /** One-line consequence note shown while the Clear button is armed. */
+  clearNote?: string;
   /** Builds the success toast from the cleared count. */
   summarizeClear?: (cleared: number) => string;
 }) {
   const [status, setStatus] = useState<UploadStatus>("idle");
+  const [uploadingName, setUploadingName] = useState<string | null>(null);
   const [clearing, setClearing] = useState(false);
+  /* Destructive clear is arm-then-confirm (the Review-queue idiom): first
+     press arms the button, second executes, and an armed button disarms
+     itself after a beat — no blocking window.confirm. */
+  const [confirmClear, setConfirmClear] = useState(false);
   const toast = useToast();
+
+  useEffect(() => {
+    if (!confirmClear) return;
+    const t = window.setTimeout(() => setConfirmClear(false), 5000);
+    return () => window.clearTimeout(t);
+  }, [confirmClear]);
 
   async function handleClear() {
     if (!clearEndpoint) return;
-    if (!window.confirm(clearConfirm ?? `Clear ${title.toLowerCase()}? This can't be undone.`))
+    if (!confirmClear) {
+      setConfirmClear(true);
       return;
-
+    }
+    setConfirmClear(false);
     setClearing(true);
     try {
       const res = await fetch(clearEndpoint, {
@@ -1651,6 +1725,7 @@ function UploadField<T>({
     if (!file) return;
 
     setStatus("uploading");
+    setUploadingName(file.name);
     try {
       const body = new FormData();
       body.append("file", file);
@@ -1685,6 +1760,9 @@ function UploadField<T>({
       <p className="m-0 mt-1.5 text-[13px] leading-relaxed text-ink-faint">{hint}</p>
       {canWrite && (
         <div className="mt-3 flex flex-wrap items-center gap-2">
+          {/* The file input stays focusable (sr-only, not display:none) so the
+              control is reachable by keyboard; the label carries the visible
+              ring while the input inside it holds keyboard focus. */}
           <label
             className={`inline-flex items-center gap-2 rounded-full border border-tide/40 bg-surface px-3.5 py-2 text-[13px] font-medium text-tide transition-colors hover:border-tide hover:bg-tide-wash ${
               busy ? "pointer-events-none opacity-60" : "cursor-pointer"
@@ -1693,7 +1771,7 @@ function UploadField<T>({
             <input
               type="file"
               accept=".csv,text/csv"
-              className="hidden"
+              className="sr-only"
               onChange={handleFile}
               disabled={busy}
             />
@@ -1710,7 +1788,11 @@ function UploadField<T>({
               type="button"
               onClick={handleClear}
               disabled={busy}
-              className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3.5 py-2 text-[13px] font-medium text-ink-soft transition-colors hover:border-red-600/40 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className={`inline-flex cursor-pointer items-center gap-2 rounded-full px-3.5 py-2 text-[13px] transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+                confirmClear
+                  ? "bg-red-700 font-semibold text-white hover:bg-red-800"
+                  : "border border-line bg-surface font-medium text-ink-soft hover:border-red-600/40 hover:text-red-700"
+              }`}
             >
               {clearing && (
                 <span
@@ -1718,19 +1800,38 @@ function UploadField<T>({
                   className="size-3.5 animate-spin rounded-full border-[1.5px] border-red-600/30 border-t-red-600"
                 />
               )}
-              {clearing ? "Clearing…" : "Clear"}
+              {clearing
+                ? "Clearing…"
+                : confirmClear
+                  ? clearArmedLabel?.(clearCount) ?? `Clear ${clearCount.toLocaleString()}? Confirm`
+                  : "Clear"}
             </button>
           )}
         </div>
       )}
+      {confirmClear && !busy && clearNote && (
+        <p className="m-0 mt-2.5 text-[13px] font-medium text-red-700" role="status">
+          {clearNote}
+        </p>
+      )}
       {busy ? (
-        <div
-          role="progressbar"
-          aria-label={`Importing ${title.toLowerCase()}`}
-          className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-line/70"
-        >
-          <div className="progress-indeterminate h-full w-1/4 rounded-full bg-tide" />
-        </div>
+        <>
+          <div
+            role="progressbar"
+            aria-label={clearing ? `Clearing ${title.toLowerCase()}` : `Importing ${title.toLowerCase()}`}
+            className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-line/70"
+          >
+            <div className="progress-indeterminate h-full w-1/4 rounded-full bg-tide" />
+          </div>
+          {uploading && (
+            /* Names what is happening (rule 4). The API is a single POST with
+               no progress endpoint, so this narrates the one stage there is;
+               finer stages need server-side import state. */
+            <p className="m-0 mt-2 text-[13px] text-ink-faint" role="status">
+              Uploading and checking {uploadingName ?? "your file"}…
+            </p>
+          )}
+        </>
       ) : (
         current && (
           <p className="m-0 mt-2.5 text-[13px] font-medium text-ink-soft">{current}</p>
@@ -1740,9 +1841,24 @@ function UploadField<T>({
   );
 }
 
+/* Strips a one-shot redirect param from the address bar so the banner it
+   drives can't replay on every reload or bookmark of that URL. The banner
+   itself keeps rendering (its state was captured before the strip). */
+function useOneShotParam(name: string): string | null {
+  const [value] = useState(() =>
+    new URLSearchParams(window.location.search).get(name),
+  );
+  useEffect(() => {
+    if (value === null) return;
+    const url = new URL(window.location.href);
+    url.searchParams.delete(name);
+    window.history.replaceState(window.history.state, "", url);
+  }, [name, value]);
+  return value;
+}
+
 function LinkedInBanner() {
-  const params = new URLSearchParams(window.location.search);
-  const status = params.get("linkedin");
+  const status = useOneShotParam("linkedin");
   if (status !== "connected" && status !== "failed") return null;
 
   const connected = status === "connected";
@@ -1768,8 +1884,7 @@ function LinkedInBanner() {
    probe failed (email_error), stay quiet and let the card explain instead
    of flashing a green "all set" over a red error. */
 function EmailBanner({ emailError }: { emailError: string | null }) {
-  const params = new URLSearchParams(window.location.search);
-  const status = params.get("email");
+  const status = useOneShotParam("email");
   if (status !== "connected" && status !== "failed") return null;
   if (status === "connected" && emailError) return null;
 
