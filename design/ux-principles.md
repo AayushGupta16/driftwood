@@ -79,6 +79,20 @@ here in the same commit. Testable rules only; taste lives in the other file.
 17. **Motion is settle, not show.** `--ease-settle`, ~240ms on controls,
     nothing bouncing for attention; `prefers-reduced-motion` disables all of
     it. Layout shift after first paint is a bug (reserve space; see rule 2).
+18. **Never name our vendors in customer-facing copy.** OrangeSlice, Unipile,
+    Composio, Kernel, Exa, InboxKit and friends are plumbing we can swap;
+    naming them leaks architecture, means nothing to the customer, and makes
+    errors unactionable ("Orange Slice connected", "Unipile 422
+    unprocessable_entity"). Say what the product can do — "Lead search
+    ready", "Couldn't send this invite: LinkedIn allows a new invite three
+    weeks after the last one was withdrawn" — or say nothing (a working
+    capability rarely needs a status chip at all). The allowed brand names
+    are the accounts the CUSTOMER connects and owns: Google, LinkedIn,
+    Gmail/Outlook, X. This applies to every string a customer can see,
+    including backend-originated ones (error fields, provider labels) — a
+    raw vendor error belongs in logs and traces; the UI translates it into
+    what happened and what happens next, and a backend that ships vendor
+    strings to a customer-visible field is a bug on the backend.
 
 ## Process
 
