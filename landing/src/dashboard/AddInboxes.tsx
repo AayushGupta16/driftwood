@@ -5,6 +5,7 @@ import {
   checkDomainAvailability,
   deriveUsername,
   domainVariations,
+  hasMoreDomains,
   purchaseInboxes,
   useDialogTrap,
   type PurchaseResult,
@@ -17,10 +18,11 @@ import {
    generated client-side from the search term and the company name, then
    verified against GET /mailboxes/availability progressively — in order, a
    small batch at a time, never the whole slate per keystroke — and only
-   available ones are listed, up to six at first with a quiet "Show more"
-   that sweeps further until the candidates run out. A taken exact-domain
-   query gets one quiet line instead. Picked domains collect as removable
-   chips above the search box.
+   available ones are listed, up to eight at first with a quiet "Show more"
+   that sweeps further until the candidates run out. Picking a name refills
+   the list from the remaining candidates, so it stays stocked as domains
+   move to chips. A taken exact-domain query gets one quiet line instead.
+   Picked domains collect as removable chips above the search box.
 
    Done POSTs /mailboxes/purchase and the tile updates optimistically. No
    prices or billing words anywhere — customers never see money; they are
@@ -34,9 +36,10 @@ type SenderRow = {
 
 const DOMAIN_RE = /^[a-z0-9][a-z0-9-]*(\.[a-z0-9-]{2,})+$/;
 
-/* progressive availability sweep: how many results each reveal aims for,
-   how many candidates one round takes, and how many checks run at once */
-const VISIBLE_STEP = 6;
+/* progressive availability sweep: how many unpicked results the list aims
+   to hold (initially and per "Show more"), how many candidates one round
+   takes, and how many checks run at once */
+const VISIBLE_STEP = 8;
 const SWEEP_BATCH = 8;
 const SWEEP_CONCURRENCY = 4;
 
@@ -92,6 +95,8 @@ export default function AddInboxes({
     exact: string | null;
   } | null>(null);
   const resultsRef = useRef<string[]>([]);
+  // selected mirrored in a ref so a mid-flight sweep counts fresh picks
+  const selectedRef = useRef<string[]>([]);
   // captured once — company name and owned domains don't change mid-flow
   const seedRef = useRef({ companyName, ownedDomains });
 
@@ -132,16 +137,23 @@ export default function AddInboxes({
     return out;
   }
 
+  /* verified names not yet picked — what the visible list can draw on */
+  const unselectedVerifiedCount = () =>
+    resultsRef.current.filter((name) => !selectedRef.current.includes(name))
+      .length;
+
   /* Verify candidates in order, a batch at a time, appending available ones
-     as they land, until `target` results exist or the list runs out. A new
-     keystroke bumps the generation and strands any in-flight sweep. */
+     as they land, until `target` unpicked results exist or the list runs
+     out. Counting unpicked names means a pick mid-sweep makes the sweep dig
+     further on its own. A new keystroke bumps the generation and strands
+     any in-flight sweep. */
   async function runSweep(gen: number, target: number) {
     const sweep = sweepRef.current;
     if (!sweep || sweep.gen !== gen) return;
     setSearching(true);
     while (
       sweep.cursor < sweep.candidates.length &&
-      resultsRef.current.length < target
+      unselectedVerifiedCount() < target
     ) {
       const batch = sweep.candidates.slice(
         sweep.cursor,
@@ -231,10 +243,19 @@ export default function AddInboxes({
     setSelected((current) =>
       current.includes(name) ? current : [...current, name],
     );
+    if (!selectedRef.current.includes(name)) {
+      selectedRef.current = [...selectedRef.current, name];
+    }
+    // refill: a pick can leave the list short, so resume the sweep for
+    // fresh verified names (an in-flight sweep digs further on its own)
+    if (!searching && !exhausted && unselectedVerifiedCount() < visibleTarget) {
+      void runSweep(searchGen.current, visibleTarget);
+    }
   }
 
   function removeDomain(name: string) {
     setSelected((current) => current.filter((n) => n !== name));
+    selectedRef.current = selectedRef.current.filter((n) => n !== name);
   }
 
   /* live math + the caps, counting what the workspace already has */
@@ -259,10 +280,13 @@ export default function AddInboxes({
   const previewDomain = selected[0] ?? "domain";
   const unselectedResults = results.filter((name) => !selected.includes(name));
   const visibleResults = unselectedResults.slice(0, visibleTarget);
-  // more to show while verified extras exist or candidates remain unchecked
-  const hasMore =
-    visibleResults.length > 0 &&
-    (unselectedResults.length > visibleTarget || !exhausted);
+  const hasMore = hasMoreDomains({
+    unselectedVerified: unselectedResults.length,
+    visibleTarget,
+    exhausted,
+    // while a sweep fills an empty list, the checking hint owns the state
+    checkingEmpty: searching && visibleResults.length === 0,
+  });
 
   function showMore() {
     const target = visibleTarget + VISIBLE_STEP;

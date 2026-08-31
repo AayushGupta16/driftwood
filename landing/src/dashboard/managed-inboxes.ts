@@ -202,6 +202,21 @@ export function domainVariations(base: string): string[] {
 export const domainSuggestions = (companyName: string | null): string[] =>
   domainVariations(companyName ?? "");
 
+/* Whether the domain search should offer "Show more": verified available
+   names exist beyond the visible slice, or unchecked candidates remain.
+   Deliberately independent of how many rows are visible right now —
+   picking every visible suggestion must never hide the path to more.
+   The one exception: while a sweep is filling an empty list the checking
+   hint owns that state, so the control waits for results or exhaustion. */
+export const hasMoreDomains = (state: {
+  unselectedVerified: number;
+  visibleTarget: number;
+  exhausted: boolean;
+  checkingEmpty: boolean;
+}): boolean =>
+  !state.checkingEmpty &&
+  (state.unselectedVerified > state.visibleTarget || !state.exhausted);
+
 /* mailbox names are the local part of an address: lowercase, no spaces */
 export const deriveUsername = (name: string) =>
   name.trim().toLowerCase().replace(/[^a-z0-9._-]/g, "");
