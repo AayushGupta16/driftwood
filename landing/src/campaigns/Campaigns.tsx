@@ -107,7 +107,10 @@ function CampaignsWorkspace() {
         )}
 
         <div className="campaign-index-tools">
-          <div className="campaign-status-tabs" role="tablist" aria-label="Campaign status">
+          {/* Filter buttons, not ARIA tabs: no roving tabindex or arrow-key
+              contract here, so the honest semantics are a group of toggles
+              (the Review FilterChip approach). */}
+          <div className="campaign-status-tabs" role="group" aria-label="Campaign status">
             {TABS.map((item) => {
               const count = item.id === "all"
                 ? campaigns.length
@@ -118,8 +121,7 @@ function CampaignsWorkspace() {
                   type="button"
                   className={tab === item.id ? "is-active" : ""}
                   onClick={() => setTab(item.id)}
-                  role="tab"
-                  aria-selected={tab === item.id}
+                  aria-pressed={tab === item.id}
                 >
                   {item.label}
                   <span>{count}</span>
@@ -141,10 +143,32 @@ function CampaignsWorkspace() {
 
         <div className="campaign-list" aria-live="polite" aria-busy={loading}>
           {loading ? (
-            <div className="campaign-loading">
-              <span aria-hidden="true" />
-              <p>Loading campaigns…</p>
-            </div>
+            /* Row skeletons mirror the loaded list's grid so nothing jumps
+               when campaigns land (ux-principles rules 1+2). */
+            <>
+              <p className="sr-only" role="status">Loading campaigns…</p>
+              {[0, 1, 2, 3, 4].map((index) => (
+                <div className="campaign-list-row campaign-list-skeleton" key={index} aria-hidden="true">
+                  <span className="campaign-skel campaign-skel-chip" />
+                  <span className="campaign-list-copy">
+                    <span className="campaign-skel campaign-skel-line-wide" />
+                    <span className="campaign-skel campaign-skel-line" />
+                  </span>
+                  <span className="campaign-list-audience">
+                    <span className="campaign-skel campaign-skel-line" />
+                    <span className="campaign-skel campaign-skel-line-short" />
+                  </span>
+                  <span className="campaign-list-sequence">
+                    <span className="campaign-skel campaign-skel-line-short" />
+                  </span>
+                  <span className="campaign-list-updated">
+                    <span className="campaign-skel campaign-skel-line" />
+                    <span className="campaign-skel campaign-skel-line-short" />
+                  </span>
+                  <span />
+                </div>
+              ))}
+            </>
           ) : loadError ? (
             <div className="campaign-empty" role="alert">
               <CampaignIcon size={24} />

@@ -29,7 +29,7 @@
 .analytics-window-controls label { display: grid; gap: 0.32rem; }
 .analytics-window-controls label > span {
   color: var(--color-ink-soft);
-  font-size: 0.68rem;
+  font-size: 0.7rem;
   font-weight: 600;
 }
 
@@ -112,7 +112,7 @@
 .analytics-people-table thead th {
   background: color-mix(in srgb, var(--color-sand) 42%, white);
   color: var(--color-ink-soft);
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   font-weight: 650;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -129,6 +129,7 @@
 
 .analytics-skeleton-row span { display: inline-block; width: 4rem; height: 0.7rem; border-radius: 0.25rem; background: var(--color-sand); animation: analytics-pulse 1.1s cubic-bezier(.2, 0, 0, 1) infinite alternate; }
 .analytics-skeleton-row th span { width: 6rem; }
+.analytics-skeleton-row span.analytics-skel-person { width: 9rem; height: 1.6rem; }
 
 .analytics-detail-heading { align-items: flex-end; padding: 1rem 0; }
 .analytics-status-tabs { display: flex; align-items: center; gap: 1.25rem; overflow-x: auto; border-top: 1px solid var(--color-line); }
@@ -146,14 +147,14 @@
 }
 .analytics-status-tabs button.is-active { color: var(--color-ink); font-weight: 650; }
 .analytics-status-tabs button.is-active::after { position: absolute; right: 0; bottom: 0; left: 0; height: 2px; background: var(--color-tide); content: ""; }
-.analytics-status-unavailable { margin-left: auto; flex: 0 0 auto; color: var(--color-ink-faint); font-size: 0.66rem; }
+.analytics-status-unavailable { margin-left: auto; flex: 0 0 auto; color: var(--color-ink-faint); font-size: 0.7rem; }
 
 .analytics-people-table tbody td { color: var(--color-ink-soft); font-size: 0.76rem; }
 .analytics-people-table tbody td:first-child { min-width: 13rem; }
 .analytics-people-table td strong { display: block; color: var(--color-ink); font-size: 0.8rem; font-weight: 620; }
-.analytics-people-table td span:not(.analytics-channel-tag) { display: block; margin-top: 0.2rem; color: var(--color-ink-faint); font-size: 0.68rem; }
+.analytics-people-table td span:not(.analytics-channel-tag) { display: block; margin-top: 0.2rem; color: var(--color-ink-faint); font-size: 0.7rem; }
 
-.analytics-channel-tag { display: inline-flex; align-items: center; border: 1px solid var(--color-line); border-radius: 999px; padding: 0.25rem 0.52rem; color: var(--color-ink-soft); font-size: 0.66rem; font-weight: 600; }
+.analytics-channel-tag { display: inline-flex; align-items: center; border: 1px solid var(--color-line); border-radius: 999px; padding: 0.25rem 0.52rem; color: var(--color-ink-soft); font-size: 0.7rem; font-weight: 600; }
 .analytics-channel-tag.is-linkedin { border-color: color-mix(in srgb, var(--color-tide) 26%, var(--color-line)); color: var(--color-tide-deep); }
 .analytics-channel-tag.is-email { border-color: color-mix(in srgb, var(--color-ok) 30%, var(--color-line)); color: var(--color-ok); }
 
@@ -195,7 +196,7 @@
 .analytics-empty strong { color: var(--color-ink); font-size: 0.82rem; }
 .analytics-empty p { margin: 0; font-size: 0.72rem; }
 
-.analytics-table-footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.7rem 0.15rem; color: var(--color-ink-faint); font-size: 0.67rem; }
+.analytics-table-footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.7rem 0.15rem; color: var(--color-ink-faint); font-size: 0.7rem; }
 .analytics-load-more {
   width: 100%;
   min-height: 2.35rem;
@@ -210,7 +211,7 @@
 .analytics-load-more:disabled { cursor: wait; opacity: 0.6; }
 .analytics-method { display: flex; align-items: flex-start; gap: 0.55rem; margin-top: 2.2rem; border-top: 1px solid var(--color-line); padding-top: 1rem; color: var(--color-ink-faint); }
 .analytics-method svg { flex: 0 0 auto; margin-top: 0.15rem; }
-.analytics-method p { max-width: 56rem; margin: 0; font-size: 0.68rem; line-height: 1.55; }
+.analytics-method p { max-width: 56rem; margin: 0; font-size: 0.7rem; line-height: 1.55; }
 
 @keyframes analytics-pulse { to { opacity: 0.45; } }
 

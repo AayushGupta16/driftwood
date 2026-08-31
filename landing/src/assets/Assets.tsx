@@ -77,6 +77,16 @@ export default function Assets() {
   const [agentsLoading, setAgentsLoading] = useState(true);
   const [agentsError, setAgentsError] = useState(false);
   const [agentsErrorVisible, setAgentsErrorVisible] = useState(false);
+  const [armedDeleteId, setArmedDeleteId] = useState<string | null>(null);
+  const [removingId, setRemovingId] = useState<string | null>(null);
+
+  /* An armed Remove disarms itself after a beat — no stale confirm buttons
+     (the Review-queue arm-then-confirm idiom). */
+  useEffect(() => {
+    if (!armedDeleteId) return;
+    const timer = window.setTimeout(() => setArmedDeleteId(null), 5000);
+    return () => window.clearTimeout(timer);
+  }, [armedDeleteId]);
 
   useEffect(() => {
     let current = true;
@@ -134,14 +144,25 @@ export default function Assets() {
     setError(null);
   }
 
+  /* First press arms the card's Remove ("Remove? Confirm"), the second
+     executes. One in-flight delete at a time; the busy state disables the
+     button so a double-click can't send two DELETEs. */
   async function removeAsset(asset: CompanyAsset) {
-    if (!window.confirm(`Remove “${asset.name}” from the agent library?`)) return;
+    if (removingId) return;
+    if (armedDeleteId !== asset.id) {
+      setArmedDeleteId(asset.id);
+      return;
+    }
+    setArmedDeleteId(null);
+    setRemovingId(asset.id);
     setError(null);
     try {
       await deleteAsset(asset.id);
       setAssets((current) => current.filter((candidate) => candidate.id !== asset.id));
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "The asset could not be removed.");
+    } finally {
+      setRemovingId(null);
     }
   }
 
@@ -176,7 +197,9 @@ export default function Assets() {
       )}
 
       <div className="asset-toolbar">
-        <div className="asset-filters" role="tablist" aria-label="Asset type">
+        {/* Filter buttons, not ARIA tabs: no roving tabindex or arrow-key
+            contract here, so the honest semantics are a group of toggles. */}
+        <div className="asset-filters" role="group" aria-label="Asset type">
           {FILTERS.map((item) => {
             const count = item.id === "all"
               ? assets.length
@@ -187,8 +210,7 @@ export default function Assets() {
                 type="button"
                 className={filter === item.id ? "is-active" : ""}
                 onClick={() => setFilter(item.id)}
-                role="tab"
-                aria-selected={filter === item.id}
+                aria-pressed={filter === item.id}
               >
                 {item.label}<span>{count}</span>
               </button>
@@ -209,7 +231,24 @@ export default function Assets() {
 
       <div className="asset-library" aria-live="polite" aria-busy={loading}>
         {loading ? (
-          <div className="asset-state"><span className="asset-spinner" /><p>Loading private assets…</p></div>
+          /* Card skeletons mirror the loaded grid so nothing jumps when the
+             library lands (ux-principles rules 1+2). */
+          <>
+            <p className="sr-only" role="status">Loading private assets…</p>
+            <div className="asset-grid" aria-hidden="true">
+              {[0, 1, 2, 3, 4, 5].map((index) => (
+                <div className="asset-card asset-card-skeleton" key={index}>
+                  <div className="asset-visual asset-skel-visual" />
+                  <div className="asset-card-body">
+                    <span className="asset-skel asset-skel-kind" />
+                    <span className="asset-skel asset-skel-title" />
+                    <span className="asset-skel asset-skel-line" />
+                    <span className="asset-skel asset-skel-line-short" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         ) : loadFailed ? (
           <div className="asset-state" role="alert"><ImageIcon size={27} /><h2>Assets are unavailable</h2><p>We could not load the private library. Try again before adding or changing an asset.</p><button className="asset-button asset-button-secondary" type="button" onClick={() => window.location.reload()}>Try again</button></div>
         ) : visible.length === 0 ? (
@@ -222,6 +261,8 @@ export default function Assets() {
           <div className="asset-grid">
             {visible.map((asset) => {
               const destination = assetDestination(asset);
+              const armed = armedDeleteId === asset.id;
+              const removing = removingId === asset.id;
               return (
                 <article className="asset-card" key={asset.id}>
                   {destination ? (
@@ -238,9 +279,30 @@ export default function Assets() {
                         <span className={`asset-kind asset-kind-${asset.kind}`}>{assetKindLabel(asset.kind)}</span>
                         <h2>{asset.name}</h2>
                       </div>
-                      {canWrite && <button className="asset-delete" type="button" onClick={() => void removeAsset(asset)} aria-label={`Remove ${asset.name}`} title="Remove asset">
-                        <TrashIcon size={16} />
-                      </button>}
+                      {canWrite && (
+                        <button
+                          className={`asset-delete${armed ? " is-armed" : ""}`}
+                          type="button"
+                          onClick={() => void removeAsset(asset)}
+                          disabled={removing}
+                          aria-label={
+                            removing
+                              ? `Removing ${asset.name}`
+                              : armed
+                                ? `Confirm removing ${asset.name}`
+                                : `Remove ${asset.name}`
+                          }
+                          title={armed || removing ? undefined : "Remove asset"}
+                        >
+                          {removing ? (
+                            <span className="asset-delete-spinner" aria-hidden="true" />
+                          ) : armed ? (
+                            "Remove? Confirm"
+                          ) : (
+                            <TrashIcon size={16} />
+                          )}
+                        </button>
+                      )}
                     </div>
                     {asset.description && <p>{asset.description}</p>}
                     {asset.tags.length > 0 && (
@@ -254,7 +316,16 @@ export default function Assets() {
                     </div>
                     <div className="asset-access">
                       <span><small>Agent access</small><strong>{agentsLoading ? "Loading agents…" : agentsError ? "Unavailable" : assetAssignmentLabel(asset, agents)}</strong></span>
-                      {canWrite && !agentsError && <button type="button" onClick={() => setAssignmentAsset(asset)} disabled={!assignmentsReady}>Manage</button>}
+                      {canWrite && !agentsError && (
+                        <button
+                          type="button"
+                          onClick={() => setAssignmentAsset(asset)}
+                          disabled={!assignmentsReady}
+                          title={assignmentsReady ? undefined : "Available once workspace agents load"}
+                        >
+                          Manage
+                        </button>
+                      )}
                     </div>
                   </div>
                 </article>
@@ -291,11 +362,16 @@ type ComposerProps = {
 function ComposerShell({
   title,
   intro,
+  locked = false,
   onClose,
   children,
 }: {
   title: string;
   intro: string;
+  /* While locked (an upload in flight), Escape, backdrop, and the close
+     button won't dismiss the dialog — closing would leave the request
+     running with no visible state. */
+  locked?: boolean;
   onClose: () => void;
   children: React.ReactNode;
 }) {
@@ -321,7 +397,7 @@ function ComposerShell({
   }, []);
 
   function closeFromBackdrop(event: React.MouseEvent<HTMLDialogElement>) {
-    if (event.target !== event.currentTarget) return;
+    if (event.target !== event.currentTarget || locked) return;
     const bounds = event.currentTarget.getBoundingClientRect();
     if (
       event.clientX < bounds.left || event.clientX > bounds.right ||
@@ -335,18 +411,21 @@ function ComposerShell({
       className="asset-dialog"
       aria-modal="true"
       aria-labelledby="asset-dialog-title"
-      onCancel={(event) => { event.preventDefault(); onClose(); }}
+      onCancel={(event) => {
+        event.preventDefault();
+        if (!locked) onClose();
+      }}
       onKeyDown={(event) => {
         if (event.key === "Escape") {
           event.preventDefault();
-          onClose();
+          if (!locked) onClose();
         }
       }}
       onMouseDown={closeFromBackdrop}
     >
       <div className="asset-dialog-heading">
         <div><h2 id="asset-dialog-title">{title}</h2><p>{intro}</p></div>
-        <button type="button" onClick={onClose} aria-label="Close" autoFocus><CloseIcon size={18} /></button>
+        <button type="button" onClick={onClose} disabled={locked} aria-label="Close" autoFocus><CloseIcon size={18} /></button>
       </div>
       {children}
     </dialog>
@@ -469,19 +548,27 @@ function UploadComposer({ onClose, onCreated }: ComposerProps) {
   }
 
   return (
-    <ComposerShell title="Upload an asset" intro="Images, videos, and audio stay private to this workspace." onClose={onClose}>
+    <ComposerShell title="Upload an asset" intro="Images, videos, and audio stay private to this workspace." locked={saving} onClose={onClose}>
       <form className="asset-form" onSubmit={(event) => void submit(event)}>
-        <button className="asset-dropzone" type="button" onClick={() => inputRef.current?.click()}>
+        <button className="asset-dropzone" type="button" onClick={() => inputRef.current?.click()} disabled={saving}>
           <UploadIcon size={23} />
           <strong>{file ? file.name : "Choose an image, video, or audio file"}</strong>
           <span>{file ? formatBytes(file.size) : "PNG, JPEG, GIF, WebP, MP4, MOV, WebM, MP3, WAV, M4A, or OGG · up to 25 MB"}</span>
         </button>
         <input ref={inputRef} className="sr-only" type="file" accept="image/png,image/jpeg,image/gif,image/webp,video/mp4,video/quicktime,video/webm,audio/mpeg,audio/wav,audio/x-wav,audio/mp4,audio/x-m4a,audio/ogg,audio/webm" onChange={(event) => setFile(event.target.files?.[0] ?? null)} />
-        <label>Display name <span>Optional</span><input value={name} onChange={(event) => setName(event.target.value)} maxLength={255} placeholder={file?.name ?? "Product walkthrough"} /></label>
-        <label>Description <span>Optional</span><textarea value={description} onChange={(event) => setDescription(event.target.value)} maxLength={2000} rows={3} placeholder="How should the agent use this?" /></label>
-        <label>Tags <span>Comma separated</span><input value={tags} onChange={(event) => setTags(event.target.value)} maxLength={1000} placeholder="product, proof, enterprise" /></label>
+        <label>Display name <span>Optional</span><input value={name} onChange={(event) => setName(event.target.value)} maxLength={255} placeholder={file?.name ?? "Product walkthrough"} disabled={saving} /></label>
+        <label>Description <span>Optional</span><textarea value={description} onChange={(event) => setDescription(event.target.value)} maxLength={2000} rows={3} placeholder="How should the agent use this?" disabled={saving} /></label>
+        <label>Tags <span>Comma separated</span><input value={tags} onChange={(event) => setTags(event.target.value)} maxLength={1000} placeholder="product, proof, enterprise" disabled={saving} /></label>
+        {saving && file && (
+          /* A large file can take a while: narrate what is happening in place
+             (ux-principles rule 4). */
+          <div className="asset-upload-progress" role="status">
+            <span className="asset-upload-bar" aria-hidden="true"><span /></span>
+            <span>Uploading {file.name} ({formatBytes(file.size)})… keep this dialog open until it finishes.</span>
+          </div>
+        )}
         {submitError && <p className="asset-dialog-error" role="alert">{submitError}</p>}
-        <div className="asset-form-actions"><button className="asset-button asset-button-secondary" type="button" onClick={onClose}>Cancel</button><button className="asset-button asset-button-primary" type="submit" disabled={!file || saving}>{saving ? "Uploading…" : "Upload asset"}</button></div>
+        <div className="asset-form-actions"><button className="asset-button asset-button-secondary" type="button" onClick={onClose} disabled={saving}>Cancel</button><button className="asset-button asset-button-primary" type="submit" disabled={!file || saving}>{saving ? "Uploading…" : "Upload asset"}</button></div>
       </form>
     </ComposerShell>
   );
@@ -520,7 +607,7 @@ function LinkComposer({ onClose, onCreated }: ComposerProps) {
         <label>Description <span>Optional</span><textarea value={description} onChange={(event) => setDescription(event.target.value)} maxLength={2000} rows={3} placeholder="When should the agent use this?" /></label>
         <label>Tags <span>Comma separated</span><input value={tags} onChange={(event) => setTags(event.target.value)} maxLength={1000} placeholder="case study, proof" /></label>
         {submitError && <p className="asset-dialog-error" role="alert">{submitError}</p>}
-        <div className="asset-form-actions"><button className="asset-button asset-button-secondary" type="button" onClick={onClose}>Cancel</button><button className="asset-button asset-button-primary" type="submit" disabled={saving}>{saving ? "Saving…" : "Save link"}</button></div>
+        <div className="asset-form-actions"><button className="asset-button asset-button-secondary" type="button" onClick={onClose} disabled={saving}>Cancel</button><button className="asset-button asset-button-primary" type="submit" disabled={saving}>{saving ? "Saving…" : "Save link"}</button></div>
       </form>
     </ComposerShell>
   );

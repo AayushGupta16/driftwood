@@ -254,13 +254,14 @@ export default function AnalyticsDashboard() {
             </label>
           </div>
         </div>
-        <div className="analytics-status-tabs" role="tablist" aria-label="Outcome type">
+        {/* Filter buttons, not ARIA tabs: no roving tabindex or arrow-key
+            contract here, so the honest semantics are a group of toggles. */}
+        <div className="analytics-status-tabs" role="group" aria-label="Outcome type">
           {AVAILABLE_STATUSES.map((option) => (
             <button
               key={option}
               type="button"
-              role="tab"
-              aria-selected={status === option}
+              aria-pressed={status === option}
               className={status === option ? "is-active" : ""}
               onClick={() => {
                 if (status === option) return;
@@ -289,6 +290,18 @@ export default function AnalyticsDashboard() {
               </tr>
             </thead>
             <tbody aria-busy={loading}>
+              {loading && !data
+                ? Array.from({ length: 5 }, (_, index) => (
+                    /* Row skeletons mirror the loaded table (same idiom as the
+                       channel matrix above) so nothing jumps when people land. */
+                    <tr key={index} className="analytics-skeleton-row">
+                      <td><span className="analytics-skel-person" /></td>
+                      <td><span /></td>
+                      <td><span /></td>
+                      <td><span /></td>
+                    </tr>
+                  ))
+                : null}
               {data?.people.map((person, index) => {
                 const rowKey = `${person.leadId ?? "unmatched"}-${person.channel}-${index}`;
                 const replyBody = person.replyText ? formatReplyBody(person.replyText) : "";

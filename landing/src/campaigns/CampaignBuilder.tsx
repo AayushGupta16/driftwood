@@ -53,6 +53,7 @@ import {
 
 type MobilePanel = "flow" | "editor";
 type SaveState = "idle" | "saving" | "saved" | "error";
+type Toast = { message: string; tone: "status" | "error" };
 
 const STEP_OPTIONS: Array<{
   kind: StepKind;
@@ -92,7 +93,8 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
   const [overlapLoading, setOverlapLoading] = useState(false);
   const [overlapError, setOverlapError] = useState<string | null>(null);
   const [overlapConfirmed, setOverlapConfirmed] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<Toast | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [mobilePanel, setMobilePanel] = useState<MobilePanel>("flow");
   const [loading, setLoading] = useState(campaignId !== "new");
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -146,6 +148,18 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
     }
   }
 
+  /* Unsaved work guard: while a save is pending (including the 600ms debounce
+     window) or has failed, warn before the tab or page goes away. */
+  useEffect(() => {
+    if (saveState !== "saving" && saveState !== "error") return;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [saveState]);
+
   useEffect(() => {
     if (revision === 0) return;
     saveTimerRef.current = window.setTimeout(() => {
@@ -181,7 +195,7 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
         if (latestRevisionRef.current === expectedRevision) {
           setSaveState("error");
           if (reason instanceof CampaignApiError && reason.code === "campaign_conflict") {
-            setToast("This campaign changed elsewhere. Reload before continuing.");
+            setToast({ message: "This campaign changed elsewhere. Reload before continuing.", tone: "error" });
           }
         }
         throw reason;
@@ -221,7 +235,7 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
     setSelectedStepId(step.id);
     setAddAfterStepId(undefined);
     setMobilePanel("editor");
-    setToast(`${step.label} added to the sequence.`);
+    setToast({ message: `${step.label} added to the sequence.`, tone: "status" });
   }
 
   function handleMove(stepId: string, direction: -1 | 1) {
@@ -237,7 +251,7 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
     commit(next);
     setSelectedStepId(next.steps[Math.max(0, index - 1)]?.id ?? null);
     setMobilePanel("flow");
-    setToast("Step removed from the sequence.");
+    setToast({ message: "Step removed from the sequence.", tone: "status" });
   }
 
   function selectSavedAudience(audience: Audience) {
@@ -259,9 +273,10 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
     }));
     const hydrated = { ...current, contacts: audienceContacts };
     commit(applyAudience(hydrated, audience.id, audience.name, leadIds));
-    setToast(
-      `${audience.name} applied with ${leadIds.length} outreach-eligible ${leadIds.length === 1 ? "member" : "members"}.`,
-    );
+    setToast({
+      message: `${audience.name} applied with ${leadIds.length} outreach-eligible ${leadIds.length === 1 ? "member" : "members"}.`,
+      tone: "status",
+    });
   }
 
   async function persistLatest(): Promise<Campaign> {
@@ -280,6 +295,7 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
       overlapLoading || overlapError || (overlap?.leadCount && !overlapConfirmed)
     ) return;
     setActionBusy(true);
+    setActionError(null);
     try {
       const saved = await persistLatest();
       const confirmedLeadIds = overlapConfirmed ? confirmedOverlapLeadIds(overlap) : [];
@@ -287,9 +303,12 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
       campaignRef.current = active;
       setCampaign(active);
       closeReview();
-      setToast("Campaign activated. No outreach was queued or sent.");
+      setToast({ message: "Campaign activated. No outreach was queued or sent.", tone: "status" });
     } catch (reason) {
-      setToast(reason instanceof Error ? reason.message : "Campaign could not be activated.");
+      /* The failure renders inside the still-open review dialog, next to the
+         Activate button, which stays enabled for a retry. A corner toast is
+         invisible here: the <dialog> top layer paints over it. */
+      setActionError(reason instanceof Error ? reason.message : "Campaign could not be activated.");
     } finally {
       setActionBusy(false);
     }
@@ -300,6 +319,7 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
     if (!current || !canWrite || current.status !== "draft") return;
     setReviewMode("activate");
     setReviewOpen(true);
+    setActionError(null);
     setOverlap(null);
     setOverlapConfirmed(false);
     setOverlapError(null);
@@ -321,6 +341,7 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
     if (!current || !canWrite || current.status !== "paused") return;
     setReviewMode("resume");
     setReviewOpen(true);
+    setActionError(null);
     setOverlap(null);
     setOverlapConfirmed(false);
     setOverlapError(null);
@@ -343,15 +364,16 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
       overlapLoading || overlapError || (overlap?.leadCount && !overlapConfirmed)
     ) return;
     setActionBusy(true);
+    setActionError(null);
     try {
       const confirmedLeadIds = overlapConfirmed ? confirmedOverlapLeadIds(overlap) : [];
       const resumed = await resumeCampaign(current.id, confirmedLeadIds);
       campaignRef.current = resumed;
       setCampaign(resumed);
       closeReview();
-      setToast("Campaign resumed. Nothing was sent.");
+      setToast({ message: "Campaign resumed. Nothing was sent.", tone: "status" });
     } catch (reason) {
-      setToast(reason instanceof Error ? reason.message : "Campaign status could not change.");
+      setActionError(reason instanceof Error ? reason.message : "The campaign could not resume.");
     } finally {
       setActionBusy(false);
     }
@@ -372,13 +394,16 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
       return;
     }
     setActionBusy(true);
+    setActionError(null);
     try {
       const updated = await pauseCampaign(current.id);
       campaignRef.current = updated;
       setCampaign(updated);
-      setToast("Campaign paused.");
+      setToast({ message: "Campaign paused.", tone: "status" });
     } catch (reason) {
-      setToast(reason instanceof Error ? reason.message : "Campaign status could not change.");
+      /* Renders as a role="alert" strip in the toolbar, next to the Pause
+         button, which stays enabled for a retry. */
+      setActionError(reason instanceof Error ? reason.message : "The campaign could not pause.");
     } finally {
       setActionBusy(false);
     }
@@ -388,11 +413,12 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
     const current = campaignRef.current;
     if (!current || !canWrite) return;
     setActionBusy(true);
+    setActionError(null);
     try {
       const draft = await createCampaignRevision(current.id);
       window.location.href = withMockMode(`/dashboard/campaigns/${encodeURIComponent(draft.id)}`);
     } catch (reason) {
-      setToast(reason instanceof Error ? reason.message : "A revision could not be created.");
+      setActionError(reason instanceof Error ? reason.message : "A revision could not be created.");
       setActionBusy(false);
     }
   }
@@ -414,12 +440,7 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
   }
 
   if (loading) {
-    return (
-      <div className="campaign-loading campaign-loading-workspace" aria-live="polite">
-        <span aria-hidden="true" />
-        <p>Loading campaign…</p>
-      </div>
-    );
+    return <BuilderSkeleton />;
   }
 
   if (!campaign || loadError) {
@@ -467,12 +488,24 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
           <div className="campaign-builder-actions">
             {canWrite && (campaign.status === "active" || campaign.status === "paused") ? (
               <button className="campaign-secondary" type="button" onClick={toggleStatus} disabled={actionBusy}>
-                {campaign.status === "active" ? "Pause" : "Resume"}
+                {campaign.status === "active" ? (actionBusy ? "Pausing…" : "Pause") : "Resume"}
               </button>
             ) : null}
-            <span className={`campaign-saved-state campaign-save-${saveState}`} aria-live="polite">
+            <span
+              className={`campaign-saved-state campaign-save-${saveState}`}
+              aria-live={saveState === "error" ? "assertive" : "polite"}
+            >
               {!canWrite ? "Read only" : saveState === "saving" ? "Saving…" : saveState === "error" ? "Save failed" : editable ? "Saved" : "Version frozen"}
             </span>
+            {saveState === "error" && editable && (
+              <button
+                className="campaign-save-retry"
+                type="button"
+                onClick={() => void persistLatest().catch(() => undefined)}
+              >
+                Retry save
+              </button>
+            )}
             {channelIssues.length > 0 && <span className="campaign-channel-warning">Channel setup required</span>}
             {canWrite && editable ? (
               <button className="campaign-primary" type="button" onClick={() => void openReview()} disabled={actionBusy} data-testid="review-campaign">
@@ -484,6 +517,12 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
               </button>
             ) : null}
           </div>
+          {actionError && !reviewOpen && (
+            <div className="campaign-action-error" role="alert">
+              <span>{actionError}</span>
+              <button type="button" onClick={() => setActionError(null)}>Dismiss</button>
+            </div>
+          )}
         </header>
 
         <div className="campaign-mobile-switcher" role="group" aria-label="Campaign workspace panels">
@@ -587,6 +626,7 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
           campaign={campaign}
           issues={reviewMode === "resume" ? [] : validation.issues}
           busy={actionBusy}
+          actionError={actionError}
           overlap={overlap}
           overlapLoading={overlapLoading}
           overlapError={overlapError}
@@ -599,8 +639,13 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
       )}
 
       {toast && (
-        <button className="campaign-toast" type="button" onClick={() => setToast(null)} role="status">
-          {toast}
+        <button
+          className={`campaign-toast${toast.tone === "error" ? " is-error" : ""}`}
+          type="button"
+          onClick={() => setToast(null)}
+          role={toast.tone === "error" ? "alert" : "status"}
+        >
+          {toast.message}
         </button>
       )}
     </>
@@ -612,6 +657,55 @@ export default function CampaignBuilder({ campaignId }: { campaignId: string }) 
     <CampaignShell active="campaigns" workspace>
       <CampaignBuilderWorkspace campaignId={campaignId} />
     </CampaignShell>
+  );
+}
+
+/* Layout-mirroring skeleton for the builder's first paint (ux-principles
+   rules 1+2): toolbar, sequence canvas, and inspector hold their final
+   footprint so nothing jumps when the campaign lands. Static under
+   prefers-reduced-motion via campaigns.css. */
+function BuilderSkeleton() {
+  return (
+    <div className="campaign-workspace" aria-busy="true">
+      <p className="sr-only" role="status">Loading campaign…</p>
+      <header className="campaign-builder-toolbar" aria-hidden="true">
+        <div className="campaign-builder-title">
+          <span className="campaign-skel campaign-skel-circle" />
+          <div>
+            <span className="campaign-skel campaign-skel-chip" />
+            <span className="campaign-skel campaign-skel-title" />
+          </div>
+        </div>
+        <div className="campaign-builder-actions">
+          <span className="campaign-skel campaign-skel-pill" />
+        </div>
+      </header>
+      <section className="campaign-canvas is-mobile-current" aria-hidden="true">
+        <div className="campaign-flow">
+          <div className="campaign-skel-node" />
+          {[0, 1, 2].map((index) => (
+            <div className="campaign-flow-item" key={index}>
+              <span className="campaign-skel-connector" />
+              <div className="campaign-skel-node" />
+            </div>
+          ))}
+        </div>
+      </section>
+      <aside className="campaign-inspector" aria-hidden="true">
+        <div className="campaign-editor-form">
+          <div className="campaign-editor-heading">
+            <span className="campaign-skel campaign-skel-icon" />
+            <span className="campaign-skel campaign-skel-heading" />
+          </div>
+          {[0, 1, 2].map((index) => (
+            <div className="campaign-field" key={index}>
+              <span className="campaign-skel campaign-skel-label" />
+              <span className="campaign-skel campaign-skel-input" />
+            </div>
+          ))}
+        </div>
+      </aside>
+    </div>
   );
 }
 
@@ -937,6 +1031,7 @@ function ReviewDialog({
   campaign,
   issues,
   busy,
+  actionError,
   overlap,
   overlapLoading,
   overlapError,
@@ -950,6 +1045,7 @@ function ReviewDialog({
   campaign: Campaign;
   issues: string[];
   busy: boolean;
+  actionError: string | null;
   overlap: CampaignOverlap | null;
   overlapLoading: boolean;
   overlapError: string | null;
@@ -1021,6 +1117,11 @@ function ReviewDialog({
             No active campaign overlap
           </div>
         ) : null}
+        {actionError && (
+          <div className="campaign-dialog-error" role="alert">
+            {actionError}
+          </div>
+        )}
         <div className="campaign-dialog-actions">
           <button className="campaign-secondary" type="button" onClick={onClose} disabled={busy}>{resuming ? "Keep paused" : "Keep editing"}</button>
           <button className="campaign-primary" type="button" onClick={onConfirm} disabled={issues.length > 0 || busy || !overlapReady || (needsOverlapConfirmation && !overlapConfirmed)} data-testid={resuming ? "resume-campaign" : "activate-campaign"}>
