@@ -170,8 +170,10 @@ export function managedInboxChip(box: ManagedMailbox): {
 
 /* ---------- buy-flow helpers ---------- */
 
-/* The five variation shapes of the Autosana slate, applied to any base:
-   base-ai.com, basehq.com, usebase.com, joinbase.com, withbase.com. */
+/* Ordered variation shapes applied to any base. The five Autosana-slate
+   originals lead (they're the proven favorites), then the wider set of
+   credible business shapes the search sweeps through in order.
+   All .com on purpose: exotic TLDs hurt cold-email deliverability. */
 export function domainVariations(base: string): string[] {
   const clean = base.toLowerCase().replace(/[^a-z0-9]/g, "");
   if (!clean) return [];
@@ -181,6 +183,18 @@ export function domainVariations(base: string): string[] {
     `use${clean}.com`,
     `join${clean}.com`,
     `with${clean}.com`,
+    `get${clean}.com`,
+    `try${clean}.com`,
+    `meet${clean}.com`,
+    `hello${clean}.com`,
+    `go${clean}.com`,
+    `on${clean}.com`,
+    `${clean}ai.com`,
+    `${clean}-hq.com`,
+    `${clean}app.com`,
+    `${clean}-app.com`,
+    `${clean}team.com`,
+    `${clean}-team.com`,
   ];
 }
 

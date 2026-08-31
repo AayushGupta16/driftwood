@@ -14,10 +14,13 @@ import {
 /* Add inboxes — the EmailCard's sender-first flow, floated over the grid.
    Senders are one input each: the mailbox name, previewed inline as
    name@domain. Domains are found by search: candidate variations are
-   generated client-side from the search term and the company name, checked
-   against GET /mailboxes/availability (debounced), and only available ones
-   are listed — a taken exact-domain query gets one quiet line instead.
-   Picked domains collect as removable chips above the search box.
+   generated client-side from the search term and the company name, then
+   verified against GET /mailboxes/availability progressively — in order, a
+   small batch at a time, never the whole slate per keystroke — and only
+   available ones are listed, up to six at first with a quiet "Show more"
+   that sweeps further until the candidates run out. A taken exact-domain
+   query gets one quiet line instead. Picked domains collect as removable
+   chips above the search box.
 
    Done POSTs /mailboxes/purchase and the tile updates optimistically. No
    prices or billing words anywhere — customers never see money; they are
@@ -30,6 +33,12 @@ type SenderRow = {
 };
 
 const DOMAIN_RE = /^[a-z0-9][a-z0-9-]*(\.[a-z0-9-]{2,})+$/;
+
+/* progressive availability sweep: how many results each reveal aims for,
+   how many candidates one round takes, and how many checks run at once */
+const VISIBLE_STEP = 6;
+const SWEEP_BATCH = 8;
+const SWEEP_CONCURRENCY = 4;
 
 const normalizeDomain = (raw: string) =>
   raw
@@ -61,6 +70,8 @@ export default function AddInboxes({
   const [selected, setSelected] = useState<string[]>([]);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<string[]>([]);
+  const [visibleTarget, setVisibleTarget] = useState(VISIBLE_STEP);
+  const [exhausted, setExhausted] = useState(true);
   const [searching, setSearching] = useState(false);
   const [takenQuery, setTakenQuery] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -71,6 +82,16 @@ export default function AddInboxes({
   const submittingRef = useRef(false);
   const availCache = useRef(new Map<string, boolean>());
   const searchGen = useRef(0);
+  // the current sweep: ordered candidates, how far it has verified, and the
+  // exact-domain query (if any) for the taken hint. results mirrored in a
+  // ref so a resumed sweep sees what's already verified.
+  const sweepRef = useRef<{
+    gen: number;
+    candidates: string[];
+    cursor: number;
+    exact: string | null;
+  } | null>(null);
+  const resultsRef = useRef<string[]>([]);
   // captured once — company name and owned domains don't change mid-flow
   const seedRef = useRef({ companyName, ownedDomains });
 
@@ -92,6 +113,63 @@ export default function AddInboxes({
     return available;
   }
 
+  /* one round of availability checks through a small worker pool, results
+     kept in candidate order */
+  async function checkBatch(
+    names: string[],
+  ): Promise<(readonly [string, boolean | null])[]> {
+    const out: (readonly [string, boolean | null])[] = new Array(names.length);
+    let next = 0;
+    const worker = async () => {
+      while (next < names.length) {
+        const index = next++;
+        out[index] = [names[index], await cachedCheck(names[index])] as const;
+      }
+    };
+    await Promise.all(
+      Array.from({ length: Math.min(SWEEP_CONCURRENCY, names.length) }, worker),
+    );
+    return out;
+  }
+
+  /* Verify candidates in order, a batch at a time, appending available ones
+     as they land, until `target` results exist or the list runs out. A new
+     keystroke bumps the generation and strands any in-flight sweep. */
+  async function runSweep(gen: number, target: number) {
+    const sweep = sweepRef.current;
+    if (!sweep || sweep.gen !== gen) return;
+    setSearching(true);
+    while (
+      sweep.cursor < sweep.candidates.length &&
+      resultsRef.current.length < target
+    ) {
+      const batch = sweep.candidates.slice(
+        sweep.cursor,
+        sweep.cursor + SWEEP_BATCH,
+      );
+      sweep.cursor += batch.length;
+      const checks = await checkBatch(batch);
+      if (gen !== searchGen.current || !mountedRef.current) return;
+      const found = checks
+        .filter(([, available]) => available === true)
+        .map(([name]) => name);
+      if (found.length > 0) {
+        resultsRef.current = [...resultsRef.current, ...found];
+        setResults(resultsRef.current);
+      }
+      if (
+        sweep.exact !== null &&
+        checks.some(
+          ([name, available]) => name === sweep.exact && available === false,
+        )
+      ) {
+        setTakenQuery(sweep.exact);
+      }
+    }
+    if (sweep.cursor >= sweep.candidates.length) setExhausted(true);
+    setSearching(false);
+  }
+
   /* the search: debounced, generation-guarded, available results only */
   useEffect(() => {
     const gen = ++searchGen.current;
@@ -110,36 +188,24 @@ export default function AddInboxes({
           if (exact) push(exact);
           for (const name of domainVariations(term.split(".")[0])) push(name);
           for (const name of domainVariations(companyName ?? "")) push(name);
+          if (gen !== searchGen.current || !mountedRef.current) return;
+          sweepRef.current = { gen, candidates, cursor: 0, exact };
+          resultsRef.current = [];
+          setResults([]);
+          setTakenQuery(null);
+          setVisibleTarget(VISIBLE_STEP);
+          setExhausted(candidates.length === 0);
           if (candidates.length === 0) {
-            if (gen === searchGen.current && mountedRef.current) {
-              setResults([]);
-              setTakenQuery(null);
-              setSearching(false);
-            }
+            setSearching(false);
             return;
           }
-          if (mountedRef.current && gen === searchGen.current) setSearching(true);
-          const checks = await Promise.all(
-            candidates.map(
-              async (name) => [name, await cachedCheck(name)] as const,
-            ),
-          );
-          if (gen !== searchGen.current || !mountedRef.current) return;
-          setResults(
-            checks.filter(([, available]) => available === true).map(([name]) => name),
-          );
-          setTakenQuery(
-            exact !== null &&
-              checks.some(([name, available]) => name === exact && available === false)
-              ? exact
-              : null,
-          );
-          setSearching(false);
+          await runSweep(gen, VISIBLE_STEP);
         })();
       },
       term ? 350 : 0,
     );
     return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
   function updateSender(id: number, username: string) {
@@ -191,7 +257,18 @@ export default function AddInboxes({
     !submitting && senderCount > 0 && domainCount > 0 && reason === null;
 
   const previewDomain = selected[0] ?? "domain";
-  const visibleResults = results.filter((name) => !selected.includes(name));
+  const unselectedResults = results.filter((name) => !selected.includes(name));
+  const visibleResults = unselectedResults.slice(0, visibleTarget);
+  // more to show while verified extras exist or candidates remain unchecked
+  const hasMore =
+    visibleResults.length > 0 &&
+    (unselectedResults.length > visibleTarget || !exhausted);
+
+  function showMore() {
+    const target = visibleTarget + VISIBLE_STEP;
+    setVisibleTarget(target);
+    void runSweep(searchGen.current, target);
+  }
 
   async function handleDone() {
     if (!canSubmit) return;
@@ -333,6 +410,16 @@ export default function AddInboxes({
               </button>
             ))}
           </div>
+        )}
+        {hasMore && (
+          <button
+            type="button"
+            className="add-inboxes-quiet"
+            disabled={submitting || searching}
+            onClick={showMore}
+          >
+            {searching ? "Checking…" : "Show more"}
+          </button>
         )}
         {searching && visibleResults.length === 0 && (
           <p className="add-inboxes-hint">Checking…</p>

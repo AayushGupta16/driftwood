@@ -145,15 +145,28 @@ if (mockMode) {
         ],
       }
     : { capacity: { current_per_day: 0, projected_per_day: 0 }, domains: [], mailboxes: [] };
-  // The add-inboxes flow's two endpoints. Availability marks everything
-  // available except getautosana.com, so the domain search lists whatever
-  // gets typed (the Autosana slate included) and the taken path is
-  // demoable by searching getautosana.com exactly. Purchase always
-  // succeeds, echoing the requested domains back in their registering
-  // state — the tile's optimistic merge takes it from there.
+  // The add-inboxes flow's two endpoints. Availability marks a handful of
+  // shapes taken — a few of the workspace-seeded suggestions ("Example
+  // workspace" cleans to exampleworkspace) so the progressive sweep and its
+  // Show more control have to dig past taken names, plus a few Autosana
+  // shapes so typing autosana behaves the same, and getautosana.com keeps
+  // the taken exact-domain line demoable. Everything else is available.
+  // Purchase always succeeds, echoing the requested domains back in their
+  // registering state — the tile's optimistic merge takes it from there.
+  const takenDomains = new Set([
+    "getautosana.com",
+    "tryautosana.com",
+    "meetautosana.com",
+    "autosanaai.com",
+    "autosana-app.com",
+    "getexampleworkspace.com",
+    "tryexampleworkspace.com",
+    "exampleworkspaceai.com",
+    "exampleworkspace-app.com",
+  ]);
   const mailboxAvailability = (_init?: RequestInit, url?: string) => {
     const domain = new URL(url ?? "", location.origin).searchParams.get("domain") ?? "";
-    return { domain, available: domain !== "getautosana.com" };
+    return { domain, available: !takenDomains.has(domain) };
   };
   const mailboxPurchase = (init?: RequestInit) => {
     try {
