@@ -39,7 +39,6 @@ import {
   BackIcon,
   CheckIcon,
   PlusIcon,
-  OrangeSliceIcon,
   SearchIcon,
   TrashIcon,
   UploadIcon,
@@ -60,8 +59,13 @@ export default function Audiences() {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
+  /* Errors render next to the control that failed (ux-principles rule 7), so
+     each surface gets its own slot instead of one page-wide message. */
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [detailError, setDetailError] = useState<string | null>(null);
+  const [detailFailedId, setDetailFailedId] = useState<string | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -82,11 +86,17 @@ export default function Audiences() {
   const [selectedRecords, setSelectedRecords] = useState<Set<string>>(new Set());
   const [discovering, setDiscovering] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [campaignPrompt, setCampaignPrompt] = useState<Audience | null>(null);
   const [campaignCreating, setCampaignCreating] = useState(false);
   const [campaignError, setCampaignError] = useState<string | null>(null);
   const campaignButtonRef = useRef<HTMLButtonElement>(null);
   const uploadInputRef = useRef<HTMLInputElement>(null);
+  /* Enter submits the rename AND blurs the input (disabling it), so the blur
+     handler re-enters submitRename before the `renaming` state commits — a
+     ref is the only reliable same-tick double-submit guard. */
+  const renamingRef = useRef(false);
 
   useEffect(() => {
     let current = true;
@@ -94,11 +104,8 @@ export default function Audiences() {
       .then((rows) => {
         if (current) setAudiences(rows);
       })
-      .catch((reason: unknown) => {
-        if (current) {
-          setLoadFailed(true);
-          setError(reason instanceof Error ? reason.message : "Audiences could not load.");
-        }
+      .catch(() => {
+        if (current) setLoadFailed(true);
       })
       .finally(() => {
         if (current) setLoading(false);
@@ -130,6 +137,14 @@ export default function Audiences() {
     };
   }, []);
 
+  /* An armed delete disarms itself after a beat — no stale confirm button
+     waiting to be fat-fingered later (the review-queue idiom). */
+  useEffect(() => {
+    if (!confirmDelete) return;
+    const t = window.setTimeout(() => setConfirmDelete(false), 5000);
+    return () => window.clearTimeout(t);
+  }, [confirmDelete]);
+
   const filteredAudiences = useMemo(
     () => filterAudiences(audiences, query),
     [audiences, query],
@@ -145,7 +160,8 @@ export default function Audiences() {
     setResultQuery("");
     setImportNotice(null);
     setSelectedRecords(new Set());
-    setError(null);
+    setSearchError(null);
+    setSaveError(null);
   }
 
   const activeProvider = providerStatuses.find(
@@ -165,11 +181,14 @@ export default function Audiences() {
 
   async function openAudience(id: string) {
     setDetailLoading(true);
-    setError(null);
+    setDetailError(null);
+    setDetailFailedId(null);
+    setConfirmDelete(false);
     try {
       setSelectedAudience(await getAudience(id));
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "This audience could not load.");
+      setDetailError(reason instanceof Error ? reason.message : "This audience could not load.");
+      setDetailFailedId(id);
     } finally {
       setDetailLoading(false);
     }
@@ -177,15 +196,16 @@ export default function Audiences() {
 
   async function runDiscovery(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (discovering) return;
     setDiscovering(true);
-    setError(null);
+    setSearchError(null);
     try {
       const nextResults = await discoverAudienceLeads(filters, "orange_slice");
       setResults(nextResults);
       const available = new Set(nextResults.candidates.map((candidate) => candidate.providerRecordId));
       setSelectedRecords((current) => new Set([...current].filter((id) => available.has(id))));
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Lead discovery could not run.");
+      setSearchError(reason instanceof Error ? reason.message : "Lead discovery could not run.");
     } finally {
       setDiscovering(false);
     }
@@ -194,17 +214,19 @@ export default function Audiences() {
   async function findSimilar(audience: Audience) {
     if (findingSimilar) return;
     setFindingSimilar(true);
-    setError(null);
+    setDetailError(null);
     try {
       const similar = await findSimilarPeople(audience.id);
       setGrowTarget(audience);
       setName(audience.name);
       setResults(similar);
       setSelectedRecords(new Set());
+      setSearchError(null);
+      setSaveError(null);
       setView("builder");
       setBuilderTab("search");
     } catch (reason) {
-      setError(
+      setDetailError(
         reason instanceof Error ? reason.message : "Similar-people search failed.",
       );
     } finally {
@@ -213,18 +235,25 @@ export default function Audiences() {
   }
 
   async function submitRename(audience: Audience) {
+    if (renamingRef.current) return;
     const name = (renameDraft ?? "").trim();
-    setRenameDraft(null);
-    if (!name || name === audience.name || renaming) return;
+    if (!name || name === audience.name) {
+      setRenameDraft(null);
+      return;
+    }
+    renamingRef.current = true;
     setRenaming(true);
-    setError(null);
+    setDetailError(null);
     try {
       const updated = await renameAudience(audience.id, name);
       setSelectedAudience(updated);
+      setRenameDraft(null);
       setAudiences(await listAudiences());
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Rename failed.");
+      setRenameDraft(null);
+      setDetailError(reason instanceof Error ? reason.message : "The rename failed.");
     } finally {
+      renamingRef.current = false;
       setRenaming(false);
     }
   }
@@ -236,7 +265,7 @@ export default function Audiences() {
   }
 
   /* Drag-and-drop: any .csv dropped anywhere on the builder workbench runs
-     the same import as the Upload CSV button. */
+     the same import as the upload card. */
   function handleBuilderDrop(event: React.DragEvent<HTMLElement>) {
     event.preventDefault();
     setDragActive(false);
@@ -282,7 +311,7 @@ export default function Audiences() {
     if (selectedRecords.size === 0 || !results) return;
     if (!growTarget && !name.trim()) return;
     setSaving(true);
-    setError(null);
+    setSaveError(null);
     try {
       const selected = results.candidates.filter((candidate) =>
         selectedRecords.has(candidate.providerRecordId),
@@ -321,7 +350,7 @@ export default function Audiences() {
       setCampaignError(null);
       setCampaignPrompt(created);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "The audience could not be saved.");
+      setSaveError(reason instanceof Error ? reason.message : "The audience could not be saved.");
     } finally {
       setSaving(false);
     }
@@ -351,22 +380,48 @@ export default function Audiences() {
     requestAnimationFrame(() => campaignButtonRef.current?.focus());
   }
 
+  /* Arm-then-confirm (ux-principles rule 9): the first press turns the icon
+     into a labeled confirm, the second deletes; the armed state self-disarms. */
   async function removeAudience() {
-    if (!selectedAudience) return;
-    const shouldDelete = window.confirm(`Delete “${selectedAudience.name}”? This will not delete its leads.`);
-    if (!shouldDelete) return;
-    setError(null);
+    if (!selectedAudience || deleting) return;
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
+    setConfirmDelete(false);
+    setDeleting(true);
+    setDetailError(null);
     try {
       await deleteAudience(selectedAudience.id);
       setAudiences((current) => current.filter((item) => item.id !== selectedAudience.id));
       setSelectedAudience(null);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "The audience could not be deleted.");
+      setDetailError(reason instanceof Error ? reason.message : "The audience could not be deleted.");
+    } finally {
+      setDeleting(false);
     }
   }
 
   if (view === "builder") {
     const hasSearchFilter = Object.values(filters).some((value) => value.trim());
+    const providerReady = !providerStatusLoading && activeProvider?.configured === true;
+    const searchDisabledReason = providerStatusLoading
+      ? "Checking the lead search connection"
+      : !activeProvider?.configured
+        ? "Lead search isn't set up for this workspace yet — upload a CSV instead"
+        : !hasSearchFilter
+          ? "Describe who you're looking for first"
+          : null;
+    const saveDisabledReason =
+      !results || results.candidates.length === 0
+        ? "Run a search or upload a CSV first"
+        : selectedRecords.size === 0
+          ? "Select people in the results first"
+          : !growTarget && !name.trim()
+            ? "Name the audience in the Details tab first"
+            : null;
+    const needsNameOnly =
+      selectedRecords.size > 0 && !growTarget && !name.trim();
     const allVisibleSelected =
       visibleCandidates.length > 0 &&
       visibleCandidates.every((candidate) => selectedRecords.has(candidate.providerRecordId));
@@ -390,6 +445,7 @@ export default function Audiences() {
             Drop CSV to import leads
           </div>
         )}
+        <input ref={uploadInputRef} hidden type="file" accept=".csv,text/csv" onChange={handleLeadUpload} disabled={importing} />
         <div className="audience-builder-canvas">
           <header className="audience-builder-bar">
             <button className="audience-builder-back" type="button" onClick={() => { setGrowTarget(null); setView("library"); }} aria-label="Back to audiences">
@@ -397,23 +453,102 @@ export default function Audiences() {
             </button>
             <div>
               <h1 id="audience-builder-heading">{name.trim() || "Untitled audience"}</h1>
-              <span>{results ? `${results.candidates.length} results` : "New audience"}</span>
+              {/* Honest counts (rule 13): while the table filter narrows the
+                  view, the line reads shown-of-total, never a bare total. */}
+              <span>
+                {results
+                  ? resultQuery.trim()
+                    ? `${visibleCandidates.length.toLocaleString()} of ${results.candidates.length.toLocaleString()} results`
+                    : `${results.candidates.length.toLocaleString()} results`
+                  : "New audience"}
+              </span>
             </div>
             <label className="audience-result-search">
               <SearchIcon size={15} />
               <span className="audience-visually-hidden">Search results</span>
-              <input type="search" value={resultQuery} onChange={(event) => setResultQuery(event.target.value)} placeholder="Search by name, title, or company" disabled={!results} />
+              <input
+                type="search"
+                value={resultQuery}
+                onChange={(event) => setResultQuery(event.target.value)}
+                placeholder="Search by name, title, or company"
+                disabled={!results}
+                title={results ? undefined : "Filters the results once a search has run"}
+              />
             </label>
-            {selectedRecords.size > 0 && <span className="audience-selection-count">{selectedRecords.size} selected</span>}
+            {selectedRecords.size > 0 && <span className="audience-selection-count">{selectedRecords.size.toLocaleString()} selected</span>}
           </header>
 
           <div className="audience-results audience-results-canvas" aria-live="polite" aria-busy={discovering}>
+            {importNotice && <ImportNoticeCard notice={importNotice} banner />}
             {discovering ? (
-              <div className="audience-table-loading" aria-label="Searching for leads">
-                {Array.from({ length: 9 }, (_, index) => <span key={index} />)}
-              </div>
+              <>
+                <DiscoveryNarration />
+                <div className="audience-table-loading" aria-hidden="true">
+                  <span className="is-head" />
+                  {Array.from({ length: 8 }, (_, index) => <span key={index} />)}
+                </div>
+              </>
             ) : !results ? (
-              <div className="audience-state audience-builder-empty"><SearchIcon size={23} /><h2>{activeProvider?.configured === false ? "Lead search is unavailable" : "Find people for this audience"}</h2><p>{activeProvider?.configured === false ? "Upload a CSV or ask an admin to connect Orange Slice." : "Describe who you're looking for in the panel."}</p></div>
+              /* Two co-equal ways to start an audience, in the canvas itself:
+                 describe the people you want, or bring your own CSV. */
+              <div className="audience-start">
+                <div className="audience-start-lede">
+                  <h2>Two ways to fill this audience</h2>
+                  <p>Run a people search, or upload a list you already have.</p>
+                </div>
+                <div className="audience-start-grid">
+                  <form className="audience-start-card" onSubmit={runDiscovery}>
+                    <span className="audience-start-icon" aria-hidden="true"><SearchIcon size={19} /></span>
+                    <h3>Describe who you're looking for</h3>
+                    <p>
+                      {providerReady || providerStatusLoading
+                        ? "Lead search turns a plain description into a list of people to review."
+                        : "Lead search isn't set up for this workspace yet — upload a CSV instead."}
+                    </p>
+                    <div className="audience-start-search">
+                      <input
+                        aria-label="Describe who you're looking for"
+                        value={filters.prompt}
+                        onChange={(event) => setFilters({ ...filters, prompt: event.target.value })}
+                        placeholder="Founders at seed-stage B2B SaaS companies"
+                        disabled={providerStatusLoading || !activeProvider?.configured}
+                      />
+                      <button
+                        type="submit"
+                        disabled={discovering || searchDisabledReason !== null}
+                        title={searchDisabledReason ?? undefined}
+                      >
+                        Find leads
+                      </button>
+                    </div>
+                    {searchError && <div className="audience-error audience-start-error" role="alert">{searchError}</div>}
+                  </form>
+                  <div className="audience-start-card">
+                    <span className="audience-start-icon" aria-hidden="true"><UploadIcon size={19} /></span>
+                    <h3>Upload a CSV</h3>
+                    <p>Every row needs a company; name, title, and email help. The audience is named after the file.</p>
+                    <button
+                      className="audience-upload-target"
+                      type="button"
+                      onClick={() => uploadInputRef.current?.click()}
+                      disabled={importing}
+                      title={importing ? "Import in progress" : undefined}
+                    >
+                      <UploadIcon size={15} /> {importing ? "Importing…" : "Choose a CSV file"}
+                      <small>or drag and drop it anywhere on this page</small>
+                    </button>
+                    <input
+                      className="audience-upload-name"
+                      type="text"
+                      value={importName}
+                      onChange={(e) => setImportName(e.target.value)}
+                      placeholder="Audience name (optional)"
+                      aria-label="Audience name for CSV upload"
+                      disabled={importing}
+                    />
+                  </div>
+                </div>
+              </div>
             ) : results.candidates.length === 0 ? (
               <div className="audience-state audience-builder-empty"><AudienceIcon size={24} /><h2>No matching leads</h2><p>Adjust a criterion and search again.</p></div>
             ) : visibleCandidates.length === 0 ? (
@@ -456,37 +591,39 @@ export default function Audiences() {
             <button id="audience-details-tab" type="button" role="tab" aria-controls="audience-details-panel" aria-selected={builderTab === "details"} className={builderTab === "details" ? "is-active" : ""} onClick={() => setBuilderTab("details")}>Details</button>
           </div>
 
-          {error && <div className="audience-error audience-panel-error" role="alert">{error}</div>}
-
           {builderTab === "search" ? (
             <form id="audience-search-panel" className="audience-search-form" role="tabpanel" aria-labelledby="audience-search-tab" onSubmit={runDiscovery}>
               <div className="audience-search-panel-head">
                 <div className="audience-search-title">
                   <AudienceIcon size={18} />
-                  <div><h2>Find people</h2><small className={activeProvider?.configured ? "is-connected" : ""}><OrangeSliceIcon size={12} /> {providerStatusLoading ? "Checking Orange Slice" : activeProvider?.configured ? "Orange Slice connected" : "Orange Slice offline"}</small></div>
+                  <h2>Find people</h2>
                 </div>
-                <input
-                  className="audience-upload-name"
-                  type="text"
-                  value={importName}
-                  onChange={(e) => setImportName(e.target.value)}
-                  placeholder="Audience name (optional)"
-                  aria-label="Audience name for CSV upload"
-                  disabled={importing}
-                />
-                <button className="audience-upload-button" type="button" onClick={() => uploadInputRef.current?.click()} disabled={importing}>
-                  <UploadIcon size={14} /> {importing ? "Importing…" : "Upload CSV"}
-                </button>
-                <input ref={uploadInputRef} hidden type="file" accept=".csv,text/csv" onChange={handleLeadUpload} disabled={importing} />
               </div>
 
-              {importNotice && <ImportNoticeCard notice={importNotice} />}
+              {/* A healthy search needs no status chip; only the absence of
+                  the capability is worth a line (ux-principles rule 18). */}
+              {!providerStatusLoading && activeProvider?.configured === false && (
+                <p className="audience-search-offline">
+                  Lead search isn't set up for this workspace yet — upload a CSV instead.
+                </p>
+              )}
 
               <div className="audience-query-box">
                 <SearchIcon size={17} />
                 <input aria-label="Describe who you're looking for" value={filters.prompt} onChange={(event) => setFilters({ ...filters, prompt: event.target.value })} placeholder="Describe who you're looking for" />
-                <button type="submit" aria-label="Run lead search" disabled={discovering || providerStatusLoading || !activeProvider?.configured || !hasSearchFilter}><ArrowIcon size={15} /></button>
+                <button
+                  type="submit"
+                  aria-label="Run lead search"
+                  disabled={discovering || searchDisabledReason !== null}
+                  title={searchDisabledReason ?? undefined}
+                >
+                  <ArrowIcon size={15} />
+                </button>
               </div>
+
+              {/* With no results the start card owns the search entry and its
+                  error; once results exist the rail is where retries happen. */}
+              {searchError && results && <div className="audience-error audience-panel-error" role="alert">{searchError}</div>}
 
               <div className="audience-search-examples" aria-label="Example searches">
                 <button type="button" onClick={() => setFilters({ ...EMPTY_FILTERS, prompt: "Founders at seed-stage B2B SaaS companies in the US" })}><SearchIcon size={13} /> Founders at seed-stage B2B SaaS companies in the US</button>
@@ -494,7 +631,14 @@ export default function Audiences() {
               </div>
 
               <div className="audience-panel-search-action">
-                <button className="audience-secondary" type="submit" disabled={discovering || providerStatusLoading || !activeProvider?.configured || !hasSearchFilter}>{discovering ? "Searching…" : results ? "Update search" : "Find leads"}</button>
+                <button
+                  className="audience-secondary"
+                  type="submit"
+                  disabled={discovering || searchDisabledReason !== null}
+                  title={searchDisabledReason ?? undefined}
+                >
+                  {discovering ? "Searching…" : results ? "Update search" : "Find leads"}
+                </button>
               </div>
             </form>
           ) : (
@@ -502,13 +646,27 @@ export default function Audiences() {
               <h2>Audience details</h2>
               <label><span>Audience name</span><input autoFocus value={name} onChange={(event) => setName(event.target.value)} placeholder="Qualified founders" maxLength={255} /></label>
               <label><span>Description <small>Optional</small></span><textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Who belongs in this audience" maxLength={20000} rows={4} /></label>
-              <dl><div><dt>Source</dt><dd>{results?.providerLabel ?? "Orange Slice"}</dd></div><div><dt>Selected</dt><dd>{selectedRecords.size}</dd></div><div><dt>Results</dt><dd>{results?.candidates.length ?? 0}</dd></div></dl>
+              <dl><div><dt>Source</dt><dd>{results ? providerLabel(results.provider) : "Lead search"}</dd></div><div><dt>Selected</dt><dd>{selectedRecords.size.toLocaleString()}</dd></div><div><dt>Results</dt><dd>{(results?.candidates.length ?? 0).toLocaleString()}</dd></div></dl>
             </div>
           )}
 
           <footer className="audience-panel-footer">
-            <button className="audience-primary" type="button" onClick={saveAudience} disabled={saving || !name.trim() || selectedRecords.size === 0}>
-              <CheckIcon size={16} /> {saving ? "Saving…" : selectedRecords.size > 0 ? `Save ${selectedRecords.size} to audience` : "Save to audience"}
+            {saveError && <div className="audience-error audience-footer-error" role="alert">{saveError}</div>}
+            {needsNameOnly && builderTab === "search" && (
+              <p className="audience-footer-hint">
+                Name it in the{" "}
+                <button type="button" onClick={() => setBuilderTab("details")}>Details tab</button>
+                {" "}to save.
+              </p>
+            )}
+            <button
+              className="audience-primary"
+              type="button"
+              onClick={saveAudience}
+              disabled={saving || saveDisabledReason !== null}
+              title={saving ? undefined : saveDisabledReason ?? undefined}
+            >
+              <CheckIcon size={16} /> {saving ? "Saving…" : selectedRecords.size > 0 ? `Save ${selectedRecords.size.toLocaleString()} to audience` : "Save to audience"}
             </button>
           </footer>
         </aside>
@@ -527,25 +685,60 @@ export default function Audiences() {
         )}
       </header>
 
-      {importNotice && <ImportNoticeCard notice={importNotice} banner />}
+      <input ref={uploadInputRef} hidden type="file" accept=".csv,text/csv" onChange={handleLeadUpload} disabled={importing} />
 
-      {error && !loadFailed && <div className="audience-error" role="alert">{error}</div>}
+      {importNotice && <ImportNoticeCard notice={importNotice} banner />}
 
       <div className="audience-library-grid">
         <div className="audience-library">
           <label className="audience-library-search"><SearchIcon size={16} /><span className="audience-visually-hidden">Search audiences</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search audiences" /></label>
           <div className="audience-list" aria-busy={loading} aria-live="polite">
             {loading ? (
-              <div className="audience-state"><span className="audience-spinner" aria-hidden="true" /><p>Loading audiences…</p></div>
+              /* Skeleton rows mirror the loaded list (rule 2) so nothing
+                 jumps when the audiences land. */
+              <div className="audience-list-skeleton" role="status" aria-label="Loading audiences">
+                {Array.from({ length: 3 }, (_, index) => (
+                  <span key={index} className="audience-skeleton-row" aria-hidden="true">
+                    <span className="audience-skeleton-dot" />
+                    <span className="audience-skeleton-copy"><span /><span /></span>
+                    <span className="audience-skeleton-cell" />
+                    <span className="audience-skeleton-cell" />
+                  </span>
+                ))}
+              </div>
             ) : loadFailed ? (
               <div className="audience-state" role="alert"><AudienceIcon size={24} /><h2>Audiences are unavailable</h2><p>We could not load this workspace. Try again before creating or changing an audience.</p><button className="audience-secondary" type="button" onClick={() => window.location.reload()}>Try again</button></div>
             ) : filteredAudiences.length === 0 ? (
-              <div className="audience-state"><AudienceIcon size={24} /><h2>{audiences.length === 0 ? "No audiences yet" : "No audiences match"}</h2><p>{audiences.length === 0 ? canWrite ? "Create an audience from your discovery source." : "An owner or admin can create the first audience." : "Try a broader search."}</p>{audiences.length === 0 && canWrite && <button className="audience-secondary" type="button" onClick={startBuilder}>Build the first audience</button>}</div>
+              <div className="audience-state">
+                <AudienceIcon size={24} />
+                <h2>{audiences.length === 0 ? "No audiences yet" : "No audiences match"}</h2>
+                <p>
+                  {audiences.length === 0
+                    ? canWrite
+                      ? "Describe who you want to reach, or upload a CSV you already have."
+                      : "An owner or admin can create the first audience."
+                    : "Try a broader search."}
+                </p>
+                {audiences.length === 0 && canWrite && (
+                  <div className="audience-state-actions">
+                    <button className="audience-secondary" type="button" onClick={startBuilder}>Build the first audience</button>
+                    <button
+                      className="audience-secondary"
+                      type="button"
+                      onClick={() => uploadInputRef.current?.click()}
+                      disabled={importing}
+                      title={importing ? "Import in progress" : undefined}
+                    >
+                      <UploadIcon size={14} /> {importing ? "Importing…" : "Upload a CSV"}
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : filteredAudiences.map((audience) => (
               <button key={audience.id} className={`audience-list-row ${selectedAudience?.id === audience.id ? "is-active" : ""}`} type="button" onClick={() => openAudience(audience.id)}>
                 <span className="audience-list-icon"><AudienceIcon size={18} /></span>
                 <span className="audience-list-copy"><strong>{audience.name}</strong><span>{audience.description || "No description"}</span></span>
-                <span className="audience-list-meta"><strong>{audience.memberCount}</strong><small>{audience.memberCount === 1 ? "lead" : "leads"}</small></span>
+                <span className="audience-list-meta"><strong>{audience.memberCount.toLocaleString()}</strong><small>{audience.memberCount === 1 ? "lead" : "leads"}</small></span>
                 <span className="audience-list-meta audience-source"><strong>{providerLabel(audience.sourceProvider)}</strong><small>source</small></span>
                 <span className="audience-list-date"><small>Updated</small><span>{formatAudienceDate(audience.updatedAt)}</span></span>
                 <ArrowIcon size={16} />
@@ -556,7 +749,25 @@ export default function Audiences() {
 
         <aside className={`audience-detail ${selectedAudience ? "has-audience" : ""}`} aria-label="Audience details" aria-busy={detailLoading}>
           {detailLoading ? (
-            <div className="audience-state"><span className="audience-spinner" aria-hidden="true" /><p>Loading audience…</p></div>
+            /* Mirrors the loaded detail: head block, count strip, member
+               rows — same heights, so the pane doesn't jump. */
+            <div className="audience-detail-skeleton" role="status" aria-label="Loading audience">
+              <span className="audience-skeleton-head" aria-hidden="true"><span /><span /><span /></span>
+              <span className="audience-skeleton-strip" aria-hidden="true" />
+              {Array.from({ length: 3 }, (_, index) => (
+                <span key={index} className="audience-skeleton-member" aria-hidden="true">
+                  <span className="audience-skeleton-dot" />
+                  <span className="audience-skeleton-copy"><span /><span /></span>
+                </span>
+              ))}
+            </div>
+          ) : detailFailedId ? (
+            <div className="audience-state audience-detail-empty" role="alert">
+              <AudienceIcon size={24} />
+              <h2>This audience could not load</h2>
+              <p>{detailError}</p>
+              <button className="audience-secondary" type="button" onClick={() => void openAudience(detailFailedId)}>Try again</button>
+            </div>
           ) : selectedAudience ? (
             <>
               <div className="audience-detail-head">
@@ -568,6 +779,7 @@ export default function Audiences() {
                       value={renameDraft}
                       autoFocus
                       aria-label="Audience name"
+                      disabled={renaming}
                       onChange={(e) => setRenameDraft(e.target.value)}
                       onBlur={() => void submitRename(selectedAudience)}
                       onKeyDown={(e) => {
@@ -583,9 +795,10 @@ export default function Audiences() {
                           className="audience-rename-button"
                           type="button"
                           aria-label={`Rename ${selectedAudience.name}`}
+                          disabled={renaming}
                           onClick={() => setRenameDraft(selectedAudience.name)}
                         >
-                          rename
+                          {renaming ? "Renaming…" : "Rename"}
                         </button>
                       )}
                     </h2>
@@ -600,11 +813,35 @@ export default function Audiences() {
                     <button ref={campaignButtonRef} className="audience-secondary audience-build-campaign" type="button" onClick={() => void startCampaign(selectedAudience)} disabled={campaignCreating} data-testid="build-audience-campaign">
                       {campaignCreating ? "Creating…" : "Build campaign"} <ArrowIcon size={15} />
                     </button>
-                    <button className="audience-icon-button" type="button" onClick={removeAudience} aria-label={`Delete ${selectedAudience.name}`}><TrashIcon size={17} /></button>
+                    {confirmDelete ? (
+                      <button
+                        className="audience-danger-confirm"
+                        type="button"
+                        onClick={() => void removeAudience()}
+                        onBlur={() => setConfirmDelete(false)}
+                      >
+                        Delete audience? Confirm
+                      </button>
+                    ) : (
+                      <button
+                        className="audience-icon-button"
+                        type="button"
+                        onClick={() => void removeAudience()}
+                        disabled={deleting}
+                        aria-label={`Delete ${selectedAudience.name}`}
+                        title={deleting ? "Deleting…" : "Delete this audience (its leads stay)"}
+                      >
+                        <TrashIcon size={17} />
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
-              <div className="audience-detail-count"><strong>{selectedAudience.memberCount}</strong><span>{selectedAudience.memberCount === 1 ? "person" : "people"} in this reusable list</span></div>
+              {detailError && <div className="audience-error audience-detail-error" role="alert">{detailError}</div>}
+              {campaignError && !campaignPrompt && (
+                <div className="audience-error audience-detail-error" role="alert">{campaignError}</div>
+              )}
+              <div className="audience-detail-count"><strong>{selectedAudience.memberCount.toLocaleString()}</strong><span>{selectedAudience.memberCount === 1 ? "person" : "people"} in this reusable list</span></div>
               <div className="audience-member-list">
                 {selectedAudience.members.map((member) => (
                   <div className="audience-member" key={member.leadId}>
@@ -635,6 +872,36 @@ export default function Audiences() {
         />
       )}
     </section>
+  );
+}
+
+/* The long search narrates in place (ux-principles rule 4): what it is doing
+   now, staged by elapsed time, plus the honest caveat that the search runs
+   with the page. Lives in its own component so the timer mounts with it. */
+function DiscoveryNarration() {
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    const started = Date.now();
+    const t = window.setInterval(
+      () => setElapsed(Math.round((Date.now() - started) / 1000)),
+      1000,
+    );
+    return () => window.clearInterval(t);
+  }, []);
+  const stage =
+    elapsed < 4
+      ? "Reading your description…"
+      : elapsed < 14
+        ? "Searching for matching people…"
+        : elapsed < 35
+          ? "Scoring and ranking the matches…"
+          : "Still working — big searches can take about a minute…";
+  return (
+    <p className="audience-searching" role="status">
+      <span className="audience-spinner" aria-hidden="true" />
+      <strong>{stage}</strong>
+      <span>Keep this tab open — leaving the page cancels the search.</span>
+    </p>
   );
 }
 

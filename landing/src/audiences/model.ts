@@ -174,11 +174,18 @@ export function summarizeLeadImport(result: LeadImportResult): LeadImportNotice 
   return { kind: "info", message: `No new people imported${suffix}` };
 }
 
+/* Customer-facing source labels speak in capabilities, never vendor names
+   (ux-principles rule 18): the discovery vendor is swappable plumbing, so
+   its slug renders as "Lead search". Unknown slugs fall back to a generic
+   word rather than title-casing a possible vendor name into the UI. */
+const PROVIDER_LABELS: Record<string, string> = {
+  csv_upload: "CSV upload",
+  orange_slice: "Lead search",
+  workspace: "Workspace",
+};
+
 export function providerLabel(provider: string): string {
-  // source_provider is a slug; never show it raw. csv_upload is the one slug
-  // whose generic title-casing ("Csv Upload") reads wrong.
-  if (provider === "csv_upload") return "CSV upload";
-  return provider.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+  return PROVIDER_LABELS[provider] ?? "Imported";
 }
 
 export function formatAudienceDate(iso: string): string {

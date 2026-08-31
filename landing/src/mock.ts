@@ -1246,6 +1246,40 @@ if (mockMode) {
     { provider_record_id: "orange-person-2", lead_id: null, name: "Ravi Menon", title: "Director of Engineering", company: "SignalNest", email: null, linkedin_url: "https://www.linkedin.com/in/ravi-menon", stage: "new" },
     { provider_record_id: "orange-person-3", lead_id: null, name: "Elena Park", title: "Founder", company: "Releasewise", email: null, linkedin_url: "https://www.linkedin.com/in/elena-park", stage: "new" },
   ];
+  /* QA knobs for the audiences surface (additive, dev/preview only):
+     - ?audlat=1500       delays every audiences/import response by that many ms
+                          (drive skeletons and the search narration)
+     - ?auderr=<op>       forces that operation to fail with a 502 —
+                          ops: list, detail, discover, save, similar, grow,
+                          rename, delete, upload
+     - ?audempty=1        the library lists no audiences (empty state) */
+  const AUD_LATENCY = Math.max(0, Number(params.get("audlat") ?? 0));
+  const AUD_ERR = params.get("auderr");
+  const AUD_EMPTY = params.get("audempty") === "1";
+  const audKnob = (op: string, make: () => unknown): unknown => {
+    const value =
+      AUD_ERR === op
+        ? new Response(
+            JSON.stringify({ error: { detail: `Mock failure for "${op}" (auderr=${op}).` } }),
+            { status: 502, headers: { "Content-Type": "application/json" } },
+          )
+        : make();
+    if (!AUD_LATENCY) return value;
+    return new Promise((resolve) => setTimeout(() => resolve(value), AUD_LATENCY));
+  };
+  const audienceOp = (init?: RequestInit, url?: string): string => {
+    const method = init?.method ?? "GET";
+    const pathname = new URL(url ?? location.href, location.href).pathname;
+    const suffix = pathname.replace("/api/v1/dashboard/audiences", "").replace(/^\//, "");
+    if (suffix === "discovery-status") return "status";
+    if (suffix === "discover") return "discover";
+    if (suffix.endsWith("/similar")) return "similar";
+    if (suffix.endsWith("/grow")) return "grow";
+    if (!suffix) return method === "POST" ? "save" : "list";
+    if (method === "PATCH") return "rename";
+    if (method === "DELETE") return "delete";
+    return "detail";
+  };
   const audiencesApi = (init?: RequestInit, url?: string) => {
     const method = init?.method ?? "GET";
     const pathname = new URL(url ?? location.href, location.href).pathname;
@@ -1279,7 +1313,7 @@ if (mockMode) {
       }
       return { provider: "orange_slice", provider_label: "Orange Slice", candidates: discoveryCandidates };
     }
-    if (!suffix && method === "GET") return { audiences: mockAudiences.map(audienceSummary) };
+    if (!suffix && method === "GET") return { audiences: (AUD_EMPTY ? [] : mockAudiences).map(audienceSummary) };
     if (!suffix && method === "POST") {
       const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
       const selectedProviderIds = Array.isArray(body.provider_record_ids) ? body.provider_record_ids : [];
@@ -1547,9 +1581,11 @@ if (mockMode) {
   // come first — /sends/cancel and /sends/dismiss (POST) would otherwise be
   // swallowed by the /sends fixture, and /reviews/decide by /reviews.
   const routes: [string, unknown][] = [
-    ["/api/v1/imports/leads", leadImportsApi],
+    // The audiences surface routes through audKnob so ?audlat/?auderr can
+    // express slow and failing states (see the knob comment above).
+    ["/api/v1/imports/leads", (init?: RequestInit) => audKnob("upload", () => leadImportsApi(init))],
     ["/api/v1/dashboard/org", orgApi],
-    ["/api/v1/dashboard/audiences", audiencesApi],
+    ["/api/v1/dashboard/audiences", (init?: RequestInit, url?: string) => audKnob(audienceOp(init, url), () => audiencesApi(init, url))],
     ["/api/v1/dashboard/leads", dashboardLeadsApi],
     ["/api/v1/dashboard/companies", dashboardCompaniesApi],
     ["/api/v1/dashboard/channel-metrics", channelMetricsApi],
@@ -1580,14 +1616,17 @@ if (mockMode) {
     for (const [path, body] of routes) {
       if (url.startsWith(path)) {
         const payload = typeof body === "function" ? (body as (i?: RequestInit, u?: string) => unknown)(init, url) : body;
-        // A fixture may hand back a full Response (e.g. a synthetic 404).
-        if (payload instanceof Response) return Promise.resolve(payload);
-        return Promise.resolve(
-          new Response(JSON.stringify(payload), {
-            status: 200,
-            headers: { "Content-Type": "application/json" },
-          }),
-        );
+        // A fixture may hand back a full Response (e.g. a synthetic 404), or
+        // a Promise of either (the latency/error knobs above).
+        const toResponse = (value: unknown) =>
+          value instanceof Response
+            ? value
+            : new Response(JSON.stringify(value), {
+                status: 200,
+                headers: { "Content-Type": "application/json" },
+              });
+        if (payload instanceof Promise) return payload.then(toResponse);
+        return Promise.resolve(toResponse(payload));
       }
     }
     const parsed = new URL(url, location.origin);

@@ -182,8 +182,10 @@ test("a response without the audience field still summarizes sensibly", () => {
   );
 });
 
-test("provider slugs render as human labels", () => {
+test("provider slugs render as capability labels, never vendor names", () => {
   assert.equal(providerLabel("csv_upload"), "CSV upload");
-  assert.equal(providerLabel("orange_slice"), "Orange Slice");
+  assert.equal(providerLabel("orange_slice"), "Lead search");
   assert.equal(providerLabel("workspace"), "Workspace");
+  // An unrecognized slug must never title-case a vendor name into the UI.
+  assert.equal(providerLabel("some_new_vendor"), "Imported");
 });
