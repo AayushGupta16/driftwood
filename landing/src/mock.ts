@@ -1495,10 +1495,13 @@ if (mockMode) {
     };
   };
 
+  // Mirrors the real customer-org shape: an owner, one claimed admin seat,
+  // one invited-but-unclaimed seat (no name until first sign-in), and the
+  // auto-join domain set — the exact states the Team page has to render.
   const mockOrg = {
     id: "org-1",
     name: "Example workspace",
-    domain: null as string | null,
+    domain: "example.com" as string | null,
     members: [
       { membership_id: "m-1", email: "sam@example.com", name: "Sam Field", role: "admin", status: "active", invited_at: hoursAgo(400) },
       { membership_id: "m-2", email: "new-hire@example.com", name: null, role: "member", status: "invited", invited_at: hoursAgo(20) },

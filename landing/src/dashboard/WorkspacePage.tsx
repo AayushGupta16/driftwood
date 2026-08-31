@@ -1,10 +1,11 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { LoggedOutView } from "./DashboardCommon";
+import { LoggedOutView, ToastProvider } from "./DashboardCommon";
 import { AdminPanelControls, ImpersonationBanner } from "../GodMode";
 import AppShell, { type DashboardSection } from "./AppShell";
 import { WorkspacePermissionsProvider } from "./workspace-permissions";
 import type { WorkspaceRole } from "./workspace-permissions-context";
 import { withMockMode } from "../mock-mode";
+import { clearIdentity, loadIdentity } from "../identity";
 
 type WorkspaceUser = {
   email: string;
@@ -24,6 +25,12 @@ type AuthState =
   | { status: "denied" }
   | { status: "ready"; user: WorkspaceUser };
 
+/* /auth/me starts at module eval (chunk load), in parallel with whatever the
+   child page prefetches — cached identity paints the real shell immediately
+   and the background result confirms it or swaps to the logged-out view. */
+const identityBoot =
+  typeof window === "undefined" ? null : loadIdentity<WorkspaceUser>();
+
 export default function WorkspacePage({
   active,
   children,
@@ -35,28 +42,44 @@ export default function WorkspacePage({
   notice?: ReactNode;
   workspace?: boolean;
 }) {
-  const [auth, setAuth] = useState<AuthState>({ status: "loading" });
+  /* Unapproved users never seed from cache — they belong on the denied view,
+     and the fresh result below sends them there. */
+  const [auth, setAuth] = useState<AuthState>(
+    identityBoot?.cached?.is_approved
+      ? { status: "ready", user: identityBoot.cached }
+      : { status: "loading" },
+  );
 
   useEffect(() => {
-    let current = true;
-    fetch("/auth/me", { credentials: "include" })
-      .then(async (response) => response.ok ? await response.json() as WorkspaceUser : null)
-      .then((user) => {
-        if (!current) return;
-        setAuth(user?.is_approved ? { status: "ready", user } : { status: "denied" });
-      })
-      .catch(() => current && setAuth({ status: "denied" }));
-    return () => { current = false; };
+    let cancelled = false;
+    void (async () => {
+      const fresh = (await identityBoot?.fresh) ?? null;
+      if (cancelled) return;
+      // Only approved users get the workspace; everyone else gets the
+      // logged-out view, exactly as before the cache existed. A 401 or
+      // network failure already cleared the identity cache.
+      if (fresh?.is_approved) {
+        setAuth({ status: "ready", user: fresh }); // swap in place when it differs from the cache
+      } else {
+        if (fresh) clearIdentity(); // logged in, but not approved
+        setAuth({ status: "denied" });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   async function logout() {
     try {
       await fetch("/auth/logout", { method: "POST", credentials: "include" });
     } finally {
+      clearIdentity();
       window.location.href = withMockMode("/dashboard");
     }
   }
 
+  // First-ever visit only (no cached identity): nothing real to paint yet.
   if (auth.status === "loading") {
     return <div className="flex min-h-[100dvh] items-center justify-center"><span className="size-7 animate-spin rounded-full border-2 border-line border-t-tide" role="status" aria-label="Loading workspace" /></div>;
   }
@@ -66,7 +89,7 @@ export default function WorkspacePage({
   const role = user.org?.role ?? "owner";
   const canWrite = role !== "member";
   return (
-    <>
+    <ToastProvider>
       {user.impersonating && <ImpersonationBanner email={user.email} />}
       <WorkspacePermissionsProvider role={role} channels={{
         linkedin: user.linkedin_connected ?? false,
@@ -85,6 +108,6 @@ export default function WorkspacePage({
           {children}
         </AppShell>
       </WorkspacePermissionsProvider>
-    </>
+    </ToastProvider>
   );
 }
