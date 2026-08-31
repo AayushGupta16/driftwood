@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { ToastProvider } from "./dashboard/DashboardCommon";
 import { AdminPanelControls, ImpersonationBanner } from "./GodMode";
-import { CARD, useToast } from "./dashboard-shared";
+import { CARD, fetchInWaves, prefetch, useToast } from "./dashboard-shared";
+import { clearIdentity, loadIdentity } from "./identity";
 import AppShell from "./dashboard/AppShell";
 import { EmailPreview } from "./EmailPreview";
 import { emailBodySummary } from "./email-preview";
@@ -164,27 +165,32 @@ type DecideResult = {
 
 /* ---------- page shell ---------- */
 
+/* /auth/me starts at module eval (chunk load), in parallel with the data
+   prefetches below — cached identity paints the real shell immediately and
+   the background result confirms it or bounces to /dashboard. */
+const identityBoot =
+  typeof window === "undefined" ? null : loadIdentity<User>();
+
 export default function Review() {
-  const [user, setUser] = useState<User | null>(null);
+  /* Unapproved users never seed from cache — they belong on /dashboard's
+     pending screen, and the fresh result below sends them there. */
+  const [user, setUser] = useState<User | null>(
+    identityBoot?.cached?.is_approved ? identityBoot.cached : null,
+  );
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch("/auth/me", { credentials: "include" });
-        if (cancelled) return;
-        if (res.ok) {
-          const u = (await res.json()) as User;
-          if (cancelled) return;
-          // Only approved users get the queue; everyone else goes back to the
-          // dashboard, which handles login + the pending-approval state.
-          if (u.is_approved) setUser(u);
-          else window.location.href = withMockMode("/dashboard");
-        } else {
-          window.location.href = withMockMode("/dashboard");
-        }
-      } catch {
-        if (!cancelled) window.location.href = withMockMode("/dashboard");
+    void (async () => {
+      const fresh = (await identityBoot?.fresh) ?? null;
+      if (cancelled) return;
+      // Only approved users get the queue; everyone else goes back to the
+      // dashboard, which handles login + the pending-approval state. A 401
+      // or network failure already cleared the identity cache.
+      if (fresh?.is_approved) {
+        setUser(fresh); // swap in place when it differs from the cache
+      } else {
+        if (fresh) clearIdentity(); // logged in, but not approved
+        window.location.href = withMockMode("/dashboard");
       }
     })();
     return () => {
@@ -224,6 +230,7 @@ function ReviewView({ user }: { user: User }) {
     try {
       await fetch("/auth/logout", { method: "POST", credentials: "include" });
     } finally {
+      clearIdentity();
       window.location.href = withMockMode("/dashboard");
     }
   }
@@ -255,7 +262,25 @@ function ReviewView({ user }: { user: User }) {
    subset that had loaded") and the count label reads loaded-of-total. */
 const FETCH_CHUNK = 100;
 const FETCH_GUARD = 100; // hard ceiling on total pages fetched per list
-const FETCH_PARALLEL = 5; // later pages in flight at once
+
+/* First pages for all three tabs fire at module eval, in parallel with
+   /auth/me (see prefetch() in dashboard-shared). Each is consumed exactly
+   once by its loader's initial run; refetches go to the network. */
+const initialReviewsPage = prefetch(() =>
+  fetch(`/api/v1/dashboard/reviews?limit=${FETCH_CHUNK}&offset=0`, {
+    credentials: "include",
+  }),
+);
+const initialSendsPage = prefetch(() =>
+  fetch(`/api/v1/dashboard/sends?limit=${FETCH_CHUNK}&offset=0`, {
+    credentials: "include",
+  }),
+);
+const initialSentPage = prefetch(() =>
+  fetch(`/api/v1/dashboard/sends?${sentLedgerQuery(DEFAULT_SENT_QUERY, 100)}`, {
+    credentials: "include",
+  }),
+);
 
 type QueueState =
   | { status: "loading" }
@@ -420,34 +445,6 @@ async function readErrorDetail(res: Response, fallback: string): Promise<string>
   return fallback;
 }
 
-/* Fetch the post-first pages of a list with FETCH_PARALLEL in flight at
-   once; results come back in offset order, `null` where a page failed — a
-   failed later page must never blank the already-painted first page, so
-   per-page errors are swallowed here and read back as an incomplete load. */
-async function fetchInWaves<T>(
-  offsets: number[],
-  fetchPage: (offset: number) => Promise<T>,
-): Promise<(T | null)[]> {
-  const results: (T | null)[] = new Array<T | null>(offsets.length).fill(null);
-  let next = 0;
-  const workers = Array.from(
-    { length: Math.min(FETCH_PARALLEL, offsets.length) },
-    async () => {
-      while (next < offsets.length) {
-        const i = next;
-        next += 1;
-        try {
-          results[i] = await fetchPage(offsets[i]);
-        } catch {
-          results[i] = null;
-        }
-      }
-    },
-  );
-  await Promise.all(workers);
-  return results;
-}
-
 function summarizeDecide(r: DecideResult): string {
   const parts: string[] = [];
   if (r.approved) parts.push(`${r.approved} approved`);
@@ -528,10 +525,12 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
 
   const loadAll = useCallback(async () => {
     try {
-      const res = await fetch(
-        `/api/v1/dashboard/reviews?limit=${FETCH_CHUNK}&offset=0`,
-        { credentials: "include" },
-      );
+      // The mount run rides the module-eval prefetch; anything after gets
+      // its own fresh request.
+      const res = await (initialReviewsPage.take() ??
+        fetch(`/api/v1/dashboard/reviews?limit=${FETCH_CHUNK}&offset=0`, {
+          credentials: "include",
+        }));
       if (!res.ok) throw new Error("request failed");
       const first = (await res.json()) as ReviewsPageData;
       // Stats + counts come from the offset=0 response only — later pages
@@ -600,10 +599,10 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
      keeps that order). */
   const loadAllSends = useCallback(async () => {
     try {
-      const res = await fetch(
-        `/api/v1/dashboard/sends?limit=${FETCH_CHUNK}&offset=0`,
-        { credentials: "include" },
-      );
+      const res = await (initialSendsPage.take() ??
+        fetch(`/api/v1/dashboard/sends?limit=${FETCH_CHUNK}&offset=0`, {
+          credentials: "include",
+        }));
       if (!res.ok) throw new Error("request failed");
       const first = (await res.json()) as SendsPageData;
       const total = first.total;
@@ -663,10 +662,13 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
      client-side filter over the newest 100 would lie about the rest. */
   const loadSent = useCallback(async (query: SentQuery) => {
     try {
-      const res = await fetch(
-        `/api/v1/dashboard/sends?${sentLedgerQuery(query, 100)}`,
-        { credentials: "include" },
-      );
+      // The first run is always DEFAULT_SENT_QUERY (the state's initial
+      // value), which is exactly what the prefetch requested; filter/sort
+      // refetches find the slot empty and hit the network.
+      const res = await (initialSentPage.take() ??
+        fetch(`/api/v1/dashboard/sends?${sentLedgerQuery(query, 100)}`, {
+          credentials: "include",
+        }));
       if (!res.ok) throw new Error("request failed");
       const page = (await res.json()) as SendsPageData;
       setSentState({ status: "ready", sends: page.sends, total: page.total });

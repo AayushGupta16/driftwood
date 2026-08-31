@@ -39,9 +39,11 @@ import {
 } from "./dashboard/overview-model";
 import {
   CARD,
+  prefetch,
   relativeTime,
   useToast,
 } from "./dashboard-shared";
+import { clearIdentity, loadIdentity } from "./identity";
 import "./dashboard/overview.css";
 import "./dashboard/managed-inboxes.css";
 
@@ -91,6 +93,28 @@ type AuthState =
   | { status: "logged-out" }
   | { status: "logged-in"; user: User };
 
+/* Every mount-time request fires at module eval, in parallel with /auth/me
+   (see prefetch() in dashboard-shared): the summary, the activity feed, and
+   the three inventory lists the campaign desk reads. Each is consumed
+   exactly once by its loader's initial run; refreshes (e.g. after a CSV
+   import) fetch fresh. For logged-out or pending visitors the responses go
+   unconsumed — they're cookie-authed, so they carry nothing anyway. */
+const initialSummary = prefetch(() =>
+  fetch("/api/v1/dashboard/summary", { credentials: "include" }),
+);
+const initialActivity = prefetch(() =>
+  fetch("/api/v1/dashboard/activity?limit=8", { credentials: "include" }),
+);
+const initialInventory = prefetch(() =>
+  Promise.allSettled([listAudiences(), listCampaigns(), listAssets()]),
+);
+
+/* /auth/me starts at module eval too — cached identity paints the real
+   shell immediately; the background result confirms it, swaps it in place,
+   or flips to the logged-out view. */
+const identityBoot =
+  typeof window === "undefined" ? null : loadIdentity<User>();
+
 function LinkedInMark({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={className}>
@@ -135,23 +159,23 @@ function LockMark({ className }: { className?: string }) {
 }
 
 export default function Dashboard() {
-  const [auth, setAuth] = useState<AuthState>({ status: "loading" });
+  /* Any cached identity seeds the shell, pending screen included —
+     /dashboard gates on login, not approval. */
+  const [auth, setAuth] = useState<AuthState>(
+    identityBoot?.cached
+      ? { status: "logged-in", user: identityBoot.cached }
+      : { status: "loading" },
+  );
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch("/auth/me", { credentials: "include" });
-        if (cancelled) return;
-        if (res.ok) {
-          const user = (await res.json()) as User;
-          if (!cancelled) setAuth({ status: "logged-in", user });
-        } else {
-          setAuth({ status: "logged-out" });
-        }
-      } catch {
-        if (!cancelled) setAuth({ status: "logged-out" });
-      }
+    void (async () => {
+      const fresh = (await identityBoot?.fresh) ?? null;
+      if (cancelled) return;
+      // A 401 or network failure already cleared the identity cache.
+      setAuth(
+        fresh ? { status: "logged-in", user: fresh } : { status: "logged-out" },
+      );
     })();
     return () => {
       cancelled = true;
@@ -162,6 +186,7 @@ export default function Dashboard() {
     try {
       await fetch("/auth/logout", { method: "POST", credentials: "include" });
     } finally {
+      clearIdentity();
       window.location.href = withMockMode("/dashboard");
     }
   }
@@ -342,9 +367,11 @@ function ApprovedView({ user }: { user: User }) {
 
   const loadActivity = useCallback(async () => {
     try {
-      const res = await fetch("/api/v1/dashboard/activity?limit=8", {
-        credentials: "include",
-      });
+      // The mount run rides the module-eval prefetch; refreshes fetch fresh.
+      const res = await (initialActivity.take() ??
+        fetch("/api/v1/dashboard/activity?limit=8", {
+          credentials: "include",
+        }));
       if (!res.ok) throw new Error("request failed");
       const data = (await res.json()) as { events: ActivityEvent[] };
       setActivity({ status: "ready", events: data.events });
@@ -359,9 +386,10 @@ function ApprovedView({ user }: { user: User }) {
   const loadSummary = useCallback(async () => {
     void loadActivity();
     try {
-      const res = await fetch("/api/v1/dashboard/summary", {
-        credentials: "include",
-      });
+      const res = await (initialSummary.take() ??
+        fetch("/api/v1/dashboard/summary", {
+          credentials: "include",
+        }));
       if (!res.ok) throw new Error("request failed");
       const data = (await res.json()) as DashboardSummary;
       setSummary({ status: "ready", summary: data });
@@ -380,11 +408,8 @@ function ApprovedView({ user }: { user: User }) {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const [audiences, campaigns, assets] = await Promise.allSettled([
-        listAudiences(),
-        listCampaigns(),
-        listAssets(),
-      ]);
+      const [audiences, campaigns, assets] = await (initialInventory.take() ??
+        Promise.allSettled([listAudiences(), listCampaigns(), listAssets()]));
       if (cancelled) return;
       setInventory({
         status: "ready",

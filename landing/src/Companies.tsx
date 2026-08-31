@@ -3,12 +3,21 @@ import {
   useDeferredValue,
   useEffect,
   useMemo,
+  useRef,
   useState,
+  type ReactNode,
 } from "react";
 import Fuse from "fuse.js";
 import { ToastProvider } from "./dashboard/DashboardCommon";
 import { AdminPanelControls, ImpersonationBanner } from "./GodMode";
-import { CARD, relativeTime, useToast } from "./dashboard-shared";
+import {
+  CARD,
+  fetchInWaves,
+  prefetch,
+  relativeTime,
+  useToast,
+} from "./dashboard-shared";
+import { clearIdentity, loadIdentity } from "./identity";
 import AppShell from "./dashboard/AppShell";
 import { withMockMode } from "./mock-mode";
 
@@ -58,27 +67,32 @@ type CompaniesPage = {
   offset: number;
 };
 
+/* /auth/me starts at module eval (chunk load), in parallel with the first
+   companies page below — cached identity paints the real shell immediately
+   and the background result confirms it or bounces to /dashboard. */
+const identityBoot =
+  typeof window === "undefined" ? null : loadIdentity<User>();
+
 export default function Companies() {
-  const [user, setUser] = useState<User | null>(null);
+  /* Unapproved users never seed from cache — they belong on /dashboard's
+     pending screen, and the fresh result below sends them there. */
+  const [user, setUser] = useState<User | null>(
+    identityBoot?.cached?.is_approved ? identityBoot.cached : null,
+  );
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch("/auth/me", { credentials: "include" });
-        if (cancelled) return;
-        if (res.ok) {
-          const u = (await res.json()) as User;
-          if (cancelled) return;
-          // Only approved users get the table; everyone else goes back to the
-          // dashboard, which handles login + the pending-approval state.
-          if (u.is_approved) setUser(u);
-          else window.location.href = withMockMode("/dashboard");
-        } else {
-          window.location.href = withMockMode("/dashboard");
-        }
-      } catch {
-        if (!cancelled) window.location.href = withMockMode("/dashboard");
+    void (async () => {
+      const fresh = (await identityBoot?.fresh) ?? null;
+      if (cancelled) return;
+      // Only approved users get the table; everyone else goes back to the
+      // dashboard, which handles login + the pending-approval state. A 401
+      // or network failure already cleared the identity cache.
+      if (fresh?.is_approved) {
+        setUser(fresh); // swap in place when it differs from the cache
+      } else {
+        if (fresh) clearIdentity(); // logged in, but not approved
+        window.location.href = withMockMode("/dashboard");
       }
     })();
     return () => {
@@ -118,6 +132,7 @@ function CompaniesView({ user }: { user: User }) {
     try {
       await fetch("/auth/logout", { method: "POST", credentials: "include" });
     } finally {
+      clearIdentity();
       window.location.href = withMockMode("/dashboard");
     }
   }
@@ -140,17 +155,39 @@ function CompaniesView({ user }: { user: User }) {
 
 /* ---------- the table (GET /api/v1/dashboard/companies) ---------- */
 
-/* Same shape as the leads table: we load the current ICP segment once (paged
-   loop against the 100-cap endpoint) and do search + pagination client-side.
-   The segmented All/Qualified/Unknown/Disqualified control maps to the
-   endpoint's server-side `icp_status` param, so picking a segment refetches
-   just that group — the server also pre-sorts qualified -> unknown ->
-   disqualified so the accounts worth looking at come back first. The page
-   opens on Qualified: the disqualified group is mostly the agent's negative
-   cache (thousands of rows), so customers opt into it via the control. */
+/* Same shape as the leads table: we load the current ICP segment against the
+   100-cap endpoint and do search + pagination client-side — the first page
+   paints the moment it lands (the Qualified segment's request is already in
+   flight before React mounts, see initialCompaniesPage), then the rest
+   fetches with FETCH_PARALLEL pages in flight behind a quiet loading line,
+   with every stated count reading loaded-of-total until the segment is
+   whole. The segmented All/Qualified/Unknown/Disqualified control maps to
+   the endpoint's server-side `icp_status` param, so picking a segment
+   refetches just that group — the server also pre-sorts qualified ->
+   unknown -> disqualified so the accounts worth looking at come back first.
+   The page opens on Qualified: the disqualified group is mostly the agent's
+   negative cache (thousands of rows), so customers opt into it via the
+   control. */
 const COMPANIES_PAGE_SIZE = 25; // rows shown per page (display only)
 const FETCH_CHUNK = 100; // server-side limit cap, used for the upfront load
-const FETCH_GUARD = 1000; // hard ceiling on load-all iterations
+const FETCH_GUARD = 1000; // hard ceiling on total pages fetched
+
+/* The segmented ICP filter. "all" omits the server-side param. */
+const ICP_FILTERS = ["all", "qualified", "unknown", "disqualified"] as const;
+type IcpFilter = (typeof ICP_FILTERS)[number];
+
+function fetchCompaniesPage(offset: number, icp: IcpFilter): Promise<Response> {
+  const icpParam = icp === "all" ? "" : `&icp_status=${icp}`;
+  return fetch(
+    `/api/v1/dashboard/companies?limit=${FETCH_CHUNK}&offset=${offset}${icpParam}`,
+    { credentials: "include" },
+  );
+}
+
+/* The default segment's first page fires at module eval, in parallel with
+   /auth/me (see prefetch() in dashboard-shared); the table's initial load
+   consumes it exactly once. Segment switches always fetch fresh. */
+const initialCompaniesPage = prefetch(() => fetchCompaniesPage(0, "qualified"));
 
 /* Fuse keys, weighted so a name/domain hit outranks a location/source hit. */
 const SEARCH_KEYS = [
@@ -160,14 +197,21 @@ const SEARCH_KEYS = [
   { name: "source", weight: 1 },
 ];
 
-/* The segmented ICP filter. "all" omits the server-side param. */
-const ICP_FILTERS = ["all", "qualified", "unknown", "disqualified"] as const;
-type IcpFilter = (typeof ICP_FILTERS)[number];
-
 type CompaniesState =
   | { status: "loading" }
   | { status: "error" }
-  | { status: "ready"; companies: CompanyRow[] };
+  | {
+      status: "ready";
+      companies: CompanyRow[];
+      /* the segment's census from the first page — the denominator for the
+         loaded-of-total labels while the rest streams in */
+      total: number;
+      /* later pages still in flight (drives the quiet loading line) */
+      loadingMore: boolean;
+      /* every page landed; stays false if a later page failed, so the
+         counts keep saying "of N" instead of quietly lying */
+      complete: boolean;
+    };
 
 /* Stable empty fallback so the search memos keep a steady reference pre-load. */
 const NO_COMPANIES: CompanyRow[] = [];
@@ -191,6 +235,25 @@ function Dash() {
   return <span className="text-ink-faint">—</span>;
 }
 
+/* Quiet line above the controls while later pages stream in — the first
+   page is already interactive; this only explains the growing list and the
+   partial counts. Local copy of the review queue's LoadingMoreLine idiom
+   (Review.tsx), margins adjusted for the card. */
+function LoadingMoreLine({ children }: { children: ReactNode }) {
+  return (
+    <p
+      role="status"
+      className="m-0 mb-4 flex items-center gap-2 font-mono text-[11px] tracking-[0.06em] text-ink-faint"
+    >
+      <span
+        aria-hidden="true"
+        className="size-3 shrink-0 animate-spin rounded-full border-2 border-line border-t-tide"
+      />
+      {children}
+    </p>
+  );
+}
+
 function companyLabel(company: CompanyRow): string {
   return company.name || "this company";
 }
@@ -205,27 +268,78 @@ function CompaniesTable({ canWrite }: { canWrite: boolean }) {
   const [page, setPage] = useState(0);
   const toast = useToast();
 
-  // Pull the selected segment once via a paged loop against the 100-cap
-  // endpoint. Re-runs whenever the segment changes (state resets to loading).
+  /* Monotonic id per loadAll run: a segment switch mid-load starts a new
+     run, and the superseded run's late pages must never merge into (or
+     error out) the new segment's list. */
+  const runRef = useRef(0);
+
+  // Pull the selected segment: paint after the first page (the Qualified
+  // segment's is usually already in flight via the module-eval prefetch),
+  // then parallel-fetch the remaining offsets and append them in one
+  // functional setState. Re-runs whenever the segment changes (state
+  // resets to loading).
   const loadAll = useCallback(async (icp: IcpFilter) => {
+    const run = ++runRef.current;
     setState({ status: "loading" });
     try {
-      const icpParam = icp === "all" ? "" : `&icp_status=${icp}`;
-      const all: CompanyRow[] = [];
-      for (let i = 0; i < FETCH_GUARD; i++) {
-        const res = await fetch(
-          `/api/v1/dashboard/companies?limit=${FETCH_CHUNK}&offset=${all.length}${icpParam}`,
-          { credentials: "include" },
-        );
-        if (!res.ok) throw new Error("request failed");
-        const pageData = (await res.json()) as CompaniesPage;
-        all.push(...pageData.companies);
-        if (pageData.companies.length === 0 || all.length >= pageData.total)
-          break;
-      }
-      setState({ status: "ready", companies: all });
+      const res = await ((icp === "qualified"
+        ? initialCompaniesPage.take()
+        : null) ?? fetchCompaniesPage(0, icp));
+      if (!res.ok) throw new Error("request failed");
+      const first = (await res.json()) as CompaniesPage;
+      if (runRef.current !== run) return;
+      const total = first.total;
+      const pageCount =
+        first.companies.length === 0
+          ? 1
+          : Math.min(Math.ceil(total / FETCH_CHUNK), FETCH_GUARD);
+      const done = pageCount <= 1 || first.companies.length >= total;
+      // Paint now — the rest of the segment streams in behind this.
+      setState({
+        status: "ready",
+        companies: first.companies,
+        total,
+        loadingMore: !done,
+        complete: done,
+      });
+      if (done) return;
+
+      const offsets: number[] = [];
+      for (let p = 1; p < pageCount; p++) offsets.push(p * FETCH_CHUNK);
+      const pages = await fetchInWaves(offsets, async (offset) => {
+        const r = await fetchCompaniesPage(offset, icp);
+        if (!r.ok) throw new Error("request failed");
+        return (await r.json()) as CompaniesPage;
+      });
+      if (runRef.current !== run) return;
+      const complete = pages.every((page) => page !== null);
+      // Merge in offset order so the server's qualified-first sort holds.
+      const rest: CompanyRow[] = [];
+      for (const page of pages) if (page) rest.push(...page.companies);
+      setState((prev) => {
+        if (prev.status !== "ready") return prev;
+        // Dedupe by id: rows removed mid-load shift server offsets, so
+        // pages can overlap each other and the already-painted first page.
+        const seen = new Set(prev.companies.map((c) => c.id));
+        const fresh = rest.filter((c) => {
+          if (seen.has(c.id)) return false;
+          seen.add(c.id);
+          return true;
+        });
+        return {
+          ...prev,
+          companies: [...prev.companies, ...fresh],
+          loadingMore: false,
+          complete,
+        };
+      });
     } catch {
-      setState({ status: "error" });
+      // Only a failed FIRST page shows the error state — a failed later
+      // page keeps the painted rows and reads back as an incomplete load.
+      if (runRef.current !== run) return;
+      setState((prev) =>
+        prev.status === "ready" ? prev : { status: "error" },
+      );
     }
   }, []);
 
@@ -259,7 +373,7 @@ function CompaniesTable({ canWrite }: { canWrite: boolean }) {
       setState((prev) =>
         prev.status === "ready"
           ? {
-              status: "ready",
+              ...prev,
               companies: prev.companies.filter((c) => c.id !== company.id),
             }
           : prev,
@@ -276,6 +390,14 @@ function CompaniesTable({ canWrite }: { canWrite: boolean }) {
     [state],
   );
   const allCount = allCompanies.length;
+  /* Partial-load affordances: while later pages stream in, every stated
+     count reads loaded-of-total (or "so far") — a bare number would lie
+     about the segment's size. The search index runs over the partial set
+     (its memo re-keys as chunks land); the loading line explains the
+     incompleteness. */
+  const serverTotal = state.status === "ready" ? state.total : 0;
+  const complete = state.status === "ready" && state.complete;
+  const loadingMore = state.status === "ready" && state.loadingMore;
 
   // useDeferredValue keeps typing snappy: the input updates immediately while
   // the (cheap, but non-blocking) Fuse pass runs against the deferred value.
@@ -319,7 +441,11 @@ function CompaniesTable({ canWrite }: { canWrite: boolean }) {
         </h1>
         {state.status === "ready" && allCount > 0 && (
           <span className="shrink-0 text-[12.5px] text-ink-faint tabular-nums">
-            {allCount.toLocaleString()} {filter === "all" ? "total" : filter}
+            {complete
+              ? `${allCount.toLocaleString()} ${filter === "all" ? "total" : filter}`
+              : `${allCount.toLocaleString()} of ${serverTotal.toLocaleString()} ${
+                  filter === "all" ? "loaded" : filter
+                }`}
           </span>
         )}
       </div>
@@ -377,6 +503,11 @@ function CompaniesTable({ canWrite }: { canWrite: boolean }) {
             </p>
           ) : (
             <>
+              {loadingMore && (
+                <LoadingMoreLine>
+                  Loading the rest of your companies
+                </LoadingMoreLine>
+              )}
               <div className="mb-4 flex items-center gap-3">
                 <div className="relative flex-1">
                   <svg
@@ -420,6 +551,7 @@ function CompaniesTable({ canWrite }: { canWrite: boolean }) {
                 {trimmed && (
                   <span className="shrink-0 text-[12.5px] text-ink-faint tabular-nums">
                     {total.toLocaleString()} {total === 1 ? "match" : "matches"}
+                    {complete ? "" : " so far"}
                   </span>
                 )}
               </div>
@@ -550,6 +682,7 @@ function CompaniesTable({ canWrite }: { canWrite: boolean }) {
                       Showing {start.toLocaleString()}–{end.toLocaleString()} of{" "}
                       {total.toLocaleString()}
                       {trimmed ? " matching" : ""}
+                      {complete ? "" : trimmed ? " so far" : " loaded so far"}
                     </span>
                     <div className="flex items-center gap-2">
                       <button

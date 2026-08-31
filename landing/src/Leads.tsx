@@ -4,11 +4,19 @@ import {
   useEffect,
   useMemo,
   useState,
+  type ReactNode,
 } from "react";
 import Fuse from "fuse.js";
 import { ToastProvider } from "./dashboard/DashboardCommon";
 import { AdminPanelControls, ImpersonationBanner } from "./GodMode";
-import { CARD, relativeTime, useToast } from "./dashboard-shared";
+import {
+  CARD,
+  fetchInWaves,
+  prefetch,
+  relativeTime,
+  useToast,
+} from "./dashboard-shared";
+import { clearIdentity, loadIdentity } from "./identity";
 import AppShell from "./dashboard/AppShell";
 import { withMockMode } from "./mock-mode";
 
@@ -55,27 +63,32 @@ type LeadsPage = {
   offset: number;
 };
 
+/* /auth/me starts at module eval (chunk load), in parallel with the first
+   leads page below — cached identity paints the real shell immediately and
+   the background result confirms it or bounces to /dashboard. */
+const identityBoot =
+  typeof window === "undefined" ? null : loadIdentity<User>();
+
 export default function Leads() {
-  const [user, setUser] = useState<User | null>(null);
+  /* Unapproved users never seed from cache — they belong on /dashboard's
+     pending screen, and the fresh result below sends them there. */
+  const [user, setUser] = useState<User | null>(
+    identityBoot?.cached?.is_approved ? identityBoot.cached : null,
+  );
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch("/auth/me", { credentials: "include" });
-        if (cancelled) return;
-        if (res.ok) {
-          const u = (await res.json()) as User;
-          if (cancelled) return;
-          // Only approved users get the table; everyone else goes back to the
-          // dashboard, which handles login + the pending-approval state.
-          if (u.is_approved) setUser(u);
-          else window.location.href = withMockMode("/dashboard");
-        } else {
-          window.location.href = withMockMode("/dashboard");
-        }
-      } catch {
-        if (!cancelled) window.location.href = withMockMode("/dashboard");
+    void (async () => {
+      const fresh = (await identityBoot?.fresh) ?? null;
+      if (cancelled) return;
+      // Only approved users get the table; everyone else goes back to the
+      // dashboard, which handles login + the pending-approval state. A 401
+      // or network failure already cleared the identity cache.
+      if (fresh?.is_approved) {
+        setUser(fresh); // swap in place when it differs from the cache
+      } else {
+        if (fresh) clearIdentity(); // logged in, but not approved
+        window.location.href = withMockMode("/dashboard");
       }
     })();
     return () => {
@@ -115,6 +128,7 @@ function LeadsView({ user }: { user: User }) {
     try {
       await fetch("/auth/logout", { method: "POST", credentials: "include" });
     } finally {
+      clearIdentity();
       window.location.href = withMockMode("/dashboard");
     }
   }
@@ -137,15 +151,29 @@ function LeadsView({ user }: { user: User }) {
 
 /* ---------- the table (GET /api/v1/dashboard/leads) ---------- */
 
-/* We load every lead once (paged loop against the 100-cap endpoint) and do
-   search + pagination client-side. Per-customer lead counts are small, so the
-   upfront load is sub-second and every page flip / keystroke after it is
-   instant — no per-page network round-trips. If a customer ever holds many
-   thousands of leads, move the filter server-side (add a `q` param to
-   `list_leads`) and this component keeps the same shape. */
+/* We load every lead against the 100-cap endpoint and do search + pagination
+   client-side: the first page paints the moment it lands (its request is
+   already in flight before React mounts — see initialLeadsPage), then the
+   rest of the list fetches with FETCH_PARALLEL pages in flight and streams
+   in behind a quiet loading line. Lead lists run from hundreds to several
+   thousand rows, so until the list is whole every stated count reads
+   loaded-of-total. Once loaded, every page flip / keystroke is instant —
+   no per-page network round-trips. */
 const LEADS_PAGE_SIZE = 25; // rows shown per page (display only)
 const FETCH_CHUNK = 100; // server-side limit cap, used for the upfront load
-const FETCH_GUARD = 1000; // hard ceiling on load-all iterations
+const FETCH_GUARD = 1000; // hard ceiling on total pages fetched
+
+function fetchLeadsPage(offset: number): Promise<Response> {
+  return fetch(
+    `/api/v1/dashboard/leads?limit=${FETCH_CHUNK}&offset=${offset}`,
+    { credentials: "include" },
+  );
+}
+
+/* The first page fires at module eval, in parallel with /auth/me (see
+   prefetch() in dashboard-shared); the table's initial load consumes it
+   exactly once and parallel-fetches the rest. */
+const initialLeadsPage = prefetch(() => fetchLeadsPage(0));
 
 /* Fuse keys, weighted so a name/company hit outranks a title/source hit. */
 const SEARCH_KEYS = [
@@ -160,7 +188,23 @@ const SEARCH_KEYS = [
 type LeadsState =
   | { status: "loading" }
   | { status: "error" }
-  | { status: "ready"; leads: LeadRow[] };
+  | {
+      status: "ready";
+      leads: LeadRow[];
+      /* the server's census from the first page — the denominator for the
+         loaded-of-total labels while the rest streams in */
+      total: number;
+      /* later pages still in flight (drives the quiet loading line) */
+      loadingMore: boolean;
+      /* every page landed; stays false if a later page failed, so the
+         counts keep saying "of N" instead of quietly lying */
+      complete: boolean;
+    };
+
+/* audiences may arrive null from an older backend */
+function withAudiences(lead: LeadRow): LeadRow {
+  return { ...lead, audiences: lead.audiences ?? [] };
+}
 
 /* Stable empty fallback so the search memos keep a steady reference pre-load. */
 const NO_LEADS: LeadRow[] = [];
@@ -181,6 +225,25 @@ function Dash() {
   return <span className="text-ink-faint">—</span>;
 }
 
+/* Quiet line above the controls while later pages stream in — the first
+   page is already interactive; this only explains the growing list and the
+   partial counts. Local copy of the review queue's LoadingMoreLine idiom
+   (Review.tsx), margins adjusted for the card. */
+function LoadingMoreLine({ children }: { children: ReactNode }) {
+  return (
+    <p
+      role="status"
+      className="m-0 mb-4 flex items-center gap-2 font-mono text-[11px] tracking-[0.06em] text-ink-faint"
+    >
+      <span
+        aria-hidden="true"
+        className="size-3 shrink-0 animate-spin rounded-full border-2 border-line border-t-tide"
+      />
+      {children}
+    </p>
+  );
+}
+
 function LeadsTable({ canWrite }: { canWrite: boolean }) {
   const [state, setState] = useState<LeadsState>({ status: "loading" });
   const [removingId, setRemovingId] = useState<string | null>(null);
@@ -189,28 +252,64 @@ function LeadsTable({ canWrite }: { canWrite: boolean }) {
   const [page, setPage] = useState(0);
   const toast = useToast();
 
-  // Pull every lead once via a paged loop against the 100-cap endpoint.
-  // Runs on mount only; state already starts as "loading".
+  // Paint after the first page (usually already in flight via the
+  // module-eval prefetch), then parallel-fetch the remaining offsets and
+  // append them in one functional setState. Runs on mount only; state
+  // already starts as "loading".
   const loadAll = useCallback(async () => {
     try {
-      const all: LeadRow[] = [];
-      for (let i = 0; i < FETCH_GUARD; i++) {
-        const res = await fetch(
-          `/api/v1/dashboard/leads?limit=${FETCH_CHUNK}&offset=${all.length}`,
-          { credentials: "include" },
-        );
-        if (!res.ok) throw new Error("request failed");
-        const pageData = (await res.json()) as LeadsPage;
-        all.push(
-          ...pageData.leads.map((lead) => ({
-            ...lead,
-            audiences: lead.audiences ?? [],
-          })),
-        );
-        if (pageData.leads.length === 0 || all.length >= pageData.total) break;
-      }
-      setState({ status: "ready", leads: all });
+      const res = await (initialLeadsPage.take() ?? fetchLeadsPage(0));
+      if (!res.ok) throw new Error("request failed");
+      const first = (await res.json()) as LeadsPage;
+      const firstLeads = first.leads.map(withAudiences);
+      const total = first.total;
+      const pageCount =
+        firstLeads.length === 0
+          ? 1
+          : Math.min(Math.ceil(total / FETCH_CHUNK), FETCH_GUARD);
+      const done = pageCount <= 1 || firstLeads.length >= total;
+      // Paint now — the rest of the list streams in behind this.
+      setState({
+        status: "ready",
+        leads: firstLeads,
+        total,
+        loadingMore: !done,
+        complete: done,
+      });
+      if (done) return;
+
+      const offsets: number[] = [];
+      for (let p = 1; p < pageCount; p++) offsets.push(p * FETCH_CHUNK);
+      const pages = await fetchInWaves(offsets, async (offset) => {
+        const r = await fetchLeadsPage(offset);
+        if (!r.ok) throw new Error("request failed");
+        return (await r.json()) as LeadsPage;
+      });
+      const complete = pages.every((page) => page !== null);
+      // Merge in offset order so the server's sort holds.
+      const rest: LeadRow[] = [];
+      for (const page of pages)
+        if (page) rest.push(...page.leads.map(withAudiences));
+      setState((prev) => {
+        if (prev.status !== "ready") return prev;
+        // Dedupe by id: rows removed mid-load shift server offsets, so
+        // pages can overlap each other and the already-painted first page.
+        const seen = new Set(prev.leads.map((lead) => lead.id));
+        const fresh = rest.filter((lead) => {
+          if (seen.has(lead.id)) return false;
+          seen.add(lead.id);
+          return true;
+        });
+        return {
+          ...prev,
+          leads: [...prev.leads, ...fresh],
+          loadingMore: false,
+          complete,
+        };
+      });
     } catch {
+      // Only a failed FIRST page shows the error state — a failed later
+      // page keeps the painted rows and reads back as an incomplete load.
       setState((prev) =>
         prev.status === "ready" ? prev : { status: "error" },
       );
@@ -244,7 +343,7 @@ function LeadsTable({ canWrite }: { canWrite: boolean }) {
       setState((prev) =>
         prev.status === "ready"
           ? {
-              status: "ready",
+              ...prev,
               leads: prev.leads.filter((l) => l.id !== lead.id),
             }
           : prev,
@@ -261,6 +360,14 @@ function LeadsTable({ canWrite }: { canWrite: boolean }) {
     [state],
   );
   const allCount = allLeads.length;
+  /* Partial-load affordances: while later pages stream in, every stated
+     count reads loaded-of-total (or "so far") — a bare number would lie
+     about the list's size. The search index and filters run over the
+     partial set (their memos re-key as chunks land); the loading line
+     explains the incompleteness. */
+  const serverTotal = state.status === "ready" ? state.total : 0;
+  const complete = state.status === "ready" && state.complete;
+  const loadingMore = state.status === "ready" && state.loadingMore;
   const audienceOptions = useMemo(
     () =>
       [...new Set(allLeads.flatMap((lead) => lead.audiences))].sort((a, b) =>
@@ -312,7 +419,9 @@ function LeadsTable({ canWrite }: { canWrite: boolean }) {
         </h1>
         {allCount > 0 && (
           <span className="shrink-0 text-[12.5px] text-ink-faint tabular-nums">
-            {allCount.toLocaleString()} total
+            {complete
+              ? `${allCount.toLocaleString()} total`
+              : `${allCount.toLocaleString()} of ${serverTotal.toLocaleString()} leads`}
           </span>
         )}
       </div>
@@ -341,6 +450,9 @@ function LeadsTable({ canWrite }: { canWrite: boolean }) {
             </p>
           ) : (
             <>
+              {loadingMore && (
+                <LoadingMoreLine>Loading the rest of your leads</LoadingMoreLine>
+              )}
               <div className="mb-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_13rem_auto] sm:items-center">
                 <div className="relative min-w-0">
                   <svg
@@ -402,6 +514,7 @@ function LeadsTable({ canWrite }: { canWrite: boolean }) {
                 {(trimmed || audienceFilter !== "all") && (
                   <span className="shrink-0 text-[12.5px] text-ink-faint tabular-nums">
                     {total.toLocaleString()} {total === 1 ? "match" : "matches"}
+                    {complete ? "" : " so far"}
                   </span>
                 )}
               </div>
@@ -525,6 +638,11 @@ function LeadsTable({ canWrite }: { canWrite: boolean }) {
                       Showing {start.toLocaleString()}–{end.toLocaleString()} of{" "}
                       {total.toLocaleString()}
                       {trimmed ? " matching" : ""}
+                      {complete
+                        ? ""
+                        : trimmed || audienceFilter !== "all"
+                          ? " so far"
+                          : " loaded so far"}
                     </span>
                     <div className="flex items-center gap-2">
                       <button
