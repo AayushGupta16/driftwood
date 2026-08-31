@@ -15,3 +15,16 @@ q.addEventListener('keydown', e => { if(e.key === 'Enter') { const m = matches(q
 window.addEventListener('resize', () => { if (current) { const v = document.getElementById('v'); const t = v.currentTime, was = !v.paused; v.src = srcFor(current); v.load(); v.currentTime = t; if (was) v.play().catch(()=>{}) } });
 
 const capSend = document.getElementById('capSend'); if (capSend) capSend.addEventListener('click', e => { e.preventDefault(); document.getElementById('cap').innerHTML = '<p class=note>Got it. We’ll send it within the day.</p>' });
+
+
+/* Deep link: /oruk?c=<slug> (or ?company=<name>) opens that company's demo straight away —
+   the link we put in outreach emails. Falls back to the search box when the slug is unknown. */
+(function deepLink(){
+  const p = new URLSearchParams(location.search);
+  const want = (p.get('c') || p.get('company') || '').trim();
+  if (!want) return;
+  const k = norm(want);
+  const hit = C.find(c => c.s === want.toLowerCase()) || C.find(c => [c.n, ...c.a].some(x => norm(x) === k));
+  if (hit) { pick(hit); document.getElementById('result').scrollIntoView({behavior:'smooth', block:'center'}) }
+  else { q.value = want; q.dispatchEvent(new Event('input')) }
+})();
