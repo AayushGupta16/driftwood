@@ -1009,14 +1009,16 @@ function EmailCard({
   const [connectError, setConnectError] = useState<string | null>(null);
   /* the managed pool is null for every customer without one (and on any
      fetch error) — the tile then renders exactly as it did before the
-     feature existed. Shown only alongside the customer's own connected
-     mailbox. The tile itself never grows past its siblings: the inbox
-     list and the add flow both float over the grid as overlays. */
+     feature existed. The pool and its add flow do NOT wait for the
+     customer's own mailbox: warmup takes weeks, so a fresh account buys
+     inboxes first and connects Gmail/Outlook whenever. The tile itself
+     never grows past its siblings: the inbox list and the add flow both
+     float over the grid as overlays. */
   const [listOpen, setListOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
-  const showPool = connected && pool !== null;
-  // own connected mailbox + the managed pool
-  const boxCount = 1 + (pool?.mailboxes.length ?? 0);
+  const showPool = pool !== null;
+  // own connected mailbox (when there is one) + the managed pool
+  const boxCount = (connected ? 1 : 0) + (pool?.mailboxes.length ?? 0);
   const underCaps =
     (pool?.domains.length ?? 0) < DOMAIN_CAP &&
     (pool?.mailboxes.length ?? 0) < INBOX_CAP;
@@ -1150,6 +1152,17 @@ function EmailCard({
                   ? "Connecting…"
                   : "Connect Outlook"}
               </button>
+              {underCaps && (
+                <button
+                  type="button"
+                  aria-haspopup="dialog"
+                  disabled={pending}
+                  onClick={() => setAddOpen(true)}
+                  className="inline-flex cursor-pointer items-center justify-center rounded-full border border-line bg-surface px-4.5 py-2.5 text-[14.5px] font-semibold text-ink-soft transition-colors hover:border-tide/40 hover:bg-tide-wash hover:text-tide-deep disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Add inboxes
+                </button>
+              )}
             </div>
           )}
 
