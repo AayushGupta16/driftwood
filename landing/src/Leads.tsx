@@ -75,44 +75,118 @@ export default function Leads() {
   const [user, setUser] = useState<User | null>(
     identityBoot?.cached?.is_approved ? identityBoot.cached : null,
   );
+  /* Meaningful only while user is null: "checking" paints the skeleton,
+     "offline" the stay-and-retry card. A network blip is not a logout
+     (ux-principles rule 7) — only a readable non-ok /auth/me bounces. */
+  const [gate, setGate] = useState<"checking" | "offline">("checking");
+
+  /* Applies a live /auth/me result. Returns false when the result is null —
+     which identity.ts hands back for BOTH a real 401 and a failed request,
+     so null alone never justifies a redirect. */
+  const applyFresh = useCallback((fresh: User | null): boolean => {
+    if (fresh?.is_approved) {
+      setUser(fresh); // swap in place when it differs from the cache
+      return true;
+    }
+    if (fresh) {
+      // Logged in, but not approved — /dashboard owns the pending screen.
+      clearIdentity();
+      window.location.href = withMockMode("/dashboard");
+      return true;
+    }
+    return false;
+  }, []);
+
+  /* identity.ts folds a real 401 and a dead network into the same null, so
+     when fresh comes back null we ask /auth/me once more ourselves: a
+     readable response means the session is really gone (bounce to
+     /dashboard, which owns login), a thrown fetch means the network blinked
+     — stay put and offer a retry instead of hard-redirecting mid-blip. */
+  const recheck = useCallback(async () => {
+    setGate("checking");
+    try {
+      const res = await fetch("/auth/me", { credentials: "include" });
+      const fresh = res.ok ? ((await res.json()) as User) : null;
+      if (applyFresh(fresh)) return;
+      // The server answered and it's a no: real 401 — same bounce as ever.
+      clearIdentity();
+      window.location.href = withMockMode("/dashboard");
+    } catch {
+      // Request never reached the server. With a cached shell already
+      // painted the user just stays where they are (data calls fail loudly
+      // on their own); with no shell we show the retry card below.
+      setGate("offline");
+    }
+  }, [applyFresh]);
 
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       const fresh = (await identityBoot?.fresh) ?? null;
       if (cancelled) return;
-      // Only approved users get the table; everyone else goes back to the
-      // dashboard, which handles login + the pending-approval state. A 401
-      // or network failure already cleared the identity cache.
-      if (fresh?.is_approved) {
-        setUser(fresh); // swap in place when it differs from the cache
-      } else {
-        if (fresh) clearIdentity(); // logged in, but not approved
-        window.location.href = withMockMode("/dashboard");
-      }
+      if (applyFresh(fresh)) return;
+      await recheck();
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [applyFresh, recheck]);
 
   return (
     <ToastProvider>
       <div className="relative flex min-h-[100dvh] flex-col overflow-x-clip">
-        {user ? <LeadsView user={user} /> : <LoadingView />}
+        {user ? (
+          <LeadsView user={user} />
+        ) : gate === "offline" ? (
+          <OfflineView onRetry={() => void recheck()} />
+        ) : (
+          <LoadingView />
+        )}
       </div>
     </ToastProvider>
   );
 }
 
+/* Pre-auth first paint with no cached identity: mirror the page we're about
+   to show (title, card, table rows) instead of a lone spinner on a blank
+   page — ux-principles rules 1 + 2. The AppShell chrome itself still waits
+   on identity (it needs the user's name and role). */
 function LoadingView() {
   return (
-    <div className="flex flex-1 items-center justify-center">
-      <span
-        className="size-7 animate-spin rounded-full border-2 border-line border-t-tide"
-        role="status"
-        aria-label="Loading"
-      />
+    <div className="mx-auto w-full max-w-7xl flex-1 px-4 pb-10 sm:px-8">
+      <div className="mt-11 h-9 w-44 animate-pulse rounded-md bg-sand motion-reduce:animate-none" />
+      <div className={`mt-5 ${CARD} p-5 sm:p-6`}>
+        <TableSkeleton />
+      </div>
+    </div>
+  );
+}
+
+/* Painted only when we have no identity at all AND /auth/me was unreachable:
+   the user stays here with a retry instead of being bounced to /dashboard —
+   that bounce is reserved for real 401s. */
+function OfflineView({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="flex flex-1 items-center justify-center p-6">
+      <div
+        role="alert"
+        className={`w-full max-w-sm ${CARD} p-6 text-center`}
+      >
+        <p className="m-0 text-[14.5px] font-semibold text-ink">
+          Can&rsquo;t reach driftwood right now
+        </p>
+        <p className="m-0 mt-1.5 text-[13px] leading-relaxed text-ink-soft">
+          The connection failed before we could check your session. Check
+          your network and retry.
+        </p>
+        <button
+          type="button"
+          onClick={onRetry}
+          className="mt-4 cursor-pointer rounded-full bg-tide px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-tide-deep"
+        >
+          Retry
+        </button>
+      </div>
     </div>
   );
 }
@@ -244,9 +318,48 @@ function LoadingMoreLine({ children }: { children: ReactNode }) {
   );
 }
 
+/* Initial-load placeholder that mirrors the table it becomes (ux-principles
+   rule 2): the search/filter controls row, a header line, then a page of
+   row-height bars in line/sand tones. Slow pulse, static under
+   prefers-reduced-motion. Local Tailwind-only copy per the LoadingMoreLine
+   precedent — the shared skeleton utility is a later batch. */
+function TableSkeleton() {
+  return (
+    <div
+      role="status"
+      aria-label="Loading leads"
+      className="animate-pulse motion-reduce:animate-none"
+    >
+      <div className="mb-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_13rem]">
+        <div className="h-[42px] rounded-xl bg-sand" />
+        <div className="hidden h-[42px] rounded-xl bg-sand sm:block" />
+      </div>
+      <div className="border-b border-line pb-3 pt-1">
+        <div className="h-3 w-2/3 max-w-[30rem] rounded bg-line" />
+      </div>
+      {Array.from({ length: 12 }, (_, i) => (
+        <div
+          key={i}
+          className="flex items-center gap-6 border-b border-line/70 py-3"
+        >
+          <div className="h-3.5 w-[11%] min-w-[4.5rem] rounded bg-line" />
+          <div className="h-3.5 w-[9%] min-w-[3.5rem] rounded bg-sand" />
+          <div className="h-[22px] w-[7rem] shrink-0 rounded-full bg-sand" />
+          <div className="h-3.5 w-[13%] min-w-[4.5rem] rounded bg-sand" />
+          <div className="h-3.5 flex-1 rounded bg-sand" />
+          <div className="h-[30px] w-[4.75rem] shrink-0 rounded-full bg-sand" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function LeadsTable({ canWrite }: { canWrite: boolean }) {
   const [state, setState] = useState<LeadsState>({ status: "loading" });
   const [removingId, setRemovingId] = useState<string | null>(null);
+  /* Which row's Remove is armed — one at a time, so arming a second row
+     disarms the first (the review queue's mutual-exclusivity idiom). */
+  const [armedId, setArmedId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [audienceFilter, setAudienceFilter] = useState("all");
   const [page, setPage] = useState(0);
@@ -322,15 +435,28 @@ function LeadsTable({ canWrite }: { canWrite: boolean }) {
     })();
   }, [loadAll]);
 
-  async function handleRemove(lead: LeadRow) {
-    const label = leadLabel(lead);
-    if (
-      !window.confirm(
-        `Remove ${label}? They'll be deleted and added to your blacklist so we never contact them again.`,
-      )
-    )
-      return;
+  /* An armed Remove disarms itself after a beat — no stale confirm lying in
+     wait (same self-disarm as the review queue's bulk buttons). */
+  useEffect(() => {
+    if (!armedId) return;
+    const t = window.setTimeout(() => setArmedId(null), 5000);
+    return () => window.clearTimeout(t);
+  }, [armedId]);
 
+  /* First press arms this row's button ("Remove and blacklist? Confirm"),
+     the second executes — a delete-plus-blacklist cascade never rides on one
+     click (ux-principles rule 9; this replaced a blocking window.confirm). */
+  function handleRemove(lead: LeadRow) {
+    if (armedId !== lead.id) {
+      setArmedId(lead.id);
+      return;
+    }
+    setArmedId(null);
+    void executeRemove(lead);
+  }
+
+  async function executeRemove(lead: LeadRow) {
+    const label = leadLabel(lead);
     setRemovingId(lead.id);
     try {
       const res = await fetch(`/api/v1/dashboard/leads/${lead.id}`, {
@@ -427,15 +553,7 @@ function LeadsTable({ canWrite }: { canWrite: boolean }) {
       </div>
 
       <div className={`mt-5 ${CARD} p-5 sm:p-6`}>
-        {state.status === "loading" && (
-          <div className="flex items-center justify-center py-16">
-            <span
-              className="size-6 animate-spin rounded-full border-2 border-line border-t-tide"
-              role="status"
-              aria-label="Loading leads"
-            />
-          </div>
-        )}
+        {state.status === "loading" && <TableSkeleton />}
 
         {state.status === "error" && (
           <p className="m-0 text-[14px] font-medium text-red-700" role="alert">
@@ -445,8 +563,25 @@ function LeadsTable({ canWrite }: { canWrite: boolean }) {
 
         {state.status === "ready" &&
           (allCount === 0 ? (
+            /* Empty is a designed state (rule 14): say what lands here and
+               offer the next action — CSV import lives on the dashboard, and
+               read-only members can't import at all. */
             <p className="m-0 text-[13px] leading-relaxed text-ink-soft">
-              No leads yet.
+              No leads yet. Every lead your agent works shows up here.{" "}
+              {canWrite ? (
+                <>
+                  Import a CSV from the{" "}
+                  <a
+                    href={withMockMode("/dashboard")}
+                    className="font-medium text-tide no-underline hover:underline"
+                  >
+                    dashboard
+                  </a>{" "}
+                  to add your first ones.
+                </>
+              ) : (
+                <>An owner or admin can import the first ones.</>
+              )}
             </p>
           ) : (
             <>
@@ -520,8 +655,22 @@ function LeadsTable({ canWrite }: { canWrite: boolean }) {
               </div>
 
               {total === 0 ? (
+                /* Name what's actually filtering: search text, the audience
+                   pick, or both — an audience-only miss used to render
+                   `No leads match ""` (rule 14: empty states tell the truth). */
                 <p className="m-0 py-6 text-[13px] leading-relaxed text-ink-soft">
-                  No leads match &ldquo;{trimmed}&rdquo;.
+                  {trimmed && audienceFilter !== "all" ? (
+                    <>
+                      No leads in &ldquo;{audienceFilter}&rdquo; match &ldquo;
+                      {trimmed}&rdquo;.
+                    </>
+                  ) : trimmed ? (
+                    <>No leads match &ldquo;{trimmed}&rdquo;.</>
+                  ) : (
+                    <>
+                      No leads in the &ldquo;{audienceFilter}&rdquo; audience.
+                    </>
+                  )}
                 </p>
               ) : (
                 <>
@@ -548,6 +697,7 @@ function LeadsTable({ canWrite }: { canWrite: boolean }) {
                         {visible.map((lead) => {
                           const added = relativeTime(lead.created_at);
                           const removing = removingId === lead.id;
+                          const armed = armedId === lead.id;
                           return (
                             <tr
                               key={lead.id}
@@ -614,7 +764,16 @@ function LeadsTable({ canWrite }: { canWrite: boolean }) {
                                     type="button"
                                     onClick={() => handleRemove(lead)}
                                     disabled={removing}
-                                    className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-red-600/40 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                    title={
+                                      armed || removing
+                                        ? undefined
+                                        : `Deletes ${leadLabel(lead)} and adds them to your blacklist`
+                                    }
+                                    className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-[12.5px] transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+                                      armed
+                                        ? "border-red-700 bg-red-700 font-semibold text-white hover:border-red-800 hover:bg-red-800"
+                                        : "border-line bg-surface font-medium text-ink-soft hover:border-red-600/40 hover:text-red-700"
+                                    }`}
                                   >
                                     {removing && (
                                       <span
@@ -622,7 +781,11 @@ function LeadsTable({ canWrite }: { canWrite: boolean }) {
                                         className="size-3.5 animate-spin rounded-full border-[1.5px] border-red-600/30 border-t-red-600"
                                       />
                                     )}
-                                    {removing ? "Removing…" : "Remove"}
+                                    {removing
+                                      ? "Removing…"
+                                      : armed
+                                        ? "Remove and blacklist? Confirm"
+                                        : "Remove"}
                                   </button>
                                 )}
                               </td>
