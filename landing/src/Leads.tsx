@@ -255,7 +255,9 @@ const SEARCH_KEYS = [
   { name: "company", weight: 2 },
   { name: "email", weight: 2 },
   { name: "title", weight: 1 },
-  { name: "source", weight: 1 },
+  // Search matches the label the customer sees ("Lead search"), never the
+  // raw vendor slug the API stores (sourceLabel below, ux-principles rule 18).
+  { name: "source", weight: 1, getFn: (lead: LeadRow) => (lead.source ? sourceLabel(lead.source) : "") },
   { name: "audiences", weight: 2 },
 ];
 
@@ -297,6 +299,30 @@ function leadLabel(lead: LeadRow): string {
 
 function Dash() {
   return <span className="text-ink-faint">—</span>;
+}
+
+/* Customer-facing source labels speak in capabilities, never vendor names
+   (ux-principles rule 18) — the audiences library does the same for its
+   provider enums (audiences/model.ts providerLabel), but lead sources arrive
+   as raw slugs ("orange-slice:ocean", "upload:yc", "workspace"), so they get
+   their own mapper here. The upload filename is deliberately dropped: the
+   Audiences column already names the list, and this table has no room for
+   "CSV upload · a16z-speedrun". Unknown slugs render sentence-cased with
+   vendor tokens stripped — the raw colon form never reaches the customer. */
+function sourceLabel(source: string): string {
+  const slug = source.trim().toLowerCase();
+  if (!slug) return "";
+  if (slug.startsWith("orange-slice") || slug.startsWith("orange_slice")) return "Lead search";
+  if (slug.startsWith("upload")) return "CSV upload"; // upload:<name>, uploaded:csv
+  if (slug.includes("rb2b")) return "Website visitor";
+  if (slug === "workspace") return "Workspace";
+  const cleaned = slug
+    .replace(/orange[-_]?slice|unipile|composio|inboxkit|smartlead|sixtyfour|kernel|exa\b/g, " ")
+    .replace(/[:_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!cleaned) return "Imported";
+  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
 }
 
 /* Quiet line above the controls while later pages stream in — the first
@@ -747,7 +773,7 @@ function LeadsTable({ canWrite }: { canWrite: boolean }) {
                               <td className={TD}>
                                 <span className={STAGE_PILL}>{lead.stage}</span>
                               </td>
-                              <td className={TD}>{lead.source || <Dash />}</td>
+                              <td className={TD}>{lead.source ? sourceLabel(lead.source) : <Dash />}</td>
                               <td className={TD}>
                                 {lead.demo_artifact_id ? (
                                   <span className={STAGE_PILL}>Demo</span>

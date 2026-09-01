@@ -246,7 +246,7 @@ if (mockMode) {
     pending: [
       {
         id: "rb1", batch_id: "b9", agent_id: "demo", kind: "bug_validation",
-        title: "Meridian — booking flow bug",
+        title: "Meridian · booking flow bug",
         body: "Selecting a same-day slot on meridian.com/book throws a 500 and drops the reservation.",
         lead: null, attachment_slug: null,
         evidence: { device: "Pixel 9", video_timestamp: "0:12" },
@@ -255,7 +255,7 @@ if (mockMode) {
       },
       {
         id: "r1", batch_id: "b1", agent_id: "demo", kind: "send_message",
-        title: "Brex \u2014 Jordan Reyes (message)",
+        title: "Brex \u00b7 Jordan Reyes (message)",
         body: "hey jordan, notion is one of ramp's flagship case studies. built the one-pager brex could send notion's finance team to flip it: entity-by-entity rollout, the yield math, live page linked below. worth a look?",
         lead: lead("Jordan Reyes", "Head of Growth", "Brex"),
         attachment_slug: null, evidence: null, status: "pending",
@@ -264,7 +264,7 @@ if (mockMode) {
       },
       {
         id: "r2", batch_id: "b1", agent_id: "demo", kind: "send_message",
-        title: "Northstar \u2014 Priya Patel (message)",
+        title: "Northstar \u00b7 Priya Patel (message)",
         body: "hey priya, found a dead link on northstar's pricing page. built you a working demo of the fix, 19 seconds, link below. worth a look?",
         lead: lead("Priya Patel", "Head of Growth", "Northstar"),
         attachment_slug: null, evidence: null, status: "pending",
@@ -273,7 +273,7 @@ if (mockMode) {
       },
       {
         id: "r3", batch_id: "b2", agent_id: "demo", kind: "send_connection",
-        title: "Ledgerline \u2014 Sam Okafor (connect)",
+        title: "Ledgerline \u00b7 Sam Okafor (connect)",
         body: "fellow yc founder! building in the fintech tooling space too.",
         lead: lead("Sam Okafor", "CTO", "Ledgerline"),
         attachment_slug: null, evidence: null, status: "pending",
@@ -282,7 +282,7 @@ if (mockMode) {
       },
       {
         id: "r4", batch_id: "b3", agent_id: "demo", kind: "send_email",
-        title: "Autosana — Yuvan Kumar (email)",
+        title: "Autosana · Yuvan Kumar (email)",
         subject: "Two outreach fixes from this week",
         body: "Hey Yuvan,\n\nI pulled the two workflow changes into one short walkthrough.\n\n[![Autosana outreach workflow](https://driftwood.sh/case-autosana-poster.webp)](https://driftwood.sh/customers/autosana)\n\nWorth a look before our next check-in?\n\nBest,\nAayush",
         lead: lead("Yuvan Kumar", "CEO", "Autosana"),
@@ -771,30 +771,70 @@ if (mockMode) {
   }];
   const mockFixtureCampaignIds = new Set(mockCampaigns.map((campaign) => campaign.id));
   const mockCampaignStorageKey = "driftwood.dashboard.mock-campaigns";
-  try {
-    const stored = JSON.parse(sessionStorage.getItem(mockCampaignStorageKey) ?? "[]") as MockCampaign[];
-    for (const campaign of stored) {
-      if (
-        campaign && typeof campaign.id === "string" &&
-        Array.isArray(campaign.steps) && Array.isArray(campaign.contacts) &&
-        !mockCampaigns.some((item) => item.id === campaign.id)
-      ) {
-        mockCampaigns.unshift(campaign);
-      }
-    }
-  } catch {
-    sessionStorage.removeItem(mockCampaignStorageKey);
-  }
-  const persistMockCampaigns = () => {
+  /* Created campaigns must survive the full-document navigation from "New
+     campaign" into the builder (create -> redirect -> reload resets the
+     in-memory store, and the builder would show "Campaign not found").
+     sessionStorage is the primary home: per-tab, gone when the demo tab
+     closes (the mock-mode.ts pattern). But automation browsers — the kind
+     scripted demos and baked marketing shots actually run in — reset
+     sessionStorage on EVERY document load, which is exactly the create
+     redirect. So each persist also mirrors to localStorage stamped with a
+     save time, and hydration falls back to that copy only while it is
+     fresh. Hydration re-persists, so the stamp rolls forward as long as
+     the demo keeps navigating, while a stray demo campaign still cannot
+     leak into next week's pristine default view. */
+  const mockCampaignFallbackMaxAgeMs = 10 * 60 * 1000;
+  const readStoredMockCampaigns = (): MockCampaign[] => {
     try {
-      sessionStorage.setItem(
-        mockCampaignStorageKey,
-        JSON.stringify(mockCampaigns.filter((campaign) => !mockFixtureCampaignIds.has(campaign.id))),
-      );
+      const raw = sessionStorage.getItem(mockCampaignStorageKey);
+      if (raw !== null) return JSON.parse(raw) as MockCampaign[];
     } catch {
-      // The preview remains usable when storage is blocked; only reload persistence is lost.
+      try { sessionStorage.removeItem(mockCampaignStorageKey); } catch { /* unreadable AND unremovable: nothing left to do */ }
+    }
+    try {
+      const raw = localStorage.getItem(mockCampaignStorageKey);
+      if (raw === null) return [];
+      const parsed = JSON.parse(raw) as { saved_at?: unknown; campaigns?: unknown };
+      if (
+        typeof parsed.saved_at !== "number" ||
+        Date.now() - parsed.saved_at > mockCampaignFallbackMaxAgeMs ||
+        !Array.isArray(parsed.campaigns)
+      ) {
+        localStorage.removeItem(mockCampaignStorageKey);
+        return [];
+      }
+      return parsed.campaigns as MockCampaign[];
+    } catch {
+      try { localStorage.removeItem(mockCampaignStorageKey); } catch { /* same */ }
+      return [];
     }
   };
+  const persistMockCampaigns = () => {
+    const created = mockCampaigns.filter((campaign) => !mockFixtureCampaignIds.has(campaign.id));
+    // Guarded independently: either store may be blocked (Safari private
+    // mode) — the preview stays usable, only reload persistence is lost.
+    try {
+      sessionStorage.setItem(mockCampaignStorageKey, JSON.stringify(created));
+    } catch { /* ignore */ }
+    try {
+      localStorage.setItem(
+        mockCampaignStorageKey,
+        JSON.stringify({ saved_at: Date.now(), campaigns: created }),
+      );
+    } catch { /* ignore */ }
+  };
+  let hydratedStoredCampaign = false;
+  for (const campaign of readStoredMockCampaigns()) {
+    if (
+      campaign && typeof campaign.id === "string" &&
+      Array.isArray(campaign.steps) && Array.isArray(campaign.contacts) &&
+      !mockCampaigns.some((item) => item.id === campaign.id)
+    ) {
+      mockCampaigns.unshift(campaign);
+      hydratedStoredCampaign = true;
+    }
+  }
+  if (hydratedStoredCampaign) persistMockCampaigns();
   const campaignsApi = (init?: RequestInit, url?: string) => {
     const method = init?.method ?? "GET";
     const pathname = new URL(url ?? location.href, location.href).pathname;

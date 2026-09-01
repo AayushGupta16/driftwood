@@ -408,7 +408,7 @@ export default function Audiences() {
     const searchDisabledReason = providerStatusLoading
       ? "Checking the lead search connection"
       : !activeProvider?.configured
-        ? "Lead search isn't set up for this workspace yet — upload a CSV instead"
+        ? "Lead search isn't set up for this workspace yet. Upload a CSV instead"
         : !hasSearchFilter
           ? "Describe who you're looking for first"
           : null;
@@ -503,7 +503,7 @@ export default function Audiences() {
                     <p>
                       {providerReady || providerStatusLoading
                         ? "Lead search turns a plain description into a list of people to review."
-                        : "Lead search isn't set up for this workspace yet — upload a CSV instead."}
+                        : "Lead search isn't set up for this workspace yet. Upload a CSV instead."}
                     </p>
                     <div className="audience-start-search">
                       <input
@@ -604,7 +604,7 @@ export default function Audiences() {
                   the capability is worth a line (ux-principles rule 18). */}
               {!providerStatusLoading && activeProvider?.configured === false && (
                 <p className="audience-search-offline">
-                  Lead search isn't set up for this workspace yet — upload a CSV instead.
+                  Lead search isn't set up for this workspace yet. Upload a CSV instead.
                 </p>
               )}
 
@@ -895,12 +895,12 @@ function DiscoveryNarration() {
         ? "Searching for matching people…"
         : elapsed < 35
           ? "Scoring and ranking the matches…"
-          : "Still working — big searches can take about a minute…";
+          : "Still working. Big searches can take about a minute…";
   return (
     <p className="audience-searching" role="status">
       <span className="audience-spinner" aria-hidden="true" />
       <strong>{stage}</strong>
-      <span>Keep this tab open — leaving the page cancels the search.</span>
+      <span>Keep this tab open. Leaving the page cancels the search.</span>
     </p>
   );
 }

@@ -473,7 +473,7 @@ function summarizeDecide(r: DecideResult): string {
   if (r.denied) parts.push(`${r.denied} denied`);
   if (r.skipped.length) parts.push(`${r.skipped.length} already decided`);
   const head = parts.join(" · ") || "Nothing to decide";
-  return r.queued.length ? `${head} — ${r.queued.join("; ")}.` : `${head}.`;
+  return r.queued.length ? `${head} · ${r.queued.join("; ")}.` : `${head}.`;
 }
 
 function summarizeCancel(r: CancelResult): string {
@@ -1285,7 +1285,7 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
           <p className="m-0 mt-8 text-[14px] text-ink-soft">
             {sentQuery.kind !== null
               ? "No delivered sends of this type."
-              : "Nothing delivered yet — approved sends land here once the dispatcher delivers them."}
+              : "Nothing delivered yet. Approved sends land here once the dispatcher delivers them."}
           </p>
         ) : (
           <SentLedger sends={sentState.sends} total={sentState.total} />
@@ -2305,7 +2305,7 @@ function ItemCard({
   );
 }
 
-/* "Maya Reston — VP Engineering, Loomi · [new] · no prior sends"; the name
+/* "Maya Reston · VP Engineering, Loomi · [new] · no prior sends"; the name
    links out to the lead's LinkedIn profile when we have one (tide + hover
    underline, the Leads-table affordance) — no more hand-searching names. */
 function LeadLine({ lead }: { lead: ReviewLeadContext }) {
@@ -2334,7 +2334,7 @@ function LeadLine({ lead }: { lead: ReviewLeadContext }) {
         ) : (
           lead.name
         ))}
-      {lead.name && role ? ` — ${role}` : role}
+      {lead.name && role ? ` · ${role}` : role}
       {(lead.name || role) && <> &middot; </>}
       <span className={STAGE_PILL}>{lead.stage}</span> &middot; {prior}
     </p>
