@@ -151,7 +151,7 @@
 .analytics-people-table tbody td { color: var(--color-ink-soft); font-size: 0.76rem; }
 .analytics-people-table tbody td:first-child { min-width: 13rem; }
 .analytics-people-table td strong { display: block; color: var(--color-ink); font-size: 0.8rem; font-weight: 620; }
-.analytics-people-table td span:not(.analytics-channel-tag) { display: block; margin-top: 0.2rem; color: var(--color-ink-faint); font-size: 0.68rem; }
+.analytics-people-table td span:not(.analytics-channel-tag):not(.analytics-auto-tag) { display: block; margin-top: 0.2rem; color: var(--color-ink-faint); font-size: 0.68rem; }
 
 .analytics-channel-tag { display: inline-flex; align-items: center; border: 1px solid var(--color-line); border-radius: 999px; padding: 0.25rem 0.52rem; color: var(--color-ink-soft); font-size: 0.66rem; font-weight: 600; }
 .analytics-channel-tag.is-linkedin { border-color: color-mix(in srgb, var(--color-tide) 26%, var(--color-line)); color: var(--color-tide-deep); }
@@ -227,4 +227,19 @@
 
 @media (prefers-reduced-motion: reduce) {
   .analytics-skeleton-row span { animation: none; }
+}
+
+/* Automatic-response tag beside the channel tag on replied rows. */
+.analytics-auto-tag {
+  display: inline-block;
+  margin-left: 0.4rem;
+  border: 1px solid color-mix(in srgb, var(--color-alert) 30%, var(--color-line));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-alert) 6%, white);
+  color: color-mix(in srgb, var(--color-alert) 78%, var(--color-ink));
+  padding: 0.14rem 0.5rem;
+  font-size: 0.62rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: help;
 }

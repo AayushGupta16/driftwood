@@ -8,6 +8,8 @@ import {
   appendAnalyticsPage,
   analyticsWindow,
   channelLabel,
+  countAutomatic,
+  filterByReplyKind,
   formatMetric,
   formatObservedAt,
   formatReplyBody,
@@ -16,6 +18,7 @@ import {
   type AnalyticsStatus,
   type ChannelAnalytics,
   type MetricValue,
+  type ReplyKindFilter,
 } from "./model";
 import "./analytics.css";
 
@@ -87,6 +90,10 @@ export default function AnalyticsDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [expandedReplies, setExpandedReplies] = useState<ReadonlySet<string>>(new Set());
+  /* Replied view only: differentiate human replies from automatic responses
+     (OOO, autoresponders). Client-side over the loaded rows — the reply
+     rate above never changes. */
+  const [replyKind, setReplyKind] = useState<ReplyKindFilter>("all");
 
   const toggleReply = useCallback((key: string) => {
     setExpandedReplies((current) => {
@@ -106,6 +113,7 @@ export default function AnalyticsDashboard() {
     setOffset(0);
     setError(null);
     setExpandedReplies(new Set());
+    setReplyKind("all");
     setRefreshKey((value) => value + 1);
   }, []);
 
@@ -145,6 +153,12 @@ export default function AnalyticsDashboard() {
       "This event is not tracked yet.",
     [data],
   );
+  const automaticCount = data ? countAutomatic(data.people) : 0;
+  const visiblePeople = data
+    ? status === "replied"
+      ? filterByReplyKind(data.people, replyKind)
+      : data.people
+    : [];
   const dataIssues = data
     ? Object.values(data.unmatchedReplies).reduce((sum, value) => sum + value, 0) +
       data.unattributedDemosBooked
@@ -231,6 +245,19 @@ export default function AnalyticsDashboard() {
         <div className="analytics-section-heading analytics-detail-heading">
           <h2 id="outcome-detail-heading">Outcome detail</h2>
           <div className="analytics-filter-row">
+            {status === "replied" && (automaticCount > 0 || replyKind !== "all") ? (
+              <label>
+                <span className="sr-only">Filter replies by kind</span>
+                <select
+                  value={replyKind}
+                  onChange={(event) => setReplyKind(event.target.value as ReplyKindFilter)}
+                >
+                  <option value="all">All replies</option>
+                  <option value="human">From people</option>
+                  <option value="automatic">{`Automatic (${automaticCount})`}</option>
+                </select>
+              </label>
+            ) : null}
             <label>
               <span className="sr-only">Filter people by channel</span>
               <select
@@ -269,6 +296,7 @@ export default function AnalyticsDashboard() {
                 setError(null);
                 setOffset(0);
                 setExpandedReplies(new Set());
+                setReplyKind("all");
                 setStatus(option);
               }}
             >
@@ -289,7 +317,7 @@ export default function AnalyticsDashboard() {
               </tr>
             </thead>
             <tbody aria-busy={loading}>
-              {data?.people.map((person, index) => {
+              {visiblePeople.map((person, index) => {
                 const rowKey = `${person.leadId ?? "unmatched"}-${person.channel}-${index}`;
                 const replyBody = person.replyText ? formatReplyBody(person.replyText) : "";
                 return (
@@ -300,7 +328,17 @@ export default function AnalyticsDashboard() {
                         <span>{person.title ?? person.email ?? "Details unavailable"}</span>
                       </td>
                       <td>{person.companyName ?? "—"}</td>
-                      <td><span className={`analytics-channel-tag is-${person.channel ?? "unknown"}`}>{channelLabel(person.channel)}</span></td>
+                      <td>
+                        <span className={`analytics-channel-tag is-${person.channel ?? "unknown"}`}>{channelLabel(person.channel)}</span>
+                        {person.replyIsAutomatic ? (
+                          <span
+                            className="analytics-auto-tag"
+                            title={person.replyAutoReason ?? "Automatic response"}
+                          >
+                            Auto-reply
+                          </span>
+                        ) : null}
+                      </td>
                       <td>{formatObservedAt(person.occurredAt)}</td>
                     </tr>
                     {replyBody ? (
@@ -322,18 +360,32 @@ export default function AnalyticsDashboard() {
           </table>
         </div>
 
-        {!loading && data && data.people.length === 0 ? (
+        {!loading && data && visiblePeople.length === 0 ? (
           <div className="analytics-empty">
             <TrendIcon size={22} />
-            <strong>No {statusLabel(status).toLowerCase()} prospects in this view</strong>
-            <p>Try a broader date range or another channel.</p>
+            <strong>
+              {data.people.length > 0
+                ? replyKind === "automatic"
+                  ? "No automatic responses in this view"
+                  : "Only automatic responses in this view"
+                : `No ${statusLabel(status).toLowerCase()} prospects in this view`}
+            </strong>
+            <p>
+              {data.people.length > 0
+                ? "Switch the reply filter back to all replies."
+                : "Try a broader date range or another channel."}
+            </p>
           </div>
         ) : null}
 
         <div className="analytics-table-footer">
           <span>
             {data
-              ? `Showing ${data.people.length} of ${data.peopleTotal} ${data.peopleTotal === 1 ? "person" : "people"}`
+              ? `Showing ${visiblePeople.length} of ${data.peopleTotal} ${data.peopleTotal === 1 ? "person" : "people"}${
+                  status === "replied" && replyKind !== "all" && data.people.length !== visiblePeople.length
+                    ? ` · ${data.people.length - visiblePeople.length} ${replyKind === "human" ? "automatic" : "human"} hidden`
+                    : ""
+                }`
               : error
                 ? "People unavailable for this view"
               : "Loading people…"}

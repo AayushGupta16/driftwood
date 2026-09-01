@@ -41,6 +41,12 @@ export type MetricPerson = {
   source: string;
   replySubject: string | null;
   replyText: string | null;
+  /* True when the backend's classifier flagged the reply as an automatic
+     response (out-of-office, autoresponder, departure notice); the reason
+     is its short human-readable why. Counts are unaffected — this only
+     lets the drilldown tell people from machines. */
+  replyIsAutomatic: boolean;
+  replyAutoReason: string | null;
 };
 
 export type ChannelAnalytics = {
@@ -96,6 +102,25 @@ export function formatObservedAt(value: string): string {
 
 /* Reply bodies arrive with \r\n line endings and auto-replies pad with runs
    of blank lines; normalize so `white-space: pre-line` renders them sanely. */
+export type ReplyKindFilter = "all" | "human" | "automatic";
+
+/* The drilldown's client-side reply-kind filter, applied over the loaded
+   rows. Only meaningful on the replied view — every other status has no
+   reply to classify, so "all" is the only honest value there. */
+export function filterByReplyKind(
+  people: MetricPerson[],
+  filter: ReplyKindFilter,
+): MetricPerson[] {
+  if (filter === "all") return people;
+  if (filter === "automatic")
+    return people.filter((person) => person.replyIsAutomatic);
+  return people.filter((person) => !person.replyIsAutomatic);
+}
+
+export function countAutomatic(people: MetricPerson[]): number {
+  return people.filter((person) => person.replyIsAutomatic).length;
+}
+
 export function formatReplyBody(text: string): string {
   return text.replace(/\r\n?/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
 }

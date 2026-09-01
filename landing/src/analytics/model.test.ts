@@ -1,7 +1,24 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { mapChannelAnalytics } from "./api.ts";
-import { analyticsDataAfterFailure, appendAnalyticsPage, analyticsWindow, channelLabel, formatMetric, formatReplyBody } from "./model.ts";
+import { analyticsDataAfterFailure, appendAnalyticsPage, analyticsWindow, channelLabel, countAutomatic, filterByReplyKind, formatMetric, formatReplyBody, type MetricPerson } from "./model.ts";
+
+const person = (overrides: Partial<MetricPerson>): MetricPerson => ({
+  leadId: "lead-1",
+  name: "Mina",
+  title: null,
+  email: null,
+  companyName: null,
+  channel: "email",
+  status: "replied",
+  occurredAt: "2026-08-20T15:00:00Z",
+  source: "email_replies",
+  replySubject: null,
+  replyText: "hello",
+  replyIsAutomatic: false,
+  replyAutoReason: null,
+  ...overrides,
+});
 
 test("unavailable metrics stay distinct from observed zero", () => {
   assert.equal(formatMetric({ count: null, available: false }), "—");
@@ -108,4 +125,14 @@ test("a failed fresh analytics query clears stale data while pagination failure 
   });
   assert.equal(analyticsDataAfterFailure(current, 0), null);
   assert.equal(analyticsDataAfterFailure(current, 100), current);
+});
+
+test("filterByReplyKind splits people from machines and counts them", () => {
+  const human = person({ replyIsAutomatic: false });
+  const ooo = person({ replyIsAutomatic: true, replyAutoReason: 'subject says "out of office"' });
+  const rows = [human, ooo];
+  assert.deepEqual(filterByReplyKind(rows, "all"), rows);
+  assert.deepEqual(filterByReplyKind(rows, "human"), [human]);
+  assert.deepEqual(filterByReplyKind(rows, "automatic"), [ooo]);
+  assert.equal(countAutomatic(rows), 1);
 });

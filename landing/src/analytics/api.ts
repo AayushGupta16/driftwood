@@ -35,6 +35,9 @@ type RawMetricPerson = {
   /* Optional so the UI tolerates a backend that predates reply content. */
   reply_subject?: string | null;
   reply_text?: string | null;
+  /* Optional too: automatic-response classification (OOO, autoresponder). */
+  reply_is_automatic?: boolean;
+  reply_auto_reason?: string | null;
 };
 
 type RawChannelAnalytics = {
@@ -84,6 +87,8 @@ function mapPerson(row: RawMetricPerson): MetricPerson {
     source: row.source,
     replySubject: row.reply_subject ?? null,
     replyText: row.reply_text ?? null,
+    replyIsAutomatic: row.reply_is_automatic ?? false,
+    replyAutoReason: row.reply_auto_reason ?? null,
   };
 }
 

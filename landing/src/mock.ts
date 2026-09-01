@@ -975,8 +975,10 @@ if (mockMode) {
     { lead_id: "lead-4", name: "Ines Duarte", title: "Product lead", email: "ines@example.test", company_name: "Relayworks", channel: "linkedin", status: "contacted", occurred_at: hoursAgo(24), source: "confirmed_send" },
     { lead_id: "lead-5", name: "Owen Brooks", title: "Engineering director", email: "owen@example.test", company_name: "Juniper Systems", channel: "linkedin", status: "contacted", occurred_at: hoursAgo(20), source: "confirmed_send" },
     { lead_id: "lead-6", name: "Nadia Rahman", title: "COO", email: "nadia@example.test", company_name: "Fieldnote", channel: "x", status: "contacted", occurred_at: hoursAgo(18), source: "confirmed_send" },
-    { lead_id: "lead-1", name: "Mara Okafor", title: "VP Operations", email: "mara@example.test", company_name: "Ternary Labs", channel: "email", status: "replied", occurred_at: hoursAgo(3), source: "email_reply" },
-    { lead_id: "lead-2", name: "Anika Shah", title: "Head of QA", email: "anika@example.test", company_name: "Northstar Health", channel: "linkedin", status: "replied", occurred_at: hoursAgo(9), source: "linkedin_reply" },
+    { lead_id: "lead-1", name: "Mara Okafor", title: "VP Operations", email: "mara@example.test", company_name: "Ternary Labs", channel: "email", status: "replied", occurred_at: hoursAgo(3), source: "email_reply", reply_subject: "Re: quick idea for Ternary", reply_text: "This is timely, actually. Can you send the deck and a couple times for Thursday?" },
+    { lead_id: "lead-2", name: "Anika Shah", title: "Head of QA", email: "anika@example.test", company_name: "Northstar Health", channel: "linkedin", status: "replied", occurred_at: hoursAgo(9), source: "linkedin_reply", reply_text: "Interesting — how does this handle flaky device farms?" },
+    { lead_id: "lead-4", name: "Ines Duarte", title: "Product lead", email: "ines@example.test", company_name: "Relayworks", channel: "email", status: "replied", occurred_at: hoursAgo(5), source: "email_reply", reply_subject: "Automatic reply: quick idea for Relayworks", reply_text: "I am out of the office until Monday, September 7, with limited access to email. For urgent matters contact ops@relayworks.test.", reply_is_automatic: true, reply_auto_reason: 'subject says "automatic reply"' },
+    { lead_id: "lead-5", name: "Owen Brooks", title: "Engineering director", email: "owen@example.test", company_name: "Juniper Systems", channel: "email", status: "replied", occurred_at: hoursAgo(12), source: "email_reply", reply_subject: "Re: quick idea for Juniper", reply_text: "Owen is no longer with the company. Please direct product inquiries to engineering@juniper.test.", reply_is_automatic: true, reply_auto_reason: 'mentions "no longer with the company"' },
     { lead_id: "lead-3", name: "Luca Moretti", title: "Founder", email: "luca@example.test", company_name: "Clearline", channel: "email", status: "demos_booked", occurred_at: hoursAgo(26), source: "lead_stage" },
   ];
   const channelMetricsApi = (_init?: RequestInit, url?: string) => {
@@ -988,7 +990,7 @@ if (mockMode) {
       window: { start: query.get("start"), end: query.get("end") },
       channels: [
         { channel: "linkedin", contacted: { count: 3, available: true }, opened: { count: null, available: false }, clicked: { count: null, available: false }, replied: { count: 1, available: true }, demos_booked: { count: 0, available: true } },
-        { channel: "email", contacted: { count: 2, available: true }, opened: { count: null, available: false }, clicked: { count: null, available: false }, replied: { count: 1, available: true }, demos_booked: { count: 1, available: true } },
+        { channel: "email", contacted: { count: 2, available: true }, opened: { count: null, available: false }, clicked: { count: null, available: false }, replied: { count: 3, available: true }, demos_booked: { count: 1, available: true } },
         { channel: "x", contacted: { count: 1, available: true }, opened: { count: null, available: false }, clicked: { count: null, available: false }, replied: { count: null, available: false }, demos_booked: { count: 0, available: true } },
       ],
       definitions: [
