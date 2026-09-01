@@ -207,14 +207,36 @@ export default function Review() {
   );
 }
 
+/* Pre-auth first paint with no cached identity: mirror the page we're about
+   to show (title, section tabs, queue rows) instead of a lone spinner on a
+   blank page — ux-principles rules 1 + 2. The AppShell chrome itself still
+   waits on identity (it needs the user's name and role). Local Tailwind-only
+   copy per the Leads/Companies precedent — the shared skeleton utility is a
+   later batch. */
 function LoadingView() {
   return (
-    <div className="flex flex-1 items-center justify-center">
-      <span
-        className="size-7 animate-spin rounded-full border-2 border-line border-t-tide"
-        role="status"
-        aria-label="Loading"
-      />
+    <div
+      role="status"
+      aria-label="Loading review queue"
+      className="mx-auto w-full max-w-[82rem] flex-1 animate-pulse px-4 pb-10 motion-reduce:animate-none sm:px-8"
+    >
+      <div className="mt-11 h-9 w-56 rounded-md bg-sand" />
+      <div className="mt-6 flex gap-2">
+        {[0, 1, 2].map((tab) => (
+          <div key={tab} className="h-[34px] w-28 rounded-full bg-sand" />
+        ))}
+      </div>
+      <div className="mt-6 border-t border-line">
+        {Array.from({ length: 8 }, (_, i) => (
+          <div key={i} className="flex flex-col gap-2.5 border-b border-line/70 py-4">
+            <div className="flex items-center gap-4">
+              <div className="h-3 w-16 rounded bg-sand" />
+              <div className="h-3.5 w-[28%] min-w-[9rem] rounded bg-line" />
+            </div>
+            <div className="h-3 w-[55%] max-w-[34rem] rounded bg-sand" />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

@@ -204,14 +204,52 @@ export default function Dashboard() {
   );
 }
 
+/* Pre-auth first paint with no cached identity: mirror the overview we're
+   about to show (heading, shortcut chips, connection cards, panels) instead
+   of a lone spinner on a blank page — ux-principles rules 1 + 2. The
+   AppShell chrome itself still waits on identity. Local Tailwind-only copy
+   per the Leads/Companies precedent — the shared skeleton utility is a
+   later batch. */
 function LoadingView() {
   return (
-    <div className="flex flex-1 items-center justify-center">
-      <span
-        className="size-7 animate-spin rounded-full border-2 border-line border-t-tide"
-        role="status"
-        aria-label="Loading"
-      />
+    <div
+      role="status"
+      aria-label="Loading dashboard"
+      className="mx-auto w-full max-w-5xl flex-1 animate-pulse px-4 py-5 motion-reduce:animate-none sm:px-8 sm:py-8"
+    >
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="h-10 w-48 rounded-md bg-sand" />
+        <div className="flex gap-2">
+          <div className="h-[30px] w-24 rounded-full bg-sand" />
+          <div className="h-[30px] w-40 rounded-full bg-sand" />
+        </div>
+      </div>
+      <div className="mt-9 h-4 w-40 rounded bg-sand" />
+      <div className="mt-3 grid gap-3 sm:grid-cols-3">
+        {[0, 1, 2].map((card) => (
+          <div key={card} className={`${CARD} p-4`}>
+            <div className="h-3.5 w-20 rounded bg-sand" />
+            <div className="mt-2.5 h-3 w-3/4 rounded bg-sand" />
+            <div className="mt-4 h-[30px] w-24 rounded-full bg-sand" />
+          </div>
+        ))}
+      </div>
+      <div className={`mt-6 ${CARD} p-5`}>
+        <div className="h-3.5 w-36 rounded bg-line" />
+        <div className="mt-4 h-3 w-2/3 max-w-[26rem] rounded bg-sand" />
+        <div className="mt-2.5 h-3 w-1/2 max-w-[20rem] rounded bg-sand" />
+      </div>
+      <div className={`mt-6 ${CARD} p-5`}>
+        <div className="h-3.5 w-28 rounded bg-line" />
+        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+          {[0, 1, 2].map((metric) => (
+            <div key={metric}>
+              <div className="h-3 w-16 rounded bg-sand" />
+              <div className="mt-2 h-7 w-14 rounded bg-sand" />
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

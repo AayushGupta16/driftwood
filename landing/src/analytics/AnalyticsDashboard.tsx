@@ -153,7 +153,9 @@ export default function AnalyticsDashboard() {
   return (
     <section className="analytics-page" aria-labelledby="analytics-heading">
       <div className="analytics-heading-row">
-        <h1 id="analytics-heading">Channel performance</h1>
+        {/* "Metrics" everywhere — nav, the overview's "Open metrics" link,
+            and this h1 name one concept (ux-principles rule 12). */}
+        <h1 id="analytics-heading">Metrics</h1>
         <div className="analytics-window-controls">
           <label>
             <span>Date range</span>

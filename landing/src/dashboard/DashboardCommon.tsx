@@ -15,6 +15,14 @@ export function GoogleMark({ className }: { className?: string }) {
 
 type ToastItem = { id: number; message: string; variant: ToastVariant };
 
+/* A missed failure must not evaporate as fast as a routine confirmation
+   (ux-principles rule 7): errors dwell twice as long as success/info. */
+const TOAST_DISMISS_MS: Record<ToastVariant, number> = {
+  success: 5000,
+  info: 5000,
+  error: 10000,
+};
+
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const nextId = useRef(0);
@@ -22,13 +30,15 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const push = useCallback((message: string, variant: ToastVariant = "info") => {
     const id = nextId.current++;
     setToasts((items) => [...items, { id, message, variant }]);
-    window.setTimeout(() => dismiss(id), 5000);
+    window.setTimeout(() => dismiss(id), TOAST_DISMISS_MS[variant]);
   }, [dismiss]);
 
   return (
     <ToastContext.Provider value={push}>
       {children}
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex flex-col items-center gap-2 px-4 pb-5 sm:items-end sm:px-6" aria-live="polite">
+      {/* Announcements come from each toast's own role (status/alert) — an
+          aria-live here would double-announce them. */}
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex flex-col items-center gap-2 px-4 pb-5 sm:items-end sm:px-6">
         {toasts.map((toast) => <Toast key={toast.id} toast={toast} onDismiss={() => dismiss(toast.id)} />)}
       </div>
     </ToastContext.Provider>
@@ -49,12 +59,24 @@ function ToastGlyph({ variant }: { variant: ToastVariant }) {
   );
 }
 
+/* The live-region role lives on a wrapper so the dismiss control can be a
+   real <button> (keyboard reachable, ux-principles rule 15) without the role
+   overriding its button semantics. Errors interrupt via role="alert";
+   success/info stay polite via role="status". Same visuals as ever — the
+   whole toast is still the click target. */
 function Toast({ toast, onDismiss }: { toast: ToastItem; onDismiss: () => void }) {
   const style = TOAST_STYLE[toast.variant];
   return (
-    <div role="status" onClick={onDismiss} className={`toast-in pointer-events-auto flex w-full max-w-sm cursor-pointer items-start gap-2.5 rounded-xl border bg-surface px-4 py-3 text-[13.5px] font-medium text-ink shadow-win ${style.ring}`}>
-      <span aria-hidden="true" className={`mt-px shrink-0 ${style.tint}`}><ToastGlyph variant={toast.variant} /></span>
-      <span className="leading-snug">{toast.message}</span>
+    <div role={toast.variant === "error" ? "alert" : "status"} className="pointer-events-auto w-full max-w-sm">
+      <button
+        type="button"
+        onClick={onDismiss}
+        className={`toast-in flex w-full cursor-pointer items-start gap-2.5 rounded-xl border bg-surface px-4 py-3 text-left text-[13.5px] font-medium text-ink shadow-win ${style.ring}`}
+      >
+        <span aria-hidden="true" className={`mt-px shrink-0 ${style.tint}`}><ToastGlyph variant={toast.variant} /></span>
+        <span className="leading-snug">{toast.message}</span>
+        <span className="sr-only">Dismiss notification</span>
+      </button>
     </div>
   );
 }

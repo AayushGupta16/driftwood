@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import {
   getAudience as getSavedAudience,
   listAudiences,
@@ -34,6 +34,7 @@ import {
 } from "./model";
 import { CampaignSaveQueue } from "./save-queue";
 import { disconnectedChannelIssues } from "./channel-readiness";
+import { useToast } from "../dashboard-shared";
 import { useWorkspacePermissions } from "../dashboard/workspace-permissions-context";
 import { withMockMode } from "../mock-mode";
 import {
@@ -53,7 +54,6 @@ import {
 
 type MobilePanel = "flow" | "editor";
 type SaveState = "idle" | "saving" | "saved" | "error";
-type Toast = { message: string; tone: "status" | "error" };
 
 const STEP_OPTIONS: Array<{
   kind: StepKind;
@@ -93,7 +93,10 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
   const [overlapLoading, setOverlapLoading] = useState(false);
   const [overlapError, setOverlapError] = useState<string | null>(null);
   const [overlapConfirmed, setOverlapConfirmed] = useState(false);
-  const [toast, setToast] = useState<Toast | null>(null);
+  /* Transient confirmations ride the shared dashboard toast channel (mounted
+     by WorkspacePage's ToastProvider) — the builder's error surfaces stay
+     local: in-dialog alerts and the toolbar alert strip. */
+  const pushToast = useToast();
   const [actionError, setActionError] = useState<string | null>(null);
   const [mobilePanel, setMobilePanel] = useState<MobilePanel>("flow");
   const [loading, setLoading] = useState(campaignId !== "new");
@@ -160,19 +163,9 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
     return () => window.removeEventListener("beforeunload", warn);
   }, [saveState]);
 
-  useEffect(() => {
-    if (revision === 0) return;
-    saveTimerRef.current = window.setTimeout(() => {
-      const snapshot = campaignRef.current;
-      if (!snapshot || snapshot.status !== "draft") return;
-      void persistSnapshot(snapshot, latestRevisionRef.current).catch(() => undefined);
-    }, 600);
-    return () => {
-      if (saveTimerRef.current !== null) window.clearTimeout(saveTimerRef.current);
-    };
-  }, [revision]);
-
-  function persistSnapshot(snapshot: Campaign, expectedRevision: number) {
+  /* Memoized (pushToast is its one reactive input, and stable) so the
+     debounce effect below can list it honestly. */
+  const persistSnapshot = useCallback((snapshot: Campaign, expectedRevision: number) => {
     const pending = saveQueueRef.current.enqueue(snapshot);
     savePromiseRef.current = pending;
     return pending
@@ -195,7 +188,7 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
         if (latestRevisionRef.current === expectedRevision) {
           setSaveState("error");
           if (reason instanceof CampaignApiError && reason.code === "campaign_conflict") {
-            setToast({ message: "This campaign changed elsewhere. Reload before continuing.", tone: "error" });
+            pushToast("This campaign changed elsewhere. Reload before continuing.", "error");
           }
         }
         throw reason;
@@ -203,7 +196,19 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
       .finally(() => {
         if (savePromiseRef.current === pending) savePromiseRef.current = null;
       });
-  }
+  }, [pushToast]);
+
+  useEffect(() => {
+    if (revision === 0) return;
+    saveTimerRef.current = window.setTimeout(() => {
+      const snapshot = campaignRef.current;
+      if (!snapshot || snapshot.status !== "draft") return;
+      void persistSnapshot(snapshot, latestRevisionRef.current).catch(() => undefined);
+    }, 600);
+    return () => {
+      if (saveTimerRef.current !== null) window.clearTimeout(saveTimerRef.current);
+    };
+  }, [revision, persistSnapshot]);
 
   function commit(next: Campaign) {
     if (campaignRef.current?.status !== "draft") return;
@@ -235,7 +240,7 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
     setSelectedStepId(step.id);
     setAddAfterStepId(undefined);
     setMobilePanel("editor");
-    setToast({ message: `${step.label} added to the sequence.`, tone: "status" });
+    pushToast(`${step.label} added to the sequence.`, "success");
   }
 
   function handleMove(stepId: string, direction: -1 | 1) {
@@ -251,7 +256,7 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
     commit(next);
     setSelectedStepId(next.steps[Math.max(0, index - 1)]?.id ?? null);
     setMobilePanel("flow");
-    setToast({ message: "Step removed from the sequence.", tone: "status" });
+    pushToast("Step removed from the sequence.", "success");
   }
 
   function selectSavedAudience(audience: Audience) {
@@ -273,10 +278,10 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
     }));
     const hydrated = { ...current, contacts: audienceContacts };
     commit(applyAudience(hydrated, audience.id, audience.name, leadIds));
-    setToast({
-      message: `${audience.name} applied with ${leadIds.length} outreach-eligible ${leadIds.length === 1 ? "member" : "members"}.`,
-      tone: "status",
-    });
+    pushToast(
+      `${audience.name} applied with ${leadIds.length} outreach-eligible ${leadIds.length === 1 ? "member" : "members"}.`,
+      "success",
+    );
   }
 
   async function persistLatest(): Promise<Campaign> {
@@ -303,7 +308,7 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
       campaignRef.current = active;
       setCampaign(active);
       closeReview();
-      setToast({ message: "Campaign activated. No outreach was queued or sent.", tone: "status" });
+      pushToast("Campaign activated. No outreach was queued or sent.", "success");
     } catch (reason) {
       /* The failure renders inside the still-open review dialog, next to the
          Activate button, which stays enabled for a retry. A corner toast is
@@ -371,7 +376,7 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
       campaignRef.current = resumed;
       setCampaign(resumed);
       closeReview();
-      setToast({ message: "Campaign resumed. Nothing was sent.", tone: "status" });
+      pushToast("Campaign resumed. Nothing was sent.", "success");
     } catch (reason) {
       setActionError(reason instanceof Error ? reason.message : "The campaign could not resume.");
     } finally {
@@ -399,7 +404,7 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
       const updated = await pauseCampaign(current.id);
       campaignRef.current = updated;
       setCampaign(updated);
-      setToast({ message: "Campaign paused.", tone: "status" });
+      pushToast("Campaign paused.", "success");
     } catch (reason) {
       /* Renders as a role="alert" strip in the toolbar, next to the Pause
          button, which stays enabled for a retry. */
@@ -636,17 +641,6 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
           onClose={closeReview}
           onConfirm={reviewMode === "resume" ? resume : activate}
         />
-      )}
-
-      {toast && (
-        <button
-          className={`campaign-toast${toast.tone === "error" ? " is-error" : ""}`}
-          type="button"
-          onClick={() => setToast(null)}
-          role={toast.tone === "error" ? "alert" : "status"}
-        >
-          {toast.message}
-        </button>
       )}
     </>
   );
