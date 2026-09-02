@@ -1617,14 +1617,19 @@ if (mockMode) {
     return orgPage();
   };
 
-  // Triggers (GET/POST /dashboard/triggers, GET /{id}, POST /{id}/run|pause|
-  // resume). Two sample watches; ?trgempty=1 serves the empty state. "Run
-  // now" queues a run that flips queued -> running -> done across the
-  // page's polls and lands one new posting when it finishes. Writes 403 in
+  // Triggers (GET/POST /dashboard/triggers, GET/PUT /{id}, POST
+  // /{id}/run|pause|resume). Four sample watches: one nightly, one every
+  // four hours, one still being built, one on a site that cannot be
+  // watched; ?trgempty=1 serves the empty state. "Check now" queues a run
+  // that flips queued -> running -> done across the page's polls and lands
+  // one new posting when it finishes. A trigger created on a site the mock
+  // does not know starts as needs_setup and becomes active twenty seconds
+  // later, as the agent would finish building its pull. Writes 403 in
   // ?mock=member, as the backend does.
   const triggersEmpty = params.get("trgempty") === "1";
   type MockRun = {
     id: string; state: string; triggered_by: string; postings_seen: number; postings_new: number;
+    pages_fetched?: number; credits_used?: number | null; ids_seen?: number; ids_new?: number; ids_filtered?: number;
     error: string | null; created_at: string; started_at: string | null; finished_at: string | null;
   };
   type MockPosting = {
@@ -1633,13 +1638,44 @@ if (mockMode) {
     status: string; note: string | null; company_id: string | null; lead_id: string | null;
     demo_url: string | null; created_at: string;
   };
+  type MockFilters = { keywords: string[]; locations: string[]; exclude_employer_terms: string[]; url: string | null };
+  type MockSchedule = { cadence: string; fire_hour: number; interval_hours: number | null };
+  type MockActions = { add_company: boolean; find_contact: boolean; build_demo: boolean; enroll: boolean };
   type MockTrigger = {
-    id: string; name: string; source_kind: string;
-    filters: { keywords: string[]; locations: string[]; url: string | null };
-    cadence: string; fire_hour: number; campaign_id: string | null; campaign_name: string | null;
+    id: string; name: string; source_kind: string; source_url: string | null; source_host: string | null;
+    watch: string | null; filters: MockFilters; cadence: string; fire_hour: number; schedule: MockSchedule;
+    actions: MockActions; pull: { method: string; label: string } | null;
+    campaign_id: string | null; campaign_name: string | null;
     status: string; last_run_at: string | null; last_run_state: string | null; created_at: string;
     runs: MockRun[]; postings: MockPosting[];
   };
+  const mockExcludeTerms = ["senior living", "health system", "hospital", "medical center", "nursing home", "assisted living", "memory care", "hospice"];
+  const mockHost = (url: string | null): string | null => {
+    if (!url) return null;
+    try {
+      return new URL(url).hostname.replace(/^www\./, "") || null;
+    } catch {
+      return null;
+    }
+  };
+  const stringList = (value: unknown): string[] => (Array.isArray(value) ? value.map(String) : []);
+  const mockFilters = (raw: Record<string, unknown> | null | undefined): MockFilters => ({
+    keywords: stringList(raw?.keywords),
+    locations: stringList(raw?.locations),
+    exclude_employer_terms: stringList(raw?.exclude_employer_terms),
+    url: typeof raw?.url === "string" ? raw.url : null,
+  });
+  const mockSchedule = (raw: Record<string, unknown> | null | undefined): MockSchedule => ({
+    cadence: raw?.cadence === "weekly" || raw?.cadence === "every_n_hours" ? raw.cadence : "daily",
+    fire_hour: Number.isInteger(raw?.fire_hour) ? (raw?.fire_hour as number) : 2,
+    interval_hours: Number.isInteger(raw?.interval_hours) ? (raw?.interval_hours as number) : null,
+  });
+  const mockActions = (raw: Record<string, unknown> | null | undefined): MockActions => ({
+    add_company: raw?.add_company !== false,
+    find_contact: raw?.find_contact !== false,
+    build_demo: raw?.build_demo !== false,
+    enroll: raw?.enroll === true,
+  });
   const posting = (
     id: string, employer: string, title: string, city: string, state: string, pay: string,
     daysAgo: number, status: string, note: string | null, demo: boolean,
@@ -1654,13 +1690,18 @@ if (mockMode) {
   });
   const mockTriggers: MockTrigger[] = triggersEmpty ? [] : [
     {
-      id: "trg-mycnajobs", name: "myCNAjobs", source_kind: "mycnajobs",
-      filters: { keywords: ["caregiver", "CNA"], locations: ["All US"], url: null },
-      cadence: "daily", fire_hour: 6, campaign_id: "home-care-intro", campaign_name: "Home care agency intro",
+      id: "trg-mycnajobs", name: "mycnajobs.com", source_kind: "custom_url",
+      source_url: "https://www.mycnajobs.com", source_host: "mycnajobs.com",
+      watch: "A new caregiver or CNA job posting from a home care agency",
+      filters: { keywords: ["caregiver", "CNA"], locations: ["All US"], exclude_employer_terms: mockExcludeTerms, url: null },
+      cadence: "daily", fire_hour: 2, schedule: { cadence: "daily", fire_hour: 2, interval_hours: null },
+      actions: { add_company: true, find_contact: true, build_demo: true, enroll: true },
+      pull: { method: "api", label: "Job board search" },
+      campaign_id: "home-care-intro", campaign_name: "Home care agency intro",
       status: "active", last_run_at: hoursAgo(5), last_run_state: "done", created_at: hoursAgo(24 * 13),
       runs: [
-        { id: "run-3", state: "done", triggered_by: "schedule", postings_seen: 219, postings_new: 9, error: null, created_at: hoursAgo(5), started_at: hoursAgo(5), finished_at: hoursAgo(4.95) },
-        { id: "run-2", state: "done", triggered_by: "schedule", postings_seen: 212, postings_new: 14, error: "The job board was slow to respond. We retried once and the run finished.", created_at: hoursAgo(29), started_at: hoursAgo(29), finished_at: hoursAgo(28.9) },
+        { id: "run-3", state: "done", triggered_by: "schedule", postings_seen: 219, postings_new: 9, pages_fetched: 4, credits_used: 12, ids_seen: 219, ids_new: 9, ids_filtered: 31, error: null, created_at: hoursAgo(5), started_at: hoursAgo(5), finished_at: hoursAgo(4.95) },
+        { id: "run-2", state: "done", triggered_by: "schedule", postings_seen: 212, postings_new: 14, pages_fetched: 4, credits_used: 12, ids_seen: 212, ids_new: 14, ids_filtered: 27, error: "The job board was slow to respond. We retried once and the run finished.", created_at: hoursAgo(29), started_at: hoursAgo(29), finished_at: hoursAgo(28.9) },
         { id: "run-1", state: "failed", triggered_by: "manual", postings_seen: 0, postings_new: 0, error: "The job board did not load. Nothing was added.", created_at: hoursAgo(53), started_at: hoursAgo(53), finished_at: hoursAgo(52.99) },
       ],
       postings: [
@@ -1675,18 +1716,48 @@ if (mockMode) {
       ],
     },
     {
-      id: "trg-indeed-fl-ga", name: "Indeed", source_kind: "indeed",
-      filters: { keywords: ["live-in caregiver"], locations: ["Florida", "Georgia"], url: null },
-      cadence: "weekly", fire_hour: 6, campaign_id: "home-care-intro", campaign_name: "Home care agency intro",
-      status: "paused", last_run_at: hoursAgo(24 * 8), last_run_state: "done", created_at: hoursAgo(24 * 30),
+      id: "trg-indeed-fl-ga", name: "indeed.com", source_kind: "custom_url",
+      source_url: "https://www.indeed.com/q-live-in-caregiver-l-florida-jobs.html", source_host: "indeed.com",
+      watch: "A new live-in caregiver posting from a home care agency",
+      filters: { keywords: ["live-in caregiver"], locations: ["Florida", "Georgia"], exclude_employer_terms: mockExcludeTerms, url: null },
+      cadence: "daily", fire_hour: 0, schedule: { cadence: "every_n_hours", fire_hour: 0, interval_hours: 4 },
+      actions: { add_company: true, find_contact: true, build_demo: false, enroll: true },
+      pull: { method: "firecrawl_pages", label: "Page watch" },
+      campaign_id: "home-care-intro", campaign_name: "Home care agency intro",
+      status: "active", last_run_at: hoursAgo(3), last_run_state: "done", created_at: hoursAgo(24 * 30),
       runs: [
-        { id: "run-i1", state: "done", triggered_by: "schedule", postings_seen: 88, postings_new: 6, error: null, created_at: hoursAgo(24 * 8), started_at: hoursAgo(24 * 8), finished_at: hoursAgo(24 * 8 - 0.05) },
+        { id: "run-i2", state: "done", triggered_by: "schedule", postings_seen: 41, postings_new: 1, pages_fetched: 2, credits_used: 6, ids_seen: 41, ids_new: 1, ids_filtered: 5, error: null, created_at: hoursAgo(3), started_at: hoursAgo(3), finished_at: hoursAgo(2.98) },
+        { id: "run-i1", state: "done", triggered_by: "schedule", postings_seen: 40, postings_new: 0, pages_fetched: 2, credits_used: 6, ids_seen: 40, ids_new: 0, ids_filtered: 5, error: null, created_at: hoursAgo(7), started_at: hoursAgo(7), finished_at: hoursAgo(6.98) },
       ],
       postings: [
         posting("i1", "Sunrise Companion Care", "Live-in caregiver", "Tampa", "FL", "$180 to $210/day", 8, "enrolled", "Angela Reyes, owner", true),
         posting("i2", "Peachtree Home Helpers", "Live-in caregiver", "Marietta", "GA", "$175 to $200/day", 8, "no_lead", "No owner or administrator found", false),
         posting("i3", "Coastal Care Partners", "Live-in caregiver, weekends", "Sarasota", "FL", "$190/day", 9, "dismissed", null, false),
       ],
+    },
+    {
+      id: "trg-craigslist", name: "craigslist.org", source_kind: "custom_url",
+      source_url: "https://sfbay.craigslist.org/search/hea", source_host: "craigslist.org",
+      watch: "A new caregiver posting from a home care agency",
+      filters: { keywords: ["caregiver", "CNA"], locations: ["California", "Texas"], exclude_employer_terms: mockExcludeTerms, url: null },
+      cadence: "daily", fire_hour: 2, schedule: { cadence: "daily", fire_hour: 2, interval_hours: null },
+      actions: { add_company: true, find_contact: true, build_demo: true, enroll: false },
+      pull: { method: "needs_puller", label: "Building" },
+      campaign_id: null, campaign_name: null,
+      status: "needs_setup", last_run_at: null, last_run_state: null, created_at: hoursAgo(1),
+      runs: [], postings: [],
+    },
+    {
+      id: "trg-carecom", name: "care.com", source_kind: "custom_url",
+      source_url: "https://www.care.com/senior-care-jobs", source_host: "care.com",
+      watch: "A new senior care job posted by an agency",
+      filters: { keywords: ["caregiver"], locations: ["All US"], exclude_employer_terms: mockExcludeTerms, url: null },
+      cadence: "daily", fire_hour: 2, schedule: { cadence: "daily", fire_hour: 2, interval_hours: null },
+      actions: { add_company: true, find_contact: true, build_demo: true, enroll: false },
+      pull: { method: "unsupported", label: "Not supported yet" },
+      campaign_id: null, campaign_name: null,
+      status: "needs_setup", last_run_at: null, last_run_state: null, created_at: hoursAgo(26),
+      runs: [], postings: [],
     },
   ];
   // Created triggers live in sessionStorage so the create -> detail hand-off
@@ -1726,11 +1797,23 @@ if (mockMode) {
       held: by("no_lead"),
     };
   };
+  // A trigger the customer created on a site the mock does not know starts
+  // as needs_setup; twenty seconds on, its agent has "built the pull".
+  const settleBuild = (trigger: MockTrigger) => {
+    if (trigger.status !== "needs_setup" || trigger.pull?.method !== "needs_puller") return;
+    if (mockFixtureTriggerIds.has(trigger.id)) return;
+    if (Date.now() - new Date(trigger.created_at).getTime() < 20_000) return;
+    trigger.status = "active";
+    trigger.pull = { method: "adapter", label: "Site search" };
+  };
   const triggerRow = (trigger: MockTrigger) => ({
-    id: trigger.id, name: trigger.name, source_kind: trigger.source_kind, filters: trigger.filters,
-    cadence: trigger.cadence, fire_hour: trigger.fire_hour, campaign_id: trigger.campaign_id,
-    campaign_name: trigger.campaign_name, status: trigger.status, last_run_at: trigger.last_run_at,
-    last_run_state: trigger.last_run_state, counts: triggerCounts(trigger), created_at: trigger.created_at,
+    id: trigger.id, name: trigger.name, source_kind: trigger.source_kind,
+    source_url: trigger.source_url, source_host: trigger.source_host, watch: trigger.watch,
+    filters: trigger.filters, cadence: trigger.cadence, fire_hour: trigger.fire_hour,
+    schedule: trigger.schedule, actions: trigger.actions, pull: trigger.pull,
+    campaign_id: trigger.campaign_id, campaign_name: trigger.campaign_name, status: trigger.status,
+    last_run_at: trigger.last_run_at, last_run_state: trigger.last_run_state,
+    counts: triggerCounts(trigger), created_at: trigger.created_at,
   });
   const triggerError = (status: number, code: string, detail: string) =>
     new Response(JSON.stringify({ error: { code, detail } }), { status, headers: { "Content-Type": "application/json" } });
@@ -1748,6 +1831,11 @@ if (mockMode) {
       run.finished_at = now;
       run.postings_seen = 221;
       run.postings_new = 1;
+      run.pages_fetched = 4;
+      run.credits_used = 12;
+      run.ids_seen = 221;
+      run.ids_new = 1;
+      run.ids_filtered = 30;
       trigger.last_run_at = now;
       trigger.last_run_state = "done";
       const id = `p-${trigger.runs.length}-${trigger.postings.length + 1}`;
@@ -1770,31 +1858,66 @@ if (mockMode) {
         const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
         const campaign = mockCampaigns.find((row) => row.id === body.campaign_id);
         const now = new Date().toISOString();
+        const sourceUrl = typeof body.source_url === "string" ? body.source_url : null;
+        const host = mockHost(sourceUrl);
+        // The mock knows two job boards; any other site is one the agent
+        // still has to work out (see settleBuild).
+        const known = host === "mycnajobs.com" || host === "indeed.com";
+        const schedule = mockSchedule(body.schedule);
+        const name = typeof body.name === "string" && body.name.trim() ? body.name.trim() : host ?? "Trigger";
         const trigger: MockTrigger = {
           id: `trg-${crypto.randomUUID().slice(0, 8)}`,
-          name: String(body.name ?? "Trigger"),
-          source_kind: String(body.source_kind ?? "mycnajobs"),
-          filters: {
-            keywords: Array.isArray(body.filters?.keywords) ? body.filters.keywords.map(String) : [],
-            locations: Array.isArray(body.filters?.locations) ? body.filters.locations.map(String) : [],
-            url: typeof body.filters?.url === "string" ? body.filters.url : null,
-          },
-          cadence: body.cadence === "weekly" ? "weekly" : "daily",
-          fire_hour: Number.isInteger(body.fire_hour) ? body.fire_hour : 6,
+          name,
+          source_kind: "custom_url",
+          source_url: sourceUrl,
+          source_host: host,
+          watch: typeof body.watch === "string" ? body.watch : null,
+          filters: mockFilters(body.filters),
+          cadence: schedule.cadence,
+          fire_hour: schedule.fire_hour,
+          schedule,
+          actions: mockActions(body.actions),
+          pull: known ? { method: "api", label: "Job board search" } : { method: "needs_puller", label: "Building" },
           campaign_id: campaign?.id ?? null,
           campaign_name: campaign?.name ?? null,
-          status: "active", last_run_at: null, last_run_state: null, created_at: now,
+          status: known ? "active" : "needs_setup", last_run_at: null, last_run_state: null, created_at: now,
           runs: [], postings: [],
         };
         mockTriggers.unshift(trigger);
         persistMockTriggers();
         return new Response(JSON.stringify(triggerRow(trigger)), { status: 201, headers: { "Content-Type": "application/json" } });
       }
+      mockTriggers.forEach(settleBuild);
       return { triggers: mockTriggers.map(triggerRow) };
     }
     const trigger = mockTriggers.find((row) => row.id === decodeURIComponent(encodedId));
     if (!trigger) return triggerError(404, "not_found", "Trigger not found");
+    settleBuild(trigger);
+    if (method === "PUT" && !action) {
+      const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
+      if (typeof body.name === "string" && body.name.trim()) trigger.name = body.name.trim();
+      if (typeof body.watch === "string") trigger.watch = body.watch;
+      if (body.filters && typeof body.filters === "object") trigger.filters = mockFilters(body.filters);
+      if (body.schedule && typeof body.schedule === "object") {
+        trigger.schedule = mockSchedule(body.schedule);
+        trigger.cadence = trigger.schedule.cadence;
+        trigger.fire_hour = trigger.schedule.fire_hour;
+      }
+      if (body.actions && typeof body.actions === "object") trigger.actions = mockActions(body.actions);
+      if ("campaign_id" in body && body.campaign_id !== trigger.campaign_id) {
+        // The fixtures feed a home care campaign the campaign mock does
+        // not list; only a real change of campaign is looked up.
+        const campaign = mockCampaigns.find((row) => row.id === body.campaign_id);
+        trigger.campaign_id = campaign?.id ?? null;
+        trigger.campaign_name = campaign?.name ?? null;
+      }
+      persistMockTriggers();
+      return triggerRow(trigger);
+    }
     if (method === "POST" && action === "run") {
+      if (trigger.status === "needs_setup") {
+        return triggerError(409, "needs_setup", "Your agent is still setting up the pull for this site.");
+      }
       if (trigger.runs[0] && ["queued", "running"].includes(trigger.runs[0].state)) {
         return triggerError(409, "run_in_progress", "A run is already in progress for this trigger.");
       }

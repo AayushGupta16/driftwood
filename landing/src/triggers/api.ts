@@ -2,26 +2,36 @@
    shapes (backend app/schemas/triggers.py) to the camelCase the pages use.
    Base /api/v1/dashboard/triggers, same-origin session cookie. Errors come
    back as {"error": {"code", "detail"}}: 403 for read-only members on
-   writes, 404 not_found, 409 run_in_progress. */
+   writes, 404 not_found, 409 run_in_progress.
 
-import type {
-  NewTriggerInput,
-  PostingStatus,
-  RunState,
-  Trigger,
-  TriggerCadence,
-  TriggerDetail,
-  TriggerPosting,
-  TriggerRun,
-  TriggerSourceKind,
-  TriggerStatus,
-} from "./model";
+   Rows written before source_url, watch, schedule, actions and pull
+   existed lack those fields; the mapping fills them from the older
+   source_kind, cadence and fire_hour so the pages work against either
+   backend. */
+
+import {
+  hostFromUrl,
+  legacyHost,
+  normalizeCadence,
+  normalizeStatus,
+  type EditTriggerInput,
+  type NewTriggerInput,
+  type PostingStatus,
+  type PullMethod,
+  type RunState,
+  type Trigger,
+  type TriggerDetail,
+  type TriggerPosting,
+  type TriggerRun,
+  type TriggerSourceKind,
+} from "./model.ts";
 
 const BASE = "/api/v1/dashboard/triggers";
 
 type RawFilters = {
   keywords?: string[] | null;
   locations?: string[] | null;
+  exclude_employer_terms?: string[] | null;
   url?: string | null;
 };
 
@@ -35,19 +45,43 @@ type RawCounts = {
   held: number;
 };
 
+export type RawSchedule = {
+  cadence: string;
+  fire_hour: number;
+  interval_hours?: number | null;
+};
+
+export type RawActions = {
+  add_company: boolean;
+  find_contact: boolean;
+  build_demo: boolean;
+  enroll: boolean;
+};
+
+export type RawPull = {
+  method: string;
+  label: string;
+};
+
 export type RawTriggerRow = {
   id: string;
   name: string;
   source_kind: string;
+  source_url?: string | null;
+  source_host?: string | null;
+  watch?: string | null;
   filters: RawFilters | null;
   cadence: string;
   fire_hour: number;
+  schedule?: RawSchedule | null;
+  actions?: RawActions | null;
+  pull?: RawPull | null;
   campaign_id: string | null;
   campaign_name: string | null;
   status: string;
   last_run_at: string | null;
   last_run_state: string | null;
-  counts: RawCounts;
+  counts: RawCounts | null;
   created_at: string;
 };
 
@@ -57,6 +91,11 @@ export type RawRunRow = {
   triggered_by: string;
   postings_seen: number;
   postings_new: number;
+  pages_fetched?: number | null;
+  credits_used?: number | null;
+  ids_seen?: number | null;
+  ids_new?: number | null;
+  ids_filtered?: number | null;
   error: string | null;
   created_at: string;
   started_at: string | null;
@@ -119,31 +158,60 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   return (await response.json()) as T;
 }
 
+function stringList(value: string[] | null | undefined): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+}
+
+function counter(value: number | null | undefined): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
 export function mapTrigger(raw: RawTriggerRow): Trigger {
+  const sourceUrl = raw.source_url ?? raw.filters?.url ?? null;
+  const sourceHost = raw.source_host ?? hostFromUrl(sourceUrl) ?? legacyHost(raw.source_kind);
+  const counts = raw.counts;
   return {
     id: raw.id,
     name: raw.name,
     sourceKind: raw.source_kind as TriggerSourceKind,
+    sourceUrl,
+    sourceHost,
+    watch: raw.watch ?? null,
     filters: {
-      keywords: raw.filters?.keywords ?? [],
-      locations: raw.filters?.locations ?? [],
+      keywords: stringList(raw.filters?.keywords),
+      locations: stringList(raw.filters?.locations),
+      excludeEmployerTerms: stringList(raw.filters?.exclude_employer_terms),
       url: raw.filters?.url ?? null,
     },
-    cadence: raw.cadence as TriggerCadence,
-    fireHour: raw.fire_hour,
+    schedule: {
+      cadence: normalizeCadence(raw.schedule?.cadence ?? raw.cadence),
+      fireHour: raw.schedule?.fire_hour ?? raw.fire_hour ?? 6,
+      intervalHours: counter(raw.schedule?.interval_hours),
+    },
+    /* Before actions existed every trigger did the whole pipeline, and
+       enrolled whenever it had a campaign. */
+    actions: raw.actions
+      ? {
+          addCompany: Boolean(raw.actions.add_company),
+          findContact: Boolean(raw.actions.find_contact),
+          buildDemo: Boolean(raw.actions.build_demo),
+          enroll: Boolean(raw.actions.enroll),
+        }
+      : { addCompany: true, findContact: true, buildDemo: true, enroll: Boolean(raw.campaign_id) },
+    pull: raw.pull ? { method: raw.pull.method as PullMethod, label: raw.pull.label ?? "" } : null,
     campaignId: raw.campaign_id,
     campaignName: raw.campaign_name,
-    status: raw.status as TriggerStatus,
+    status: normalizeStatus(raw.status),
     lastRunAt: raw.last_run_at,
     lastRunState: raw.last_run_state,
     counts: {
-      postings: raw.counts.postings,
-      new: raw.counts.new,
-      agenciesAdded: raw.counts.agencies_added,
-      leads: raw.counts.leads,
-      demos: raw.counts.demos,
-      enrolled: raw.counts.enrolled,
-      held: raw.counts.held,
+      postings: counts?.postings ?? 0,
+      new: counts?.new ?? 0,
+      agenciesAdded: counts?.agencies_added ?? 0,
+      leads: counts?.leads ?? 0,
+      demos: counts?.demos ?? 0,
+      enrolled: counts?.enrolled ?? 0,
+      held: counts?.held ?? 0,
     },
     createdAt: raw.created_at,
   };
@@ -154,8 +222,13 @@ export function mapRun(raw: RawRunRow): TriggerRun {
     id: raw.id,
     state: raw.state as RunState,
     triggeredBy: raw.triggered_by === "manual" ? "manual" : "schedule",
-    postingsSeen: raw.postings_seen,
-    postingsNew: raw.postings_new,
+    postingsSeen: raw.postings_seen ?? 0,
+    postingsNew: raw.postings_new ?? 0,
+    pagesFetched: counter(raw.pages_fetched),
+    creditsUsed: counter(raw.credits_used),
+    idsSeen: counter(raw.ids_seen),
+    idsNew: counter(raw.ids_new),
+    idsFiltered: counter(raw.ids_filtered),
     error: raw.error,
     createdAt: raw.created_at,
     startedAt: raw.started_at,
@@ -196,30 +269,69 @@ export async function getTrigger(id: string): Promise<TriggerDetail> {
   }>(`${BASE}/${encodeURIComponent(id)}`);
   return {
     trigger: mapTrigger(body.trigger),
-    runs: body.runs.map(mapRun),
-    postings: body.postings.map(mapPosting),
+    runs: (body.runs ?? []).map(mapRun),
+    postings: (body.postings ?? []).map(mapPosting),
   };
 }
 
-export function createBody(input: NewTriggerInput): string {
-  return JSON.stringify({
-    name: input.name,
-    source_kind: input.sourceKind,
+/* The wire shape of everything Edit can change, shared by POST and PUT.
+   Name is sent only when the customer typed one; otherwise the backend
+   names the trigger after the site. interval_hours rides along only for
+   every_n_hours. */
+function editableFields(input: EditTriggerInput) {
+  const name = input.name?.trim();
+  return {
+    ...(name ? { name } : {}),
+    watch: input.watch,
     filters: {
       keywords: input.keywords,
       locations: input.locations,
-      ...(input.sourceKind === "custom_url" && input.url ? { url: input.url } : {}),
+      exclude_employer_terms: input.excludeEmployerTerms,
     },
-    cadence: input.cadence,
-    fire_hour: input.fireHour,
+    schedule: {
+      cadence: input.cadence,
+      fire_hour: input.fireHour,
+      ...(input.cadence === "every_n_hours" && input.intervalHours
+        ? { interval_hours: input.intervalHours }
+        : {}),
+    },
+    actions: {
+      add_company: input.actions.addCompany,
+      find_contact: input.actions.findContact,
+      build_demo: input.actions.buildDemo,
+      enroll: input.actions.enroll,
+    },
     campaign_id: input.campaignId,
+  };
+}
+
+/* The POST body, exactly as the backend reads it. */
+export function createBody(input: NewTriggerInput): string {
+  const { name, ...rest } = editableFields(input);
+  return JSON.stringify({
+    ...(name ? { name } : {}),
+    source_url: input.sourceUrl,
+    ...rest,
   });
+}
+
+/* The PUT body: the partial the backend accepts, minus the site. */
+export function updateBody(input: EditTriggerInput): string {
+  return JSON.stringify(editableFields(input));
 }
 
 export async function createTrigger(input: NewTriggerInput): Promise<Trigger> {
   const body = await requestJson<RawTriggerRow>(BASE, {
     method: "POST",
     body: createBody(input),
+  });
+  return mapTrigger(body);
+}
+
+export async function updateTrigger(id: string, input: EditTriggerInput): Promise<Trigger> {
+  const body = await requestJson<RawTriggerRow>(`${BASE}/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    body: updateBody(input),
   });
   return mapTrigger(body);
 }

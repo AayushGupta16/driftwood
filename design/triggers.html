@@ -1,0 +1,1010 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Triggers (design draft, 2026-09-01)</title>
+<!--
+  DESIGN DRAFT: /dashboard/triggers, 2026-09-01.
+  Standalone, self-contained, no scripts. For Aayush's review before any
+  React is written (design-changes-draft-first).
+
+  Chrome and tokens are lifted from the live dashboard:
+  - tokens: landing/src/index.css @theme (white ground, ink scale, hairline
+    #e9ebee, one tide accent, green reserved for live/ok)
+  - shell: landing/src/dashboard/AppShell.tsx + app-shell.css (15.25rem
+    sidebar, brand row, create button, grouped nav, identity footer,
+    mobile masthead under 960px)
+  - page header, primary pill, "Read-only access" chip: audiences.css
+  - status dot chip: campaigns.css .campaign-status
+  - fonts: the same self-hosted files the app uses, from driftwood.sh
+
+  Four states stacked on one canvas: list, list (read-only member),
+  detail, new-trigger form, empty. A notes box at the bottom lists the
+  decisions the founder needs to make. All data on the page is sample data.
+
+  Revised 2026-09-02 to the when/then model: a trigger is any site URL plus
+  a line saying what counts as new; cards and the form read as the sentence
+  "When ..., then ..."; checks run on a schedule (nightly 2 AM PT, weekly,
+  every N hours) and "Run now" is a quiet "Check now" link; a trigger still
+  waiting on its pull shows "Building", one on a site we cannot read shows
+  "Not supported". States 1, 1b, 2 and 3 carry the revision.
+-->
+<style>
+  @font-face{font-family:"Public Sans";src:url(https://driftwood.sh/fonts/public-sans-latin-wght-normal.woff2) format("woff2-variations");font-weight:100 900;font-display:swap}
+  @font-face{font-family:"Source Serif 4";src:url(https://driftwood.sh/fonts/source-serif-4-latin-600-normal.woff2) format("woff2");font-weight:600;font-display:swap}
+  @font-face{font-family:"IBM Plex Mono";src:url(https://driftwood.sh/fonts/ibm-plex-mono-latin-400-normal.woff2) format("woff2");font-weight:400;font-display:swap}
+
+  :root {
+    --paper: #ffffff;
+    --surface: #ffffff;
+    --ink: #16181b;
+    --ink-soft: #6a737d;
+    --ink-faint: #6f7780;
+    --tide: #15557e;
+    --tide-deep: #0d3c5b;
+    --tide-wash: #eaf1f7;
+    --sand: #eef2f5;
+    --line: #e9ebee;
+    --ok: #197142;
+    --alert: #b42318;
+    --warn: #92400e;
+    --warn-dot: #d97706;
+    --shadow-win: 0 1px 2px rgba(22, 24, 27, 0.05), 0 24px 48px -24px rgba(22, 24, 27, 0.18);
+    --shadow-win-sm: 0 1px 2px rgba(22, 24, 27, 0.04), 0 10px 20px -14px rgba(22, 24, 27, 0.12);
+    --sans: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --brand: "Source Serif 4", Georgia, serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    --r-win: 12px;
+    --ease: cubic-bezier(.2, 0, 0, 1);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  a { color: inherit; }
+  button, input, select { font: inherit; }
+  :focus-visible { outline: 2px solid var(--tide); outline-offset: 2px; }
+
+  /* ---------- draft framing (not part of the design) ---------- */
+  .canvas { max-width: 80rem; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; }
+  .draft-head { margin-bottom: 2rem; }
+  .draft-head .k { margin: 0; color: var(--ink-faint); font-size: .68rem; font-weight: 620; }
+  .draft-head h1 { margin: .4rem 0 0; font-size: 1.45rem; font-weight: 650; letter-spacing: -.02em; line-height: 1.15; }
+  .draft-head .sub { margin: .6rem 0 0; max-width: 46rem; color: var(--ink-soft); font-size: .8rem; line-height: 1.55; }
+  .state-label { margin: 2.6rem 0 .55rem; color: var(--ink-soft); font-size: .68rem; font-weight: 620; }
+  .state-label small { color: var(--ink-faint); font-weight: 400; }
+  .state-label.sub-state { margin-top: 1.4rem; }
+  .draft-tag {
+    display: inline-block; margin-left: .5rem; vertical-align: middle;
+    border: 1px dashed var(--line); border-radius: 999px;
+    color: var(--ink-faint); padding: .08rem .5rem; font-size: .6rem; font-weight: 600; line-height: 1.5;
+    white-space: nowrap;
+  }
+  .caption { margin: .6rem 0 0; color: var(--ink-faint); font-size: .68rem; line-height: 1.55; }
+
+  /* ---------- the dashboard shell, mirrored from app-shell.css ---------- */
+  .frame {
+    border: 1px solid var(--line); border-radius: var(--r-win);
+    background: var(--paper); box-shadow: var(--shadow-win-sm);
+    overflow: hidden;
+  }
+  .shell { display: grid; grid-template-columns: 15.25rem minmax(0, 1fr); min-height: 30rem; }
+  .sidebar {
+    display: flex; flex-direction: column;
+    border-right: 1px solid var(--line);
+    background: color-mix(in srgb, var(--paper) 98%, var(--tide-wash));
+    padding: 1rem .8rem .8rem;
+  }
+  .brand-row { display: flex; min-height: 2.6rem; align-items: center; padding: 0 .55rem; }
+  .wordmark {
+    display: inline-flex; align-items: center; gap: .75rem;
+    color: var(--ink); text-decoration: none;
+    font-family: var(--brand); font-weight: 600; font-size: 17px; line-height: 1;
+  }
+  .wordmark img { width: 1.75rem; height: 1.75rem; flex: none; }
+  .side-create {
+    display: flex; min-height: 2.45rem; align-items: center; justify-content: center; gap: .45rem;
+    margin: .9rem .25rem .7rem;
+    border: 1px solid var(--tide); border-radius: .65rem;
+    background: var(--tide); color: #fff;
+    font-size: .78rem; font-weight: 650; text-decoration: none;
+    transition: background 200ms var(--ease);
+  }
+  .side-create:hover { background: var(--tide-deep); }
+  .side-context {
+    display: flex; min-height: 3.8rem; flex-direction: column; justify-content: center; gap: .15rem;
+    margin: .9rem .25rem .7rem;
+    border: 1px solid var(--line); border-radius: .65rem; background: var(--surface);
+    padding: .65rem .8rem;
+  }
+  .side-context span { color: var(--ink-faint); font-size: .63rem; }
+  .side-context strong { font-size: .84rem; font-weight: 650; }
+  .side-nav { flex: 1; padding: .15rem .25rem 1rem; }
+  .side-group + .side-group { margin-top: 1.15rem; }
+  .side-label {
+    margin: 0 0 .35rem; padding: 0 .65rem;
+    color: var(--ink-faint); font-size: .65rem; font-weight: 650; letter-spacing: .035em; text-transform: uppercase;
+  }
+  .side-link {
+    position: relative; display: flex; min-height: 2.25rem; align-items: center; gap: .65rem;
+    border-radius: .55rem; color: var(--ink-soft); padding: 0 .65rem;
+    font-size: .79rem; font-weight: 520; text-decoration: none;
+    transition: color 200ms var(--ease), background 200ms var(--ease);
+  }
+  .side-link:hover { background: var(--tide-wash); color: var(--tide-deep); }
+  .side-link.is-active { background: var(--tide-wash); color: var(--tide-deep); font-weight: 650; }
+  .side-link.is-active::before {
+    position: absolute; top: .55rem; bottom: .55rem; left: -.25rem; width: 2px;
+    border-radius: 2px; background: var(--tide); content: "";
+  }
+  .side-footer { border-top: 1px solid var(--line); padding: .7rem .25rem 0; }
+  .identity { display: grid; grid-template-columns: 1.85rem minmax(0, 1fr) 1.85rem; align-items: center; gap: .55rem; padding: .4rem; }
+  .avatar {
+    display: grid; width: 1.85rem; height: 1.85rem; place-items: center;
+    border-radius: .45rem; background: var(--tide); color: #fff; font-size: .7rem; font-weight: 700;
+  }
+  .identity div { display: flex; min-width: 0; flex-direction: column; gap: .1rem; }
+  .identity strong, .identity small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .identity strong { font-size: .72rem; font-weight: 650; }
+  .identity small { color: var(--ink-faint); font-size: .63rem; }
+  .identity button {
+    display: grid; width: 1.85rem; height: 1.85rem; place-items: center;
+    border: 0; border-radius: .45rem; background: transparent; color: var(--ink-faint); cursor: pointer;
+  }
+  .identity button:hover { background: var(--sand); color: var(--ink); }
+  .ic { width: 17px; height: 17px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+  .ic.sm { width: 15px; height: 15px; }
+
+  .stage { min-width: 0; }
+  .masthead { display: none; }
+  .main { width: min(100%, 90rem); margin: 0 auto; padding: 2.4rem 2rem 4rem; }
+
+  /* ---------- page header (audiences.css .audience-heading) ---------- */
+  .page-head { display: flex; min-height: 2.8rem; align-items: center; justify-content: space-between; gap: 1rem 1.5rem; flex-wrap: wrap; }
+  .title-row { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; min-width: 0; }
+  .page-head h1 { margin: 0; font-size: clamp(1.7rem, 3.6vw, 2.25rem); font-weight: 620; letter-spacing: -.028em; line-height: 1.05; text-wrap: balance; }
+  .count { border-radius: 999px; background: var(--tide-wash); color: var(--tide-deep); padding: .4rem .65rem; font-size: .68rem; font-weight: 650; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .readonly { flex: 0 0 auto; border: 1px solid var(--line); border-radius: 999px; background: var(--sand); color: var(--ink-soft); padding: .55rem .8rem; font-size: .72rem; font-weight: 650; }
+  .lede { margin: .7rem 0 0; max-width: 46rem; color: var(--ink-soft); font-size: .8rem; line-height: 1.55; }
+  .actions { display: flex; align-items: center; gap: .5rem; flex: 0 0 auto; }
+  .back { display: inline-flex; align-items: center; gap: .35rem; margin-bottom: .9rem; color: var(--ink-soft); font-size: .78rem; font-weight: 560; text-decoration: none; }
+  .back:hover { color: var(--ink); }
+
+  /* ---------- buttons: pills ---------- */
+  .btn {
+    display: inline-flex; min-height: 2.55rem; align-items: center; justify-content: center; gap: .5rem;
+    border-radius: 999px; padding: .62rem 1rem;
+    font-size: .82rem; font-weight: 620; cursor: pointer; text-decoration: none; white-space: nowrap;
+    transition: background 200ms var(--ease), border-color 200ms var(--ease), color 200ms var(--ease);
+  }
+  .btn-primary { border: 1px solid var(--tide); background: var(--tide); color: #fff; }
+  .btn-primary:hover { background: var(--tide-deep); border-color: var(--tide-deep); }
+  .btn-secondary { border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+  .btn-secondary:hover { border-color: var(--tide); background: var(--tide-wash); }
+  .btn-text { border: 1px solid transparent; background: transparent; color: var(--ink-soft); padding-inline: .6rem; }
+  .btn-text:hover { color: var(--ink); }
+  .btn:disabled { cursor: not-allowed; opacity: .5; }
+  .btn:disabled:hover { border-color: var(--line); background: var(--surface); }
+  .btn.small { min-height: 2.2rem; padding: .45rem .85rem; font-size: .76rem; }
+
+  /* ---------- status chip (campaigns.css .campaign-status) ---------- */
+  .status { display: inline-flex; width: max-content; align-items: center; gap: .4rem; color: var(--ink-soft); font-size: .7rem; font-weight: 600; white-space: nowrap; }
+  .status::before { width: .45rem; height: .45rem; border-radius: 50%; background: var(--ink-faint); content: ""; }
+  .status-active::before { background: var(--ok); }
+  .status-paused::before { background: var(--ink-faint); }
+  .status-building::before { background: var(--warn-dot); }
+  .status-unsupported { color: var(--ink-faint); }
+  .status-unsupported::before { background: transparent; box-shadow: inset 0 0 0 1px var(--ink-faint); }
+
+  /* ---------- trigger cards ---------- */
+  .trigger-list { display: grid; gap: .85rem; margin-top: 1.35rem; }
+  .trigger-card {
+    display: grid; grid-template-columns: 2.25rem minmax(0, 1fr) auto; gap: .5rem 1rem; align-items: start;
+    border: 1px solid var(--line); border-radius: .85rem; background: var(--surface); box-shadow: var(--shadow-win-sm);
+    padding: 1.1rem 1.25rem; color: inherit; text-decoration: none;
+    transition: border-color 200ms var(--ease), background 200ms var(--ease);
+  }
+  .trigger-card:hover { border-color: color-mix(in srgb, var(--tide) 38%, var(--line)); background: color-mix(in srgb, var(--tide-wash) 40%, white); }
+  .mark { display: grid; width: 2.25rem; height: 2.25rem; place-items: center; border-radius: .65rem; background: var(--tide-wash); color: var(--tide-deep); font-size: .74rem; font-weight: 700; }
+  .trigger-card h2 { margin: 0; font-size: .95rem; font-weight: 650; letter-spacing: -.012em; line-height: 1.3; }
+  .trigger-card .watch { margin: .15rem 0 0; font-size: .82rem; color: var(--ink); line-height: 1.45; }
+  .trigger-card .meta { margin: .4rem 0 0; color: var(--ink-soft); font-size: .74rem; line-height: 1.5; }
+  .trigger-card .meta b { font-weight: 600; color: var(--ink-soft); }
+  .trigger-card .lastrun { margin: .35rem 0 0; color: var(--ink-faint); font-size: .72rem; line-height: 1.5; font-variant-numeric: tabular-nums; }
+  .trigger-card .status { margin-top: .2rem; }
+  /* the card reads as the sentence: When ..., then ... */
+  .trigger-card .when, .trigger-card .then { margin: .2rem 0 0; font-size: .82rem; color: var(--ink); line-height: 1.45; }
+  .trigger-card .then { margin-top: .1rem; }
+  .trigger-card .when b, .trigger-card .then b, .lede.sentence b { color: var(--tide-deep); font-weight: 650; }
+  .lede.sentence { color: var(--ink); font-size: .86rem; }
+  /* building and not supported: the chip stays crisp, the rest steps back */
+  .trigger-card.muted .mark, .trigger-card.muted > div { opacity: .55; }
+  .is-muted { opacity: .55; }
+
+  /* ---------- detail ---------- */
+  .facts {
+    display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1rem 1.5rem;
+    margin-top: 1.35rem; border: 1px solid var(--line); border-radius: .85rem; background: var(--surface);
+    padding: 1rem 1.25rem;
+  }
+  .fact small { display: block; color: var(--ink-faint); font-size: .66rem; }
+  .fact strong { display: block; margin-top: .2rem; font-size: .82rem; font-weight: 600; line-height: 1.4; }
+  .fact a { color: var(--tide); text-decoration: none; }
+  .fact a:hover { text-decoration: underline; }
+  /* "Check now" is a quiet text link under the facts; the schedule is what normally runs it */
+  .check-row { margin: .7rem 0 0; font-size: .76rem; line-height: 1.5; }
+  .check-now { color: var(--tide); font-weight: 600; text-decoration: none; }
+  .check-now:hover { text-decoration: underline; }
+  .notice { margin: .8rem 0 0; max-width: 46rem; color: var(--ink-soft); font-size: .78rem; line-height: 1.5; }
+  .section { margin-top: 2rem; }
+  .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: .6rem; }
+  .section-head h2 { margin: 0; font-size: 1rem; font-weight: 650; letter-spacing: -.012em; }
+  .section-head span { color: var(--ink-faint); font-size: .7rem; font-variant-numeric: tabular-nums; }
+  .table-card { border: 1px solid var(--line); border-radius: .85rem; background: var(--surface); overflow: hidden; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: .76rem; }
+  .postings { min-width: 56rem; }
+  .runs { min-width: 44rem; }
+  th { border-bottom: 1px solid var(--line); background: var(--sand); color: var(--ink-soft); padding: .65rem .85rem; font-size: .66rem; font-weight: 650; text-align: left; white-space: nowrap; }
+  td { border-bottom: 1px solid var(--line); padding: .7rem .75rem; vertical-align: top; line-height: 1.45; }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td .sub { display: block; margin-top: .15rem; color: var(--ink-soft); font-size: .68rem; }
+  td strong { font-weight: 600; }
+  .chips { display: flex; flex-wrap: wrap; gap: .3rem; }
+  .chip { display: inline-flex; align-items: center; border-radius: .35rem; background: var(--sand); color: var(--ink-soft); padding: .2rem .42rem; font-size: .64rem; font-weight: 600; line-height: 1.25; white-space: nowrap; }
+  .chip-tide { background: var(--tide-wash); color: var(--tide-deep); }
+  .chip-hold { background: color-mix(in srgb, #f59e0b 14%, var(--surface)); color: var(--warn); }
+  .chip-skip { color: var(--ink-faint); }
+  a.demo { color: var(--tide); font-weight: 600; text-decoration: none; white-space: nowrap; }
+  a.demo:hover { text-decoration: underline; }
+  td.errors { color: var(--ink-soft); }
+  td.errors.none { color: var(--ink-faint); }
+
+  /* ---------- new trigger form ---------- */
+  .form-card { max-width: 46rem; margin-top: 1.35rem; border: 1px solid var(--line); border-radius: .85rem; background: var(--surface); box-shadow: var(--shadow-win-sm); }
+  .fieldset { border-top: 1px solid var(--line); padding: 1.15rem 1.35rem 1.25rem; min-width: 0; }
+  .fieldset:first-child { border-top: 0; }
+  .legend { margin: 0; font-size: .88rem; font-weight: 650; letter-spacing: -.01em; line-height: 1.3; }
+  .help { margin: .2rem 0 .8rem; color: var(--ink-soft); font-size: .74rem; line-height: 1.5; }
+  .radio-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .6rem; }
+  .radio-card {
+    display: flex; gap: .6rem; align-items: flex-start; min-width: 0;
+    border: 1px solid var(--line); border-radius: .65rem; background: var(--surface);
+    padding: .75rem .85rem; cursor: pointer;
+    transition: border-color 200ms var(--ease), background 200ms var(--ease);
+  }
+  .radio-card:hover { border-color: color-mix(in srgb, var(--tide) 38%, var(--line)); }
+  .radio-card.is-selected { border-color: var(--tide); background: var(--tide-wash); }
+  .radio-card input { margin: .2rem 0 0; accent-color: var(--tide); flex: none; }
+  .radio-card > div { min-width: 0; flex: 1; }
+  .radio-card strong { display: block; font-size: .82rem; font-weight: 650; }
+  .radio-card small { display: block; margin-top: .15rem; color: var(--ink-soft); font-size: .68rem; line-height: 1.45; }
+  .input, .select {
+    display: block; width: 100%; min-height: 2.45rem;
+    border: 1px solid var(--line); border-radius: .6rem; background: var(--surface); color: var(--ink);
+    padding: .5rem .7rem; font-size: .82rem;
+  }
+  .input::placeholder { color: var(--ink-faint); }
+  .input:focus, .select:focus { outline: none; border-color: var(--tide); box-shadow: 0 0 0 2px color-mix(in srgb, var(--tide) 13%, transparent); }
+  .radio-card .input { margin-top: .5rem; min-height: 2.1rem; font-size: .76rem; }
+  .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+  .label { display: block; margin: 0 0 .3rem; color: var(--ink-soft); font-size: .72rem; font-weight: 600; }
+  .field + .field, .input-grid + .field { margin-top: .9rem; }
+  .hint { margin: .35rem 0 0; color: var(--ink-faint); font-size: .68rem; line-height: 1.45; }
+  .input[readonly] { color: var(--ink-soft); background: var(--sand); }
+  /* chip fields: keywords, locations, employer terms */
+  .chipbox { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem; min-height: 2.45rem; border: 1px solid var(--line); border-radius: .6rem; background: var(--surface); padding: .3rem .45rem; cursor: text; }
+  .chipbox .tag { display: inline-flex; align-items: center; gap: .15rem; border: 1px solid color-mix(in srgb, var(--tide) 38%, var(--line)); border-radius: .5rem; background: var(--tide-wash); color: var(--tide-deep); padding: .18rem .28rem .18rem .5rem; font-size: .72rem; font-weight: 630; line-height: 1.3; }
+  .chipbox .tag button { display: grid; width: 1.15rem; height: 1.15rem; place-items: center; border: 0; border-radius: .3rem; background: transparent; color: inherit; padding: 0; font-size: .85rem; line-height: 1; cursor: pointer; }
+  .chipbox input { flex: 1 1 8rem; min-width: 8rem; min-height: 1.7rem; border: 0; background: transparent; color: var(--ink); padding: .15rem .25rem; font-size: .82rem; }
+  .chipbox input:focus { outline: none; }
+  /* the optional filters and schedule fold under one disclosure; its summary says what is in effect while closed */
+  .options { margin-top: 1rem; border: 1px solid var(--line); border-radius: .65rem; }
+  .options summary { position: relative; display: flex; flex-wrap: wrap; align-items: baseline; gap: .25rem .6rem; border-radius: .65rem; padding: .7rem .9rem .7rem 2rem; list-style: none; cursor: pointer; }
+  .options summary::-webkit-details-marker { display: none; }
+  .options summary::before { position: absolute; top: 1.05rem; left: .85rem; width: .4rem; height: .4rem; border-right: 1.5px solid var(--ink-soft); border-bottom: 1.5px solid var(--ink-soft); transform: rotate(-45deg); content: ""; }
+  .options[open] summary::before { top: .95rem; transform: rotate(45deg); }
+  .options-title { font-size: .8rem; font-weight: 650; }
+  .options-hint { color: var(--ink-faint); font-size: .7rem; line-height: 1.5; }
+  .options-body { border-top: 1px solid var(--line); padding: .9rem .9rem 1rem; }
+  .checks { display: grid; gap: .75rem; }
+  .check { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .1rem .6rem; align-items: start; font-size: .82rem; cursor: pointer; }
+  .check input { width: 1.05rem; height: 1.05rem; margin: .15rem 0 0; accent-color: var(--tide); }
+  .check strong { font-weight: 600; }
+  .check small { grid-column: 2; display: block; color: var(--ink-soft); font-size: .7rem; line-height: 1.45; }
+  .check .select { grid-column: 2; width: auto; min-width: 16rem; min-height: 2.1rem; margin-top: .35rem; padding-block: .35rem; font-size: .78rem; }
+  .check.is-disabled strong { color: var(--ink-faint); }
+  .cadence-row { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1.25rem; }
+  .cadence-row .select { width: auto; min-width: 9rem; min-height: 2.35rem; padding-block: .4rem; font-size: .78rem; }
+  .seg { display: inline-flex; flex-wrap: wrap; gap: .2rem; border: 1px solid var(--line); border-radius: 999px; padding: .2rem; }
+  .seg label { border-radius: 999px; padding: .4rem .9rem; font-size: .78rem; font-weight: 600; color: var(--ink-soft); cursor: pointer; transition: background 200ms var(--ease), color 200ms var(--ease); }
+  .seg label:hover { color: var(--ink); }
+  .seg label.is-selected { background: var(--tide); color: #fff; }
+  .seg input { position: absolute; opacity: 0; pointer-events: none; }
+  .fixed { margin: 1rem 0 0; font-size: .82rem; color: var(--ink); }
+  .note-box {
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+    border: 1px solid var(--line); border-radius: .65rem; background: var(--sand);
+    padding: .8rem 1rem; color: var(--ink-soft); font-size: .78rem; line-height: 1.5;
+  }
+  .note-box p { margin: 0; flex: 1 1 18rem; }
+  .form-actions { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; border-top: 1px solid var(--line); padding: 1rem 1.35rem; }
+
+  /* ---------- empty state (audiences.css .audience-state) ---------- */
+  .empty {
+    display: grid; min-height: 17rem; place-items: center; align-content: center; gap: .55rem;
+    margin-top: 1.35rem; border: 1px solid var(--line); border-radius: .85rem; background: var(--surface);
+    color: var(--ink-faint); padding: 2rem; text-align: center;
+  }
+  .empty .ic { width: 24px; height: 24px; }
+  .empty h2 { margin: .25rem 0 0; color: var(--ink); font-size: 1rem; font-weight: 650; }
+  .empty p { max-width: 30rem; margin: 0; color: var(--ink-soft); font-size: .78rem; line-height: 1.5; }
+  .empty .btn { margin-top: .45rem; }
+
+  /* ---------- notes for review (draft framing) ---------- */
+  .notes { margin-top: 3.2rem; border: 1px solid var(--line); border-radius: var(--r-win); background: var(--sand); padding: 1.1rem 1.25rem 1.2rem; }
+  .notes h2 { margin: 0; color: var(--ink-soft); font-size: .72rem; font-weight: 650; }
+  .notes ol { margin: .6rem 0 0; padding-left: 1.2rem; }
+  .notes li { color: var(--ink-soft); font-size: .74rem; line-height: 1.6; margin-top: .35rem; }
+  .notes p { margin: .8rem 0 0; color: var(--ink-faint); font-size: .68rem; line-height: 1.55; }
+
+  /* ---------- under 960px the sidebar folds into the masthead, as in the app ---------- */
+  @media (max-width: 959px) {
+    .shell { grid-template-columns: minmax(0, 1fr); min-height: 0; }
+    .sidebar { display: none; }
+    .masthead {
+      display: grid; min-height: 3.5rem; grid-template-columns: 2.25rem 1fr 2.25rem; align-items: center;
+      border-bottom: 1px solid var(--line); background: var(--paper); padding: 0 .85rem;
+    }
+    .masthead .menu { display: grid; width: 2.25rem; height: 2.25rem; place-items: center; border: 0; border-radius: .55rem; background: transparent; color: var(--ink); cursor: pointer; }
+    .masthead .wordmark { justify-self: center; }
+    .masthead .avatar { justify-self: end; }
+    .main { padding: 1.75rem 1rem 3rem; }
+    .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .radio-cards { grid-template-columns: 1fr; }
+    .input-grid { grid-template-columns: 1fr; }
+    .trigger-card { grid-template-columns: 2.25rem minmax(0, 1fr); }
+    .trigger-card .status { grid-column: 2; margin-top: 0; }
+  }
+  @media (max-width: 480px) {
+    .canvas { padding: 1.25rem .75rem 4rem; }
+    .facts { grid-template-columns: 1fr; }
+    .page-head .btn-primary, .actions { width: 100%; }
+    .actions .btn { flex: 1; }
+    .check .select { width: 100%; min-width: 0; }
+    .seg { display: flex; width: 100%; }
+    .seg label { flex: 1; text-align: center; padding-inline: .3rem; font-size: .72rem; white-space: nowrap; }
+    .fieldset { padding-inline: 1rem; }
+    .form-actions { padding-inline: 1rem; }
+    .form-actions .btn-primary { width: 100%; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="canvas">
+
+  <header class="draft-head">
+    <p class="k">Design draft · 2026-09-01, revised 2026-09-02 · sample data throughout · not wired up</p>
+    <h1>Triggers</h1>
+    <p class="sub">A new dashboard page at /dashboard/triggers. A trigger reads as one sentence: when something new appears on a site (any URL the customer pastes), then the agent acts on it. The first case is MochaCare watching mycnajobs.com every night for home care agency job postings. Each new posting becomes the agency as a company, the owner or administrator as a lead, a personalized demo of a MochaCare job listing filled with that agency's own posting, and an enrollment in a chosen campaign. Checks run on a schedule; the agent works out how to read each site, so a trigger shows as Building until it has, and Not supported when it cannot. Nothing sends without approval in the Review queue. Five states are drawn below, then the decisions still open.</p>
+  </header>
+
+  <!-- ================= state 1: list ================= -->
+  <p class="state-label" id="s1">1 · List <small>· /dashboard/triggers, two active triggers, one paused, one still being built, one on a site we cannot read</small></p>
+  <div class="frame">
+    <div class="shell">
+      <aside class="sidebar" aria-label="Workspace navigation">
+        <div class="brand-row">
+          <a class="wordmark" href="https://driftwood.sh"><img src="https://driftwood.sh/favicon.svg" width="28" height="28" alt="" /><span>driftwood</span></a>
+        </div>
+        <a class="side-create" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New campaign</a>
+        <nav class="side-nav" aria-label="Dashboard">
+          <div class="side-group">
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v10h-6zM4 14h6v6H4zM14 18h6v2h-6z"/></svg><span>Overview</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.35-3.35 2.15-5 5.5-5s5.15 1.65 5.5 5M16 7h4M18 5v4M16.5 14.5c2.35.45 3.65 1.95 4 4.5"/></svg><span>Audiences</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14M5 12h14M5 18.5h9"/><circle cx="3.5" cy="5.5" r=".75" fill="currentColor" stroke="none"/><circle cx="3.5" cy="12" r=".75" fill="currentColor" stroke="none"/><circle cx="3.5" cy="18.5" r=".75" fill="currentColor" stroke="none"/><path d="m17 16 3 2.5-3 2.5z"/></svg><span>Campaigns</span></a>
+            <a class="side-link is-active" href="#" aria-current="page"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.25"/><path d="M8.2 8.2a5.4 5.4 0 0 0 0 7.6M15.8 8.2a5.4 5.4 0 0 1 0 7.6M5.4 5.4a9.3 9.3 0 0 0 0 13.2M18.6 5.4a9.3 9.3 0 0 1 0 13.2"/></svg><span>Triggers</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-7M22 19V3"/></svg><span>Metrics</span></a>
+          </div>
+          <div class="side-group">
+            <p class="side-label">Workspace</p>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.35-3.35 2.15-5 5.5-5s5.15 1.65 5.5 5M16 6.5a2.5 2.5 0 0 1 0 5M16 14c2.7.25 4.15 1.9 4.5 5"/></svg><span>All leads</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V6l8-3v18M12 9h8v12M7 8h2M7 12h2M7 16h2M15 12h2M15 16h2"/></svg><span>Companies</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8" cy="9" r="1.5"/><path d="m5.5 17 4-4 3 3 2.5-2.5 3.5 3.5"/></svg><span>Assets</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v4H7zM5 5H4v16h16V5h-1"/><path d="m8 14 2.5 2.5L16 11"/></svg><span>Review queue</span></a>
+          </div>
+        </nav>
+        <div class="side-footer">
+          <div class="identity">
+            <span class="avatar" aria-hidden="true">J</span>
+            <div><strong>Jordan Ellis</strong><small>MochaCare</small></div>
+            <button type="button" aria-label="Log out" title="Log out"><svg class="ic sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H5v14h5M14 8l4 4-4 4M8 12h10"/></svg></button>
+          </div>
+        </div>
+      </aside>
+      <div class="stage">
+        <header class="masthead">
+          <button class="menu" type="button" aria-label="Open navigation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+          <a class="wordmark" href="https://driftwood.sh"><img src="https://driftwood.sh/favicon.svg" width="28" height="28" alt="" /><span>driftwood</span></a>
+          <span class="avatar" aria-hidden="true">J</span>
+        </header>
+        <main class="main">
+          <header class="page-head">
+            <div class="title-row">
+              <h1>Triggers</h1>
+              <span class="count">2 active</span>
+            </div>
+            <a class="btn btn-primary" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New trigger</a>
+          </header>
+          <p class="lede">A trigger is a standing watch on a site. When something new appears, your agent acts on it, and every message waits in your Review queue.</p>
+
+          <div class="trigger-list">
+            <a class="trigger-card" href="#">
+              <span class="mark" aria-hidden="true">M</span>
+              <div>
+                <h2>mycnajobs.com</h2>
+                <p class="when"><b>When</b> a new caregiver or CNA job posting from a home care agency appears on mycnajobs.com anywhere in the US,</p>
+                <p class="then"><b>then</b> add the agency as a company, find the owner or administrator, build a demo and enroll them in "MochaCare intro for home care agencies".</p>
+                <p class="meta">Every night, 2 AM PT</p>
+                <p class="lastrun">Last check Sep 2 · 14 new postings, 11 agencies added, 9 demos built, 9 enrolled, 2 held for review</p>
+              </div>
+              <span class="status status-active">Active</span>
+            </a>
+
+            <a class="trigger-card" href="#">
+              <span class="mark" aria-hidden="true">I</span>
+              <div>
+                <h2>indeed.com</h2>
+                <p class="when"><b>When</b> a new live-in caregiver posting from a home care agency appears on indeed.com in Florida or Georgia,</p>
+                <p class="then"><b>then</b> add the agency as a company, find the owner or administrator and enroll them in "MochaCare intro for home care agencies".</p>
+                <p class="meta">Every 4 hours</p>
+                <p class="lastrun">Last check Sep 2 · 1 new posting, 1 agency added, 1 lead found, 1 enrolled</p>
+              </div>
+              <span class="status status-active">Active</span>
+            </a>
+
+            <a class="trigger-card" href="#">
+              <span class="mark" aria-hidden="true">Z</span>
+              <div>
+                <h2>Texas CNA weekly</h2>
+                <p class="when"><b>When</b> a new CNA posting from a home care agency appears on ziprecruiter.com in Texas,</p>
+                <p class="then"><b>then</b> add the agency as a company, find the owner or administrator, build a demo and enroll them in "MochaCare intro for home care agencies".</p>
+                <p class="meta">Weekly</p>
+                <p class="lastrun">Last check Aug 24 · 6 new postings, 4 agencies added, 4 demos built, 4 enrolled</p>
+              </div>
+              <span class="status status-paused">Paused</span>
+            </a>
+
+            <a class="trigger-card muted" href="#">
+              <span class="mark" aria-hidden="true">C</span>
+              <div>
+                <h2>craigslist.org</h2>
+                <p class="when"><b>When</b> a new caregiver posting from a home care agency appears on craigslist.org in California or Texas,</p>
+                <p class="then"><b>then</b> add the agency as a company, find the owner or administrator and build a demo.</p>
+                <p class="meta">Every night, 2 AM PT</p>
+                <p class="lastrun">Your agent is setting up the pull for this site.</p>
+              </div>
+              <span class="status status-building">Building</span>
+            </a>
+
+            <a class="trigger-card muted" href="#">
+              <span class="mark" aria-hidden="true">C</span>
+              <div>
+                <h2>care.com</h2>
+                <p class="when"><b>When</b> a new senior care job posted by an agency appears on care.com anywhere in the US,</p>
+                <p class="then"><b>then</b> add the agency as a company, find the owner or administrator and build a demo.</p>
+                <p class="meta">Every night, 2 AM PT</p>
+                <p class="lastrun">We cannot watch this site yet. It needs a sign-in, or it is not a list of items we can read.</p>
+              </div>
+              <span class="status status-unsupported">Not supported</span>
+            </a>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= state 1b: read-only member ================= -->
+  <p class="state-label sub-state" id="s1b">1b · Read-only member <small>· same list; New trigger, Pause and Edit are not shown, matching Audiences</small></p>
+  <div class="frame">
+    <div class="shell">
+      <aside class="sidebar" aria-label="Workspace navigation">
+        <div class="brand-row">
+          <a class="wordmark" href="https://driftwood.sh"><img src="https://driftwood.sh/favicon.svg" width="28" height="28" alt="" /><span>driftwood</span></a>
+        </div>
+        <div class="side-context"><span>Workspace access</span><strong>Read only</strong></div>
+        <nav class="side-nav" aria-label="Dashboard">
+          <div class="side-group">
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v10h-6zM4 14h6v6H4zM14 18h6v2h-6z"/></svg><span>Overview</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.35-3.35 2.15-5 5.5-5s5.15 1.65 5.5 5M16 7h4M18 5v4M16.5 14.5c2.35.45 3.65 1.95 4 4.5"/></svg><span>Audiences</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14M5 12h14M5 18.5h9"/><circle cx="3.5" cy="5.5" r=".75" fill="currentColor" stroke="none"/><circle cx="3.5" cy="12" r=".75" fill="currentColor" stroke="none"/><circle cx="3.5" cy="18.5" r=".75" fill="currentColor" stroke="none"/><path d="m17 16 3 2.5-3 2.5z"/></svg><span>Campaigns</span></a>
+            <a class="side-link is-active" href="#" aria-current="page"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.25"/><path d="M8.2 8.2a5.4 5.4 0 0 0 0 7.6M15.8 8.2a5.4 5.4 0 0 1 0 7.6M5.4 5.4a9.3 9.3 0 0 0 0 13.2M18.6 5.4a9.3 9.3 0 0 1 0 13.2"/></svg><span>Triggers</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-7M22 19V3"/></svg><span>Metrics</span></a>
+          </div>
+          <div class="side-group">
+            <p class="side-label">Workspace</p>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.35-3.35 2.15-5 5.5-5s5.15 1.65 5.5 5M16 6.5a2.5 2.5 0 0 1 0 5M16 14c2.7.25 4.15 1.9 4.5 5"/></svg><span>All leads</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V6l8-3v18M12 9h8v12M7 8h2M7 12h2M7 16h2M15 12h2M15 16h2"/></svg><span>Companies</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8" cy="9" r="1.5"/><path d="m5.5 17 4-4 3 3 2.5-2.5 3.5 3.5"/></svg><span>Assets</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v4H7zM5 5H4v16h16V5h-1"/><path d="m8 14 2.5 2.5L16 11"/></svg><span>Review queue</span></a>
+          </div>
+        </nav>
+        <div class="side-footer">
+          <div class="identity">
+            <span class="avatar" aria-hidden="true">R</span>
+            <div><strong>Rosa Delgado</strong><small>MochaCare</small></div>
+            <button type="button" aria-label="Log out" title="Log out"><svg class="ic sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H5v14h5M14 8l4 4-4 4M8 12h10"/></svg></button>
+          </div>
+        </div>
+      </aside>
+      <div class="stage">
+        <header class="masthead">
+          <button class="menu" type="button" aria-label="Open navigation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+          <a class="wordmark" href="https://driftwood.sh"><img src="https://driftwood.sh/favicon.svg" width="28" height="28" alt="" /><span>driftwood</span></a>
+          <span class="avatar" aria-hidden="true">R</span>
+        </header>
+        <main class="main">
+          <header class="page-head">
+            <div class="title-row">
+              <h1>Triggers</h1>
+              <span class="count">2 active</span>
+            </div>
+            <span class="readonly">Read-only access</span>
+          </header>
+          <p class="lede">A trigger is a standing watch on a site. When something new appears, your agent acts on it, and every message waits in the Review queue.</p>
+          <div class="trigger-list">
+            <a class="trigger-card" href="#">
+              <span class="mark" aria-hidden="true">M</span>
+              <div>
+                <h2>mycnajobs.com</h2>
+                <p class="when"><b>When</b> a new caregiver or CNA job posting from a home care agency appears on mycnajobs.com anywhere in the US,</p>
+                <p class="then"><b>then</b> add the agency as a company, find the owner or administrator, build a demo and enroll them in "MochaCare intro for home care agencies".</p>
+                <p class="meta">Every night, 2 AM PT</p>
+                <p class="lastrun">Last check Sep 2 · 14 new postings, 11 agencies added, 9 demos built, 9 enrolled, 2 held for review</p>
+              </div>
+              <span class="status status-active">Active</span>
+            </a>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= state 2: detail ================= -->
+  <p class="state-label" id="s2">2 · Detail <small>· the myCNAjobs trigger opened: summary, recent postings, runs</small></p>
+  <div class="frame">
+    <div class="shell">
+      <aside class="sidebar" aria-label="Workspace navigation">
+        <div class="brand-row">
+          <a class="wordmark" href="https://driftwood.sh"><img src="https://driftwood.sh/favicon.svg" width="28" height="28" alt="" /><span>driftwood</span></a>
+        </div>
+        <a class="side-create" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New campaign</a>
+        <nav class="side-nav" aria-label="Dashboard">
+          <div class="side-group">
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v10h-6zM4 14h6v6H4zM14 18h6v2h-6z"/></svg><span>Overview</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.35-3.35 2.15-5 5.5-5s5.15 1.65 5.5 5M16 7h4M18 5v4M16.5 14.5c2.35.45 3.65 1.95 4 4.5"/></svg><span>Audiences</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14M5 12h14M5 18.5h9"/><circle cx="3.5" cy="5.5" r=".75" fill="currentColor" stroke="none"/><circle cx="3.5" cy="12" r=".75" fill="currentColor" stroke="none"/><circle cx="3.5" cy="18.5" r=".75" fill="currentColor" stroke="none"/><path d="m17 16 3 2.5-3 2.5z"/></svg><span>Campaigns</span></a>
+            <a class="side-link is-active" href="#" aria-current="page"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.25"/><path d="M8.2 8.2a5.4 5.4 0 0 0 0 7.6M15.8 8.2a5.4 5.4 0 0 1 0 7.6M5.4 5.4a9.3 9.3 0 0 0 0 13.2M18.6 5.4a9.3 9.3 0 0 1 0 13.2"/></svg><span>Triggers</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-7M22 19V3"/></svg><span>Metrics</span></a>
+          </div>
+          <div class="side-group">
+            <p class="side-label">Workspace</p>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.35-3.35 2.15-5 5.5-5s5.15 1.65 5.5 5M16 6.5a2.5 2.5 0 0 1 0 5M16 14c2.7.25 4.15 1.9 4.5 5"/></svg><span>All leads</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V6l8-3v18M12 9h8v12M7 8h2M7 12h2M7 16h2M15 12h2M15 16h2"/></svg><span>Companies</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8" cy="9" r="1.5"/><path d="m5.5 17 4-4 3 3 2.5-2.5 3.5 3.5"/></svg><span>Assets</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v4H7zM5 5H4v16h16V5h-1"/><path d="m8 14 2.5 2.5L16 11"/></svg><span>Review queue</span></a>
+          </div>
+        </nav>
+        <div class="side-footer">
+          <div class="identity">
+            <span class="avatar" aria-hidden="true">J</span>
+            <div><strong>Jordan Ellis</strong><small>MochaCare</small></div>
+            <button type="button" aria-label="Log out" title="Log out"><svg class="ic sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H5v14h5M14 8l4 4-4 4M8 12h10"/></svg></button>
+          </div>
+        </div>
+      </aside>
+      <div class="stage">
+        <header class="masthead">
+          <button class="menu" type="button" aria-label="Open navigation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+          <a class="wordmark" href="https://driftwood.sh"><img src="https://driftwood.sh/favicon.svg" width="28" height="28" alt="" /><span>driftwood</span></a>
+          <span class="avatar" aria-hidden="true">J</span>
+        </header>
+        <main class="main">
+          <a class="back" href="#"><svg class="ic sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Triggers</a>
+          <header class="page-head">
+            <div class="title-row">
+              <h1>mycnajobs.com</h1>
+              <span class="status status-active">Active</span>
+            </div>
+            <div class="actions">
+              <button class="btn btn-secondary" type="button">Edit</button>
+              <button class="btn btn-secondary" type="button">Pause</button>
+            </div>
+          </header>
+          <p class="lede sentence"><b>When</b> a new caregiver or CNA job posting from a home care agency appears on mycnajobs.com anywhere in the US, <b>then</b> add the agency as a company, find the owner or administrator, build a demo and enroll them in "MochaCare intro for home care agencies".</p>
+
+          <div class="facts">
+            <div class="fact"><small>Schedule</small><strong>Every night, 2 AM PT</strong></div>
+            <div class="fact"><small>Source</small><strong>Job board search</strong></div>
+            <div class="fact"><small>Feeds</small><strong><a href="#">MochaCare intro for home care agencies</a></strong></div>
+            <div class="fact"><small>Last check</small><strong>Today, 2:02 AM</strong></div>
+            <div class="fact"><small>Watching since</small><strong>Aug 19, 2026</strong></div>
+          </div>
+          <p class="check-row"><a class="check-now" href="#" title="Check the site now instead of waiting for the schedule">Check now</a></p>
+
+          <section class="section" aria-labelledby="recent-postings">
+            <div class="section-head">
+              <h2 id="recent-postings">Recent postings</h2>
+              <span>8 of 34 postings since Aug 29</span>
+            </div>
+            <div class="table-card">
+              <div class="table-wrap">
+                <table class="postings">
+                  <thead>
+                    <tr>
+                      <th scope="col">Posted</th>
+                      <th scope="col">Agency</th>
+                      <th scope="col">Location</th>
+                      <th scope="col">Job title</th>
+                      <th scope="col">Pay</th>
+                      <th scope="col">What happened</th>
+                      <th scope="col">Demo</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td class="num">Aug 31</td>
+                      <td><strong>Brightpath Home Care</strong><span class="sub">Dana Whitfield, owner</span></td>
+                      <td>Tucson, AZ</td>
+                      <td>Caregiver, part time</td>
+                      <td class="num">$16 to $19/hr</td>
+                      <td><div class="chips"><span class="chip">Agency added</span><span class="chip">Lead found</span><span class="chip">Demo built</span><span class="chip chip-tide">Enrolled</span></div></td>
+                      <td><a class="demo" href="#">Open demo</a></td>
+                    </tr>
+                    <tr>
+                      <td class="num">Aug 31</td>
+                      <td><strong>Evergreen Senior Home Care</strong><span class="sub">Marcus Lee, administrator</span></td>
+                      <td>Boise, ID</td>
+                      <td>CNA, weekends</td>
+                      <td class="num">$17 to $20/hr</td>
+                      <td><div class="chips"><span class="chip">Agency added</span><span class="chip">Lead found</span><span class="chip">Demo built</span><span class="chip chip-tide">Enrolled</span></div></td>
+                      <td><a class="demo" href="#">Open demo</a></td>
+                    </tr>
+                    <tr>
+                      <td class="num">Aug 31</td>
+                      <td><strong>Heartland Caregivers of Dayton</strong><span class="sub">In Companies since Aug 22</span></td>
+                      <td>Dayton, OH</td>
+                      <td>Home health aide</td>
+                      <td class="num">$15 to $17/hr</td>
+                      <td><div class="chips"><span class="chip chip-skip">Skipped: duplicate</span></div></td>
+                      <td></td>
+                    </tr>
+                    <tr>
+                      <td class="num">Aug 31</td>
+                      <td><strong>Willow Creek In-Home Care</strong><span class="sub">No owner or administrator found</span></td>
+                      <td>Fort Collins, CO</td>
+                      <td>Live-in caregiver</td>
+                      <td class="num">$190 to $220/day</td>
+                      <td><div class="chips"><span class="chip">Agency added</span><span class="chip chip-hold">Held: no contact found</span></div></td>
+                      <td></td>
+                    </tr>
+                    <tr>
+                      <td class="num">Aug 30</td>
+                      <td><strong>Serenity Home Care Services</strong><span class="sub">Priya Natarajan, owner</span></td>
+                      <td>Chattanooga, TN</td>
+                      <td>CNA, overnight</td>
+                      <td class="num">$16 to $18/hr</td>
+                      <td><div class="chips"><span class="chip">Agency added</span><span class="chip">Lead found</span><span class="chip">Demo built</span><span class="chip chip-tide">Enrolled</span></div></td>
+                      <td><a class="demo" href="#">Open demo</a></td>
+                    </tr>
+                    <tr>
+                      <td class="num">Aug 30</td>
+                      <td><strong>Golden Hours Home Care</strong><span class="sub">Tom Beckett, administrator</span></td>
+                      <td>Spokane, WA</td>
+                      <td>Caregiver, full time</td>
+                      <td class="num">$18 to $21/hr</td>
+                      <td><div class="chips"><span class="chip">Agency added</span><span class="chip">Lead found</span><span class="chip">Demo built</span><span class="chip chip-tide">Enrolled</span></div></td>
+                      <td><a class="demo" href="#">Open demo</a></td>
+                    </tr>
+                    <tr>
+                      <td class="num">Aug 30</td>
+                      <td><strong>Maple Grove Companion Care</strong><span class="sub">No owner or administrator found</span></td>
+                      <td>Lansing, MI</td>
+                      <td>Companion caregiver</td>
+                      <td class="num">$15 to $16/hr</td>
+                      <td><div class="chips"><span class="chip">Agency added</span><span class="chip chip-hold">Held: no contact found</span></div></td>
+                      <td></td>
+                    </tr>
+                    <tr>
+                      <td class="num">Aug 29</td>
+                      <td><strong>Harbor Light Home Care</strong><span class="sub">Angela Reyes, owner</span></td>
+                      <td>Wilmington, NC</td>
+                      <td>CNA, per diem</td>
+                      <td class="num">$17 to $19/hr</td>
+                      <td><div class="chips"><span class="chip">Agency added</span><span class="chip">Lead found</span><span class="chip">Demo built</span><span class="chip chip-tide">Enrolled</span></div></td>
+                      <td><a class="demo" href="#">Open demo</a></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section class="section" aria-labelledby="runs">
+            <div class="section-head">
+              <h2 id="runs">Runs</h2>
+              <span>Last 5 of 14</span>
+            </div>
+            <div class="table-card">
+              <div class="table-wrap">
+                <table class="runs">
+                  <thead>
+                    <tr>
+                      <th scope="col">Date</th>
+                      <th scope="col">State</th>
+                      <th scope="col">Pages</th>
+                      <th scope="col">Seen</th>
+                      <th scope="col">New</th>
+                      <th scope="col">Filtered</th>
+                      <th scope="col">Errors</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td class="num">Today, 2:02 AM<span class="sub">Scheduled</span></td><td>Done</td><td class="num">4</td><td class="num">219</td><td class="num">9</td><td class="num">31</td><td class="errors none">None</td></tr>
+                    <tr><td class="num">Sep 1, 2:01 AM<span class="sub">Scheduled</span></td><td>Done</td><td class="num">4</td><td class="num">212</td><td class="num">14</td><td class="num">27</td><td class="errors none">None</td></tr>
+                    <tr><td class="num">Aug 31, 9:40 AM<span class="sub">Check now</span></td><td>Done</td><td class="num">4</td><td class="num">203</td><td class="num">11</td><td class="num">25</td><td class="errors">mycnajobs.com was slow to respond. We retried once and the run finished.</td></tr>
+                    <tr><td class="num">Aug 30, 2:01 AM<span class="sub">Scheduled</span></td><td>Done</td><td class="num">—</td><td class="num">197</td><td class="num">6</td><td class="num">—</td><td class="errors none">None</td></tr>
+                    <tr><td class="num">Aug 29, 2:00 AM<span class="sub">Scheduled</span></td><td>Failed</td><td class="num">—</td><td class="num">0</td><td class="num">0</td><td class="num">—</td><td class="errors">mycnajobs.com did not load. This run was skipped and the next night caught up.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= state 3: new trigger form ================= -->
+  <p class="state-label" id="s3">3 · New trigger <small>· /dashboard/triggers?new=1, the sentence as a form: two required fields, Options drawn open here to show its defaults (it starts closed)</small></p>
+  <div class="frame">
+    <div class="shell">
+      <aside class="sidebar" aria-label="Workspace navigation">
+        <div class="brand-row">
+          <a class="wordmark" href="https://driftwood.sh"><img src="https://driftwood.sh/favicon.svg" width="28" height="28" alt="" /><span>driftwood</span></a>
+        </div>
+        <a class="side-create" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New campaign</a>
+        <nav class="side-nav" aria-label="Dashboard">
+          <div class="side-group">
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v10h-6zM4 14h6v6H4zM14 18h6v2h-6z"/></svg><span>Overview</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.35-3.35 2.15-5 5.5-5s5.15 1.65 5.5 5M16 7h4M18 5v4M16.5 14.5c2.35.45 3.65 1.95 4 4.5"/></svg><span>Audiences</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14M5 12h14M5 18.5h9"/><circle cx="3.5" cy="5.5" r=".75" fill="currentColor" stroke="none"/><circle cx="3.5" cy="12" r=".75" fill="currentColor" stroke="none"/><circle cx="3.5" cy="18.5" r=".75" fill="currentColor" stroke="none"/><path d="m17 16 3 2.5-3 2.5z"/></svg><span>Campaigns</span></a>
+            <a class="side-link is-active" href="#" aria-current="page"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.25"/><path d="M8.2 8.2a5.4 5.4 0 0 0 0 7.6M15.8 8.2a5.4 5.4 0 0 1 0 7.6M5.4 5.4a9.3 9.3 0 0 0 0 13.2M18.6 5.4a9.3 9.3 0 0 1 0 13.2"/></svg><span>Triggers</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-7M22 19V3"/></svg><span>Metrics</span></a>
+          </div>
+          <div class="side-group">
+            <p class="side-label">Workspace</p>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.35-3.35 2.15-5 5.5-5s5.15 1.65 5.5 5M16 6.5a2.5 2.5 0 0 1 0 5M16 14c2.7.25 4.15 1.9 4.5 5"/></svg><span>All leads</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V6l8-3v18M12 9h8v12M7 8h2M7 12h2M7 16h2M15 12h2M15 16h2"/></svg><span>Companies</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8" cy="9" r="1.5"/><path d="m5.5 17 4-4 3 3 2.5-2.5 3.5 3.5"/></svg><span>Assets</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v4H7zM5 5H4v16h16V5h-1"/><path d="m8 14 2.5 2.5L16 11"/></svg><span>Review queue</span></a>
+          </div>
+        </nav>
+        <div class="side-footer">
+          <div class="identity">
+            <span class="avatar" aria-hidden="true">J</span>
+            <div><strong>Jordan Ellis</strong><small>MochaCare</small></div>
+            <button type="button" aria-label="Log out" title="Log out"><svg class="ic sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H5v14h5M14 8l4 4-4 4M8 12h10"/></svg></button>
+          </div>
+        </div>
+      </aside>
+      <div class="stage">
+        <header class="masthead">
+          <button class="menu" type="button" aria-label="Open navigation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+          <a class="wordmark" href="https://driftwood.sh"><img src="https://driftwood.sh/favicon.svg" width="28" height="28" alt="" /><span>driftwood</span></a>
+          <span class="avatar" aria-hidden="true">J</span>
+        </header>
+        <main class="main">
+          <a class="back" href="#"><svg class="ic sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Triggers</a>
+          <header class="page-head">
+            <div class="title-row"><h1>New trigger</h1></div>
+          </header>
+          <p class="lede">Paste a site and say what counts as new. Your agent works out how to check it and does the rest.</p>
+
+          <form class="form-card" action="#">
+            <div class="fieldset" role="group" aria-labelledby="f-when">
+              <h2 class="legend" id="f-when">When</h2>
+              <p class="help">Something new appears on a site.</p>
+
+              <div class="field">
+                <label class="label" for="site">Site to watch</label>
+                <input class="input" id="site" type="url" value="https://www.mycnajobs.com" placeholder="https://www.mycnajobs.com" />
+                <p class="hint">Any page that lists the postings. Your agent works out how to read it.</p>
+              </div>
+
+              <div class="field">
+                <label class="label" for="watch">What counts as new</label>
+                <input class="input" id="watch" type="text" value="A new caregiver or CNA job posting from a home care agency" placeholder="A new caregiver or CNA job posting from a home care agency" />
+              </div>
+
+              <details class="options" open>
+                <summary>
+                  <span class="options-title">Options</span>
+                  <span class="options-hint">All US · Every night, 2 AM PT · 8 employer types skipped</span>
+                </summary>
+                <div class="options-body">
+                  <div class="input-grid">
+                    <div>
+                      <label class="label" for="keywords">Keywords</label>
+                      <div class="chipbox"><input id="keywords" type="text" placeholder="caregiver, CNA, home health aide" /></div>
+                      <p class="hint">Words a posting should contain. Press Enter or type a comma after each one.</p>
+                    </div>
+                    <div>
+                      <label class="label" for="locations">Locations</label>
+                      <div class="chipbox">
+                        <span class="tag">All US<button type="button" aria-label="Remove All US">×</button></span>
+                        <input id="locations" type="text" />
+                      </div>
+                      <p class="hint">Press Enter after each place, so a city can keep its state.</p>
+                    </div>
+                  </div>
+
+                  <div class="field">
+                    <label class="label" for="exclude">Skip employers whose name contains</label>
+                    <div class="chipbox">
+                      <span class="tag">senior living<button type="button" aria-label="Remove senior living">×</button></span>
+                      <span class="tag">health system<button type="button" aria-label="Remove health system">×</button></span>
+                      <span class="tag">hospital<button type="button" aria-label="Remove hospital">×</button></span>
+                      <span class="tag">medical center<button type="button" aria-label="Remove medical center">×</button></span>
+                      <span class="tag">nursing home<button type="button" aria-label="Remove nursing home">×</button></span>
+                      <span class="tag">assisted living<button type="button" aria-label="Remove assisted living">×</button></span>
+                      <span class="tag">memory care<button type="button" aria-label="Remove memory care">×</button></span>
+                      <span class="tag">hospice<button type="button" aria-label="Remove hospice">×</button></span>
+                      <input id="exclude" type="text" />
+                    </div>
+                    <p class="hint">Postings from these employers are skipped. Remove a chip to keep them.</p>
+                  </div>
+
+                  <div class="field">
+                    <p class="label" id="schedule">Schedule</p>
+                    <div class="cadence-row">
+                      <div class="seg" role="radiogroup" aria-labelledby="schedule">
+                        <label class="is-selected"><input type="radio" name="cadence" checked />Daily</label>
+                        <label><input type="radio" name="cadence" />Weekly</label>
+                        <label><input type="radio" name="cadence" />Every N hours</label>
+                      </div>
+                      <select class="select" aria-label="Hour, Pacific time">
+                        <option>12 AM PT</option>
+                        <option>1 AM PT</option>
+                        <option selected>2 AM PT</option>
+                        <option>3 AM PT</option>
+                        <option>6 AM PT</option>
+                      </select>
+                    </div>
+                    <p class="hint">Checks run on their own, in Pacific time. Nightly leaves the night for building demos, so the Review queue is ready in the morning.</p>
+                  </div>
+                </div>
+              </details>
+            </div>
+
+            <div class="fieldset" role="group" aria-labelledby="f-then">
+              <h2 class="legend" id="f-then">Then</h2>
+              <p class="help">What your agent does with each new posting.</p>
+              <div class="checks">
+                <label class="check"><input type="checkbox" checked /><strong>Add the agency as a company</strong><small>It appears in Companies with the posting attached.</small></label>
+                <label class="check"><input type="checkbox" checked /><strong>Find the owner or administrator</strong><small>Looks up a decision maker and adds them as a lead.</small></label>
+                <label class="check"><input type="checkbox" checked /><strong>Build a personalized demo</strong><small>Your product, filled with their own posting.</small></label>
+                <div class="check">
+                  <input type="checkbox" id="enroll" checked />
+                  <label for="enroll"><strong>Enroll in campaign</strong></label>
+                  <small>Queues the campaign's messages for that contact.</small>
+                  <select class="select" aria-label="Campaign">
+                    <option>No campaign</option>
+                    <option selected>MochaCare intro for home care agencies</option>
+                    <option>MochaCare scheduling follow-up</option>
+                  </select>
+                </div>
+              </div>
+              <p class="fixed">Every message waits in your Review queue. Nothing goes out on its own.</p>
+            </div>
+
+            <div class="fieldset" role="group" aria-labelledby="f-name">
+              <h2 class="legend" id="f-name">Name</h2>
+              <p class="help">Optional. Without one, the trigger is named after the site.</p>
+              <input class="input" type="text" aria-label="Name" placeholder="mycnajobs.com" />
+            </div>
+
+            <div class="form-actions">
+              <button class="btn btn-primary" type="button">Create trigger</button>
+              <button class="btn btn-text" type="button">Cancel</button>
+            </div>
+          </form>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= state 4: empty ================= -->
+  <p class="state-label" id="s4">4 · Empty <small>· a workspace with no triggers yet</small></p>
+  <div class="frame">
+    <div class="shell">
+      <aside class="sidebar" aria-label="Workspace navigation">
+        <div class="brand-row">
+          <a class="wordmark" href="https://driftwood.sh"><img src="https://driftwood.sh/favicon.svg" width="28" height="28" alt="" /><span>driftwood</span></a>
+        </div>
+        <a class="side-create" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New campaign</a>
+        <nav class="side-nav" aria-label="Dashboard">
+          <div class="side-group">
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v10h-6zM4 14h6v6H4zM14 18h6v2h-6z"/></svg><span>Overview</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.35-3.35 2.15-5 5.5-5s5.15 1.65 5.5 5M16 7h4M18 5v4M16.5 14.5c2.35.45 3.65 1.95 4 4.5"/></svg><span>Audiences</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14M5 12h14M5 18.5h9"/><circle cx="3.5" cy="5.5" r=".75" fill="currentColor" stroke="none"/><circle cx="3.5" cy="12" r=".75" fill="currentColor" stroke="none"/><circle cx="3.5" cy="18.5" r=".75" fill="currentColor" stroke="none"/><path d="m17 16 3 2.5-3 2.5z"/></svg><span>Campaigns</span></a>
+            <a class="side-link is-active" href="#" aria-current="page"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.25"/><path d="M8.2 8.2a5.4 5.4 0 0 0 0 7.6M15.8 8.2a5.4 5.4 0 0 1 0 7.6M5.4 5.4a9.3 9.3 0 0 0 0 13.2M18.6 5.4a9.3 9.3 0 0 1 0 13.2"/></svg><span>Triggers</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-7M22 19V3"/></svg><span>Metrics</span></a>
+          </div>
+          <div class="side-group">
+            <p class="side-label">Workspace</p>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.35-3.35 2.15-5 5.5-5s5.15 1.65 5.5 5M16 6.5a2.5 2.5 0 0 1 0 5M16 14c2.7.25 4.15 1.9 4.5 5"/></svg><span>All leads</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V6l8-3v18M12 9h8v12M7 8h2M7 12h2M7 16h2M15 12h2M15 16h2"/></svg><span>Companies</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8" cy="9" r="1.5"/><path d="m5.5 17 4-4 3 3 2.5-2.5 3.5 3.5"/></svg><span>Assets</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v4H7zM5 5H4v16h16V5h-1"/><path d="m8 14 2.5 2.5L16 11"/></svg><span>Review queue</span></a>
+          </div>
+        </nav>
+        <div class="side-footer">
+          <div class="identity">
+            <span class="avatar" aria-hidden="true">J</span>
+            <div><strong>Jordan Ellis</strong><small>MochaCare</small></div>
+            <button type="button" aria-label="Log out" title="Log out"><svg class="ic sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H5v14h5M14 8l4 4-4 4M8 12h10"/></svg></button>
+          </div>
+        </div>
+      </aside>
+      <div class="stage">
+        <header class="masthead">
+          <button class="menu" type="button" aria-label="Open navigation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+          <a class="wordmark" href="https://driftwood.sh"><img src="https://driftwood.sh/favicon.svg" width="28" height="28" alt="" /><span>driftwood</span></a>
+          <span class="avatar" aria-hidden="true">J</span>
+        </header>
+        <main class="main">
+          <header class="page-head">
+            <div class="title-row"><h1>Triggers</h1></div>
+            <a class="btn btn-primary" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New trigger</a>
+          </header>
+          <div class="empty">
+            <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.25"/><path d="M8.2 8.2a5.4 5.4 0 0 0 0 7.6M15.8 8.2a5.4 5.4 0 0 1 0 7.6M5.4 5.4a9.3 9.3 0 0 0 0 13.2M18.6 5.4a9.3 9.3 0 0 1 0 13.2"/></svg>
+            <h2>No triggers yet</h2>
+            <p>A trigger watches a site for new postings and turns each one into a company, a lead, a demo and a campaign enrollment. Create your first trigger.</p>
+            <a class="btn btn-secondary" href="#">New trigger</a>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= notes for review (draft framing, not shipped copy) ================= -->
+  <section class="notes" aria-labelledby="notes-head">
+    <h2 id="notes-head">Notes for review</h2>
+    <ol>
+      <li>Which sites ship first: myCNAjobs alone, or myCNAjobs and Indeed together?</li>
+      <li>When no owner or administrator is found, is the posting held for you in the Review queue (as drawn) or dropped and only counted?</li>
+      <li>Do demos need your approval before the enrollment happens, or only the sends, with the demo visible on the lead?</li>
+      <li>What is the cadence default: every morning (as drawn), every weekday, or weekly?</li>
+      <li>Should reply and meeting counts per trigger show on this page, or only on Metrics?</li>
+    </ol>
+    <p>Drawn without asking: Triggers sits after Campaigns in the sidebar; a trigger has no name of its own and is identified by its source and what it watches; the campaign name is written "MochaCare intro for home care agencies" so the copy carries no dashes.</p>
+    <p>Revised 2026-09-02, per the founder: the trigger is the sentence "When ..., then ..."; any URL is the site, no site is a first-class choice; the customer describes what counts as new in plain words and the agent configures the pull, so the form needs only the site and that line (keywords, locations, skipped employers and the schedule sit under Options with their defaults in view); checks run nightly at 2 AM PT by default (question 4 above is answered), weekly, or every N hours, and "Run now" is the quiet "Check now" link under the facts; the runs log shows pages, seen, new and filtered; a trigger waiting on its pull shows "Building", one on a site we cannot read shows "Not supported" (this replaces the "Account for this site" box that was drawn here); Edit on the detail page opens the same form with the site read-only. A trigger may carry a name of its own after all, typed at the bottom of the form.</p>
+  </section>
+
+</div>
+</body>
+</html>
