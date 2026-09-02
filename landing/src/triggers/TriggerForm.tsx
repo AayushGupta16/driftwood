@@ -1,10 +1,11 @@
 /* The trigger form, written as the sentence it creates: When something new
-   appears on a site, then the agent acts. Two required inputs (the site
-   and what counts as new); keywords, locations, skipped employers and the
-   schedule fold under Options with their defaults in view. Used to create
-   a trigger (design/triggers.html state 3) and, from the detail page, to
-   edit one: the site is then read-only and only watch, locations,
-   schedule, actions and campaign are open. */
+   appears on a site, then the agent acts. One required input (what counts
+   as new) and an optional site, which left empty means the whole web;
+   keywords, locations, skipped employers and the schedule fold under
+   Options with their defaults in view. Used to create a trigger
+   (design/triggers.html state 3) and, from the detail page, to edit one:
+   the site is then read-only and only watch, locations, schedule, actions
+   and campaign are open. */
 
 import { useEffect, useState, type FormEvent } from "react";
 import { createTrigger, updateTrigger } from "./api";
@@ -12,6 +13,7 @@ import ChipInput from "./ChipInput";
 import {
   DEFAULT_EXCLUDE_EMPLOYER_TERMS,
   DEFAULT_FIRE_HOUR,
+  deriveTriggerName,
   fireHourLabel,
   hostFromUrl,
   INTERVAL_HOUR_OPTIONS,
@@ -71,6 +73,7 @@ export default function TriggerForm(props: Props) {
   }, []);
 
   const host = hostFromUrl(url);
+  const derivedName = watch.trim() || host ? deriveTriggerName(watch, host) : null;
   const schedule = { cadence, fireHour, intervalHours: cadence === "every_n_hours" ? intervalHours : null };
 
   function setAction(key: keyof TriggerActions, value: boolean) {
@@ -104,8 +107,8 @@ export default function TriggerForm(props: Props) {
     const cleanUrl = url.trim();
     const cleanWatch = watch.trim().replace(/\s+/g, " ");
     let valid = true;
-    if (!editing && !isSiteUrl(cleanUrl)) {
-      setUrlError("Paste the full address of the site, starting with https://");
+    if (!editing && cleanUrl && !isSiteUrl(cleanUrl)) {
+      setUrlError("Paste the full address of the site, starting with https://, or leave it empty.");
       valid = false;
     }
     if (!cleanWatch) {
@@ -114,8 +117,9 @@ export default function TriggerForm(props: Props) {
     }
     if (!valid) return;
     setSaving(true);
+    /* A cleared name on edit is left out, so the backend keeps the old one. */
     const fields = {
-      name: name.trim() || null,
+      name: name.trim() || (editing ? null : deriveTriggerName(cleanWatch, hostFromUrl(cleanUrl))),
       watch: cleanWatch,
       keywords,
       locations,
@@ -131,7 +135,7 @@ export default function TriggerForm(props: Props) {
         props.onSaved(await updateTrigger(props.trigger.id, fields));
         return;
       }
-      const trigger = await createTrigger({ ...fields, sourceUrl: cleanUrl });
+      const trigger = await createTrigger({ ...fields, sourceUrl: cleanUrl || null });
       /* Navigation is a full page load, so the detail page raises the
          "Trigger created" toast itself off this flag. */
       window.location.href = withMockMode(`/dashboard/triggers/${encodeURIComponent(trigger.id)}?created=1`);
@@ -153,7 +157,7 @@ export default function TriggerForm(props: Props) {
       <p className="trigger-lede">
         {editing
           ? "Change what counts as new, where to look, when to check and what happens next. The site stays the same."
-          : "Paste a site and say what counts as new. Your agent works out how to check it and does the rest."}
+          : "Say what counts as new, and paste a site if there is one. Your agent works out how to check it and does the rest."}
       </p>
 
       <form className="trigger-form" onSubmit={handleSubmit} noValidate>
@@ -169,7 +173,7 @@ export default function TriggerForm(props: Props) {
               type="url"
               value={url}
               onChange={(event) => setUrl(event.target.value)}
-              placeholder="https://www.mycnajobs.com"
+              placeholder={editing ? "The whole web" : "Optional. Leave empty to watch the whole web."}
               readOnly={Boolean(editing)}
               aria-invalid={urlError ? true : undefined}
               aria-describedby={urlError ? "trigger-url-error" : "trigger-url-hint"}
@@ -180,8 +184,10 @@ export default function TriggerForm(props: Props) {
               : (
                 <p className="trigger-hint" id="trigger-url-hint">
                   {editing
-                    ? "The site cannot be changed. Create a new trigger to watch another site."
-                    : "Any page that lists the postings. Your agent works out how to read it."}
+                    ? editing.sourceUrl
+                      ? "The site cannot be changed. Create a new trigger to watch another site."
+                      : "This trigger watches the whole web. Create a new trigger to watch one site."
+                    : "Any page that lists the postings. Leave it empty and your agent searches the whole web instead."}
                 </p>
               )}
           </div>
@@ -314,7 +320,7 @@ export default function TriggerForm(props: Props) {
 
         <div className="trigger-fieldset" role="group" aria-labelledby="trigger-name-legend">
           <h2 className="trigger-legend" id="trigger-name-legend">Name</h2>
-          <p className="trigger-help">Optional. Without one, the trigger is named after the site.</p>
+          <p className="trigger-help">Optional. Without one, the trigger is named after the site, or after the first words of what counts as new.</p>
           <label className="audience-visually-hidden" htmlFor="trigger-name">Name</label>
           <input
             className="trigger-input"
@@ -322,7 +328,7 @@ export default function TriggerForm(props: Props) {
             type="text"
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder={host ?? "Named after the site"}
+            placeholder={derivedName ?? "Named after the site or the sentence"}
             autoComplete="off"
           />
         </div>

@@ -6,6 +6,7 @@ import {
   counterCell,
   countsLine,
   DEFAULT_SCHEDULE,
+  deriveTriggerName,
   fireHourLabel,
   formatDay,
   hasListSeparator,
@@ -110,12 +111,36 @@ test("the when line falls back to keywords, the legacy source and All US", () =>
   );
   assert.equal(
     whenLine({ watch: null, sourceHost: null, sourceUrl: null, sourceKind: "something_else", filters: filters() }),
-    "a new posting appears",
+    "a new posting appears anywhere on the web",
   );
   assert.equal(
     whenLine({ watch: null, sourceHost: "indeed.com", sourceUrl: null, sourceKind: "custom_url", filters: filters({ locations: ["All US", "Atlanta, GA", "Phoenix"] }) }),
     "a new posting appears on indeed.com in Atlanta, GA or Phoenix",
   );
+});
+
+test("a trigger with no site appears anywhere on the web", () => {
+  const web = { sourceHost: null, sourceUrl: null, sourceKind: "custom_url" };
+  assert.equal(
+    whenLine({ ...web, watch: "Home care agencies hiring live-in caregivers", filters: filters({ locations: ["All US"] }) }),
+    "home care agencies hiring live-in caregivers appears anywhere on the web in the US",
+  );
+  assert.equal(
+    whenLine({ ...web, watch: "A new CNA posting", filters: filters({ locations: ["Atlanta", "Tampa"] }) }),
+    "a new CNA posting appears anywhere on the web in Atlanta or Tampa",
+  );
+  assert.equal(
+    whenLine({ ...web, watch: "A new CNA posting", filters: filters() }),
+    "a new CNA posting appears anywhere on the web",
+  );
+});
+
+test("a trigger is named after its site, or the first three words of the sentence", () => {
+  assert.equal(deriveTriggerName("Home care agencies hiring live-in caregivers", "mycnajobs.com"), "mycnajobs.com");
+  assert.equal(deriveTriggerName("Home care agencies hiring live-in caregivers", null), "Home care agencies");
+  assert.equal(deriveTriggerName("  A new   CNA, posting ", null), "A new CNA");
+  assert.equal(deriveTriggerName("Caregivers", null), "Caregivers");
+  assert.equal(deriveTriggerName("", null), "New trigger");
 });
 
 test("All US only means something on its own", () => {
@@ -159,6 +184,8 @@ test("the source fact takes the backend's label, then a plain name per method, n
   assert.equal(pullLabel({ method: "api", label: "Job board search" }), "Job board search");
   assert.equal(pullLabel({ method: "api", label: "  " }), "Job board search");
   assert.equal(pullLabel({ method: "firecrawl_pages", label: "" }), "Page watch");
+  assert.equal(pullLabel({ method: "firecrawl_search", label: "" }), "Web search");
+  assert.equal(pullLabel({ method: "firecrawl_search", label: "Web search" }), "Web search");
   assert.equal(pullLabel({ method: "needs_puller", label: "" }), "Building");
   assert.equal(pullLabel({ method: "unsupported", label: "" }), "Not supported yet");
   assert.equal(pullLabel(null), null);

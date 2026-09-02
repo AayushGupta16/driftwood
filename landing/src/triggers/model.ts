@@ -10,6 +10,7 @@ export type PullMethod =
   | "api"
   | "firecrawl_pages"
   | "firecrawl_monitor"
+  | "firecrawl_search"
   | "adapter"
   | "needs_puller"
   | "unsupported";
@@ -125,7 +126,8 @@ export type TriggerDetail = {
 
 export type NewTriggerInput = {
   name: string | null;
-  sourceUrl: string;
+  /* Null watches the whole web instead of one site. */
+  sourceUrl: string | null;
   watch: string;
   keywords: string[];
   locations: string[];
@@ -185,6 +187,15 @@ export function hostFromUrl(url: string | null | undefined): string | null {
 
 export function isSiteUrl(value: string): boolean {
   return /^https?:\/\/\S+\.\S+/i.test(value.trim());
+}
+
+/* The name a trigger gets when the customer does not type one: the site,
+   or, for a trigger that watches the whole web, the first three words of
+   what counts as new ("Home care agencies"). */
+export function deriveTriggerName(watch: string, host: string | null): string {
+  if (host) return host;
+  const words = watch.trim().split(/\s+/).filter(Boolean).slice(0, 3).join(" ").replace(/[.,;:!?]+$/, "");
+  return words || "New trigger";
 }
 
 export function normalizeCadence(value: string | null | undefined): TriggerCadence {
@@ -267,6 +278,7 @@ const PULL_LABELS: Record<PullMethod, string> = {
   api: "Job board search",
   firecrawl_pages: "Page watch",
   firecrawl_monitor: "Site monitor",
+  firecrawl_search: "Web search",
   adapter: "Site search",
   needs_puller: "Building",
   unsupported: "Not supported yet",
@@ -408,8 +420,9 @@ function lowerFirst(text: string): string {
 
 /* The "when" half of the sentence, minus the word When itself (the page
    sets that in bold): "a new caregiver or CNA job posting from a home care
-   agency appears on mycnajobs.com in Atlanta, Phoenix or Tampa". Falls back
-   to the keywords when the row has no watch line. */
+   agency appears on mycnajobs.com in Atlanta, Phoenix or Tampa". A trigger
+   with no site "appears anywhere on the web". Falls back to the keywords
+   when the row has no watch line. */
 export type WhenSource = Pick<Trigger, "watch" | "sourceHost" | "sourceUrl" | "filters"> & {
   sourceKind: string;
 };
@@ -430,9 +443,9 @@ export function whenLine(trigger: WhenSource): string {
   const where = locations.length === 0
     ? ""
     : isAllUs(locations)
-      ? " anywhere in the US"
+      ? host ? " anywhere in the US" : " in the US"
       : ` in ${joinList(locations, ", ", "or")}`;
-  return `${subject} appears${host ? ` on ${host}` : ""}${where}`;
+  return `${subject} appears${host ? ` on ${host}` : " anywhere on the web"}${where}`;
 }
 
 /* The "then" half: "add the agency as a company, find the owner or

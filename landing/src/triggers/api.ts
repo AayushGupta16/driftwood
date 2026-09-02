@@ -305,12 +305,13 @@ function editableFields(input: EditTriggerInput) {
   };
 }
 
-/* The POST body, exactly as the backend reads it. */
+/* The POST body, exactly as the backend reads it. source_url is null for
+   a trigger that watches the whole web. */
 export function createBody(input: NewTriggerInput): string {
   const { name, ...rest } = editableFields(input);
   return JSON.stringify({
     ...(name ? { name } : {}),
-    source_url: input.sourceUrl,
+    source_url: input.sourceUrl?.trim() || null,
     ...rest,
   });
 }

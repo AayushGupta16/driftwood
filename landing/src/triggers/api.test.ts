@@ -134,6 +134,11 @@ test("rows from before the when/then fields get sensible defaults", () => {
   assert.equal(custom.sourceUrl, "https://www.jobs.example.com/list");
   assert.equal(custom.sourceHost, "jobs.example.com");
 
+  const web = mapTrigger({ ...rawTrigger, source_url: null, source_host: null, pull: { method: "firecrawl_search", label: "Web search" } });
+  assert.equal(web.sourceUrl, null);
+  assert.equal(web.sourceHost, null);
+  assert.deepEqual(web.pull, { method: "firecrawl_search", label: "Web search" });
+
   assert.equal(mapTrigger({ ...legacyTrigger, status: "something_new" }).status, "active");
   assert.deepEqual(mapTrigger({ ...legacyTrigger, cadence: "hourly" }).schedule.cadence, "daily");
   assert.deepEqual(
@@ -237,6 +242,12 @@ test("create sends the backend's exact body", async (t) => {
   assert.deepEqual(hourly.actions, { add_company: true, find_contact: false, build_demo: false, enroll: false });
   assert.equal(hourly.campaign_id, null);
   assert.deepEqual(Object.keys(hourly).sort(), ["actions", "campaign_id", "filters", "name", "schedule", "source_url", "watch"]);
+
+  /* No site: the whole web. source_url travels as null, never as "". */
+  const web = JSON.parse(createBody({ ...input, sourceUrl: null, name: "Home care agencies" }));
+  assert.equal(web.source_url, null);
+  assert.equal(web.name, "Home care agencies");
+  assert.equal(JSON.parse(createBody({ ...input, sourceUrl: "   " })).source_url, null);
 
   stubFetch(t, (async (url, init) => {
     assert.equal(url, "/api/v1/dashboard/triggers");
