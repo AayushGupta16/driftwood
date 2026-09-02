@@ -1617,10 +1617,212 @@ if (mockMode) {
     return orgPage();
   };
 
+  // Triggers (GET/POST /dashboard/triggers, GET /{id}, POST /{id}/run|pause|
+  // resume). Two sample watches; ?trgempty=1 serves the empty state. "Run
+  // now" queues a run that flips queued -> running -> done across the
+  // page's polls and lands one new posting when it finishes. Writes 403 in
+  // ?mock=member, as the backend does.
+  const triggersEmpty = params.get("trgempty") === "1";
+  type MockRun = {
+    id: string; state: string; triggered_by: string; postings_seen: number; postings_new: number;
+    error: string | null; created_at: string; started_at: string | null; finished_at: string | null;
+  };
+  type MockPosting = {
+    id: string; source_url: string; employer_name: string; title: string; city: string | null;
+    state: string | null; location_text: string | null; pay_text: string | null; posted_at: string | null;
+    status: string; note: string | null; company_id: string | null; lead_id: string | null;
+    demo_url: string | null; created_at: string;
+  };
+  type MockTrigger = {
+    id: string; name: string; source_kind: string;
+    filters: { keywords: string[]; locations: string[]; url: string | null };
+    cadence: string; fire_hour: number; campaign_id: string | null; campaign_name: string | null;
+    status: string; last_run_at: string | null; last_run_state: string | null; created_at: string;
+    runs: MockRun[]; postings: MockPosting[];
+  };
+  const posting = (
+    id: string, employer: string, title: string, city: string, state: string, pay: string,
+    daysAgo: number, status: string, note: string | null, demo: boolean,
+  ): MockPosting => ({
+    id, source_url: `https://www.mycnajobs.com/jobs/${id}`, employer_name: employer, title,
+    city, state, location_text: `${city}, ${state}`, pay_text: pay,
+    posted_at: hoursAgo(24 * daysAgo + 9), status, note,
+    company_id: status === "duplicate" || status === "failed" ? null : `company-${id}`,
+    lead_id: ["enrolled", "ready", "demo_pending"].includes(status) ? `lead-${id}` : null,
+    demo_url: demo ? `${location.origin}/d/mock-${id}` : null,
+    created_at: hoursAgo(24 * daysAgo + 6),
+  });
+  const mockTriggers: MockTrigger[] = triggersEmpty ? [] : [
+    {
+      id: "trg-mycnajobs", name: "myCNAjobs", source_kind: "mycnajobs",
+      filters: { keywords: ["caregiver", "CNA"], locations: ["All US"], url: null },
+      cadence: "daily", fire_hour: 6, campaign_id: "home-care-intro", campaign_name: "Home care agency intro",
+      status: "active", last_run_at: hoursAgo(5), last_run_state: "done", created_at: hoursAgo(24 * 13),
+      runs: [
+        { id: "run-3", state: "done", triggered_by: "schedule", postings_seen: 219, postings_new: 9, error: null, created_at: hoursAgo(5), started_at: hoursAgo(5), finished_at: hoursAgo(4.95) },
+        { id: "run-2", state: "done", triggered_by: "schedule", postings_seen: 212, postings_new: 14, error: "The job board was slow to respond. We retried once and the run finished.", created_at: hoursAgo(29), started_at: hoursAgo(29), finished_at: hoursAgo(28.9) },
+        { id: "run-1", state: "failed", triggered_by: "manual", postings_seen: 0, postings_new: 0, error: "The job board did not load. Nothing was added.", created_at: hoursAgo(53), started_at: hoursAgo(53), finished_at: hoursAgo(52.99) },
+      ],
+      postings: [
+        posting("p1", "Brightpath Home Care", "Caregiver, part time", "Tucson", "AZ", "$16 to $19/hr", 1, "enrolled", "Dana Whitfield, owner", true),
+        posting("p2", "Evergreen Senior Home Care", "CNA, weekends", "Boise", "ID", "$17 to $20/hr", 1, "ready", "Marcus Lee, administrator", true),
+        posting("p3", "Heartland Caregivers of Dayton", "Home health aide", "Dayton", "OH", "$15 to $17/hr", 1, "duplicate", "In Companies since Aug 22", false),
+        posting("p4", "Willow Creek In-Home Care", "Live-in caregiver", "Fort Collins", "CO", "$190 to $220/day", 1, "no_lead", "No owner or administrator found", false),
+        posting("p5", "Serenity Home Care Services", "CNA, overnight", "Chattanooga", "TN", "$16 to $18/hr", 2, "demo_pending", "Priya Natarajan, owner", false),
+        posting("p6", "Golden Hours Home Care", "Caregiver, full time", "Spokane", "WA", "$18 to $21/hr", 2, "in_progress", null, false),
+        posting("p7", "Maple Grove Companion Care", "Companion caregiver", "Lansing", "MI", "$15 to $16/hr", 2, "failed", "The posting page did not load", false),
+        posting("p8", "Harbor Light Home Care", "CNA, per diem", "Wilmington", "NC", "$17 to $19/hr", 3, "new", null, false),
+      ],
+    },
+    {
+      id: "trg-indeed-fl-ga", name: "Indeed", source_kind: "indeed",
+      filters: { keywords: ["live-in caregiver"], locations: ["Florida", "Georgia"], url: null },
+      cadence: "weekly", fire_hour: 6, campaign_id: "home-care-intro", campaign_name: "Home care agency intro",
+      status: "paused", last_run_at: hoursAgo(24 * 8), last_run_state: "done", created_at: hoursAgo(24 * 30),
+      runs: [
+        { id: "run-i1", state: "done", triggered_by: "schedule", postings_seen: 88, postings_new: 6, error: null, created_at: hoursAgo(24 * 8), started_at: hoursAgo(24 * 8), finished_at: hoursAgo(24 * 8 - 0.05) },
+      ],
+      postings: [
+        posting("i1", "Sunrise Companion Care", "Live-in caregiver", "Tampa", "FL", "$180 to $210/day", 8, "enrolled", "Angela Reyes, owner", true),
+        posting("i2", "Peachtree Home Helpers", "Live-in caregiver", "Marietta", "GA", "$175 to $200/day", 8, "no_lead", "No owner or administrator found", false),
+        posting("i3", "Coastal Care Partners", "Live-in caregiver, weekends", "Sarasota", "FL", "$190/day", 9, "dismissed", null, false),
+      ],
+    },
+  ];
+  // Created triggers live in sessionStorage so the create -> detail hand-off
+  // (a full page load) finds them; fixtures are never stored, so they stay
+  // fresh on every load. Per-tab and gone with the tab, like the campaigns.
+  const mockTriggerStorageKey = "driftwood.dashboard.mock-triggers";
+  const mockFixtureTriggerIds = new Set(mockTriggers.map((trigger) => trigger.id));
+  const readStoredMockTriggers = (): MockTrigger[] => {
+    try {
+      const parsed: unknown = JSON.parse(sessionStorage.getItem(mockTriggerStorageKey) ?? "[]");
+      if (!Array.isArray(parsed)) return [];
+      return parsed.filter((row): row is MockTrigger =>
+        Boolean(row) && typeof row.id === "string" && Array.isArray(row.runs) && Array.isArray(row.postings),
+      );
+    } catch {
+      return [];
+    }
+  };
+  const persistMockTriggers = () => {
+    try {
+      sessionStorage.setItem(
+        mockTriggerStorageKey,
+        JSON.stringify(mockTriggers.filter((trigger) => !mockFixtureTriggerIds.has(trigger.id))),
+      );
+    } catch { /* storage blocked (private mode): the preview still works, reload persistence is lost */ }
+  };
+  mockTriggers.unshift(...readStoredMockTriggers());
+  const triggerCounts = (trigger: MockTrigger) => {
+    const by = (status: string) => trigger.postings.filter((row) => row.status === status).length;
+    return {
+      postings: trigger.postings.length,
+      new: by("new"),
+      agencies_added: trigger.postings.filter((row) => row.company_id).length,
+      leads: trigger.postings.filter((row) => row.lead_id).length,
+      demos: trigger.postings.filter((row) => row.demo_url).length,
+      enrolled: by("enrolled"),
+      held: by("no_lead"),
+    };
+  };
+  const triggerRow = (trigger: MockTrigger) => ({
+    id: trigger.id, name: trigger.name, source_kind: trigger.source_kind, filters: trigger.filters,
+    cadence: trigger.cadence, fire_hour: trigger.fire_hour, campaign_id: trigger.campaign_id,
+    campaign_name: trigger.campaign_name, status: trigger.status, last_run_at: trigger.last_run_at,
+    last_run_state: trigger.last_run_state, counts: triggerCounts(trigger), created_at: trigger.created_at,
+  });
+  const triggerError = (status: number, code: string, detail: string) =>
+    new Response(JSON.stringify({ error: { code, detail } }), { status, headers: { "Content-Type": "application/json" } });
+  // Each GET advances an open run one step: queued -> running -> done.
+  const advanceRun = (trigger: MockTrigger) => {
+    const run = trigger.runs[0];
+    if (!run) return;
+    const now = new Date().toISOString();
+    if (run.state === "queued") {
+      run.state = "running";
+      run.started_at = now;
+      trigger.last_run_state = "running";
+    } else if (run.state === "running") {
+      run.state = "done";
+      run.finished_at = now;
+      run.postings_seen = 221;
+      run.postings_new = 1;
+      trigger.last_run_at = now;
+      trigger.last_run_state = "done";
+      const id = `p-${trigger.runs.length}-${trigger.postings.length + 1}`;
+      trigger.postings.unshift({
+        ...posting(id, "Cedar Ridge Home Care", "Caregiver, evenings", "Reno", "NV", "$17 to $20/hr", 0, "new", null, false),
+        posted_at: now, created_at: now,
+      });
+    }
+  };
+  const triggersApi = (init?: RequestInit, url?: string) => {
+    const method = init?.method ?? "GET";
+    const pathname = new URL(url ?? location.href, location.href).pathname;
+    const suffix = pathname.replace("/api/v1/dashboard/triggers", "").replace(/^\//, "");
+    const [encodedId, action] = suffix.split("/");
+    if (method !== "GET" && mockMode === "member") {
+      return triggerError(403, "forbidden", "Only an owner or admin can change triggers.");
+    }
+    if (!encodedId) {
+      if (method === "POST") {
+        const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
+        const campaign = mockCampaigns.find((row) => row.id === body.campaign_id);
+        const now = new Date().toISOString();
+        const trigger: MockTrigger = {
+          id: `trg-${crypto.randomUUID().slice(0, 8)}`,
+          name: String(body.name ?? "Trigger"),
+          source_kind: String(body.source_kind ?? "mycnajobs"),
+          filters: {
+            keywords: Array.isArray(body.filters?.keywords) ? body.filters.keywords.map(String) : [],
+            locations: Array.isArray(body.filters?.locations) ? body.filters.locations.map(String) : [],
+            url: typeof body.filters?.url === "string" ? body.filters.url : null,
+          },
+          cadence: body.cadence === "weekly" ? "weekly" : "daily",
+          fire_hour: Number.isInteger(body.fire_hour) ? body.fire_hour : 6,
+          campaign_id: campaign?.id ?? null,
+          campaign_name: campaign?.name ?? null,
+          status: "active", last_run_at: null, last_run_state: null, created_at: now,
+          runs: [], postings: [],
+        };
+        mockTriggers.unshift(trigger);
+        persistMockTriggers();
+        return new Response(JSON.stringify(triggerRow(trigger)), { status: 201, headers: { "Content-Type": "application/json" } });
+      }
+      return { triggers: mockTriggers.map(triggerRow) };
+    }
+    const trigger = mockTriggers.find((row) => row.id === decodeURIComponent(encodedId));
+    if (!trigger) return triggerError(404, "not_found", "Trigger not found");
+    if (method === "POST" && action === "run") {
+      if (trigger.runs[0] && ["queued", "running"].includes(trigger.runs[0].state)) {
+        return triggerError(409, "run_in_progress", "A run is already in progress for this trigger.");
+      }
+      const run: MockRun = {
+        id: `run-${crypto.randomUUID().slice(0, 8)}`, state: "queued", triggered_by: "manual",
+        postings_seen: 0, postings_new: 0, error: null, created_at: new Date().toISOString(),
+        started_at: null, finished_at: null,
+      };
+      trigger.runs.unshift(run);
+      trigger.last_run_state = "queued";
+      persistMockTriggers();
+      return new Response(JSON.stringify({ run_id: run.id }), { status: 202, headers: { "Content-Type": "application/json" } });
+    }
+    if (method === "POST" && (action === "pause" || action === "resume")) {
+      trigger.status = action === "pause" ? "paused" : "active";
+      persistMockTriggers();
+      return triggerRow(trigger);
+    }
+    advanceRun(trigger);
+    persistMockTriggers();
+    return { trigger: triggerRow(trigger), runs: trigger.runs, postings: trigger.postings };
+  };
+
   // Matching is startsWith with NO method check, so more-specific paths must
   // come first — /sends/cancel and /sends/dismiss (POST) would otherwise be
   // swallowed by the /sends fixture, and /reviews/decide by /reviews.
   const routes: [string, unknown][] = [
+    ["/api/v1/dashboard/triggers", triggersApi],
     // The audiences surface routes through audKnob so ?audlat/?auderr can
     // express slow and failing states (see the knob comment above).
     ["/api/v1/imports/leads", (init?: RequestInit) => audKnob("upload", () => leadImportsApi(init))],

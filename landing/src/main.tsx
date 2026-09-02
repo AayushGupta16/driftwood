@@ -19,6 +19,8 @@ const Drift = lazy(() => import('./drift/Drift.tsx'))
 const Campaigns = lazy(() => import('./campaigns/Campaigns.tsx'))
 const CampaignBuilder = lazy(() => import('./campaigns/CampaignBuilder.tsx'))
 const Audiences = lazy(() => import('./audiences/Audiences.tsx'))
+const Triggers = lazy(() => import('./triggers/Triggers.tsx'))
+const TriggerDetail = lazy(() => import('./triggers/TriggerDetail.tsx'))
 const Assets = lazy(() => import('./assets/Assets.tsx'))
 const AnalyticsDashboard = lazy(() => import('./analytics/AnalyticsDashboard.tsx'))
 const WorkspacePage = lazy(() => import('./dashboard/WorkspacePage.tsx'))
@@ -32,6 +34,7 @@ const requestedPath = window.location.pathname.replace(/\/+$/, '')
 // on the workspace overview instead of rendering the marketing page.
 const path = requestedPath === '/dashboard.html' ? '/dashboard' : requestedPath
 const campaignPathMatch = path.match(/^\/dashboard\/campaigns\/([^/]+)$/)
+const triggerPathMatch = path.match(/^\/dashboard\/triggers\/([^/]+)$/)
 // const page = path === '/pricing' ? <Pricing /> : <App />
 // /og renders the social card; screenshot it at 1200x630 (dpr 2) to refresh public/og-5.png
 const page =
@@ -47,6 +50,10 @@ const page =
     <Campaigns />
   ) : campaignPathMatch ? (
     <CampaignBuilder campaignId={decodeURIComponent(campaignPathMatch[1])} />
+  ) : path === '/dashboard/triggers' ? (
+    <WorkspacePage active="triggers"><Triggers /></WorkspacePage>
+  ) : triggerPathMatch ? (
+    <WorkspacePage active="triggers"><TriggerDetail triggerId={decodeURIComponent(triggerPathMatch[1])} /></WorkspacePage>
   ) : path === '/dashboard/team' ? (
     <WorkspacePage active="team"><Team /></WorkspacePage>
   ) : path === '/dashboard/leads' ? (

@@ -17,6 +17,7 @@ import {
   SearchVisibilityIcon,
   FleetIcon,
   DriftIcon,
+  TriggerIcon,
   type DashboardIconProps,
 } from "./icons";
 import {
@@ -53,6 +54,7 @@ const ICONS: Record<DashboardIconName, (props: DashboardIconProps) => ReactNode>
   overview: OverviewIcon,
   audience: AudienceIcon,
   campaign: CampaignIcon,
+  trigger: TriggerIcon,
   metrics: MetricsIcon,
   people: PeopleIcon,
   companies: CompaniesIcon,
