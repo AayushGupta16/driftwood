@@ -105,7 +105,9 @@ export default function TriggerForm(props: Props) {
       <form className="trigger-form" onSubmit={handleSubmit} noValidate>
         <div className="trigger-form-body">
           <div className="trigger-field">
-            <label className="trigger-label" htmlFor="trigger-watch">What should your agent watch?</label>
+            {/* The question is the box's own headline, not a 0.72rem form
+                label: it is the only thing the customer has to answer. */}
+            <label className="trigger-ask" htmlFor="trigger-watch">What should your agent watch?</label>
             <textarea
               className="trigger-input trigger-textarea"
               id="trigger-watch"

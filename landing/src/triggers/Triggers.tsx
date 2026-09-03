@@ -14,6 +14,7 @@ import {
   triggerTitle,
   triggerView,
   viewLabel,
+  viewTone,
   type Trigger,
 } from "./model";
 import { TriggerIcon } from "../dashboard/icons";
@@ -63,7 +64,7 @@ function TriggerRow({ trigger }: { trigger: Trigger }) {
       href={withMockMode(`/dashboard/triggers/${encodeURIComponent(trigger.id)}`)}
       data-testid={`trigger-row-${trigger.id}`}
     >
-      <span className={`campaign-status campaign-status-${view}`}>{viewLabel(view)}</span>
+      <span className={`campaign-status trigger-status trigger-tone-${viewTone(view)}`}>{viewLabel(view)}</span>
       <span className="campaign-list-copy">
         <strong>{triggerTitle(trigger)}</strong>
         {readback && <span>{readback}</span>}
@@ -148,7 +149,7 @@ export default function Triggers() {
 
   if (showForm && canWrite) {
     return (
-      <section className="audience-page" aria-labelledby="triggers-heading">
+      <section className="audience-page trigger-page" aria-labelledby="triggers-heading">
         <a className="trigger-back" href={withMockMode(LIST_PATH)} onClick={(event) => { event.preventDefault(); closeForm(); }}>
           <BackChevron />Triggers
         </a>
@@ -160,7 +161,7 @@ export default function Triggers() {
   const triggers = state.status === "ready" ? state.triggers : [];
 
   return (
-    <section className="audience-page" aria-labelledby="triggers-heading">
+    <section className="audience-page trigger-page" aria-labelledby="triggers-heading">
       <header className="audience-heading">
         <div className="trigger-title-row">
           <h1 id="triggers-heading">Triggers</h1>

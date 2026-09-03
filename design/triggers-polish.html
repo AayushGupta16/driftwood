@@ -1,0 +1,827 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Triggers, design pass (2026-09-02)</title>
+<!--
+  DESIGN DRAFT: /dashboard/triggers, polish pass, 2026-09-02 evening.
+  Draft-first per design-language.md and the house note in memory: the
+  screens get judged on their own before any React moves.
+
+  This draft supersedes design/triggers.html, which was already superseded
+  once (by the one-box revision that shipped this evening). That file is
+  history for the INFORMATION on these screens; this file is the CRAFT
+  pass over the screens that shipped. Nothing here adds a field, a state
+  or a word.
+
+  What this pass changes, and why:
+
+  1. One vertical scale. The detail page stacked three blocks on three
+     different spacing logics (0.3 / 0.6 / 0.7 / 0.8 / 1.35 / 2rem). Every
+     gap now comes from five steps, --trg-1..5, and the head block is
+     closed by a hairline so the readback stops running into the first
+     table heading.
+  2. One chip vocabulary. Item state, check result and the trigger's own
+     state were three unrelated treatments (a sand pill, a bare dot, and
+     plain text). Now one tone sets the dot and the shape follows the
+     density: bare beside a heading or in a list row (the Campaigns
+     grammar), pilled inside a table cell (the Leads/Companies grammar).
+     --alert appears only as the needs-attention dot the design language
+     sanctions for a dashboard surface, never as a fill.
+  3. The tables. Header and body share one inline padding so columns line
+     up with their labels; the header is white with a hairline, like Leads
+     and Companies, instead of a sand bar; counts are right-aligned and
+     tabular against their own headers; the links sit at the right edge on
+     one line with the demo carrying the accent; long names clamp at two
+     decks with the full string in the title.
+  4. The "Found Sep 1" glitch. An undated item used to break a column of
+     bare dates with a two-word sentence. The column is now "When" in both
+     tables, always a bare date, and an undated item says so on the gray
+     sub-line under it -- the same grammar the Checks table's When column
+     already used for "Scheduled".
+  5. The readback gets the weight it earned: 1.02rem ink at a 44rem
+     measure, directly under the name, with the facts a step smaller and a
+     step quieter under it. No tint, no rule, no box -- the page already
+     carries two cards and a third surface would flatten all of them.
+  6. Building and Not supported stop being near-blank pages. The
+     customer's own sentence moves up into the readback slot, and the line
+     about the wait (or the reason the source could not be read) lands in
+     a designed card where the tables would be. Same words, arranged.
+  7. Check now joins the header actions as a ghost pill, so the page has
+     two button families instead of three (ux-principles rule 11).
+
+  Tokens are the app's, verbatim: landing/src/index.css @theme. The
+  stylesheet below the token block is character-for-character the same as
+  landing/src/triggers/triggers.css. Sample data only.
+-->
+<style>
+  @font-face{font-family:"Public Sans";src:url(https://driftwood.sh/fonts/public-sans-latin-wght-normal.woff2) format("woff2-variations");font-weight:100 900;font-display:swap}
+  @font-face{font-family:"Source Serif 4";src:url(https://driftwood.sh/fonts/source-serif-4-latin-600-normal.woff2) format("woff2");font-weight:600;font-display:swap}
+
+  :root {
+    --color-paper: #ffffff;
+    --color-surface: #ffffff;
+    --color-ink: #16181b;
+    --color-ink-soft: #6a737d;
+    --color-ink-faint: #6f7780;
+    --color-tide: #15557e;
+    --color-tide-deep: #0d3c5b;
+    --color-tide-wash: #eaf1f7;
+    --color-sand: #eef2f5;
+    --color-line: #e9ebee;
+    --color-ok: #197142;
+    --color-alert: #b42318;
+    --shadow-win: 0 1px 2px rgba(22, 24, 27, 0.05), 0 24px 48px -24px rgba(22, 24, 27, 0.18);
+    --shadow-win-sm: 0 1px 2px rgba(22, 24, 27, 0.04), 0 10px 20px -14px rgba(22, 24, 27, 0.12);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  :focus-visible { outline: 2px solid var(--color-tide); outline-offset: 2px; }
+
+  /* --- draft canvas chrome only; not part of the app --- */
+  .canvas { width: min(100%, 96rem); margin: 0 auto; padding: 2rem 1.5rem 6rem; }
+  .canvas > h1 { margin: 0 0 0.35rem; font-size: 1.5rem; font-weight: 620; letter-spacing: -0.02em; }
+  .canvas > p.lede { max-width: 46rem; margin: 0 0 2.5rem; color: var(--color-ink-soft); font-size: 0.9rem; line-height: 1.6; }
+  .shot { margin-top: 3rem; }
+  .shot > .cap { display: flex; align-items: baseline; gap: 0.6rem; margin: 0 0 0.7rem; color: var(--color-ink-faint); font-size: 0.72rem; font-weight: 650; }
+  .shot > .cap b { color: var(--color-ink); font-weight: 650; }
+  .frame { border: 1px solid var(--color-line); border-radius: 12px; background: var(--color-surface); padding: 2.25rem 2rem 2.75rem; box-shadow: var(--shadow-win-sm); }
+  .rowpair { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 1.5rem; }
+  /* draft chrome only: at phone width the canvas gets out of the way so the
+     screens inside are rendered at a realistic content width. */
+
+  /* --- the bits these pages borrow from audiences.css --- */
+  .audience-page { width: min(100%, 82rem); margin: 0 auto; color: var(--color-ink); }
+  .audience-heading { display: flex; min-height: 2.8rem; align-items: center; justify-content: space-between; gap: 1.5rem; }
+  .audience-heading h1 { max-width: 18ch; margin: 0; font-size: clamp(1.7rem, 3.6vw, 2.25rem); font-weight: 620; letter-spacing: -0.028em; line-height: 1.05; text-wrap: balance; }
+  .audience-read-only { flex: 0 0 auto; border: 1px solid var(--color-line); border-radius: 999px; background: var(--color-sand); color: var(--color-ink-soft); padding: 0.55rem 0.8rem; font-size: 0.72rem; font-weight: 650; }
+  .audience-primary, .audience-secondary { display: inline-flex; min-height: 2.55rem; align-items: center; justify-content: center; gap: 0.5rem; border-radius: 999px; padding: 0.62rem 1rem; font: inherit; font-size: 0.82rem; font-weight: 620; cursor: pointer; transition: transform 200ms cubic-bezier(0.2,0,0,1), background 200ms cubic-bezier(0.2,0,0,1), border-color 200ms cubic-bezier(0.2,0,0,1); }
+  .audience-primary { border: 1px solid var(--color-tide); background: var(--color-tide); color: white; }
+  .audience-primary:hover { transform: translateY(-1px); background: var(--color-tide-deep); }
+  .audience-secondary { border: 1px solid var(--color-line); background: var(--color-surface); color: var(--color-ink); }
+  .audience-secondary:hover { border-color: var(--color-tide); background: var(--color-tide-wash); }
+  .audience-state { display: grid; min-height: 17rem; place-items: center; align-content: center; gap: 0.55rem; color: var(--color-ink-faint); padding: 2rem; text-align: center; }
+  .audience-state h2 { margin: 0.25rem 0 0; color: var(--color-ink); font-size: 1rem; }
+  .audience-state p { max-width: 27rem; margin: 0; color: var(--color-ink-soft); font-size: 0.78rem; line-height: 1.5; }
+  .audience-state-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.55rem; margin-top: 0.45rem; }
+  .audience-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+  /* --- the bits these pages borrow from campaigns.css --- */
+  .campaign-list { border-bottom: 1px solid var(--color-line); }
+  .campaign-list-row { display: grid; width: 100%; grid-template-columns: 5rem minmax(15rem, 2fr) minmax(11rem, 1fr) 4rem minmax(8rem, 0.75fr) 2rem; align-items: center; gap: 1rem; border: 0; border-bottom: 1px solid var(--color-line); background: transparent; color: inherit; padding: 1.15rem 0.75rem; text-align: left; cursor: pointer; transition: background 200ms cubic-bezier(0.2,0,0,1), transform 200ms cubic-bezier(0.2,0,0,1); }
+  .campaign-list-row:last-child { border-bottom: 0; }
+  .campaign-list-row:hover { background: color-mix(in srgb, var(--color-tide-wash) 58%, white); transform: translateX(2px); }
+  .campaign-status { display: inline-flex; width: max-content; align-items: center; gap: 0.4rem; color: var(--color-ink-soft); font-size: 0.7rem; font-weight: 600; }
+  .campaign-status::before { width: 0.45rem; height: 0.45rem; border-radius: 50%; background: var(--color-ink-faint); content: ""; }
+  .campaign-list-copy, .campaign-list-updated { display: flex; min-width: 0; flex-direction: column; gap: 0.28rem; }
+  .campaign-list-copy strong { overflow: hidden; font-size: 0.92rem; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+  .campaign-list-copy > span, .campaign-list-updated > span { overflow: hidden; color: var(--color-ink-soft); font-size: 0.76rem; text-overflow: ellipsis; white-space: nowrap; }
+  .campaign-list-open { display: inline-flex; color: var(--color-tide); }
+  .campaign-primary, .campaign-secondary, .campaign-quiet-button { display: inline-flex; min-height: 2.55rem; align-items: center; justify-content: center; gap: 0.5rem; border-radius: 999px; padding: 0.65rem 1rem; font: inherit; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: background 200ms cubic-bezier(0.2,0,0,1), border-color 200ms cubic-bezier(0.2,0,0,1); }
+  .campaign-quiet-button { border: 1px solid transparent; background: transparent; color: var(--color-ink-soft); }
+  .campaign-quiet-button:hover { background: var(--color-sand); color: var(--color-ink); }
+  .campaign-inline-error { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 1.25rem; border: 1px solid color-mix(in srgb, var(--color-alert) 28%, var(--color-line)); border-radius: 0.7rem; background: color-mix(in srgb, var(--color-alert) 5%, white); color: var(--color-alert); padding: 0.75rem 0.9rem; font-size: 0.75rem; }
+  .campaign-inline-error button { border: 0; background: transparent; color: inherit; font: inherit; font-weight: 650; cursor: pointer; text-decoration: underline; text-underline-offset: 0.2rem; }
+
+  @media (max-width: 700px) {
+    .canvas { padding: 1rem 0.75rem 4rem; }
+    .frame { border-radius: 10px; padding: 1.25rem 0.9rem 2rem; }
+    .rowpair { gap: 1rem; }
+  }
+  @media (max-width: 48rem) {
+    /* audiences.css ships this; the draft needs it to be honest at 390px. */
+    .audience-heading { align-items: stretch; flex-direction: column; }
+    .audience-heading .audience-primary { align-self: flex-start; }
+    .shot { margin-top: 2rem; }
+  }
+
+/* ================= triggers.css, verbatim ================= */
+/* ---------- one vertical scale ---------- */
+/* The detail page stacks a head block and two table sections, and each one
+   used to invent its own gap. Every margin below comes from these five
+   steps (0.4rem x 1, 2, 3, 4.5, 6.5), so the page has a rhythm instead of
+   a pile of one-off values. */
+.trigger-page {
+  --trg-1: 0.4rem;
+  --trg-2: 0.8rem;
+  --trg-3: 1.2rem;
+  --trg-4: 1.8rem;
+  --trg-5: 2.6rem;
+}
+
+.trigger-title-row { display: flex; min-width: 0; flex-wrap: wrap; align-items: center; gap: 0.7rem; }
+.trigger-title-row h1 { max-width: none; }
+.trigger-heading-actions { display: flex; flex: 0 0 auto; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+
+.trigger-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-bottom: var(--trg-2);
+  border-radius: 3px;
+  color: var(--color-ink-soft);
+  font-size: 0.78rem;
+  font-weight: 560;
+  text-decoration: none;
+  transition: color 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+.trigger-back:hover { color: var(--color-ink); }
+
+/* ---------- the head block ---------- */
+/* Name, the agent's line and the facts are one block, closed by a hairline.
+   The rule is what separates the head from the sections below; without it
+   the readback and the first table heading read as one run of text. */
+.trigger-head { margin-bottom: var(--trg-5); padding-bottom: var(--trg-4); border-bottom: 1px solid var(--color-line); }
+
+/* The readback is the centrepiece of the feature: the one line the customer
+   reads to check the agent understood. It earns its weight from size and
+   ink, not from a box — a tinted callout here would be a second surface on
+   a page that already has two cards. Measure capped near 70ch. */
+.trigger-readback {
+  margin: var(--trg-3) 0 0;
+  max-width: 44rem;
+  color: var(--color-ink);
+  font-size: 1.02rem;
+  font-weight: 450;
+  letter-spacing: -0.006em;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+/* The facts under it are deliberately a step quieter and a step smaller, so
+   the two lines never compete. */
+.trigger-meta-line {
+  margin: var(--trg-2) 0 0;
+  max-width: 44rem;
+  color: var(--color-ink-faint);
+  font-size: 0.76rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+}
+.trigger-meta-sep { padding: 0 0.4rem; color: var(--color-ink-faint); opacity: 0.5; }
+.trigger-meta-line a { border-radius: 3px; color: var(--color-tide); font-weight: 600; text-decoration: none; }
+.trigger-meta-line a:hover { text-decoration: underline; text-underline-offset: 0.15rem; }
+
+/* ---------- one chip vocabulary ---------- */
+/* Item state, check result and the trigger's own state are one language:
+   the tone sets the dot, the shape follows the density. Bare beside a
+   heading or in a list row (the Campaigns grammar), pilled inside a table
+   cell (the Leads/Companies grammar). One accent: tide marks the wins a
+   customer scans for, everything finished without one goes quiet, and the
+   alert token appears only as the needs-attention dot the design language
+   sanctions for a dashboard surface — never as a fill, which would make it
+   a second accent. */
+.trigger-tone-live { --trg-dot: var(--color-ok); }
+.trigger-tone-accent { --trg-dot: var(--color-tide); }
+.trigger-tone-neutral { --trg-dot: var(--color-ink-faint); }
+.trigger-tone-quiet { --trg-dot: transparent; }
+.trigger-tone-alert { --trg-dot: var(--color-alert); }
+
+.trigger-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-ink-soft);
+  padding: 0.16rem 0.52rem 0.16rem 0.44rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+.trigger-chip::before {
+  flex: 0 0 auto;
+  width: 0.38rem;
+  height: 0.38rem;
+  border-radius: 50%;
+  background: var(--trg-dot, var(--color-ink-faint));
+  content: "";
+}
+.trigger-chip.trigger-tone-accent { border-color: color-mix(in srgb, var(--color-tide) 20%, var(--color-line)); background: var(--color-tide-wash); color: var(--color-tide-deep); }
+.trigger-chip.trigger-tone-quiet { color: var(--color-ink-faint); }
+.trigger-chip.trigger-tone-quiet::before { box-shadow: inset 0 0 0 1px var(--color-ink-faint); }
+
+/* The bare form, on the heading and the list row. Same dot, same tones. */
+.campaign-status.trigger-status::before { background: var(--trg-dot, var(--color-ink-faint)); box-shadow: none; }
+.campaign-status.trigger-status.trigger-tone-quiet { color: var(--color-ink-faint); }
+.campaign-status.trigger-status.trigger-tone-quiet::before { box-shadow: inset 0 0 0 1px var(--color-ink-faint); }
+
+/* ---------- list ---------- */
+/* Campaigns' row, three columns instead of five: the chip, the name with
+   the readback and meta under it, and when it last checked. */
+/* The rule frames the rows, the way Campaigns' tool bar frames its list.
+   An empty or failed list is one card and needs no rule above it. */
+.trigger-list { margin-top: var(--trg-4); border-top: 1px solid var(--color-line); }
+.trigger-list:has(> .audience-state) { border-top: 0; border-bottom: 0; }
+.trigger-row { grid-template-columns: 7.5rem minmax(14rem, 3fr) minmax(8rem, 1fr) 2rem; color: inherit; text-decoration: none; }
+/* The readback is the line the customer reads to check the agent
+   understood, so it gets two lines rather than one truncated one. */
+.trigger-row .campaign-list-copy > span {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  white-space: normal;
+  text-overflow: clip;
+  line-height: 1.45;
+}
+.trigger-row .campaign-list-copy small { color: var(--color-ink-faint); font-size: 0.7rem; font-variant-numeric: tabular-nums; }
+/* Campaigns drops this column under 900px because a campaign's "updated"
+   date is a nicety. Here it is when the watch last ran, which is the
+   answer to the only question this list gets asked, so it stays and moves
+   under the copy instead. */
+.trigger-row .campaign-list-updated { display: flex; }
+.trigger-row .campaign-list-updated span { font-size: 0.74rem; font-variant-numeric: tabular-nums; }
+/* Still being built, or on a source we cannot read: the row steps back,
+   the chip stays crisp. */
+.trigger-row-muted .campaign-list-copy,
+.trigger-row-muted .campaign-list-updated { opacity: 0.62; }
+
+/* ---------- states ---------- */
+/* Empty, error, building and not-supported all land in the same card, so a
+   page with nothing in it still reads as designed rather than unfinished. */
+.trigger-empty,
+.trigger-state-card {
+  border: 1px solid var(--color-line);
+  border-radius: 0.85rem;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-win-sm);
+}
+.trigger-empty { margin-top: var(--trg-4); }
+.trigger-empty .audience-state-actions { margin-top: var(--trg-1); }
+.trigger-state {
+  display: grid;
+  min-height: 11.5rem;
+  place-items: center;
+  align-content: center;
+  gap: var(--trg-2);
+  color: var(--color-ink-faint);
+  padding: 2rem 1.5rem;
+  text-align: center;
+}
+.trigger-state p { max-width: 32rem; margin: 0; color: var(--color-ink-soft); font-size: 0.86rem; line-height: 1.55; }
+/* Work in flight: a slow breath on the mark, not a spinner asking to be
+   watched. Static under reduced motion. */
+.trigger-state-working svg { animation: trigger-breathe 2.6s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate; }
+@keyframes trigger-breathe { to { opacity: 0.35; } }
+
+/* ---------- sections and tables ---------- */
+.trigger-section + .trigger-section { margin-top: var(--trg-5); }
+.trigger-section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin-bottom: var(--trg-2);
+}
+.trigger-section-head h2 { margin: 0; color: var(--color-ink); font-size: 0.98rem; font-weight: 650; letter-spacing: -0.012em; }
+.trigger-section-count { color: var(--color-ink-faint); font-size: 0.72rem; font-variant-numeric: tabular-nums; }
+
+.trigger-table-card {
+  border: 1px solid var(--color-line);
+  border-radius: 0.85rem;
+  background: var(--color-surface);
+  overflow: hidden;
+  box-shadow: var(--shadow-win-sm);
+}
+/* The scroll lives in the card, never in the page: a table wider than the
+   viewport used to push Status and the links off screen. The min-widths are
+   the narrowest these columns stay readable at, so a phone scrolls the card
+   and nothing else. */
+.trigger-table-wrap { overflow-x: auto; overscroll-behavior-x: contain; }
+.trigger-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+.trigger-table-items { min-width: 33rem; }
+.trigger-table-runs { min-width: 21rem; }
+/* Deliberate columns rather than whatever the content negotiates: the date
+   and the chip get exactly the room they need, the two prose columns share
+   the rest, and the links hug the right edge. Left as hints (table-layout
+   stays auto) so a long word can still push instead of clipping. */
+.trigger-table-items th:nth-child(1) { width: 7rem; }
+.trigger-table-items th:nth-child(2) { width: 26%; }
+.trigger-table-items th:nth-child(4) { width: 10.5rem; }
+.trigger-table-items th:nth-child(5) { width: 8rem; }
+.trigger-table-runs th:nth-child(1) { width: 42%; }
+.trigger-table-runs th:nth-child(2),
+.trigger-table-runs th:nth-child(3) { width: 5.5rem; }
+/* Header and body carry the same inline padding, so every column lines up
+   with its own label. The header is white with a hairline under it, like
+   the Leads and Companies tables; a sand bar read as a third surface. */
+.trigger-table th {
+  position: relative;
+  border-bottom: 1px solid var(--color-line);
+  background: var(--color-surface);
+  color: var(--color-ink-faint);
+  padding: 0.72rem 0.9rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+}
+.trigger-table td {
+  border-bottom: 1px solid var(--color-line);
+  color: var(--color-ink-soft);
+  padding: 0.72rem 0.9rem;
+  vertical-align: top;
+  line-height: 1.45;
+}
+.trigger-table tbody tr { transition: background 160ms cubic-bezier(0.2, 0, 0, 1); }
+.trigger-table tbody tr:hover { background: color-mix(in srgb, var(--color-tide-wash) 45%, white); }
+.trigger-table tbody tr:last-child td { border-bottom: 0; }
+/* Counts and dates: tabular so the columns read as columns, and counts sit
+   right against their own header. */
+.trigger-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.trigger-col-num { text-align: right; }
+.trigger-cell-strong { display: block; color: var(--color-ink); font-weight: 600; }
+/* A long name wraps twice and then stops; the whole thing stays in the
+   title attribute, so no row is ever three decks tall on its own. */
+.trigger-clamp {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.trigger-sub { display: block; margin-top: 0.18rem; color: var(--color-ink-faint); font-size: 0.71rem; line-height: 1.4; overflow-wrap: anywhere; }
+.trigger-table-skeleton td .campaign-skel { display: block; width: 70%; }
+.trigger-table-empty { margin: 0; padding: 2.4rem 1.25rem; color: var(--color-ink-soft); font-size: 0.84rem; text-align: center; }
+
+/* Links sit at the right edge, on one line. The demo is the win, so it
+   carries the accent; the source stays quiet until you reach for it. */
+.trigger-links { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.1rem 0.65rem; }
+.trigger-link { border-radius: 3px; color: var(--color-ink-soft); font-weight: 600; text-decoration: none; white-space: nowrap; }
+.trigger-link:hover { color: var(--color-tide); text-decoration: underline; text-underline-offset: 0.15rem; }
+.trigger-link-win { color: var(--color-tide); }
+.trigger-link-win:hover { color: var(--color-tide-deep); }
+
+/* ---------- the box ---------- */
+.trigger-form {
+  max-width: 40rem;
+  margin-top: var(--trg-4);
+  border: 1px solid var(--color-line);
+  border-radius: 0.85rem;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-win-sm);
+}
+.trigger-form-body { min-width: 0; padding: 1.4rem 1.4rem 1.5rem; }
+.trigger-field + .trigger-field { margin-top: var(--trg-4); }
+
+.trigger-input,
+.trigger-select {
+  display: block;
+  width: 100%;
+  min-height: 2.5rem;
+  border: 1px solid var(--color-line);
+  border-radius: 0.6rem;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  padding: 0.55rem 0.75rem;
+  font: inherit;
+  font-size: 0.86rem;
+  transition: border-color 200ms cubic-bezier(0.2, 0, 0, 1), box-shadow 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+/* The sentence is the whole product, so the box it goes in is the biggest
+   thing on the screen and the type in it matches the readback it becomes. */
+.trigger-textarea { min-height: 5.6rem; padding: 0.7rem 0.8rem; font-size: 0.95rem; line-height: 1.5; resize: vertical; }
+.trigger-input::placeholder { color: var(--color-ink-faint); }
+.trigger-input:focus,
+.trigger-select:focus {
+  outline: none;
+  border-color: var(--color-tide);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-tide) 14%, transparent);
+}
+.trigger-input:disabled,
+.trigger-select:disabled { cursor: not-allowed; opacity: 0.6; }
+/* A native select with no indicator reads as unfinished; the chevron is the
+   ink scale, drawn in the control rather than added as an icon file. */
+.trigger-select {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--color-ink-soft) 50%), linear-gradient(135deg, var(--color-ink-soft) 50%, transparent 50%);
+  background-position: right 1.05rem top 55%, right 0.75rem top 55%;
+  background-size: 0.3rem 0.3rem, 0.3rem 0.3rem;
+  background-repeat: no-repeat;
+  padding-right: 2rem;
+}
+/* The question the page asks is the field's own headline, not a form
+   label; the campaign under it stays a quiet label. */
+.trigger-ask { display: block; margin: 0 0 var(--trg-2); color: var(--color-ink); font-size: 0.95rem; font-weight: 600; letter-spacing: -0.008em; }
+.trigger-label { display: block; margin: 0 0 var(--trg-1); color: var(--color-ink-soft); font-size: 0.74rem; font-weight: 600; }
+.trigger-hint { margin: var(--trg-1) 0 0; color: var(--color-ink-faint); font-size: 0.7rem; line-height: 1.45; }
+
+.trigger-form-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; border-top: 1px solid var(--color-line); padding: 1rem 1.4rem; }
+.trigger-form-actions .campaign-quiet-button { padding-inline: 0.7rem; }
+.trigger-field-error { margin: var(--trg-1) 0 0; color: var(--color-alert); font-size: 0.75rem; line-height: 1.45; }
+.trigger-form-error { margin: var(--trg-3) 1.4rem 0; }
+
+/* ---------- narrow ---------- */
+/* Two steps, borrowed from the neighbours rather than invented: 60rem drops
+   the affordances a mouse needs, and 48rem is where audiences.css already
+   stacks the page heading, so the header and the rows change shape on the
+   same line. */
+@media (max-width: 60rem) {
+  .trigger-row { grid-template-columns: 7.5rem minmax(0, 1fr); gap: 0.5rem 0.9rem; }
+  .trigger-row .campaign-list-updated { grid-column: 2; }
+  .trigger-row .campaign-list-open { display: none; }
+}
+
+@media (max-width: 48rem) {
+  /* One column: a chip column narrow enough for a phone cannot hold "Not
+     supported", so the chip takes its own line and leads the row. */
+  .trigger-row { grid-template-columns: minmax(0, 1fr); gap: 0.45rem; }
+  .trigger-row .campaign-list-updated { grid-column: 1; }
+  .trigger-heading-actions { width: 100%; }
+  .trigger-readback { font-size: 0.96rem; }
+  .trigger-head { margin-bottom: var(--trg-4); padding-bottom: var(--trg-3); }
+  .trigger-section + .trigger-section { margin-top: var(--trg-4); }
+  /* The column hints are a desktop instrument. On a phone they add up to
+     more than the table's own min-width and squeeze the prose column to
+     nothing, one character per line, so hand the widths back to the
+     browser and scroll a narrower table instead. */
+  .trigger-table-items { min-width: 30rem; }
+  .trigger-table-items th:nth-child(1),
+  .trigger-table-items th:nth-child(2),
+  .trigger-table-items th:nth-child(4),
+  .trigger-table-items th:nth-child(5),
+  .trigger-table-runs th:nth-child(1),
+  .trigger-table-runs th:nth-child(2),
+  .trigger-table-runs th:nth-child(3) { width: auto; }
+  .trigger-table th,
+  .trigger-table td { padding-inline: 0.7rem; }
+}
+
+@media (max-width: 30rem) {
+  .trigger-form-body { padding-inline: 1.05rem; }
+  .trigger-form-actions { padding-inline: 1.05rem; }
+  .trigger-form-actions .audience-primary { width: 100%; }
+  .trigger-form-error { margin-inline: 1.05rem; }
+  .trigger-state { min-height: 9.5rem; padding: 1.6rem 1.1rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trigger-back,
+  .trigger-input,
+  .trigger-select,
+  .trigger-table tbody tr { transition: none; }
+  .trigger-state-working svg { animation: none; }
+}
+</style>
+<body>
+<div class="canvas">
+<h1>Triggers, design pass</h1>
+<p class="lede">The screens that shipped this evening, taken through a craft pass: one vertical scale, one chip vocabulary, tables that are actually designed, and states that look finished when there is nothing in them. No field, state or word is added or removed.</p>
+<p class="lede">This canvas carries the app's own media queries, so <b>narrow the window to 390px</b> to see the phone: the rows go to one column, the head block keeps its rhythm, and the two tables scroll inside their own cards while the page body never does.</p>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="i-trigger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.25"/><path d="M8.2 8.2a5.4 5.4 0 0 0 0 7.6M15.8 8.2a5.4 5.4 0 0 1 0 7.6M5.4 5.4a9.3 9.3 0 0 0 0 13.2M18.6 5.4a9.3 9.3 0 0 1 0 13.2"/></symbol><symbol id="i-back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></symbol><symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M12 5l7 7-7 7"/></symbol><symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></symbol></svg>
+
+<!-- ============ 1. LIST ============ -->
+<section class="shot">
+  <p class="cap"><b>1 &middot; List</b> &mdash; the Campaigns row grammar. The chip leads, the agent's line sits under the name, the last check closes the row.</p>
+  <div class="frame">
+    <section class="audience-page trigger-page">
+      <header class="audience-heading">
+        <div class="trigger-title-row"><h1>Triggers</h1></div>
+        <button class="audience-primary" type="button"><svg width="17" height="17"><use href="#i-plus"/></svg> New trigger</button>
+      </header>
+      <div class="trigger-list campaign-list">
+        <a class="campaign-list-row trigger-row" href="#">
+          <span class="campaign-status trigger-status trigger-tone-live">Active</span>
+          <span class="campaign-list-copy">
+            <strong>myCNAjobs</strong>
+            <span>Checks mycnajobs.com every night for caregiver and CNA jobs in five metros, skipping hospitals and senior living.</span>
+            <small>Every night, 2&nbsp;AM PT &middot; 9 found &middot; 7 companies added &middot; 3 demos &middot; 1 enrolled</small>
+          </span>
+          <span class="campaign-list-updated"><span>Last check Sep 2</span></span>
+          <span class="campaign-list-open" aria-hidden="true"><svg width="17" height="17"><use href="#i-arrow"/></svg></span>
+        </a>
+        <a class="campaign-list-row trigger-row" href="#">
+          <span class="campaign-status trigger-status trigger-tone-neutral">Paused</span>
+          <span class="campaign-list-copy">
+            <strong>Series A raises</strong>
+            <span>Searches the web every morning for climate tech companies that announced a Series A in the last week.</span>
+            <small>Every morning, 6&nbsp;AM PT &middot; 3 found &middot; 3 companies added &middot; 2 demos &middot; 1 enrolled</small>
+          </span>
+          <span class="campaign-list-updated"><span>Last check Sep 1</span></span>
+          <span class="campaign-list-open" aria-hidden="true"><svg width="17" height="17"><use href="#i-arrow"/></svg></span>
+        </a>
+        <a class="campaign-list-row trigger-row" href="#">
+          <span class="campaign-status trigger-status trigger-tone-live">Active</span>
+          <span class="campaign-list-copy">
+            <strong>Competitor launches</strong>
+            <span>Searches the web every four hours for product launches from robotics companies.</span>
+            <small>Every 4 hours &middot; 2 found &middot; 2 companies added &middot; 1 demo</small>
+          </span>
+          <span class="campaign-list-updated"><span>Last check Sep 2</span></span>
+          <span class="campaign-list-open" aria-hidden="true"><svg width="17" height="17"><use href="#i-arrow"/></svg></span>
+        </a>
+        <a class="campaign-list-row trigger-row trigger-row-muted" href="#">
+          <span class="campaign-status trigger-status trigger-tone-accent">Building</span>
+          <span class="campaign-list-copy">
+            <strong>Small business contracts</strong>
+            <span>Your agent is working out how to check this. Usually under an hour.</span>
+          </span>
+          <span class="campaign-list-updated"></span>
+          <span class="campaign-list-open" aria-hidden="true"><svg width="17" height="17"><use href="#i-arrow"/></svg></span>
+        </a>
+        <a class="campaign-list-row trigger-row trigger-row-muted" href="#">
+          <span class="campaign-status trigger-status trigger-tone-quiet">Not supported</span>
+          <span class="campaign-list-copy">
+            <strong>Supplier portal</strong>
+            <span>This page asks for a sign-in before it shows anything. Point your agent at a public page instead.</span>
+          </span>
+          <span class="campaign-list-updated"></span>
+          <span class="campaign-list-open" aria-hidden="true"><svg width="17" height="17"><use href="#i-arrow"/></svg></span>
+        </a>
+      </div>
+    </section>
+  </div>
+</section>
+
+<!-- ============ 2. EMPTY / ERROR ============ -->
+<section class="shot">
+  <p class="cap"><b>2 &middot; Empty and error</b> &mdash; two distinct renders, both in the same card as the tables, both offering the one next action.</p>
+  <div class="rowpair">
+    <div class="frame" style="flex:1 1 26rem">
+      <section class="audience-page trigger-page">
+        <header class="audience-heading">
+          <div class="trigger-title-row"><h1>Triggers</h1></div>
+          <button class="audience-primary" type="button"><svg width="17" height="17"><use href="#i-plus"/></svg> New trigger</button>
+        </header>
+        <div class="trigger-list campaign-list" style="border-top:0">
+          <div class="audience-state trigger-empty">
+            <svg width="24" height="24" aria-hidden="true"><use href="#i-trigger"/></svg>
+            <h2>No triggers yet</h2>
+            <p>Tell your agent what to watch. It checks every night and acts on anything new.</p>
+            <div class="audience-state-actions"><button class="audience-secondary" type="button">New trigger</button></div>
+          </div>
+        </div>
+      </section>
+    </div>
+    <div class="frame" style="flex:1 1 26rem">
+      <section class="audience-page trigger-page">
+        <header class="audience-heading">
+          <div class="trigger-title-row"><h1>Triggers</h1></div>
+          <button class="audience-primary" type="button"><svg width="17" height="17"><use href="#i-plus"/></svg> New trigger</button>
+        </header>
+        <div class="trigger-list campaign-list" style="border-top:0">
+          <div class="audience-state trigger-empty" role="alert">
+            <svg width="24" height="24" aria-hidden="true"><use href="#i-trigger"/></svg>
+            <h2>Triggers are unavailable</h2>
+            <p>Check your connection and try again.</p>
+            <div class="audience-state-actions"><button class="audience-secondary" type="button">Try again</button></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3. THE BOX ============ -->
+<section class="shot">
+  <p class="cap"><b>3 &middot; New trigger</b> &mdash; the question is the field's own headline, and the sentence is typed at the size it will be read back at.</p>
+  <div class="frame">
+    <section class="audience-page trigger-page">
+      <a class="trigger-back" href="#"><svg width="15" height="15"><use href="#i-back"/></svg>Triggers</a>
+      <header class="audience-heading"><div class="trigger-title-row"><h1>New trigger</h1></div></header>
+      <form class="trigger-form" onsubmit="return false">
+        <div class="trigger-form-body">
+          <div class="trigger-field">
+            <label class="trigger-ask" for="d-watch">What should your agent watch?</label>
+            <textarea class="trigger-input trigger-textarea" id="d-watch" rows="3" placeholder="Companies that just raised a Series A in climate tech"></textarea>
+          </div>
+          <div class="trigger-field">
+            <label class="trigger-label" for="d-camp">Campaign (optional)</label>
+            <select class="trigger-select" id="d-camp"><option>No campaign</option><option>Home care agency intro</option></select>
+          </div>
+        </div>
+        <div class="trigger-form-actions">
+          <button class="audience-primary" type="submit">Create</button>
+          <button class="campaign-quiet-button" type="button">Cancel</button>
+        </div>
+      </form>
+    </section>
+  </div>
+</section>
+
+<!-- ============ 4. DETAIL ============ -->
+<section class="shot">
+  <p class="cap"><b>4 &middot; Detail</b> &mdash; head block closed by a hairline, then two sections on one spacing step. Counts right-aligned and tabular; links at the right edge with the demo carrying the accent.</p>
+  <div class="frame">
+    <section class="audience-page trigger-page">
+      <a class="trigger-back" href="#"><svg width="15" height="15"><use href="#i-back"/></svg>Triggers</a>
+      <div class="trigger-head">
+        <header class="audience-heading">
+          <div class="trigger-title-row">
+            <h1>myCNAjobs</h1>
+            <span class="campaign-status trigger-status trigger-tone-live">Active</span>
+          </div>
+          <div class="trigger-heading-actions">
+            <button class="campaign-quiet-button" type="button">Check now</button>
+            <button class="audience-secondary" type="button">Pause</button>
+            <button class="audience-secondary" type="button">Edit</button>
+          </div>
+        </header>
+        <p class="trigger-readback">Checks mycnajobs.com every night for caregiver and CNA jobs in five metros, skipping hospitals and senior living.</p>
+        <p class="trigger-meta-line">Every night, 2&nbsp;AM PT<span class="trigger-meta-sep">&middot;</span>Last check Sep 2, 4:12&nbsp;PM<span class="trigger-meta-sep">&middot;</span>Campaign: <a href="#">Home care agency intro</a></p>
+      </div>
+
+      <section class="trigger-section">
+        <div class="trigger-section-head"><h2>Found</h2><span class="trigger-section-count">9 of 12</span></div>
+        <div class="trigger-table-card">
+          <div class="trigger-table-wrap">
+            <table class="trigger-table trigger-table-items">
+              <thead><tr>
+                <th scope="col">When</th><th scope="col">Name</th><th scope="col">What</th><th scope="col">Status</th>
+                <th scope="col" class="trigger-col-num"><span class="audience-visually-hidden">Links</span></th>
+              </tr></thead>
+              <tbody>
+                <tr>
+                  <td class="trigger-num">Sep 1</td>
+                  <td><strong class="trigger-cell-strong trigger-clamp">Brightpath Home Care</strong></td>
+                  <td><span class="trigger-clamp">Caregiver, part time</span><span class="trigger-sub">Where: Tucson, AZ &middot; Pay: $16 to $19/hr</span></td>
+                  <td><span class="trigger-chip trigger-tone-accent">Enrolled</span></td>
+                  <td><span class="trigger-links"><a class="trigger-link trigger-link-win" href="#">Demo</a><a class="trigger-link" href="#">Source</a></span></td>
+                </tr>
+                <tr>
+                  <td class="trigger-num">Sep 1</td>
+                  <td><strong class="trigger-cell-strong trigger-clamp">Evergreen Senior Home Care</strong></td>
+                  <td><span class="trigger-clamp">CNA, weekends</span><span class="trigger-sub">Where: Boise, ID &middot; Pay: $17 to $20/hr</span></td>
+                  <td><span class="trigger-chip trigger-tone-accent">Demo ready</span></td>
+                  <td><span class="trigger-links"><a class="trigger-link trigger-link-win" href="#">Demo</a><a class="trigger-link" href="#">Source</a></span></td>
+                </tr>
+                <tr>
+                  <td class="trigger-num">Sep 1</td>
+                  <td><strong class="trigger-cell-strong trigger-clamp">Heartland Caregivers of Dayton</strong></td>
+                  <td><span class="trigger-clamp">Home health aide</span><span class="trigger-sub">Where: Dayton, OH</span></td>
+                  <td><span class="trigger-chip trigger-tone-quiet">Duplicate</span></td>
+                  <td><span class="trigger-links"><a class="trigger-link" href="#">Source</a></span></td>
+                </tr>
+                <tr>
+                  <td class="trigger-num">Aug 31</td>
+                  <td><strong class="trigger-cell-strong trigger-clamp">Willow Creek In-Home Care</strong></td>
+                  <td><span class="trigger-clamp">Live-in caregiver</span><span class="trigger-sub">Where: Fort Collins, CO &middot; Pay: $190 to $220/day</span></td>
+                  <td><span class="trigger-chip trigger-tone-quiet">No contact found</span></td>
+                  <td><span class="trigger-links"><a class="trigger-link" href="#">Source</a></span></td>
+                </tr>
+                <tr>
+                  <td class="trigger-num">Aug 31</td>
+                  <td><strong class="trigger-cell-strong trigger-clamp" title="HCA Florida Advanced Cardiothoracic Surgery">HCA Florida Advanced Cardiothoracic Surgery</strong></td>
+                  <td><span class="trigger-clamp">Medical assistant</span><span class="trigger-sub">Where: Belleair Bluffs, FL</span><span class="trigger-sub">Dismissed: this is a hospital surgical practice, not&hellip;</span></td>
+                  <td><span class="trigger-chip trigger-tone-quiet">Dismissed</span></td>
+                  <td><span class="trigger-links"><a class="trigger-link" href="#">Source</a></span></td>
+                </tr>
+                <tr>
+                  <td class="trigger-num">Aug 30</td>
+                  <td><strong class="trigger-cell-strong trigger-clamp">Golden Hours Home Care</strong></td>
+                  <td><span class="trigger-clamp">Caregiver, full time</span><span class="trigger-sub">Where: Spokane, WA</span></td>
+                  <td><span class="trigger-chip trigger-tone-neutral">Working</span></td>
+                  <td><span class="trigger-links"><a class="trigger-link" href="#">Source</a></span></td>
+                </tr>
+                <tr>
+                  <td class="trigger-num">Aug 30</td>
+                  <td><strong class="trigger-cell-strong trigger-clamp">Harbor Light Home Care</strong></td>
+                  <td><span class="trigger-clamp">CNA, per diem</span></td>
+                  <td><span class="trigger-chip trigger-tone-neutral">Waiting</span></td>
+                  <td><span class="trigger-links"><a class="trigger-link" href="#">Source</a></span></td>
+                </tr>
+                <tr>
+                  <td class="trigger-num">Aug 29</td>
+                  <td><strong class="trigger-cell-strong trigger-clamp">Cedar Ridge Care Partners</strong></td>
+                  <td><span class="trigger-clamp">Caregiver, overnight</span><span class="trigger-sub">Where: Erie, PA</span></td>
+                  <td><span class="trigger-chip trigger-tone-alert">Failed</span></td>
+                  <td><span class="trigger-links"><a class="trigger-link" href="#">Source</a></span></td>
+                </tr>
+                <tr>
+                  <td class="trigger-num">Sep 1<span class="trigger-sub">Undated</span></td>
+                  <td><strong class="trigger-cell-strong trigger-clamp">Riverbend Home Care</strong></td>
+                  <td><span class="trigger-clamp">Caregiver, weekends</span></td>
+                  <td><span class="trigger-chip trigger-tone-neutral">Waiting</span></td>
+                  <td><span class="trigger-links"><a class="trigger-link" href="#">Source</a></span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="trigger-section">
+        <div class="trigger-section-head"><h2>Checks</h2><span class="trigger-section-count">Last 4</span></div>
+        <div class="trigger-table-card">
+          <div class="trigger-table-wrap">
+            <table class="trigger-table trigger-table-runs">
+              <thead><tr>
+                <th scope="col">When</th>
+                <th scope="col" class="trigger-col-num">Found</th>
+                <th scope="col" class="trigger-col-num">New</th>
+                <th scope="col">Result</th>
+              </tr></thead>
+              <tbody>
+                <tr><td class="trigger-num">Sep 2, 4:12&nbsp;PM<span class="trigger-sub">Scheduled</span></td><td class="trigger-num trigger-col-num">219</td><td class="trigger-num trigger-col-num">9</td><td><span class="trigger-chip trigger-tone-neutral">Done</span></td></tr>
+                <tr><td class="trigger-num">Sep 1, 4:08&nbsp;PM<span class="trigger-sub">Scheduled</span></td><td class="trigger-num trigger-col-num">212</td><td class="trigger-num trigger-col-num">14</td><td><span class="trigger-chip trigger-tone-neutral">Done</span></td></tr>
+                <tr><td class="trigger-num">Aug 31, 4:02&nbsp;PM<span class="trigger-sub">Check now</span></td><td class="trigger-num trigger-col-num">0</td><td class="trigger-num trigger-col-num">0</td><td><span class="trigger-chip trigger-tone-alert">Failed</span><span class="trigger-sub">The source did not load. Nothing was&hellip;</span></td></tr>
+                <tr><td class="trigger-num">Aug 20, 4:00&nbsp;PM<span class="trigger-sub">First check</span></td><td class="trigger-num trigger-col-num">203</td><td class="trigger-num trigger-col-num">203</td><td><span class="trigger-chip trigger-tone-neutral">Done</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </section>
+  </div>
+</section>
+
+<!-- ============ 5. BUILDING / NOT SUPPORTED ============ -->
+<section class="shot">
+  <p class="cap"><b>5 &middot; Building and Not supported</b> &mdash; the customer's own sentence takes the readback slot, and the line about the wait lands where the tables would be.</p>
+  <div class="rowpair">
+    <div class="frame" style="flex:1 1 28rem">
+      <section class="audience-page trigger-page">
+        <a class="trigger-back" href="#"><svg width="15" height="15"><use href="#i-back"/></svg>Triggers</a>
+        <div class="trigger-head">
+          <header class="audience-heading">
+            <div class="trigger-title-row"><h1>Small business contracts</h1><span class="campaign-status trigger-status trigger-tone-accent">Building</span></div>
+            <div class="trigger-heading-actions"><button class="audience-secondary" type="button">Edit</button></div>
+          </header>
+          <p class="trigger-readback">New contracts on https://sam.gov for IT services under $500k</p>
+        </div>
+        <div class="trigger-state-card">
+          <div class="trigger-state trigger-state-working">
+            <svg width="24" height="24" aria-hidden="true"><use href="#i-trigger"/></svg>
+            <p role="status">Your agent is working out how to check this. Usually under an hour.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+    <div class="frame" style="flex:1 1 28rem">
+      <section class="audience-page trigger-page">
+        <a class="trigger-back" href="#"><svg width="15" height="15"><use href="#i-back"/></svg>Triggers</a>
+        <div class="trigger-head">
+          <header class="audience-heading">
+            <div class="trigger-title-row"><h1>Supplier portal</h1><span class="campaign-status trigger-status trigger-tone-quiet">Not supported</span></div>
+            <div class="trigger-heading-actions"><button class="audience-secondary" type="button">Edit</button></div>
+          </header>
+          <p class="trigger-readback">New tenders on our supplier portal</p>
+        </div>
+        <div class="trigger-state-card">
+          <div class="trigger-state">
+            <svg width="24" height="24" aria-hidden="true"><use href="#i-trigger"/></svg>
+            <p>This page asks for a sign-in before it shows anything. Point your agent at a public page instead.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</section>
+
+</div>
+</body>
+</html>

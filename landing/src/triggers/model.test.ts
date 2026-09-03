@@ -35,6 +35,7 @@ import {
   truncate,
   UNSUPPORTED_LINE,
   viewLabel,
+  viewTone,
   type TriggerCounts,
 } from "./model.ts";
 
@@ -167,30 +168,46 @@ test("item statuses are short, and only a win takes the accent", () => {
   assert.equal(itemStatusLabel("dismissed"), "Dismissed");
   assert.equal(itemStatusLabel("duplicate"), "Duplicate");
   assert.equal(itemStatusLabel("failed"), "Failed");
-  assert.equal(itemStatusTone("ready"), "tide");
-  assert.equal(itemStatusTone("enrolled"), "tide");
+  assert.equal(itemStatusTone("ready"), "accent");
+  assert.equal(itemStatusTone("enrolled"), "accent");
   // Demo ready and Dismissed used to be the same gray.
   assert.notEqual(itemStatusTone("ready"), itemStatusTone("dismissed"));
   assert.equal(itemStatusTone("dismissed"), "quiet");
   assert.equal(itemStatusTone("duplicate"), "quiet");
   assert.equal(itemStatusTone("no_lead"), "quiet");
   assert.equal(itemStatusTone("failed"), "alert");
-  assert.equal(itemStatusTone("new"), "plain");
+  assert.equal(itemStatusTone("new"), "neutral");
+});
+
+test("one tone vocabulary covers the trigger's own state as well as an item's", () => {
+  // The accent is the single accent, so it may only mark work in flight
+  // and the wins; a paused trigger and a waiting item are the same gray.
+  assert.equal(viewTone("active"), "live");
+  assert.equal(viewTone("building"), "accent");
+  assert.equal(viewTone("paused"), "neutral");
+  assert.equal(viewTone("unsupported"), "quiet");
+  assert.equal(viewTone("paused"), itemStatusTone("new"));
+  assert.equal(viewTone("building"), itemStatusTone("ready"));
+  // Alert is the needs-attention dot and nothing else reaches for it.
+  const tones = [viewTone("active"), viewTone("paused"), viewTone("building"), viewTone("unsupported")];
+  assert.equal(tones.includes("alert"), false);
 });
 
 test("a check reads as done or failed, and a retried error is not the customer's news", () => {
-  assert.deepEqual(runResult({ state: "done", error: null }), { label: "Done", detail: null });
+  assert.deepEqual(runResult({ state: "done", error: null }), { label: "Done", detail: null, tone: "neutral" });
   assert.deepEqual(
     runResult({ state: "done", error: "The source was slow to respond. We retried once and the check finished." }),
-    { label: "Done", detail: null },
+    { label: "Done", detail: null, tone: "neutral" },
   );
-  assert.deepEqual(runResult({ state: "queued", error: null }), { label: "Queued", detail: null });
-  assert.deepEqual(runResult({ state: "running", error: null }), { label: "Running", detail: null });
+  // A check in flight takes the accent; a finished one does not.
+  assert.deepEqual(runResult({ state: "queued", error: null }), { label: "Queued", detail: null, tone: "accent" });
+  assert.deepEqual(runResult({ state: "running", error: null }), { label: "Running", detail: null, tone: "accent" });
   assert.deepEqual(runResult({ state: "failed", error: "The source did not load. Nothing was added." }), {
     label: "Failed",
     detail: "The source did not load. Nothing was added.",
+    tone: "alert",
   });
-  assert.deepEqual(runResult({ state: "failed", error: null }), { label: "Failed", detail: null });
+  assert.deepEqual(runResult({ state: "failed", error: null }), { label: "Failed", detail: null, tone: "alert" });
   // Long prose is cut to a line; the row keeps the whole thing on hover.
   assert.equal(
     runResult({ state: "failed", error: "Stopped after ten misses in a row, and the last four pages came back empty as well." }).detail,
@@ -335,10 +352,26 @@ test("days drop the year only inside the current year", () => {
   assert.equal(formatDay("not a date", now), null);
 });
 
-test("the found cell is the item's day, or the day we found an undated one", () => {
+test("the when cell is always a bare day, and flags the one it had to borrow", () => {
   const now = new Date("2026-09-02T12:00:00Z");
-  assert.equal(foundCell({ foundAt: "2026-08-31T13:02:00Z", createdAt: "2026-09-01T13:02:00Z" }, now), "Aug 31");
-  assert.equal(foundCell({ foundAt: null, createdAt: "2026-09-01T13:02:00Z" }, now), "Found Sep 1");
-  assert.equal(foundCell({ foundAt: "not a date", createdAt: "2025-09-01T13:02:00Z" }, now), "Found Sep 1, 2025");
-  assert.equal(foundCell({ foundAt: null, createdAt: "not a date" }, now), "Unknown");
+  assert.deepEqual(
+    foundCell({ foundAt: "2026-08-31T13:02:00Z", createdAt: "2026-09-01T13:02:00Z" }, now),
+    { day: "Aug 31", undated: false },
+  );
+  // An undated item used to render "Found Sep 1" in a column of bare
+  // dates, which read as a glitch. The day stays bare and the flag
+  // carries the distinction to a sub-line.
+  assert.deepEqual(
+    foundCell({ foundAt: null, createdAt: "2026-09-01T13:02:00Z" }, now),
+    { day: "Sep 1", undated: true },
+  );
+  assert.deepEqual(
+    foundCell({ foundAt: "not a date", createdAt: "2025-09-01T13:02:00Z" }, now),
+    { day: "Sep 1, 2025", undated: true },
+  );
+  // No usable date at all says so outright, and needs no sub-line.
+  assert.deepEqual(
+    foundCell({ foundAt: null, createdAt: "not a date" }, now),
+    { day: "Unknown", undated: false },
+  );
 });

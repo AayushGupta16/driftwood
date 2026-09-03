@@ -194,6 +194,25 @@ export function viewLabel(view: TriggerView): string {
   return VIEW_LABELS[view];
 }
 
+/* One tone vocabulary for every state the pages show: the trigger's own,
+   an item's, and a check's result. The tone picks the dot; the shape is
+   the page's business (bare beside a heading, pilled in a table cell).
+   `accent` is the single accent and marks what a customer scans for;
+   `alert` exists only as the needs-attention dot the design language
+   sanctions for a dashboard surface, never as a fill. */
+export type Tone = "live" | "accent" | "neutral" | "quiet" | "alert";
+
+const VIEW_TONES: Record<TriggerView, Tone> = {
+  active: "live",
+  paused: "neutral",
+  building: "accent",
+  unsupported: "quiet",
+};
+
+export function viewTone(view: TriggerView): Tone {
+  return VIEW_TONES[view];
+}
+
 /* The trigger's title. The backend names it; the page never re-derives a
    name from the sentence, which is how "New caregiver, CNA or home…"
    became a title nobody chose. */
@@ -261,17 +280,15 @@ export function readbackLine(
   return null;
 }
 
-export type ItemTone = "plain" | "tide" | "quiet" | "alert";
-
 const WORKING_LABEL = "Working";
 
-const ITEM_STATUS: Record<ItemStatus, { label: string; tone: ItemTone }> = {
-  new: { label: "Waiting", tone: "plain" },
-  in_progress: { label: WORKING_LABEL, tone: "plain" },
+const ITEM_STATUS: Record<ItemStatus, { label: string; tone: Tone }> = {
+  new: { label: "Waiting", tone: "neutral" },
+  in_progress: { label: WORKING_LABEL, tone: "neutral" },
   no_lead: { label: "No contact found", tone: "quiet" },
-  demo_pending: { label: "Building demo", tone: "plain" },
-  ready: { label: "Demo ready", tone: "tide" },
-  enrolled: { label: "Enrolled", tone: "tide" },
+  demo_pending: { label: "Building demo", tone: "neutral" },
+  ready: { label: "Demo ready", tone: "accent" },
+  enrolled: { label: "Enrolled", tone: "accent" },
   dismissed: { label: "Dismissed", tone: "quiet" },
   duplicate: { label: "Duplicate", tone: "quiet" },
   failed: { label: "Failed", tone: "alert" },
@@ -283,8 +300,8 @@ export function itemStatusLabel(status: string): string {
 
 /* Demo ready and Enrolled take the accent so a customer can scan for the
    wins; everything finished-without-a-win goes quiet. No second accent. */
-export function itemStatusTone(status: string): ItemTone {
-  return ITEM_STATUS[status as ItemStatus]?.tone ?? "plain";
+export function itemStatusTone(status: string): Tone {
+  return ITEM_STATUS[status as ItemStatus]?.tone ?? "neutral";
 }
 
 export function runIsOpen(state: string | null | undefined): boolean {
@@ -307,14 +324,16 @@ export function runTriggerLabel(triggeredBy: string): string {
 /* The Result cell: did it run, and did it fail. A check that hit a snag,
    retried and finished is "Done" — an error the customer cannot act on is
    not their news. The detail is a short reason; the row keeps the full
-   text in a title attribute. */
-export type RunResult = { label: string; detail: string | null };
+   text in a title attribute. The tone is the page's one chip vocabulary:
+   a check in flight is the accent, a finished one is neutral, and only a
+   failure takes the needs-attention dot. */
+export type RunResult = { label: string; detail: string | null; tone: Tone };
 
 export function runResult(run: Pick<TriggerRun, "state" | "error">): RunResult {
-  if (run.state === "queued") return { label: "Queued", detail: null };
-  if (run.state === "running") return { label: "Running", detail: null };
-  if (run.state === "failed") return { label: "Failed", detail: shortReason(run.error) };
-  return { label: "Done", detail: null };
+  if (run.state === "queued") return { label: "Queued", detail: null, tone: "accent" };
+  if (run.state === "running") return { label: "Running", detail: null, tone: "accent" };
+  if (run.state === "failed") return { label: "Failed", detail: shortReason(run.error), tone: "alert" };
+  return { label: "Done", detail: null, tone: "neutral" };
 }
 
 function plural(count: number, singular: string, pluralForm: string): string {
@@ -514,12 +533,22 @@ export function lastCheckFact(trigger: LastCheckSource, newestRun?: NewestRun | 
   return check.failed ? `Last check ${moment}, failed` : `Last check ${moment}`;
 }
 
-/* The Found cell: the day the item went up, or, for one the source
-   listed without a date, the day we found it, said as such so its place
-   at the bottom of a newest-first table makes sense. */
-export function foundCell(item: Pick<TriggerItem, "foundAt" | "createdAt">, now: Date = new Date()): string {
+/* The When cell: the day the item went up, or, for one the source listed
+   without a date, the day we found it.
+
+   Both come back as a bare day, because a column of dates with one cell
+   reading "Found Sep 1" looks like a rendering bug rather than a
+   distinction. The distinction survives on the flag: the page prints a
+   gray "Undated" under the borrowed date, which is the same
+   date-plus-sub-line grammar the Checks table already uses, and it is
+   what explains why a Sep 1 row sits below an Aug 29 one in a
+   newest-first table. A row with no usable date at all says so outright
+   and needs no sub-line. */
+export type FoundCell = { day: string; undated: boolean };
+
+export function foundCell(item: Pick<TriggerItem, "foundAt" | "createdAt">, now: Date = new Date()): FoundCell {
   const found = formatDay(item.foundAt, now);
-  if (found) return found;
+  if (found) return { day: found, undated: false };
   const seen = formatDay(item.createdAt, now);
-  return seen ? `Found ${seen}` : "Unknown";
+  return seen ? { day: seen, undated: true } : { day: "Unknown", undated: false };
 }

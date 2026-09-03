@@ -1,25 +1,33 @@
-/* Triggers pages (design/triggers.html, one-box revision 2026-09-02). The
+/* Triggers pages (design/triggers-polish.html, craft pass 2026-09-02). The
    page frame, pills, read-only chip, empty state and skeleton grammar come
    from audiences.css, and the list row from campaigns.css, both imported by
-   the pages; this file adds only what those do not have: the row's shape,
-   the readback line, the two tables and the one-box form. */
+   the pages; this file adds only what those do not have: one vertical
+   scale, one chip vocabulary, the two tables, the states and the box.
+   Every value is a house token. */
 
-.trigger-title-row { display: flex; min-width: 0; flex-wrap: wrap; align-items: center; gap: 0.75rem; }
+/* ---------- one vertical scale ---------- */
+/* The detail page stacks a head block and two table sections, and each one
+   used to invent its own gap. Every margin below comes from these five
+   steps (0.4rem x 1, 2, 3, 4.5, 6.5), so the page has a rhythm instead of
+   a pile of one-off values. */
+.trigger-page {
+  --trg-1: 0.4rem;
+  --trg-2: 0.8rem;
+  --trg-3: 1.2rem;
+  --trg-4: 1.8rem;
+  --trg-5: 2.6rem;
+}
+
+.trigger-title-row { display: flex; min-width: 0; flex-wrap: wrap; align-items: center; gap: 0.7rem; }
 .trigger-title-row h1 { max-width: none; }
-.trigger-heading-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 0.5rem; }
-
-/* The agent's readback: the one line saying what this trigger watches, in
-   its own words. Directly under the name, everywhere the trigger shows. */
-.trigger-readback { margin: 0.7rem 0 0; max-width: 46rem; color: var(--color-ink); font-size: 0.84rem; line-height: 1.55; }
-.trigger-meta-line { margin: 0.3rem 0 0; max-width: 46rem; color: var(--color-ink-soft); font-size: 0.74rem; line-height: 1.5; }
-.trigger-meta-line a { color: var(--color-tide); text-decoration: none; }
-.trigger-meta-line a:hover { text-decoration: underline; }
+.trigger-heading-actions { display: flex; flex: 0 0 auto; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
 
 .trigger-back {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  margin-bottom: 0.9rem;
+  gap: 0.3rem;
+  margin-bottom: var(--trg-2);
+  border-radius: 3px;
   color: var(--color-ink-soft);
   font-size: 0.78rem;
   font-weight: 560;
@@ -28,18 +36,94 @@
 }
 .trigger-back:hover { color: var(--color-ink); }
 
-/* Two more chip states next to campaigns.css's active and paused. Both
-   stay inside the one accent: tide while the agent is still working out
-   how to check, a hollow ring for a source it cannot read. */
-.campaign-status-building::before { background: var(--color-tide); }
-.campaign-status-unsupported { color: var(--color-ink-faint); }
-.campaign-status-unsupported::before { background: transparent; box-shadow: inset 0 0 0 1px var(--color-ink-faint); }
+/* ---------- the head block ---------- */
+/* Name, the agent's line and the facts are one block, closed by a hairline.
+   The rule is what separates the head from the sections below; without it
+   the readback and the first table heading read as one run of text. */
+.trigger-head { margin-bottom: var(--trg-5); padding-bottom: var(--trg-4); border-bottom: 1px solid var(--color-line); }
+
+/* The readback is the centrepiece of the feature: the one line the customer
+   reads to check the agent understood. It earns its weight from size and
+   ink, not from a box — a tinted callout here would be a second surface on
+   a page that already has two cards. Measure capped near 70ch. */
+.trigger-readback {
+  margin: var(--trg-3) 0 0;
+  max-width: 44rem;
+  color: var(--color-ink);
+  font-size: 1.02rem;
+  font-weight: 450;
+  letter-spacing: -0.006em;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+/* The facts under it are deliberately a step quieter and a step smaller, so
+   the two lines never compete. */
+.trigger-meta-line {
+  margin: var(--trg-2) 0 0;
+  max-width: 44rem;
+  color: var(--color-ink-faint);
+  font-size: 0.76rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+}
+.trigger-meta-sep { padding: 0 0.4rem; color: var(--color-ink-faint); opacity: 0.5; }
+.trigger-meta-line a { border-radius: 3px; color: var(--color-tide); font-weight: 600; text-decoration: none; }
+.trigger-meta-line a:hover { text-decoration: underline; text-underline-offset: 0.15rem; }
+
+/* ---------- one chip vocabulary ---------- */
+/* Item state, check result and the trigger's own state are one language:
+   the tone sets the dot, the shape follows the density. Bare beside a
+   heading or in a list row (the Campaigns grammar), pilled inside a table
+   cell (the Leads/Companies grammar). One accent: tide marks the wins a
+   customer scans for, everything finished without one goes quiet, and the
+   alert token appears only as the needs-attention dot the design language
+   sanctions for a dashboard surface — never as a fill, which would make it
+   a second accent. */
+.trigger-tone-live { --trg-dot: var(--color-ok); }
+.trigger-tone-accent { --trg-dot: var(--color-tide); }
+.trigger-tone-neutral { --trg-dot: var(--color-ink-faint); }
+.trigger-tone-quiet { --trg-dot: transparent; }
+.trigger-tone-alert { --trg-dot: var(--color-alert); }
+
+.trigger-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-ink-soft);
+  padding: 0.16rem 0.52rem 0.16rem 0.44rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+.trigger-chip::before {
+  flex: 0 0 auto;
+  width: 0.38rem;
+  height: 0.38rem;
+  border-radius: 50%;
+  background: var(--trg-dot, var(--color-ink-faint));
+  content: "";
+}
+.trigger-chip.trigger-tone-accent { border-color: color-mix(in srgb, var(--color-tide) 20%, var(--color-line)); background: var(--color-tide-wash); color: var(--color-tide-deep); }
+.trigger-chip.trigger-tone-quiet { color: var(--color-ink-faint); }
+.trigger-chip.trigger-tone-quiet::before { box-shadow: inset 0 0 0 1px var(--color-ink-faint); }
+
+/* The bare form, on the heading and the list row. Same dot, same tones. */
+.campaign-status.trigger-status::before { background: var(--trg-dot, var(--color-ink-faint)); box-shadow: none; }
+.campaign-status.trigger-status.trigger-tone-quiet { color: var(--color-ink-faint); }
+.campaign-status.trigger-status.trigger-tone-quiet::before { box-shadow: inset 0 0 0 1px var(--color-ink-faint); }
 
 /* ---------- list ---------- */
 /* Campaigns' row, three columns instead of five: the chip, the name with
    the readback and meta under it, and when it last checked. */
-.trigger-list { margin-top: 1.35rem; }
-.trigger-row { grid-template-columns: 6rem minmax(14rem, 3fr) minmax(8rem, 1fr) 2rem; color: inherit; text-decoration: none; }
+/* The rule frames the rows, the way Campaigns' tool bar frames its list.
+   An empty or failed list is one card and needs no rule above it. */
+.trigger-list { margin-top: var(--trg-4); border-top: 1px solid var(--color-line); }
+.trigger-list:has(> .audience-state) { border-top: 0; border-bottom: 0; }
+.trigger-row { grid-template-columns: 7.5rem minmax(14rem, 3fr) minmax(8rem, 1fr) 2rem; color: inherit; text-decoration: none; }
 /* The readback is the line the customer reads to check the agent
    understood, so it gets two lines rather than one truncated one. */
 .trigger-row .campaign-list-copy > span {
@@ -53,162 +137,242 @@
   line-height: 1.45;
 }
 .trigger-row .campaign-list-copy small { color: var(--color-ink-faint); font-size: 0.7rem; font-variant-numeric: tabular-nums; }
+/* Campaigns drops this column under 900px because a campaign's "updated"
+   date is a nicety. Here it is when the watch last ran, which is the
+   answer to the only question this list gets asked, so it stays and moves
+   under the copy instead. */
+.trigger-row .campaign-list-updated { display: flex; }
 .trigger-row .campaign-list-updated span { font-size: 0.74rem; font-variant-numeric: tabular-nums; }
 /* Still being built, or on a source we cannot read: the row steps back,
    the chip stays crisp. */
 .trigger-row-muted .campaign-list-copy,
 .trigger-row-muted .campaign-list-updated { opacity: 0.62; }
 
-.trigger-empty {
-  margin-top: 1.35rem;
-  border: 1px solid var(--color-line);
-  border-radius: 0.85rem;
-  background: var(--color-surface);
-}
-.trigger-empty .audience-state-actions { margin-top: 0.45rem; }
-
-/* ---------- detail ---------- */
-/* "Check now" is a quiet text link; the schedule is what normally runs
-   it. */
-.trigger-check-row { margin: 0.8rem 0 0; font-size: 0.76rem; line-height: 1.5; }
-.trigger-check-now {
-  border: 0;
-  border-radius: 2px;
-  background: transparent;
-  color: var(--color-tide);
-  padding: 0;
-  font: inherit;
-  font-size: 0.76rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-.trigger-check-now:hover { text-decoration: underline; }
-.trigger-check-now:disabled { color: var(--color-ink-faint); cursor: not-allowed; text-decoration: none; }
-
-.trigger-section { margin-top: 2rem; }
-.trigger-section-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 0.6rem;
-}
-.trigger-section-head h2 { margin: 0; font-size: 1rem; font-weight: 650; letter-spacing: -0.012em; }
-.trigger-section-head span { color: var(--color-ink-faint); font-size: 0.7rem; font-variant-numeric: tabular-nums; }
-
-.trigger-table-card { border: 1px solid var(--color-line); border-radius: 0.85rem; background: var(--color-surface); overflow: hidden; }
-/* The scroll lives in the card, never in the page: a table wider than the
-   viewport used to push Status and the links off screen. Both tables now
-   carry columns that fit a laptop, and the min-width only holds a phone
-   back from crushing them. */
-.trigger-table-wrap { overflow-x: auto; }
-.trigger-table { width: 100%; border-collapse: collapse; font-size: 0.76rem; table-layout: auto; }
-.trigger-table-items { min-width: 32rem; }
-.trigger-table-runs { min-width: 24rem; }
-/* The header cell is the containing block for its own screen-reader-only
-   label: absolutely positioned, that label would take its place from the
-   page instead of the scrolling table and stretch the document sideways. */
-.trigger-table th {
-  position: relative;
-  border-bottom: 1px solid var(--color-line);
-  background: var(--color-sand);
-  color: var(--color-ink-soft);
-  padding: 0.65rem 0.85rem;
-  font-size: 0.66rem;
-  font-weight: 650;
-  text-align: left;
-  white-space: nowrap;
-}
-.trigger-table td { border-bottom: 1px solid var(--color-line); padding: 0.7rem 0.75rem; vertical-align: top; line-height: 1.45; }
-.trigger-table tbody tr:last-child td { border-bottom: 0; }
-.trigger-table td.trigger-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
-.trigger-table td strong { font-weight: 600; overflow-wrap: anywhere; }
-.trigger-cell-title { display: block; overflow-wrap: anywhere; }
-.trigger-sub { display: block; margin-top: 0.15rem; color: var(--color-ink-soft); font-size: 0.68rem; overflow-wrap: anywhere; }
-.trigger-table-skeleton td .campaign-skel { display: block; width: 70%; }
-.trigger-table-empty { margin: 0; padding: 1.6rem 1.25rem; color: var(--color-ink-soft); font-size: 0.8rem; text-align: center; }
-
-.trigger-links { display: flex; flex-direction: column; gap: 0.2rem; }
-.trigger-link { color: var(--color-tide); font-weight: 600; text-decoration: none; white-space: nowrap; }
-.trigger-link:hover { text-decoration: underline; }
-
-/* Status chips: the accent marks a win a customer can scan for, and
-   everything finished without one goes quiet. No second accent. */
-.trigger-chip {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 0.35rem;
-  background: var(--color-sand);
-  color: var(--color-ink-soft);
-  padding: 0.2rem 0.42rem;
-  font-size: 0.64rem;
-  font-weight: 600;
-  line-height: 1.25;
-  white-space: nowrap;
-}
-.trigger-chip-tide { background: var(--color-tide-wash); color: var(--color-tide-deep); }
-.trigger-chip-quiet { background: transparent; box-shadow: inset 0 0 0 1px var(--color-line); color: var(--color-ink-faint); }
-.trigger-chip-alert { background: color-mix(in srgb, var(--color-alert) 8%, var(--color-surface)); color: var(--color-alert); }
-
-/* ---------- the box ---------- */
-.trigger-form {
-  max-width: 40rem;
-  margin-top: 1.35rem;
+/* ---------- states ---------- */
+/* Empty, error, building and not-supported all land in the same card, so a
+   page with nothing in it still reads as designed rather than unfinished. */
+.trigger-empty,
+.trigger-state-card {
   border: 1px solid var(--color-line);
   border-radius: 0.85rem;
   background: var(--color-surface);
   box-shadow: var(--shadow-win-sm);
 }
-.trigger-form-body { min-width: 0; padding: 1.15rem 1.35rem 1.25rem; }
-.trigger-field + .trigger-field { margin-top: 1rem; }
+.trigger-empty { margin-top: var(--trg-4); }
+.trigger-empty .audience-state-actions { margin-top: var(--trg-1); }
+.trigger-state {
+  display: grid;
+  min-height: 11.5rem;
+  place-items: center;
+  align-content: center;
+  gap: var(--trg-2);
+  color: var(--color-ink-faint);
+  padding: 2rem 1.5rem;
+  text-align: center;
+}
+.trigger-state p { max-width: 32rem; margin: 0; color: var(--color-ink-soft); font-size: 0.86rem; line-height: 1.55; }
+/* Work in flight: a slow breath on the mark, not a spinner asking to be
+   watched. Static under reduced motion. */
+.trigger-state-working svg { animation: trigger-breathe 2.6s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate; }
+@keyframes trigger-breathe { to { opacity: 0.35; } }
+
+/* ---------- sections and tables ---------- */
+.trigger-section + .trigger-section { margin-top: var(--trg-5); }
+.trigger-section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin-bottom: var(--trg-2);
+}
+.trigger-section-head h2 { margin: 0; color: var(--color-ink); font-size: 0.98rem; font-weight: 650; letter-spacing: -0.012em; }
+.trigger-section-count { color: var(--color-ink-faint); font-size: 0.72rem; font-variant-numeric: tabular-nums; }
+
+.trigger-table-card {
+  border: 1px solid var(--color-line);
+  border-radius: 0.85rem;
+  background: var(--color-surface);
+  overflow: hidden;
+  box-shadow: var(--shadow-win-sm);
+}
+/* The scroll lives in the card, never in the page: a table wider than the
+   viewport used to push Status and the links off screen. The min-widths are
+   the narrowest these columns stay readable at, so a phone scrolls the card
+   and nothing else. */
+.trigger-table-wrap { overflow-x: auto; overscroll-behavior-x: contain; }
+.trigger-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+.trigger-table-items { min-width: 33rem; }
+.trigger-table-runs { min-width: 21rem; }
+/* Deliberate columns rather than whatever the content negotiates: the date
+   and the chip get exactly the room they need, the two prose columns share
+   the rest, and the links hug the right edge. Left as hints (table-layout
+   stays auto) so a long word can still push instead of clipping. */
+.trigger-table-items th:nth-child(1) { width: 7rem; }
+.trigger-table-items th:nth-child(2) { width: 26%; }
+.trigger-table-items th:nth-child(4) { width: 10.5rem; }
+.trigger-table-items th:nth-child(5) { width: 8rem; }
+.trigger-table-runs th:nth-child(1) { width: 42%; }
+.trigger-table-runs th:nth-child(2),
+.trigger-table-runs th:nth-child(3) { width: 5.5rem; }
+/* Header and body carry the same inline padding, so every column lines up
+   with its own label. The header is white with a hairline under it, like
+   the Leads and Companies tables; a sand bar read as a third surface. */
+.trigger-table th {
+  position: relative;
+  border-bottom: 1px solid var(--color-line);
+  background: var(--color-surface);
+  color: var(--color-ink-faint);
+  padding: 0.72rem 0.9rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+}
+.trigger-table td {
+  border-bottom: 1px solid var(--color-line);
+  color: var(--color-ink-soft);
+  padding: 0.72rem 0.9rem;
+  vertical-align: top;
+  line-height: 1.45;
+}
+.trigger-table tbody tr { transition: background 160ms cubic-bezier(0.2, 0, 0, 1); }
+.trigger-table tbody tr:hover { background: color-mix(in srgb, var(--color-tide-wash) 45%, white); }
+.trigger-table tbody tr:last-child td { border-bottom: 0; }
+/* Counts and dates: tabular so the columns read as columns, and counts sit
+   right against their own header. */
+.trigger-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.trigger-col-num { text-align: right; }
+.trigger-cell-strong { display: block; color: var(--color-ink); font-weight: 600; }
+/* A long name wraps twice and then stops; the whole thing stays in the
+   title attribute, so no row is ever three decks tall on its own. */
+.trigger-clamp {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.trigger-sub { display: block; margin-top: 0.18rem; color: var(--color-ink-faint); font-size: 0.71rem; line-height: 1.4; overflow-wrap: anywhere; }
+.trigger-table-skeleton td .campaign-skel { display: block; width: 70%; }
+.trigger-table-empty { margin: 0; padding: 2.4rem 1.25rem; color: var(--color-ink-soft); font-size: 0.84rem; text-align: center; }
+
+/* Links sit at the right edge, on one line. The demo is the win, so it
+   carries the accent; the source stays quiet until you reach for it. */
+.trigger-links { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.1rem 0.65rem; }
+.trigger-link { border-radius: 3px; color: var(--color-ink-soft); font-weight: 600; text-decoration: none; white-space: nowrap; }
+.trigger-link:hover { color: var(--color-tide); text-decoration: underline; text-underline-offset: 0.15rem; }
+.trigger-link-win { color: var(--color-tide); }
+.trigger-link-win:hover { color: var(--color-tide-deep); }
+
+/* ---------- the box ---------- */
+.trigger-form {
+  max-width: 40rem;
+  margin-top: var(--trg-4);
+  border: 1px solid var(--color-line);
+  border-radius: 0.85rem;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-win-sm);
+}
+.trigger-form-body { min-width: 0; padding: 1.4rem 1.4rem 1.5rem; }
+.trigger-field + .trigger-field { margin-top: var(--trg-4); }
 
 .trigger-input,
 .trigger-select {
   display: block;
   width: 100%;
-  min-height: 2.45rem;
+  min-height: 2.5rem;
   border: 1px solid var(--color-line);
   border-radius: 0.6rem;
   background: var(--color-surface);
   color: var(--color-ink);
-  padding: 0.5rem 0.7rem;
+  padding: 0.55rem 0.75rem;
   font: inherit;
-  font-size: 0.82rem;
+  font-size: 0.86rem;
+  transition: border-color 200ms cubic-bezier(0.2, 0, 0, 1), box-shadow 200ms cubic-bezier(0.2, 0, 0, 1);
 }
-.trigger-textarea { min-height: 4.6rem; line-height: 1.5; resize: vertical; }
+/* The sentence is the whole product, so the box it goes in is the biggest
+   thing on the screen and the type in it matches the readback it becomes. */
+.trigger-textarea { min-height: 5.6rem; padding: 0.7rem 0.8rem; font-size: 0.95rem; line-height: 1.5; resize: vertical; }
 .trigger-input::placeholder { color: var(--color-ink-faint); }
 .trigger-input:focus,
 .trigger-select:focus {
   outline: none;
   border-color: var(--color-tide);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-tide) 13%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-tide) 14%, transparent);
 }
 .trigger-input:disabled,
 .trigger-select:disabled { cursor: not-allowed; opacity: 0.6; }
-.trigger-label { display: block; margin: 0 0 0.3rem; color: var(--color-ink-soft); font-size: 0.72rem; font-weight: 600; }
-.trigger-hint { margin: 0.35rem 0 0; color: var(--color-ink-faint); font-size: 0.68rem; line-height: 1.45; }
+/* A native select with no indicator reads as unfinished; the chevron is the
+   ink scale, drawn in the control rather than added as an icon file. */
+.trigger-select {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--color-ink-soft) 50%), linear-gradient(135deg, var(--color-ink-soft) 50%, transparent 50%);
+  background-position: right 1.05rem top 55%, right 0.75rem top 55%;
+  background-size: 0.3rem 0.3rem, 0.3rem 0.3rem;
+  background-repeat: no-repeat;
+  padding-right: 2rem;
+}
+/* The question the page asks is the field's own headline, not a form
+   label; the campaign under it stays a quiet label. */
+.trigger-ask { display: block; margin: 0 0 var(--trg-2); color: var(--color-ink); font-size: 0.95rem; font-weight: 600; letter-spacing: -0.008em; }
+.trigger-label { display: block; margin: 0 0 var(--trg-1); color: var(--color-ink-soft); font-size: 0.74rem; font-weight: 600; }
+.trigger-hint { margin: var(--trg-1) 0 0; color: var(--color-ink-faint); font-size: 0.7rem; line-height: 1.45; }
 
-.trigger-form-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; border-top: 1px solid var(--color-line); padding: 1rem 1.35rem; }
-.trigger-form-actions .campaign-quiet-button { padding-inline: 0.6rem; }
-.trigger-field-error { margin: 0.45rem 0 0; color: var(--color-alert); font-size: 0.74rem; line-height: 1.45; }
-.trigger-form-error { margin: 0.9rem 1.35rem 0; }
+.trigger-form-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; border-top: 1px solid var(--color-line); padding: 1rem 1.4rem; }
+.trigger-form-actions .campaign-quiet-button { padding-inline: 0.7rem; }
+.trigger-field-error { margin: var(--trg-1) 0 0; color: var(--color-alert); font-size: 0.75rem; line-height: 1.45; }
+.trigger-form-error { margin: var(--trg-3) 1.4rem 0; }
 
-@media (max-width: 959px) {
-  .trigger-row { grid-template-columns: 5.5rem minmax(0, 1fr); gap: 0.5rem 0.75rem; }
+/* ---------- narrow ---------- */
+/* Two steps, borrowed from the neighbours rather than invented: 60rem drops
+   the affordances a mouse needs, and 48rem is where audiences.css already
+   stacks the page heading, so the header and the rows change shape on the
+   same line. */
+@media (max-width: 60rem) {
+  .trigger-row { grid-template-columns: 7.5rem minmax(0, 1fr); gap: 0.5rem 0.9rem; }
   .trigger-row .campaign-list-updated { grid-column: 2; }
   .trigger-row .campaign-list-open { display: none; }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 48rem) {
+  /* One column: a chip column narrow enough for a phone cannot hold "Not
+     supported", so the chip takes its own line and leads the row. */
+  .trigger-row { grid-template-columns: minmax(0, 1fr); gap: 0.45rem; }
+  .trigger-row .campaign-list-updated { grid-column: 1; }
   .trigger-heading-actions { width: 100%; }
-  .trigger-heading-actions > * { flex: 1; }
-  .trigger-form-body { padding-inline: 1rem; }
-  .trigger-form-actions { padding-inline: 1rem; }
+  .trigger-readback { font-size: 0.96rem; }
+  .trigger-head { margin-bottom: var(--trg-4); padding-bottom: var(--trg-3); }
+  .trigger-section + .trigger-section { margin-top: var(--trg-4); }
+  /* The column hints are a desktop instrument. On a phone they add up to
+     more than the table's own min-width and squeeze the prose column to
+     nothing, one character per line, so hand the widths back to the
+     browser and scroll a narrower table instead. */
+  .trigger-table-items { min-width: 30rem; }
+  .trigger-table-items th:nth-child(1),
+  .trigger-table-items th:nth-child(2),
+  .trigger-table-items th:nth-child(4),
+  .trigger-table-items th:nth-child(5),
+  .trigger-table-runs th:nth-child(1),
+  .trigger-table-runs th:nth-child(2),
+  .trigger-table-runs th:nth-child(3) { width: auto; }
+  .trigger-table th,
+  .trigger-table td { padding-inline: 0.7rem; }
+}
+
+@media (max-width: 30rem) {
+  .trigger-form-body { padding-inline: 1.05rem; }
+  .trigger-form-actions { padding-inline: 1.05rem; }
   .trigger-form-actions .audience-primary { width: 100%; }
-  .trigger-form-error { margin-inline: 1rem; }
+  .trigger-form-error { margin-inline: 1.05rem; }
+  .trigger-state { min-height: 9.5rem; padding: 1.6rem 1.1rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .trigger-back { transition: none; }
+  .trigger-back,
+  .trigger-input,
+  .trigger-select,
+  .trigger-table tbody tr { transition: none; }
+  .trigger-state-working svg { animation: none; }
 }
