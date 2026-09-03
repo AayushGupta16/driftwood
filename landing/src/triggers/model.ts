@@ -81,16 +81,22 @@ export type Trigger = {
   createdAt: string;
 };
 
+/* Who started a run: the schedule, a press of Check now, or the setup
+   step right after the trigger was created. */
+export type RunTrigger = "schedule" | "manual" | "setup";
+
 export type TriggerRun = {
   id: string;
   state: RunState;
-  triggeredBy: "schedule" | "manual";
+  triggeredBy: RunTrigger;
   postingsSeen: number;
   postingsNew: number;
   /* The pull counters arrived after the first rows were written; null means
      the row predates them and the log shows a dash. */
   pagesFetched: number | null;
   creditsUsed: number | null;
+  /* Dollars the pull cost, when the backend metered it. */
+  costUsd: number | null;
   idsSeen: number | null;
   idsNew: number | null;
   idsFiltered: number | null;
@@ -198,6 +204,37 @@ export function deriveTriggerName(watch: string, host: string | null): string {
   return words || "New trigger";
 }
 
+const TITLE_WORDS = 5;
+/* A name longer than this is a sentence that got stored as a name. */
+const NAME_WORDS_MAX = 8;
+
+function normalizeSentence(text: string): string {
+  return text.trim().replace(/\s+/g, " ").replace(/[.,;:!?]+$/, "").toLowerCase();
+}
+
+function firstWords(text: string, count: number): string {
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  const head = words.slice(0, count).join(" ").replace(/[.,;:!?]+$/, "");
+  return words.length > count ? `${head}…` : head;
+}
+
+/* The title the card and the detail page show. A trigger with no site can
+   arrive named after its whole sentence, and fifteen words over five lines
+   is not a title. So: a name the customer typed (short, and not the
+   sentence itself), else the site, else the first five words of the
+   sentence with an ellipsis. The full sentence is the lede beneath. */
+export function triggerTitle(trigger: Pick<Trigger, "name" | "sourceHost" | "watch">): string {
+  const name = (trigger.name ?? "").trim();
+  const watch = (trigger.watch ?? "").trim();
+  const typed =
+    name !== "" &&
+    name.split(/\s+/).length <= NAME_WORDS_MAX &&
+    (watch === "" || normalizeSentence(name) !== normalizeSentence(watch));
+  if (typed) return name;
+  if (trigger.sourceHost) return trigger.sourceHost;
+  return firstWords(watch || name, TITLE_WORDS) || "Trigger";
+}
+
 export function normalizeCadence(value: string | null | undefined): TriggerCadence {
   return value === "weekly" || value === "every_n_hours" ? value : "daily";
 }
@@ -291,14 +328,19 @@ const PULL_LABELS: Record<PullMethod, string> = {
 export function pullLabel(pull: TriggerPull | null | undefined): string | null {
   if (!pull) return null;
   const label = (pull.label ?? "").trim();
-  return label || PULL_LABELS[pull.method] || null;
+  if (label && label.toLowerCase() !== pull.method.toLowerCase()) return label;
+  return PULL_LABELS[pull.method] ?? null;
 }
 
 export type PostingTone = "plain" | "tide" | "hold" | "skip" | "alert";
 
+/* "New" read two ways after a check (queued for the agent, or reviewed?),
+   so the two open statuses say who has the posting. */
+const WORKING_LABEL = "Your agent is working on it";
+
 const POSTING_STATUS: Record<PostingStatus, { label: string; tone: PostingTone }> = {
-  new: { label: "New", tone: "plain" },
-  in_progress: { label: "In progress", tone: "plain" },
+  new: { label: "Waiting for your agent", tone: "plain" },
+  in_progress: { label: WORKING_LABEL, tone: "plain" },
   no_lead: { label: "Held: no contact found", tone: "hold" },
   demo_pending: { label: "Demo pending", tone: "plain" },
   ready: { label: "Ready", tone: "plain" },
@@ -309,7 +351,7 @@ const POSTING_STATUS: Record<PostingStatus, { label: string; tone: PostingTone }
 };
 
 export function postingStatusLabel(status: string): string {
-  return POSTING_STATUS[status as PostingStatus]?.label ?? "In progress";
+  return POSTING_STATUS[status as PostingStatus]?.label ?? WORKING_LABEL;
 }
 
 export function postingStatusTone(status: string): PostingTone {
@@ -331,29 +373,87 @@ export function runIsOpen(state: string | null | undefined): boolean {
   return state === "queued" || state === "running";
 }
 
+const RUN_TRIGGER_LABELS: Record<RunTrigger, string> = {
+  schedule: "Scheduled",
+  manual: "Check now",
+  setup: "First check",
+};
+
+/* The runs log's sub-line: what started the run. The check the backend
+   starts on its own right after a trigger is created is "First check",
+   not "Check now", which nobody pressed. */
+export function runTriggerLabel(triggeredBy: string): string {
+  return RUN_TRIGGER_LABELS[triggeredBy as RunTrigger] ?? "Scheduled";
+}
+
 function plural(count: number, singular: string, pluralForm: string): string {
   return `${count.toLocaleString()} ${count === 1 ? singular : pluralForm}`;
 }
 
-/* Only the non-zero parts, in pipeline order. The postings total is left
-   out: the detail page already heads its table with it, and on the card the
-   "new" figure is the one that tells you whether the watch is finding
-   anything. Empty string when nothing has happened yet. */
+/* The counts a trigger row carries are a lifetime tally by posting
+   status, not one check's result, so the card says so: "So far: 40
+   postings · 34 agencies added · 13 contacts · 13 demos". Only the
+   non-zero parts after the total, in pipeline order; empty when nothing
+   has been found yet. Per-check numbers live in the runs log, which the
+   list call does not carry. */
 export function countsLine(counts: TriggerCounts): string {
-  const parts: string[] = [];
-  if (counts.new) parts.push(plural(counts.new, "new posting", "new postings"));
+  if (!counts.postings) return "";
+  const parts = [plural(counts.postings, "posting", "postings")];
   if (counts.agenciesAdded) parts.push(plural(counts.agenciesAdded, "agency added", "agencies added"));
-  if (counts.leads) parts.push(plural(counts.leads, "lead found", "leads found"));
-  if (counts.demos) parts.push(plural(counts.demos, "demo built", "demos built"));
+  if (counts.leads) parts.push(plural(counts.leads, "contact", "contacts"));
+  if (counts.demos) parts.push(plural(counts.demos, "demo", "demos"));
   if (counts.enrolled) parts.push(`${counts.enrolled.toLocaleString()} enrolled`);
   if (counts.held) parts.push(`${counts.held.toLocaleString()} held for review`);
-  return parts.join(", ");
+  return `So far: ${parts.join(" · ")}`;
 }
 
 /* A run's counter for the log: the number, or a dash for a row that
    predates the counter. */
 export function counterCell(value: number | null | undefined): string {
   return value === null || value === undefined ? "—" : value.toLocaleString();
+}
+
+const USD = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+
+/* "$0.05"; null for nothing, zero, or a value the backend did not send.
+   A cost too small to show in cents says so instead of rounding to $0.00. */
+export function formatUsd(value: number | null | undefined): string | null {
+  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) return null;
+  return value < 0.005 ? "Under $0.01" : USD.format(value);
+}
+
+/* The Spend cell: credits the pull used and, when metered, the dollars,
+   "12 credits · $0.05". A dash when the row carries neither. */
+export function spendCell(run: Pick<TriggerRun, "creditsUsed" | "costUsd">): string {
+  const parts: string[] = [];
+  if (run.creditsUsed !== null && run.creditsUsed !== undefined) {
+    parts.push(plural(run.creditsUsed, "credit", "credits"));
+  }
+  const cost = formatUsd(run.costUsd);
+  if (cost) parts.push(cost);
+  return parts.length ? parts.join(" · ") : "—";
+}
+
+function epoch(iso: string | null | undefined): number | null {
+  if (!iso) return null;
+  const time = new Date(iso).getTime();
+  return Number.isNaN(time) ? null : time;
+}
+
+/* Newest first by when the posting went up; postings with no date go
+   last, and ties (or no dates) fall back to when we found them. Returns
+   a new array. */
+export function sortPostings<T extends Pick<TriggerPosting, "postedAt" | "createdAt">>(postings: T[]): T[] {
+  return [...postings].sort((a, b) => {
+    const aPosted = epoch(a.postedAt);
+    const bPosted = epoch(b.postedAt);
+    if (aPosted !== bPosted) {
+      if (aPosted === null) return 1;
+      if (bPosted === null) return -1;
+      return bPosted - aPosted;
+    }
+    return (epoch(b.createdAt) ?? 0) - (epoch(a.createdAt) ?? 0);
+  });
 }
 
 export type ListKind = "keywords" | "locations" | "terms";
@@ -418,6 +518,13 @@ function lowerFirst(text: string): string {
   return text.charAt(0).toLowerCase() + text.slice(1);
 }
 
+/* Places keep their commas ("Atlanta, GA"), so a list of them is joined
+   with a middle dot: "Atlanta, GA · Phoenix, AZ · Dallas, TX". Used by
+   the when line and the form's summary alike. */
+export function joinLocations(locations: string[]): string {
+  return locations.map((place) => place.trim()).filter(Boolean).join(" · ");
+}
+
 /* The "when" half of the sentence, minus the word When itself (the page
    sets that in bold): "a new caregiver or CNA job posting from a home care
    agency appears on mycnajobs.com in Atlanta, Phoenix or Tampa". A trigger
@@ -444,7 +551,7 @@ export function whenLine(trigger: WhenSource): string {
     ? ""
     : isAllUs(locations)
       ? host ? " anywhere in the US" : " in the US"
-      : ` in ${joinList(locations, ", ", "or")}`;
+      : ` in ${joinLocations(locations)}`;
   return `${subject} appears${host ? ` on ${host}` : " anywhere on the web"}${where}`;
 }
 
@@ -493,7 +600,63 @@ export function formatMoment(iso: string | null): string | null {
   return MOMENT.format(date);
 }
 
+/* Where a trigger stands with its checks. Read from the newest run when
+   the page has the runs log (the detail page), else from the row's own
+   last_run_state and last_run_at (the list). A queued or running check
+   wins over everything, including a row that has never finished one: the
+   first check used to read "Has not checked yet" while it ran. */
+export type LastCheck =
+  | { kind: "never" }
+  | { kind: "checking" }
+  | { kind: "checked"; at: string | null; failed: boolean };
+
+export type LastCheckSource = Pick<Trigger, "lastRunAt" | "lastRunState">;
+/* The state is a plain string here: only "open" and "failed" matter. */
+export type NewestRun = { state: string; finishedAt: string | null; startedAt: string | null; createdAt: string };
+
+export function lastCheck(trigger: LastCheckSource, newestRun?: NewestRun | null): LastCheck {
+  const state = newestRun?.state ?? trigger.lastRunState;
+  if (runIsOpen(state)) return { kind: "checking" };
+  const at = newestRun?.finishedAt ?? trigger.lastRunAt ?? newestRun?.startedAt ?? newestRun?.createdAt ?? null;
+  if (!at) return { kind: "never" };
+  return { kind: "checked", at, failed: state === "failed" };
+}
+
+export const CHECKING_LINE = "Checking now…";
+export const NEVER_CHECKED_LINE = "Has not checked yet";
+
+/* The card's line: "Checking now…", "Has not checked yet", "Last check
+   Aug 31", "Last check Aug 31 failed". */
+export function lastCheckLine(trigger: LastCheckSource, newestRun?: NewestRun | null, now: Date = new Date()): string {
+  const check = lastCheck(trigger, newestRun);
+  if (check.kind === "checking") return CHECKING_LINE;
+  if (check.kind === "never") return NEVER_CHECKED_LINE;
+  const day = formatDay(check.at, now) ?? "recently";
+  return check.failed ? `Last check ${day} failed` : `Last check ${day}`;
+}
+
+/* The detail page's "Last check" fact: "Checking now…", "Has not checked
+   yet", or the moment the newest check finished, "Aug 31, 6:02 AM" (", failed"
+   when it did). */
+export function lastCheckFact(trigger: LastCheckSource, newestRun?: NewestRun | null): string {
+  const check = lastCheck(trigger, newestRun);
+  if (check.kind === "checking") return CHECKING_LINE;
+  if (check.kind === "never") return NEVER_CHECKED_LINE;
+  const moment = formatMoment(check.at) ?? "Recently";
+  return check.failed ? `${moment}, failed` : moment;
+}
+
 export function postingLocation(posting: Pick<TriggerPosting, "city" | "state" | "locationText">): string {
   const cityState = [posting.city, posting.state].filter(Boolean).join(", ");
   return cityState || posting.locationText || "Location not listed";
+}
+
+/* The Posted cell: the day the posting went up, or, for one the board
+   listed without a date, the day we found it, said as such so its place
+   at the bottom of a newest-first table makes sense. */
+export function postedCell(posting: Pick<TriggerPosting, "postedAt" | "createdAt">, now: Date = new Date()): string {
+  const posted = formatDay(posting.postedAt, now);
+  if (posted) return posted;
+  const found = formatDay(posting.createdAt, now);
+  return found ? `Found ${found}` : "Unknown";
 }

@@ -148,16 +148,18 @@ test("rows from before the when/then fields get sensible defaults", () => {
 });
 
 test("runs map every wire field, the pull counters null when absent", () => {
-  const run = mapRun({
+  const raw = {
     id: "run-1", state: "done", triggered_by: "manual", postings_seen: 219, postings_new: 9,
-    pages_fetched: 4, credits_used: 12, ids_seen: 219, ids_new: 9, ids_filtered: 31,
+    pages_fetched: 4, credits_used: 12, cost_usd: 0.05, ids_seen: 219, ids_new: 9, ids_filtered: 31,
     error: null, created_at: "2026-09-01T13:00:00Z", started_at: "2026-09-01T13:00:05Z",
     finished_at: "2026-09-01T13:02:00Z",
-  });
+  };
+  const run = mapRun(raw);
   assert.equal(run.triggeredBy, "manual");
   assert.equal(run.postingsSeen, 219);
   assert.equal(run.pagesFetched, 4);
   assert.equal(run.creditsUsed, 12);
+  assert.equal(run.costUsd, 0.05);
   assert.equal(run.idsSeen, 219);
   assert.equal(run.idsNew, 9);
   assert.equal(run.idsFiltered, 31);
@@ -170,10 +172,18 @@ test("runs map every wire field, the pull counters null when absent", () => {
   const old = mapRun(oldRaw);
   assert.equal(old.pagesFetched, null);
   assert.equal(old.creditsUsed, null);
+  assert.equal(old.costUsd, null);
   assert.equal(old.idsSeen, null);
   assert.equal(old.idsNew, null);
   assert.equal(old.idsFiltered, null);
   assert.equal(mapRun({ ...oldRaw, credits_used: null, ids_seen: undefined }).idsSeen, null);
+  assert.equal(mapRun({ ...oldRaw, cost_usd: null }).costUsd, null);
+
+  // The check the backend starts by itself after create is "setup"; any
+  // other value it might send reads as scheduled.
+  assert.equal(mapRun({ ...raw, triggered_by: "setup" }).triggeredBy, "setup");
+  assert.equal(mapRun({ ...raw, triggered_by: "schedule" }).triggeredBy, "schedule");
+  assert.equal(mapRun({ ...raw, triggered_by: "cron" }).triggeredBy, "schedule");
 });
 
 test("postings map every wire field", () => {
@@ -203,24 +213,37 @@ test("the list call reads the triggers envelope with the session cookie", async 
   assert.equal(rows[1].sourceHost, "mycnajobs.com");
 });
 
-test("the detail call returns the trigger with its runs and postings", async (t) => {
+test("the detail call returns the trigger with its runs and postings, newest posting first", async (t) => {
+  const rawPosting = (id: string, posted_at: string | null, created_at: string) => ({
+    id, source_url: `https://example.test/jobs/${id}`, employer_name: "Brightpath Home Care",
+    title: "Caregiver", city: "Tucson", state: "AZ", location_text: "Tucson, AZ", pay_text: null,
+    posted_at, status: "new", note: null, company_id: null, lead_id: null, demo_url: null, created_at,
+  });
   stubFetch(t, (async (input) => {
     assert.equal(input, "/api/v1/dashboard/triggers/trg-1");
     return json({
       trigger: rawTrigger,
       runs: [{
-        id: "run-1", state: "running", triggered_by: "schedule", postings_seen: 0, postings_new: 0,
+        id: "run-1", state: "running", triggered_by: "setup", postings_seen: 0, postings_new: 0,
         error: null, created_at: "2026-09-01T13:00:00Z", started_at: "2026-09-01T13:00:05Z", finished_at: null,
       }],
-      postings: [],
+      postings: [
+        rawPosting("undated", null, "2026-09-01T00:00:00Z"),
+        rawPosting("aug-30", "2026-08-30T00:00:00Z", "2026-08-31T00:00:00Z"),
+        rawPosting("aug-31", "2026-08-31T00:00:00Z", "2026-08-31T00:00:00Z"),
+      ],
     });
   }) as typeof fetch);
 
   const detail = await getTrigger("trg-1");
   assert.equal(detail.trigger.id, "trg-1");
   assert.equal(detail.runs[0].state, "running");
+  assert.equal(detail.runs[0].triggeredBy, "setup");
   assert.equal(detail.runs[0].pagesFetched, null);
-  assert.deepEqual(detail.postings, []);
+  assert.deepEqual(detail.postings.map((posting) => posting.id), ["aug-31", "aug-30", "undated"]);
+
+  stubFetch(t, (async () => json({ trigger: rawTrigger, runs: [], postings: [] })) as typeof fetch);
+  assert.deepEqual((await getTrigger("trg-1")).postings, []);
 });
 
 test("create sends the backend's exact body", async (t) => {

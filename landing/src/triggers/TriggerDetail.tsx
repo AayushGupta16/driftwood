@@ -12,16 +12,20 @@ import TriggerForm from "./TriggerForm";
 import {
   counterCell,
   formatDate,
-  formatDay,
   formatMoment,
+  lastCheckFact,
+  postedCell,
   postingLocation,
   postingStatusLabel,
   postingStatusTone,
   pullLabel,
   runIsOpen,
   runStateLabel,
+  runTriggerLabel,
   scheduleLabel,
+  spendCell,
   thenLine,
+  triggerTitle,
   triggerView,
   viewLabel,
   viewNotice,
@@ -70,19 +74,11 @@ function StatusChip({ trigger }: { trigger: Trigger }) {
   return <span className={`campaign-status campaign-status-${view}`}>{viewLabel(view)}</span>;
 }
 
-function lastCheckFact(trigger: Trigger): string {
-  const moment = formatMoment(trigger.lastRunAt);
-  if (!moment) return "Has not checked yet";
-  if (trigger.lastRunState === "failed") return `${moment}, failed`;
-  if (runIsOpen(trigger.lastRunState)) return `${moment}, running`;
-  return moment;
-}
-
 function PostingRow({ posting }: { posting: TriggerPosting }) {
   const tone = postingStatusTone(posting.status);
   return (
     <tr>
-      <td className="trigger-num">{formatDay(posting.postedAt) ?? formatDay(posting.createdAt) ?? "Unknown"}</td>
+      <td className="trigger-num">{postedCell(posting)}</td>
       <td>
         <strong>{posting.employerName}</strong>
         {posting.note && <span className="trigger-sub">{posting.note}</span>}
@@ -101,20 +97,22 @@ function PostingRow({ posting }: { posting: TriggerPosting }) {
   );
 }
 
-/* Seen and New prefer the pull counters and fall back to the posting
-   counts every row has; Pages and Filtered only exist on newer rows. */
+/* Seen and New prefer the pull counters (which update while a check
+   runs) and fall back to the posting counts every row has; Pages,
+   Filtered and Spend only exist on newer rows. */
 function RunRow({ run }: { run: TriggerRun }) {
   return (
     <tr>
       <td className="trigger-num">
         {formatMoment(run.startedAt ?? run.createdAt) ?? "Unknown"}
-        <span className="trigger-sub">{run.triggeredBy === "manual" ? "Check now" : "Scheduled"}</span>
+        <span className="trigger-sub">{runTriggerLabel(run.triggeredBy)}</span>
       </td>
       <td>{runStateLabel(run.state)}</td>
       <td className="trigger-num">{counterCell(run.pagesFetched)}</td>
       <td className="trigger-num">{counterCell(run.idsSeen ?? run.postingsSeen)}</td>
       <td className="trigger-num">{counterCell(run.idsNew ?? run.postingsNew)}</td>
       <td className="trigger-num">{counterCell(run.idsFiltered)}</td>
+      <td className="trigger-num">{spendCell(run)}</td>
       <td className={run.error ? "trigger-error-cell" : "trigger-error-none"}>{run.error ?? "None"}</td>
     </tr>
   );
@@ -231,6 +229,7 @@ export default function TriggerDetail({ triggerId }: { triggerId: string }) {
 
   const detail = state.status === "ready" ? state.detail : null;
   const trigger = detail?.trigger ?? null;
+  const title = trigger ? triggerTitle(trigger) : null;
 
   /* Edit swaps the page for the form, prefilled; saving lands back here
      with the row the backend returned. */
@@ -238,7 +237,7 @@ export default function TriggerDetail({ triggerId }: { triggerId: string }) {
     return (
       <section className="audience-page" aria-labelledby="triggers-heading">
         <a className="trigger-back" href={withMockMode(`/dashboard/triggers/${encodeURIComponent(triggerId)}`)} onClick={(event) => { event.preventDefault(); setEditing(false); }}>
-          <BackChevron />{trigger.name}
+          <BackChevron />{title}
         </a>
         <TriggerForm
           mode="edit"
@@ -271,7 +270,7 @@ export default function TriggerDetail({ triggerId }: { triggerId: string }) {
         <div className="trigger-title-row">
           {trigger ? (
             <>
-              <h1 id="trigger-heading">{trigger.name}</h1>
+              <h1 id="trigger-heading">{title}</h1>
               <StatusChip trigger={trigger} />
             </>
           ) : (
@@ -343,7 +342,7 @@ export default function TriggerDetail({ triggerId }: { triggerId: string }) {
         </div>
         <div className="trigger-fact">
           <small>Last check</small>
-          {trigger ? <strong>{lastCheckFact(trigger)}</strong> : <FactSkeleton />}
+          {trigger ? <strong>{lastCheckFact(trigger, detail?.runs[0])}</strong> : <FactSkeleton />}
         </div>
         <div className="trigger-fact">
           <small>Watching since</small>
@@ -389,7 +388,7 @@ export default function TriggerDetail({ triggerId }: { triggerId: string }) {
               <table className="trigger-table trigger-table-postings">
                 <thead>
                   <tr>
-                    <th scope="col">Posted</th>
+                    <th scope="col">Posted <span className="trigger-th-note">newest first</span></th>
                     <th scope="col">Agency</th>
                     <th scope="col">Location</th>
                     <th scope="col">Job title</th>
@@ -428,13 +427,14 @@ export default function TriggerDetail({ triggerId }: { triggerId: string }) {
                     <th scope="col">Seen</th>
                     <th scope="col">New</th>
                     <th scope="col">Filtered</th>
+                    <th scope="col">Spend</th>
                     <th scope="col">Errors</th>
                   </tr>
                 </thead>
                 <tbody>
                   {detail
                     ? detail.runs.map((run) => <RunRow key={run.id} run={run} />)
-                    : <SkeletonRows columns={7} rows={3} />}
+                    : <SkeletonRows columns={8} rows={3} />}
                 </tbody>
               </table>
             </div>

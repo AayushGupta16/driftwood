@@ -9,9 +9,10 @@ import { listTriggers } from "./api";
 import TriggerForm from "./TriggerForm";
 import {
   countsLine,
-  formatDay,
+  lastCheckLine,
   scheduleLabel,
   thenLine,
+  triggerTitle,
   triggerView,
   viewLabel,
   viewNotice,
@@ -55,18 +56,16 @@ function dropNewParam() {
   window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
 }
 
-function lastCheckLine(trigger: Trigger): string {
-  const day = formatDay(trigger.lastRunAt);
-  if (!day) return "Has not checked yet.";
-  const line = countsLine(trigger.counts);
-  const head = trigger.lastRunState === "failed" ? `Last check ${day} failed` : `Last check ${day}`;
-  return line ? `${head} · ${line}` : head;
-}
-
+/* The list call carries no runs, only the row's last_run_state and a
+   lifetime tally, so the card shows those two things as what they are: a
+   "Last check" line (or "Checking now…") and a "So far:" line. It never
+   dresses the lifetime tally up as one check's result. */
 function TriggerCard({ trigger }: { trigger: Trigger }) {
   const view = triggerView(trigger);
   const notice = viewNotice(view);
-  const mark = (trigger.sourceHost ?? trigger.name).charAt(0).toUpperCase();
+  const title = triggerTitle(trigger);
+  const mark = (trigger.sourceHost ?? title).charAt(0).toUpperCase();
+  const soFar = notice ? "" : countsLine(trigger.counts);
   return (
     <a
       className={`trigger-card${notice ? " trigger-card-muted" : ""}`}
@@ -75,11 +74,12 @@ function TriggerCard({ trigger }: { trigger: Trigger }) {
     >
       <span className="trigger-mark" aria-hidden="true">{mark}</span>
       <div>
-        <h2>{trigger.name}</h2>
+        <h2>{title}</h2>
         <p className="trigger-when"><b>When</b> {whenLine(trigger)},</p>
         <p className="trigger-then"><b>then</b> {thenLine(trigger.actions, trigger.campaignName)}.</p>
         <p className="trigger-meta">{scheduleLabel(trigger.schedule)}</p>
         <p className="trigger-lastrun">{notice ?? lastCheckLine(trigger)}</p>
+        {soFar && <p className="trigger-lastrun">{soFar}</p>}
       </div>
       <span className={`campaign-status campaign-status-${view}`}>{viewLabel(view)}</span>
     </a>

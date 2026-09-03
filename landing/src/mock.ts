@@ -1620,16 +1620,19 @@ if (mockMode) {
   // Triggers (GET/POST /dashboard/triggers, GET/PUT /{id}, POST
   // /{id}/run|pause|resume). Five sample watches: one nightly, one every
   // four hours, one with no site (web search), one still being built, one
-  // on a site that cannot be watched; ?trgempty=1 serves the empty state. "Check now" queues a run
-  // that flips queued -> running -> done across the page's polls and lands
-  // one new posting when it finishes. A trigger created on a site the mock
-  // does not know starts as needs_setup and becomes active twenty seconds
-  // later, as the agent would finish building its pull. Writes 403 in
-  // ?mock=member, as the backend does.
+  // on a site that cannot be watched; ?trgempty=1 serves the empty state.
+  // "Check now" queues a run that flips queued -> running -> done across
+  // the page's polls and lands one new posting when it finishes. Creating
+  // a trigger that can run queues its first check the same way, with
+  // triggered_by "setup", as the backend does. A trigger created on a site
+  // the mock does not know starts as needs_setup and becomes active twenty
+  // seconds later, as the agent would finish building its pull, and its
+  // first check queues then. Writes 403 in ?mock=member, as the backend
+  // does.
   const triggersEmpty = params.get("trgempty") === "1";
   type MockRun = {
     id: string; state: string; triggered_by: string; postings_seen: number; postings_new: number;
-    pages_fetched?: number; credits_used?: number | null; ids_seen?: number; ids_new?: number; ids_filtered?: number;
+    pages_fetched?: number; credits_used?: number | null; cost_usd?: number | null; ids_seen?: number; ids_new?: number; ids_filtered?: number;
     error: string | null; created_at: string; started_at: string | null; finished_at: string | null;
   };
   type MockPosting = {
@@ -1700,9 +1703,10 @@ if (mockMode) {
       campaign_id: "home-care-intro", campaign_name: "Home care agency intro",
       status: "active", last_run_at: hoursAgo(5), last_run_state: "done", created_at: hoursAgo(24 * 13),
       runs: [
-        { id: "run-3", state: "done", triggered_by: "schedule", postings_seen: 219, postings_new: 9, pages_fetched: 4, credits_used: 12, ids_seen: 219, ids_new: 9, ids_filtered: 31, error: null, created_at: hoursAgo(5), started_at: hoursAgo(5), finished_at: hoursAgo(4.95) },
-        { id: "run-2", state: "done", triggered_by: "schedule", postings_seen: 212, postings_new: 14, pages_fetched: 4, credits_used: 12, ids_seen: 212, ids_new: 14, ids_filtered: 27, error: "The job board was slow to respond. We retried once and the run finished.", created_at: hoursAgo(29), started_at: hoursAgo(29), finished_at: hoursAgo(28.9) },
-        { id: "run-1", state: "failed", triggered_by: "manual", postings_seen: 0, postings_new: 0, error: "The job board did not load. Nothing was added.", created_at: hoursAgo(53), started_at: hoursAgo(53), finished_at: hoursAgo(52.99) },
+        { id: "run-3", state: "done", triggered_by: "schedule", postings_seen: 219, postings_new: 9, pages_fetched: 4, credits_used: 12, cost_usd: 0.05, ids_seen: 219, ids_new: 9, ids_filtered: 31, error: null, created_at: hoursAgo(5), started_at: hoursAgo(5), finished_at: hoursAgo(4.95) },
+        { id: "run-2", state: "done", triggered_by: "schedule", postings_seen: 212, postings_new: 14, pages_fetched: 4, credits_used: 12, cost_usd: 0.05, ids_seen: 212, ids_new: 14, ids_filtered: 27, error: "The job board was slow to respond. We retried once and the run finished.", created_at: hoursAgo(29), started_at: hoursAgo(29), finished_at: hoursAgo(28.9) },
+        { id: "run-1", state: "failed", triggered_by: "manual", postings_seen: 0, postings_new: 0, cost_usd: 0, error: "The job board did not load. Nothing was added.", created_at: hoursAgo(53), started_at: hoursAgo(53), finished_at: hoursAgo(52.99) },
+        { id: "run-0", state: "done", triggered_by: "setup", postings_seen: 203, postings_new: 203, pages_fetched: 4, credits_used: 12, cost_usd: 0.05, ids_seen: 203, ids_new: 203, ids_filtered: 29, error: null, created_at: hoursAgo(24 * 13), started_at: hoursAgo(24 * 13), finished_at: hoursAgo(24 * 13 - 0.05) },
       ],
       postings: [
         posting("p1", "Brightpath Home Care", "Caregiver, part time", "Tucson", "AZ", "$16 to $19/hr", 1, "enrolled", "Dana Whitfield, owner", true),
@@ -1713,6 +1717,7 @@ if (mockMode) {
         posting("p6", "Golden Hours Home Care", "Caregiver, full time", "Spokane", "WA", "$18 to $21/hr", 2, "in_progress", null, false),
         posting("p7", "Maple Grove Companion Care", "Companion caregiver", "Lansing", "MI", "$15 to $16/hr", 2, "failed", "The posting page did not load", false),
         posting("p8", "Harbor Light Home Care", "CNA, per diem", "Wilmington", "NC", "$17 to $19/hr", 3, "new", null, false),
+        { ...posting("p9", "Riverbend Home Care", "Caregiver, weekends", "Eugene", "OR", "$16 to $18/hr", 1, "new", null, false), posted_at: null },
       ],
     },
     {
@@ -1816,6 +1821,16 @@ if (mockMode) {
       held: by("no_lead"),
     };
   };
+  // The check the backend starts on its own once a trigger can run: right
+  // after create, or once the agent has built the pull.
+  const queueSetupRun = (trigger: MockTrigger) => {
+    trigger.runs.unshift({
+      id: `run-${crypto.randomUUID().slice(0, 8)}`, state: "queued", triggered_by: "setup",
+      postings_seen: 0, postings_new: 0, error: null, created_at: new Date().toISOString(),
+      started_at: null, finished_at: null,
+    });
+    trigger.last_run_state = "queued";
+  };
   // A trigger the customer created on a site the mock does not know starts
   // as needs_setup; twenty seconds on, its agent has "built the pull".
   const settleBuild = (trigger: MockTrigger) => {
@@ -1824,6 +1839,7 @@ if (mockMode) {
     if (Date.now() - new Date(trigger.created_at).getTime() < 20_000) return;
     trigger.status = "active";
     trigger.pull = { method: "adapter", label: "Site search" };
+    queueSetupRun(trigger);
   };
   const triggerRow = (trigger: MockTrigger) => ({
     id: trigger.id, name: trigger.name, source_kind: trigger.source_kind,
@@ -1852,6 +1868,7 @@ if (mockMode) {
       run.postings_new = 1;
       run.pages_fetched = 4;
       run.credits_used = 12;
+      run.cost_usd = 0.05;
       run.ids_seen = 221;
       run.ids_new = 1;
       run.ids_filtered = 30;
@@ -1909,6 +1926,7 @@ if (mockMode) {
           last_run_at: null, last_run_state: null, created_at: now,
           runs: [], postings: [],
         };
+        if (trigger.status === "active") queueSetupRun(trigger);
         mockTriggers.unshift(trigger);
         persistMockTriggers();
         return new Response(JSON.stringify(triggerRow(trigger)), { status: 201, headers: { "Content-Type": "application/json" } });

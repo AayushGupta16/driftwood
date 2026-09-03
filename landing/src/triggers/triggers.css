@@ -74,6 +74,7 @@
 .trigger-then { margin: 0.1rem 0 0; color: var(--color-ink); font-size: 0.82rem; line-height: 1.45; }
 .trigger-meta { margin: 0.45rem 0 0; color: var(--color-ink-soft); font-size: 0.74rem; line-height: 1.5; }
 .trigger-lastrun { margin: 0.35rem 0 0; color: var(--color-ink-faint); font-size: 0.72rem; line-height: 1.5; font-variant-numeric: tabular-nums; }
+.trigger-lastrun + .trigger-lastrun { margin-top: 0.1rem; }
 .trigger-card .campaign-status { margin-top: 0.2rem; white-space: nowrap; }
 .trigger-card-muted .trigger-mark,
 .trigger-card-muted > div { opacity: 0.55; }
@@ -141,7 +142,7 @@
 .trigger-table-wrap { overflow-x: auto; }
 .trigger-table { width: 100%; border-collapse: collapse; font-size: 0.76rem; }
 .trigger-table-postings { min-width: 56rem; }
-.trigger-table-runs { min-width: 44rem; }
+.trigger-table-runs { min-width: 50rem; }
 .trigger-table th {
   border-bottom: 1px solid var(--color-line);
   background: var(--color-sand);
@@ -152,6 +153,8 @@
   text-align: left;
   white-space: nowrap;
 }
+/* A quiet note after a column name, "Posted  newest first". */
+.trigger-th-note { margin-left: 0.3rem; color: var(--color-ink-faint); font-weight: 500; }
 .trigger-table td { border-bottom: 1px solid var(--color-line); padding: 0.7rem 0.75rem; vertical-align: top; line-height: 1.45; }
 .trigger-table tbody tr:last-child td { border-bottom: 0; }
 .trigger-table td.trigger-num { font-variant-numeric: tabular-nums; white-space: nowrap; }

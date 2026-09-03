@@ -9,18 +9,29 @@ import {
   deriveTriggerName,
   fireHourLabel,
   formatDay,
+  formatMoment,
+  formatUsd,
   hasListSeparator,
   hostFromUrl,
   isSiteUrl,
+  joinLocations,
+  lastCheck,
+  lastCheckFact,
+  lastCheckLine,
+  postedCell,
   postingLocation,
   postingStatusLabel,
   postingStatusTone,
   pullLabel,
   runIsOpen,
   runStateLabel,
+  runTriggerLabel,
   scheduleLabel,
+  sortPostings,
+  spendCell,
   splitList,
   thenLine,
+  triggerTitle,
   triggerView,
   viewLabel,
   viewNotice,
@@ -84,7 +95,24 @@ test("the when line is the founder's sentence, built from watch, host and locati
       sourceKind: "custom_url",
       filters: filters({ locations: ["Atlanta", "Phoenix", "Dallas", "Chicago", "Tampa"] }),
     }),
-    "a new caregiver or CNA job posting from a home care agency appears on mycnajobs.com in Atlanta, Phoenix, Dallas, Chicago or Tampa",
+    "a new caregiver or CNA job posting from a home care agency appears on mycnajobs.com in Atlanta · Phoenix · Dallas · Chicago · Tampa",
+  );
+});
+
+test("places keep their commas, so a list of them joins on a middle dot", () => {
+  assert.equal(joinLocations(["Atlanta, GA", "Phoenix, AZ", "Dallas, TX"]), "Atlanta, GA · Phoenix, AZ · Dallas, TX");
+  assert.equal(joinLocations(["Florida", " Georgia "]), "Florida · Georgia");
+  assert.equal(joinLocations(["Tampa"]), "Tampa");
+  assert.equal(joinLocations([]), "");
+  assert.equal(
+    whenLine({
+      watch: "A new CNA posting",
+      sourceHost: "mycnajobs.com",
+      sourceUrl: null,
+      sourceKind: "custom_url",
+      filters: filters({ locations: ["Atlanta, GA", "Phoenix, AZ", "Dallas, TX"] }),
+    }),
+    "a new CNA posting appears on mycnajobs.com in Atlanta, GA · Phoenix, AZ · Dallas, TX",
   );
 });
 
@@ -107,7 +135,7 @@ test("the when line falls back to keywords, the legacy source and All US", () =>
       sourceKind: "custom_url",
       filters: filters({ url: "https://www.jobs.example.com/list", locations: ["Florida", "Georgia"] }),
     }),
-    "a live-in caregiver posting appears on jobs.example.com in Florida or Georgia",
+    "a live-in caregiver posting appears on jobs.example.com in Florida · Georgia",
   );
   assert.equal(
     whenLine({ watch: null, sourceHost: null, sourceUrl: null, sourceKind: "something_else", filters: filters() }),
@@ -115,7 +143,7 @@ test("the when line falls back to keywords, the legacy source and All US", () =>
   );
   assert.equal(
     whenLine({ watch: null, sourceHost: "indeed.com", sourceUrl: null, sourceKind: "custom_url", filters: filters({ locations: ["All US", "Atlanta, GA", "Phoenix"] }) }),
-    "a new posting appears on indeed.com in Atlanta, GA or Phoenix",
+    "a new posting appears on indeed.com in Atlanta, GA · Phoenix",
   );
 });
 
@@ -127,7 +155,7 @@ test("a trigger with no site appears anywhere on the web", () => {
   );
   assert.equal(
     whenLine({ ...web, watch: "A new CNA posting", filters: filters({ locations: ["Atlanta", "Tampa"] }) }),
-    "a new CNA posting appears anywhere on the web in Atlanta or Tampa",
+    "a new CNA posting appears anywhere on the web in Atlanta · Tampa",
   );
   assert.equal(
     whenLine({ ...web, watch: "A new CNA posting", filters: filters() }),
@@ -141,6 +169,29 @@ test("a trigger is named after its site, or the first three words of the sentenc
   assert.equal(deriveTriggerName("  A new   CNA, posting ", null), "A new CNA");
   assert.equal(deriveTriggerName("Caregivers", null), "Caregivers");
   assert.equal(deriveTriggerName("", null), "New trigger");
+});
+
+test("the title is a typed name, else the site, else five words of the sentence", () => {
+  const sentence = "A new caregiver or CNA job posting from a home care agency in the Southeast";
+  // The backend named a no-site trigger after its whole sentence.
+  assert.equal(triggerTitle({ name: sentence, sourceHost: null, watch: sentence }), "A new caregiver or CNA…");
+  assert.equal(triggerTitle({ name: `${sentence}.`, sourceHost: null, watch: sentence }), "A new caregiver or CNA…");
+  assert.equal(triggerTitle({ name: "", sourceHost: null, watch: sentence }), "A new caregiver or CNA…");
+  // With a site, the site.
+  assert.equal(triggerTitle({ name: sentence, sourceHost: "mycnajobs.com", watch: sentence }), "mycnajobs.com");
+  assert.equal(triggerTitle({ name: "mycnajobs.com", sourceHost: "mycnajobs.com", watch: sentence }), "mycnajobs.com");
+  // A name the customer typed wins, site or not.
+  assert.equal(triggerTitle({ name: "Southeast agencies", sourceHost: "indeed.com", watch: sentence }), "Southeast agencies");
+  assert.equal(triggerTitle({ name: "Home care agencies", sourceHost: null, watch: sentence }), "Home care agencies");
+  // A name that is itself a long sentence is not a name.
+  assert.equal(
+    triggerTitle({ name: "Home care agencies hiring live-in caregivers across the whole Southeast region", sourceHost: null, watch: sentence }),
+    "A new caregiver or CNA…",
+  );
+  // Short sentences need no ellipsis; nothing at all is still a title.
+  assert.equal(triggerTitle({ name: "", sourceHost: null, watch: "Home care agencies hiring." }), "Home care agencies hiring");
+  assert.equal(triggerTitle({ name: "", sourceHost: null, watch: "Five words and no more" }), "Five words and no more");
+  assert.equal(triggerTitle({ name: "", sourceHost: null, watch: null }), "Trigger");
 });
 
 test("All US only means something on its own", () => {
@@ -182,7 +233,12 @@ test("the view folds status and pull into one chip: active, paused, building, no
 
 test("the source fact takes the backend's label, then a plain name per method, never the key", () => {
   assert.equal(pullLabel({ method: "api", label: "Job board search" }), "Job board search");
+  assert.equal(pullLabel({ method: "api", label: "Google Jobs" }), "Google Jobs");
   assert.equal(pullLabel({ method: "api", label: "  " }), "Job board search");
+  // A label that only echoes the method key is no label.
+  assert.equal(pullLabel({ method: "api", label: "API" }), "Job board search");
+  assert.equal(pullLabel({ method: "something_new" as "api", label: "something_new" }), null);
+  assert.equal(pullLabel({ method: "something_new" as "api", label: "Something new" }), "Something new");
   assert.equal(pullLabel({ method: "firecrawl_pages", label: "" }), "Page watch");
   assert.equal(pullLabel({ method: "firecrawl_search", label: "" }), "Web search");
   assert.equal(pullLabel({ method: "firecrawl_search", label: "Web search" }), "Web search");
@@ -192,9 +248,10 @@ test("the source fact takes the backend's label, then a plain name per method, n
   assert.equal(pullLabel(undefined), null);
 });
 
-test("posting statuses map to plain labels and a tone", () => {
-  assert.equal(postingStatusLabel("new"), "New");
-  assert.equal(postingStatusLabel("in_progress"), "In progress");
+test("posting statuses say who has the posting, with a tone", () => {
+  assert.equal(postingStatusLabel("new"), "Waiting for your agent");
+  assert.equal(postingStatusLabel("in_progress"), "Your agent is working on it");
+  assert.equal(postingStatusLabel("something_new"), "Your agent is working on it");
   assert.equal(postingStatusLabel("no_lead"), "Held: no contact found");
   assert.equal(postingStatusLabel("demo_pending"), "Demo pending");
   assert.equal(postingStatusLabel("ready"), "Ready");
@@ -220,6 +277,49 @@ test("run states label and the open check covers queued and running only", () =>
   assert.equal(runIsOpen(null), false);
 });
 
+test("the runs log names what started a run: the schedule, a press, or setup", () => {
+  assert.equal(runTriggerLabel("schedule"), "Scheduled");
+  assert.equal(runTriggerLabel("manual"), "Check now");
+  assert.equal(runTriggerLabel("setup"), "First check");
+  assert.equal(runTriggerLabel("something_else"), "Scheduled");
+});
+
+test("spend shows dollars only when metered and non-zero, next to credits", () => {
+  assert.equal(formatUsd(0.05), "$0.05");
+  assert.equal(formatUsd(1.2), "$1.20");
+  assert.equal(formatUsd(1234.5), "$1,234.50");
+  assert.equal(formatUsd(0.004), "Under $0.01");
+  assert.equal(formatUsd(0), null);
+  assert.equal(formatUsd(-1), null);
+  assert.equal(formatUsd(null), null);
+  assert.equal(formatUsd(undefined), null);
+  assert.equal(formatUsd(Number.NaN), null);
+  assert.equal(spendCell({ creditsUsed: 12, costUsd: 0.05 }), "12 credits · $0.05");
+  assert.equal(spendCell({ creditsUsed: 1, costUsd: null }), "1 credit");
+  assert.equal(spendCell({ creditsUsed: 12, costUsd: 0 }), "12 credits");
+  assert.equal(spendCell({ creditsUsed: null, costUsd: 0.05 }), "$0.05");
+  assert.equal(spendCell({ creditsUsed: null, costUsd: null }), "—");
+});
+
+test("postings sort newest first by posting date, undated last, then by when we found them", () => {
+  const rows = [
+    { id: "undated-old", postedAt: null, createdAt: "2026-08-20T00:00:00Z" },
+    { id: "aug-30", postedAt: "2026-08-30T00:00:00Z", createdAt: "2026-08-31T00:00:00Z" },
+    { id: "aug-31-found-late", postedAt: "2026-08-31T00:00:00Z", createdAt: "2026-09-02T00:00:00Z" },
+    { id: "undated-new", postedAt: null, createdAt: "2026-09-01T00:00:00Z" },
+    { id: "aug-31-found-early", postedAt: "2026-08-31T00:00:00Z", createdAt: "2026-09-01T00:00:00Z" },
+    { id: "bad-date", postedAt: "not a date", createdAt: "2026-08-25T00:00:00Z" },
+  ];
+  const sorted = sortPostings(rows);
+  assert.deepEqual(
+    sorted.map((row) => row.id),
+    ["aug-31-found-late", "aug-31-found-early", "aug-30", "undated-new", "bad-date", "undated-old"],
+  );
+  // The input is left alone.
+  assert.equal(rows[0].id, "undated-old");
+  assert.deepEqual(sortPostings([]), []);
+});
+
 test("run counters show a dash when the row predates them", () => {
   assert.equal(counterCell(0), "0");
   assert.equal(counterCell(1234), "1,234");
@@ -227,17 +327,57 @@ test("run counters show a dash when the row predates them", () => {
   assert.equal(counterCell(undefined), "—");
 });
 
-test("the counts line carries only what happened", () => {
+test("the counts line is the lifetime tally, labelled as such, never one check's result", () => {
   const zero = { postings: 0, new: 0, agenciesAdded: 0, leads: 0, demos: 0, enrolled: 0, held: 0 };
   assert.equal(countsLine(zero), "");
+  // "new" is a status count, not a per-check figure, so it stays off the line.
   assert.equal(
-    countsLine({ ...zero, postings: 34, new: 14, agenciesAdded: 11 }),
-    "14 new postings, 11 agencies added",
+    countsLine({ ...zero, postings: 40, new: 21, agenciesAdded: 34, leads: 13, demos: 13 }),
+    "So far: 40 postings · 34 agencies added · 13 contacts · 13 demos",
   );
+  assert.equal(countsLine({ ...zero, postings: 40, new: 40 }), "So far: 40 postings");
   assert.equal(
-    countsLine({ ...zero, new: 1, agenciesAdded: 1, leads: 1, demos: 1, enrolled: 1, held: 1 }),
-    "1 new posting, 1 agency added, 1 lead found, 1 demo built, 1 enrolled, 1 held for review",
+    countsLine({ ...zero, postings: 1, agenciesAdded: 1, leads: 1, demos: 1, enrolled: 1, held: 1 }),
+    "So far: 1 posting · 1 agency added · 1 contact · 1 demo · 1 enrolled · 1 held for review",
   );
+  assert.equal(countsLine({ ...zero, postings: 1234, agenciesAdded: 1000 }), "So far: 1,234 postings · 1,000 agencies added");
+});
+
+test("last check reads Checking now while a run is open, even before the first ever finished", () => {
+  const now = new Date("2026-09-02T12:00:00Z");
+  const never = { lastRunAt: null, lastRunState: null };
+  const running = { lastRunAt: null, lastRunState: "running" };
+  const done = { lastRunAt: "2026-08-31T13:02:00Z", lastRunState: "done" };
+  const failed = { lastRunAt: "2026-08-31T13:02:00Z", lastRunState: "failed" };
+
+  // From the row alone (the list call carries no runs).
+  assert.deepEqual(lastCheck(never), { kind: "never" });
+  assert.deepEqual(lastCheck(running), { kind: "checking" });
+  assert.deepEqual(lastCheck({ lastRunAt: null, lastRunState: "queued" }), { kind: "checking" });
+  assert.deepEqual(lastCheck(done), { kind: "checked", at: "2026-08-31T13:02:00Z", failed: false });
+  assert.deepEqual(lastCheck(failed), { kind: "checked", at: "2026-08-31T13:02:00Z", failed: true });
+
+  // With the newest run, the run wins: its state, and its finish time.
+  const openRun = { state: "queued", finishedAt: null, startedAt: null, createdAt: "2026-09-02T11:59:00Z" };
+  const doneRun = { state: "done", finishedAt: "2026-09-02T11:58:00Z", startedAt: "2026-09-02T11:57:00Z", createdAt: "2026-09-02T11:57:00Z" };
+  const failedRun = { state: "failed", finishedAt: null, startedAt: "2026-09-02T11:57:00Z", createdAt: "2026-09-02T11:57:00Z" };
+  assert.deepEqual(lastCheck(done, openRun), { kind: "checking" });
+  assert.deepEqual(lastCheck(never, openRun), { kind: "checking" });
+  assert.deepEqual(lastCheck(done, doneRun), { kind: "checked", at: "2026-09-02T11:58:00Z", failed: false });
+  assert.deepEqual(lastCheck(never, failedRun), { kind: "checked", at: "2026-09-02T11:57:00Z", failed: true });
+  assert.deepEqual(lastCheck(never, null), { kind: "never" });
+
+  assert.equal(lastCheckLine(never, null, now), "Has not checked yet");
+  assert.equal(lastCheckLine(running, null, now), "Checking now…");
+  assert.equal(lastCheckLine(done, null, now), "Last check Aug 31");
+  assert.equal(lastCheckLine(failed, null, now), "Last check Aug 31 failed");
+  assert.equal(lastCheckLine(done, openRun, now), "Checking now…");
+
+  assert.equal(lastCheckFact(never), "Has not checked yet");
+  assert.equal(lastCheckFact(running), "Checking now…");
+  assert.equal(lastCheckFact(done, openRun), "Checking now…");
+  assert.equal(lastCheckFact(done, doneRun), formatMoment("2026-09-02T11:58:00Z"));
+  assert.equal(lastCheckFact(failed), `${formatMoment("2026-08-31T13:02:00Z")}, failed`);
 });
 
 test("keywords and employer terms split on commas, locations on semicolons so a city keeps its state", () => {
@@ -264,6 +404,14 @@ test("days drop the year only inside the current year", () => {
   assert.equal(formatDay("2025-08-31T13:02:00Z", now), "Aug 31, 2025");
   assert.equal(formatDay(null, now), null);
   assert.equal(formatDay("not a date", now), null);
+});
+
+test("the posted cell is the posting's day, or the day we found an undated one", () => {
+  const now = new Date("2026-09-02T12:00:00Z");
+  assert.equal(postedCell({ postedAt: "2026-08-31T13:02:00Z", createdAt: "2026-09-01T13:02:00Z" }, now), "Aug 31");
+  assert.equal(postedCell({ postedAt: null, createdAt: "2026-09-01T13:02:00Z" }, now), "Found Sep 1");
+  assert.equal(postedCell({ postedAt: "not a date", createdAt: "2025-09-01T13:02:00Z" }, now), "Found Sep 1, 2025");
+  assert.equal(postedCell({ postedAt: null, createdAt: "not a date" }, now), "Unknown");
 });
 
 test("posting location prefers city and state, then the raw text", () => {

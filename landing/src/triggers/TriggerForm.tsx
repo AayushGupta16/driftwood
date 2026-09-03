@@ -18,6 +18,7 @@ import {
   hostFromUrl,
   INTERVAL_HOUR_OPTIONS,
   isSiteUrl,
+  joinLocations,
   scheduleLabel,
   withoutAllUs,
   type Trigger,
@@ -90,7 +91,7 @@ export default function TriggerForm(props: Props) {
   /* What the closed Options disclosure says is in effect:
      "All US · Every night, 2 AM PT", plus the create-only fields. */
   function optionsSummary(): string {
-    const parts = [locations.length ? locations.join(", ") : "Anywhere", scheduleLabel(schedule)];
+    const parts = [locations.length ? joinLocations(locations) : "Anywhere", scheduleLabel(schedule)];
     if (!editing) {
       if (keywords.length) parts.push(`${keywords.length.toLocaleString()} ${keywords.length === 1 ? "keyword" : "keywords"}`);
       if (excludeTerms.length) parts.push(`${excludeTerms.length.toLocaleString()} employer ${excludeTerms.length === 1 ? "type" : "types"} skipped`);

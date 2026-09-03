@@ -14,11 +14,13 @@ import {
   legacyHost,
   normalizeCadence,
   normalizeStatus,
+  sortPostings,
   type EditTriggerInput,
   type NewTriggerInput,
   type PostingStatus,
   type PullMethod,
   type RunState,
+  type RunTrigger,
   type Trigger,
   type TriggerDetail,
   type TriggerPosting,
@@ -93,6 +95,7 @@ export type RawRunRow = {
   postings_new: number;
   pages_fetched?: number | null;
   credits_used?: number | null;
+  cost_usd?: number | null;
   ids_seen?: number | null;
   ids_new?: number | null;
   ids_filtered?: number | null;
@@ -217,15 +220,22 @@ export function mapTrigger(raw: RawTriggerRow): Trigger {
   };
 }
 
+/* "setup" is the check the backend starts on its own right after a
+   trigger is created; anything else it might send reads as scheduled. */
+function runTriggerKind(value: string | null | undefined): RunTrigger {
+  return value === "manual" || value === "setup" ? value : "schedule";
+}
+
 export function mapRun(raw: RawRunRow): TriggerRun {
   return {
     id: raw.id,
     state: raw.state as RunState,
-    triggeredBy: raw.triggered_by === "manual" ? "manual" : "schedule",
+    triggeredBy: runTriggerKind(raw.triggered_by),
     postingsSeen: raw.postings_seen ?? 0,
     postingsNew: raw.postings_new ?? 0,
     pagesFetched: counter(raw.pages_fetched),
     creditsUsed: counter(raw.credits_used),
+    costUsd: counter(raw.cost_usd),
     idsSeen: counter(raw.ids_seen),
     idsNew: counter(raw.ids_new),
     idsFiltered: counter(raw.ids_filtered),
@@ -267,10 +277,12 @@ export async function getTrigger(id: string): Promise<TriggerDetail> {
     runs: RawRunRow[];
     postings: RawPostingRow[];
   }>(`${BASE}/${encodeURIComponent(id)}`);
+  /* The backend hands postings back in insertion order; the page wants
+     them newest first by posting date. */
   return {
     trigger: mapTrigger(body.trigger),
     runs: (body.runs ?? []).map(mapRun),
-    postings: (body.postings ?? []).map(mapPosting),
+    postings: sortPostings((body.postings ?? []).map(mapPosting)),
   };
 }
 
