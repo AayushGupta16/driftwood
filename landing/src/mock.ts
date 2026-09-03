@@ -1633,7 +1633,7 @@ if (mockMode) {
   type MockRun = {
     id: string; state: string; triggered_by: string; postings_seen: number; postings_new: number;
     pages_fetched?: number; credits_used?: number | null; cost_usd?: number | null; ids_seen?: number; ids_new?: number; ids_filtered?: number;
-    error: string | null; created_at: string; started_at: string | null; finished_at: string | null;
+    error: string | null; note?: string | null; created_at: string; started_at: string | null; finished_at: string | null;
   };
   type MockPosting = {
     id: string; source_url: string; employer_name: string; title: string; city: string | null;
@@ -1752,7 +1752,7 @@ if (mockMode) {
       status: "active", last_run_at: hoursAgo(9), last_run_state: "done", created_at: hoursAgo(24 * 4),
       runs: [
         { id: "run-w2", state: "done", triggered_by: "schedule", postings_seen: 63, postings_new: 2, pages_fetched: 6, credits_used: 18, ids_seen: 63, ids_new: 2, ids_filtered: 11, error: null, created_at: hoursAgo(9), started_at: hoursAgo(9), finished_at: hoursAgo(8.9) },
-        { id: "run-w1", state: "done", triggered_by: "schedule", postings_seen: 58, postings_new: 4, pages_fetched: 6, credits_used: 18, ids_seen: 58, ids_new: 4, ids_filtered: 9, error: null, created_at: hoursAgo(33), started_at: hoursAgo(33), finished_at: hoursAgo(32.9) },
+        { id: "run-w1", state: "done", triggered_by: "schedule", postings_seen: 425, postings_new: 0, pages_fetched: 9, credits_used: 27, ids_seen: 425, ids_new: 0, ids_filtered: 61, error: null, note: "First check: recorded 425 postings already listed; new ones arrive from the next check.", created_at: hoursAgo(33), started_at: hoursAgo(33), finished_at: hoursAgo(32.9) },
       ],
       postings: [
         posting("w1", "Comfort Keepers of Reno", "Live-in caregiver", "Reno", "NV", "$200 to $230/day", 1, "ready", "Elena Marsh, owner", true),

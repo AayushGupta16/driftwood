@@ -162,6 +162,11 @@
 .trigger-sub { display: block; margin-top: 0.15rem; color: var(--color-ink-soft); font-size: 0.68rem; }
 .trigger-table td.trigger-error-cell { color: var(--color-ink-soft); }
 .trigger-table td.trigger-error-none { color: var(--color-ink-faint); }
+/* A run's note hangs under its row: the row gives up its rule so the two
+   read as one, and the note carries it instead. Same tone as an error
+   cell, never red. */
+.trigger-table tr.trigger-run-with-note td { border-bottom: 0; }
+.trigger-table td.trigger-run-note { padding-top: 0; color: var(--color-ink-soft); font-size: 0.7rem; line-height: 1.5; }
 .trigger-table-skeleton td .campaign-skel { display: block; width: 70%; }
 .trigger-table-empty { margin: 0; padding: 1.6rem 1.25rem; color: var(--color-ink-soft); font-size: 0.8rem; text-align: center; }
 

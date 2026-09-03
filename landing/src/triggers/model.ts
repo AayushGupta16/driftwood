@@ -101,6 +101,10 @@ export type TriggerRun = {
   idsNew: number | null;
   idsFiltered: number | null;
   error: string | null;
+  /* Something worth knowing about the run that is not an error ("First
+     check: recorded 425 postings already listed..."); shown under the
+     row. Null when the row has none or predates the field. */
+  note: string | null;
   createdAt: string;
   startedAt: string | null;
   finishedAt: string | null;

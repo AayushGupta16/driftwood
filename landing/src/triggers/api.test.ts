@@ -179,6 +179,14 @@ test("runs map every wire field, the pull counters null when absent", () => {
   assert.equal(mapRun({ ...oldRaw, credits_used: null, ids_seen: undefined }).idsSeen, null);
   assert.equal(mapRun({ ...oldRaw, cost_usd: null }).costUsd, null);
 
+  /* A note is informational and separate from the error; absent -> null. */
+  const note = "First check: recorded 425 postings already listed; new ones arrive from the next check.";
+  assert.equal(mapRun({ ...raw, note }).note, note);
+  assert.equal(mapRun({ ...raw, note }).error, null);
+  assert.equal(run.note, null);
+  assert.equal(old.note, null);
+  assert.equal(mapRun({ ...oldRaw, note: null }).note, null);
+
   // The check the backend starts by itself after create is "setup"; any
   // other value it might send reads as scheduled.
   assert.equal(mapRun({ ...raw, triggered_by: "setup" }).triggeredBy, "setup");

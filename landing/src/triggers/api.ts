@@ -100,6 +100,7 @@ export type RawRunRow = {
   ids_new?: number | null;
   ids_filtered?: number | null;
   error: string | null;
+  note?: string | null;
   created_at: string;
   started_at: string | null;
   finished_at: string | null;
@@ -240,6 +241,7 @@ export function mapRun(raw: RawRunRow): TriggerRun {
     idsNew: counter(raw.ids_new),
     idsFiltered: counter(raw.ids_filtered),
     error: raw.error,
+    note: raw.note ?? null,
     createdAt: raw.created_at,
     startedAt: raw.started_at,
     finishedAt: raw.finished_at,

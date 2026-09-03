@@ -97,24 +97,34 @@ function PostingRow({ posting }: { posting: TriggerPosting }) {
   );
 }
 
+const RUN_COLUMNS = 8;
+
 /* Seen and New prefer the pull counters (which update while a check
    runs) and fall back to the posting counts every row has; Pages,
-   Filtered and Spend only exist on newer rows. */
+   Filtered and Spend only exist on newer rows. A run's note, when it has
+   one, hangs under the row as a quiet line across the table. */
 function RunRow({ run }: { run: TriggerRun }) {
   return (
-    <tr>
-      <td className="trigger-num">
-        {formatMoment(run.startedAt ?? run.createdAt) ?? "Unknown"}
-        <span className="trigger-sub">{runTriggerLabel(run.triggeredBy)}</span>
-      </td>
-      <td>{runStateLabel(run.state)}</td>
-      <td className="trigger-num">{counterCell(run.pagesFetched)}</td>
-      <td className="trigger-num">{counterCell(run.idsSeen ?? run.postingsSeen)}</td>
-      <td className="trigger-num">{counterCell(run.idsNew ?? run.postingsNew)}</td>
-      <td className="trigger-num">{counterCell(run.idsFiltered)}</td>
-      <td className="trigger-num">{spendCell(run)}</td>
-      <td className={run.error ? "trigger-error-cell" : "trigger-error-none"}>{run.error ?? "None"}</td>
-    </tr>
+    <>
+      <tr className={run.note ? "trigger-run-with-note" : undefined}>
+        <td className="trigger-num">
+          {formatMoment(run.startedAt ?? run.createdAt) ?? "Unknown"}
+          <span className="trigger-sub">{runTriggerLabel(run.triggeredBy)}</span>
+        </td>
+        <td>{runStateLabel(run.state)}</td>
+        <td className="trigger-num">{counterCell(run.pagesFetched)}</td>
+        <td className="trigger-num">{counterCell(run.idsSeen ?? run.postingsSeen)}</td>
+        <td className="trigger-num">{counterCell(run.idsNew ?? run.postingsNew)}</td>
+        <td className="trigger-num">{counterCell(run.idsFiltered)}</td>
+        <td className="trigger-num">{spendCell(run)}</td>
+        <td className={run.error ? "trigger-error-cell" : "trigger-error-none"}>{run.error ?? "None"}</td>
+      </tr>
+      {run.note && (
+        <tr>
+          <td className="trigger-run-note" colSpan={RUN_COLUMNS}>{run.note}</td>
+        </tr>
+      )}
+    </>
   );
 }
 
