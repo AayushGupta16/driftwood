@@ -4,9 +4,11 @@ import test from "node:test";
 import {
   createBody,
   createTrigger,
+  errorDetail,
   getTrigger,
   listTriggers,
-  mapPosting,
+  mapFields,
+  mapItem,
   mapRun,
   mapTrigger,
   runTrigger,
@@ -15,65 +17,40 @@ import {
   updateTrigger,
   type RawTriggerRow,
 } from "./api.ts";
-import type { NewTriggerInput } from "./model.ts";
 
 const rawTrigger: RawTriggerRow = {
   id: "trg-1",
-  name: "mycnajobs.com",
-  source_kind: "custom_url",
-  source_url: "https://www.mycnajobs.com",
-  source_host: "mycnajobs.com",
-  watch: "A new caregiver or CNA job posting from a home care agency",
-  filters: {
-    keywords: ["caregiver", "CNA"],
-    locations: ["Atlanta", "Phoenix"],
-    exclude_employer_terms: ["hospital", "hospice"],
-    url: null,
-  },
+  name: "myCNAjobs",
+  watch: "New caregiver and CNA jobs from home care agencies, not hospitals",
+  summary: "Checks mycnajobs.com every night for caregiver and CNA jobs in five metros, skipping hospitals.",
   cadence: "daily",
   fire_hour: 2,
   schedule: { cadence: "daily", fire_hour: 2, interval_hours: null },
-  actions: { add_company: true, find_contact: true, build_demo: true, enroll: true },
-  pull: { method: "api", label: "Job board search" },
+  pull: { method: "site", reason: null },
   campaign_id: "cmp-1",
   campaign_name: "MochaCare intro",
   status: "active",
   last_run_at: "2026-09-01T13:02:00Z",
   last_run_state: "done",
-  counts: { postings: 34, new: 14, agencies_added: 11, leads: 9, demos: 9, enrolled: 9, held: 2 },
+  counts: { items: 34, new: 14, companies_added: 11, leads: 9, demos: 9, enrolled: 9 },
   created_at: "2026-08-19T16:00:00Z",
+  updated_at: "2026-08-30T16:00:00Z",
 };
 
-/* A row written before source_url, watch, schedule, actions and pull
-   existed: only the first slice's fields. */
+/* A row from before the rename: the old count names, the old counter
+   names on its checks, and no summary. */
 const legacyTrigger: RawTriggerRow = {
   id: "trg-old",
-  name: "myCNAjobs",
-  source_kind: "mycnajobs",
-  filters: { keywords: ["caregiver"], locations: ["All US"], url: null },
+  name: "Live-in caregivers",
   cadence: "weekly",
   fire_hour: 6,
-  campaign_id: "cmp-1",
-  campaign_name: "Home care agency intro",
+  campaign_id: null,
+  campaign_name: null,
   status: "paused",
   last_run_at: null,
   last_run_state: null,
-  counts: { postings: 0, new: 0, agencies_added: 0, leads: 0, demos: 0, enrolled: 0, held: 0 },
+  counts: { postings: 7, new: 2, agencies_added: 6 },
   created_at: "2026-08-19T16:00:00Z",
-};
-
-const input: NewTriggerInput = {
-  name: null,
-  sourceUrl: "https://www.mycnajobs.com",
-  watch: "A new caregiver or CNA job posting from a home care agency",
-  keywords: ["caregiver", "CNA"],
-  locations: ["All US"],
-  excludeEmployerTerms: ["hospital"],
-  cadence: "daily",
-  fireHour: 2,
-  intervalHours: null,
-  actions: { addCompany: true, findContact: true, buildDemo: true, enroll: true },
-  campaignId: "cmp-1",
 };
 
 function json(body: unknown, status = 200): Response {
@@ -93,118 +70,109 @@ function stubFetch(t: { after: (fn: () => void) => void }, handler: typeof fetch
 
 test("trigger rows map snake_case to the page shape", () => {
   const trigger = mapTrigger(rawTrigger);
-  assert.equal(trigger.sourceUrl, "https://www.mycnajobs.com");
-  assert.equal(trigger.sourceHost, "mycnajobs.com");
-  assert.equal(trigger.watch, "A new caregiver or CNA job posting from a home care agency");
-  assert.deepEqual(trigger.filters, {
-    keywords: ["caregiver", "CNA"],
-    locations: ["Atlanta", "Phoenix"],
-    excludeEmployerTerms: ["hospital", "hospice"],
-    url: null,
-  });
+  assert.equal(trigger.name, "myCNAjobs");
+  assert.equal(trigger.watch, "New caregiver and CNA jobs from home care agencies, not hospitals");
+  assert.equal(trigger.summary, "Checks mycnajobs.com every night for caregiver and CNA jobs in five metros, skipping hospitals.");
   assert.deepEqual(trigger.schedule, { cadence: "daily", fireHour: 2, intervalHours: null });
-  assert.deepEqual(trigger.actions, { addCompany: true, findContact: true, buildDemo: true, enroll: true });
-  assert.deepEqual(trigger.pull, { method: "api", label: "Job board search" });
+  assert.deepEqual(trigger.pull, { method: "site", reason: null });
   assert.equal(trigger.status, "active");
   assert.equal(trigger.campaignName, "MochaCare intro");
-  assert.equal(trigger.lastRunAt, "2026-09-01T13:02:00Z");
-  assert.deepEqual(trigger.counts, {
-    postings: 34, new: 14, agenciesAdded: 11, leads: 9, demos: 9, enrolled: 9, held: 2,
-  });
+  assert.equal(trigger.updatedAt, "2026-08-30T16:00:00Z");
+  assert.deepEqual(trigger.counts, { items: 34, new: 14, companiesAdded: 11, leads: 9, demos: 9, enrolled: 9 });
 });
 
-test("rows from before the when/then fields get sensible defaults", () => {
+test("rows from before the rename read through the old names", () => {
   const trigger = mapTrigger(legacyTrigger);
-  assert.equal(trigger.sourceUrl, null);
-  assert.equal(trigger.sourceHost, "mycnajobs.com");
-  assert.equal(trigger.watch, null);
-  assert.deepEqual(trigger.filters.excludeEmployerTerms, []);
-  assert.deepEqual(trigger.schedule, { cadence: "weekly", fireHour: 6, intervalHours: null });
-  assert.deepEqual(trigger.actions, { addCompany: true, findContact: true, buildDemo: true, enroll: true });
+  assert.equal(trigger.summary, null);
+  assert.equal(trigger.updatedAt, null);
   assert.equal(trigger.pull, null);
   assert.equal(trigger.status, "paused");
+  assert.deepEqual(trigger.schedule, { cadence: "weekly", fireHour: 6, intervalHours: null });
+  // postings -> items, agencies_added -> companiesAdded.
+  assert.equal(trigger.counts.items, 7);
+  assert.equal(trigger.counts.companiesAdded, 6);
 
-  const bare = mapTrigger({ ...legacyTrigger, filters: null, campaign_id: null, campaign_name: null, status: "needs_setup", counts: null });
-  assert.deepEqual(bare.filters, { keywords: [], locations: [], excludeEmployerTerms: [], url: null });
-  assert.equal(bare.actions.enroll, false);
-  assert.equal(bare.status, "needs_setup");
-  assert.equal(bare.counts.postings, 0);
-
-  const custom = mapTrigger({ ...legacyTrigger, source_kind: "custom_url", filters: { keywords: [], locations: [], url: "https://www.jobs.example.com/list" } });
-  assert.equal(custom.sourceUrl, "https://www.jobs.example.com/list");
-  assert.equal(custom.sourceHost, "jobs.example.com");
-
-  const web = mapTrigger({ ...rawTrigger, source_url: null, source_host: null, pull: { method: "firecrawl_search", label: "Web search" } });
-  assert.equal(web.sourceUrl, null);
-  assert.equal(web.sourceHost, null);
-  assert.deepEqual(web.pull, { method: "firecrawl_search", label: "Web search" });
+  const bare = mapTrigger({ ...legacyTrigger, counts: null });
+  assert.equal(bare.counts.items, 0);
+  assert.equal(bare.counts.companiesAdded, 0);
 
   assert.equal(mapTrigger({ ...legacyTrigger, status: "something_new" }).status, "active");
-  assert.deepEqual(mapTrigger({ ...legacyTrigger, cadence: "hourly" }).schedule.cadence, "daily");
+  assert.equal(mapTrigger({ ...legacyTrigger, cadence: "hourly" }).schedule.cadence, "daily");
   assert.deepEqual(
     mapTrigger({ ...legacyTrigger, schedule: { cadence: "every_n_hours", fire_hour: 0, interval_hours: 4 } }).schedule,
     { cadence: "every_n_hours", fireHour: 0, intervalHours: 4 },
   );
 });
 
-test("runs map every wire field, the pull counters null when absent", () => {
-  const raw = {
-    id: "run-1", state: "done", triggered_by: "manual", postings_seen: 219, postings_new: 9,
-    pages_fetched: 4, credits_used: 12, cost_usd: 0.05, ids_seen: 219, ids_new: 9, ids_filtered: 31,
-    error: null, created_at: "2026-09-01T13:00:00Z", started_at: "2026-09-01T13:00:05Z",
-    finished_at: "2026-09-01T13:02:00Z",
-  };
-  const run = mapRun(raw);
+test("the reason a source cannot be read arrives on either field, never as an identifier", () => {
+  assert.equal(mapTrigger({ ...rawTrigger, pull: { method: "unsupported", reason: "It needs a sign-in." } }).pull?.reason, "It needs a sign-in.");
+  assert.equal(mapTrigger({ ...rawTrigger, pull: { method: "unsupported", note: "It needs a sign-in." } }).pull?.reason, "It needs a sign-in.");
+  assert.equal(mapTrigger({ ...rawTrigger, pull: { method: "unsupported", reason: "  ", note: "It needs a sign-in." } }).pull?.reason, "It needs a sign-in.");
+  // The provider id the backend used to put on note is not a sentence.
+  assert.equal(mapTrigger({ ...rawTrigger, pull: { method: "api", note: "dataforseo_google_jobs" } }).pull?.reason, null);
+});
+
+test("checks map both spellings of their counters", () => {
+  const run = mapRun({
+    id: "run-1", state: "done", triggered_by: "manual", items_seen: 219, items_new: 9,
+    ids_seen: 219, ids_new: 9, error: null, created_at: "2026-09-01T13:00:00Z",
+    started_at: "2026-09-01T13:00:05Z", finished_at: "2026-09-01T13:02:00Z",
+  });
   assert.equal(run.triggeredBy, "manual");
-  assert.equal(run.postingsSeen, 219);
-  assert.equal(run.pagesFetched, 4);
-  assert.equal(run.creditsUsed, 12);
-  assert.equal(run.costUsd, 0.05);
+  assert.equal(run.itemsSeen, 219);
   assert.equal(run.idsSeen, 219);
-  assert.equal(run.idsNew, 9);
-  assert.equal(run.idsFiltered, 31);
   assert.equal(run.finishedAt, "2026-09-01T13:02:00Z");
 
-  const oldRaw = {
+  const rawOld = {
     id: "run-0", state: "done", triggered_by: "schedule", postings_seen: 88, postings_new: 6,
     error: null, created_at: "2026-08-20T13:00:00Z", started_at: null, finished_at: null,
   };
-  const old = mapRun(oldRaw);
-  assert.equal(old.pagesFetched, null);
-  assert.equal(old.creditsUsed, null);
-  assert.equal(old.costUsd, null);
+  const old = mapRun(rawOld);
+  assert.equal(old.itemsSeen, 88);
+  assert.equal(old.itemsNew, 6);
   assert.equal(old.idsSeen, null);
   assert.equal(old.idsNew, null);
-  assert.equal(old.idsFiltered, null);
-  assert.equal(mapRun({ ...oldRaw, credits_used: null, ids_seen: undefined }).idsSeen, null);
-  assert.equal(mapRun({ ...oldRaw, cost_usd: null }).costUsd, null);
-
-  /* A note is informational and separate from the error; absent -> null. */
-  const note = "First check: recorded 425 postings already listed; new ones arrive from the next check.";
-  assert.equal(mapRun({ ...raw, note }).note, note);
-  assert.equal(mapRun({ ...raw, note }).error, null);
-  assert.equal(run.note, null);
-  assert.equal(old.note, null);
-  assert.equal(mapRun({ ...oldRaw, note: null }).note, null);
 
   // The check the backend starts by itself after create is "setup"; any
   // other value it might send reads as scheduled.
-  assert.equal(mapRun({ ...raw, triggered_by: "setup" }).triggeredBy, "setup");
-  assert.equal(mapRun({ ...raw, triggered_by: "schedule" }).triggeredBy, "schedule");
-  assert.equal(mapRun({ ...raw, triggered_by: "cron" }).triggeredBy, "schedule");
+  assert.equal(mapRun({ ...rawOld, triggered_by: "setup" }).triggeredBy, "setup");
+  assert.equal(mapRun({ ...rawOld, triggered_by: "cron" }).triggeredBy, "schedule");
 });
 
-test("postings map every wire field", () => {
-  const posting = mapPosting({
-    id: "p-1", source_url: "https://example.test/jobs/1", employer_name: "Brightpath Home Care",
-    title: "Caregiver, part time", city: "Tucson", state: "AZ", location_text: "Tucson, AZ",
-    pay_text: "$16 to $19/hr", posted_at: "2026-08-31T00:00:00Z", status: "enrolled", note: null,
+test("items map the entity under either name, and carry whatever fields they brought", () => {
+  const item = mapItem({
+    id: "p-1", source_url: "https://example.test/items/1", entity_name: "Verdant Grid",
+    title: "Raises $18M", fields: [{ label: "Round", value: "Series A" }],
+    found_at: "2026-08-31T00:00:00Z", status: "enrolled", note: null,
     company_id: "c-1", lead_id: "l-1", demo_url: "https://driftwood.sh/d/abc", created_at: "2026-08-31T13:02:00Z",
   });
-  assert.equal(posting.employerName, "Brightpath Home Care");
-  assert.equal(posting.payText, "$16 to $19/hr");
-  assert.equal(posting.demoUrl, "https://driftwood.sh/d/abc");
-  assert.equal(posting.status, "enrolled");
+  assert.equal(item.entityName, "Verdant Grid");
+  assert.equal(item.foundAt, "2026-08-31T00:00:00Z");
+  assert.deepEqual(item.fields, [{ label: "Round", value: "Series A" }]);
+  assert.equal(item.status, "enrolled");
+
+  const legacy = mapItem({
+    id: "p-2", source_url: "https://example.test/items/2", employer_name: "Brightpath Home Care",
+    title: null, posted_at: "2026-08-30T00:00:00Z", status: "new", note: null,
+    company_id: null, lead_id: null, demo_url: null, created_at: "2026-08-31T13:02:00Z",
+  });
+  assert.equal(legacy.entityName, "Brightpath Home Care");
+  assert.equal(legacy.title, "");
+  assert.equal(legacy.foundAt, "2026-08-30T00:00:00Z");
+  assert.deepEqual(legacy.fields, []);
+});
+
+test("extracted fields read as key and value however the backend shaped them", () => {
+  assert.deepEqual(mapFields([{ label: "Round", value: "Series A" }]), [{ label: "Round", value: "Series A" }]);
+  assert.deepEqual(mapFields([{ name: "Round", value: "Series A" }]), [{ label: "Round", value: "Series A" }]);
+  assert.deepEqual(mapFields([{ key: "Round", text: "Series A" }]), [{ label: "Round", value: "Series A" }]);
+  assert.deepEqual(mapFields([{ label: "Round" }, { value: "Series A" }, null, "nope"]), []);
+  assert.deepEqual(mapFields({ due_on: "Oct 4", bid_number: 4021 }), [
+    { label: "Due on", value: "Oct 4" },
+    { label: "Bid number", value: "4021" },
+  ]);
+  assert.deepEqual(mapFields(null), []);
+  assert.deepEqual(mapFields("Series A"), []);
 });
 
 test("the list call reads the triggers envelope with the session cookie", async (t) => {
@@ -217,28 +185,28 @@ test("the list call reads the triggers envelope with the session cookie", async 
 
   const rows = await listTriggers();
   assert.equal(rows.length, 2);
-  assert.equal(rows[0].name, "mycnajobs.com");
-  assert.equal(rows[1].sourceHost, "mycnajobs.com");
+  assert.equal(rows[0].name, "myCNAjobs");
+  assert.equal(rows[1].counts.items, 7);
 });
 
-test("the detail call returns the trigger with its runs and postings, newest posting first", async (t) => {
-  const rawPosting = (id: string, posted_at: string | null, created_at: string) => ({
-    id, source_url: `https://example.test/jobs/${id}`, employer_name: "Brightpath Home Care",
-    title: "Caregiver", city: "Tucson", state: "AZ", location_text: "Tucson, AZ", pay_text: null,
-    posted_at, status: "new", note: null, company_id: null, lead_id: null, demo_url: null, created_at,
+test("the detail call returns the trigger with its checks and items, newest item first", async (t) => {
+  const rawItem = (id: string, found_at: string | null, created_at: string) => ({
+    id, source_url: `https://example.test/items/${id}`, entity_name: "Brightpath Home Care",
+    title: "Caregiver", found_at, status: "new", note: null,
+    company_id: null, lead_id: null, demo_url: null, created_at,
   });
   stubFetch(t, (async (input) => {
     assert.equal(input, "/api/v1/dashboard/triggers/trg-1");
     return json({
       trigger: rawTrigger,
       runs: [{
-        id: "run-1", state: "running", triggered_by: "setup", postings_seen: 0, postings_new: 0,
+        id: "run-1", state: "running", triggered_by: "setup", items_seen: 0, items_new: 0,
         error: null, created_at: "2026-09-01T13:00:00Z", started_at: "2026-09-01T13:00:05Z", finished_at: null,
       }],
-      postings: [
-        rawPosting("undated", null, "2026-09-01T00:00:00Z"),
-        rawPosting("aug-30", "2026-08-30T00:00:00Z", "2026-08-31T00:00:00Z"),
-        rawPosting("aug-31", "2026-08-31T00:00:00Z", "2026-08-31T00:00:00Z"),
+      items: [
+        rawItem("undated", null, "2026-09-01T00:00:00Z"),
+        rawItem("aug-30", "2026-08-30T00:00:00Z", "2026-08-31T00:00:00Z"),
+        rawItem("aug-31", "2026-08-31T00:00:00Z", "2026-08-31T00:00:00Z"),
       ],
     });
   }) as typeof fetch);
@@ -246,39 +214,25 @@ test("the detail call returns the trigger with its runs and postings, newest pos
   const detail = await getTrigger("trg-1");
   assert.equal(detail.trigger.id, "trg-1");
   assert.equal(detail.runs[0].state, "running");
-  assert.equal(detail.runs[0].triggeredBy, "setup");
-  assert.equal(detail.runs[0].pagesFetched, null);
-  assert.deepEqual(detail.postings.map((posting) => posting.id), ["aug-31", "aug-30", "undated"]);
+  assert.deepEqual(detail.items.map((item) => item.id), ["aug-31", "aug-30", "undated"]);
 
-  stubFetch(t, (async () => json({ trigger: rawTrigger, runs: [], postings: [] })) as typeof fetch);
-  assert.deepEqual((await getTrigger("trg-1")).postings, []);
+  /* A backend still calling them postings answers the same page. */
+  stubFetch(t, (async () => json({
+    trigger: rawTrigger,
+    runs: [],
+    postings: [rawItem("only", "2026-08-31T00:00:00Z", "2026-08-31T00:00:00Z")],
+  })) as typeof fetch);
+  assert.deepEqual((await getTrigger("trg-1")).items.map((item) => item.id), ["only"]);
 });
 
-test("create sends the backend's exact body", async (t) => {
-  assert.deepEqual(JSON.parse(createBody(input)), {
-    source_url: "https://www.mycnajobs.com",
-    watch: "A new caregiver or CNA job posting from a home care agency",
-    filters: { keywords: ["caregiver", "CNA"], locations: ["All US"], exclude_employer_terms: ["hospital"] },
-    schedule: { cadence: "daily", fire_hour: 2 },
-    actions: { add_company: true, find_contact: true, build_demo: true, enroll: true },
+test("create sends one sentence and nothing else", async (t) => {
+  assert.deepEqual(JSON.parse(createBody({ watch: "Companies that just raised a Series A", campaignId: null })), {
+    watch: "Companies that just raised a Series A",
+  });
+  assert.deepEqual(JSON.parse(createBody({ watch: "New warehouse jobs in Texas", campaignId: "cmp-1" })), {
+    watch: "New warehouse jobs in Texas",
     campaign_id: "cmp-1",
   });
-
-  const hourly = JSON.parse(createBody({
-    ...input, name: "  Agencies, Southeast ", cadence: "every_n_hours", fireHour: 0, intervalHours: 4,
-    actions: { addCompany: true, findContact: false, buildDemo: false, enroll: false }, campaignId: null,
-  }));
-  assert.equal(hourly.name, "Agencies, Southeast");
-  assert.deepEqual(hourly.schedule, { cadence: "every_n_hours", fire_hour: 0, interval_hours: 4 });
-  assert.deepEqual(hourly.actions, { add_company: true, find_contact: false, build_demo: false, enroll: false });
-  assert.equal(hourly.campaign_id, null);
-  assert.deepEqual(Object.keys(hourly).sort(), ["actions", "campaign_id", "filters", "name", "schedule", "source_url", "watch"]);
-
-  /* No site: the whole web. source_url travels as null, never as "". */
-  const web = JSON.parse(createBody({ ...input, sourceUrl: null, name: "Home care agencies" }));
-  assert.equal(web.source_url, null);
-  assert.equal(web.name, "Home care agencies");
-  assert.equal(JSON.parse(createBody({ ...input, sourceUrl: "   " })).source_url, null);
 
   stubFetch(t, (async (url, init) => {
     assert.equal(url, "/api/v1/dashboard/triggers");
@@ -286,35 +240,32 @@ test("create sends the backend's exact body", async (t) => {
     assert.equal((init?.headers as Record<string, string>)["Content-Type"], "application/json");
     return json(rawTrigger, 201);
   }) as typeof fetch);
-  const created = await createTrigger(input);
+  const created = await createTrigger({ watch: "New warehouse jobs in Texas", campaignId: null });
   assert.equal(created.status, "active");
 });
 
-test("edit puts the partial body without the site and reads the row back", async (t) => {
-  const { sourceUrl: _site, ...edit } = input;
-  void _site;
-  assert.deepEqual(JSON.parse(updateBody({ ...edit, name: "Southeast agencies", locations: ["Atlanta", "Tampa"] })), {
-    name: "Southeast agencies",
-    watch: "A new caregiver or CNA job posting from a home care agency",
-    filters: { keywords: ["caregiver", "CNA"], locations: ["Atlanta", "Tampa"], exclude_employer_terms: ["hospital"] },
-    schedule: { cadence: "daily", fire_hour: 2 },
-    actions: { add_company: true, find_contact: true, build_demo: true, enroll: true },
-    campaign_id: "cmp-1",
+test("edit puts only what changed, so an unchanged sentence never rebuilds the trigger", async (t) => {
+  assert.deepEqual(JSON.parse(updateBody({ watch: "Companies that raised a Series B" })), {
+    watch: "Companies that raised a Series B",
   });
-  assert.equal("source_url" in JSON.parse(updateBody(edit)), false);
-  assert.equal("name" in JSON.parse(updateBody(edit)), false);
+  assert.deepEqual(JSON.parse(updateBody({ campaignId: "cmp-2" })), { campaign_id: "cmp-2" });
+  // Clearing the campaign is a change, and travels as null.
+  assert.deepEqual(JSON.parse(updateBody({ campaignId: null })), { campaign_id: null });
+  assert.deepEqual(JSON.parse(updateBody({})), {});
 
   stubFetch(t, (async (url, init) => {
     assert.equal(url, "/api/v1/dashboard/triggers/trg-1");
     assert.equal(init?.method, "PUT");
-    assert.equal((init?.headers as Record<string, string>)["Content-Type"], "application/json");
-    return json({ ...rawTrigger, name: "Southeast agencies" });
+    assert.equal(init?.body, JSON.stringify({ watch: "Companies that raised a Series B" }));
+    return json({ ...rawTrigger, watch: "Companies that raised a Series B", summary: null, status: "needs_setup" });
   }) as typeof fetch);
-  const saved = await updateTrigger("trg-1", { ...edit, name: "Southeast agencies" });
-  assert.equal(saved.name, "Southeast agencies");
+  const saved = await updateTrigger("trg-1", { watch: "Companies that raised a Series B" });
+  // A new sentence sends the trigger back to Building with no readback.
+  assert.equal(saved.status, "needs_setup");
+  assert.equal(saved.summary, null);
 });
 
-test("check now posts and hands back the run id", async (t) => {
+test("check now posts and hands back the check id", async (t) => {
   stubFetch(t, (async (url, init) => {
     assert.equal(url, "/api/v1/dashboard/triggers/trg-1/run");
     assert.equal(init?.method, "POST");
@@ -323,15 +274,35 @@ test("check now posts and hands back the run id", async (t) => {
   assert.deepEqual(await runTrigger("trg-1"), { runId: "run-9" });
 });
 
+test("an error body only reaches the page when it is a sentence", () => {
+  assert.equal(errorDetail({ error: { code: "not_found", detail: "Trigger not found" } }), "Trigger not found");
+  assert.equal(errorDetail({ detail: "Say what to watch." }), "Say what to watch.");
+  // A 422 answers with a list of objects; printing one is the
+  // "[object Object]" a customer used to see where an explanation belonged.
+  assert.equal(errorDetail({ detail: [{ loc: ["body", "watch"], msg: "field required" }] }), null);
+  assert.equal(errorDetail({ error: { code: "invalid", detail: { msg: "nope" } } }), null);
+  assert.equal(errorDetail({ detail: "   " }), null);
+  assert.equal(errorDetail(null), null);
+  assert.equal(errorDetail("plain text"), "plain text");
+});
+
 test("errors surface the backend detail and code, with a status fallback", async (t) => {
   stubFetch(t, (async () =>
-    json({ error: { code: "run_in_progress", detail: "A run is already in progress for this trigger." } }, 409)
+    json({ error: { code: "run_in_progress", detail: "A check is already running for this trigger." } }, 409)
   ) as typeof fetch);
   await assert.rejects(runTrigger("trg-1"), (error: unknown) => {
     assert.ok(error instanceof TriggerApiError);
     assert.equal(error.status, 409);
     assert.equal(error.code, "run_in_progress");
-    assert.equal(error.message, "A run is already in progress for this trigger.");
+    assert.equal(error.message, "A check is already running for this trigger.");
+    return true;
+  });
+
+  // The 422 that used to render as [object Object] now reads as a status.
+  stubFetch(t, (async () => json({ detail: [{ msg: "field required" }] }, 422)) as typeof fetch);
+  await assert.rejects(listTriggers(), (error: unknown) => {
+    assert.ok(error instanceof TriggerApiError);
+    assert.equal(error.message, "Request failed (422)");
     return true;
   });
 

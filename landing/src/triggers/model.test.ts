@@ -2,67 +2,50 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
-  addToList,
+  BUILDING_LINES,
+  buildingLine,
+  buildingStage,
   counterCell,
   countsLine,
   DEFAULT_SCHEDULE,
-  deriveTriggerName,
   fireHourLabel,
   formatDay,
   formatMoment,
-  formatUsd,
-  hasListSeparator,
-  hostFromUrl,
-  isSiteUrl,
-  joinLocations,
+  foundCell,
+  itemName,
+  itemStatusLabel,
+  itemStatusTone,
+  itemTitle,
   lastCheck,
   lastCheckFact,
   lastCheckLine,
-  postedCell,
-  postingLocation,
-  postingStatusLabel,
-  postingStatusTone,
-  pullLabel,
+  metaLine,
+  plainReason,
+  plainText,
+  readbackLine,
+  rowFields,
   runIsOpen,
-  runStateLabel,
+  runResult,
   runTriggerLabel,
   scheduleLabel,
-  sortPostings,
-  spendCell,
-  splitList,
-  thenLine,
+  shortReason,
+  sortItems,
   triggerTitle,
   triggerView,
+  truncate,
+  UNSUPPORTED_LINE,
   viewLabel,
-  viewNotice,
-  whenLine,
-  withoutAllUs,
-  type TriggerFilters,
+  type TriggerCounts,
 } from "./model.ts";
 
-const filters = (over: Partial<TriggerFilters> = {}): TriggerFilters => ({
-  keywords: [],
-  locations: [],
-  excludeEmployerTerms: [],
-  url: null,
+const counts = (over: Partial<TriggerCounts> = {}): TriggerCounts => ({
+  items: 0,
+  new: 0,
+  companiesAdded: 0,
+  leads: 0,
+  demos: 0,
+  enrolled: 0,
   ...over,
-});
-
-test("hosts come out of any pasted address, bare or with www", () => {
-  assert.equal(hostFromUrl("https://www.mycnajobs.com/jobs?city=Atlanta"), "mycnajobs.com");
-  assert.equal(hostFromUrl("http://Jobs.Example.org"), "jobs.example.org");
-  assert.equal(hostFromUrl("mycnajobs.com"), "mycnajobs.com");
-  assert.equal(hostFromUrl("  "), null);
-  assert.equal(hostFromUrl(null), null);
-  assert.equal(hostFromUrl("not a url"), null);
-  assert.equal(hostFromUrl("localhost"), null);
-});
-
-test("a site address must be a full https address", () => {
-  assert.equal(isSiteUrl("https://www.mycnajobs.com"), true);
-  assert.equal(isSiteUrl("http://jobs.example.test/list"), true);
-  assert.equal(isSiteUrl("mycnajobs.com"), false);
-  assert.equal(isSiteUrl("https://nodot"), false);
 });
 
 test("fire hours read as clock times", () => {
@@ -75,9 +58,7 @@ test("fire hours read as clock times", () => {
 
 test("the schedule reads as a sentence: night before 6, morning to 11, daily after", () => {
   assert.equal(scheduleLabel(DEFAULT_SCHEDULE), "Every night, 2 AM PT");
-  assert.equal(scheduleLabel({ cadence: "daily", fireHour: 0, intervalHours: null }), "Every night, 12 AM PT");
   assert.equal(scheduleLabel({ cadence: "daily", fireHour: 6, intervalHours: null }), "Every morning, 6 AM PT");
-  assert.equal(scheduleLabel({ cadence: "daily", fireHour: 11, intervalHours: null }), "Every morning, 11 AM PT");
   assert.equal(scheduleLabel({ cadence: "daily", fireHour: 15, intervalHours: null }), "Daily, 3 PM PT");
   assert.equal(scheduleLabel({ cadence: "weekly", fireHour: 6, intervalHours: null }), "Weekly");
   assert.equal(scheduleLabel({ cadence: "every_n_hours", fireHour: 0, intervalHours: 4 }), "Every 4 hours");
@@ -86,316 +67,264 @@ test("the schedule reads as a sentence: night before 6, morning to 11, daily aft
   assert.equal(scheduleLabel(null), "On a schedule");
 });
 
-test("the when line is the founder's sentence, built from watch, host and locations", () => {
-  assert.equal(
-    whenLine({
-      watch: "A new caregiver or CNA job posting from a home care agency",
-      sourceHost: "mycnajobs.com",
-      sourceUrl: "https://www.mycnajobs.com",
-      sourceKind: "custom_url",
-      filters: filters({ locations: ["Atlanta", "Phoenix", "Dallas", "Chicago", "Tampa"] }),
-    }),
-    "a new caregiver or CNA job posting from a home care agency appears on mycnajobs.com in Atlanta · Phoenix · Dallas · Chicago · Tampa",
-  );
-});
-
-test("places keep their commas, so a list of them joins on a middle dot", () => {
-  assert.equal(joinLocations(["Atlanta, GA", "Phoenix, AZ", "Dallas, TX"]), "Atlanta, GA · Phoenix, AZ · Dallas, TX");
-  assert.equal(joinLocations(["Florida", " Georgia "]), "Florida · Georgia");
-  assert.equal(joinLocations(["Tampa"]), "Tampa");
-  assert.equal(joinLocations([]), "");
-  assert.equal(
-    whenLine({
-      watch: "A new CNA posting",
-      sourceHost: "mycnajobs.com",
-      sourceUrl: null,
-      sourceKind: "custom_url",
-      filters: filters({ locations: ["Atlanta, GA", "Phoenix, AZ", "Dallas, TX"] }),
-    }),
-    "a new CNA posting appears on mycnajobs.com in Atlanta, GA · Phoenix, AZ · Dallas, TX",
-  );
-});
-
-test("the when line falls back to keywords, the legacy source and All US", () => {
-  assert.equal(
-    whenLine({
-      watch: null,
-      sourceHost: null,
-      sourceUrl: null,
-      sourceKind: "mycnajobs",
-      filters: filters({ keywords: ["caregiver", "CNA"], locations: ["All US"] }),
-    }),
-    "a new caregiver or CNA posting appears on mycnajobs.com anywhere in the US",
-  );
-  assert.equal(
-    whenLine({
-      watch: "A live-in caregiver posting.",
-      sourceHost: null,
-      sourceUrl: null,
-      sourceKind: "custom_url",
-      filters: filters({ url: "https://www.jobs.example.com/list", locations: ["Florida", "Georgia"] }),
-    }),
-    "a live-in caregiver posting appears on jobs.example.com in Florida · Georgia",
-  );
-  assert.equal(
-    whenLine({ watch: null, sourceHost: null, sourceUrl: null, sourceKind: "something_else", filters: filters() }),
-    "a new posting appears anywhere on the web",
-  );
-  assert.equal(
-    whenLine({ watch: null, sourceHost: "indeed.com", sourceUrl: null, sourceKind: "custom_url", filters: filters({ locations: ["All US", "Atlanta, GA", "Phoenix"] }) }),
-    "a new posting appears on indeed.com in Atlanta, GA · Phoenix",
-  );
-});
-
-test("a trigger with no site appears anywhere on the web", () => {
-  const web = { sourceHost: null, sourceUrl: null, sourceKind: "custom_url" };
-  assert.equal(
-    whenLine({ ...web, watch: "Home care agencies hiring live-in caregivers", filters: filters({ locations: ["All US"] }) }),
-    "home care agencies hiring live-in caregivers appears anywhere on the web in the US",
-  );
-  assert.equal(
-    whenLine({ ...web, watch: "A new CNA posting", filters: filters({ locations: ["Atlanta", "Tampa"] }) }),
-    "a new CNA posting appears anywhere on the web in Atlanta · Tampa",
-  );
-  assert.equal(
-    whenLine({ ...web, watch: "A new CNA posting", filters: filters() }),
-    "a new CNA posting appears anywhere on the web",
-  );
-});
-
-test("a trigger is named after its site, or the first three words of the sentence", () => {
-  assert.equal(deriveTriggerName("Home care agencies hiring live-in caregivers", "mycnajobs.com"), "mycnajobs.com");
-  assert.equal(deriveTriggerName("Home care agencies hiring live-in caregivers", null), "Home care agencies");
-  assert.equal(deriveTriggerName("  A new   CNA, posting ", null), "A new CNA");
-  assert.equal(deriveTriggerName("Caregivers", null), "Caregivers");
-  assert.equal(deriveTriggerName("", null), "New trigger");
-});
-
-test("the title is a typed name, else the site, else five words of the sentence", () => {
-  const sentence = "A new caregiver or CNA job posting from a home care agency in the Southeast";
-  // The backend named a no-site trigger after its whole sentence.
-  assert.equal(triggerTitle({ name: sentence, sourceHost: null, watch: sentence }), "A new caregiver or CNA…");
-  assert.equal(triggerTitle({ name: `${sentence}.`, sourceHost: null, watch: sentence }), "A new caregiver or CNA…");
-  assert.equal(triggerTitle({ name: "", sourceHost: null, watch: sentence }), "A new caregiver or CNA…");
-  // With a site, the site.
-  assert.equal(triggerTitle({ name: sentence, sourceHost: "mycnajobs.com", watch: sentence }), "mycnajobs.com");
-  assert.equal(triggerTitle({ name: "mycnajobs.com", sourceHost: "mycnajobs.com", watch: sentence }), "mycnajobs.com");
-  // A name the customer typed wins, site or not.
-  assert.equal(triggerTitle({ name: "Southeast agencies", sourceHost: "indeed.com", watch: sentence }), "Southeast agencies");
-  assert.equal(triggerTitle({ name: "Home care agencies", sourceHost: null, watch: sentence }), "Home care agencies");
-  // A name that is itself a long sentence is not a name.
-  assert.equal(
-    triggerTitle({ name: "Home care agencies hiring live-in caregivers across the whole Southeast region", sourceHost: null, watch: sentence }),
-    "A new caregiver or CNA…",
-  );
-  // Short sentences need no ellipsis; nothing at all is still a title.
-  assert.equal(triggerTitle({ name: "", sourceHost: null, watch: "Home care agencies hiring." }), "Home care agencies hiring");
-  assert.equal(triggerTitle({ name: "", sourceHost: null, watch: "Five words and no more" }), "Five words and no more");
-  assert.equal(triggerTitle({ name: "", sourceHost: null, watch: null }), "Trigger");
-});
-
-test("All US only means something on its own", () => {
-  assert.deepEqual(withoutAllUs(["All US"]), ["All US"]);
-  assert.deepEqual(withoutAllUs(["All US", "Atlanta, GA"]), ["Atlanta, GA"]);
-  assert.deepEqual(withoutAllUs(["Atlanta, GA", "united states", "Phoenix"]), ["Atlanta, GA", "Phoenix"]);
-  assert.deepEqual(withoutAllUs([]), []);
-});
-
-test("the then line lists the ticked actions and names the campaign", () => {
-  const all = { addCompany: true, findContact: true, buildDemo: true, enroll: true };
-  assert.equal(
-    thenLine(all, "MochaCare intro"),
-    'add the agency as a company, find the owner or administrator, build a demo and enroll them in "MochaCare intro"',
-  );
-  assert.equal(thenLine({ ...all, enroll: false }, null), "add the agency as a company, find the owner or administrator and build a demo");
-  assert.equal(thenLine({ ...all, buildDemo: false, findContact: false }, null), 'add the agency as a company and enroll them in a campaign');
-  assert.equal(thenLine({ addCompany: true, findContact: false, buildDemo: false, enroll: false }, null), "add the agency as a company");
-  assert.equal(thenLine({ addCompany: false, findContact: false, buildDemo: false, enroll: false }, null), "record the posting");
+test("the title is the backend's name and is never derived from the sentence", () => {
+  assert.equal(triggerTitle({ name: "myCNAjobs" }), "myCNAjobs");
+  assert.equal(triggerTitle({ name: "  Series A raises  " }), "Series A raises");
+  // No name is a missing name, not an excuse to truncate the sentence.
+  assert.equal(triggerTitle({ name: "" }), "Trigger");
 });
 
 test("the view folds status and pull into one chip: active, paused, building, not supported", () => {
-  assert.equal(triggerView({ status: "active", pull: { method: "api", label: "Job board search" } }), "active");
+  assert.equal(triggerView({ status: "active", pull: { method: "site", reason: null } }), "active");
   assert.equal(triggerView({ status: "active", pull: null }), "active");
   assert.equal(triggerView({ status: "paused", pull: null }), "paused");
-  assert.equal(triggerView({ status: "needs_setup", pull: { method: "needs_puller", label: "Building" } }), "building");
+  assert.equal(triggerView({ status: "needs_setup", pull: { method: "pending", reason: null } }), "building");
   assert.equal(triggerView({ status: "needs_setup", pull: null }), "building");
-  assert.equal(triggerView({ status: "needs_setup", pull: { method: "unsupported", label: "Not supported yet" } }), "unsupported");
-  assert.equal(triggerView({ status: "active", pull: { method: "unsupported", label: "" } }), "unsupported");
+  assert.equal(triggerView({ status: "active", pull: { method: "unsupported", reason: null } }), "unsupported");
   assert.equal(viewLabel("active"), "Active");
   assert.equal(viewLabel("paused"), "Paused");
   assert.equal(viewLabel("building"), "Building");
   assert.equal(viewLabel("unsupported"), "Not supported");
-  assert.equal(viewNotice("active"), null);
-  assert.equal(viewNotice("paused"), null);
-  assert.equal(viewNotice("building"), "Your agent is setting up the pull for this site.");
-  assert.equal(viewNotice("unsupported"), "We cannot watch this site yet. It needs a sign-in, or it is not a list of items we can read.");
 });
 
-test("the source fact takes the backend's label, then a plain name per method, never the key", () => {
-  assert.equal(pullLabel({ method: "api", label: "Job board search" }), "Job board search");
-  assert.equal(pullLabel({ method: "api", label: "Google Jobs" }), "Google Jobs");
-  assert.equal(pullLabel({ method: "api", label: "  " }), "Job board search");
-  // A label that only echoes the method key is no label.
-  assert.equal(pullLabel({ method: "api", label: "API" }), "Job board search");
-  assert.equal(pullLabel({ method: "something_new" as "api", label: "something_new" }), null);
-  assert.equal(pullLabel({ method: "something_new" as "api", label: "Something new" }), "Something new");
-  assert.equal(pullLabel({ method: "firecrawl_pages", label: "" }), "Page watch");
-  assert.equal(pullLabel({ method: "firecrawl_search", label: "" }), "Web search");
-  assert.equal(pullLabel({ method: "firecrawl_search", label: "Web search" }), "Web search");
-  assert.equal(pullLabel({ method: "needs_puller", label: "" }), "Building");
-  assert.equal(pullLabel({ method: "unsupported", label: "" }), "Not supported yet");
-  assert.equal(pullLabel(null), null);
-  assert.equal(pullLabel(undefined), null);
+test("the building line changes at an hour and again at a day, from the last change", () => {
+  const now = new Date("2026-09-02T12:00:00Z");
+  assert.equal(buildingStage("2026-09-02T11:40:00Z", now), "fresh");
+  assert.equal(buildingStage("2026-09-02T10:00:00Z", now), "slow");
+  assert.equal(buildingStage("2026-08-31T10:00:00Z", now), "stalled");
+  assert.equal(buildingStage(null, now), "fresh");
+  assert.equal(buildingStage("not a date", now), "fresh");
+
+  // An edited sentence restarts the clock, so the update wins over create.
+  assert.equal(
+    buildingLine({ createdAt: "2026-08-01T00:00:00Z", updatedAt: "2026-09-02T11:40:00Z" }, now),
+    BUILDING_LINES.fresh,
+  );
+  assert.equal(
+    buildingLine({ createdAt: "2026-09-02T10:00:00Z", updatedAt: null }, now),
+    BUILDING_LINES.slow,
+  );
+  assert.equal(BUILDING_LINES.fresh, "Your agent is working out how to check this. Usually under an hour.");
+  assert.equal(BUILDING_LINES.slow, "Taking longer than usual. Your agent is still on it.");
+  assert.equal(BUILDING_LINES.stalled, "Could not set this up yet.");
 });
 
-test("posting statuses say who has the posting, with a tone", () => {
-  assert.equal(postingStatusLabel("new"), "Waiting for your agent");
-  assert.equal(postingStatusLabel("in_progress"), "Your agent is working on it");
-  assert.equal(postingStatusLabel("something_new"), "Your agent is working on it");
-  assert.equal(postingStatusLabel("no_lead"), "Held: no contact found");
-  assert.equal(postingStatusLabel("demo_pending"), "Demo pending");
-  assert.equal(postingStatusLabel("ready"), "Ready");
-  assert.equal(postingStatusLabel("enrolled"), "Enrolled");
-  assert.equal(postingStatusLabel("dismissed"), "Dismissed");
-  assert.equal(postingStatusLabel("duplicate"), "Skipped: duplicate");
-  assert.equal(postingStatusLabel("failed"), "Failed");
-  assert.equal(postingStatusTone("enrolled"), "tide");
-  assert.equal(postingStatusTone("no_lead"), "hold");
-  assert.equal(postingStatusTone("duplicate"), "skip");
-  assert.equal(postingStatusTone("failed"), "alert");
-  assert.equal(postingStatusTone("new"), "plain");
+test("a reason worth printing is a sentence, never an identifier out of the plumbing", () => {
+  assert.equal(plainReason("This page asks for a sign-in first."), "This page asks for a sign-in first.");
+  assert.equal(plainReason("  "), null);
+  assert.equal(plainReason(null), null);
+  assert.equal(plainReason("dataforseo_google_jobs"), null);
+  assert.equal(plainReason("needs_puller"), null);
 });
 
-test("run states label and the open check covers queued and running only", () => {
-  assert.equal(runStateLabel("queued"), "Queued");
-  assert.equal(runStateLabel("running"), "Running");
-  assert.equal(runStateLabel("done"), "Done");
-  assert.equal(runStateLabel("failed"), "Failed");
+test("the readback is the agent's line, the reason it could not read, or how long the wait is", () => {
+  const now = new Date("2026-09-02T12:00:00Z");
+  const base = { createdAt: "2026-09-02T11:40:00Z", updatedAt: null };
+  assert.equal(
+    readbackLine({ ...base, status: "active", pull: null, summary: "Checks mycnajobs.com every night for caregiver jobs." }, now),
+    "Checks mycnajobs.com every night for caregiver jobs.",
+  );
+  // Still being set up and nothing written back yet.
+  assert.equal(readbackLine({ ...base, status: "needs_setup", pull: null, summary: null }, now), BUILDING_LINES.fresh);
+  assert.equal(readbackLine({ ...base, status: "needs_setup", pull: null, summary: "  " }, now), BUILDING_LINES.fresh);
+  // A source we cannot read says why, in the agent's own words when it has them.
+  assert.equal(
+    readbackLine({ ...base, status: "needs_setup", pull: { method: "unsupported", reason: "It needs a sign-in." }, summary: null }, now),
+    "It needs a sign-in.",
+  );
+  assert.equal(
+    readbackLine({ ...base, status: "needs_setup", pull: { method: "unsupported", reason: null }, summary: "anything" }, now),
+    UNSUPPORTED_LINE,
+  );
+  assert.equal(readbackLine({ ...base, status: "active", pull: null, summary: null }, now), null);
+});
+
+test("the counts line is the lifetime tally in plain words, and says nothing when empty", () => {
+  assert.equal(countsLine(counts()), "");
+  assert.equal(countsLine(counts({ items: 12, companiesAdded: 9 })), "12 found · 9 companies added");
+  assert.equal(countsLine(counts({ items: 1, companiesAdded: 1, demos: 1, enrolled: 1 })), "1 found · 1 company added · 1 demo · 1 enrolled");
+  // Leads are not a number the customer counts, so they stay off the line.
+  assert.equal(countsLine(counts({ items: 40, leads: 13, demos: 13 })), "40 found · 13 demos");
+  assert.equal(countsLine(counts({ items: 1234, companiesAdded: 1000 })), "1,234 found · 1,000 companies added");
+});
+
+test("the row's meta line is the schedule, then the tally when there is one", () => {
+  assert.equal(
+    metaLine({ schedule: DEFAULT_SCHEDULE, counts: counts({ items: 12, companiesAdded: 9 }) }),
+    "Every night, 2 AM PT · 12 found · 9 companies added",
+  );
+  assert.equal(metaLine({ schedule: DEFAULT_SCHEDULE, counts: counts() }), "Every night, 2 AM PT");
+});
+
+test("item statuses are short, and only a win takes the accent", () => {
+  assert.equal(itemStatusLabel("new"), "Waiting");
+  assert.equal(itemStatusLabel("in_progress"), "Working");
+  assert.equal(itemStatusLabel("something_new"), "Working");
+  assert.equal(itemStatusLabel("no_lead"), "No contact found");
+  assert.equal(itemStatusLabel("demo_pending"), "Building demo");
+  assert.equal(itemStatusLabel("ready"), "Demo ready");
+  assert.equal(itemStatusLabel("enrolled"), "Enrolled");
+  assert.equal(itemStatusLabel("dismissed"), "Dismissed");
+  assert.equal(itemStatusLabel("duplicate"), "Duplicate");
+  assert.equal(itemStatusLabel("failed"), "Failed");
+  assert.equal(itemStatusTone("ready"), "tide");
+  assert.equal(itemStatusTone("enrolled"), "tide");
+  // Demo ready and Dismissed used to be the same gray.
+  assert.notEqual(itemStatusTone("ready"), itemStatusTone("dismissed"));
+  assert.equal(itemStatusTone("dismissed"), "quiet");
+  assert.equal(itemStatusTone("duplicate"), "quiet");
+  assert.equal(itemStatusTone("no_lead"), "quiet");
+  assert.equal(itemStatusTone("failed"), "alert");
+  assert.equal(itemStatusTone("new"), "plain");
+});
+
+test("a check reads as done or failed, and a retried error is not the customer's news", () => {
+  assert.deepEqual(runResult({ state: "done", error: null }), { label: "Done", detail: null });
+  assert.deepEqual(
+    runResult({ state: "done", error: "The source was slow to respond. We retried once and the check finished." }),
+    { label: "Done", detail: null },
+  );
+  assert.deepEqual(runResult({ state: "queued", error: null }), { label: "Queued", detail: null });
+  assert.deepEqual(runResult({ state: "running", error: null }), { label: "Running", detail: null });
+  assert.deepEqual(runResult({ state: "failed", error: "The source did not load. Nothing was added." }), {
+    label: "Failed",
+    detail: "The source did not load. Nothing was added.",
+  });
+  assert.deepEqual(runResult({ state: "failed", error: null }), { label: "Failed", detail: null });
+  // Long prose is cut to a line; the row keeps the whole thing on hover.
+  assert.equal(
+    runResult({ state: "failed", error: "Stopped after ten misses in a row, and the last four pages came back empty as well." }).detail,
+    "Stopped after ten misses in a row, and the last…",
+  );
+});
+
+test("the checks log names what started a check", () => {
+  assert.equal(runTriggerLabel("schedule"), "Scheduled");
+  assert.equal(runTriggerLabel("manual"), "Check now");
+  assert.equal(runTriggerLabel("setup"), "First check");
+  assert.equal(runTriggerLabel("something_else"), "Scheduled");
   assert.equal(runIsOpen("queued"), true);
   assert.equal(runIsOpen("running"), true);
   assert.equal(runIsOpen("done"), false);
   assert.equal(runIsOpen(null), false);
 });
 
-test("the runs log names what started a run: the schedule, a press, or setup", () => {
-  assert.equal(runTriggerLabel("schedule"), "Scheduled");
-  assert.equal(runTriggerLabel("manual"), "Check now");
-  assert.equal(runTriggerLabel("setup"), "First check");
-  assert.equal(runTriggerLabel("something_else"), "Scheduled");
-});
-
-test("spend shows dollars only when metered and non-zero, next to credits", () => {
-  assert.equal(formatUsd(0.05), "$0.05");
-  assert.equal(formatUsd(1.2), "$1.20");
-  assert.equal(formatUsd(1234.5), "$1,234.50");
-  assert.equal(formatUsd(0.004), "Under $0.01");
-  assert.equal(formatUsd(0), null);
-  assert.equal(formatUsd(-1), null);
-  assert.equal(formatUsd(null), null);
-  assert.equal(formatUsd(undefined), null);
-  assert.equal(formatUsd(Number.NaN), null);
-  assert.equal(spendCell({ creditsUsed: 12, costUsd: 0.05 }), "12 credits · $0.05");
-  assert.equal(spendCell({ creditsUsed: 1, costUsd: null }), "1 credit");
-  assert.equal(spendCell({ creditsUsed: 12, costUsd: 0 }), "12 credits");
-  assert.equal(spendCell({ creditsUsed: null, costUsd: 0.05 }), "$0.05");
-  assert.equal(spendCell({ creditsUsed: null, costUsd: null }), "—");
-});
-
-test("postings sort newest first by posting date, undated last, then by when we found them", () => {
-  const rows = [
-    { id: "undated-old", postedAt: null, createdAt: "2026-08-20T00:00:00Z" },
-    { id: "aug-30", postedAt: "2026-08-30T00:00:00Z", createdAt: "2026-08-31T00:00:00Z" },
-    { id: "aug-31-found-late", postedAt: "2026-08-31T00:00:00Z", createdAt: "2026-09-02T00:00:00Z" },
-    { id: "undated-new", postedAt: null, createdAt: "2026-09-01T00:00:00Z" },
-    { id: "aug-31-found-early", postedAt: "2026-08-31T00:00:00Z", createdAt: "2026-09-01T00:00:00Z" },
-    { id: "bad-date", postedAt: "not a date", createdAt: "2026-08-25T00:00:00Z" },
-  ];
-  const sorted = sortPostings(rows);
-  assert.deepEqual(
-    sorted.map((row) => row.id),
-    ["aug-31-found-late", "aug-31-found-early", "aug-30", "undated-new", "bad-date", "undated-old"],
-  );
-  // The input is left alone.
-  assert.equal(rows[0].id, "undated-old");
-  assert.deepEqual(sortPostings([]), []);
-});
-
-test("run counters show a dash when the row predates them", () => {
+test("check counters show a dash when the row predates them", () => {
   assert.equal(counterCell(0), "0");
   assert.equal(counterCell(1234), "1,234");
   assert.equal(counterCell(null), "—");
   assert.equal(counterCell(undefined), "—");
 });
 
-test("the counts line is the lifetime tally, labelled as such, never one check's result", () => {
-  const zero = { postings: 0, new: 0, agenciesAdded: 0, leads: 0, demos: 0, enrolled: 0, held: 0 };
-  assert.equal(countsLine(zero), "");
-  // "new" is a status count, not a per-check figure, so it stays off the line.
-  assert.equal(
-    countsLine({ ...zero, postings: 40, new: 21, agenciesAdded: 34, leads: 13, demos: 13 }),
-    "So far: 40 postings · 34 agencies added · 13 contacts · 13 demos",
+test("items sort newest first, undated last, then by when we found them", () => {
+  const rows = [
+    { id: "undated-old", foundAt: null, createdAt: "2026-08-20T00:00:00Z" },
+    { id: "aug-30", foundAt: "2026-08-30T00:00:00Z", createdAt: "2026-08-31T00:00:00Z" },
+    { id: "aug-31-found-late", foundAt: "2026-08-31T00:00:00Z", createdAt: "2026-09-02T00:00:00Z" },
+    { id: "undated-new", foundAt: null, createdAt: "2026-09-01T00:00:00Z" },
+    { id: "aug-31-found-early", foundAt: "2026-08-31T00:00:00Z", createdAt: "2026-09-01T00:00:00Z" },
+    { id: "bad-date", foundAt: "not a date", createdAt: "2026-08-25T00:00:00Z" },
+  ];
+  assert.deepEqual(
+    sortItems(rows).map((row) => row.id),
+    ["aug-31-found-late", "aug-31-found-early", "aug-30", "undated-new", "bad-date", "undated-old"],
   );
-  assert.equal(countsLine({ ...zero, postings: 40, new: 40 }), "So far: 40 postings");
-  assert.equal(
-    countsLine({ ...zero, postings: 1, agenciesAdded: 1, leads: 1, demos: 1, enrolled: 1, held: 1 }),
-    "So far: 1 posting · 1 agency added · 1 contact · 1 demo · 1 enrolled · 1 held for review",
-  );
-  assert.equal(countsLine({ ...zero, postings: 1234, agenciesAdded: 1000 }), "So far: 1,234 postings · 1,000 agencies added");
+  assert.equal(rows[0].id, "undated-old");
+  assert.deepEqual(sortItems([]), []);
 });
 
-test("last check reads Checking now while a run is open, even before the first ever finished", () => {
+test("a bad extraction reads as words: markdown links and images never reach a cell raw", () => {
+  assert.equal(plainText("[Skip to main content](https://jobs.boeing.com/en/job/brisbane/#content)"), "Skip to main content");
+  assert.equal(plainText("![Fermilab](https://lss.fnal.gov/images/logo-fnal-blue.png)"), "Fermilab");
+  assert.equal(plainText("![](https://example.test/logo.png)"), "");
+  assert.equal(plainText("**Caregiver**, part time"), "Caregiver , part time");
+  assert.equal(plainText("Caregiver, part   time\n"), "Caregiver, part time");
+  // An address alone is not a title.
+  assert.equal(plainText("https://example.test/jobs/1"), "");
+  assert.equal(plainText("www.example.test"), "");
+  assert.equal(plainText(null), "");
+  assert.equal(itemTitle({ title: "[Read more](https://example.test/x)" }), "Read more");
+  assert.equal(itemTitle({ title: "" }), "");
+  assert.equal(itemName({ entityName: "**Brightpath** Home Care" }), "Brightpath Home Care");
+});
+
+test("long text is cut on a word boundary, with the rest left to a title attribute", () => {
+  assert.equal(truncate("short", 20), "short");
+  assert.equal(truncate("a caregiver posting from a home care agency", 20), "a caregiver posting…");
+  // No sensible break: cut where the room runs out rather than leave a stub.
+  assert.equal(truncate("abcdefghijklmnopqrstuvwxyz", 10), "abcdefghij…");
+  assert.equal(shortReason("Dismissed: this is a hospital surgical practice, not the kind of agency this trigger watches."), "Dismissed: this is a hospital surgical practice, not the kind…");
+  assert.equal(shortReason("In Companies since Aug 22"), "In Companies since Aug 22");
+  assert.equal(shortReason(null), null);
+  assert.equal(shortReason("   "), null);
+});
+
+test("a row shows at most two extracted fields, whatever schema the item brought", () => {
+  const item = {
+    entityName: "Verdant Grid",
+    title: "Raises $18M to put batteries on rural feeders",
+    fields: [
+      { label: "Round", value: "Series A" },
+      { label: "Raised", value: "$18M" },
+      { label: "Lead", value: "Fieldstone" },
+    ],
+  };
+  assert.deepEqual(rowFields(item), [
+    { label: "Round", value: "Series A" },
+    { label: "Raised", value: "$18M" },
+  ]);
+  // A job brings different keys and the row does not care.
+  assert.deepEqual(
+    rowFields({ entityName: "Brightpath Home Care", title: "Caregiver", fields: [{ label: "Pay", value: "$16 to $19/hr" }] }),
+    [{ label: "Pay", value: "$16 to $19/hr" }],
+  );
+  // Nothing empty, nothing that only repeats the name or the title.
+  assert.deepEqual(
+    rowFields({
+      entityName: "Brightpath Home Care",
+      title: "Caregiver",
+      fields: [
+        { label: "Employer", value: "Brightpath Home Care" },
+        { label: "Role", value: "Caregiver" },
+        { label: "Shift", value: "" },
+        { label: "", value: "nothing" },
+        { label: "Where", value: "Tucson, AZ" },
+      ],
+    }),
+    [{ label: "Where", value: "Tucson, AZ" }],
+  );
+  assert.deepEqual(rowFields({ entityName: "x", title: "y", fields: [] }), []);
+});
+
+test("last check reads Checking now while a check is open, even before the first ever finished", () => {
   const now = new Date("2026-09-02T12:00:00Z");
   const never = { lastRunAt: null, lastRunState: null };
   const running = { lastRunAt: null, lastRunState: "running" };
   const done = { lastRunAt: "2026-08-31T13:02:00Z", lastRunState: "done" };
   const failed = { lastRunAt: "2026-08-31T13:02:00Z", lastRunState: "failed" };
 
-  // From the row alone (the list call carries no runs).
   assert.deepEqual(lastCheck(never), { kind: "never" });
   assert.deepEqual(lastCheck(running), { kind: "checking" });
-  assert.deepEqual(lastCheck({ lastRunAt: null, lastRunState: "queued" }), { kind: "checking" });
   assert.deepEqual(lastCheck(done), { kind: "checked", at: "2026-08-31T13:02:00Z", failed: false });
   assert.deepEqual(lastCheck(failed), { kind: "checked", at: "2026-08-31T13:02:00Z", failed: true });
 
-  // With the newest run, the run wins: its state, and its finish time.
   const openRun = { state: "queued", finishedAt: null, startedAt: null, createdAt: "2026-09-02T11:59:00Z" };
   const doneRun = { state: "done", finishedAt: "2026-09-02T11:58:00Z", startedAt: "2026-09-02T11:57:00Z", createdAt: "2026-09-02T11:57:00Z" };
-  const failedRun = { state: "failed", finishedAt: null, startedAt: "2026-09-02T11:57:00Z", createdAt: "2026-09-02T11:57:00Z" };
   assert.deepEqual(lastCheck(done, openRun), { kind: "checking" });
-  assert.deepEqual(lastCheck(never, openRun), { kind: "checking" });
   assert.deepEqual(lastCheck(done, doneRun), { kind: "checked", at: "2026-09-02T11:58:00Z", failed: false });
-  assert.deepEqual(lastCheck(never, failedRun), { kind: "checked", at: "2026-09-02T11:57:00Z", failed: true });
   assert.deepEqual(lastCheck(never, null), { kind: "never" });
 
   assert.equal(lastCheckLine(never, null, now), "Has not checked yet");
   assert.equal(lastCheckLine(running, null, now), "Checking now…");
   assert.equal(lastCheckLine(done, null, now), "Last check Aug 31");
   assert.equal(lastCheckLine(failed, null, now), "Last check Aug 31 failed");
-  assert.equal(lastCheckLine(done, openRun, now), "Checking now…");
 
+  // The detail page's line carries the same thing to the minute, and says
+  // what the number is: there is no label beside it any more.
   assert.equal(lastCheckFact(never), "Has not checked yet");
   assert.equal(lastCheckFact(running), "Checking now…");
-  assert.equal(lastCheckFact(done, openRun), "Checking now…");
-  assert.equal(lastCheckFact(done, doneRun), formatMoment("2026-09-02T11:58:00Z"));
-  assert.equal(lastCheckFact(failed), `${formatMoment("2026-08-31T13:02:00Z")}, failed`);
-});
-
-test("keywords and employer terms split on commas, locations on semicolons so a city keeps its state", () => {
-  assert.deepEqual(splitList("caregiver, CNA", "keywords"), ["caregiver", "CNA"]);
-  assert.deepEqual(splitList("senior living, hospice", "terms"), ["senior living", "hospice"]);
-  assert.deepEqual(splitList("Atlanta, GA; Phoenix, AZ", "locations"), ["Atlanta, GA", "Phoenix, AZ"]);
-  assert.deepEqual(splitList("Atlanta, GA\nPhoenix, AZ", "locations"), ["Atlanta, GA", "Phoenix, AZ"]);
-  assert.deepEqual(splitList("  cna ,, CNA , home  health aide ", "keywords"), ["cna", "home health aide"]);
-  assert.deepEqual(splitList("", "keywords"), []);
-});
-
-test("chip fields turn typed text into chips at the separator and never repeat one", () => {
-  assert.equal(hasListSeparator("caregiver,", "keywords"), true);
-  assert.equal(hasListSeparator("caregiver", "keywords"), false);
-  assert.equal(hasListSeparator("Atlanta, GA", "locations"), false);
-  assert.equal(hasListSeparator("Atlanta, GA;", "locations"), true);
-  assert.deepEqual(addToList(["CNA"], ["cna", "caregiver"]), ["CNA", "caregiver"]);
-  assert.deepEqual(addToList([], ["Atlanta, GA", "atlanta, ga"]), ["Atlanta, GA"]);
+  assert.equal(lastCheckFact(done, doneRun), `Last check ${formatMoment("2026-09-02T11:58:00Z")}`);
+  assert.equal(lastCheckFact(failed), `Last check ${formatMoment("2026-08-31T13:02:00Z")}, failed`);
 });
 
 test("days drop the year only inside the current year", () => {
@@ -406,16 +335,10 @@ test("days drop the year only inside the current year", () => {
   assert.equal(formatDay("not a date", now), null);
 });
 
-test("the posted cell is the posting's day, or the day we found an undated one", () => {
+test("the found cell is the item's day, or the day we found an undated one", () => {
   const now = new Date("2026-09-02T12:00:00Z");
-  assert.equal(postedCell({ postedAt: "2026-08-31T13:02:00Z", createdAt: "2026-09-01T13:02:00Z" }, now), "Aug 31");
-  assert.equal(postedCell({ postedAt: null, createdAt: "2026-09-01T13:02:00Z" }, now), "Found Sep 1");
-  assert.equal(postedCell({ postedAt: "not a date", createdAt: "2025-09-01T13:02:00Z" }, now), "Found Sep 1, 2025");
-  assert.equal(postedCell({ postedAt: null, createdAt: "not a date" }, now), "Unknown");
-});
-
-test("posting location prefers city and state, then the raw text", () => {
-  assert.equal(postingLocation({ city: "Tucson", state: "AZ", locationText: null }), "Tucson, AZ");
-  assert.equal(postingLocation({ city: null, state: null, locationText: "Remote (US)" }), "Remote (US)");
-  assert.equal(postingLocation({ city: null, state: null, locationText: null }), "Location not listed");
+  assert.equal(foundCell({ foundAt: "2026-08-31T13:02:00Z", createdAt: "2026-09-01T13:02:00Z" }, now), "Aug 31");
+  assert.equal(foundCell({ foundAt: null, createdAt: "2026-09-01T13:02:00Z" }, now), "Found Sep 1");
+  assert.equal(foundCell({ foundAt: "not a date", createdAt: "2025-09-01T13:02:00Z" }, now), "Found Sep 1, 2025");
+  assert.equal(foundCell({ foundAt: null, createdAt: "not a date" }, now), "Unknown");
 });

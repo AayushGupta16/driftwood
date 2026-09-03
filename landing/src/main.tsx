@@ -50,7 +50,10 @@ const page =
     <Campaigns />
   ) : campaignPathMatch ? (
     <CampaignBuilder campaignId={decodeURIComponent(campaignPathMatch[1])} />
-  ) : path === '/dashboard/triggers' ? (
+  ) : path === '/dashboard/triggers' || path === '/dashboard/triggers/new' ? (
+    // /new is the new-trigger box's own address, so it can be linked and
+    // refreshed; without this it fell through to the id route and asked the
+    // API for a trigger called "new".
     <WorkspacePage active="triggers"><Triggers /></WorkspacePage>
   ) : triggerPathMatch ? (
     <WorkspacePage active="triggers"><TriggerDetail triggerId={decodeURIComponent(triggerPathMatch[1])} /></WorkspacePage>

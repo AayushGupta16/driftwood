@@ -1,18 +1,19 @@
-/* Triggers pages (design/triggers.html, 2026-09-01, when/then revision
-   2026-09-02). The page frame, pills, read-only chip, empty state and
-   skeleton grammar come from audiences.css and campaigns.css (imported by
-   the pages); this file adds only what those do not have: the trigger
-   card, the facts strip, the two tables, the posting chips, the chip
-   fields and the new-trigger form. */
+/* Triggers pages (design/triggers.html, one-box revision 2026-09-02). The
+   page frame, pills, read-only chip, empty state and skeleton grammar come
+   from audiences.css, and the list row from campaigns.css, both imported by
+   the pages; this file adds only what those do not have: the row's shape,
+   the readback line, the two tables and the one-box form. */
 
 .trigger-title-row { display: flex; min-width: 0; flex-wrap: wrap; align-items: center; gap: 0.75rem; }
 .trigger-title-row h1 { max-width: none; }
 .trigger-heading-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 0.5rem; }
-.trigger-lede { margin: 0.7rem 0 0; max-width: 46rem; color: var(--color-ink-soft); font-size: 0.8rem; line-height: 1.55; }
-.trigger-sentence { color: var(--color-ink); font-size: 0.86rem; }
-.trigger-sentence b,
-.trigger-when b,
-.trigger-then b { color: var(--color-tide-deep); font-weight: 650; }
+
+/* The agent's readback: the one line saying what this trigger watches, in
+   its own words. Directly under the name, everywhere the trigger shows. */
+.trigger-readback { margin: 0.7rem 0 0; max-width: 46rem; color: var(--color-ink); font-size: 0.84rem; line-height: 1.55; }
+.trigger-meta-line { margin: 0.3rem 0 0; max-width: 46rem; color: var(--color-ink-soft); font-size: 0.74rem; line-height: 1.5; }
+.trigger-meta-line a { color: var(--color-tide); text-decoration: none; }
+.trigger-meta-line a:hover { text-decoration: underline; }
 
 .trigger-back {
   display: inline-flex;
@@ -27,60 +28,36 @@
 }
 .trigger-back:hover { color: var(--color-ink); }
 
-/* Building and unsupported: the chip stays crisp, the rest steps back. */
-.is-muted { opacity: 0.55; }
-
-/* Two more chip states next to campaigns.css's active and paused: an
-   amber dot while the agent builds the pull, a hollow dot for a site it
-   cannot watch. */
-.campaign-status-building::before { background: #d97706; }
+/* Two more chip states next to campaigns.css's active and paused. Both
+   stay inside the one accent: tide while the agent is still working out
+   how to check, a hollow ring for a source it cannot read. */
+.campaign-status-building::before { background: var(--color-tide); }
 .campaign-status-unsupported { color: var(--color-ink-faint); }
 .campaign-status-unsupported::before { background: transparent; box-shadow: inset 0 0 0 1px var(--color-ink-faint); }
 
-/* ---------- cards ---------- */
-.trigger-list { display: grid; gap: 0.85rem; margin-top: 1.35rem; }
-.trigger-card {
-  display: grid;
-  grid-template-columns: 2.25rem minmax(0, 1fr) auto;
-  gap: 0.5rem 1rem;
-  align-items: start;
-  border: 1px solid var(--color-line);
-  border-radius: 0.85rem;
-  background: var(--color-surface);
-  box-shadow: var(--shadow-win-sm);
-  padding: 1.1rem 1.25rem;
-  color: inherit;
-  text-decoration: none;
-  transition: border-color 200ms cubic-bezier(0.2, 0, 0, 1), background 200ms cubic-bezier(0.2, 0, 0, 1);
+/* ---------- list ---------- */
+/* Campaigns' row, three columns instead of five: the chip, the name with
+   the readback and meta under it, and when it last checked. */
+.trigger-list { margin-top: 1.35rem; }
+.trigger-row { grid-template-columns: 6rem minmax(14rem, 3fr) minmax(8rem, 1fr) 2rem; color: inherit; text-decoration: none; }
+/* The readback is the line the customer reads to check the agent
+   understood, so it gets two lines rather than one truncated one. */
+.trigger-row .campaign-list-copy > span {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  white-space: normal;
+  text-overflow: clip;
+  line-height: 1.45;
 }
-.trigger-card:hover {
-  border-color: color-mix(in srgb, var(--color-tide) 38%, var(--color-line));
-  background: color-mix(in srgb, var(--color-tide-wash) 40%, white);
-}
-.trigger-mark {
-  display: grid;
-  width: 2.25rem;
-  height: 2.25rem;
-  place-items: center;
-  border-radius: 0.65rem;
-  background: var(--color-tide-wash);
-  color: var(--color-tide-deep);
-  font-size: 0.74rem;
-  font-weight: 700;
-}
-.trigger-card > div { min-width: 0; }
-.trigger-card h2 { margin: 0; font-size: 0.95rem; font-weight: 650; letter-spacing: -0.012em; line-height: 1.3; }
-.trigger-when { margin: 0.2rem 0 0; color: var(--color-ink); font-size: 0.82rem; line-height: 1.45; }
-.trigger-then { margin: 0.1rem 0 0; color: var(--color-ink); font-size: 0.82rem; line-height: 1.45; }
-.trigger-meta { margin: 0.45rem 0 0; color: var(--color-ink-soft); font-size: 0.74rem; line-height: 1.5; }
-.trigger-lastrun { margin: 0.35rem 0 0; color: var(--color-ink-faint); font-size: 0.72rem; line-height: 1.5; font-variant-numeric: tabular-nums; }
-.trigger-lastrun + .trigger-lastrun { margin-top: 0.1rem; }
-.trigger-card .campaign-status { margin-top: 0.2rem; white-space: nowrap; }
-.trigger-card-muted .trigger-mark,
-.trigger-card-muted > div { opacity: 0.55; }
-.trigger-card-skeleton { pointer-events: none; }
-.trigger-card-skeleton .campaign-skel { display: block; }
-.trigger-card-skeleton .campaign-skel + .campaign-skel { margin-top: 0.55rem; }
+.trigger-row .campaign-list-copy small { color: var(--color-ink-faint); font-size: 0.7rem; font-variant-numeric: tabular-nums; }
+.trigger-row .campaign-list-updated span { font-size: 0.74rem; font-variant-numeric: tabular-nums; }
+/* Still being built, or on a source we cannot read: the row steps back,
+   the chip stays crisp. */
+.trigger-row-muted .campaign-list-copy,
+.trigger-row-muted .campaign-list-updated { opacity: 0.62; }
 
 .trigger-empty {
   margin-top: 1.35rem;
@@ -91,26 +68,9 @@
 .trigger-empty .audience-state-actions { margin-top: 0.45rem; }
 
 /* ---------- detail ---------- */
-.trigger-facts {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 1rem 1.5rem;
-  margin-top: 1.35rem;
-  border: 1px solid var(--color-line);
-  border-radius: 0.85rem;
-  background: var(--color-surface);
-  padding: 1rem 1.25rem;
-}
-.trigger-fact { min-width: 0; }
-.trigger-fact small { display: block; color: var(--color-ink-faint); font-size: 0.66rem; }
-.trigger-fact strong { display: block; margin-top: 0.2rem; font-size: 0.82rem; font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; }
-.trigger-fact a { color: var(--color-tide); text-decoration: none; }
-.trigger-fact a:hover { text-decoration: underline; }
-.trigger-fact .campaign-skel { display: block; margin-top: 0.35rem; }
-
-/* "Check now" is a quiet text link under the facts, for debugging a
-   watch; the schedule is what normally runs it. */
-.trigger-check-row { margin: 0.7rem 0 0; font-size: 0.76rem; line-height: 1.5; }
+/* "Check now" is a quiet text link; the schedule is what normally runs
+   it. */
+.trigger-check-row { margin: 0.8rem 0 0; font-size: 0.76rem; line-height: 1.5; }
 .trigger-check-now {
   border: 0;
   border-radius: 2px;
@@ -124,7 +84,6 @@
 }
 .trigger-check-now:hover { text-decoration: underline; }
 .trigger-check-now:disabled { color: var(--color-ink-faint); cursor: not-allowed; text-decoration: none; }
-.trigger-notice { margin: 0.8rem 0 0; max-width: 46rem; color: var(--color-ink-soft); font-size: 0.78rem; line-height: 1.5; }
 
 .trigger-section { margin-top: 2rem; }
 .trigger-section-head {
@@ -139,11 +98,19 @@
 .trigger-section-head span { color: var(--color-ink-faint); font-size: 0.7rem; font-variant-numeric: tabular-nums; }
 
 .trigger-table-card { border: 1px solid var(--color-line); border-radius: 0.85rem; background: var(--color-surface); overflow: hidden; }
+/* The scroll lives in the card, never in the page: a table wider than the
+   viewport used to push Status and the links off screen. Both tables now
+   carry columns that fit a laptop, and the min-width only holds a phone
+   back from crushing them. */
 .trigger-table-wrap { overflow-x: auto; }
-.trigger-table { width: 100%; border-collapse: collapse; font-size: 0.76rem; }
-.trigger-table-postings { min-width: 56rem; }
-.trigger-table-runs { min-width: 50rem; }
+.trigger-table { width: 100%; border-collapse: collapse; font-size: 0.76rem; table-layout: auto; }
+.trigger-table-items { min-width: 32rem; }
+.trigger-table-runs { min-width: 24rem; }
+/* The header cell is the containing block for its own screen-reader-only
+   label: absolutely positioned, that label would take its place from the
+   page instead of the scrolling table and stretch the document sideways. */
 .trigger-table th {
+  position: relative;
   border-bottom: 1px solid var(--color-line);
   background: var(--color-sand);
   color: var(--color-ink-soft);
@@ -153,20 +120,12 @@
   text-align: left;
   white-space: nowrap;
 }
-/* A quiet note after a column name, "Posted  newest first". */
-.trigger-th-note { margin-left: 0.3rem; color: var(--color-ink-faint); font-weight: 500; }
 .trigger-table td { border-bottom: 1px solid var(--color-line); padding: 0.7rem 0.75rem; vertical-align: top; line-height: 1.45; }
 .trigger-table tbody tr:last-child td { border-bottom: 0; }
 .trigger-table td.trigger-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
-.trigger-table td strong { font-weight: 600; }
-.trigger-sub { display: block; margin-top: 0.15rem; color: var(--color-ink-soft); font-size: 0.68rem; }
-.trigger-table td.trigger-error-cell { color: var(--color-ink-soft); }
-.trigger-table td.trigger-error-none { color: var(--color-ink-faint); }
-/* A run's note hangs under its row: the row gives up its rule so the two
-   read as one, and the note carries it instead. Same tone as an error
-   cell, never red. */
-.trigger-table tr.trigger-run-with-note td { border-bottom: 0; }
-.trigger-table td.trigger-run-note { padding-top: 0; color: var(--color-ink-soft); font-size: 0.7rem; line-height: 1.5; }
+.trigger-table td strong { font-weight: 600; overflow-wrap: anywhere; }
+.trigger-cell-title { display: block; overflow-wrap: anywhere; }
+.trigger-sub { display: block; margin-top: 0.15rem; color: var(--color-ink-soft); font-size: 0.68rem; overflow-wrap: anywhere; }
 .trigger-table-skeleton td .campaign-skel { display: block; width: 70%; }
 .trigger-table-empty { margin: 0; padding: 1.6rem 1.25rem; color: var(--color-ink-soft); font-size: 0.8rem; text-align: center; }
 
@@ -174,6 +133,8 @@
 .trigger-link { color: var(--color-tide); font-weight: 600; text-decoration: none; white-space: nowrap; }
 .trigger-link:hover { text-decoration: underline; }
 
+/* Status chips: the accent marks a win a customer can scan for, and
+   everything finished without one goes quiet. No second accent. */
 .trigger-chip {
   display: inline-flex;
   align-items: center;
@@ -187,25 +148,20 @@
   white-space: nowrap;
 }
 .trigger-chip-tide { background: var(--color-tide-wash); color: var(--color-tide-deep); }
-.trigger-chip-hold { background: color-mix(in srgb, #f59e0b 14%, var(--color-surface)); color: #92400e; }
-.trigger-chip-skip { color: var(--color-ink-faint); }
+.trigger-chip-quiet { background: transparent; box-shadow: inset 0 0 0 1px var(--color-line); color: var(--color-ink-faint); }
 .trigger-chip-alert { background: color-mix(in srgb, var(--color-alert) 8%, var(--color-surface)); color: var(--color-alert); }
 
-/* ---------- new trigger form ---------- */
+/* ---------- the box ---------- */
 .trigger-form {
-  max-width: 46rem;
+  max-width: 40rem;
   margin-top: 1.35rem;
   border: 1px solid var(--color-line);
   border-radius: 0.85rem;
   background: var(--color-surface);
   box-shadow: var(--shadow-win-sm);
 }
-.trigger-fieldset { min-width: 0; border-top: 1px solid var(--color-line); padding: 1.15rem 1.35rem 1.25rem; }
-.trigger-fieldset:first-child { border-top: 0; }
-.trigger-legend { margin: 0; font-size: 0.88rem; font-weight: 650; letter-spacing: -0.01em; line-height: 1.3; }
-.trigger-help { margin: 0.2rem 0 0.8rem; color: var(--color-ink-soft); font-size: 0.74rem; line-height: 1.5; }
-.trigger-field + .trigger-field,
-.trigger-input-grid + .trigger-field { margin-top: 0.9rem; }
+.trigger-form-body { min-width: 0; padding: 1.15rem 1.35rem 1.25rem; }
+.trigger-field + .trigger-field { margin-top: 1rem; }
 
 .trigger-input,
 .trigger-select {
@@ -220,6 +176,7 @@
   font: inherit;
   font-size: 0.82rem;
 }
+.trigger-textarea { min-height: 4.6rem; line-height: 1.5; resize: vertical; }
 .trigger-input::placeholder { color: var(--color-ink-faint); }
 .trigger-input:focus,
 .trigger-select:focus {
@@ -229,174 +186,29 @@
 }
 .trigger-input:disabled,
 .trigger-select:disabled { cursor: not-allowed; opacity: 0.6; }
-.trigger-input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
-.trigger-input-grid > div { min-width: 0; }
 .trigger-label { display: block; margin: 0 0 0.3rem; color: var(--color-ink-soft); font-size: 0.72rem; font-weight: 600; }
 .trigger-hint { margin: 0.35rem 0 0; color: var(--color-ink-faint); font-size: 0.68rem; line-height: 1.45; }
 
-/* Chip fields: keywords, locations, employer terms. */
-.trigger-chipbox {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.3rem;
-  min-height: 2.45rem;
-  border: 1px solid var(--color-line);
-  border-radius: 0.6rem;
-  background: var(--color-surface);
-  padding: 0.3rem 0.45rem;
-  cursor: text;
-}
-.trigger-chipbox:focus-within {
-  border-color: var(--color-tide);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-tide) 13%, transparent);
-}
-.trigger-chipbox.is-disabled { cursor: not-allowed; opacity: 0.6; }
-.trigger-chipbox-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.15rem;
-  border: 1px solid color-mix(in srgb, var(--color-tide) 38%, var(--color-line));
-  border-radius: 0.5rem;
-  background: var(--color-tide-wash);
-  color: var(--color-tide-deep);
-  padding: 0.18rem 0.28rem 0.18rem 0.5rem;
-  font-size: 0.72rem;
-  font-weight: 630;
-  line-height: 1.3;
-}
-.trigger-chipbox-chip button {
-  display: grid;
-  width: 1.15rem;
-  height: 1.15rem;
-  place-items: center;
-  border: 0;
-  border-radius: 0.3rem;
-  background: transparent;
-  color: inherit;
-  padding: 0;
-  font-size: 0.85rem;
-  line-height: 1;
-  cursor: pointer;
-}
-.trigger-chipbox-chip button:hover { background: color-mix(in srgb, var(--color-tide) 14%, transparent); }
-.trigger-chipbox-chip button:disabled { cursor: not-allowed; }
-.trigger-chipbox input {
-  flex: 1 1 8rem;
-  min-width: 8rem;
-  min-height: 1.7rem;
-  border: 0;
-  background: transparent;
-  color: var(--color-ink);
-  padding: 0.15rem 0.25rem;
-  font: inherit;
-  font-size: 0.82rem;
-}
-.trigger-chipbox input::placeholder { color: var(--color-ink-faint); }
-.trigger-chipbox input:focus { outline: none; }
-
-/* The optional filters and schedule fold under one disclosure; its
-   summary line says what is in effect while it is closed. */
-.trigger-options { margin-top: 1rem; border: 1px solid var(--color-line); border-radius: 0.65rem; }
-.trigger-options summary {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.25rem 0.6rem;
-  border-radius: 0.65rem;
-  padding: 0.7rem 0.9rem 0.7rem 2rem;
-  list-style: none;
-  position: relative;
-  cursor: pointer;
-}
-.trigger-options summary::-webkit-details-marker { display: none; }
-.trigger-options summary::before {
-  position: absolute;
-  top: 1.05rem;
-  left: 0.85rem;
-  width: 0.4rem;
-  height: 0.4rem;
-  border-right: 1.5px solid var(--color-ink-soft);
-  border-bottom: 1.5px solid var(--color-ink-soft);
-  transform: rotate(-45deg);
-  transition: transform 200ms cubic-bezier(0.2, 0, 0, 1);
-  content: "";
-}
-.trigger-options[open] summary::before { transform: rotate(45deg); top: 0.95rem; }
-.trigger-options summary:hover { background: color-mix(in srgb, var(--color-sand) 60%, white); }
-.trigger-options summary:focus-visible { outline: 2px solid var(--color-tide); outline-offset: 2px; }
-.trigger-options-title { font-size: 0.8rem; font-weight: 650; }
-.trigger-options-hint { color: var(--color-ink-faint); font-size: 0.7rem; line-height: 1.5; }
-.trigger-options-body { border-top: 1px solid var(--color-line); padding: 0.9rem 0.9rem 1rem; }
-
-.trigger-cadence-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.25rem; }
-.trigger-cadence-row .trigger-select { width: auto; min-width: 9rem; min-height: 2.35rem; padding-block: 0.4rem; font-size: 0.78rem; }
-
-.trigger-seg { display: inline-flex; flex-wrap: wrap; gap: 0.2rem; border: 1px solid var(--color-line); border-radius: 999px; padding: 0.2rem; }
-.trigger-seg label {
-  position: relative;
-  border-radius: 999px;
-  color: var(--color-ink-soft);
-  padding: 0.4rem 0.9rem;
-  font-size: 0.78rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 200ms cubic-bezier(0.2, 0, 0, 1), color 200ms cubic-bezier(0.2, 0, 0, 1);
-}
-.trigger-seg label:hover { color: var(--color-ink); }
-.trigger-seg label.is-selected { background: var(--color-tide); color: #fff; }
-.trigger-seg label:focus-within { outline: 2px solid var(--color-tide); outline-offset: 2px; }
-.trigger-seg input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
-
-/* The "then" checkboxes, each with a one-line helper. */
-.trigger-checks { display: grid; gap: 0.75rem; }
-.trigger-check {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 0.1rem 0.6rem;
-  align-items: start;
-  font-size: 0.82rem;
-  cursor: pointer;
-}
-.trigger-check input[type="checkbox"] { width: 1.05rem; height: 1.05rem; margin: 0.15rem 0 0; accent-color: var(--color-tide); }
-.trigger-check strong { font-weight: 600; }
-.trigger-check label { cursor: pointer; }
-.trigger-check small { grid-column: 2; display: block; color: var(--color-ink-soft); font-size: 0.7rem; line-height: 1.45; }
-.trigger-check .trigger-select { grid-column: 2; width: auto; min-width: 16rem; min-height: 2.1rem; margin-top: 0.35rem; padding-block: 0.35rem; font-size: 0.78rem; }
-.trigger-check.is-disabled { cursor: default; }
-.trigger-check.is-disabled strong { color: var(--color-ink-faint); }
-.trigger-check input[type="checkbox"]:disabled { cursor: not-allowed; }
-
-.trigger-fixed { margin: 1rem 0 0; color: var(--color-ink); font-size: 0.82rem; }
 .trigger-form-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; border-top: 1px solid var(--color-line); padding: 1rem 1.35rem; }
 .trigger-form-actions .campaign-quiet-button { padding-inline: 0.6rem; }
 .trigger-field-error { margin: 0.45rem 0 0; color: var(--color-alert); font-size: 0.74rem; line-height: 1.45; }
 .trigger-form-error { margin: 0.9rem 1.35rem 0; }
 
 @media (max-width: 959px) {
-  .trigger-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .trigger-input-grid { grid-template-columns: 1fr; }
-  .trigger-card { grid-template-columns: 2.25rem minmax(0, 1fr); }
-  .trigger-card .campaign-status { grid-column: 2; margin-top: 0; }
+  .trigger-row { grid-template-columns: 5.5rem minmax(0, 1fr); gap: 0.5rem 0.75rem; }
+  .trigger-row .campaign-list-updated { grid-column: 2; }
+  .trigger-row .campaign-list-open { display: none; }
 }
 
 @media (max-width: 480px) {
-  .trigger-facts { grid-template-columns: 1fr; }
   .trigger-heading-actions { width: 100%; }
   .trigger-heading-actions > * { flex: 1; }
-  .trigger-seg { display: flex; width: 100%; }
-  .trigger-seg label { flex: 1; text-align: center; padding-inline: 0.3rem; font-size: 0.72rem; white-space: nowrap; }
-  .trigger-cadence-row .trigger-select { width: 100%; }
-  .trigger-check .trigger-select { width: 100%; min-width: 0; }
-  .trigger-fieldset { padding-inline: 1rem; }
+  .trigger-form-body { padding-inline: 1rem; }
   .trigger-form-actions { padding-inline: 1rem; }
   .trigger-form-actions .audience-primary { width: 100%; }
   .trigger-form-error { margin-inline: 1rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .trigger-card,
-  .trigger-back,
-  .trigger-options summary::before,
-  .trigger-seg label { transition: none; }
+  .trigger-back { transition: none; }
 }

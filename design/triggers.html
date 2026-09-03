@@ -29,6 +29,29 @@
   every N hours) and "Run now" is a quiet "Check now" link; a trigger still
   waiting on its pull shows "Building", one on a site we cannot read shows
   "Not supported". States 1, 1b, 2 and 3 carry the revision.
+
+  SUPERSEDED 2026-09-02 evening, after the founder's "there's just way too
+  much information hitting me when I go to make a trigger". Read this file
+  as history, not as the design. What shipped instead:
+  - The form is one box. The customer types one sentence and picks a
+    campaign if they want one; the agent derives the source, the words,
+    the places, the schedule and the actions. The site field, keywords,
+    locations, the skip list, the schedule control, the three action
+    checkboxes and the name field are all gone, and so are the MochaCare
+    defaults that used to be preloaded into every workspace.
+  - The agent writes back one plain line (trigger.summary) saying what it
+    watches. That line replaces the "When ..., then ..." sentence, the
+    five-cell facts strip and the Options drawer, on both the list and the
+    detail page.
+  - The list is rows in the Campaigns grammar, not cards.
+  - "Recent postings" is "Found" with columns that fit any customer
+    (Found / Name / What / Status / link) and "Runs" is "Checks" with four
+    (When / Found / New / Result). No credits, dollars, pages or filtered
+    counts anywhere.
+  - Building says how long it usually takes and changes its line after an
+    hour and after a day; Not supported prints the agent's own reason and
+    keeps Edit open, because changing the sentence is the way out.
+  See landing/src/triggers/ for the shipped version.
 -->
 <style>
   @font-face{font-family:"Public Sans";src:url(https://driftwood.sh/fonts/public-sans-latin-wght-normal.woff2) format("woff2-variations");font-weight:100 900;font-display:swap}

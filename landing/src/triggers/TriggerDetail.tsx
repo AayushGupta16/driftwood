@@ -1,38 +1,38 @@
-/* /dashboard/triggers/<id>: one trigger's facts, its recent postings and
-   its run log (design/triggers.html state 2). Checks happen on the
-   schedule; "Check now" queues one by hand and the page polls every 5 s
-   until the newest run settles. Pause and Resume flip the schedule. A
-   trigger still being built, or on a site that cannot be watched, is
-   greyed out and cannot be checked. Enroll and dismiss controls come in a
-   later slice. */
+/* /dashboard/triggers/<id>: one trigger, the line its agent wrote about
+   what it watches, what it found and when it last checked. Checks happen
+   on the schedule; "Check now" queues one by hand and the page polls every
+   5 s until the newest check settles. Pause and Resume flip the schedule.
+
+   A trigger still being built shows the one Building line and nothing
+   else: there is nothing in its tables yet. A source the agent could not
+   read shows its reason and keeps Edit open, because changing the sentence
+   is the way out. */
 
 import { useCallback, useEffect, useState } from "react";
 import { getTrigger, pauseTrigger, resumeTrigger, runTrigger, TriggerApiError } from "./api";
 import TriggerForm from "./TriggerForm";
 import {
   counterCell,
-  formatDate,
+  foundCell,
   formatMoment,
+  itemName,
+  itemStatusLabel,
+  itemStatusTone,
+  itemTitle,
   lastCheckFact,
-  postedCell,
-  postingLocation,
-  postingStatusLabel,
-  postingStatusTone,
-  pullLabel,
+  readbackLine,
+  rowFields,
   runIsOpen,
-  runStateLabel,
+  runResult,
   runTriggerLabel,
   scheduleLabel,
-  spendCell,
-  thenLine,
+  shortReason,
   triggerTitle,
   triggerView,
   viewLabel,
-  viewNotice,
-  whenLine,
   type Trigger,
   type TriggerDetail as TriggerDetailData,
-  type TriggerPosting,
+  type TriggerItem,
   type TriggerRun,
 } from "./model";
 import { TriggerIcon } from "../dashboard/icons";
@@ -51,7 +51,7 @@ const bootId =
   typeof window === "undefined"
     ? null
     : window.location.pathname.match(/^\/dashboard\/triggers\/([^/]+)/)?.[1] ?? null;
-const initialDetail = bootId ? prefetch(() => getTrigger(decodeURIComponent(bootId))) : null;
+const initialDetail = bootId && bootId !== "new" ? prefetch(() => getTrigger(decodeURIComponent(bootId))) : null;
 
 function takeCreatedFlag(): boolean {
   if (typeof window === "undefined") return false;
@@ -74,57 +74,58 @@ function StatusChip({ trigger }: { trigger: Trigger }) {
   return <span className={`campaign-status campaign-status-${view}`}>{viewLabel(view)}</span>;
 }
 
-function PostingRow({ posting }: { posting: TriggerPosting }) {
-  const tone = postingStatusTone(posting.status);
+/* A row is: when we found it, who it is about, what it is, where it stands
+   and where to read it. The two extra facts under the title come from
+   whatever the item carried, so a funding round and a job both fit. Only a
+   dismissed row explains itself, short, with the whole sentence on hover. */
+function ItemRow({ item }: { item: TriggerItem }) {
+  const tone = itemStatusTone(item.status);
+  const title = itemTitle(item);
+  const name = itemName(item);
+  const fields = rowFields(item);
+  const reason = item.status === "dismissed" ? shortReason(item.note) : null;
   return (
     <tr>
-      <td className="trigger-num">{postedCell(posting)}</td>
+      <td className="trigger-num">{foundCell(item)}</td>
+      <td><strong title={item.entityName || undefined}>{name || "—"}</strong></td>
       <td>
-        <strong>{posting.employerName}</strong>
-        {posting.note && <span className="trigger-sub">{posting.note}</span>}
+        <span className="trigger-cell-title" title={item.title || undefined}>{title || "—"}</span>
+        {fields.length > 0 && (
+          <span className="trigger-sub">
+            {fields.map((field) => `${field.label}: ${field.value}`).join(" · ")}
+          </span>
+        )}
+        {reason && <span className="trigger-sub" title={item.note ?? undefined}>{reason}</span>}
       </td>
-      <td>{postingLocation(posting)}</td>
-      <td>{posting.title}</td>
-      <td className="trigger-num">{posting.payText ?? "Not listed"}</td>
-      <td><span className={`trigger-chip${tone === "plain" ? "" : ` trigger-chip-${tone}`}`}>{postingStatusLabel(posting.status)}</span></td>
+      <td><span className={`trigger-chip${tone === "plain" ? "" : ` trigger-chip-${tone}`}`}>{itemStatusLabel(item.status)}</span></td>
       <td>
         <span className="trigger-links">
-          <a className="trigger-link" href={posting.sourceUrl} target="_blank" rel="noopener noreferrer">Open posting</a>
-          {posting.demoUrl && <a className="trigger-link" href={posting.demoUrl} target="_blank" rel="noopener noreferrer">Open demo</a>}
+          <a className="trigger-link" href={item.sourceUrl} target="_blank" rel="noopener noreferrer">Source</a>
+          {item.demoUrl && <a className="trigger-link" href={item.demoUrl} target="_blank" rel="noopener noreferrer">Demo</a>}
         </span>
       </td>
     </tr>
   );
 }
 
-const RUN_COLUMNS = 8;
-
-/* Seen and New prefer the pull counters (which update while a check
-   runs) and fall back to the posting counts every row has; Pages,
-   Filtered and Spend only exist on newer rows. A run's note, when it has
-   one, hangs under the row as a quiet line across the table. */
+/* Found and New prefer the counters that move while a check runs and fall
+   back to the item counts every row has. A check that hit a snag and
+   finished anyway reads "Done": only a failure is the customer's news. */
 function RunRow({ run }: { run: TriggerRun }) {
+  const result = runResult(run);
   return (
-    <>
-      <tr className={run.note ? "trigger-run-with-note" : undefined}>
-        <td className="trigger-num">
-          {formatMoment(run.startedAt ?? run.createdAt) ?? "Unknown"}
-          <span className="trigger-sub">{runTriggerLabel(run.triggeredBy)}</span>
-        </td>
-        <td>{runStateLabel(run.state)}</td>
-        <td className="trigger-num">{counterCell(run.pagesFetched)}</td>
-        <td className="trigger-num">{counterCell(run.idsSeen ?? run.postingsSeen)}</td>
-        <td className="trigger-num">{counterCell(run.idsNew ?? run.postingsNew)}</td>
-        <td className="trigger-num">{counterCell(run.idsFiltered)}</td>
-        <td className="trigger-num">{spendCell(run)}</td>
-        <td className={run.error ? "trigger-error-cell" : "trigger-error-none"}>{run.error ?? "None"}</td>
-      </tr>
-      {run.note && (
-        <tr>
-          <td className="trigger-run-note" colSpan={RUN_COLUMNS}>{run.note}</td>
-        </tr>
-      )}
-    </>
+    <tr>
+      <td className="trigger-num">
+        {formatMoment(run.startedAt ?? run.createdAt) ?? "Unknown"}
+        <span className="trigger-sub">{runTriggerLabel(run.triggeredBy)}</span>
+      </td>
+      <td className="trigger-num">{counterCell(run.idsSeen ?? run.itemsSeen)}</td>
+      <td className="trigger-num">{counterCell(run.idsNew ?? run.itemsNew)}</td>
+      <td>
+        {result.label}
+        {result.detail && <span className="trigger-sub" title={run.error ?? undefined}>{result.detail}</span>}
+      </td>
+    </tr>
   );
 }
 
@@ -140,10 +141,6 @@ function SkeletonRows({ columns, rows }: { columns: number; rows: number }) {
       ))}
     </>
   );
-}
-
-function FactSkeleton() {
-  return <span className="campaign-skel campaign-skel-line" aria-hidden="true" />;
 }
 
 export default function TriggerDetail({ triggerId }: { triggerId: string }) {
@@ -169,7 +166,7 @@ export default function TriggerDetail({ triggerId }: { triggerId: string }) {
             ? "This trigger does not exist, or it belongs to another workspace."
             : reason instanceof Error && reason.message
               ? reason.message
-              : "The request never made it. Check your connection.",
+              : "Check your connection and try again.",
         };
       });
     }
@@ -186,14 +183,16 @@ export default function TriggerDetail({ triggerId }: { triggerId: string }) {
   }, [toast]);
 
   const openRun = state.status === "ready" && runIsOpen(state.detail.runs[0]?.state);
+  const building = state.status === "ready" && triggerView(state.detail.trigger) === "building";
 
-  /* Poll while a run is queued or running (ux-principles rule 4): state
-     lives server-side, so a tab switch or reload picks up where it was. */
+  /* Poll while a check is queued or running, and while the agent is still
+     working out how to check this (ux-principles rule 4): state lives
+     server-side, so a tab switch or reload picks up where it was. */
   useEffect(() => {
-    if (!openRun) return;
+    if (!openRun && !building) return;
     const timer = window.setTimeout(() => void load(), POLL_MS);
     return () => window.clearTimeout(timer);
-  }, [openRun, state, load]);
+  }, [openRun, building, state, load]);
 
   async function act(kind: NonNullable<Pending>) {
     if (pending || state.status !== "ready") return;
@@ -209,11 +208,18 @@ export default function TriggerDetail({ triggerId }: { triggerId: string }) {
         toast(kind === "pause" ? "Trigger paused." : "Trigger resumed.", "success");
       }
     } catch (reason) {
-      if (kind === "run" && reason instanceof TriggerApiError && reason.code === "run_in_progress") {
-        // Someone (or the schedule) got there first: show that run.
+      const code = reason instanceof TriggerApiError ? reason.code : null;
+      if (kind === "run" && code === "run_in_progress") {
+        // Someone (or the schedule) got there first: show that check.
         await load();
       }
-      setActionError(reason instanceof Error && reason.message ? reason.message : "Something went wrong. Try again.");
+      setActionError(
+        code === "needs_setup"
+          ? "Still building. Try again in a bit."
+          : reason instanceof Error && reason.message
+            ? reason.message
+            : "Something went wrong. Try again.",
+      );
     } finally {
       setPending(null);
     }
@@ -241,8 +247,9 @@ export default function TriggerDetail({ triggerId }: { triggerId: string }) {
   const trigger = detail?.trigger ?? null;
   const title = trigger ? triggerTitle(trigger) : null;
 
-  /* Edit swaps the page for the form, prefilled; saving lands back here
-     with the row the backend returned. */
+  /* Edit swaps the page for the box, prefilled; saving lands back here with
+     the row the backend returned, which is a trigger back in Building when
+     the sentence changed. */
   if (editing && trigger && canWrite) {
     return (
       <section className="audience-page" aria-labelledby="triggers-heading">
@@ -264,14 +271,11 @@ export default function TriggerDetail({ triggerId }: { triggerId: string }) {
   }
 
   const view = trigger ? triggerView(trigger) : null;
-  const notice = view ? viewNotice(view) : null;
-  const muted = notice ? " is-muted" : "";
+  const readback = trigger ? readbackLine(trigger) : null;
+  const runnable = view === "active" || view === "paused";
   const runBusy = pending === "run" || openRun;
-  const pauseTitle = notice
-    ? "Available once the site can be watched"
-    : pending && pending !== "pause" && pending !== "resume"
-      ? "Wait for the current action to finish"
-      : undefined;
+  const hasRows = Boolean(detail && (detail.items.length > 0 || detail.runs.length > 0));
+  const showTables = view !== "building" && (view !== "unsupported" || hasRows);
 
   return (
     <section className="audience-page" aria-labelledby="trigger-heading" aria-busy={state.status === "loading"}>
@@ -302,26 +306,44 @@ export default function TriggerDetail({ triggerId }: { triggerId: string }) {
             >
               Edit
             </button>
-            <button
-              className="audience-secondary"
-              type="button"
-              onClick={() => void act(trigger.status === "paused" ? "resume" : "pause")}
-              disabled={pending !== null || notice !== null}
-              title={pauseTitle}
-            >
-              {pending === "pause" ? "Pausing…" : pending === "resume" ? "Resuming…" : trigger.status === "paused" ? "Resume" : "Pause"}
-            </button>
+            {runnable && (
+              <button
+                className="audience-secondary"
+                type="button"
+                onClick={() => void act(trigger.status === "paused" ? "resume" : "pause")}
+                disabled={pending !== null}
+                title={pending ? "Wait for the current action to finish" : undefined}
+              >
+                {pending === "pause" ? "Pausing…" : pending === "resume" ? "Resuming…" : trigger.status === "paused" ? "Resume" : "Pause"}
+              </button>
+            )}
           </div>
         ) : !canWrite && trigger ? (
           <span className="audience-read-only">Read-only access</span>
         ) : null}
       </header>
+
       {trigger ? (
-        <p className={`trigger-lede trigger-sentence${muted}`}>
-          <b>When</b> {whenLine(trigger)}, <b>then</b> {thenLine(trigger.actions, trigger.campaignName)}.
-        </p>
+        <>
+          {readback && <p className="trigger-readback" role={view === "building" ? "status" : undefined}>{readback}</p>}
+          {runnable ? (
+            <p className="trigger-meta-line">
+              {scheduleLabel(trigger.schedule)} · {lastCheckFact(trigger, detail?.runs[0])}
+              {trigger.campaignId && trigger.campaignName ? (
+                <>
+                  {" · Campaign: "}
+                  <a href={withMockMode(`/dashboard/campaigns/${encodeURIComponent(trigger.campaignId)}`)}>{trigger.campaignName}</a>
+                </>
+              ) : null}
+            </p>
+          ) : trigger.watch ? (
+            /* Still being set up: the customer's own words are the only
+               honest thing to show under the line about the wait. */
+            <p className="trigger-meta-line">{trigger.watch}</p>
+          ) : null}
+        </>
       ) : (
-        <p className="trigger-lede" aria-hidden="true"><span className="campaign-skel campaign-skel-line-wide" /></p>
+        <p className="trigger-readback" aria-hidden="true"><span className="campaign-skel campaign-skel-line-wide" /></p>
       )}
 
       {actionError && (
@@ -331,126 +353,91 @@ export default function TriggerDetail({ triggerId }: { triggerId: string }) {
         </div>
       )}
 
-      <div className={`trigger-facts${muted}`}>
-        <div className="trigger-fact">
-          <small>Schedule</small>
-          {trigger ? <strong>{scheduleLabel(trigger.schedule)}</strong> : <FactSkeleton />}
-        </div>
-        <div className="trigger-fact">
-          <small>Source</small>
-          {trigger ? <strong>{pullLabel(trigger.pull) ?? trigger.sourceHost ?? "—"}</strong> : <FactSkeleton />}
-        </div>
-        <div className="trigger-fact">
-          <small>Feeds</small>
-          {trigger ? (
-            <strong>
-              {trigger.campaignId && trigger.campaignName
-                ? <a href={withMockMode(`/dashboard/campaigns/${encodeURIComponent(trigger.campaignId)}`)}>{trigger.campaignName}</a>
-                : "No campaign chosen yet"}
-            </strong>
-          ) : <FactSkeleton />}
-        </div>
-        <div className="trigger-fact">
-          <small>Last check</small>
-          {trigger ? <strong>{lastCheckFact(trigger, detail?.runs[0])}</strong> : <FactSkeleton />}
-        </div>
-        <div className="trigger-fact">
-          <small>Watching since</small>
-          {trigger ? <strong>{formatDate(trigger.createdAt) ?? "Recently"}</strong> : <FactSkeleton />}
-        </div>
-      </div>
-
-      {trigger && notice ? (
-        <p className="trigger-notice" role="status">{notice}</p>
-      ) : trigger && canWrite ? (
+      {trigger && runnable && canWrite && (
         <p className="trigger-check-row">
           <button
             className="trigger-check-now"
             type="button"
             onClick={() => void act("run")}
             disabled={runBusy || pending !== null}
-            title={openRun ? "A check is in progress. This page refreshes every few seconds." : pending ? "Wait for the current action to finish" : "Check the site now instead of waiting for the schedule"}
+            title={openRun ? "A check is already running." : pending ? "Wait for the current action to finish" : "Runs a check now."}
             data-testid="check-now"
           >
             {runBusy ? "Checking…" : "Check now"}
           </button>
         </p>
-      ) : null}
+      )}
 
-      <section className="trigger-section" aria-labelledby="trigger-postings">
-        <div className="trigger-section-head">
-          <h2 id="trigger-postings">Recent postings</h2>
-          {detail && detail.postings.length > 0 && (
-            <span>
-              {detail.trigger.counts.postings > detail.postings.length
-                ? `${detail.postings.length.toLocaleString()} of ${detail.trigger.counts.postings.toLocaleString()} postings`
-                : `${detail.postings.length.toLocaleString()} ${detail.postings.length === 1 ? "posting" : "postings"}`}
-            </span>
-          )}
-        </div>
-        <div className="trigger-table-card" aria-live="polite">
-          {detail && detail.postings.length === 0 ? (
-            <p className="trigger-table-empty">
-              {canWrite && !notice ? "Nothing found yet. The next check runs on schedule, or press Check now." : "Nothing found yet."}
-            </p>
-          ) : (
-            <div className="trigger-table-wrap">
-              <table className="trigger-table trigger-table-postings">
-                <thead>
-                  <tr>
-                    <th scope="col">Posted <span className="trigger-th-note">newest first</span></th>
-                    <th scope="col">Agency</th>
-                    <th scope="col">Location</th>
-                    <th scope="col">Job title</th>
-                    <th scope="col">Pay</th>
-                    <th scope="col">Status</th>
-                    <th scope="col">Links</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {detail
-                    ? detail.postings.map((posting) => <PostingRow key={posting.id} posting={posting} />)
-                    : <SkeletonRows columns={7} rows={5} />}
-                </tbody>
-              </table>
+      {showTables && (
+        <>
+          <section className="trigger-section" aria-labelledby="trigger-items">
+            <div className="trigger-section-head">
+              <h2 id="trigger-items">Found</h2>
+              {detail && detail.items.length > 0 && (
+                <span>
+                  {detail.trigger.counts.items > detail.items.length
+                    ? `${detail.items.length.toLocaleString()} of ${detail.trigger.counts.items.toLocaleString()}`
+                    : detail.items.length.toLocaleString()}
+                </span>
+              )}
             </div>
-          )}
-        </div>
-      </section>
+            <div className="trigger-table-card" aria-live="polite">
+              {detail && detail.items.length === 0 ? (
+                <p className="trigger-table-empty">Nothing yet. The next check runs on schedule.</p>
+              ) : (
+                <div className="trigger-table-wrap">
+                  <table className="trigger-table trigger-table-items">
+                    <thead>
+                      <tr>
+                        <th scope="col">Found</th>
+                        <th scope="col">Name</th>
+                        <th scope="col">What</th>
+                        <th scope="col">Status</th>
+                        <th scope="col"><span className="audience-visually-hidden">Links</span></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {detail
+                        ? detail.items.map((item) => <ItemRow key={item.id} item={item} />)
+                        : <SkeletonRows columns={5} rows={5} />}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </section>
 
-      <section className="trigger-section" aria-labelledby="trigger-runs">
-        <div className="trigger-section-head">
-          <h2 id="trigger-runs">Runs</h2>
-          {detail && detail.runs.length > 0 && <span>Last {detail.runs.length.toLocaleString()}</span>}
-        </div>
-        <div className="trigger-table-card" aria-live="polite">
-          {detail && detail.runs.length === 0 ? (
-            <p className="trigger-table-empty">No checks yet.</p>
-          ) : (
-            <div className="trigger-table-wrap">
-              <table className="trigger-table trigger-table-runs">
-                <thead>
-                  <tr>
-                    <th scope="col">Date</th>
-                    <th scope="col">State</th>
-                    <th scope="col">Pages</th>
-                    <th scope="col">Seen</th>
-                    <th scope="col">New</th>
-                    <th scope="col">Filtered</th>
-                    <th scope="col">Spend</th>
-                    <th scope="col">Errors</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {detail
-                    ? detail.runs.map((run) => <RunRow key={run.id} run={run} />)
-                    : <SkeletonRows columns={8} rows={3} />}
-                </tbody>
-              </table>
+          <section className="trigger-section" aria-labelledby="trigger-runs">
+            <div className="trigger-section-head">
+              <h2 id="trigger-runs">Checks</h2>
+              {detail && detail.runs.length > 0 && <span>Last {detail.runs.length.toLocaleString()}</span>}
             </div>
-          )}
-        </div>
-      </section>
+            <div className="trigger-table-card" aria-live="polite">
+              {detail && detail.runs.length === 0 ? (
+                <p className="trigger-table-empty">No checks yet.</p>
+              ) : (
+                <div className="trigger-table-wrap">
+                  <table className="trigger-table trigger-table-runs">
+                    <thead>
+                      <tr>
+                        <th scope="col">When</th>
+                        <th scope="col">Found</th>
+                        <th scope="col">New</th>
+                        <th scope="col">Result</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {detail
+                        ? detail.runs.map((run) => <RunRow key={run.id} run={run} />)
+                        : <SkeletonRows columns={4} rows={3} />}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </section>
+        </>
+      )}
       {state.status === "loading" && <p className="audience-visually-hidden" role="status">Loading trigger…</p>}
     </section>
   );

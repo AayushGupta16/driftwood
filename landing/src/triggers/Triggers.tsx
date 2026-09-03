@@ -1,26 +1,23 @@
-/* /dashboard/triggers: the list of standing watches and the new-trigger
-   form (design/triggers.html states 1, 1b, 3 and 4). Every card reads as
-   one sentence: when something new appears on a site, then the agent
-   acts. Writers get "New trigger", members the read-only chip (the backend
-   enforces the same with a 403). */
+/* /dashboard/triggers: the standing watches, and the box that creates one.
+   A row is the trigger's name, the line the agent wrote back about what it
+   watches, one gray meta line and the status chip — the same row grammar
+   Campaigns uses. Writers get "New trigger", members the read-only chip
+   (the backend enforces the same with a 403). */
 
 import { useEffect, useState } from "react";
 import { listTriggers } from "./api";
 import TriggerForm from "./TriggerForm";
 import {
-  countsLine,
   lastCheckLine,
-  scheduleLabel,
-  thenLine,
+  metaLine,
+  readbackLine,
   triggerTitle,
   triggerView,
   viewLabel,
-  viewNotice,
-  whenLine,
   type Trigger,
 } from "./model";
 import { TriggerIcon } from "../dashboard/icons";
-import { PlusIcon } from "../audiences/icons";
+import { ArrowIcon, PlusIcon } from "../campaigns/icons";
 import { useWorkspacePermissions } from "../dashboard/workspace-permissions-context";
 import { prefetch } from "../dashboard-shared";
 import { withMockMode } from "../mock-mode";
@@ -32,6 +29,9 @@ import "./triggers.css";
    /auth/me (see prefetch() in dashboard-shared). */
 const initialList = prefetch(() => listTriggers());
 
+const NEW_PATH = "/dashboard/triggers/new";
+const LIST_PATH = "/dashboard/triggers";
+
 type ListState =
   | { status: "loading" }
   | { status: "error"; message: string }
@@ -40,67 +40,63 @@ type ListState =
 function describeFailure(reason: unknown): string {
   return reason instanceof Error && reason.message
     ? reason.message
-    : "The request never made it. Check your connection.";
+    : "Check your connection and try again.";
 }
 
+/* The box has its own address, so it can be linked, refreshed and backed
+   out of; ?new=1 still opens it for anything that kept the old link. */
 function startsOnNewForm(): boolean {
   if (typeof window === "undefined") return false;
+  if (window.location.pathname.replace(/\/+$/, "") === NEW_PATH) return true;
   return new URLSearchParams(window.location.search).get("new") === "1";
 }
 
-function dropNewParam() {
-  if (typeof window === "undefined") return;
-  const url = new URL(window.location.href);
-  if (!url.searchParams.has("new")) return;
-  url.searchParams.delete("new");
-  window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
-}
-
-/* The list call carries no runs, only the row's last_run_state and a
-   lifetime tally, so the card shows those two things as what they are: a
-   "Last check" line (or "Checking now…") and a "So far:" line. It never
-   dresses the lifetime tally up as one check's result. */
-function TriggerCard({ trigger }: { trigger: Trigger }) {
+function TriggerRow({ trigger }: { trigger: Trigger }) {
   const view = triggerView(trigger);
-  const notice = viewNotice(view);
-  const title = triggerTitle(trigger);
-  const mark = (trigger.sourceHost ?? title).charAt(0).toUpperCase();
-  const soFar = notice ? "" : countsLine(trigger.counts);
+  const readback = readbackLine(trigger);
+  /* A trigger the agent is still working on has no schedule it chose and
+     no check to report, so the row says neither. */
+  const running = view === "active" || view === "paused";
   return (
     <a
-      className={`trigger-card${notice ? " trigger-card-muted" : ""}`}
+      className={`campaign-list-row trigger-row${running ? "" : " trigger-row-muted"}`}
       href={withMockMode(`/dashboard/triggers/${encodeURIComponent(trigger.id)}`)}
-      data-testid={`trigger-card-${trigger.id}`}
+      data-testid={`trigger-row-${trigger.id}`}
     >
-      <span className="trigger-mark" aria-hidden="true">{mark}</span>
-      <div>
-        <h2>{title}</h2>
-        <p className="trigger-when"><b>When</b> {whenLine(trigger)},</p>
-        <p className="trigger-then"><b>then</b> {thenLine(trigger.actions, trigger.campaignName)}.</p>
-        <p className="trigger-meta">{scheduleLabel(trigger.schedule)}</p>
-        <p className="trigger-lastrun">{notice ?? lastCheckLine(trigger)}</p>
-        {soFar && <p className="trigger-lastrun">{soFar}</p>}
-      </div>
       <span className={`campaign-status campaign-status-${view}`}>{viewLabel(view)}</span>
+      <span className="campaign-list-copy">
+        <strong>{triggerTitle(trigger)}</strong>
+        {readback && <span>{readback}</span>}
+        {running && <small>{metaLine(trigger)}</small>}
+      </span>
+      <span className="campaign-list-updated">
+        {running && <span>{lastCheckLine(trigger)}</span>}
+      </span>
+      <span className="campaign-list-open" aria-hidden="true">
+        <ArrowIcon size={17} />
+      </span>
     </a>
   );
 }
 
-function CardSkeletons() {
+function RowSkeletons() {
   return (
-    <div className="trigger-list" role="status" aria-label="Loading triggers">
+    <>
+      <p className="audience-visually-hidden" role="status">Loading triggers…</p>
       {[0, 1, 2].map((index) => (
-        <div className="trigger-card trigger-card-skeleton" key={index} aria-hidden="true">
-          <span className="campaign-skel campaign-skel-icon" />
-          <div>
-            <span className="campaign-skel campaign-skel-heading" />
+        <div className="campaign-list-row trigger-row campaign-list-skeleton" key={index} aria-hidden="true">
+          <span className="campaign-skel campaign-skel-chip" />
+          <span className="campaign-list-copy">
             <span className="campaign-skel campaign-skel-line-wide" />
             <span className="campaign-skel campaign-skel-line" />
-          </div>
-          <span className="campaign-skel campaign-skel-chip" />
+          </span>
+          <span className="campaign-list-updated">
+            <span className="campaign-skel campaign-skel-line" />
+          </span>
+          <span />
         </div>
       ))}
-    </div>
+    </>
   );
 }
 
@@ -123,6 +119,14 @@ export default function Triggers() {
     };
   }, []);
 
+  /* Back and forward move between the list and the box, since each has an
+     address now. */
+  useEffect(() => {
+    const onPop = () => setShowForm(startsOnNewForm());
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
   function retry() {
     setState({ status: "loading" });
     listTriggers()
@@ -131,18 +135,21 @@ export default function Triggers() {
   }
 
   function openForm() {
+    if (typeof window !== "undefined" && window.location.pathname.replace(/\/+$/, "") !== NEW_PATH) {
+      window.history.pushState(null, "", withMockMode(NEW_PATH));
+    }
     setShowForm(true);
   }
 
   function closeForm() {
-    dropNewParam();
+    if (typeof window !== "undefined") window.history.replaceState(null, "", withMockMode(LIST_PATH));
     setShowForm(false);
   }
 
   if (showForm && canWrite) {
     return (
       <section className="audience-page" aria-labelledby="triggers-heading">
-        <a className="trigger-back" href={withMockMode("/dashboard/triggers")} onClick={(event) => { event.preventDefault(); closeForm(); }}>
+        <a className="trigger-back" href={withMockMode(LIST_PATH)} onClick={(event) => { event.preventDefault(); closeForm(); }}>
           <BackChevron />Triggers
         </a>
         <TriggerForm mode="create" onCancel={closeForm} />
@@ -151,16 +158,12 @@ export default function Triggers() {
   }
 
   const triggers = state.status === "ready" ? state.triggers : [];
-  const activeCount = triggers.filter((trigger) => triggerView(trigger) === "active").length;
 
   return (
     <section className="audience-page" aria-labelledby="triggers-heading">
       <header className="audience-heading">
         <div className="trigger-title-row">
           <h1 id="triggers-heading">Triggers</h1>
-          {state.status === "ready" && triggers.length > 0 && (
-            <span className="audience-selection-count">{activeCount.toLocaleString()} active</span>
-          )}
         </div>
         {canWrite ? (
           <button className="audience-primary" type="button" onClick={openForm} data-testid="new-trigger"><PlusIcon size={17} /> New trigger</button>
@@ -168,11 +171,10 @@ export default function Triggers() {
           <span className="audience-read-only">Read-only access</span>
         )}
       </header>
-      <p className="trigger-lede">A trigger is a standing watch on a site. When something new appears, your agent acts on it, and every message waits in your Review queue.</p>
 
-      <div aria-live="polite" aria-busy={state.status === "loading"}>
+      <div className="trigger-list campaign-list" aria-live="polite" aria-busy={state.status === "loading"}>
         {state.status === "loading" ? (
-          <CardSkeletons />
+          <RowSkeletons />
         ) : state.status === "error" ? (
           <div className="audience-state trigger-empty" role="alert">
             <TriggerIcon size={24} />
@@ -186,8 +188,8 @@ export default function Triggers() {
             <h2>No triggers yet</h2>
             <p>
               {canWrite
-                ? "Paste a site and say what counts as new. Your agent watches it and acts on each new posting. Create your first trigger."
-                : "Paste a site and say what counts as new. Your agent watches it and acts on each new posting. An owner or admin can create the first trigger."}
+                ? "Tell your agent what to watch. It checks every night and acts on anything new."
+                : "An owner or admin can add the first one."}
             </p>
             {canWrite && (
               <div className="audience-state-actions">
@@ -196,9 +198,7 @@ export default function Triggers() {
             )}
           </div>
         ) : (
-          <div className="trigger-list">
-            {triggers.map((trigger) => <TriggerCard key={trigger.id} trigger={trigger} />)}
-          </div>
+          triggers.map((trigger) => <TriggerRow key={trigger.id} trigger={trigger} />)
         )}
       </div>
     </section>
