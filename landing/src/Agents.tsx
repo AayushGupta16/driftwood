@@ -4,15 +4,19 @@ import { AdminPanelControls, ImpersonationBanner } from "./GodMode";
 import { AgentChatComposer, AgentChatThread, ImportFromSlackButton } from "./components/AgentChat";
 import { type AgentChat, agentDisplayName as displayName, readErrorDetail, useAgentChat } from "./components/useAgentChat";
 import AppShell from "./dashboard/AppShell";
+import AdminInvite from "./team/AdminInvite";
 import { withMockMode } from "./mock-mode";
 import "./agents.css";
 
 type User = {
+  /* The EFFECTIVE user: while impersonating, the customer being viewed as. */
+  id: string;
   email: string;
   name: string;
   avatar_url: string | null;
   is_admin?: boolean;
   impersonating?: boolean;
+  org?: { name: string } | null;
 };
 
 type AuthState =
@@ -890,6 +894,11 @@ function AgentsView({ user }: { user: User }) {
             </button>
           </div>
         </div>
+
+        {/* God mode only: the route needs the impersonated user's id. */}
+        {user.impersonating && (
+          <AdminInvite userId={user.id} email={user.email} workspace={user.org?.name ?? null} />
+        )}
 
         {notice && <p className="m-0 mt-4 text-[12.5px] text-ink-soft" role="status">{notice}</p>}
         {error && <div className="mt-6 rounded-xl border border-line bg-sand/50 px-4 py-3 text-[13px] text-ink">{error}</div>}

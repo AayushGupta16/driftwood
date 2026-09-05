@@ -8,11 +8,12 @@ import {
   getOrg,
   inviteMember,
   removeMember,
+  resendInvite,
   setOrgDomain,
   type OrgMember,
   type OrgPage,
 } from "./api";
-import { domainDirty, normalizeDomain } from "./team-model";
+import { domainDirty, inviteOutcomeLine, normalizeDomain, pendingSeatLine } from "./team-model";
 import "./team.css";
 
 /* The org fetch starts at module eval (chunk load), in parallel with
@@ -31,19 +32,19 @@ type Pending =
   | { kind: "invite" }
   | { kind: "domain" }
   | { kind: "remove"; membershipId: string }
+  | { kind: "resend"; membershipId: string }
   | null;
 
-/* Where an action's failure message renders: next to the control it belongs
-   to, not in a toast that floats away. */
-type ActionError = { spot: string; message: string } | null;
+/* Where an action's message renders: next to the control it belongs to,
+   not in a toast that floats away. A failure is one; so is an invite's
+   outcome, because "no email was sent: <reason>" has to stay readable. */
+type ActionNote = { spot: string; tone: "error" | "status"; message: string } | null;
 
 const ROLE_LABEL: Record<OrgMember["role"], string> = {
   owner: "Owner",
   admin: "Admin",
   member: "Member",
 };
-
-const INVITED_NOTE = "Invited · activates on first sign-in";
 
 export default function Team() {
   const [state, setState] = useState<State>({ status: "loading" });
@@ -52,7 +53,7 @@ export default function Team() {
   const [domainDraft, setDomainDraft] = useState<string | null>(null);
   const [pending, setPending] = useState<Pending>(null);
   const [armedRemove, setArmedRemove] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<ActionError>(null);
+  const [actionNote, setActionNote] = useState<ActionNote>(null);
   const toast = useToast();
 
   const load = useCallback(async (initial?: Promise<OrgPage> | null) => {
@@ -86,45 +87,80 @@ export default function Team() {
     return () => window.clearTimeout(timer);
   }, [armedRemove]);
 
+  /* One in-flight action at a time. A failure lands beside its control;
+     the caller decides what a success looks like. */
+  async function attempt<T>(
+    spec: NonNullable<Pending>,
+    spot: string,
+    action: () => Promise<T>,
+  ): Promise<T | null> {
+    if (pending) return null;
+    setPending(spec);
+    setActionNote(null);
+    try {
+      return await action();
+    } catch (reason) {
+      setActionNote({
+        spot,
+        tone: "error",
+        message:
+          reason instanceof Error && reason.message
+            ? reason.message
+            : "Something went wrong. Try again.",
+      });
+      return null;
+    } finally {
+      setPending(null);
+    }
+  }
+
   async function run(
     spec: NonNullable<Pending>,
     spot: string,
     action: () => Promise<OrgPage>,
     done: string,
   ): Promise<boolean> {
-    if (pending) return false;
-    setPending(spec);
-    setActionError(null);
-    try {
-      const page = await action();
-      setState({ status: "ready", page });
-      toast(done, "success");
-      return true;
-    } catch (reason) {
-      setActionError({
-        spot,
-        message:
-          reason instanceof Error && reason.message
-            ? reason.message
-            : "Something went wrong. Try again.",
-      });
-      return false;
-    } finally {
-      setPending(null);
-    }
+    const page = await attempt(spec, spot, action);
+    if (!page) return false;
+    setState({ status: "ready", page });
+    toast(done, "success");
+    return true;
   }
 
   function handleInvite(event: FormEvent) {
     event.preventDefault();
     const value = email.trim();
     if (!value || pending) return;
-    void run(
-      { kind: "invite" },
-      "invite",
-      () => inviteMember(value, role),
-      `Invited ${value}. Their seat activates on their first Google sign-in.`,
-    ).then((ok) => {
-      if (ok) setEmail("");
+    void attempt({ kind: "invite" }, "invite", () => inviteMember(value, role)).then((result) => {
+      if (!result) return;
+      setState({ status: "ready", page: result.page });
+      setActionNote({
+        spot: "invite",
+        tone: "status",
+        message: inviteOutcomeLine({ email: value, emailSent: result.emailSent, reason: result.reason }),
+      });
+      setEmail("");
+    });
+  }
+
+  function handleResend(member: OrgMember) {
+    const membershipId = member.membershipId;
+    if (!membershipId || pending) return;
+    const spot = `resend:${membershipId}`;
+    void attempt({ kind: "resend", membershipId }, spot, () => resendInvite(membershipId)).then((row) => {
+      if (!row) return;
+      setState((prev) =>
+        prev.status === "ready"
+          ? {
+              status: "ready",
+              page: {
+                ...prev.page,
+                members: prev.page.members.map((m) => (m.membershipId === membershipId ? row : m)),
+              },
+            }
+          : prev,
+      );
+      setActionNote({ spot, tone: "status", message: `Invite sent again to ${row.email}.` });
     });
   }
 
@@ -159,11 +195,17 @@ export default function Team() {
     });
   }
 
-  const inlineError = (spot: string) =>
-    actionError?.spot === spot ? (
-      <p className="team-inline-error" role="alert">
-        {actionError.message}
-      </p>
+  const inlineNote = (spot: string) =>
+    actionNote?.spot === spot ? (
+      actionNote.tone === "error" ? (
+        <p className="team-inline-error" role="alert">
+          {actionNote.message}
+        </p>
+      ) : (
+        <p className="team-inline-note" role="status">
+          {actionNote.message}
+        </p>
+      )
     ) : null;
 
   return (
@@ -200,9 +242,10 @@ export default function Team() {
           pending={pending}
           armedRemove={armedRemove}
           onInvite={handleInvite}
+          onResend={handleResend}
           onRemove={handleRemove}
           onDomainSave={handleDomainSave}
-          inlineError={inlineError}
+          inlineNote={inlineNote}
         />
       )}
     </section>
@@ -249,9 +292,10 @@ function TeamView({
   pending,
   armedRemove,
   onInvite,
+  onResend,
   onRemove,
   onDomainSave,
-  inlineError,
+  inlineNote,
 }: {
   page: OrgPage;
   email: string;
@@ -263,9 +307,10 @@ function TeamView({
   pending: Pending;
   armedRemove: string | null;
   onInvite: (event: FormEvent) => void;
+  onResend: (member: OrgMember) => void;
   onRemove: (member: OrgMember) => void;
   onDomainSave: (page: OrgPage) => void;
-  inlineError: (spot: string) => ReactNode;
+  inlineNote: (spot: string) => ReactNode;
 }) {
   const isOwner = page.yourRole === "owner";
   const busyElsewhere = "Waiting for the current change to finish";
@@ -287,7 +332,11 @@ function TeamView({
             const removing =
               pending?.kind === "remove" &&
               pending.membershipId === membershipId;
+            const resending =
+              pending?.kind === "resend" &&
+              pending.membershipId === membershipId;
             const armed = armedRemove !== null && armedRemove === membershipId;
+            const invited = member.status === "invited";
             return (
               <li key={membershipId ?? "owner"} className="team-member-row">
                 <span className="team-avatar" aria-hidden="true">
@@ -298,27 +347,41 @@ function TeamView({
                     {member.name || member.email}
                   </div>
                   <div className="team-member-sub">
-                    {member.status === "invited"
+                    {invited
                       ? member.name
-                        ? `${member.email} · ${INVITED_NOTE}`
-                        : INVITED_NOTE
+                        ? `${member.email} · ${pendingSeatLine(member)}`
+                        : pendingSeatLine(member)
                       : member.email}
                   </div>
-                  {membershipId && inlineError(`remove:${membershipId}`)}
+                  {membershipId && inlineNote(`resend:${membershipId}`)}
+                  {membershipId && inlineNote(`remove:${membershipId}`)}
                 </div>
                 <span className={`team-role is-${member.role}`}>
                   {ROLE_LABEL[member.role]}
                 </span>
                 {isOwner && membershipId && (
-                  <button
-                    type="button"
-                    className={`team-remove${armed || removing ? " is-armed" : ""}`}
-                    disabled={pending !== null}
-                    title={pending && !removing ? busyElsewhere : undefined}
-                    onClick={() => onRemove(member)}
-                  >
-                    {removing ? "Removing…" : armed ? "Remove? Confirm" : "Remove"}
-                  </button>
+                  <div className="team-member-actions">
+                    {invited && (
+                      <button
+                        type="button"
+                        className="team-resend"
+                        disabled={pending !== null}
+                        title={pending && !resending ? busyElsewhere : undefined}
+                        onClick={() => onResend(member)}
+                      >
+                        {resending ? "Resending…" : "Resend invite"}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className={`team-remove${armed || removing ? " is-armed" : ""}`}
+                      disabled={pending !== null}
+                      title={pending && !removing ? busyElsewhere : undefined}
+                      onClick={() => onRemove(member)}
+                    >
+                      {removing ? "Removing…" : armed ? "Remove? Confirm" : "Remove"}
+                    </button>
+                  </div>
                 )}
               </li>
             );
@@ -362,9 +425,9 @@ function TeamView({
               {pending?.kind === "invite" ? "Inviting…" : "Invite"}
             </button>
           </div>
-          {inlineError("invite")}
+          {inlineNote("invite")}
           <p className="team-hint">
-            They sign in with Google using that email. Nothing else to set up.
+            They get an invite email and sign in with Google using that address. Nothing else to set up.
           </p>
         </form>
       )}
@@ -403,7 +466,7 @@ function TeamView({
               {pending?.kind === "domain" ? "Saving…" : "Save"}
             </button>
           </div>
-          {inlineError("domain")}
+          {inlineNote("domain")}
         </div>
       )}
     </>

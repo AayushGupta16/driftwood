@@ -33,6 +33,13 @@
 .team-remove.is-armed { border-color: var(--color-alert); background: var(--color-alert); color: #fff; }
 .team-remove:disabled { cursor: not-allowed; opacity: 0.55; }
 
+/* Resend sits beside Remove on an unclaimed seat: the same quiet outline
+   pill, in the accent because it is the safe action of the two. */
+.team-member-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 0.4rem; }
+.team-resend { flex: 0 0 auto; min-height: 1.9rem; border: 1px solid var(--color-line); border-radius: 999px; background: var(--color-surface); color: var(--color-tide); padding: 0.2rem 0.8rem; font: inherit; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: background 200ms cubic-bezier(0.2, 0, 0, 1), border-color 200ms cubic-bezier(0.2, 0, 0, 1); }
+.team-resend:hover:not(:disabled) { border-color: color-mix(in srgb, var(--color-tide) 45%, var(--color-line)); background: var(--color-tide-wash); }
+.team-resend:disabled { cursor: not-allowed; opacity: 0.55; }
+
 /* ---------- invite + domain cards ---------- */
 
 .team-invite { padding: 0.95rem 1.1rem 1rem; display: flex; flex-direction: column; gap: 0.55rem; }
@@ -65,6 +72,9 @@
 /* Failures render beside the control that failed, sentence case, and the
    control re-enables for retry (ux-principles rule 7). */
 .team-inline-error { margin: 0.15rem 0 0; color: var(--color-alert); font-size: 0.76rem; }
+/* An outcome that carries information ("no email was sent: ...", "sent
+   again") stays in place under its control rather than in a toast. */
+.team-inline-note { margin: 0.15rem 0 0; color: var(--color-ink-soft); font-size: 0.76rem; }
 
 /* ---------- loading skeleton ---------- */
 
@@ -83,7 +93,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .team-skel { animation: none; }
-  .team-remove, .team-invite-row button { transition: none; }
+  .team-remove, .team-resend, .team-invite-row button { transition: none; }
 }
 
 /* ---------- load failure ---------- */
@@ -97,5 +107,5 @@
 @media (max-width: 560px) {
   .team-member-row { flex-wrap: wrap; }
   .team-member-id { flex-basis: calc(100% - 2.95rem); }
-  .team-remove { margin-left: 2.95rem; }
+  .team-member-actions { margin-left: 2.95rem; }
 }

@@ -1,4 +1,5 @@
 import { initializeMockMode, mockBlockedResponse } from "./mock-mode.ts";
+import { resendRefusalMessage, resendWaitMinutes } from "./team/team-model.ts";
 
 /* Preview-branch mock: `?mock=1` serves canned dashboard data so the
    redesigned dashboard can be seen (and screenshotted) without the backend.
@@ -1570,16 +1571,25 @@ if (mockMode) {
   };
 
   // Mirrors the real customer-org shape: an owner, one claimed admin seat,
-  // one invited-but-unclaimed seat (no name until first sign-in), and the
-  // auto-join domain set — the exact states the Team page has to render.
+  // three invited-but-unclaimed seats (no name until first sign-in) covering
+  // the invite-email states the Team page renders — one whose email went
+  // out, one that never got an email, one resent minutes ago so Resend is
+  // refused on the first click — and the auto-join domain set.
+  const minutesAgo = (m: number) => new Date(Date.now() - m * 60e3).toISOString();
+  type MockMember = {
+    membership_id: string | null; email: string; name: string | null; role: string; status: string;
+    invited_at: string | null; invite_sent_at: string | null; invite_note: string | null;
+  };
   const mockOrg = {
     id: "org-1",
     name: "Example workspace",
     domain: "example.com" as string | null,
     members: [
-      { membership_id: "m-1", email: "sam@example.com", name: "Sam Field", role: "admin", status: "active", invited_at: hoursAgo(400) },
-      { membership_id: "m-2", email: "new-hire@example.com", name: null, role: "member", status: "invited", invited_at: hoursAgo(20) },
-    ] as { membership_id: string | null; email: string; name: string | null; role: string; status: string; invited_at: string | null }[],
+      { membership_id: "m-1", email: "sam@example.com", name: "Sam Field", role: "admin", status: "active", invited_at: hoursAgo(400), invite_sent_at: hoursAgo(400), invite_note: null },
+      { membership_id: "m-2", email: "new-hire@example.com", name: null, role: "member", status: "invited", invited_at: hoursAgo(20), invite_sent_at: hoursAgo(20), invite_note: null },
+      { membership_id: "m-3", email: "contractor@example.com", name: null, role: "member", status: "invited", invited_at: hoursAgo(70), invite_sent_at: null, invite_note: null },
+      { membership_id: "m-4", email: "priya@example.com", name: "Priya Nair", role: "admin", status: "invited", invited_at: hoursAgo(50), invite_sent_at: minutesAgo(4), invite_note: "Met at the offsite, wants the review queue" },
+    ] as MockMember[],
   };
   const orgPage = () => ({
     id: mockOrg.id,
@@ -1587,22 +1597,52 @@ if (mockMode) {
     domain: mockOrg.domain,
     your_role: mockMode === "member" ? "member" : "owner",
     members: [
-      { membership_id: null, email: "marc@example.com", name: "Marc Andreessen", role: "owner", status: "active", invited_at: null },
+      { membership_id: null, email: "marc@example.com", name: "Marc Andreessen", role: "owner", status: "active", invited_at: null, invite_sent_at: null, invite_note: null },
       ...mockOrg.members,
     ],
   });
+  // An address whose local part starts with "noemail" adds the seat but
+  // reports that no email went out, the way the backend does when sending
+  // is not configured. Everything else sends.
+  const addSeat = (body: Record<string, unknown>) => {
+    const email = String(body.email ?? "");
+    const sent = !email.toLowerCase().startsWith("noemail");
+    const name = typeof body.name === "string" && body.name.trim() ? body.name.trim() : null;
+    const note = typeof body.note === "string" && body.note.trim() ? body.note.trim() : null;
+    const row: MockMember = {
+      membership_id: crypto.randomUUID(), email, name,
+      role: String(body.role ?? "member"), status: "invited",
+      invited_at: new Date().toISOString(), invite_sent_at: sent ? new Date().toISOString() : null,
+      invite_note: note,
+    };
+    mockOrg.members.push(row);
+    const receipt = sent ? { email_sent: true } : { email_sent: false, reason: "email sending is not configured" };
+    return { row, receipt };
+  };
+  // Refused inside ten minutes of the last send (429 with a plain message);
+  // otherwise the row comes back with a fresh invite_sent_at.
+  const resendSeat = (membershipId: string) => {
+    const row = mockOrg.members.find((m) => m.membership_id === membershipId);
+    if (!row) return new Response(JSON.stringify({ detail: "That seat is no longer on the page." }), { status: 404, headers: { "Content-Type": "application/json" } });
+    if (row.status !== "invited") return new Response(JSON.stringify({ detail: "That seat is already claimed." }), { status: 409, headers: { "Content-Type": "application/json" } });
+    if (resendWaitMinutes(row.invite_sent_at) !== null) {
+      return new Response(JSON.stringify({ detail: resendRefusalMessage(row.invite_sent_at as string) }), { status: 429, headers: { "Content-Type": "application/json" } });
+    }
+    row.invite_sent_at = new Date().toISOString();
+    return row;
+  };
   const orgApi = (init?: RequestInit, url?: string) => {
     const method = init?.method ?? "GET";
     const parsed = new URL(url ?? location.href, location.href);
     const path = parsed.pathname;
     if (method === "POST" && path.endsWith("/members")) {
       const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
-      mockOrg.members.push({
-        membership_id: crypto.randomUUID(), email: String(body.email ?? ""),
-        name: null, role: String(body.role ?? "member"), status: "invited",
-        invited_at: new Date().toISOString(),
-      });
-      return orgPage();
+      const { receipt } = addSeat(body);
+      return { ...orgPage(), ...receipt };
+    }
+    if (method === "POST" && path.endsWith("/resend")) {
+      const id = decodeURIComponent(path.split("/members/")[1]?.replace(/\/resend$/, "") ?? "");
+      return resendSeat(id);
     }
     if (method === "DELETE" && path.includes("/members/")) {
       const id = decodeURIComponent(path.split("/members/")[1] ?? "");
@@ -1615,6 +1655,21 @@ if (mockMode) {
       return orgPage();
     }
     return orgPage();
+  };
+  // The admin routes act on the impersonated user's workspace, which in mock
+  // mode is this same org. The invite answers with the row plus the receipt.
+  const adminInviteApi = (init?: RequestInit, url?: string) => {
+    const path = new URL(url ?? location.href, location.href).pathname;
+    if ((init?.method ?? "GET") !== "POST" || !path.endsWith("/invite")) return mockBlockedResponse(path);
+    const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
+    const { row, receipt } = addSeat(body);
+    return { ...row, ...receipt };
+  };
+  const adminResendApi = (init?: RequestInit, url?: string) => {
+    const path = new URL(url ?? location.href, location.href).pathname;
+    if ((init?.method ?? "GET") !== "POST" || !path.endsWith("/resend")) return mockBlockedResponse(path);
+    const id = decodeURIComponent(path.split("/memberships/")[1]?.replace(/\/resend$/, "") ?? "");
+    return resendSeat(id);
   };
 
   // Triggers (GET/POST /dashboard/triggers, GET/PUT /{id}, POST
@@ -2039,6 +2094,10 @@ if (mockMode) {
     ["/api/v1/admin/drift/agents/", driftAgentRuns],
     ["/api/v1/admin/drift/runs/", driftRunDetail],
     ["/api/v1/admin/probes/dashboard", probesNotFound],
+    // Trailing slash on purpose: the Impersonate dialog's /admin/users?q=
+    // search stays unmatched (and blocked), as before.
+    ["/api/v1/admin/users/", adminInviteApi],
+    ["/api/v1/admin/memberships/", adminResendApi],
     ["/api/v1/dashboard/sends/cancel", cancelSends],
     ["/api/v1/dashboard/sends/dismiss", dismissSends],
     ["/api/v1/dashboard/sends", sendsApi],
