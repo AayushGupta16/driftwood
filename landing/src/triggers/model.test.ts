@@ -8,10 +8,13 @@ import {
   counterCell,
   countsLine,
   DEFAULT_SCHEDULE,
+  fieldKey,
   fireHourLabel,
   formatDay,
   formatMoment,
   foundCell,
+  isTechnicalKey,
+  isTechnicalValue,
   itemName,
   itemStatusLabel,
   itemStatusTone,
@@ -23,7 +26,9 @@ import {
   plainReason,
   plainText,
   readbackLine,
+  readyLabel,
   rowFields,
+  RUN_COLUMNS,
   runIsOpen,
   runResult,
   runTriggerLabel,
@@ -36,6 +41,7 @@ import {
   UNSUPPORTED_LINE,
   viewLabel,
   viewTone,
+  type TriggerActions,
   type TriggerCounts,
 } from "./model.ts";
 
@@ -179,6 +185,31 @@ test("item statuses are short, and only a win takes the accent", () => {
   assert.equal(itemStatusTone("new"), "neutral");
 });
 
+test("done reads as what the trigger asked for: a demo, a contact, or the company", () => {
+  const demo: TriggerActions = { addCompany: true, findContact: true, buildDemo: true, enroll: false };
+  const contact: TriggerActions = { addCompany: true, findContact: true, buildDemo: false, enroll: false };
+  const company: TriggerActions = { addCompany: true, findContact: false, buildDemo: false, enroll: false };
+  assert.equal(readyLabel(demo), "Demo ready");
+  assert.equal(readyLabel(contact), "Contact found");
+  assert.equal(readyLabel(company), "Added");
+  assert.equal(itemStatusLabel("ready", demo), "Demo ready");
+  assert.equal(itemStatusLabel("ready", contact), "Contact found");
+  // Seventy rows reading "Demo ready" with no demo link on a trigger that
+  // only adds companies was the label contradicting the trigger.
+  assert.equal(itemStatusLabel("ready", company), "Added");
+  // Every other status reads the same whatever the trigger does.
+  assert.equal(itemStatusLabel("enrolled", company), "Enrolled");
+  assert.equal(itemStatusLabel("demo_pending", company), "Building demo");
+  assert.equal(itemStatusLabel("no_lead", company), "No contact found");
+  // Done is the win a customer scans for, so the tone stays the accent.
+  assert.equal(itemStatusTone("ready"), "accent");
+});
+
+test("the checks table says Seen, not Found: a scan is not the trigger's tally", () => {
+  assert.deepEqual(RUN_COLUMNS.map((column) => column.label), ["When", "Seen", "New", "Result"]);
+  assert.deepEqual(RUN_COLUMNS.filter((column) => column.numeric).map((column) => column.label), ["Seen", "New"]);
+});
+
 test("one tone vocabulary covers the trigger's own state as well as an item's", () => {
   // The accent is the single accent, so it may only mark work in flight
   // and the wins; a paused trigger and a waiting item are the same gray.
@@ -311,6 +342,93 @@ test("a row shows at most two extracted fields, whatever schema the item brought
     [{ label: "Where", value: "Tucson, AZ" }],
   );
   assert.deepEqual(rowFields({ entityName: "x", title: "y", fields: [] }), []);
+});
+
+test("a row never shows the scraper's own keys, and leads with the facts a customer reads first", () => {
+  // A jobs API pull stores its bookkeeping first. Every row on that trigger
+  // used to read "Type: google_jobs_item · Xpath: /html[1]/body[1]/div[3]…".
+  const job = {
+    entityName: "Bluebonnet Home Care",
+    title: "Caregiver, days",
+    fields: [
+      { label: "Type", value: "google_jobs_item" },
+      { label: "Xpath", value: "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]" },
+      { label: "Rank absolute", value: "1" },
+      { label: "Employer name", value: "Bluebonnet Home Care" },
+      { label: "Title", value: "Caregiver, days" },
+      { label: "Location", value: "Plano, TX" },
+      { label: "Salary", value: "$15 to $17 an hour" },
+      { label: "Time ago", value: "2 days ago" },
+      { label: "Source url", value: "https://www.google.com/search?ibp=htl;jobs" },
+    ],
+  };
+  // Pay before place, and nothing else: two fields is still the limit.
+  assert.deepEqual(rowFields(job), [
+    { label: "Salary", value: "$15 to $17 an hour" },
+    { label: "Location", value: "Plano, TX" },
+  ]);
+  // A raise brings its own keys, and the round and the amount lead.
+  assert.deepEqual(
+    rowFields({
+      entityName: "Verdant Grid",
+      title: "Raises $18M",
+      fields: [
+        { label: "Company", value: "Verdant Grid" },
+        { label: "Round", value: "Series A" },
+        { label: "Amount", value: "$18M" },
+        { label: "Investors", value: "Fieldstone, Cairn" },
+        { label: "Source", value: "TechCrunch" },
+      ],
+    }),
+    [{ label: "Round", value: "Series A" }, { label: "Amount", value: "$18M" }],
+  );
+  // Only bookkeeping: the row shows nothing rather than any of it.
+  assert.deepEqual(
+    rowFields({
+      entityName: "x",
+      title: "y",
+      fields: [
+        { label: "Type", value: "google_jobs_item" },
+        { label: "Rank group", value: "1" },
+        { label: "Job id", value: "eyJqb2JfdGl0bGUiOiJDYXJlZ2l2ZXIi" },
+        { label: "Employer image url", value: "https://example.test/logo.png" },
+        { label: "Timestamp", value: "2026-09-04 02:07:11 +00:00" },
+        { label: "Detail url", value: "https://example.test/jobs/1" },
+        { label: "Listing hash", value: "3f9a" },
+        { label: "Position", value: "left" },
+      ],
+    }),
+    [],
+  );
+  // A human key with a path or an identifier for a value is no better.
+  assert.deepEqual(
+    rowFields({
+      entityName: "x",
+      title: "y",
+      fields: [
+        { label: "Location", value: "/jobs/plano-tx" },
+        { label: "Category", value: "#warehouse" },
+        { label: "Schedule", value: "MondayTuesdayWednesdayThursday" },
+        { label: "Pay", value: "www.example.test/pay" },
+        { label: "Shifts", value: "Days and evenings" },
+      ],
+    }),
+    [{ label: "Shifts", value: "Days and evenings" }],
+  );
+  // The other keys follow the preferred ones, in the order they were stored.
+  assert.deepEqual(
+    rowFields({ entityName: "x", title: "y", fields: [{ label: "Lead", value: "Fieldstone" }, { label: "Stage", value: "Growth" }, { label: "Amount", value: "$40M" }] }),
+    [{ label: "Amount", value: "$40M" }, { label: "Lead", value: "Fieldstone" }],
+  );
+  // The key is read the way the extraction stored it, however it was labelled.
+  assert.equal(fieldKey("Rank absolute"), "rank_absolute");
+  assert.equal(fieldKey("Source URL"), "source_url");
+  assert.equal(fieldKey("time-ago"), "time_ago");
+  assert.equal(isTechnicalKey("employer_image_url"), true);
+  assert.equal(isTechnicalKey("employer_name"), false);
+  assert.equal(isTechnicalValue("$16 to $19/hr"), false);
+  assert.equal(isTechnicalValue("eyJqb2JfdGl0bGUiOiJDYXJlZ2l2ZXIi"), true);
+  assert.equal(isTechnicalValue("Days and evenings, some weekends"), false);
 });
 
 test("last check reads Checking now while a check is open, even before the first ever finished", () => {

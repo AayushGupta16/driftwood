@@ -123,7 +123,13 @@
    An empty or failed list is one card and needs no rule above it. */
 .trigger-list { margin-top: var(--trg-4); border-top: 1px solid var(--color-line); }
 .trigger-list:has(> .audience-state) { border-top: 0; border-bottom: 0; }
-.trigger-row { grid-template-columns: 7.5rem minmax(14rem, 3fr) minmax(8rem, 1fr) 2rem; color: inherit; text-decoration: none; }
+/* The row's grid rules carry the row's full selector, here and at both
+   breakpoints. The production bundle loads campaigns.css after this file
+   (dev loads it before), so a bare .trigger-row rule loses to
+   .campaign-list-row's own grid at equal specificity: in the built page
+   the row was Campaigns' six columns with two of them empty, and on a
+   phone the check line sat in a chip-wide column ("Last chec…"). */
+.campaign-list-row.trigger-row { grid-template-columns: 7.5rem minmax(14rem, 3fr) minmax(8rem, 1fr) 2rem; color: inherit; text-decoration: none; }
 /* The readback is the line the customer reads to check the agent
    understood, so it gets two lines rather than one truncated one. */
 .trigger-row .campaign-list-copy > span {
@@ -331,7 +337,7 @@
    stacks the page heading, so the header and the rows change shape on the
    same line. */
 @media (max-width: 60rem) {
-  .trigger-row { grid-template-columns: 7.5rem minmax(0, 1fr); gap: 0.5rem 0.9rem; }
+  .campaign-list-row.trigger-row { grid-template-columns: 7.5rem minmax(0, 1fr); gap: 0.5rem 0.9rem; }
   .trigger-row .campaign-list-updated { grid-column: 2; }
   .trigger-row .campaign-list-open { display: none; }
 }
@@ -339,8 +345,23 @@
 @media (max-width: 48rem) {
   /* One column: a chip column narrow enough for a phone cannot hold "Not
      supported", so the chip takes its own line and leads the row. */
-  .trigger-row { grid-template-columns: minmax(0, 1fr); gap: 0.45rem; }
-  .trigger-row .campaign-list-updated { grid-column: 1; }
+  .campaign-list-row.trigger-row { grid-template-columns: minmax(0, 1fr); gap: 0.45rem; }
+  .campaign-list-row.trigger-row .campaign-list-updated { grid-column: 1; }
+  /* The name wraps to a second line rather than ellipsizing mid-word
+     ("Caregiver openings on myCNAjo…"), and the check line, which is a
+     few words, is never cut. Desktop keeps its one-line name. */
+  .trigger-row .campaign-list-copy strong {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+    white-space: normal;
+    text-overflow: clip;
+    overflow-wrap: anywhere;
+    line-height: 1.3;
+  }
+  .trigger-row .campaign-list-updated span { overflow: visible; white-space: normal; text-overflow: clip; }
   .trigger-heading-actions { width: 100%; }
   .trigger-readback { font-size: 0.96rem; }
   .trigger-head { margin-bottom: var(--trg-4); padding-bottom: var(--trg-3); }

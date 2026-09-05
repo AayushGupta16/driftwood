@@ -7,6 +7,7 @@ import {
   errorDetail,
   getTrigger,
   listTriggers,
+  mapActions,
   mapFields,
   mapItem,
   mapRun,
@@ -102,6 +103,18 @@ test("rows from before the rename read through the old names", () => {
     mapTrigger({ ...legacyTrigger, schedule: { cadence: "every_n_hours", fire_hour: 0, interval_hours: 4 } }).schedule,
     { cadence: "every_n_hours", fireHour: 0, intervalHours: 4 },
   );
+});
+
+test("the actions ride along, and a row that did not say reads as the backend's defaults", () => {
+  assert.deepEqual(
+    mapTrigger({ ...rawTrigger, actions: { add_company: true, find_contact: false, build_demo: false, enroll: false } }).actions,
+    { addCompany: true, findContact: false, buildDemo: false, enroll: false },
+  );
+  assert.deepEqual(mapTrigger(rawTrigger).actions, { addCompany: true, findContact: true, buildDemo: true, enroll: false });
+  assert.deepEqual(mapTrigger(legacyTrigger).actions, { addCompany: true, findContact: true, buildDemo: true, enroll: false });
+  assert.deepEqual(mapActions(null), { addCompany: true, findContact: true, buildDemo: true, enroll: false });
+  // A half-filled block keeps the defaults for what it left out.
+  assert.deepEqual(mapActions({ build_demo: false }), { addCompany: true, findContact: true, buildDemo: false, enroll: false });
 });
 
 test("the reason a source cannot be read arrives on either field, never as an identifier", () => {

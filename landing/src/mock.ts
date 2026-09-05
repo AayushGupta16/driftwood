@@ -1618,10 +1618,12 @@ if (mockMode) {
   };
 
   // Triggers (GET/POST /dashboard/triggers, GET/PUT /{id}, POST
-  // /{id}/run|pause|resume). Five watches, one per state the pages can
-  // show: an active one carrying the line its agent wrote back, a paused
-  // one, a web watch that has nothing to do with jobs, one still being
-  // built, and one on a source the agent could not read. ?trgempty=1 serves
+  // /{id}/run|pause|resume). Six watches, one per state the pages can
+  // show: an active one carrying the line its agent wrote back, one that
+  // only adds companies and whose items came from a jobs API pull (so its
+  // rows carry the scraper's own keys), a paused one, a web watch that has
+  // nothing to do with jobs, one still being built, and one on a source
+  // the agent could not read. ?trgempty=1 serves
   // the empty state. Creating a trigger sends one sentence and nothing
   // else; the mock does what the backend does with it — names it, spends
   // twenty seconds working out how to check it, writes the readback and
@@ -1636,23 +1638,29 @@ if (mockMode) {
     error: string | null; created_at: string; started_at: string | null; finished_at: string | null;
   };
   type MockField = { label: string; value: string };
+  // Fields arrive either as rows the backend labelled or as the raw object
+  // the extraction stored, and the page reads both.
+  type MockFields = MockField[] | Record<string, string | number>;
   type MockItem = {
     id: string; source_url: string; entity_name: string; employer_name: string; title: string;
-    fields: MockField[]; posted_at: string | null; status: string; note: string | null;
+    fields: MockFields; posted_at: string | null; status: string; note: string | null;
     company_id: string | null; lead_id: string | null; demo_url: string | null; created_at: string;
   };
   type MockSchedule = { cadence: string; fire_hour: number; interval_hours: number | null };
+  type MockActions = { add_company: boolean; find_contact: boolean; build_demo: boolean; enroll: boolean };
+  const defaultActions: MockActions = { add_company: true, find_contact: true, build_demo: true, enroll: false };
   type MockTrigger = {
     id: string; name: string; watch: string | null; summary: string | null;
     cadence: string; fire_hour: number; schedule: MockSchedule;
     pull: { method: string; reason: string | null } | null;
+    actions: MockActions;
     campaign_id: string | null; campaign_name: string | null;
     status: string; last_run_at: string | null; last_run_state: string | null;
     created_at: string; updated_at: string | null;
     runs: MockRun[]; items: MockItem[];
   };
   const item = (
-    id: string, host: string, entity: string, title: string, fields: MockField[],
+    id: string, host: string, entity: string, title: string, fields: MockFields,
     daysAgo: number, status: string, note: string | null, demo: boolean,
   ): MockItem => ({
     id, source_url: `https://${host}/items/${id}`, entity_name: entity, employer_name: entity, title,
@@ -1662,6 +1670,33 @@ if (mockMode) {
     demo_url: demo ? `${location.origin}/d/mock-${id}` : null,
     created_at: hoursAgo(24 * daysAgo + 6),
   });
+  // What a jobs API pull actually stores on an item: its own bookkeeping
+  // first (type, rank, xpath, ids, addresses), then the facts. The page
+  // has to skip the first kind and lead with the second. The trigger only
+  // adds companies, so no row has a contact or a demo.
+  const boardItem = (
+    id: string, entity: string, title: string, where: string, salary: string,
+    contract: string, ago: string, daysAgo: number, status: string, note: string | null = null,
+  ): MockItem => ({
+    ...item(id, "www.google.com", entity, title, [], daysAgo, status, note, false),
+    lead_id: null,
+    fields: {
+      type: "google_jobs_item",
+      rank_group: 1,
+      rank_absolute: Number(id.replace(/\D/g, "")) || 1,
+      xpath: "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[1]/div[1]/div[3]",
+      employer_name: entity,
+      employer_image_url: `https://encrypted-tbn0.gstatic.com/images?q=tbn:${id}`,
+      title,
+      location: where,
+      salary,
+      contract_type: contract,
+      time_ago: ago,
+      source_url: `https://www.google.com/search?ibp=htl;jobs#htivrt=jobs&htidocid=${id}`,
+      job_id: `eyJqb2JfdGl0bGUiOiJDYXJlZ2l2ZXIiLCJodGlkb2NpZCI6${id}`,
+      timestamp: "2026-09-04 02:07:11 +00:00",
+    },
+  });
   const mockTriggers: MockTrigger[] = triggersEmpty ? [] : [
     {
       id: "trg-mycnajobs", name: "myCNAjobs",
@@ -1669,6 +1704,7 @@ if (mockMode) {
       summary: "Checks mycnajobs.com every night for caregiver and CNA jobs in five metros, skipping hospitals and senior living.",
       cadence: "daily", fire_hour: 2, schedule: { cadence: "daily", fire_hour: 2, interval_hours: null },
       pull: { method: "site", reason: null },
+      actions: { add_company: true, find_contact: true, build_demo: true, enroll: true },
       campaign_id: "home-care-intro", campaign_name: "Home care agency intro",
       status: "active", last_run_at: hoursAgo(5), last_run_state: "done",
       created_at: hoursAgo(24 * 13), updated_at: hoursAgo(24 * 13),
@@ -1693,11 +1729,39 @@ if (mockMode) {
       ],
     },
     {
+      id: "trg-boards", name: "Caregiver openings on all job boards",
+      watch: "Caregiver and CNA openings from home care agencies on any job board in Texas. Just add the agencies to Companies.",
+      summary: "Searches job boards across the web every night for caregiver and CNA openings from home care agencies in Texas, and adds each agency to Companies.",
+      cadence: "daily", fire_hour: 2, schedule: { cadence: "daily", fire_hour: 2, interval_hours: null },
+      pull: { method: "api", reason: null },
+      actions: { add_company: true, find_contact: false, build_demo: false, enroll: false },
+      campaign_id: null, campaign_name: null,
+      status: "active", last_run_at: hoursAgo(6), last_run_state: "done",
+      created_at: hoursAgo(24 * 6), updated_at: hoursAgo(24 * 6),
+      runs: [
+        // A check scans every listing on the boards and keeps a few: the
+        // scan is the Seen column, never the trigger's "found".
+        { id: "run-b2", state: "done", triggered_by: "schedule", items_seen: 2095, items_new: 12, ids_seen: 2095, ids_new: 12, error: null, created_at: hoursAgo(6), started_at: hoursAgo(6), finished_at: hoursAgo(5.8) },
+        { id: "run-b1", state: "done", triggered_by: "setup", items_seen: 1980, items_new: 58, ids_seen: 1980, ids_new: 58, error: null, created_at: hoursAgo(24 * 6), started_at: hoursAgo(24 * 6), finished_at: hoursAgo(24 * 6 - 0.3) },
+      ],
+      items: [
+        boardItem("b1", "Bluebonnet Home Care", "Caregiver, days", "Plano, TX", "$15 to $17 an hour", "Full-time", "2 days ago", 1, "ready"),
+        boardItem("b2", "Lone Star Caregivers", "CNA, overnight", "Fort Worth, TX", "$16 an hour", "Part-time", "2 days ago", 1, "ready"),
+        boardItem("b3", "Hill Country In-Home Care", "Personal care aide", "San Antonio, TX", "$14.50 to $16 an hour", "Full-time", "3 days ago", 2, "ready"),
+        boardItem("b4", "Prairie Rose Senior Care", "Live-in caregiver", "Lubbock, TX", "$180 a day", "Contract", "3 days ago", 2, "duplicate", "In Companies since Aug 30"),
+        boardItem("b5", "Gulf Coast Home Companions", "Companion caregiver, weekends", "Corpus Christi, TX", "$15 an hour", "Part-time", "4 days ago", 3, "ready"),
+        boardItem("b6", "Trinity River Home Health", "Home health aide", "Dallas, TX", "$17 to $19 an hour", "Full-time", "4 days ago", 3, "dismissed", "Dismissed: a home health agency that hires nurses, not a caregiver agency."),
+        boardItem("b7", "Pecan Valley Caregivers", "Caregiver, evenings", "Waco, TX", "$15.50 an hour", "Part-time", "5 days ago", 4, "ready"),
+        boardItem("b8", "Brazos Home Care", "CNA, days", "College Station, TX", "$16 to $18 an hour", "Full-time", "6 hours ago", 0, "new"),
+      ],
+    },
+    {
       id: "trg-funding", name: "Series A raises",
       watch: "Companies that just raised a Series A in climate tech",
       summary: "Searches the web every morning for climate tech companies that announced a Series A in the last week.",
       cadence: "daily", fire_hour: 6, schedule: { cadence: "daily", fire_hour: 6, interval_hours: null },
       pull: { method: "web", reason: null },
+      actions: defaultActions,
       campaign_id: null, campaign_name: null,
       status: "paused", last_run_at: hoursAgo(30), last_run_state: "done",
       created_at: hoursAgo(24 * 9), updated_at: hoursAgo(24 * 2),
@@ -1717,6 +1781,7 @@ if (mockMode) {
       summary: "Searches the web every four hours for product launches from robotics companies.",
       cadence: "every_n_hours", fire_hour: 0, schedule: { cadence: "every_n_hours", fire_hour: 0, interval_hours: 4 },
       pull: { method: "web", reason: null },
+      actions: defaultActions,
       campaign_id: null, campaign_name: null,
       status: "active", last_run_at: hoursAgo(3), last_run_state: "done",
       created_at: hoursAgo(24 * 4), updated_at: hoursAgo(24 * 4),
@@ -1737,6 +1802,7 @@ if (mockMode) {
       summary: null,
       cadence: "daily", fire_hour: 2, schedule: { cadence: "daily", fire_hour: 2, interval_hours: null },
       pull: { method: "pending", reason: null },
+      actions: defaultActions,
       campaign_id: null, campaign_name: null,
       status: "needs_setup", last_run_at: null, last_run_state: null,
       created_at: hoursAgo(0.4), updated_at: hoursAgo(0.4),
@@ -1748,6 +1814,7 @@ if (mockMode) {
       summary: null,
       cadence: "daily", fire_hour: 2, schedule: { cadence: "daily", fire_hour: 2, interval_hours: null },
       pull: { method: "unsupported", reason: "This page asks for a sign-in before it shows anything. Point your agent at a public page instead." },
+      actions: defaultActions,
       campaign_id: null, campaign_name: null,
       status: "needs_setup", last_run_at: null, last_run_state: null,
       created_at: hoursAgo(26), updated_at: hoursAgo(26),
@@ -1820,7 +1887,8 @@ if (mockMode) {
   const triggerRow = (trigger: MockTrigger) => ({
     id: trigger.id, name: trigger.name, watch: trigger.watch, summary: trigger.summary,
     cadence: trigger.cadence, fire_hour: trigger.fire_hour, schedule: trigger.schedule,
-    pull: trigger.pull, campaign_id: trigger.campaign_id, campaign_name: trigger.campaign_name,
+    pull: trigger.pull, actions: trigger.actions,
+    campaign_id: trigger.campaign_id, campaign_name: trigger.campaign_name,
     status: trigger.status, last_run_at: trigger.last_run_at, last_run_state: trigger.last_run_state,
     counts: triggerCounts(trigger), created_at: trigger.created_at, updated_at: trigger.updated_at,
   });
@@ -1882,6 +1950,7 @@ if (mockMode) {
           summary: null,
           cadence: "daily", fire_hour: 2, schedule: { cadence: "daily", fire_hour: 2, interval_hours: null },
           pull: { method: "pending", reason: null },
+          actions: defaultActions,
           campaign_id: campaign?.id ?? null,
           campaign_name: campaign?.name ?? null,
           status: "needs_setup",

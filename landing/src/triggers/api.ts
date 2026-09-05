@@ -9,10 +9,11 @@
    renaming (entity_name, companies_added) are read new-name-first with the
    old name as a fallback, so the page works against either. Everything the
    pages stopped showing (pull labels, credits, dollars, pages fetched,
-   filtered counts, the customer's old filters and action toggles) is simply
-   not mapped. */
+   filtered counts, the customer's old filters) is simply not mapped. The
+   actions are read, but only so a row can say what done looks like. */
 
 import {
+  DEFAULT_ACTIONS,
   normalizeCadence,
   normalizeStatus,
   plainReason,
@@ -24,6 +25,7 @@ import {
   type RunState,
   type RunTrigger,
   type Trigger,
+  type TriggerActions,
   type TriggerDetail,
   type TriggerItem,
   type TriggerRun,
@@ -56,6 +58,14 @@ export type RawPull = {
   note?: string | null;
 };
 
+/* What the agent does with each new item, as the backend stores it. */
+export type RawActions = {
+  add_company?: boolean | null;
+  find_contact?: boolean | null;
+  build_demo?: boolean | null;
+  enroll?: boolean | null;
+};
+
 export type RawTriggerRow = {
   id: string;
   name: string;
@@ -65,6 +75,7 @@ export type RawTriggerRow = {
   fire_hour: number;
   schedule?: RawSchedule | null;
   pull?: RawPull | null;
+  actions?: RawActions | null;
   campaign_id: string | null;
   campaign_name: string | null;
   status: string;
@@ -211,6 +222,17 @@ export function mapFields(raw: unknown): ItemField[] {
   return [];
 }
 
+/* A row that did not say reads as the backend's defaults, which is what
+   every trigger had before the toggles existed. */
+export function mapActions(raw: RawActions | null | undefined): TriggerActions {
+  return {
+    addCompany: raw?.add_company ?? DEFAULT_ACTIONS.addCompany,
+    findContact: raw?.find_contact ?? DEFAULT_ACTIONS.findContact,
+    buildDemo: raw?.build_demo ?? DEFAULT_ACTIONS.buildDemo,
+    enroll: raw?.enroll ?? DEFAULT_ACTIONS.enroll,
+  };
+}
+
 export function mapTrigger(raw: RawTriggerRow): Trigger {
   const counts = raw.counts;
   return {
@@ -226,6 +248,7 @@ export function mapTrigger(raw: RawTriggerRow): Trigger {
     pull: raw.pull
       ? { method: raw.pull.method, reason: plainReason(raw.pull.reason) ?? plainReason(raw.pull.note) }
       : null,
+    actions: mapActions(raw.actions),
     campaignId: raw.campaign_id,
     campaignName: raw.campaign_name,
     status: normalizeStatus(raw.status),

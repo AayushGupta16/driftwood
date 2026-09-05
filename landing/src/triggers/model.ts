@@ -8,7 +8,10 @@
    mycnajobs.com every night for caregiver and CNA jobs in five metros,
    skipping hospitals and senior living."). Nothing in this file may name
    jobs, agencies, employers, pay, credits or a pull method: a trigger is
-   just as likely to be watching funding rounds or a competitor. */
+   just as likely to be watching funding rounds or a competitor. The one
+   exception is the field picker's key lists (rowFields), which name every
+   schema they know, jobs and raises and tenders alike, so a row leads
+   with the right fact whichever it is. */
 
 export type TriggerStatus = "active" | "paused" | "needs_setup";
 export type RunState = "queued" | "running" | "done" | "failed";
@@ -51,6 +54,20 @@ export type TriggerCounts = {
   enrolled: number;
 };
 
+/* What the agent does with each new item. The page reads these only to
+   say what "done" looks like on a row: a trigger that builds demos ends
+   an item at "Demo ready", one that only adds companies ends it at
+   "Added". */
+export type TriggerActions = {
+  addCompany: boolean;
+  findContact: boolean;
+  buildDemo: boolean;
+  enroll: boolean;
+};
+
+/* The backend's own defaults, used for a row that did not say. */
+export const DEFAULT_ACTIONS: TriggerActions = { addCompany: true, findContact: true, buildDemo: true, enroll: false };
+
 export type Trigger = {
   id: string;
   /* A short name the backend writes. Never derived from the sentence
@@ -62,6 +79,7 @@ export type Trigger = {
   summary: string | null;
   schedule: TriggerSchedule;
   pull: TriggerPull | null;
+  actions: TriggerActions;
   campaignId: string | null;
   campaignName: string | null;
   status: TriggerStatus;
@@ -294,7 +312,18 @@ const ITEM_STATUS: Record<ItemStatus, { label: string; tone: Tone }> = {
   failed: { label: "Failed", tone: "alert" },
 };
 
-export function itemStatusLabel(status: string): string {
+/* "ready" means the agent is done with this item. What that looks like
+   depends on what the trigger asked for: a demo, a contact, or just the
+   company in Companies. Seventy rows reading "Demo ready" with no demo
+   link on any of them was the label contradicting the trigger. */
+export function readyLabel(actions: TriggerActions): string {
+  if (actions.buildDemo) return "Demo ready";
+  if (actions.findContact) return "Contact found";
+  return "Added";
+}
+
+export function itemStatusLabel(status: string, actions: TriggerActions = DEFAULT_ACTIONS): string {
+  if (status === "ready") return readyLabel(actions);
   return ITEM_STATUS[status as ItemStatus]?.label ?? WORKING_LABEL;
 }
 
@@ -335,6 +364,20 @@ export function runResult(run: Pick<TriggerRun, "state" | "error">): RunResult {
   if (run.state === "failed") return { label: "Failed", detail: shortReason(run.error), tone: "alert" };
   return { label: "Done", detail: null, tone: "neutral" };
 }
+
+/* The Checks table's columns, pinned here so the header and the cell under
+   it cannot drift apart. The second column is every listing a check
+   scanned, which is not the trigger's "found": a run that scanned 2,095
+   listings on a trigger showing "90 found" read as two numbers under one
+   word. "Seen" is the scan; "New" is what it had not seen before. */
+export type RunColumn = { label: string; numeric: boolean };
+
+export const RUN_COLUMNS: readonly RunColumn[] = [
+  { label: "When", numeric: false },
+  { label: "Seen", numeric: true },
+  { label: "New", numeric: true },
+  { label: "Result", numeric: false },
+];
 
 function plural(count: number, singular: string, pluralForm: string): string {
   return `${count.toLocaleString()} ${count === 1 ? singular : pluralForm}`;
@@ -444,22 +487,73 @@ export function shortReason(text: string | null | undefined, words: number = REA
 const FIELD_VALUE_MAX = 40;
 const ROW_FIELDS = 2;
 
+/* A field's key the way the extraction stored it, whatever the backend
+   did to the label on the way: "Rank absolute", "rank_absolute" and
+   "Rank-Absolute" all read as rank_absolute. */
+export function fieldKey(label: string): string {
+  return label.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+}
+
+/* Keys that are the scraper's business, not the item's. A Google Jobs pull
+   stores its type, its xpath and its rank first, and those were the first
+   two "facts" every row showed. */
+const TECHNICAL_KEYS = new Set([
+  "type", "xpath", "rank_absolute", "rank_group", "rectangle", "timestamp",
+  "source_url", "url", "link", "id", "job_id", "employer_image_url", "image", "logo",
+  "position", "domain", "slug", "uuid", "guid", "hash", "html",
+]);
+const TECHNICAL_SUFFIXES = ["_url", "_id", "_xpath", "_hash", "_key", "_html"];
+
+export function isTechnicalKey(key: string): boolean {
+  return TECHNICAL_KEYS.has(key) || TECHNICAL_SUFFIXES.some((suffix) => key.endsWith(suffix));
+}
+
+/* A value that is a path or an identifier rather than a fact: an xpath, an
+   address, an anchor, or one long token with no space in it. */
+export function isTechnicalValue(value: string): boolean {
+  const text = value.trim();
+  if (/^(\/|http|www\.|#)/i.test(text)) return true;
+  return text.length >= 24 && !/\s/.test(text);
+}
+
+/* The facts a customer reads first, whatever the schema: pay before place,
+   place before when; the round and the amount for a raise; the due date
+   for a tender. Anything else follows in the order it was stored. */
+const PREFERRED_KEYS = [
+  "pay", "pay_text", "salary", "compensation", "location", "city", "shifts", "schedule",
+  "employment_type", "contract_type", "posted", "posted_text", "time_ago", "round", "amount",
+  "investors", "category", "platform", "due_on", "deadline", "contact_name",
+];
+const PREFERRED_RANK = new Map(PREFERRED_KEYS.map((key, index) => [key, index]));
+
 /* Up to two extracted fields to show on a row, chosen by what the item
    actually carries rather than by a fixed schema: an item can be a job, a
-   funding round or a tender, and each brings its own keys. Fields that
-   only repeat the name or the title earn no room. */
+   funding round or a tender, and each brings its own keys. Human keys
+   come first, in a fixed order of usefulness; technical keys and values
+   never show; fields that only repeat the name or the title earn no
+   room. */
 export function rowFields(item: Pick<TriggerItem, "fields" | "entityName" | "title">, limit: number = ROW_FIELDS): ItemField[] {
   const seen = new Set([plainText(item.entityName).toLowerCase(), plainText(item.title).toLowerCase()]);
-  const out: ItemField[] = [];
-  for (const field of item.fields) {
-    if (out.length >= limit) break;
+  const usable: { field: ItemField; rank: number; order: number }[] = [];
+  item.fields.forEach((field, order) => {
     const label = plainText(field.label);
     const value = plainText(field.value);
-    if (!label || !value) continue;
-    const key = value.toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push({ label, value: truncate(value, FIELD_VALUE_MAX) });
+    if (!label || !value) return;
+    const key = fieldKey(label);
+    if (!key || isTechnicalKey(key)) return;
+    /* The raw value too: plainText drops a leading "#", which is the
+       very thing that marks an anchor or a ticket number. */
+    if (isTechnicalValue(field.value) || isTechnicalValue(value)) return;
+    usable.push({ field: { label, value }, rank: PREFERRED_RANK.get(key) ?? PREFERRED_KEYS.length, order });
+  });
+  usable.sort((a, b) => a.rank - b.rank || a.order - b.order);
+  const out: ItemField[] = [];
+  for (const { field } of usable) {
+    if (out.length >= limit) break;
+    const repeat = field.value.toLowerCase();
+    if (seen.has(repeat)) continue;
+    seen.add(repeat);
+    out.push({ label: field.label, value: truncate(field.value, FIELD_VALUE_MAX) });
   }
   return out;
 }

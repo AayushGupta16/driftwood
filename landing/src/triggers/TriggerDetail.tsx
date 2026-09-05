@@ -24,6 +24,7 @@ import {
   lastCheckFact,
   readbackLine,
   rowFields,
+  RUN_COLUMNS,
   runIsOpen,
   runResult,
   runTriggerLabel,
@@ -36,6 +37,7 @@ import {
   viewTone,
   type Tone,
   type Trigger,
+  type TriggerActions,
   type TriggerDetail as TriggerDetailData,
   type TriggerItem,
   type TriggerRun,
@@ -87,9 +89,11 @@ function StatusChip({ trigger }: { trigger: Trigger }) {
 
 /* A row is: when it went up, who it is about, what it is, where it stands
    and where to read it. The two extra facts under the title come from
-   whatever the item carried, so a funding round and a job both fit. Only a
-   dismissed row explains itself, short, with the whole sentence on hover. */
-function ItemRow({ item }: { item: TriggerItem }) {
+   whatever the item carried, so a funding round and a job both fit. The
+   status names what done looks like for this trigger, which is why the
+   trigger's actions come along. Only a dismissed row explains itself,
+   short, with the whole sentence on hover. */
+function ItemRow({ item, actions }: { item: TriggerItem; actions: TriggerActions }) {
   const title = itemTitle(item);
   const name = itemName(item);
   const fields = rowFields(item);
@@ -115,7 +119,7 @@ function ItemRow({ item }: { item: TriggerItem }) {
         )}
         {reason && <span className="trigger-sub" title={item.note ?? undefined}>{reason}</span>}
       </td>
-      <td><Chip tone={itemStatusTone(item.status)}>{itemStatusLabel(item.status)}</Chip></td>
+      <td><Chip tone={itemStatusTone(item.status)}>{itemStatusLabel(item.status, actions)}</Chip></td>
       <td>
         {/* The demo is the win, so it leads and carries the accent. */}
         <span className="trigger-links">
@@ -127,9 +131,11 @@ function ItemRow({ item }: { item: TriggerItem }) {
   );
 }
 
-/* Found and New prefer the counters that move while a check runs and fall
-   back to the item counts every row has. A check that hit a snag and
-   finished anyway reads "Done": only a failure is the customer's news. */
+/* Seen and New prefer the counters that move while a check runs and fall
+   back to the item counts every row has. Seen is every listing the check
+   scanned, which is why it is not called Found: the trigger's "found" is
+   the smaller number it kept. A check that hit a snag and finished anyway
+   reads "Done": only a failure is the customer's news. */
 function RunRow({ run }: { run: TriggerRun }) {
   const result = runResult(run);
   return (
@@ -441,7 +447,7 @@ export default function TriggerDetail({ triggerId }: { triggerId: string }) {
                     </thead>
                     <tbody>
                       {detail
-                        ? detail.items.map((item) => <ItemRow key={item.id} item={item} />)
+                        ? detail.items.map((item) => <ItemRow key={item.id} item={item} actions={detail.trigger.actions} />)
                         : <SkeletonRows columns={5} rows={5} />}
                     </tbody>
                   </table>
@@ -463,10 +469,11 @@ export default function TriggerDetail({ triggerId }: { triggerId: string }) {
                   <table className="trigger-table trigger-table-runs">
                     <thead>
                       <tr>
-                        <th scope="col">When</th>
-                        <th scope="col" className="trigger-col-num">Found</th>
-                        <th scope="col" className="trigger-col-num">New</th>
-                        <th scope="col">Result</th>
+                        {/* The labels live in the model beside the cells
+                            they sit over (RunRow), so the two agree. */}
+                        {RUN_COLUMNS.map((column) => (
+                          <th scope="col" key={column.label} className={column.numeric ? "trigger-col-num" : undefined}>{column.label}</th>
+                        ))}
                       </tr>
                     </thead>
                     <tbody>
