@@ -77,3 +77,11 @@ campaign editing/activation, assets, metric drilldowns, admin gating, and the
 same-tab review-queue transition. The full implementation rationale, visual
 decisions, risks, and recorded evidence are in
 `../plans/2026-08-21-cardinal-campaign-workbench/plan.md`.
+
+## Switchfrog
+
+The production build installs the asynchronous Switchfrog SDK in every HTML
+document via `scripts/prerender.mjs`, including static articles and dashboard
+entries. `vercel.json` allows its script and activity requests through the CSP.
+Only the publishable key is used; no secret key is needed for anonymous activity.
+The snippet is added during build, so use a production build/preview to verify it.
