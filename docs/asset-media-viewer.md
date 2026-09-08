@@ -44,3 +44,7 @@ focus return also passed. No customer media or local QA fixtures are deployed.
 
 The mock library includes the already-public `/compare.mp4` messaging clip for
 reviewing video behavior without uploading a file.
+
+Rollout is pending review of the committed Vercel preview before production.
+The Engineering Todos Notion page could not be updated: Chrome's signed-in
+account returned “No access.” No tracker content was changed.
