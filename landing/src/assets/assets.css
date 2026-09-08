@@ -122,8 +122,8 @@
 /* Private media opens in a native modal; only the explicit download link saves it. */
 button.asset-visual { width: 100%; border: 0; border-bottom: 1px solid var(--color-line); padding: 0; font: inherit; cursor: pointer; }
 .asset-visual:focus-visible { outline: 3px solid var(--color-tide); outline-offset: -3px; }
-.asset-thumbnail { display: grid; width: 100%; height: 100%; min-height: 0; place-items: center; }
-.asset-thumbnail img, .asset-thumbnail video { width: 100%; height: 100%; object-fit: contain; }
+.asset-thumbnail { pointer-events: none; position: absolute; inset: 0; display: grid; width: 100%; height: 100%; min-height: 0; min-width: 0; place-items: center; }
+.asset-thumbnail img, .asset-thumbnail video { width: 100%; height: 100%; min-width: 0; min-height: 0; object-fit: contain; }
 .asset-preview-label { position: absolute; right: 0.65rem; bottom: 0.65rem; border: 1px solid var(--color-line); border-radius: 999px; background: var(--color-surface); color: var(--color-tide); padding: 0.4rem 0.65rem; font-size: 0.72rem; font-weight: 650; }
 .asset-viewer { width: min(64rem, calc(100vw - 2rem)); }
 .asset-viewer .asset-dialog-heading h2 { overflow-wrap: anywhere; }

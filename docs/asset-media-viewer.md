@@ -34,3 +34,13 @@ card; no sound after dismissal; repeated reopening; unsupported media fallback;
 external-link navigation; and the explicit download action. Check a narrow
 viewport and keyboard focus as well. Mock files are temporary and disappear on
 reload.
+
+Browser QA completed in Chrome on 2026-09-08 with local-only fixtures: original
+HEVC MOV and H.264 MP4 rendered and played, MOV seeking worked after buffering,
+audio playback worked, and unavailable media displayed the fallback. Verified
+full portrait thumbnails, backdrop and Escape dismissal, focus returning to the
+preview button, and paused thumbnails after closing. Image preview and Escape
+focus return also passed. No customer media or local QA fixtures are deployed.
+
+The mock library includes the already-public `/compare.mp4` messaging clip for
+reviewing video behavior without uploading a file.

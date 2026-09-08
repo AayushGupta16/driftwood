@@ -55,7 +55,8 @@ export function AssetViewer({ asset, onClose }: { asset: CompanyAsset; onClose: 
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
-    const returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const activeElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const returnFocus = activeElement?.closest("button") ?? activeElement;
     const previousOverflow = document.body.style.overflow;
     const media = mediaRef.current;
     document.body.style.overflow = "hidden";
