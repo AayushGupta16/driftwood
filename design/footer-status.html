@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Draft — footer status check</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300..800;1,300..800&family=Source+Serif+4:opsz,wght@8..60,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff;
+    --ink: #16181b;
+    --gray: #6a737d;
+    --gray-light: #9aa2ab;
+    --line: #e9ebee;
+    --accent: #15557e;
+
+    /* NEW — the only tokens this change adds. Muted on purpose: the dot
+       should read as a hairline detail, not a traffic light. */
+    --status-ok: #5fbf8f;
+    --status-down: #e0645a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "Public Sans", system-ui, -apple-system, sans-serif;
+    font-size: 16px; line-height: 1.5;
+  }
+  .wrap { width: min(82rem, 100% - 3rem); margin-inline: auto; }
+
+  /* ---- draft chrome (not part of the site) ---- */
+  .sheet { padding: 2.5rem 0 1rem; }
+  .sheet h1 { font-family: "Source Serif 4", Georgia, serif; font-weight: 600; font-size: 1.6rem; margin: 0 0 0.4rem; }
+  .sheet p.lede { color: var(--gray); margin: 0 0 0.5rem; max-width: 68ch; }
+  .chip {
+    display: inline-block; vertical-align: middle; margin-left: 0.5rem;
+    background: #fde68a; color: #6b4b00; border-radius: 999px;
+    font-size: 0.66rem; font-weight: 700; letter-spacing: 0.04em;
+    padding: 0.12rem 0.45rem; text-transform: uppercase;
+  }
+  .rule { border: 0; border-top: 1px solid var(--line); margin: 2.25rem 0 0; }
+  .caption { color: var(--gray); font-size: 0.85rem; margin: 0.9rem 0 0; }
+  .states { display: flex; flex-wrap: wrap; gap: 0.75rem; margin: 1rem 0 0; }
+  .state-card {
+    background: linear-gradient(var(--accent), #0d3c5b); color: #fff;
+    border-radius: 10px; padding: 1rem 1.15rem; min-width: 15rem;
+  }
+  .state-card .lbl { display: block; font-size: 0.7rem; letter-spacing: 0.04em; text-transform: uppercase; color: rgba(255,255,255,0.45); margin-bottom: 0.5rem; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85em; background: #f4f6f8; padding: 0.1rem 0.3rem; border-radius: 4px; }
+
+  /* ---- the real footer, reproduced from src/index.css:969-1006 ---- */
+  footer { background: linear-gradient(var(--accent), #0d3c5b); color: #fff; margin-top: 3rem; }
+  footer::before {
+    content: ""; display: block; height: 28px; margin-top: -28px;
+    position: relative; z-index: 1;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='28' viewBox='0 0 180 28'%3E%3Cpath d='M0 14 C 11.25 5.5, 33.75 5.5, 45 14 C 56.25 22.5, 78.75 22.5, 90 14 C 101.25 5.5, 123.75 5.5, 135 14 C 146.25 22.5, 168.75 22.5, 180 14 L180 28 L0 28 Z' fill='%2315557e'/%3E%3C/svg%3E") repeat-x bottom;
+  }
+  .foot { display: flex; flex-direction: column; padding-block: 4.25rem 2.5rem; }
+  .wordmark { color: #fff; font-size: 1.2rem; gap: 0.7rem; display: inline-flex; align-items: center; text-decoration: none; font-weight: 700; }
+  .wordmark svg { width: 2.05rem; height: 2.05rem; }
+  .foot-top {
+    display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr);
+    gap: 2.5rem clamp(2.5rem, 6vw, 6rem); align-items: start;
+  }
+  .foot-def { margin: 1.2rem 0 0; max-width: 38ch; font-size: 0.85rem; line-height: 1.65; color: rgba(255,255,255,0.62); }
+  .foot-col { display: flex; flex-direction: column; align-items: flex-start; gap: 0.6rem; font-size: 0.9rem; color: rgba(255,255,255,0.72); }
+  .foot-col-head { font-size: 0.8rem; color: rgba(255,255,255,0.45); margin-bottom: 0.3rem; }
+  .foot-bottom {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem 2rem; flex-wrap: wrap;
+    margin-top: 3rem; border-top: 1px solid rgba(255,255,255,0.16); padding-top: 1.6rem;
+    font-size: 0.85rem; color: rgba(255,255,255,0.62);
+  }
+  .foot a { color: inherit; text-decoration: none; }
+  .foot a:hover { color: #fff; }
+
+  /* ---- NEW: the status line. One added element; nothing existing moves. ---- */
+  .foot-status { display: inline-flex; align-items: center; gap: 0.5rem; }
+  .foot-status .dot {
+    width: 0.44rem; height: 0.44rem; border-radius: 50%;
+    background: rgba(255,255,255,0.38); flex: none;
+  }
+  .foot-status[data-state="ok"]   .dot { background: var(--status-ok); }
+  .foot-status[data-state="down"] .dot { background: var(--status-down); }
+
+  .outline { outline: 2px dashed #fde68a; outline-offset: 5px; border-radius: 3px; }
+
+  @media (max-width: 52rem) {
+    .foot-top { grid-template-columns: 1fr 1fr; gap: 2.25rem 1.5rem; }
+    .foot-brand { grid-column: 1 / -1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap sheet">
+  <h1>Footer status check <span class="chip">draft</span></h1>
+  <p class="lede">
+    The whole footer below is the live one, reproduced from <code>src/App.tsx:1542</code> and
+    <code>src/index.css:969&ndash;1006</code>. The only change is one added element in the bottom
+    hairline row, outlined in yellow. Nothing existing moves or is restyled.
+  </p>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <div class="foot-top">
+      <div class="foot-brand">
+        <a class="wordmark" href="#top" aria-label="back to top">
+          <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <rect width="32" height="32" rx="7" fill="#ffffff" fill-opacity="0.14"/>
+            <circle cx="16" cy="16" r="6.2" stroke="#fff" stroke-width="1.6"/>
+            <circle cx="16" cy="16" r="2.1" fill="#fff"/>
+            <g stroke="#fff" stroke-width="1.6" stroke-linecap="round">
+              <path d="M16 5.6v3.4M16 23v3.4M5.6 16h3.4M23 16h3.4"/>
+              <path d="M8.7 8.7l2.4 2.4M20.9 20.9l2.4 2.4M23.3 8.7l-2.4 2.4M11.1 20.9l-2.4 2.4"/>
+            </g>
+          </svg>
+          driftwood
+        </a>
+        <p class="foot-def">
+          driftwood is an AI sales agent for demo-led outbound: it researches each prospect,
+          builds a working demo of your product for their business, and sends from your account
+          after human review.
+        </p>
+      </div>
+      <nav class="foot-col" aria-label="site">
+        <span class="foot-col-head">Learn</span>
+        <a href="#">Customers</a>
+        <a href="#">Demo-led outbound</a>
+        <a href="#">FAQ</a>
+        <a href="#">Founder-led sales</a>
+        <a href="#">Outbound benchmarks</a>
+        <a href="#">What is an AI SDR</a>
+      </nav>
+      <nav class="foot-col" aria-label="compare">
+        <span class="foot-col-head">Compare</span>
+        <a href="#">Compare AI SDR tools</a>
+        <a href="#">Instantly alternatives</a>
+        <a href="#">Clay alternatives</a>
+        <a href="#">Apollo alternatives</a>
+        <a href="#">Artisan alternatives</a>
+        <a href="#">11x alternatives</a>
+        <a href="#">driftwood vs Artisan</a>
+        <a href="#">driftwood vs 11x</a>
+      </nav>
+    </div>
+    <div class="foot-bottom">
+      <span class="foot-status outline" data-state="ok" id="live">
+        <span class="dot"></span><span class="txt">All systems operational</span>
+      </span>
+      <a href="mailto:aayush@driftwood.sh">aayush@driftwood.sh</a>
+      <span>&copy; 2026 driftwood</span>
+    </div>
+  </div>
+</footer>
+
+<div class="wrap sheet">
+  <hr class="rule">
+  <h1 style="font-size:1.15rem; margin-top:1.6rem;">The three states</h1>
+  <p class="lede">Left to right: healthy, the first paint before the check returns, and what last night would have shown from 21:37 onward.</p>
+  <div class="states">
+    <div class="state-card">
+      <span class="lbl">healthy &mdash; 200</span>
+      <span class="foot-status" data-state="ok"><span class="dot"></span>All systems operational</span>
+    </div>
+    <div class="state-card">
+      <span class="lbl">first paint</span>
+      <span class="foot-status" data-state="pending"><span class="dot"></span>Checking status</span>
+    </div>
+    <div class="state-card">
+      <span class="lbl">503, timeout, or network error</span>
+      <span class="foot-status" data-state="down"><span class="dot"></span>Service disruption</span>
+    </div>
+  </div>
+  <p class="caption">
+    Copy is sentence case and flat. No link &mdash; there is no status page to point at yet, and a dead
+    link is worse than none.
+  </p>
+  <hr class="rule">
+</div>
+
+</body>
+</html>

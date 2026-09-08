@@ -8,6 +8,82 @@ import HelmMark from "./components/HelmMark";
 import InlineBooking from "./components/InlineBooking";
 
 
+/* Backend reachability, shown as a dot in the footer. The landing itself is
+   static on Vercel, so it stays up while the Cloud Run backend is down — which
+   is exactly the gap this reports (2026-09-07: the backend was gone for 5.5h
+   and every surface here still looked fine).
+
+   Two things this deliberately does NOT trust:
+   - a bare 200. `/health` is proxied in vercel.json, but the catch-all rewrite
+     serves index.html for anything unmatched, so a 200 can be the landing page
+     itself. The body has to actually be the health payload.
+   - a hung request. Cloud Run answers in ~200ms; without the abort a wedged
+     backend leaves the dot on "Checking status" forever instead of going red. */
+type HealthState = "pending" | "ok" | "down";
+
+const HEALTH_LABEL: Record<HealthState, string> = {
+  pending: "Checking status",
+  ok: "All systems operational",
+  down: "Service disruption",
+};
+
+function FooterStatus() {
+  const [state, setState] = useState<HealthState>("pending");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function check(force = false) {
+      // Skip background POLLS — a hidden tab pinging every minute is just
+      // noise on Cloud Run. Never skip the first check though: a page restored
+      // or cmd-clicked into a background tab would otherwise sit on "Checking
+      // status" forever, which is the one state that tells a reader nothing.
+      if (!force && document.visibilityState !== "visible") return;
+      const abort = new AbortController();
+      const timer = window.setTimeout(() => abort.abort(), 5000);
+      try {
+        const res = await fetch("/health", {
+          signal: abort.signal,
+          cache: "no-store",
+        });
+        const body = await res.json();
+        if (!cancelled) {
+          setState(res.ok && body?.status === "ok" ? "ok" : "down");
+        }
+      } catch {
+        // Non-JSON body, abort, or network failure all mean the same thing to
+        // a reader: the thing behind this page is not answering.
+        if (!cancelled) setState("down");
+      } finally {
+        window.clearTimeout(timer);
+      }
+    }
+
+    // Wrapped, not passed directly: a listener/interval hands its own first
+    // argument (an Event, a timer id) straight into `force`.
+    const tick = () => void check();
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void check(true);
+    };
+
+    void check(true);
+    const poll = window.setInterval(tick, 60000);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      cancelled = true;
+      window.clearInterval(poll);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, []);
+
+  return (
+    <span className="foot-status" data-state={state} role="status">
+      <span className="dot" aria-hidden="true" />
+      {HEALTH_LABEL[state]}
+    </span>
+  );
+}
+
 function Wordmark({ label = true }: { label?: boolean }) {
   return (
     <>
@@ -1574,6 +1650,7 @@ export default function App() {
             </nav>
           </div>
           <div className="foot-bottom">
+            <FooterStatus />
             <a href="mailto:aayush@driftwood.sh">aayush@driftwood.sh</a>
             <span>&copy; 2026 driftwood</span>
           </div>
