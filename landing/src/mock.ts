@@ -1060,13 +1060,16 @@ if (mockMode) {
         : isFile && file.type.startsWith("video/")
           ? "video"
           : "image";
-      const asset: MockAsset = { id: crypto.randomUUID(), kind, name: String(form.get("name") || (isFile ? file.name : "Uploaded asset")), description: String(form.get("description") ?? ""), tags: String(form.get("tags") ?? "").split(",").map((tag) => tag.trim()).filter(Boolean), original_filename: isFile ? file.name : null, content_type: isFile ? file.type : null, byte_size: isFile ? file.size : null, external_url: null, content_url: kind === "image" ? assetPreview : null, created_at: now, updated_at: now, assignment_mode: "all", assigned_agent_ids: [] };
+      const asset: MockAsset = { id: crypto.randomUUID(), kind, name: String(form.get("name") || (isFile ? file.name : "Uploaded asset")), description: String(form.get("description") ?? ""), tags: String(form.get("tags") ?? "").split(",").map((tag) => tag.trim()).filter(Boolean), original_filename: isFile ? file.name : null, content_type: isFile ? file.type : null, byte_size: isFile ? file.size : null, external_url: null, content_url: isFile ? URL.createObjectURL(file) : null, created_at: now, updated_at: now, assignment_mode: "all", assigned_agent_ids: [] };
       mockAssets.unshift(asset);
       return asset;
     }
     if (method === "DELETE") {
       const index = mockAssets.findIndex((asset) => asset.id === decodeURIComponent(suffix));
-      if (index >= 0) mockAssets.splice(index, 1);
+      if (index >= 0) {
+        const [removed] = mockAssets.splice(index, 1);
+        if (removed.content_url?.startsWith("blob:")) URL.revokeObjectURL(removed.content_url);
+      }
       return {};
     }
     return { assets: mockAssets };

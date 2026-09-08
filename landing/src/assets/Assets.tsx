@@ -3,7 +3,6 @@ import { createLinkAsset, deleteAsset, listAssetAgents, listAssets, updateAssetA
 import {
   assetAssignmentLabel,
   assetAssignmentsReady,
-  assetDestination,
   assetKindLabel,
   filterAssets,
   formatBytes,
@@ -14,7 +13,6 @@ import {
 } from "./model";
 import { useWorkspacePermissions } from "../dashboard/workspace-permissions-context";
 import {
-  AudioIcon,
   CloseIcon,
   ExternalIcon,
   ImageIcon,
@@ -22,8 +20,8 @@ import {
   SearchIcon,
   TrashIcon,
   UploadIcon,
-  VideoIcon,
 } from "./icons";
+import { AssetThumbnail, AssetViewer } from "./AssetViewer";
 import "./assets.css";
 
 const FILTERS: Array<{ id: AssetFilter; label: string }> = [
@@ -45,23 +43,6 @@ function domainFor(url: string | null): string {
   }
 }
 
-function AssetVisual({ asset }: { asset: CompanyAsset }) {
-  if (asset.kind === "image" && asset.contentUrl) {
-    return <img src={asset.contentUrl} alt="" loading="lazy" />;
-  }
-  if (asset.kind === "video") {
-    return <div className="asset-visual-placeholder"><VideoIcon size={27} /><span>Video</span></div>;
-  }
-  if (asset.kind === "audio") {
-    return <div className="asset-visual-placeholder"><AudioIcon size={27} /><span>Audio</span></div>;
-  }
-  return (
-    <div className="asset-visual-placeholder asset-link-visual">
-      <LinkIcon size={25} />
-      <span>{domainFor(asset.externalUrl)}</span>
-    </div>
-  );
-}
 
 export default function Assets() {
   const { canWrite } = useWorkspacePermissions();
@@ -71,6 +52,7 @@ export default function Assets() {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
+  const [viewingAsset, setViewingAsset] = useState<CompanyAsset | null>(null);
   const [composer, setComposer] = useState<Composer>(null);
   const [assignmentAsset, setAssignmentAsset] = useState<CompanyAsset | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -260,18 +242,23 @@ export default function Assets() {
         ) : (
           <div className="asset-grid">
             {visible.map((asset) => {
-              const destination = assetDestination(asset);
+              const destination = asset.kind === "link" ? asset.externalUrl : null;
               const armed = armedDeleteId === asset.id;
               const removing = removingId === asset.id;
               return (
                 <article className="asset-card" key={asset.id}>
                   {destination ? (
                     <a className="asset-visual" href={destination} target="_blank" rel="noreferrer" aria-label={`Open ${asset.name}`}>
-                      <AssetVisual asset={asset} />
+                      <AssetThumbnail asset={asset} />
                       <span className="asset-open-mark"><ExternalIcon size={14} /></span>
                     </a>
+                  ) : asset.kind !== "link" && asset.contentUrl ? (
+                    <button className="asset-visual" type="button" onClick={() => setViewingAsset(asset)} aria-label={`Preview ${asset.name}`} aria-haspopup="dialog">
+                      <AssetThumbnail asset={asset} />
+                      <span className="asset-preview-label">{asset.kind === "image" ? "View image" : asset.kind === "video" ? "Play video" : "Play audio"}</span>
+                    </button>
                   ) : (
-                    <div className="asset-visual"><AssetVisual asset={asset} /></div>
+                    <div className="asset-visual"><AssetThumbnail asset={asset} /></div>
                   )}
                   <div className="asset-card-body">
                     <div className="asset-card-title">
@@ -335,6 +322,7 @@ export default function Assets() {
         )}
       </div>
 
+      {viewingAsset && <AssetViewer key={viewingAsset.id} asset={viewingAsset} onClose={() => setViewingAsset(null)} />}
       {composer === "upload" && (
         <UploadComposer onClose={() => setComposer(null)} onCreated={addAsset} />
       )}
