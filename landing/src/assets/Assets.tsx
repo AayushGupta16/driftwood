@@ -6,9 +6,11 @@ import {
   assetKindLabel,
   filterAssets,
   formatBytes,
+  uploadKindFor,
   type AssetFilter,
   type AssetAgent,
   type AssetAssignmentMode,
+  type AssetUploadKind,
   type CompanyAsset,
 } from "./model";
 import { useWorkspacePermissions } from "../dashboard/workspace-permissions-context";
@@ -30,6 +32,8 @@ const FILTERS: Array<{ id: AssetFilter; label: string }> = [
   { id: "video", label: "Videos" },
   { id: "audio", label: "Audio" },
   { id: "link", label: "Links" },
+  { id: "skill", label: "Skills" },
+  { id: "repo", label: "Repos" },
 ];
 
 type Composer = "upload" | "link" | null;
@@ -237,12 +241,16 @@ export default function Assets() {
           <div className="asset-state">
             <ImageIcon size={27} />
             <h2>{assets.length === 0 ? "Your asset library is empty" : "No assets match this view"}</h2>
-            <p>{assets.length === 0 ? canWrite ? "Upload an image, video, or audio file, or add a link your agents can reference." : "An owner or admin can add the first asset." : "Try another type or clear the search."}</p>
+            <p>{assets.length === 0 ? canWrite ? "Upload an image, video, audio, skill, or repository file, or add a link your agents can reference." : "An owner or admin can add the first asset." : "Try another type or clear the search."}</p>
           </div>
         ) : (
           <div className="asset-grid">
             {visible.map((asset) => {
-              const destination = asset.kind === "link" ? asset.externalUrl : null;
+              /* Links and URL-backed repos open the URL. Media previews in
+                 the viewer. File-backed skills and repos only download. */
+              const destination = asset.kind === "link" || asset.kind === "repo" ? asset.externalUrl : null;
+              const previewable = asset.kind === "image" || asset.kind === "video" || asset.kind === "audio";
+              const downloadOnly = (asset.kind === "skill" || asset.kind === "repo") && asset.contentUrl;
               const armed = armedDeleteId === asset.id;
               const removing = removingId === asset.id;
               return (
@@ -252,7 +260,12 @@ export default function Assets() {
                       <AssetThumbnail asset={asset} />
                       <span className="asset-open-mark"><ExternalIcon size={14} /></span>
                     </a>
-                  ) : asset.kind !== "link" && asset.contentUrl ? (
+                  ) : downloadOnly ? (
+                    <a className="asset-visual" href={asset.contentUrl ?? undefined} download={asset.originalFilename || asset.name} aria-label={`Download ${asset.name}`}>
+                      <AssetThumbnail asset={asset} />
+                      <span className="asset-preview-label">Download</span>
+                    </a>
+                  ) : previewable && asset.contentUrl ? (
                     <button className="asset-visual" type="button" onClick={() => setViewingAsset(asset)} aria-label={`Preview ${asset.name}`} aria-haspopup="dialog">
                       <AssetThumbnail asset={asset} />
                       <span className="asset-preview-label">{asset.kind === "image" ? "View image" : asset.kind === "video" ? "Play video" : "Play audio"}</span>
@@ -299,7 +312,7 @@ export default function Assets() {
                     )}
                     <div className="asset-meta">
                       <span>{formatBytes(asset.byteSize)}</span>
-                      {asset.kind === "link" && <span>{domainFor(asset.externalUrl)}</span>}
+                      {destination && <span>{domainFor(destination)}</span>}
                     </div>
                     <div className="asset-access">
                       <span><small>Agent access</small><strong>{agentsLoading ? "Loading agents…" : agentsError ? "Unavailable" : assetAssignmentLabel(asset, agents)}</strong></span>
@@ -512,15 +525,29 @@ function AssignmentComposer({
 function UploadComposer({ onClose, onCreated }: ComposerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
+  /* The kind picked for an archive. Media sends none; markdown is always a skill. */
+  const [archiveKind, setArchiveKind] = useState<AssetUploadKind | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
   const [saving, setSaving] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const fileClass = file ? uploadKindFor(file.name) : null;
+  const kind: AssetUploadKind | undefined = fileClass === "archive"
+    ? archiveKind ?? undefined
+    : fileClass === "markdown"
+      ? "skill"
+      : undefined;
+  const needsKind = fileClass === "archive" && !archiveKind;
+
+  function chooseFile(next: File | null) {
+    setFile(next);
+    setArchiveKind(null);
+  }
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    if (!file) return;
+    if (!file || needsKind) return;
     if (file.size > 25 * 1024 * 1024) {
       setSubmitError("Choose a file smaller than 25 MB.");
       return;
@@ -528,7 +555,7 @@ function UploadComposer({ onClose, onCreated }: ComposerProps) {
     setSaving(true);
     setSubmitError(null);
     try {
-      onCreated(await uploadAsset({ file, name, description, tags }));
+      onCreated(await uploadAsset({ file, name, description, tags, kind }));
     } catch (reason) {
       setSubmitError(reason instanceof Error ? reason.message : "The asset could not be uploaded.");
       setSaving(false);
@@ -536,14 +563,28 @@ function UploadComposer({ onClose, onCreated }: ComposerProps) {
   }
 
   return (
-    <ComposerShell title="Upload an asset" intro="Images, videos, and audio stay private to this workspace." locked={saving} onClose={onClose}>
+    <ComposerShell title="Upload an asset" intro="Files stay private to this workspace." locked={saving} onClose={onClose}>
       <form className="asset-form" onSubmit={(event) => void submit(event)}>
         <button className="asset-dropzone" type="button" onClick={() => inputRef.current?.click()} disabled={saving}>
           <UploadIcon size={23} />
-          <strong>{file ? file.name : "Choose an image, video, or audio file"}</strong>
-          <span>{file ? formatBytes(file.size) : "PNG, JPEG, GIF, WebP, MP4, MOV, WebM, MP3, WAV, M4A, or OGG · up to 25 MB"}</span>
+          <strong>{file ? file.name : "Choose an image, video, audio, skill, or repository file"}</strong>
+          <span>{file ? formatBytes(file.size) : "PNG, JPEG, GIF, WebP, MP4, MOV, WebM, MP3, WAV, M4A, OGG, ZIP, TAR.GZ, or Markdown · up to 25 MB"}</span>
         </button>
-        <input ref={inputRef} className="sr-only" type="file" accept="image/png,image/jpeg,image/gif,image/webp,video/mp4,video/quicktime,video/webm,audio/mpeg,audio/wav,audio/x-wav,audio/mp4,audio/x-m4a,audio/ogg,audio/webm" onChange={(event) => setFile(event.target.files?.[0] ?? null)} />
+        <input ref={inputRef} className="sr-only" type="file" accept="image/png,image/jpeg,image/gif,image/webp,video/mp4,video/quicktime,video/webm,audio/mpeg,audio/wav,audio/x-wav,audio/mp4,audio/x-m4a,audio/ogg,audio/webm,.zip,.tar.gz,.tgz,.md,application/zip,application/gzip,text/markdown" onChange={(event) => chooseFile(event.target.files?.[0] ?? null)} />
+        {fileClass === "archive" && (
+          <fieldset className="asset-kind-choice">
+            <legend>This file is</legend>
+            <label>
+              <input type="radio" name="upload-kind" checked={archiveKind === "skill"} onChange={() => setArchiveKind("skill")} disabled={saving} />
+              <span><strong>Skill</strong><small>A folder with a SKILL.md, zipped</small></span>
+            </label>
+            <label>
+              <input type="radio" name="upload-kind" checked={archiveKind === "repo"} onChange={() => setArchiveKind("repo")} disabled={saving} />
+              <span><strong>Repository</strong><small>A code repository, zipped</small></span>
+            </label>
+          </fieldset>
+        )}
+        {fileClass === "markdown" && <p className="asset-form-note">Uploads as a skill.</p>}
         <label>Display name <span>Optional</span><input value={name} onChange={(event) => setName(event.target.value)} maxLength={255} placeholder={file?.name ?? "Product walkthrough"} disabled={saving} /></label>
         <label>Description <span>Optional</span><textarea value={description} onChange={(event) => setDescription(event.target.value)} maxLength={2000} rows={3} placeholder="How should the agent use this?" disabled={saving} /></label>
         <label>Tags <span>Comma separated</span><input value={tags} onChange={(event) => setTags(event.target.value)} maxLength={1000} placeholder="product, proof, enterprise" disabled={saving} /></label>
@@ -556,7 +597,7 @@ function UploadComposer({ onClose, onCreated }: ComposerProps) {
           </div>
         )}
         {submitError && <p className="asset-dialog-error" role="alert">{submitError}</p>}
-        <div className="asset-form-actions"><button className="asset-button asset-button-secondary" type="button" onClick={onClose} disabled={saving}>Cancel</button><button className="asset-button asset-button-primary" type="submit" disabled={!file || saving}>{saving ? "Uploading…" : "Upload asset"}</button></div>
+        <div className="asset-form-actions"><button className="asset-button asset-button-secondary" type="button" onClick={onClose} disabled={saving}>Cancel</button><button className="asset-button asset-button-primary" type="submit" disabled={!file || needsKind || saving}>{saving ? "Uploading…" : "Upload asset"}</button></div>
       </form>
     </ComposerShell>
   );
@@ -565,6 +606,7 @@ function UploadComposer({ onClose, onCreated }: ComposerProps) {
 function LinkComposer({ onClose, onCreated }: ComposerProps) {
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
+  const [kind, setKind] = useState<"link" | "repo">("link");
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
   const [saving, setSaving] = useState(false);
@@ -572,6 +614,12 @@ function LinkComposer({ onClose, onCreated }: ComposerProps) {
 
   async function submit(event: FormEvent) {
     event.preventDefault();
+    /* The server refuses a non-https repo with a structured validation body,
+       so say it here in plain words instead. */
+    if (kind === "repo" && !url.trim().toLowerCase().startsWith("https://")) {
+      setSubmitError("A repository link must start with https://.");
+      return;
+    }
     setSaving(true);
     setSubmitError(null);
     try {
@@ -580,6 +628,7 @@ function LinkComposer({ onClose, onCreated }: ComposerProps) {
         url,
         description,
         tags: tags.split(",").map((tag) => tag.trim()).filter(Boolean),
+        kind,
       }));
     } catch (reason) {
       setSubmitError(reason instanceof Error ? reason.message : "The link could not be saved.");
@@ -588,10 +637,21 @@ function LinkComposer({ onClose, onCreated }: ComposerProps) {
   }
 
   return (
-    <ComposerShell title="Add a reference link" intro="Save approved work, documentation, or proof the agent should know." onClose={onClose}>
+    <ComposerShell title="Add a reference link" intro="Save approved work, documentation, proof, or a git repository the agent should know." onClose={onClose}>
       <form className="asset-form" onSubmit={(event) => void submit(event)}>
         <label>Display name<input required value={name} onChange={(event) => setName(event.target.value)} maxLength={255} placeholder="Enterprise case study" /></label>
         <label>URL<input required type="url" value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://" /></label>
+        <fieldset className="asset-kind-choice">
+          <legend>This link is</legend>
+          <label>
+            <input type="radio" name="link-kind" checked={kind === "link"} onChange={() => setKind("link")} disabled={saving} />
+            <span><strong>A web page</strong></span>
+          </label>
+          <label>
+            <input type="radio" name="link-kind" checked={kind === "repo"} onChange={() => setKind("repo")} disabled={saving} />
+            <span><strong>A git repository</strong><small>An https URL the agent can clone</small></span>
+          </label>
+        </fieldset>
         <label>Description <span>Optional</span><textarea value={description} onChange={(event) => setDescription(event.target.value)} maxLength={2000} rows={3} placeholder="When should the agent use this?" /></label>
         <label>Tags <span>Comma separated</span><input value={tags} onChange={(event) => setTags(event.target.value)} maxLength={1000} placeholder="case study, proof" /></label>
         {submitError && <p className="asset-dialog-error" role="alert">{submitError}</p>}

@@ -44,6 +44,8 @@
 .asset-kind-image { color: var(--color-tide); }
 .asset-kind-video { color: var(--color-tide-deep); }
 .asset-kind-audio { color: var(--color-tide); }
+.asset-kind-skill { color: var(--color-tide-deep); }
+.asset-kind-repo { color: var(--color-tide); }
 .asset-card h2 { overflow: hidden; margin: 0.25rem 0 0; font-size: 0.9rem; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
 .asset-card-title > div { min-width: 0; }
 .asset-delete { display: grid; min-width: 2rem; height: 2rem; flex: 0 0 auto; place-items: center; border: 0; border-radius: 999px; background: transparent; color: var(--color-ink-faint); font: inherit; cursor: pointer; }
@@ -103,14 +105,17 @@
 .asset-dropzone strong { max-width: 100%; overflow: hidden; color: var(--color-ink); font-size: 0.82rem; text-overflow: ellipsis; white-space: nowrap; }
 .asset-dropzone span { color: var(--color-ink-soft); font-size: 0.7rem; }
 .asset-form-actions { display: flex; justify-content: flex-end; gap: 0.6rem; padding-top: 0.2rem; }
-.asset-assignment-modes, .asset-agent-list { display: grid; gap: 0.55rem; margin: 0; border: 0; padding: 0; }
-.asset-assignment-modes legend, .asset-agent-list legend { margin-bottom: 0.25rem; color: var(--color-ink); font-size: 0.75rem; font-weight: 650; }
-.asset-assignment-form .asset-assignment-modes label, .asset-assignment-form .asset-agent-list label { display: flex; min-height: 3.1rem; align-items: center; gap: 0.7rem; border: 1px solid var(--color-line); border-radius: 0.7rem; background: var(--color-surface); padding: 0.65rem 0.75rem; cursor: pointer; }
-.asset-assignment-form fieldset label:has(input:checked) { border-color: color-mix(in srgb, var(--color-tide) 48%, var(--color-line)); background: color-mix(in srgb, var(--color-tide-wash) 55%, var(--color-surface)); }
-.asset-assignment-form fieldset input { width: 1rem; height: 1rem; flex: 0 0 auto; accent-color: var(--color-tide); }
-.asset-assignment-form fieldset label > span { display: grid; justify-self: auto; margin: 0; gap: 0.15rem; color: var(--color-ink); font-size: inherit; }
-.asset-assignment-form fieldset label strong { font-size: 0.78rem; font-weight: 650; }
-.asset-assignment-form fieldset label small { color: var(--color-ink-soft); font-size: 0.7rem; font-weight: 400; }
+/* One radio-card grammar for every choice in a dialog: agent access, and
+   the skill/repo choice on uploads and links. */
+.asset-assignment-modes, .asset-agent-list, .asset-kind-choice { display: grid; gap: 0.55rem; margin: 0; border: 0; padding: 0; }
+.asset-assignment-modes legend, .asset-agent-list legend, .asset-kind-choice legend { margin-bottom: 0.25rem; color: var(--color-ink); font-size: 0.75rem; font-weight: 650; }
+.asset-assignment-form .asset-assignment-modes label, .asset-assignment-form .asset-agent-list label, .asset-kind-choice label { display: flex; min-height: 3.1rem; align-items: center; gap: 0.7rem; border: 1px solid var(--color-line); border-radius: 0.7rem; background: var(--color-surface); padding: 0.65rem 0.75rem; cursor: pointer; }
+.asset-assignment-form fieldset label:has(input:checked), .asset-kind-choice label:has(input:checked) { border-color: color-mix(in srgb, var(--color-tide) 48%, var(--color-line)); background: color-mix(in srgb, var(--color-tide-wash) 55%, var(--color-surface)); }
+.asset-assignment-form fieldset input, .asset-kind-choice input { width: 1rem; height: 1rem; flex: 0 0 auto; accent-color: var(--color-tide); }
+.asset-assignment-form fieldset label > span, .asset-kind-choice label > span { display: grid; justify-self: auto; margin: 0; gap: 0.15rem; color: var(--color-ink); font-size: inherit; }
+.asset-assignment-form fieldset label strong, .asset-kind-choice label strong { font-size: 0.78rem; font-weight: 650; }
+.asset-assignment-form fieldset label small, .asset-kind-choice label small { color: var(--color-ink-soft); font-size: 0.7rem; font-weight: 400; }
+.asset-form-note { margin: 0; color: var(--color-ink-soft); font-size: 0.73rem; line-height: 1.5; }
 .asset-agent-list { max-height: 14rem; overflow: auto; padding-right: 0.15rem; }
 .asset-agent-list p, .asset-access-warning { margin: 0; color: var(--color-ink-soft); font-size: 0.73rem; line-height: 1.5; }
 .asset-access-warning { border-left: 2px solid var(--color-alert); color: var(--color-alert); padding-left: 0.7rem; }

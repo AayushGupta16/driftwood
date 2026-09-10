@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { CompanyAsset } from "./model";
-import { AudioIcon, CloseIcon, ImageIcon, LinkIcon, VideoIcon } from "./icons";
+import { AudioIcon, CloseIcon, ImageIcon, LinkIcon, RepoIcon, SkillIcon, VideoIcon } from "./icons";
 
 /** Thumbnails never play. Videos load only when their card approaches the viewport. */
 export function AssetThumbnail({ asset }: { asset: CompanyAsset }) {
@@ -20,7 +20,7 @@ export function AssetThumbnail({ asset }: { asset: CompanyAsset }) {
     return () => observer.disconnect();
   }, [asset.kind]);
 
-  const Icon = asset.kind === "image" ? ImageIcon : asset.kind === "video" ? VideoIcon : asset.kind === "audio" ? AudioIcon : LinkIcon;
+  const Icon = asset.kind === "image" ? ImageIcon : asset.kind === "video" ? VideoIcon : asset.kind === "audio" ? AudioIcon : asset.kind === "skill" ? SkillIcon : asset.kind === "repo" ? RepoIcon : LinkIcon;
   return (
     <div ref={ref} className="asset-thumbnail">
       {asset.kind === "image" && asset.contentUrl && !failed ? (
@@ -41,7 +41,7 @@ export function AssetThumbnail({ asset }: { asset: CompanyAsset }) {
           onError={() => setFailed(true)}
         />
       ) : (
-        <div className="asset-visual-placeholder"><Icon size={27} /><span>{failed ? "Preview unavailable" : asset.kind === "link" ? "External link" : asset.kind === "audio" ? "Audio" : asset.kind === "video" ? "Video" : "Image"}</span></div>
+        <div className="asset-visual-placeholder"><Icon size={27} /><span>{failed ? "Preview unavailable" : asset.kind === "link" ? "External link" : asset.kind === "skill" ? "Skill" : asset.kind === "repo" ? "Repository" : asset.kind === "audio" ? "Audio" : asset.kind === "video" ? "Video" : "Image"}</span></div>
       )}
     </div>
   );

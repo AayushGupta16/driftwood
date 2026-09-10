@@ -1,4 +1,8 @@
-export type AssetKind = "image" | "video" | "audio" | "link";
+export type AssetKind = "image" | "video" | "audio" | "link" | "skill" | "repo";
+/** The kind the upload form sends. Media sends none; archives and markdown must say which. */
+export type AssetUploadKind = "skill" | "repo";
+/** What the chosen file is, by its name. Decides whether the form asks for a kind. */
+export type UploadFileClass = "archive" | "markdown" | "media";
 export type AssetAssignmentMode = "all" | "selected";
 
 export type AssetAgent = {
@@ -77,7 +81,17 @@ export function assetKindLabel(kind: AssetKind): string {
   if (kind === "image") return "Image";
   if (kind === "video") return "Video";
   if (kind === "audio") return "Audio";
+  if (kind === "skill") return "Skill";
+  if (kind === "repo") return "Repository";
   return "Link";
+}
+
+/** Classify an upload by its lowercased file name. Archives need a kind; markdown is a skill. */
+export function uploadKindFor(filename: string): UploadFileClass {
+  const name = filename.toLowerCase();
+  if (name.endsWith(".zip") || name.endsWith(".tar.gz") || name.endsWith(".tgz")) return "archive";
+  if (name.endsWith(".md")) return "markdown";
+  return "media";
 }
 
 export function assetDestination(asset: CompanyAsset): string | null {

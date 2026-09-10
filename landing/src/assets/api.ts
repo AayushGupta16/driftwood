@@ -1,4 +1,4 @@
-import type { AssetAgent, AssetAssignmentMode, AssetKind, CompanyAsset } from "./model";
+import type { AssetAgent, AssetAssignmentMode, AssetKind, AssetUploadKind, CompanyAsset } from "./model";
 
 type RawAsset = {
   id: string;
@@ -75,6 +75,7 @@ export async function createLinkAsset(input: {
   url: string;
   description: string;
   tags: string[];
+  kind: "link" | "repo";
 }): Promise<CompanyAsset> {
   const raw = await requestJson<RawAsset>("/api/v1/dashboard/assets/link", {
     method: "POST",
@@ -89,12 +90,15 @@ export async function uploadAsset(input: {
   name: string;
   description: string;
   tags: string;
+  /* Media files send no kind. Archives and markdown must send one. */
+  kind?: AssetUploadKind;
 }): Promise<CompanyAsset> {
   const body = new FormData();
   body.set("file", input.file);
   if (input.name.trim()) body.set("name", input.name.trim());
   body.set("description", input.description);
   body.set("tags", input.tags);
+  if (input.kind) body.set("kind", input.kind);
   const raw = await requestJson<RawAsset>("/api/v1/dashboard/assets/upload", {
     method: "POST",
     body,

@@ -45,6 +45,14 @@ export function AudioIcon(props: IconProps) {
   return <Icon {...props}><path d="M5 14v-4M9 17V7M13 20V4M17 16V8M21 13v-2" /></Icon>;
 }
 
+export function SkillIcon(props: IconProps) {
+  return <Icon {...props}><path d="M7 3.5h7l4 4v13H7Z" /><path d="M14 3.5v4h4" /><path d="M10 12h4M10 15.5h4" /></Icon>;
+}
+
+export function RepoIcon(props: IconProps) {
+  return <Icon {...props}><circle cx="7" cy="5.5" r="2" /><circle cx="7" cy="18.5" r="2" /><circle cx="17" cy="8.5" r="2" /><path d="M7 7.5v9" /><path d="M17 10.5c0 3.5-10 2.5-10 6" /></Icon>;
+}
+
 export function ExternalIcon(props: IconProps) {
   return <Icon {...props}><path d="M13 5h6v6M19 5l-8 8" /><path d="M17 13v6H5V7h6" /></Icon>;
 }

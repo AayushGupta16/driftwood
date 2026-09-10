@@ -1,5 +1,6 @@
 import { initializeMockMode, mockBlockedResponse } from "./mock-mode.ts";
 import { resendRefusalMessage, resendWaitMinutes } from "./team/team-model.ts";
+import { uploadKindFor } from "./assets/model.ts";
 
 /* Preview-branch mock: `?mock=1` serves canned dashboard data so the
    redesigned dashboard can be seen (and screenshotted) without the backend.
@@ -1099,7 +1100,7 @@ if (mockMode) {
     return campaign;
   };
   type MockAsset = {
-    id: string; kind: "image" | "video" | "audio" | "link"; name: string; description: string;
+    id: string; kind: "image" | "video" | "audio" | "link" | "skill" | "repo"; name: string; description: string;
     tags: string[]; original_filename: string | null; content_type: string | null;
     byte_size: number | null; external_url: string | null; content_url: string | null;
     created_at: string; updated_at: string;
@@ -1115,7 +1116,11 @@ if (mockMode) {
     { id: "asset-messaging", kind: "video", name: "Messaging walkthrough", description: "Public Driftwood site clip showing the messaging workflow.", tags: ["product"], original_filename: "compare.mp4", content_type: "video/mp4", byte_size: 1093813, external_url: null, content_url: "/compare.mp4", created_at: hoursAgo(72), updated_at: hoursAgo(4), assignment_mode: "all", assigned_agent_ids: [] },
     { id: "asset-product", kind: "image", name: "Product workflow", description: "Approved overview visual for outbound demos.", tags: ["product", "approved"], original_filename: "workflow.png", content_type: "image/png", byte_size: 184200, external_url: null, content_url: assetPreview, created_at: hoursAgo(72), updated_at: hoursAgo(4), assignment_mode: "all", assigned_agent_ids: [] },
     { id: "asset-proof", kind: "link", name: "Enterprise customer story", description: "Use when a prospect asks for implementation proof.", tags: ["proof", "enterprise"], original_filename: null, content_type: null, byte_size: null, external_url: "https://driftwood.sh/", content_url: null, created_at: hoursAgo(96), updated_at: hoursAgo(28), assignment_mode: "selected", assigned_agent_ids: ["outbound", "demo"] },
+    { id: "asset-skill", kind: "skill", name: "Demo recording", description: "How to record a product demo from a prospect's app.", tags: ["skill"], original_filename: "demo-recording.zip", content_type: "application/zip", byte_size: 24576, external_url: null, content_url: "/api/v1/dashboard/assets/asset-skill/content", created_at: hoursAgo(48), updated_at: hoursAgo(48), assignment_mode: "all", assigned_agent_ids: [] },
+    { id: "asset-repo", kind: "repo", name: "Example app", description: "The product the agent demos. Clone before a walkthrough.", tags: ["code"], original_filename: null, content_type: null, byte_size: null, external_url: "https://github.com/example/example-app", content_url: null, created_at: hoursAgo(40), updated_at: hoursAgo(40), assignment_mode: "all", assigned_agent_ids: [] },
   ];
+  const assetError = (detail: string, status = 422) =>
+    new Response(JSON.stringify({ detail }), { status, headers: { "Content-Type": "application/json" } });
   const assetsApi = (init?: RequestInit, url?: string) => {
     const method = init?.method ?? "GET";
     const pathname = new URL(url ?? location.href, location.href).pathname;
@@ -1135,7 +1140,9 @@ if (mockMode) {
     if (suffix === "link" && method === "POST") {
       const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
       const now = new Date().toISOString();
-      const asset: MockAsset = { id: crypto.randomUUID(), kind: "link", name: String(body.name), description: String(body.description ?? ""), tags: Array.isArray(body.tags) ? body.tags : [], original_filename: null, content_type: null, byte_size: null, external_url: String(body.url), content_url: null, created_at: now, updated_at: now, assignment_mode: "all", assigned_agent_ids: [] };
+      const linkKind = body.kind === "repo" ? "repo" : "link";
+      if (linkKind === "repo" && !String(body.url).startsWith("https://")) return assetError("A repository link must start with https://.");
+      const asset: MockAsset = { id: crypto.randomUUID(), kind: linkKind, name: String(body.name), description: String(body.description ?? ""), tags: Array.isArray(body.tags) ? body.tags : [], original_filename: null, content_type: null, byte_size: null, external_url: String(body.url), content_url: null, created_at: now, updated_at: now, assignment_mode: "all", assigned_agent_ids: [] };
       mockAssets.unshift(asset);
       return asset;
     }
@@ -1144,12 +1151,20 @@ if (mockMode) {
       const file = form.get("file");
       const now = new Date().toISOString();
       const isFile = file instanceof File;
-      const kind = isFile && file.type.startsWith("audio/")
+      /* Mirrors the backend: archives and markdown must say skill or repo;
+         media must not. */
+      const fileClass = isFile ? uploadKindFor(file.name) : "media";
+      const askedKind = form.get("kind");
+      const skillOrRepo = askedKind === "skill" || askedKind === "repo" ? askedKind : null;
+      if (fileClass !== "media" && !skillOrRepo) return assetError("Choose whether this file is a skill or a repository.");
+      if (fileClass === "media" && askedKind !== null) return assetError("A media file does not take a kind.");
+      const kind = skillOrRepo ?? (isFile && file.type.startsWith("audio/")
         ? "audio"
         : isFile && file.type.startsWith("video/")
           ? "video"
-          : "image";
-      const asset: MockAsset = { id: crypto.randomUUID(), kind, name: String(form.get("name") || (isFile ? file.name : "Uploaded asset")), description: String(form.get("description") ?? ""), tags: String(form.get("tags") ?? "").split(",").map((tag) => tag.trim()).filter(Boolean), original_filename: isFile ? file.name : null, content_type: isFile ? file.type : null, byte_size: isFile ? file.size : null, external_url: null, content_url: isFile ? URL.createObjectURL(file) : null, created_at: now, updated_at: now, assignment_mode: "all", assigned_agent_ids: [] };
+          : "image");
+      const contentType = !isFile ? null : file.type || (fileClass === "markdown" ? "text/markdown" : file.name.toLowerCase().endsWith(".zip") ? "application/zip" : fileClass === "archive" ? "application/gzip" : null);
+      const asset: MockAsset = { id: crypto.randomUUID(), kind, name: String(form.get("name") || (isFile ? file.name : "Uploaded asset")), description: String(form.get("description") ?? ""), tags: String(form.get("tags") ?? "").split(",").map((tag) => tag.trim()).filter(Boolean), original_filename: isFile ? file.name : null, content_type: contentType, byte_size: isFile ? file.size : null, external_url: null, content_url: isFile ? URL.createObjectURL(file) : null, created_at: now, updated_at: now, assignment_mode: "all", assigned_agent_ids: [] };
       mockAssets.unshift(asset);
       return asset;
     }

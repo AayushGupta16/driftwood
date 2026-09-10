@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { assetAssignmentLabel, assetAssignmentsReady, assetDestination, assetKindLabel, filterAssets, formatBytes, type CompanyAsset } from "./model.ts";
+import { assetAssignmentLabel, assetAssignmentsReady, assetDestination, assetKindLabel, filterAssets, formatBytes, uploadKindFor, type CompanyAsset } from "./model.ts";
 
 const assets: CompanyAsset[] = [
   {
@@ -51,6 +51,38 @@ const assets: CompanyAsset[] = [
     assignmentMode: "selected",
     assignedAgentIds: ["outbound", "demo"],
   },
+  {
+    id: "skill-1",
+    kind: "skill",
+    name: "Demo recording",
+    description: "How to record a demo",
+    tags: ["skill"],
+    originalFilename: "demo-recording.zip",
+    contentType: "application/zip",
+    byteSize: 24576,
+    externalUrl: null,
+    contentUrl: "/api/v1/dashboard/assets/skill-1/content",
+    createdAt: "2026-09-10T00:00:00Z",
+    updatedAt: "2026-09-10T00:00:00Z",
+    assignmentMode: "all",
+    assignedAgentIds: [],
+  },
+  {
+    id: "repo-1",
+    kind: "repo",
+    name: "Example app",
+    description: "The product the agent demos",
+    tags: ["code"],
+    originalFilename: null,
+    contentType: null,
+    byteSize: null,
+    externalUrl: "https://github.com/example/example-app",
+    contentUrl: null,
+    createdAt: "2026-09-10T00:00:00Z",
+    updatedAt: "2026-09-10T00:00:00Z",
+    assignmentMode: "all",
+    assignedAgentIds: [],
+  },
 ];
 
 test("asset filtering searches metadata and respects type", () => {
@@ -58,6 +90,9 @@ test("asset filtering searches metadata and respects type", () => {
   assert.deepEqual(filterAssets(assets, "link", "proof").map((asset) => asset.id), ["link-1"]);
   assert.deepEqual(filterAssets(assets, "image", "case"), []);
   assert.deepEqual(filterAssets(assets, "audio", "voice").map((asset) => asset.id), ["audio-1"]);
+  assert.deepEqual(filterAssets(assets, "skill", "").map((asset) => asset.id), ["skill-1"]);
+  assert.deepEqual(filterAssets(assets, "repo", "demos").map((asset) => asset.id), ["repo-1"]);
+  assert.deepEqual(filterAssets(assets, "repo", "recording"), []);
 });
 
 test("asset assignment labels distinguish workspace, selected, and no-agent access", () => {
@@ -82,4 +117,20 @@ test("asset metadata formatters keep file and link semantics distinct", () => {
   assert.equal(assetDestination(assets[0]), assets[0].contentUrl);
   assert.equal(assetDestination(assets[2]), assets[2].externalUrl);
   assert.equal(assetKindLabel("audio"), "Audio");
+  assert.equal(assetKindLabel("skill"), "Skill");
+  assert.equal(assetKindLabel("repo"), "Repository");
+  assert.equal(assetDestination(assets[3]), assets[3].contentUrl);
+  assert.equal(assetDestination(assets[4]), assets[4].externalUrl);
+});
+
+test("upload kind follows the lowercased file name", () => {
+  assert.equal(uploadKindFor("skill.zip"), "archive");
+  assert.equal(uploadKindFor("repo.tar.gz"), "archive");
+  assert.equal(uploadKindFor("repo.tgz"), "archive");
+  assert.equal(uploadKindFor("SKILL.md"), "markdown");
+  assert.equal(uploadKindFor("Repo.TAR.GZ"), "archive");
+  assert.equal(uploadKindFor("ARCHIVE.ZIP"), "archive");
+  assert.equal(uploadKindFor("screenshot.png"), "media");
+  assert.equal(uploadKindFor("clip.mp4"), "media");
+  assert.equal(uploadKindFor("notes.md.png"), "media");
 });
