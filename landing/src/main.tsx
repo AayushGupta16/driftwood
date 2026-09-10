@@ -26,6 +26,7 @@ const Assets = lazy(() => import('./assets/Assets.tsx'))
 const AnalyticsDashboard = lazy(() => import('./analytics/AnalyticsDashboard.tsx'))
 const WorkspacePage = lazy(() => import('./dashboard/WorkspacePage.tsx'))
 const Team = lazy(() => import('./team/Team.tsx'))
+const Settings = lazy(() => import('./settings/Settings.tsx'))
 // Pricing is parked for now; re-enable by restoring the route below.
 // const Pricing = lazy(() => import('./Pricing.tsx'))
 
@@ -62,6 +63,8 @@ const page =
     <WorkspacePage active="triggers"><TriggerDetail triggerId={decodeURIComponent(triggerPathMatch[1])} /></WorkspacePage>
   ) : path === '/dashboard/team' ? (
     <WorkspacePage active="team"><Team /></WorkspacePage>
+  ) : path === '/dashboard/settings' ? (
+    <WorkspacePage active="settings"><Settings /></WorkspacePage>
   ) : path === '/dashboard/leads' ? (
     <Leads />
   ) : path === '/dashboard/companies' ? (
