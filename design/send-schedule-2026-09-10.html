@@ -1,0 +1,843 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Send schedule (design draft, 2026-09-10)</title>
+<!--
+  DESIGN DRAFT: send schedule, 2026-09-10.
+  Standalone, self-contained, no scripts. For Aayush's review before any
+  React is written (design-changes-draft-first).
+
+  The ask. Autosana wants to choose when demos are sent.
+
+  What the backend does today. One global send window. 9 AM to 6 PM Pacific.
+  Seven days a week. No holidays. Every workspace shares it.
+
+  The feature. A per-workspace send schedule:
+  - which days of the week outbound goes out (default Monday to Friday)
+  - one daily time window (default 9:00 AM to 6:00 PM)
+  - a timezone (default Pacific)
+  - a checkbox to skip US federal holidays (default on)
+  It applies to every channel: email, LinkedIn, X. Daily caps still apply on
+  top. Saving moves already-queued sends to the next open window. Only owners
+  and admins can save. Members see it read-only.
+
+  The backend will serve GET /api/v1/dashboard/settings with: the schedule,
+  window_open_now, next_open_at, the next 3 upcoming_holidays (date and
+  name), and daily_caps (email 20, LinkedIn messages 25, connection requests
+  20, X DMs 5, X follows 10).
+
+  Three screens on one canvas:
+  A. /dashboard/settings. A new page with one card. Recommended.
+  B. Overview with a collapsed schedule line. The alternative. Offered
+     because it is the smallest delta: one line on a page the customer
+     already reads, and no new page.
+  C. Review queue, Queued tab. Ships with A or with B. The runway strip
+     states the schedule, and projected dates count send days.
+
+  Recommendation: A plus C.
+
+  Chrome and tokens are lifted from the live dashboard (the form of
+  design/triggers.html):
+  - tokens: landing/src/index.css @theme (white ground, ink scale, hairline
+    #e9ebee, one tide accent, green reserved for live/ok)
+  - shell: landing/src/dashboard/AppShell.tsx + app-shell.css (15.25rem
+    sidebar, brand row, create button, grouped nav, identity footer). Nav
+    order from landing/src/dashboard/navigation.ts, which now has Team after
+    Review queue. Settings is the addition in screen A.
+  - form controls: landing/src/campaigns/campaigns.css .campaign-field and
+    .campaign-check-field
+  - card, hint, row, Save pill: landing/src/team/team.css. The auto-join
+    domain card in landing/src/team/Team.tsx is the model for edit + save.
+  - overview: landing/src/Dashboard.tsx ApprovedView, ConnectionSetup,
+    TodaysSending, ActivityLine, and landing/src/dashboard/overview.css
+  - review queue: landing/src/Review.tsx tab bar, QueueStatsStrip,
+    QueuedRow, SendStatus, and landing/src/review-queue.css
+  - fonts: the same self-hosted files the app uses, from driftwood.sh
+
+  Only additions carry a .draft-tag chip. Unchanged regions carry an HTML
+  comment that says so. All data on the page is sample data. Today in the
+  sample is Thu Sep 10 2026.
+-->
+<style>
+  @font-face{font-family:"Public Sans";src:url(https://driftwood.sh/fonts/public-sans-latin-wght-normal.woff2) format("woff2-variations");font-weight:100 900;font-display:swap}
+  @font-face{font-family:"Source Serif 4";src:url(https://driftwood.sh/fonts/source-serif-4-latin-600-normal.woff2) format("woff2");font-weight:600;font-display:swap}
+  @font-face{font-family:"IBM Plex Mono";src:url(https://driftwood.sh/fonts/ibm-plex-mono-latin-400-normal.woff2) format("woff2");font-weight:400;font-display:swap}
+  @font-face{font-family:"IBM Plex Mono";src:url(https://driftwood.sh/fonts/ibm-plex-mono-latin-500-normal.woff2) format("woff2");font-weight:500;font-display:swap}
+  @font-face{font-family:"IBM Plex Mono";src:url(https://driftwood.sh/fonts/ibm-plex-mono-latin-600-normal.woff2) format("woff2");font-weight:600;font-display:swap}
+
+  :root {
+    --paper: #ffffff;
+    --surface: #ffffff;
+    --ink: #16181b;
+    --ink-soft: #6a737d;
+    --ink-faint: #6f7780;
+    --tide: #15557e;
+    --tide-deep: #0d3c5b;
+    --tide-wash: #eaf1f7;
+    --sand: #eef2f5;
+    --line: #e9ebee;
+    --ok: #197142;
+    --alert: #b42318;
+    --shadow-win: 0 1px 2px rgba(22, 24, 27, 0.05), 0 24px 48px -24px rgba(22, 24, 27, 0.18);
+    --shadow-win-sm: 0 1px 2px rgba(22, 24, 27, 0.04), 0 10px 20px -14px rgba(22, 24, 27, 0.12);
+    --sans: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --brand: "Source Serif 4", Georgia, serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    --r-win: 12px;
+    --ease: cubic-bezier(.2, 0, 0, 1);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  a { color: inherit; }
+  button, input, select { font: inherit; }
+  :focus-visible { outline: 2px solid var(--tide); outline-offset: 2px; }
+
+  /* ---------- draft framing (not part of the design) ---------- */
+  .canvas { max-width: 80rem; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; }
+  .draft-head { margin-bottom: 2rem; }
+  .draft-head .k { margin: 0; color: var(--ink-faint); font-size: .68rem; font-weight: 620; }
+  .draft-head h1 { margin: .4rem 0 0; font-size: 1.45rem; font-weight: 650; letter-spacing: -.02em; line-height: 1.15; }
+  .draft-head .sub { margin: .6rem 0 0; max-width: 46rem; color: var(--ink-soft); font-size: .8rem; line-height: 1.55; }
+  .state-label { margin: 2.6rem 0 .55rem; color: var(--ink-soft); font-size: .68rem; font-weight: 620; }
+  .state-label small { color: var(--ink-faint); font-weight: 400; }
+  .draft-tag {
+    display: inline-block; margin-left: .5rem; vertical-align: middle;
+    border: 1px dashed var(--line); border-radius: 999px;
+    color: var(--ink-faint); padding: .08rem .5rem; font-size: .6rem; font-weight: 600; line-height: 1.5;
+    font-family: var(--sans); letter-spacing: 0; text-transform: none;
+    white-space: nowrap;
+  }
+  .caption { margin: .6rem 0 0; color: var(--ink-faint); font-size: .68rem; line-height: 1.55; }
+  .fold-note { margin: 1.4rem 0 0; color: var(--ink-faint); font-size: .72rem; line-height: 1.5; }
+
+  /* ---------- the dashboard shell, mirrored from app-shell.css ---------- */
+  .frame {
+    border: 1px solid var(--line); border-radius: var(--r-win);
+    background: var(--paper); box-shadow: var(--shadow-win-sm);
+    overflow: hidden;
+  }
+  .shell { display: grid; grid-template-columns: 15.25rem minmax(0, 1fr); min-height: 30rem; }
+  .sidebar {
+    display: flex; flex-direction: column;
+    border-right: 1px solid var(--line);
+    background: color-mix(in srgb, var(--paper) 98%, var(--tide-wash));
+    padding: 1rem .8rem .8rem;
+  }
+  .brand-row { display: flex; min-height: 2.6rem; align-items: center; padding: 0 .55rem; }
+  .wordmark {
+    display: inline-flex; align-items: center; gap: .75rem;
+    color: var(--ink); text-decoration: none;
+    font-family: var(--brand); font-weight: 600; font-size: 17px; line-height: 1;
+  }
+  .wordmark img { width: 1.75rem; height: 1.75rem; flex: none; }
+  .side-create {
+    display: flex; min-height: 2.45rem; align-items: center; justify-content: center; gap: .45rem;
+    margin: .9rem .25rem .7rem;
+    border: 1px solid var(--tide); border-radius: .65rem;
+    background: var(--tide); color: #fff;
+    font-size: .78rem; font-weight: 650; text-decoration: none;
+    transition: background 200ms var(--ease);
+  }
+  .side-create:hover { background: var(--tide-deep); }
+  .side-nav { flex: 1; padding: .15rem .25rem 1rem; }
+  .side-group + .side-group { margin-top: 1.15rem; }
+  .side-label {
+    margin: 0 0 .35rem; padding: 0 .65rem;
+    color: var(--ink-faint); font-size: .65rem; font-weight: 650; letter-spacing: .035em; text-transform: uppercase;
+  }
+  .side-link {
+    position: relative; display: flex; min-height: 2.25rem; align-items: center; gap: .65rem;
+    border-radius: .55rem; color: var(--ink-soft); padding: 0 .65rem;
+    font-size: .79rem; font-weight: 520; text-decoration: none;
+    transition: color 200ms var(--ease), background 200ms var(--ease);
+  }
+  .side-link:hover { background: var(--tide-wash); color: var(--tide-deep); }
+  .side-link.is-active { background: var(--tide-wash); color: var(--tide-deep); font-weight: 650; }
+  .side-link.is-active::before {
+    position: absolute; top: .55rem; bottom: .55rem; left: -.25rem; width: 2px;
+    border-radius: 2px; background: var(--tide); content: "";
+  }
+  .side-link .draft-tag { margin-left: auto; }
+  .side-footer { border-top: 1px solid var(--line); padding: .7rem .25rem 0; }
+  .identity { display: grid; grid-template-columns: 1.85rem minmax(0, 1fr) 1.85rem; align-items: center; gap: .55rem; padding: .4rem; }
+  .avatar {
+    display: grid; width: 1.85rem; height: 1.85rem; place-items: center;
+    border-radius: .45rem; background: var(--tide); color: #fff; font-size: .7rem; font-weight: 700;
+  }
+  .identity div { display: flex; min-width: 0; flex-direction: column; gap: .1rem; }
+  .identity strong, .identity small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .identity strong { font-size: .72rem; font-weight: 650; }
+  .identity small { color: var(--ink-faint); font-size: .63rem; }
+  .identity button {
+    display: grid; width: 1.85rem; height: 1.85rem; place-items: center;
+    border: 0; border-radius: .45rem; background: transparent; color: var(--ink-faint); cursor: pointer;
+  }
+  .identity button:hover { background: var(--sand); color: var(--ink); }
+  .ic { width: 17px; height: 17px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+  .ic.sm { width: 15px; height: 15px; }
+  .ic.lg { width: 24px; height: 24px; }
+
+  .stage { min-width: 0; }
+  .masthead { display: none; }
+  .main { width: min(100%, 90rem); margin: 0 auto; padding: 2.4rem 2rem 4rem; }
+
+  /* ================= screen A: settings page (team.css + campaigns.css) ================= */
+  .settings-page { display: flex; max-width: 44rem; margin: 0 auto; flex-direction: column; gap: 1.1rem; }
+  .settings-heading { display: flex; flex-direction: column; gap: .45rem; margin-bottom: .35rem; }
+  .settings-heading h1 { margin: 0; font-size: clamp(1.7rem, 3.6vw, 2.25rem); font-weight: 620; letter-spacing: -.025em; line-height: 1.08; }
+  .settings-heading p { margin: 0; color: var(--ink-soft); font-size: .88rem; }
+  /* CARD from dashboard-shared.ts: rounded-xl, line border, surface, shadow-win */
+  .card { border: 1px solid var(--line); border-radius: .75rem; background: var(--surface); box-shadow: var(--shadow-win); }
+  /* team.css .team-invite */
+  .card-form { display: flex; flex-direction: column; gap: .55rem; padding: .95rem 1.1rem 1rem; }
+  .card-form h2 { margin: 0; color: var(--ink); font-size: .82rem; font-weight: 650; }
+  .hint { margin: 0; color: var(--ink-faint); font-size: .76rem; }
+  /* campaigns.css .campaign-field */
+  .field { display: flex; flex-direction: column; gap: .42rem; margin-top: .45rem; }
+  .field > span { color: var(--ink-soft); font-size: .7rem; font-weight: 600; }
+  .field select {
+    width: 100%;
+    border: 1px solid var(--line); border-radius: .55rem; outline: 0;
+    background: var(--paper); color: var(--ink);
+    padding: .62rem .7rem; font: inherit; font-size: .75rem; line-height: 1.45;
+  }
+  .field select:focus { border-color: var(--tide); box-shadow: 0 0 0 2px color-mix(in srgb, var(--tide) 12%, transparent); }
+  .field select:disabled { cursor: default; background: var(--sand); color: var(--ink-soft); opacity: 1; }
+  .field > small { color: var(--ink-faint); font-size: .7rem; line-height: 1.45; }
+  .field-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1rem; }
+  .hours { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+  .hours select { width: auto; min-width: 6.5rem; }
+  .hours span { color: var(--ink-soft); font-size: .75rem; }
+  /* day pills: the one button system, pressed = primary fill */
+  .day-pills { display: flex; flex-wrap: wrap; gap: .4rem; }
+  .day-pill {
+    display: inline-flex; min-height: 2.1rem; align-items: center; justify-content: center;
+    border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink-soft);
+    padding: .4rem .85rem; font-size: .76rem; font-weight: 600; cursor: pointer;
+    transition: background 200ms var(--ease), border-color 200ms var(--ease), color 200ms var(--ease);
+  }
+  .day-pill:hover { border-color: color-mix(in srgb, var(--tide) 45%, var(--line)); background: var(--tide-wash); color: var(--tide-deep); }
+  .day-pill[aria-pressed="true"] { border-color: var(--tide); background: var(--tide); color: #fff; }
+  .day-pill[aria-pressed="true"]:hover { border-color: var(--tide-deep); background: var(--tide-deep); }
+  /* campaigns.css .campaign-check-field */
+  .check-field { display: flex; align-items: flex-start; gap: .6rem; margin-top: .45rem; border: 1px solid var(--line); border-radius: .6rem; padding: .75rem; cursor: pointer; }
+  .check-field input { margin-top: .15rem; accent-color: var(--tide); }
+  .check-field > span { display: flex; flex-direction: column; gap: .18rem; }
+  .check-field strong { font-size: .72rem; }
+  .check-field small { color: var(--ink-soft); font-size: .7rem; line-height: 1.4; }
+  .next-window { margin: .9rem 0 0; color: var(--ink-soft); font-size: .76rem; line-height: 1.5; }
+  /* team.css .team-invite-row button, and .team-inline-note in green for a success */
+  .save-row { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin-top: .35rem; }
+  .save-btn {
+    min-height: 2.1rem; border: 0; border-radius: 999px; background: var(--tide); color: #fff;
+    padding: .35rem 1.1rem; font-size: .82rem; font-weight: 600; cursor: pointer;
+    transition: background 200ms var(--ease);
+  }
+  .save-btn:hover:not(:disabled) { background: var(--tide-deep); }
+  .save-btn:disabled { opacity: .5; cursor: not-allowed; }
+  .inline-note { margin: 0; color: var(--ok); font-size: .76rem; }
+  .caps-line { margin: 0 .1rem; color: var(--ink-faint); font-size: .76rem; line-height: 1.5; }
+
+  /* ================= screen B: overview (overview.css) ================= */
+  .overview-page { --overview-radius: .85rem; display: flex; flex-direction: column; gap: .9rem; }
+  .overview-heading { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; min-height: 2.8rem; }
+  .overview-heading h1 { margin: 0; font-size: clamp(1.7rem, 3.6vw, 2.25rem); font-weight: 620; letter-spacing: -.025em; line-height: 1.08; }
+  .overview-heading-links { display: flex; flex: none; flex-wrap: wrap; gap: .35rem; }
+  .overview-heading-links a, .overview-panel-heading > a {
+    display: inline-flex; min-height: 2.1rem; align-items: center; justify-content: center;
+    border: 1px solid var(--line); border-radius: .6rem; background: var(--surface); color: var(--ink-soft);
+    padding: .45rem .68rem; font-size: .72rem; font-weight: 620; text-decoration: none;
+    transition: border-color 200ms var(--ease), color 200ms var(--ease), background 200ms var(--ease);
+  }
+  .overview-heading-links a:hover, .overview-panel-heading > a:hover { border-color: color-mix(in srgb, var(--tide) 38%, var(--line)); background: var(--tide-wash); color: var(--tide-deep); }
+  .overview-section-heading, .overview-panel-heading { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 1rem; }
+  .overview-section-heading { margin-bottom: .55rem; padding: 0 .1rem; }
+  .overview-section-heading h2, .overview-panel-heading h2 { margin: 0; font-size: .95rem; font-weight: 650; letter-spacing: -.012em; line-height: 1.3; }
+  .overview-section-heading > span { color: var(--ink-faint); font-size: .7rem; font-variant-numeric: tabular-nums; }
+  .overview-connection-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .7rem; }
+  .overview-channel-row { min-width: 0; border: 1px solid var(--line); border-radius: var(--overview-radius); background: var(--surface); padding: 1rem; }
+  .overview-channel-row > .flex { display: flex; align-items: flex-start; gap: .8rem; }
+  .channel-mark { display: flex; width: 2.25rem; height: 2.25rem; flex: none; align-items: center; justify-content: center; border-radius: .65rem; }
+  .channel-mark.is-connected { background: color-mix(in srgb, var(--ok) 10%, transparent); color: var(--ok); }
+  .channel-mark.is-open { background: color-mix(in srgb, var(--tide) 10%, transparent); color: var(--tide); }
+  .channel-mark svg { width: 1.5rem; height: 1.5rem; }
+  .channel-body { min-width: 0; flex: 1; }
+  .overview-channel-row h3 { margin: 0; font-size: .85rem; font-weight: 600; letter-spacing: -.01em; }
+  .overview-channel-row p { margin: .5rem 0 0; color: var(--ink-soft); font-size: .72rem; line-height: 1.45; }
+  .connect-btn {
+    display: inline-flex; min-height: 2rem; align-items: center; justify-content: center; gap: .4rem;
+    margin-top: .8rem; border: 0; border-radius: 999px; background: var(--tide); color: #fff;
+    padding: .45rem .7rem; font-size: .72rem; font-weight: 600; cursor: pointer;
+    transition: background 200ms var(--ease);
+  }
+  .connect-btn:hover { background: var(--tide-deep); }
+  .connect-btn svg { width: 1.1rem; height: 1.1rem; }
+  /* the per-channel account list: team.css member row at the card's scale */
+  .overview-accounts { margin: .55rem 0 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+  .overview-accounts li { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem .6rem; padding: .5rem 0; border-bottom: 1px solid var(--line); }
+  .overview-accounts li:last-child { border-bottom: 0; }
+  .team-avatar { display: grid; flex: 0 0 auto; width: 1.75rem; height: 1.75rem; place-items: center; border-radius: 50%; background: var(--tide-wash); color: var(--tide); font-size: .7rem; font-weight: 650; }
+  .team-member-id { min-width: 0; flex: 1 1 8rem; }
+  .team-member-name { overflow: hidden; color: var(--ink); font-size: .78rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+  .team-member-sub { overflow: hidden; color: var(--ink-faint); font-size: .68rem; text-overflow: ellipsis; white-space: nowrap; }
+  .overview-account-tail { display: flex; flex: 0 0 auto; align-items: center; gap: .4rem; margin-left: auto; }
+  .team-remove { min-height: 1.75rem; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--alert); padding: .2rem .65rem; font-size: .68rem; font-weight: 600; cursor: pointer; }
+  .team-remove:hover { border-color: color-mix(in srgb, var(--alert) 45%, var(--line)); }
+  .overview-panel { min-width: 0; border: 1px solid var(--line); border-radius: var(--overview-radius); background: var(--surface); padding: 1.1rem; }
+  /* the alternative: one line, heading and sentence on one row, a quiet link at the right */
+  .overview-schedule { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding-block: .85rem; }
+  .overview-schedule-copy { display: flex; flex-wrap: wrap; align-items: baseline; gap: .25rem .75rem; min-width: 0; }
+  .overview-schedule-copy h2 { margin: 0; font-size: .95rem; font-weight: 650; letter-spacing: -.012em; line-height: 1.3; }
+  .overview-schedule-copy p { margin: 0; color: var(--ink-soft); font-size: .8rem; line-height: 1.45; }
+  .overview-schedule > a {
+    display: inline-flex; min-height: 2.1rem; align-items: center; justify-content: center;
+    border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink-soft);
+    padding: .45rem .8rem; font-size: .72rem; font-weight: 620; text-decoration: none;
+    transition: border-color 200ms var(--ease), color 200ms var(--ease), background 200ms var(--ease);
+  }
+  .overview-schedule > a:hover { border-color: color-mix(in srgb, var(--tide) 38%, var(--line)); background: var(--tide-wash); color: var(--tide-deep); }
+  .overview-sending-layout { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(15rem, .7fr); gap: 1.1rem; margin-top: .8rem; }
+  .overview-sending-stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: .7rem; overflow: hidden; }
+  .overview-sending-stat { display: flex; min-width: 0; min-height: 5.4rem; flex-direction: column; justify-content: space-between; gap: .55rem; padding: .78rem; }
+  .overview-sending-stat + .overview-sending-stat { border-left: 1px solid var(--line); }
+  .overview-sending-stat span { color: var(--ink-faint); font-size: .7rem; line-height: 1.35; }
+  .overview-sending-stat strong { display: block; font-size: 1.3rem; font-weight: 650; letter-spacing: -.025em; font-variant-numeric: tabular-nums; }
+  .overview-sending-stat strong.is-success { color: var(--ok); font-size: .84rem; letter-spacing: 0; }
+  .overview-latest-sends { min-width: 0; border-left: 1px solid var(--line); padding-left: 1.1rem; }
+  .overview-latest-sends h3 { display: flex; align-items: baseline; justify-content: space-between; margin: 0 0 .4rem; color: var(--ink-faint); font-size: .7rem; font-weight: 620; }
+  .overview-latest-sends h3 a { color: var(--tide); text-decoration: none; }
+  .overview-latest-sends h3 a:hover { text-decoration: underline; }
+  .activity-line { display: flex; min-height: 2rem; align-items: baseline; gap: .625rem; border-top: 1px solid var(--line); padding-top: .5rem; color: var(--ink-soft); font-size: 12.5px; }
+  .activity-line > span:first-child { min-width: 0; }
+  .activity-line b { font-weight: 600; color: var(--ink); }
+  .activity-line time { margin-left: auto; flex: none; color: var(--ink-faint); font-size: 11px; font-variant-numeric: tabular-nums; }
+
+  /* ================= screen C: review queue (review-queue.css) ================= */
+  .review-page { width: min(100%, 82rem); margin: 0 auto; color: var(--ink); }
+  .review-page-header { display: flex; min-height: 2.8rem; align-items: flex-end; justify-content: space-between; gap: 1rem; }
+  .review-page-header h1 { margin: 0; font-size: clamp(1.7rem, 3.6vw, 2.25rem); font-weight: 620; letter-spacing: -.028em; line-height: 1.08; }
+  /* mono survives here only: the review queue's functional bits */
+  .review-count { margin-bottom: 5px; flex: none; color: var(--ink-faint); font-family: var(--mono); font-size: 11px; letter-spacing: .06em; font-variant-numeric: tabular-nums; }
+  .review-tabs { display: inline-flex; align-items: center; gap: .2rem; margin-top: 1.1rem; border: 1px solid var(--line); border-radius: .7rem; background: var(--sand); padding: .22rem; }
+  .review-tabs button {
+    min-height: 2.25rem; border: 0; border-radius: 999px; background: transparent; color: var(--ink-soft);
+    padding: .375rem 1rem; font-size: 13.5px; font-weight: 500; font-variant-numeric: tabular-nums; cursor: pointer;
+    transition: color 200ms var(--ease), background 200ms var(--ease);
+  }
+  .review-tabs button:hover { color: var(--ink); }
+  .review-tabs button[aria-pressed="true"] { background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: var(--shadow-win-sm); }
+  .review-runway { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 0; margin-top: 1rem; border-block: 1px solid var(--line); background: color-mix(in srgb, var(--sand) 52%, white); }
+  .review-runway p { margin: 0; padding: .65rem .8rem; color: var(--ink-soft); font-family: var(--mono); font-size: 11.5px; line-height: 1.6; font-variant-numeric: tabular-nums; }
+  .review-runway p + p { border-left: 1px solid var(--line); }
+  .review-runway p b { font-weight: 400; color: var(--ink); }
+  /* the new schedule line spans the strip and sits above the per-kind lines */
+  .runway-schedule { grid-column: 1 / -1; border-bottom: 1px solid var(--line); }
+  .review-runway .runway-schedule + p { border-left: 0; }
+  .runway-schedule a { color: var(--tide); text-decoration: none; }
+  .runway-schedule a:hover { text-decoration: underline; }
+  .review-filters { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; margin-top: 1rem; }
+  .filter-chip {
+    display: inline-flex; min-height: 2.25rem; align-items: center; gap: .375rem;
+    border: 1px solid var(--line); border-radius: 999px; background: var(--paper); color: var(--ink-soft);
+    padding: .375rem .75rem; font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer;
+  }
+  .filter-chip span { color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+  .filter-chip[aria-pressed="true"] { border-color: color-mix(in srgb, var(--tide) 40%, transparent); background: var(--tide-wash); color: var(--tide); }
+  .filter-chip[aria-pressed="true"] span { color: color-mix(in srgb, var(--tide) 70%, transparent); }
+  .queued-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: .625rem; margin: .875rem .125rem .625rem; }
+  .queued-toolbar label { display: inline-flex; align-items: center; gap: 9px; color: var(--ink-soft); font-size: 13.5px; font-weight: 500; cursor: pointer; }
+  .queued-toolbar input, .review-queued-row input[type="checkbox"] { width: 1.25rem; height: 1.25rem; margin: 0; flex: none; accent-color: var(--tide); }
+  .queued-toolbar .review-count { margin: 0 0 0 auto; }
+  .review-queued-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; }
+  .review-queued-row { border: 1px solid var(--line); border-radius: .85rem; background: var(--surface); box-shadow: var(--shadow-win-sm); padding: 1rem; }
+  .queued-top { display: flex; align-items: center; gap: .5rem; }
+  .kind-badge { border: 1px solid var(--line); border-radius: 999px; background: var(--paper); color: var(--ink-soft); padding: .125rem .5rem; font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
+  .queued-age { margin-left: auto; flex: none; color: var(--ink-faint); font-family: var(--mono); font-size: 10.5px; font-variant-numeric: tabular-nums; }
+  .lead-line { margin: 3px 0 .75rem; color: var(--ink-soft); font-size: 13px; line-height: 1.5; }
+  .lead-line a { color: var(--tide); font-weight: 500; text-decoration: none; }
+  .lead-line a:hover { text-decoration: underline; }
+  .lead-line a small { font-size: 11px; }
+  .stage-pill { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 999px; background: var(--paper); color: var(--ink-soft); padding: .125rem .5rem; font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; }
+  .note-block { display: block; width: 100%; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); color: var(--ink); padding: 13px .875rem; text-align: left; cursor: pointer; }
+  .note-block .subject { display: block; margin-bottom: .25rem; font-family: var(--mono); font-size: 12.75px; font-weight: 600; line-height: 1.65; }
+  .note-block .body { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; font-family: var(--mono); font-size: 12.75px; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .attach-line { margin: .375rem 0 0; color: var(--ink-faint); font-family: var(--mono); font-size: 10.5px; }
+  .queued-foot { display: flex; min-height: 1.5rem; align-items: center; gap: .625rem; margin-top: .625rem; }
+  .send-status { color: var(--ink-soft); font-family: var(--mono); font-size: 11.5px; letter-spacing: .02em; font-variant-numeric: tabular-nums; }
+  .queued-cancel { margin-left: auto; border: 0; background: transparent; color: var(--ink-faint); padding: .375rem .25rem; font-size: 13px; font-weight: 500; cursor: pointer; transition: color 200ms var(--ease); }
+  .queued-cancel:hover { color: var(--ink); }
+
+  /* ---------- under 960px the sidebar folds into the masthead, as in the app ---------- */
+  @media (max-width: 959px) {
+    .shell { grid-template-columns: minmax(0, 1fr); min-height: 0; }
+    .sidebar { display: none; }
+    .masthead {
+      display: grid; min-height: 3.5rem; grid-template-columns: 2.25rem 1fr 2.25rem; align-items: center;
+      border-bottom: 1px solid var(--line); background: var(--paper); padding: 0 .85rem;
+    }
+    .masthead .menu { display: grid; width: 2.25rem; height: 2.25rem; place-items: center; border: 0; border-radius: .55rem; background: transparent; color: var(--ink); cursor: pointer; }
+    .masthead .wordmark { justify-self: center; }
+    .masthead .avatar { justify-self: end; }
+    .main { padding: 1.75rem 1rem 3rem; }
+    .field-row { grid-template-columns: 1fr; }
+    .overview-connection-grid { grid-template-columns: 1fr; }
+    .overview-sending-layout { grid-template-columns: 1fr; }
+    .overview-sending-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .overview-sending-stat + .overview-sending-stat { border-left: 0; border-top: 1px solid var(--line); }
+    .overview-latest-sends { border-left: 0; padding-left: 0; }
+    .review-queued-grid { grid-template-columns: 1fr; }
+    .review-runway { grid-template-columns: 1fr; }
+    .review-runway p + p { border-top: 1px solid var(--line); border-left: 0; }
+  }
+  @media (max-width: 480px) {
+    .canvas { padding: 1.25rem .75rem 4rem; }
+    .day-pills { display: grid; grid-template-columns: repeat(4, 1fr); }
+    .day-pill { padding-inline: .3rem; }
+    .save-btn { width: 100%; }
+    .review-page-header { align-items: flex-start; flex-direction: column; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="canvas">
+
+  <header class="draft-head">
+    <p class="k">Design draft · 2026-09-10 · sample data throughout · not wired up</p>
+    <h1>Send schedule</h1>
+    <p class="sub">Autosana asked to choose when their demos go out. Today the backend has one window for everyone: 9 AM to 6 PM Pacific, seven days a week, no holidays. This draft gives each workspace its own schedule: the days, one daily window, a timezone, and a switch to skip US federal holidays. It applies to email, LinkedIn and X alike, and daily caps still sit on top. Three screens are drawn below. A is the recommended new Settings page. B is the alternative, a single line on Overview. C is the Review queue, which changes either way.</p>
+  </header>
+
+  <!-- ================= screen A: /dashboard/settings ================= -->
+  <p class="state-label" id="sa">A · Settings <small>· /dashboard/settings, owner view, the form is dirty (Saturday was just unselected)</small></p>
+  <div class="frame">
+    <div class="shell">
+      <aside class="sidebar" aria-label="Workspace navigation">
+        <!-- brand row, New campaign, the primary group and the first five Workspace entries: unchanged -->
+        <div class="brand-row">
+          <a class="wordmark" href="https://driftwood.sh"><img src="https://driftwood.sh/favicon.svg" width="28" height="28" alt="" /><span>driftwood</span></a>
+        </div>
+        <a class="side-create" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New campaign</a>
+        <nav class="side-nav" aria-label="Dashboard">
+          <div class="side-group">
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v10h-6zM4 14h6v6H4zM14 18h6v2h-6z"/></svg><span>Overview</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.35-3.35 2.15-5 5.5-5s5.15 1.65 5.5 5M16 7h4M18 5v4M16.5 14.5c2.35.45 3.65 1.95 4 4.5"/></svg><span>Audiences</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14M5 12h14M5 18.5h9"/><circle cx="3.5" cy="5.5" r=".75" fill="currentColor" stroke="none"/><circle cx="3.5" cy="12" r=".75" fill="currentColor" stroke="none"/><circle cx="3.5" cy="18.5" r=".75" fill="currentColor" stroke="none"/><path d="m17 16 3 2.5-3 2.5z"/></svg><span>Campaigns</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.25"/><path d="M8.2 8.2a5.4 5.4 0 0 0 0 7.6M15.8 8.2a5.4 5.4 0 0 1 0 7.6M5.4 5.4a9.3 9.3 0 0 0 0 13.2M18.6 5.4a9.3 9.3 0 0 1 0 13.2"/></svg><span>Triggers</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-7M22 19V3"/></svg><span>Metrics</span></a>
+          </div>
+          <div class="side-group">
+            <p class="side-label">Workspace</p>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.35-3.35 2.15-5 5.5-5s5.15 1.65 5.5 5M16 6.5a2.5 2.5 0 0 1 0 5M16 14c2.7.25 4.15 1.9 4.5 5"/></svg><span>All leads</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V6l8-3v18M12 9h8v12M7 8h2M7 12h2M7 16h2M15 12h2M15 16h2"/></svg><span>Companies</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8" cy="9" r="1.5"/><path d="m5.5 17 4-4 3 3 2.5-2.5 3.5 3.5"/></svg><span>Assets</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v4H7zM5 5H4v16h16V5h-1"/><path d="m8 14 2.5 2.5L16 11"/></svg><span>Review queue</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.35-3.35 2.15-5 5.5-5s5.15 1.65 5.5 5M16 6.5a2.5 2.5 0 0 1 0 5M16 14c2.7.25 4.15 1.9 4.5 5"/></svg><span>Team</span></a>
+            <!-- addition: Settings, last in the Workspace group -->
+            <a class="side-link is-active" href="#" aria-current="page"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h8M18 7h2M4 12h2M10 12h10M4 17h10M20 17h0"/><circle cx="15" cy="7" r="2.25"/><circle cx="7" cy="12" r="2.25"/><circle cx="17" cy="17" r="2.25"/></svg><span>Settings</span><span class="draft-tag">new</span></a>
+          </div>
+        </nav>
+        <div class="side-footer">
+          <div class="identity">
+            <span class="avatar" aria-hidden="true">J</span>
+            <div><strong>Jordan Ellis</strong><small>MochaCare</small></div>
+            <button type="button" aria-label="Log out" title="Log out"><svg class="ic sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H5v14h5M14 8l4 4-4 4M8 12h10"/></svg></button>
+          </div>
+        </div>
+      </aside>
+      <div class="stage">
+        <header class="masthead">
+          <button class="menu" type="button" aria-label="Open navigation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+          <a class="wordmark" href="https://driftwood.sh"><img src="https://driftwood.sh/favicon.svg" width="28" height="28" alt="" /><span>driftwood</span></a>
+          <span class="avatar" aria-hidden="true">J</span>
+        </header>
+        <main class="main">
+          <!-- the whole page is an addition; the sidebar entry carries the one chip for it -->
+          <section class="settings-page" aria-labelledby="settings-heading">
+            <header class="settings-heading">
+              <h1 id="settings-heading">Settings</h1>
+              <p>Workspace-wide preferences. Only owners and admins can change them.</p>
+            </header>
+
+            <form class="card card-form" aria-labelledby="schedule-heading">
+              <h2 id="schedule-heading">Send schedule</h2>
+              <p class="hint">When your approved emails, LinkedIn messages and X DMs go out. Daily caps still apply.</p>
+
+              <div class="field" role="group" aria-labelledby="days-label">
+                <span id="days-label">Days</span>
+                <div class="day-pills">
+                  <button class="day-pill" type="button" aria-pressed="true">Mon</button>
+                  <button class="day-pill" type="button" aria-pressed="true">Tue</button>
+                  <button class="day-pill" type="button" aria-pressed="true">Wed</button>
+                  <button class="day-pill" type="button" aria-pressed="true">Thu</button>
+                  <button class="day-pill" type="button" aria-pressed="true">Fri</button>
+                  <button class="day-pill" type="button" aria-pressed="false">Sat</button>
+                  <button class="day-pill" type="button" aria-pressed="false">Sun</button>
+                </div>
+              </div>
+
+              <div class="field-row">
+                <div class="field" role="group" aria-labelledby="hours-label">
+                  <span id="hours-label">Hours</span>
+                  <div class="hours">
+                    <select aria-label="Window opens">
+                      <option>6:00 AM</option>
+                      <option>7:00 AM</option>
+                      <option>8:00 AM</option>
+                      <option selected>9:00 AM</option>
+                      <option>10:00 AM</option>
+                      <option>11:00 AM</option>
+                    </select>
+                    <span>to</span>
+                    <select aria-label="Window closes">
+                      <option>4:00 PM</option>
+                      <option>5:00 PM</option>
+                      <option selected>6:00 PM</option>
+                      <option>7:00 PM</option>
+                      <option>8:00 PM</option>
+                      <option>9:00 PM</option>
+                    </select>
+                  </div>
+                </div>
+                <label class="field">
+                  <span>Timezone</span>
+                  <select>
+                    <option selected>Pacific Time (Los Angeles)</option>
+                    <option>Mountain Time (Denver)</option>
+                    <option>Central Time (Chicago)</option>
+                    <option>Eastern Time (New York)</option>
+                    <option>Other…</option>
+                  </select>
+                </label>
+              </div>
+
+              <label class="check-field">
+                <input type="checkbox" checked />
+                <span>
+                  <strong>Skip US federal holidays</strong>
+                  <small>Next: Columbus Day, Mon Oct 12 · Veterans Day, Wed Nov 11 · Thanksgiving, Thu Nov 26</small>
+                </span>
+              </label>
+
+              <p class="next-window">Next send window: today until 6:00 PM PT. Then Fri Sep 11, 9:00 AM PT.</p>
+
+              <!-- Save is disabled until the form is dirty. Its title then reads
+                   "This already matches the saved schedule". Here the form is
+                   dirty, so the pill is live. The green note appears only after
+                   a save, in place, and names what moved. -->
+              <div class="save-row">
+                <button class="save-btn" type="button">Save schedule</button>
+                <p class="inline-note" role="status">Saved. 14 queued sends moved to the next open window.<span class="draft-tag">after save</span></p>
+              </div>
+            </form>
+
+            <p class="caps-line">Daily caps per connected account: 20 emails, 25 LinkedIn messages, 20 connection requests, 5 X DMs, 10 X follows.</p>
+          </section>
+        </main>
+      </div>
+    </div>
+  </div>
+  <p class="caption">Recommended. One card today. Timezone and caps live here too, so the page earns itself. Members see the same card with controls disabled and no Save button. The real timezone control lists every IANA zone and preselects the browser's zone on first visit.</p>
+
+  <!-- ================= screen B: overview with a collapsed schedule line ================= -->
+  <p class="state-label" id="sb">B · Overview <small>· /dashboard, the real top of the page with one panel added between Sending accounts and Today's sending</small></p>
+  <div class="frame">
+    <div class="shell">
+      <aside class="sidebar" aria-label="Workspace navigation">
+        <!-- sidebar: unchanged (Team is already in the shipped nav) -->
+        <div class="brand-row">
+          <a class="wordmark" href="https://driftwood.sh"><img src="https://driftwood.sh/favicon.svg" width="28" height="28" alt="" /><span>driftwood</span></a>
+        </div>
+        <a class="side-create" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New campaign</a>
+        <nav class="side-nav" aria-label="Dashboard">
+          <div class="side-group">
+            <a class="side-link is-active" href="#" aria-current="page"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v10h-6zM4 14h6v6H4zM14 18h6v2h-6z"/></svg><span>Overview</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.35-3.35 2.15-5 5.5-5s5.15 1.65 5.5 5M16 7h4M18 5v4M16.5 14.5c2.35.45 3.65 1.95 4 4.5"/></svg><span>Audiences</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14M5 12h14M5 18.5h9"/><circle cx="3.5" cy="5.5" r=".75" fill="currentColor" stroke="none"/><circle cx="3.5" cy="12" r=".75" fill="currentColor" stroke="none"/><circle cx="3.5" cy="18.5" r=".75" fill="currentColor" stroke="none"/><path d="m17 16 3 2.5-3 2.5z"/></svg><span>Campaigns</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.25"/><path d="M8.2 8.2a5.4 5.4 0 0 0 0 7.6M15.8 8.2a5.4 5.4 0 0 1 0 7.6M5.4 5.4a9.3 9.3 0 0 0 0 13.2M18.6 5.4a9.3 9.3 0 0 1 0 13.2"/></svg><span>Triggers</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-7M22 19V3"/></svg><span>Metrics</span></a>
+          </div>
+          <div class="side-group">
+            <p class="side-label">Workspace</p>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.35-3.35 2.15-5 5.5-5s5.15 1.65 5.5 5M16 6.5a2.5 2.5 0 0 1 0 5M16 14c2.7.25 4.15 1.9 4.5 5"/></svg><span>All leads</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V6l8-3v18M12 9h8v12M7 8h2M7 12h2M7 16h2M15 12h2M15 16h2"/></svg><span>Companies</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8" cy="9" r="1.5"/><path d="m5.5 17 4-4 3 3 2.5-2.5 3.5 3.5"/></svg><span>Assets</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v4H7zM5 5H4v16h16V5h-1"/><path d="m8 14 2.5 2.5L16 11"/></svg><span>Review queue</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.35-3.35 2.15-5 5.5-5s5.15 1.65 5.5 5M16 6.5a2.5 2.5 0 0 1 0 5M16 14c2.7.25 4.15 1.9 4.5 5"/></svg><span>Team</span></a>
+          </div>
+        </nav>
+        <div class="side-footer">
+          <div class="identity">
+            <span class="avatar" aria-hidden="true">J</span>
+            <div><strong>Jordan Ellis</strong><small>MochaCare</small></div>
+            <button type="button" aria-label="Log out" title="Log out"><svg class="ic sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H5v14h5M14 8l4 4-4 4M8 12h10"/></svg></button>
+          </div>
+        </div>
+      </aside>
+      <div class="stage">
+        <header class="masthead">
+          <button class="menu" type="button" aria-label="Open navigation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+          <a class="wordmark" href="https://driftwood.sh"><img src="https://driftwood.sh/favicon.svg" width="28" height="28" alt="" /><span>driftwood</span></a>
+          <span class="avatar" aria-hidden="true">J</span>
+        </header>
+        <main class="main">
+          <div class="overview-page">
+            <!-- LinkedInBanner and EmailBanner render only on a connection error. Nothing in this sample. Unchanged. -->
+            <!-- heading: unchanged -->
+            <header class="overview-heading">
+              <h1>Overview</h1>
+              <div class="overview-heading-links" aria-label="Lead database shortcuts">
+                <a href="#">1,240 leads</a>
+                <a href="#">318 qualified companies</a>
+              </div>
+            </header>
+
+            <!-- Sending accounts: unchanged -->
+            <section class="overview-connections" aria-labelledby="connections-title">
+              <div class="overview-section-heading">
+                <h2 id="connections-title">Sending accounts</h2>
+                <span>2 of 3 connected · 1 left</span>
+              </div>
+              <div class="overview-connection-grid">
+                <div class="overview-channel-row">
+                  <div class="flex">
+                    <span class="channel-mark is-connected" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span>
+                    <div class="channel-body">
+                      <h3>LinkedIn</h3>
+                      <ul class="overview-accounts">
+                        <li>
+                          <span class="team-avatar" aria-hidden="true">J</span>
+                          <div class="team-member-id">
+                            <div class="team-member-name">Jordan Ellis</div>
+                            <div class="team-member-sub">Linked by you</div>
+                          </div>
+                          <div class="overview-account-tail"><button class="team-remove" type="button">Disconnect</button></div>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+                <div class="overview-channel-row">
+                  <div class="flex">
+                    <span class="channel-mark is-connected" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span>
+                    <div class="channel-body">
+                      <h3>Email</h3>
+                      <ul class="overview-accounts">
+                        <li>
+                          <span class="team-avatar" aria-hidden="true">J</span>
+                          <div class="team-member-id">
+                            <div class="team-member-name">jordan@mochacare.com</div>
+                            <div class="team-member-sub">Google · Linked by you</div>
+                          </div>
+                          <div class="overview-account-tail"><button class="team-remove" type="button">Disconnect</button></div>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+                <div class="overview-channel-row">
+                  <div class="flex">
+                    <span class="channel-mark is-open" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24"><path d="M4 4l16 16M20 4 4 20"/></svg></span>
+                    <div class="channel-body">
+                      <h3>Connect X</h3>
+                      <p>Send direct messages from X.</p>
+                      <button class="connect-btn" type="button"><svg class="ic sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4l16 16M20 4 4 20"/></svg>Connect mine</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- addition: the schedule as one line between Sending accounts and Today's sending -->
+            <section class="overview-panel overview-schedule" aria-labelledby="schedule-title">
+              <div class="overview-schedule-copy">
+                <h2 id="schedule-title">Send schedule<span class="draft-tag">alternative</span></h2>
+                <p>Monday to Friday, 9:00 AM to 6:00 PM PT. Skips US federal holidays.</p>
+              </div>
+              <a href="#">Change</a>
+            </section>
+
+            <!-- Today's sending: unchanged -->
+            <section class="overview-panel overview-sending" aria-labelledby="sending-title">
+              <div class="overview-panel-heading">
+                <h2 id="sending-title">Today&rsquo;s sending</h2>
+                <a href="#">Open review queue</a>
+              </div>
+              <div class="overview-sending-layout">
+                <div class="overview-sending-stats">
+                  <div class="overview-sending-stat"><span>LinkedIn invites</span><div><strong>4/20</strong></div></div>
+                  <div class="overview-sending-stat"><span>LinkedIn messages</span><div><strong>9/25</strong></div></div>
+                  <div class="overview-sending-stat"><span>Emails sent</span><div><strong>12/20</strong></div></div>
+                  <div class="overview-sending-stat"><span>Waiting for review</span><div><strong>8</strong></div></div>
+                  <div class="overview-sending-stat"><span>Status</span><div><strong class="is-success">On track</strong></div></div>
+                </div>
+                <div class="overview-latest-sends">
+                  <h3>Latest sends <a href="#">View all</a></h3>
+                  <div class="activity-line"><span>Email sent to <b>Dana Whitfield</b> (Brightpath Home Care)</span><time>12m ago</time></div>
+                  <div class="activity-line"><span>LinkedIn message sent to <b>Marcus Lee</b> (Harbor Home Health)</span><time>41m ago</time></div>
+                  <div class="activity-line"><span>LinkedIn invite sent to <b>Elena Ruiz</b> (CareFirst Agency)</span><time>1h ago</time></div>
+                  <div class="activity-line"><span>Email sent to <b>Tom Baird</b> (Sunrise Senior Care)</span><time>2h ago</time></div>
+                </div>
+              </div>
+            </section>
+
+            <!-- below the fold, unchanged: Results (MetricsCard), Add more (QuickActions),
+                 Campaigns (CampaignDesk), and the Imports and blacklist disclosure -->
+            <p class="fold-note">Below this line the page continues as it does today: Results, Add more, Campaigns, Imports and blacklist. Nothing changes there.</p>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+  <p class="caption">Alternative. Smallest delta: one line on Overview that expands to the same controls. No new page. Keeps Overview the only place a customer looks.</p>
+
+  <!-- ================= screen C: review queue, queued tab ================= -->
+  <p class="state-label" id="sc">C · Review queue, Queued tab <small>· /dashboard/review?tab=queued, approved on Thu Sep 10, 34 emails waiting</small></p>
+  <div class="frame">
+    <div class="shell">
+      <aside class="sidebar" aria-label="Workspace navigation">
+        <!-- sidebar: unchanged -->
+        <div class="brand-row">
+          <a class="wordmark" href="https://driftwood.sh"><img src="https://driftwood.sh/favicon.svg" width="28" height="28" alt="" /><span>driftwood</span></a>
+        </div>
+        <a class="side-create" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New campaign</a>
+        <nav class="side-nav" aria-label="Dashboard">
+          <div class="side-group">
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v10h-6zM4 14h6v6H4zM14 18h6v2h-6z"/></svg><span>Overview</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.35-3.35 2.15-5 5.5-5s5.15 1.65 5.5 5M16 7h4M18 5v4M16.5 14.5c2.35.45 3.65 1.95 4 4.5"/></svg><span>Audiences</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14M5 12h14M5 18.5h9"/><circle cx="3.5" cy="5.5" r=".75" fill="currentColor" stroke="none"/><circle cx="3.5" cy="12" r=".75" fill="currentColor" stroke="none"/><circle cx="3.5" cy="18.5" r=".75" fill="currentColor" stroke="none"/><path d="m17 16 3 2.5-3 2.5z"/></svg><span>Campaigns</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.25"/><path d="M8.2 8.2a5.4 5.4 0 0 0 0 7.6M15.8 8.2a5.4 5.4 0 0 1 0 7.6M5.4 5.4a9.3 9.3 0 0 0 0 13.2M18.6 5.4a9.3 9.3 0 0 1 0 13.2"/></svg><span>Triggers</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-7M22 19V3"/></svg><span>Metrics</span></a>
+          </div>
+          <div class="side-group">
+            <p class="side-label">Workspace</p>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.35-3.35 2.15-5 5.5-5s5.15 1.65 5.5 5M16 6.5a2.5 2.5 0 0 1 0 5M16 14c2.7.25 4.15 1.9 4.5 5"/></svg><span>All leads</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V6l8-3v18M12 9h8v12M7 8h2M7 12h2M7 16h2M15 12h2M15 16h2"/></svg><span>Companies</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8" cy="9" r="1.5"/><path d="m5.5 17 4-4 3 3 2.5-2.5 3.5 3.5"/></svg><span>Assets</span></a>
+            <a class="side-link is-active" href="#" aria-current="page"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v4H7zM5 5H4v16h16V5h-1"/><path d="m8 14 2.5 2.5L16 11"/></svg><span>Review queue</span></a>
+            <a class="side-link" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.35-3.35 2.15-5 5.5-5s5.15 1.65 5.5 5M16 6.5a2.5 2.5 0 0 1 0 5M16 14c2.7.25 4.15 1.9 4.5 5"/></svg><span>Team</span></a>
+          </div>
+        </nav>
+        <div class="side-footer">
+          <div class="identity">
+            <span class="avatar" aria-hidden="true">J</span>
+            <div><strong>Jordan Ellis</strong><small>MochaCare</small></div>
+            <button type="button" aria-label="Log out" title="Log out"><svg class="ic sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H5v14h5M14 8l4 4-4 4M8 12h10"/></svg></button>
+          </div>
+        </div>
+      </aside>
+      <div class="stage">
+        <header class="masthead">
+          <button class="menu" type="button" aria-label="Open navigation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+          <a class="wordmark" href="https://driftwood.sh"><img src="https://driftwood.sh/favicon.svg" width="28" height="28" alt="" /><span>driftwood</span></a>
+          <span class="avatar" aria-hidden="true">J</span>
+        </header>
+        <main class="main">
+          <div class="review-page">
+            <!-- page header and tab bar: unchanged -->
+            <div class="review-page-header">
+              <h1>Review queue</h1>
+              <span class="review-count">8 pending · 41 approved this week</span>
+            </div>
+            <div class="review-tabs" role="group" aria-label="Queue sections">
+              <button type="button" aria-pressed="false">Needs review (8)</button>
+              <button type="button" aria-pressed="true">Queued (34)</button>
+              <button type="button" aria-pressed="false">Sent (120)</button>
+            </div>
+
+            <div class="review-runway">
+              <!-- addition: the schedule line at the top of the runway strip -->
+              <p class="runway-schedule">Sends Monday to Friday, 9:00 AM to 6:00 PM PT, skipping US holidays · <a href="#">Change</a><span class="draft-tag">new</span></p>
+              <!-- per-kind lines: unchanged -->
+              <p><b>emails:</b> 34 queued · 12/20 sent in last 24h · runs through ~Sep 18</p>
+            </div>
+
+            <!-- kind filter chips and the select-all row: unchanged -->
+            <div class="review-filters">
+              <button class="filter-chip" type="button" aria-pressed="true">All <span>34</span></button>
+              <button class="filter-chip" type="button" aria-pressed="false">email <span>34</span></button>
+            </div>
+            <div class="queued-toolbar">
+              <label><input type="checkbox" aria-label="Select all queued sends" />Select all</label>
+              <span class="review-count">34 queued</span>
+            </div>
+
+            <div class="review-queued-grid">
+              <article class="review-queued-row">
+                <div class="queued-top">
+                  <input type="checkbox" aria-label="Select send to Dana Whitfield" />
+                  <span class="kind-badge">email</span>
+                  <span class="queued-age">2h</span>
+                </div>
+                <p class="lead-line"><a href="#">Dana Whitfield<small> ↗</small></a> · Owner, Brightpath Home Care · <span class="stage-pill">outreach</span> · no prior sends</p>
+                <button class="note-block" type="button" aria-expanded="false" aria-label="Preview email">
+                  <span class="subject">Subject: A MochaCare listing built from your CNA posting</span>
+                  <span class="body">Hi Dana, I saw Brightpath is hiring CNAs in Fresno. I put your posting into a MochaCare listing so you can see how it reads to a caregiver on their phone. Two minutes, no login. If it is useful I can show you how agencies fill shifts from it.</span>
+                </button>
+                <p class="attach-line">d/brightpath-cna-fresno · attached</p>
+                <div class="queued-foot">
+                  <span class="send-status">sends ~Fri Sep 11</span>
+                  <button class="queued-cancel" type="button">Cancel</button>
+                </div>
+              </article>
+
+              <article class="review-queued-row">
+                <div class="queued-top">
+                  <input type="checkbox" aria-label="Select send to Marcus Lee" />
+                  <span class="kind-badge">email</span>
+                  <span class="queued-age">3h</span>
+                </div>
+                <p class="lead-line"><a href="#">Marcus Lee<small> ↗</small></a> · Administrator, Harbor Home Health · <span class="stage-pill">outreach</span> · 1 prior send</p>
+                <button class="note-block" type="button" aria-expanded="false" aria-label="Preview email">
+                  <span class="subject">Subject: Your Harbor posting, as a caregiver sees it</span>
+                  <span class="body">Hi Marcus, following up on the note from last week. Your home health aide posting is now a MochaCare listing you can open on a phone. It shows the shift, the pay and the one-tap apply that agencies use to cut the time to first interview.</span>
+                </button>
+                <p class="attach-line">d/harbor-home-health-aide · attached</p>
+                <div class="queued-foot">
+                  <!-- the projected date now names the weekday and skips Sat, Sun and holidays -->
+                  <span class="send-status">sends ~Mon Sep 14</span><span class="draft-tag">updated line</span>
+                  <button class="queued-cancel" type="button">Cancel</button>
+                </div>
+              </article>
+
+              <article class="review-queued-row">
+                <div class="queued-top">
+                  <input type="checkbox" aria-label="Select send to Elena Ruiz" />
+                  <span class="kind-badge">email</span>
+                  <span class="queued-age">5h</span>
+                </div>
+                <p class="lead-line"><a href="#">Elena Ruiz<small> ↗</small></a> · Director of Nursing, CareFirst Agency · <span class="stage-pill">outreach</span> · no prior sends</p>
+                <button class="note-block" type="button" aria-expanded="false" aria-label="Preview email">
+                  <span class="subject">Subject: CareFirst's LVN posting on MochaCare</span>
+                  <span class="body">Hi Elena, CareFirst has an LVN posting up in Sacramento. I built it into a MochaCare listing so you can see the applicant side before you decide anything. The link opens without a login and takes about two minutes.</span>
+                </button>
+                <p class="attach-line">d/carefirst-lvn-sacramento · attached</p>
+                <div class="queued-foot">
+                  <span class="send-status">sends ~Mon Sep 14</span>
+                  <button class="queued-cancel" type="button">Cancel</button>
+                </div>
+              </article>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+  <p class="caption">Ships with either option. Projected dates now count send days, not calendar days, so a Friday approval says Monday. The dates also skip US federal holidays when the box is on.</p>
+
+</div>
+</body>
+</html>
