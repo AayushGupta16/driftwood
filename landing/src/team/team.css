@@ -25,6 +25,9 @@
 
 .team-role { flex: 0 0 auto; border: 1px solid var(--color-line); border-radius: 999px; background: var(--color-sand); color: var(--color-ink-soft); padding: 0.14rem 0.6rem; font-size: 0.7rem; font-weight: 650; }
 .team-role.is-owner { border-color: transparent; background: var(--color-tide-wash); color: var(--color-tide); }
+/* The overview's Sending accounts lists reuse this row. Their chip carries
+   a state, not a role: pending keeps the base sand, error goes red. */
+.team-role.is-error { border-color: transparent; background: color-mix(in srgb, var(--color-alert) 10%, var(--color-surface)); color: var(--color-alert); }
 
 /* Danger is armed-then-confirmed, mirroring the review queue's Deny all:
    quiet outline at rest, solid red once armed, label swap while removing. */

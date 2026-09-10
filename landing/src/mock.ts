@@ -64,6 +64,87 @@ if (mockMode) {
      identically, so this mode exists to prove that by hand. */
   const mockOrgRole: "owner" | "admin" | "member" =
     mockMode === "member" ? "member" : mockMode === "org-admin" ? "admin" : "owner";
+  // The workspace's pool of sending accounts (GET /dashboard/accounts,
+  // DELETE /dashboard/accounts/{id}). One row per state the cards can
+  // show: the viewer's own LinkedIn, a teammate's LinkedIn, the viewer's
+  // Gmail, a teammate's Outlook still pending, a teammate's Gmail in error
+  // (no name, so the label falls back to the address), and a teammate's X
+  // that sits behind the chat PIN wall. ?x=pending|connected|locked adds
+  // the viewer's own X row in that state (omit for "Connect mine", as
+  // before). An owner or admin can connect and can disconnect any row. In
+  // ?mock=member the viewer holds no seat that can connect, so no row is
+  // theirs, nothing can be disconnected, and the rows that would be theirs
+  // belong to Priya instead.
+  const viewerCanConnect = mockOrgRole !== "member";
+  type MockPerson = { id: string; name: string | null; email: string };
+  const viewer: MockPerson = viewerCanConnect
+    ? { id: "mock", name: "Marc Andreessen", email: "marc@a16z.com" }
+    : { id: "m-4", name: "Priya Nair", email: "priya@example.com" };
+  const sam: MockPerson = { id: "m-1", name: "Sam Field", email: "sam@example.com" };
+  const newHire: MockPerson = { id: "m-2", name: null, email: "new-hire@example.com" };
+  type MockAccount = {
+    id: string; display: string | null;
+    connected_by: MockPerson;
+    is_mine: boolean; can_disconnect: boolean; status: string; error: string | null;
+    connected_at: string | null; channel_state: Record<string, unknown>;
+  };
+  const account = (
+    id: string, display: string | null, by: MockPerson, status: string,
+    channel_state: Record<string, unknown>, error: string | null = null,
+  ): MockAccount => ({
+    id, display, connected_by: by,
+    is_mine: viewerCanConnect && by === viewer,
+    can_disconnect: viewerCanConnect,
+    status, error: status === "error" ? error : null,
+    connected_at: status === "pending" ? null : hoursAgo(24 * 12),
+    channel_state,
+  });
+  const xMode = params.get("x");
+  const mockAccounts: Record<"linkedin" | "email" | "x", MockAccount[]> = {
+    linkedin: [
+      account("acct-li-1", viewer.name, viewer, "active", {}),
+      account("acct-li-2", sam.name, sam, "active", {}),
+    ],
+    email: [
+      account("acct-em-1", viewer.email, viewer, "active", { provider: "gmail", address: viewer.email }),
+      account("acct-em-2", sam.email, sam, "pending", { provider: "outlook", address: sam.email }),
+      account("acct-em-3", null, newHire, "error", { provider: "gmail", address: newHire.email },
+        "Google signed this mailbox out. Connect it again to resume sending."),
+    ],
+    x: [
+      account("acct-x-1", "Sam Field", sam, "active", { handle: "samfield", pending: false, chat_locked: true }),
+      ...(xMode === "pending"
+        ? [account("acct-x-2", viewer.name, viewer, "pending", { handle: null, pending: true, chat_locked: false })]
+        : xMode === "connected" || xMode === "locked"
+          ? [account("acct-x-2", viewer.name, viewer, "active", { handle: "pmarca", pending: false, chat_locked: xMode === "locked" })]
+          : []),
+    ],
+  };
+  const accountsPage = () => ({
+    can_connect: viewerCanConnect,
+    linkedin: mockAccounts.linkedin,
+    email: mockAccounts.email,
+    x: mockAccounts.x,
+  });
+  const accountsApi = (init?: RequestInit, url?: string) => {
+    const method = init?.method ?? "GET";
+    const path = new URL(url ?? location.href, location.href).pathname;
+    if (method !== "DELETE") return accountsPage();
+    const id = decodeURIComponent(path.split("/accounts/")[1] ?? "");
+    const channel = (["linkedin", "email", "x"] as const).find((c) => mockAccounts[c].some((a) => a.id === id));
+    const row = channel ? mockAccounts[channel].find((a) => a.id === id) : undefined;
+    if (!channel || !row) {
+      return new Response(JSON.stringify({ detail: "That account is no longer on the page." }), { status: 404, headers: { "Content-Type": "application/json" } });
+    }
+    if (!row.can_disconnect) {
+      return new Response(
+        JSON.stringify({ detail: "Only the person who linked this account, or an owner or admin, can disconnect it.", code: "cannot_disconnect" }),
+        { status: 403, headers: { "Content-Type": "application/json" } },
+      );
+    }
+    mockAccounts[channel] = mockAccounts[channel].filter((a) => a.id !== id);
+    return accountsPage();
+  };
   const me = {
     id: "mock",
     email: "marc@a16z.com",
@@ -2094,6 +2175,7 @@ if (mockMode) {
     // express slow and failing states (see the knob comment above).
     ["/api/v1/imports/leads", (init?: RequestInit) => audKnob("upload", () => leadImportsApi(init))],
     ["/api/v1/dashboard/org", orgApi],
+    ["/api/v1/dashboard/accounts", accountsApi],
     ["/api/v1/dashboard/audiences", (init?: RequestInit, url?: string) => audKnob(audienceOp(init, url), () => audiencesApi(init, url))],
     ["/api/v1/dashboard/leads", dashboardLeadsApi],
     ["/api/v1/dashboard/companies", dashboardCompaniesApi],

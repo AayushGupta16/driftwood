@@ -159,6 +159,24 @@
 .overview-channel-row .mt-5 { margin-top: .8rem; }
 .overview-channel-row .gap-2\.5 { gap: .4rem; }
 
+/* The per-channel account list inside a card: the Team page's member row
+   (team.css) at the card's type scale. A row's Disconnect must not pick
+   up the card's control margin above. */
+.overview-accounts { margin-top: .55rem; border-top: 1px solid var(--color-line); }
+/* A card is a third of the page, so the row wraps: name and sub line keep
+   at least 8rem, and the chip + Disconnect cluster drops under them,
+   right-aligned, when the row cannot hold all three. */
+.overview-accounts .team-member-row { flex-wrap: wrap; gap: .4rem .6rem; padding: .5rem 0; }
+.overview-accounts .team-avatar { width: 1.75rem; height: 1.75rem; font-size: .7rem; }
+.overview-accounts .team-member-id { flex: 1 1 8rem; }
+.overview-accounts .team-member-name { font-size: .78rem; }
+.overview-accounts .team-member-sub { font-size: .68rem; white-space: normal; }
+.overview-accounts .team-role { font-size: .64rem; }
+.overview-account-tail { display: flex; flex: 0 0 auto; align-items: center; gap: .4rem; margin-left: auto; }
+.overview-channel-row .overview-accounts button { min-height: 1.75rem; margin-top: 0; padding: .2rem .65rem; font-size: .68rem; }
+.overview-accounts-note { margin: .5rem 0 0; color: var(--color-ink-faint); }
+.overview-accounts-note.is-error { color: var(--color-alert); }
+
 .overview-panel {
   min-width: 0;
   border: 1px solid var(--color-line);
@@ -394,6 +412,14 @@
   .overview-action-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .overview-sending-stat:nth-child(n + 3) { border-top: 1px solid var(--color-line); }
   .overview-sending-stat:nth-child(odd) { border-left: 0; }
+}
+
+/* team.css wraps the member row at this width and indents the actions
+   under its own avatar; here the cluster already carries its own
+   alignment, and the indent must match the smaller avatar. */
+@media (max-width: 560px) {
+  .overview-accounts .team-member-id { flex-basis: calc(100% - 2.35rem); }
+  .overview-accounts .team-member-actions { margin-left: 0; }
 }
 
 @media (max-width: 520px) {

@@ -7,6 +7,24 @@ import {
   type ReactNode,
 } from "react";
 import { AdminPanelControls, ImpersonationBanner } from "./GodMode";
+import {
+  AccountApiError,
+  disconnectAccount,
+  getAccounts,
+  type AccountsPage,
+  type EmailState,
+  type LinkedInState,
+  type SendingAccount,
+  type XState,
+} from "./accounts/api";
+import {
+  accountLabel,
+  channelConnected,
+  connectedChannelCount,
+  isUsable,
+  linkedByLine,
+  ownAccount,
+} from "./accounts/model";
 import { listAssets } from "./assets/api";
 import type { CompanyAsset } from "./assets/model";
 import { listAudiences } from "./audiences/api";
@@ -46,6 +64,8 @@ import {
 import { clearIdentity, loadIdentity } from "./identity";
 import "./dashboard/overview.css";
 import "./dashboard/managed-inboxes.css";
+/* the Sending accounts lists reuse the Team page's member row */
+import "./team/team.css";
 
 /* /dashboard — Google-login-gated shell. Talks to the same-origin /auth/*
    endpoints (vite proxy in dev, vercel rewrite in prod), so every request
@@ -108,6 +128,9 @@ const initialActivity = prefetch(() =>
 const initialInventory = prefetch(() =>
   Promise.allSettled([listAudiences(), listCampaigns(), listAssets()]),
 );
+/* The pool of sending accounts behind the three cards. The cards paint
+   from the /auth/me booleans first and fill in the rows when this lands. */
+const initialAccounts = prefetch(() => getAccounts());
 
 /* /auth/me starts at module eval too — cached identity paints the real
    shell immediately; the background result confirms it, swaps it in place,
@@ -383,6 +406,14 @@ type InventoryState = {
   assets: CompanyAsset[] | null;
 };
 
+/* The pool of sending accounts behind ConnectionSetup. Loads alongside the
+   summary and never gates the page: the cards paint from the /auth/me
+   booleans until it lands, and keep that paint if it fails. */
+type AccountsState =
+  | { status: "loading" }
+  | { status: "error" }
+  | { status: "ready"; page: AccountsPage };
+
 function ApprovedView({ user }: { user: User }) {
   // Solo accounts carry no org and stay full-control. An owner and an admin
   // get identical controls. A member sees every section and gets no write
@@ -400,6 +431,7 @@ function ApprovedView({ user }: { user: User }) {
     campaigns: null,
     assets: null,
   });
+  const [accounts, setAccounts] = useState<AccountsState>({ status: "loading" });
   const [importsOpen, setImportsOpen] = useState(false);
   const importsRef = useRef<HTMLDetailsElement>(null);
 
@@ -461,6 +493,28 @@ function ApprovedView({ user }: { user: User }) {
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const page = await (initialAccounts.take() ?? getAccounts());
+        if (!cancelled) setAccounts({ status: "ready", page });
+      } catch {
+        // Keep the /auth/me-driven paint; the cards say the list is unavailable.
+        if (!cancelled) setAccounts((prev) => (prev.status === "ready" ? prev : { status: "error" }));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // A disconnect answers with the page after the removal, which replaces
+  // the lists in place.
+  const applyAccounts = useCallback((page: AccountsPage) => {
+    setAccounts({ status: "ready", page });
+  }, []);
+
   const snapshot = buildOverviewSnapshot(
     summary.status === "ready" ? summary.summary.pending_reviews : null,
     {
@@ -473,9 +527,12 @@ function ApprovedView({ user }: { user: User }) {
   /* the email channel's daily ceiling — own connected mailbox (20/day)
      plus what the managed pool carries today. Shown quietly where the
      dashboard already talks send volume; absent whenever there is no pool
-     (or the fetch failed). */
+     (or the fetch failed). "Own mailbox" reads the account pool once it
+     lands, so a disconnect updates the line in place. */
+  const emailConnected =
+    accounts.status === "ready" ? channelConnected(accounts.page.email) : (user.email_connected ?? false);
   const emailCapLine = pool
-    ? `Up to ${((user.email_connected ?? false) ? 20 : 0) + managedInboxCap(pool.mailboxes)} emails/day`
+    ? `Up to ${(emailConnected ? 20 : 0) + managedInboxCap(pool.mailboxes)} emails/day`
     : null;
 
   function openImports() {
@@ -503,6 +560,8 @@ function ApprovedView({ user }: { user: User }) {
         canWrite={canWrite}
         pool={pool}
         applyPurchase={applyPurchase}
+        accounts={accounts}
+        onAccounts={applyAccounts}
       />
       <TodaysSending summary={summary} activity={activity} emailCapLine={emailCapLine} />
       <MetricsCard state={summary} />
@@ -532,25 +591,39 @@ function formatCount(state: SummaryState, key: "leads" | "companies") {
 }
 
 /* Every role sees this section, including a member: the same pages for
-   everyone, and only the write controls differ. `canWrite` therefore gates
-   the connect / disconnect / add-inbox / purchase controls inside the three
-   cards, and never the cards themselves. */
+   everyone, and only the write controls differ. Each card lists the
+   workspace's pool for its channel — one row per linked account, each
+   linked by its own person. `canWrite` (then the page's own can_connect)
+   gates only the connect and add-inbox controls; a row's Disconnect
+   follows that row's can_disconnect. Until the pool lands the cards paint
+   from the /auth/me booleans, which now mean "the workspace has at least
+   one active account for that channel". */
 function ConnectionSetup({
   user,
   canWrite,
   pool,
   applyPurchase,
+  accounts,
+  onAccounts,
 }: {
   user: User;
   canWrite: boolean;
   pool: MailboxesOverview | null;
   applyPurchase: (result: PurchaseResult, senders: SenderInput[]) => void;
+  accounts: AccountsState;
+  onAccounts: (page: AccountsPage) => void;
 }) {
-  const linkedInMissing = !user.linkedin_connected;
-  const emailMissing = !(user.email_connected ?? false);
-  const xMissing = !(user.twitter_connected ?? false) || (user.twitter_chat_locked ?? false);
-  const remaining = [linkedInMissing, emailMissing, xMissing].filter(Boolean).length;
-  const connected = 3 - remaining;
+  const page = accounts.status === "ready" ? accounts.page : null;
+  const linkedInFallback = user.linkedin_connected;
+  const emailFallback = user.email_connected ?? false;
+  const xFallback = user.twitter_connected ?? false;
+  const xLockedFallback = user.twitter_chat_locked ?? false;
+  // "N of 3": channels with at least one usable row. A chat-locked X does
+  // not count, as before.
+  const connected = page
+    ? connectedChannelCount(page)
+    : [linkedInFallback, emailFallback, xFallback && !xLockedFallback].filter(Boolean).length;
+  const remaining = 3 - connected;
 
   return (
     <section className="overview-connections" aria-labelledby="connections-title">
@@ -559,20 +632,31 @@ function ConnectionSetup({
         <span>{connected} of 3 connected{remaining > 0 ? ` · ${remaining} left` : ""}</span>
       </div>
       <div className="overview-connection-grid">
-        <LinkedInCard connected={!linkedInMissing} canWrite={canWrite} />
+        <LinkedInCard
+          connected={linkedInFallback}
+          rows={page?.linkedin ?? []}
+          accounts={accounts}
+          canWrite={canWrite}
+          onAccounts={onAccounts}
+        />
         <EmailCard
-          connected={!emailMissing}
+          connected={emailFallback}
+          rows={page?.email ?? []}
+          accounts={accounts}
           emailError={user.email_error ?? null}
           companyName={user.org?.name ?? null}
           pool={pool}
           applyPurchase={applyPurchase}
           canWrite={canWrite}
+          onAccounts={onAccounts}
         />
         <TwitterCard
-          connected={user.twitter_connected ?? false}
-          pending={user.twitter_pending ?? false}
-          chatLocked={user.twitter_chat_locked ?? false}
+          connected={xFallback}
+          chatLocked={xLockedFallback}
+          rows={page?.x ?? []}
+          accounts={accounts}
           canWrite={canWrite}
+          onAccounts={onAccounts}
         />
       </div>
     </section>
@@ -777,29 +861,146 @@ function CampaignDesk({
   );
 }
 
-/* shared disconnect logic — reused by LinkedInCard, EmailCard and the
-   status strip. */
-function useDisconnect(endpoint: string) {
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+/* shared disconnect logic — reused by LinkedInCard, EmailCard and
+   TwitterCard. One removal in flight per card; a failure renders beside
+   the row it belongs to. The DELETE answers with the page after the
+   removal, which replaces the lists in place. A 403 carries the backend's
+   own sentence (code "cannot_disconnect"); anything else gets the fixed
+   line. */
+function useAccountDisconnect(onAccounts: (page: AccountsPage) => void) {
+  const [disconnecting, setDisconnecting] = useState<string | null>(null);
+  const [rowError, setRowError] = useState<{ id: string; message: string } | null>(null);
 
-  async function disconnect() {
-    setPending(true);
-    setError(null);
+  async function disconnect(id: string) {
+    if (disconnecting !== null) return;
+    setDisconnecting(id);
+    setRowError(null);
     try {
-      const res = await fetch(endpoint, {
-        method: "POST",
-        credentials: "include",
+      onAccounts(await disconnectAccount(id));
+    } catch (reason) {
+      setRowError({
+        id,
+        message:
+          reason instanceof AccountApiError && reason.code === "cannot_disconnect" && reason.message
+            ? reason.message
+            : "Couldn't disconnect. Please try again.",
       });
-      if (!res.ok) throw new Error("request failed");
-      window.location.reload();
-    } catch {
-      setError("Couldn't disconnect. Please try again.");
-      setPending(false);
+    } finally {
+      setDisconnecting(null);
     }
   }
 
-  return { pending, error, disconnect };
+  return { disconnecting, rowError, disconnect };
+}
+
+/* The per-channel list inside a card: the Team page's member row
+   (team.css), one per linked account. While the pool loads it mirrors the
+   /auth/me boolean — a skeleton row when the channel is connected, nothing
+   otherwise — so a single-account customer never sees a "Connect mine"
+   flash over their own row. */
+function AccountRows<S>({
+  accounts,
+  rows,
+  connected,
+  canConnect,
+  detail,
+  chip,
+  disconnecting,
+  rowError,
+  onDisconnect,
+}: {
+  accounts: AccountsState;
+  rows: SendingAccount<S>[];
+  /** the /auth/me boolean — drives the paint until the pool lands */
+  connected: boolean;
+  canConnect: boolean;
+  /** per-channel second-line detail (an address, a handle); omitted when
+   *  it repeats the label */
+  detail?: (account: SendingAccount<S>) => string | null;
+  /** an extra state chip for an active row, e.g. "Messages locked" */
+  chip?: (account: SendingAccount<S>) => string | null;
+  disconnecting: string | null;
+  rowError: { id: string; message: string } | null;
+  onDisconnect: (account: SendingAccount<S>) => void;
+}) {
+  if (accounts.status === "loading") {
+    if (!connected) return null;
+    return (
+      <ul className="team-member-list overview-accounts" aria-hidden="true">
+        <li className="team-member-row is-skeleton">
+          <span className="team-avatar team-skel" />
+          <div className="team-member-id">
+            <span className="team-skel team-skel-line" style={{ width: "7rem" }} />
+            <span className="team-skel team-skel-line is-faint" style={{ width: "5rem" }} />
+          </div>
+        </li>
+      </ul>
+    );
+  }
+  if (accounts.status === "error") {
+    return (
+      <p className="overview-accounts-note is-error" role="alert">
+        Couldn&rsquo;t load the account list.
+      </p>
+    );
+  }
+  if (rows.length === 0) {
+    return canConnect ? null : <p className="overview-accounts-note">No accounts linked yet.</p>;
+  }
+  return (
+    <ul className="team-member-list overview-accounts">
+      {rows.map((account) => {
+        const label = accountLabel(account);
+        const extra = detail?.(account) ?? null;
+        const sub = extra && extra !== label ? `${extra} · ${linkedByLine(account)}` : linkedByLine(account);
+        const stateChip =
+          account.status === "pending" ? "Pending" : account.status === "error" ? "Error" : (chip?.(account) ?? null);
+        const busy = disconnecting === account.id;
+        return (
+          <li key={account.id} className="team-member-row">
+            <span className="team-avatar" aria-hidden="true">
+              {label.charAt(0).toUpperCase()}
+            </span>
+            <div className="team-member-id">
+              <div className="team-member-name">{label}</div>
+              <div className="team-member-sub">{sub}</div>
+              {account.error && (
+                <p className="team-inline-error" role="alert">
+                  {account.error}
+                </p>
+              )}
+              {rowError?.id === account.id && (
+                <p className="team-inline-error" role="alert">
+                  {rowError.message}
+                </p>
+              )}
+            </div>
+            {(stateChip || account.canDisconnect) && (
+              /* chip + button travel as one cluster, so in a narrow card
+                 they wrap under the name together instead of squeezing it */
+              <div className="overview-account-tail">
+                {stateChip && (
+                  <span className={`team-role${account.status === "error" ? " is-error" : ""}`}>{stateChip}</span>
+                )}
+                {account.canDisconnect && (
+                  <div className="team-member-actions">
+                    <button
+                      type="button"
+                      className="team-remove"
+                      disabled={disconnecting !== null}
+                      onClick={() => onDisconnect(account)}
+                    >
+                      {busy ? "Disconnecting…" : "Disconnect"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
 }
 
 /* Honest summary metrics remain the overview's largest surface. Activity has
@@ -984,19 +1185,35 @@ function FunnelBars({ funnel }: { funnel: Funnel }) {
   );
 }
 
-/* `canWrite` hides the connect and disconnect controls for a member. The
-   card itself, and the connected-or-not state it shows, stay visible to
-   every role. */
-function LinkedInCard({ connected, canWrite }: { connected: boolean; canWrite: boolean }) {
+/* `canWrite` (then the page's can_connect) hides the "Connect mine"
+   control for a member; a row's Disconnect follows its own can_disconnect.
+   The card, its connected-or-not state, and every row stay visible to
+   every role. One LinkedIn per person: an own active row hides "Connect
+   mine". */
+function LinkedInCard({
+  connected: connectedFallback,
+  rows,
+  accounts,
+  canWrite,
+  onAccounts,
+}: {
+  connected: boolean;
+  rows: SendingAccount<LinkedInState>[];
+  accounts: AccountsState;
+  canWrite: boolean;
+  onAccounts: (page: AccountsPage) => void;
+}) {
   const [connectPending, setConnectPending] = useState(false);
   const [connectError, setConnectError] = useState<string | null>(null);
-  const {
-    pending: disconnectPending,
-    error: disconnectError,
-    disconnect: handleDisconnect,
-  } = useDisconnect("/linkedin/disconnect");
-  const pending = connectPending || disconnectPending;
-  const error = connectError ?? disconnectError;
+  const { disconnecting, rowError, disconnect } = useAccountDisconnect(onAccounts);
+  const ready = accounts.status === "ready";
+  const connected = ready ? channelConnected(rows) : connectedFallback;
+  const canConnect = ready ? accounts.page.canConnect : canWrite;
+  const own = ownAccount(rows);
+  // Until the pool lands, offer connect only when nothing is connected — a
+  // connected channel might already hold the viewer's own row.
+  const showConnect = canConnect && (ready ? own?.status !== "active" : !connectedFallback);
+  const pending = connectPending || disconnecting !== null;
 
   async function handleConnect() {
     setConnectPending(true);
@@ -1036,38 +1253,40 @@ function LinkedInCard({ connected, canWrite }: { connected: boolean; canWrite: b
           <h3 className="m-0 text-[18px] font-semibold tracking-[-0.01em]">
             {connected ? "LinkedIn" : "Connect LinkedIn"}
           </h3>
-          <p className="m-0 mt-2 text-[15px] leading-relaxed text-ink-soft">
-            {connected ? "Ready." : "Required for LinkedIn outreach."}
-          </p>
+          {!connected && (
+            <p className="m-0 mt-2 text-[15px] leading-relaxed text-ink-soft">
+              Required for LinkedIn outreach.
+            </p>
+          )}
 
-          {canWrite &&
-            (connected ? (
-              <button
-                type="button"
-                onClick={handleDisconnect}
-                disabled={pending}
-                className="mt-5 cursor-pointer rounded-full border border-line bg-surface px-3.5 py-2 text-[13.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {pending ? "Disconnecting…" : "Disconnect"}
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleConnect}
-                disabled={pending}
-                className="mt-5 inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-full bg-tide px-4.5 py-2.5 text-[14.5px] font-semibold text-white transition-[background,transform] hover:-translate-y-px hover:bg-tide-deep disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <LinkedInMark className="size-4.5 shrink-0" />
-                {pending ? "Connecting…" : "Connect LinkedIn"}
-              </button>
-            ))}
+          <AccountRows
+            accounts={accounts}
+            rows={rows}
+            connected={connectedFallback}
+            canConnect={canConnect}
+            disconnecting={disconnecting}
+            rowError={rowError}
+            onDisconnect={(account) => void disconnect(account.id)}
+          />
 
-          {error && (
+          {showConnect && (
+            <button
+              type="button"
+              onClick={handleConnect}
+              disabled={pending}
+              className="mt-5 inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-full bg-tide px-4.5 py-2.5 text-[14.5px] font-semibold text-white transition-[background,transform] hover:-translate-y-px hover:bg-tide-deep disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <LinkedInMark className="size-4.5 shrink-0" />
+              {connectPending ? "Connecting…" : "Connect mine"}
+            </button>
+          )}
+
+          {connectError && (
             <p
               className="m-0 mt-3 text-[13.5px] font-medium text-red-700"
               role="alert"
             >
-              {error}
+              {connectError}
             </p>
           )}
         </div>
@@ -1093,28 +1312,42 @@ type EmailProvider = "gmail" | "outlook";
    auth — the redirect comes back with ?email=connected|failed). Two connect
    buttons because the provider must match where the mailbox actually lives:
    a Google sign-in on an M365-hosted address completes OAuth but can't send. */
-/* `canWrite` hides the connect, disconnect, and add-inbox controls for a
-   member. The box count and the read-only inbox list stay visible to every
-   role. */
+/* `canWrite` (then the page's can_connect) hides the connect and add-inbox
+   controls for a member; a row's Disconnect follows its own
+   can_disconnect. The box count and the read-only inbox list stay visible
+   to every role. A person may link more than one mailbox, so "Connect
+   mine" stays even when the viewer already has a row. */
 function EmailCard({
-  connected,
+  connected: connectedFallback,
+  rows,
+  accounts,
   emailError,
   companyName,
   pool,
   applyPurchase,
   canWrite,
+  onAccounts,
 }: {
   connected: boolean;
+  rows: SendingAccount<EmailState>[];
+  accounts: AccountsState;
   emailError: string | null;
   companyName: string | null;
   pool: MailboxesOverview | null;
   applyPurchase: (result: PurchaseResult, senders: SenderInput[]) => void;
   canWrite: boolean;
+  onAccounts: (page: AccountsPage) => void;
 }) {
   const [connectPending, setConnectPending] = useState<EmailProvider | null>(
     null,
   );
   const [connectError, setConnectError] = useState<string | null>(null);
+  const { disconnecting, rowError, disconnect } = useAccountDisconnect(onAccounts);
+  const ready = accounts.status === "ready";
+  const connected = ready ? channelConnected(rows) : connectedFallback;
+  const canConnect = ready ? accounts.page.canConnect : canWrite;
+  // Until the pool lands, offer connect only when nothing is connected.
+  const showConnect = canConnect && (ready || !connectedFallback);
   /* the managed pool is null for every customer without one (and on any
      fetch error) — the tile then renders exactly as it did before the
      feature existed. The pool and its add flow do NOT wait for the
@@ -1125,18 +1358,14 @@ function EmailCard({
   const [listOpen, setListOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const showPool = pool !== null;
-  // own connected mailbox (when there is one) + the managed pool
-  const boxCount = (connected ? 1 : 0) + (pool?.mailboxes.length ?? 0);
+  // own connected mailboxes (the pool's usable rows once it lands) + the
+  // managed pool
+  const ownBoxes = ready ? rows.filter(isUsable).length : connectedFallback ? 1 : 0;
+  const boxCount = ownBoxes + (pool?.mailboxes.length ?? 0);
   const underCaps =
     (pool?.domains.length ?? 0) < DOMAIN_CAP &&
     (pool?.mailboxes.length ?? 0) < INBOX_CAP;
-  const {
-    pending: disconnectPending,
-    error: disconnectError,
-    disconnect: handleDisconnect,
-  } = useDisconnect("/email/disconnect");
-  const pending = connectPending !== null || disconnectPending;
-  const error = connectError ?? disconnectError;
+  const pending = connectPending !== null || disconnecting !== null;
 
   async function handleConnect(provider: EmailProvider) {
     setConnectPending(provider);
@@ -1209,58 +1438,51 @@ function EmailCard({
               </p>
             )
           ) : (
-            <p className="m-0 mt-2 text-[15px] leading-relaxed text-ink-soft">
-              {connected
-                ? "Ready."
-                : "Send from Gmail or Outlook."}
-            </p>
+            !connected && (
+              <p className="m-0 mt-2 text-[15px] leading-relaxed text-ink-soft">
+                Send from Gmail or Outlook.
+              </p>
+            )
           )}
 
-          {canWrite && (connected ? (
-            <div className="flex flex-wrap items-center gap-2.5">
-              <button
-                type="button"
-                onClick={handleDisconnect}
-                disabled={pending}
-                className="cursor-pointer rounded-full border border-line bg-surface px-3.5 py-2 text-[13.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {pending ? "Disconnecting…" : "Disconnect"}
-              </button>
-              {underCaps && (
-                <button
-                  type="button"
-                  aria-haspopup="dialog"
-                  disabled={pending}
-                  onClick={() => setAddOpen(true)}
-                  className="cursor-pointer rounded-full border border-line bg-surface px-3.5 py-2 text-[13.5px] font-medium text-ink-soft transition-colors hover:border-tide/40 hover:bg-tide-wash hover:text-tide-deep disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  Add inboxes
-                </button>
-              )}
-            </div>
-          ) : (
+          <AccountRows
+            accounts={accounts}
+            rows={rows}
+            connected={connectedFallback}
+            canConnect={canConnect}
+            detail={(account) => account.channelState.address}
+            disconnecting={disconnecting}
+            rowError={rowError}
+            onDisconnect={(account) => void disconnect(account.id)}
+          />
+
+          {(showConnect || (canWrite && underCaps)) && (
             <div className="mt-5 flex flex-wrap gap-2.5">
-              <button
-                type="button"
-                onClick={() => void handleConnect("gmail")}
-                disabled={pending}
-                className="inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-full border border-line bg-surface px-4.5 py-2.5 text-[14.5px] font-semibold text-ink transition-colors hover:border-ink-faint/50 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <GoogleMark className="size-4.5 shrink-0" />
-                {connectPending === "gmail" ? "Connecting…" : "Connect Gmail"}
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleConnect("outlook")}
-                disabled={pending}
-                className="inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-full border border-line bg-surface px-4.5 py-2.5 text-[14.5px] font-semibold text-ink transition-colors hover:border-ink-faint/50 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <MicrosoftMark className="size-4.5 shrink-0" />
-                {connectPending === "outlook"
-                  ? "Connecting…"
-                  : "Connect Outlook"}
-              </button>
-              {underCaps && (
+              {showConnect && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => void handleConnect("gmail")}
+                    disabled={pending}
+                    className="inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-full border border-line bg-surface px-4.5 py-2.5 text-[14.5px] font-semibold text-ink transition-colors hover:border-ink-faint/50 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <GoogleMark className="size-4.5 shrink-0" />
+                    {connectPending === "gmail" ? "Connecting…" : "Connect my Gmail"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleConnect("outlook")}
+                    disabled={pending}
+                    className="inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-full border border-line bg-surface px-4.5 py-2.5 text-[14.5px] font-semibold text-ink transition-colors hover:border-ink-faint/50 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <MicrosoftMark className="size-4.5 shrink-0" />
+                    {connectPending === "outlook"
+                      ? "Connecting…"
+                      : "Connect my Outlook"}
+                  </button>
+                </>
+              )}
+              {canWrite && underCaps && (
                 <button
                   type="button"
                   aria-haspopup="dialog"
@@ -1272,7 +1494,7 @@ function EmailCard({
                 </button>
               )}
             </div>
-          ))}
+          )}
 
           {!connected && emailError && (
             <p
@@ -1283,12 +1505,12 @@ function EmailCard({
             </p>
           )}
 
-          {error && (
+          {connectError && (
             <p
               className="m-0 mt-3 text-[13.5px] font-medium text-red-700"
               role="alert"
             >
-              {error}
+              {connectError}
             </p>
           )}
 
@@ -1374,36 +1596,51 @@ function TwitterSteps({ loggedIn }: { loggedIn: boolean }) {
    for `closed` and POSTs /twitter/finish, which is what ends the Kernel
    session and confirms the login. It also polls /auth/me on the same
    interval + window focus, and reloads once connected. */
-/* `canWrite` hides the connect, reopen, and disconnect controls for a
-   member. The card and its state — connected, pending, or chat-locked —
-   stay visible to every role. */
+/* `canWrite` (then the page's can_connect) hides the connect and reopen
+   controls for a member; a row's Disconnect follows its own
+   can_disconnect. The card and its state — connected, pending, or
+   chat-locked — stay visible to every role. The pending and locked states,
+   and the watcher below, key on the viewer's OWN row (is_mine): the PIN is
+   theirs to enter, and a teammate's half-finished login must not put this
+   card into its watching state. One X per person: an own active row hides
+   "Connect mine". */
 function TwitterCard({
-  connected,
-  pending: alreadyPending,
-  chatLocked,
+  connected: connectedFallback,
+  chatLocked: chatLockedFallback,
+  rows,
+  accounts,
   canWrite,
+  onAccounts,
 }: {
   connected: boolean;
-  pending: boolean;
   chatLocked: boolean;
+  rows: SendingAccount<XState>[];
+  accounts: AccountsState;
   canWrite: boolean;
+  onAccounts: (page: AccountsPage) => void;
 }) {
-  const [state, setState] = useState<TwitterState>(
-    alreadyPending ? "pending" : "idle",
-  );
+  const [state, setState] = useState<TwitterState>("idle");
   const [error, setError] = useState<string | null>(null);
-  const {
-    pending: disconnectPending,
-    error: disconnectError,
-    disconnect: handleDisconnect,
-  } = useDisconnect("/twitter/disconnect");
-  const pending = state === "connecting" || disconnectPending;
-  const watching = state === "pending" || state === "unlocking";
+  const { disconnecting, rowError, disconnect } = useAccountDisconnect(onAccounts);
+  const ready = accounts.status === "ready";
+  const own = ownAccount(rows);
+  // The viewer's own login is started but not confirmed. Read live from the
+  // row instead of seeded at mount, so it holds whenever the pool lands.
+  const ownPending = own !== null && (own.status === "pending" || own.channelState.pending);
+  const pending = state === "connecting" || disconnecting !== null;
+  const watching = state === "pending" || state === "unlocking" || (state === "idle" && ownPending);
+  const connected = ready ? channelConnected(rows) : connectedFallback;
+  const canConnect = ready ? accounts.page.canConnect : canWrite;
   // Connected but walled: the login is fine, chats aren't reachable. Treated
   // as its own state rather than a variant of "connected" because the user
   // has something left to do, and as its own state rather than a variant of
   // "pending" because nothing about the connection is in doubt.
-  const locked = connected && chatLocked;
+  const locked = ready
+    ? own !== null && own.status === "active" && own.channelState.chatLocked
+    : connectedFallback && chatLockedFallback;
+  // Until the pool lands, offer connect only when nothing is connected — a
+  // connected channel might already hold the viewer's own row.
+  const showConnect = canConnect && (ready ? own?.status !== "active" : !connectedFallback);
   // Deliberately no noopener/noreferrer on the window.open below — we need
   // this reference back to watch for the user closing the tab (and to close
   // it ourselves if the backend confirms first), and the target is Kernel's
@@ -1432,19 +1669,20 @@ function TwitterCard({
         if (cancelled) return;
       }
       try {
+        // /auth/me stays in the loop for its Kernel-backed self-heal check
+        // (routers/auth.py). Its booleans are workspace-wide now, so what
+        // counts as done is read from the viewer's own row instead.
         const res = await fetch("/auth/me", { credentials: "include" });
         if (!res.ok || cancelled) return;
-        const data = (await res.json()) as {
-          twitter_connected?: boolean;
-          twitter_chat_locked?: boolean;
-        };
+        const mine = ownAccount((await getAccounts()).x);
+        if (cancelled) return;
         // What counts as done depends on why the tab was opened. An unlock
-        // run starts already-connected, so waiting on twitter_connected
+        // run starts already-connected, so waiting on the row being active
         // would be satisfied instantly and reload the page out from under
         // someone still typing their PIN.
         const done = forUnlock
-          ? data.twitter_connected === true && !data.twitter_chat_locked
-          : data.twitter_connected === true;
+          ? mine !== null && mine.status === "active" && !mine.channelState.chatLocked
+          : mine !== null && mine.status === "active";
         if (done) {
           loginTab.current?.close();
           window.location.reload();
@@ -1516,28 +1754,48 @@ function TwitterCard({
         <div className="min-w-0 flex-1">
           <h3 className="m-0 text-[18px] font-semibold tracking-[-0.01em]">
             {/* No @handle to show: the login check reads cookies, not X's
-                DOM, so nothing scrapes the handle any more. */}
+                DOM, so nothing scrapes the handle any more. The viewer's
+                own half-finished login outranks a teammate's working row,
+                since the steps below are theirs to finish. */}
             {locked
               ? "Almost there — Messages is locked"
-              : connected
-                ? "X"
-                : watching
-                  ? "Finish in the X tab"
+              : watching
+                ? "Finish in the X tab"
+                : connected
+                  ? "X"
                   : "Connect X"}
           </h3>
-          <p className="m-0 mt-2 text-[15px] leading-relaxed text-ink-soft">
-            {locked
-              ? "Enter your chat PIN to enable DMs."
-              : connected
-                ? "Ready."
-                : watching
-                  ? "Complete these steps in X:"
-                  : "Send direct messages from X."}
-          </p>
+          {locked ? (
+            <p className="m-0 mt-2 text-[15px] leading-relaxed text-ink-soft">
+              Enter your chat PIN to enable DMs.
+            </p>
+          ) : watching ? (
+            <p className="m-0 mt-2 text-[15px] leading-relaxed text-ink-soft">
+              Complete these steps in X:
+            </p>
+          ) : (
+            !connected && (
+              <p className="m-0 mt-2 text-[15px] leading-relaxed text-ink-soft">
+                Send direct messages from X.
+              </p>
+            )
+          )}
 
           {(watching || locked) && <TwitterSteps loggedIn={locked} />}
 
-          {canWrite && (locked ? (
+          <AccountRows
+            accounts={accounts}
+            rows={rows}
+            connected={connectedFallback}
+            canConnect={canConnect}
+            detail={(account) => (account.channelState.handle ? `@${account.channelState.handle}` : null)}
+            chip={(account) => (account.channelState.chatLocked ? "Messages locked" : null)}
+            disconnecting={disconnecting}
+            rowError={rowError}
+            onDisconnect={(account) => void disconnect(account.id)}
+          />
+
+          {canConnect && locked ? (
             <div className="mt-5 flex flex-wrap items-center gap-2.5">
               <button
                 type="button"
@@ -1548,25 +1806,8 @@ function TwitterCard({
                 <XMark className="size-4.5 shrink-0" />
                 {state === "connecting" ? "Opening…" : "Reopen X tab"}
               </button>
-              <button
-                type="button"
-                onClick={handleDisconnect}
-                disabled={pending}
-                className="cursor-pointer rounded-full border border-line bg-surface px-3.5 py-2 text-[13.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {pending ? "Disconnecting…" : "Disconnect"}
-              </button>
             </div>
-          ) : connected ? (
-            <button
-              type="button"
-              onClick={handleDisconnect}
-              disabled={pending}
-              className="mt-5 cursor-pointer rounded-full border border-line bg-surface px-3.5 py-2 text-[13.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {pending ? "Disconnecting…" : "Disconnect"}
-            </button>
-          ) : (
+          ) : showConnect ? (
             <button
               type="button"
               onClick={() => void openTab("connect")}
@@ -1576,18 +1817,18 @@ function TwitterCard({
               <XMark className="size-4.5 shrink-0" />
               {state === "connecting"
                 ? "Connecting…"
-                : state === "pending"
+                : watching
                   ? "Reopen login tab"
-                  : "Connect X"}
+                  : "Connect mine"}
             </button>
-          ))}
+          ) : null}
 
-          {(error ?? disconnectError) && (
+          {error && (
             <p
               className="m-0 mt-3 text-[13.5px] font-medium text-red-700"
               role="alert"
             >
-              {error ?? disconnectError}
+              {error}
             </p>
           )}
         </div>
