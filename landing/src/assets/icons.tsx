@@ -25,6 +25,14 @@ export function UploadIcon(props: IconProps) {
   return <Icon {...props}><path d="M12 16V4M7 9l5-5 5 5" /><path d="M5 14v5h14v-5" /></Icon>;
 }
 
+export function PlusIcon(props: IconProps) {
+  return <Icon {...props}><path d="M12 5v14M5 12h14" /></Icon>;
+}
+
+export function ChevronDownIcon(props: IconProps) {
+  return <Icon {...props}><path d="m6 9 6 6 6-6" /></Icon>;
+}
+
 export function LinkIcon(props: IconProps) {
   return <Icon {...props}><path d="m9.5 14.5 5-5" /><path d="M7.2 17.8 5.7 19.3a3.5 3.5 0 0 1-5-5l3.5-3.5a3.5 3.5 0 0 1 5 0" transform="translate(3 -2)" /><path d="m16.8 6.2 1.5-1.5a3.5 3.5 0 0 1 5 5l-3.5 3.5a3.5 3.5 0 0 1-5 0" transform="translate(-3 2)" /></Icon>;
 }
