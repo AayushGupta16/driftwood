@@ -1765,6 +1765,48 @@ if (mockMode) {
     }
     return orgPage();
   };
+  // The workspace send schedule (/dashboard/settings). GET answers the page;
+  // PUT /send-schedule saves it and reports a fixed 3 moved sends so the
+  // saved note renders. A member gets the backend's 403, and an empty day
+  // list or an inverted window its 422.
+  const mockSchedule = {
+    days: [0, 1, 2, 3, 4],
+    start: "09:00",
+    end: "18:00",
+    tz: "America/Los_Angeles",
+    skip_us_holidays: true,
+  };
+  const settingsPage = (movedSends: number | null) => ({
+    send_schedule: { ...mockSchedule, days: [...mockSchedule.days] },
+    window_open_now: true,
+    next_open_at: "2026-09-11T16:00:00Z",
+    upcoming_holidays: [
+      { date: "2026-10-12", name: "Columbus Day" },
+      { date: "2026-11-11", name: "Veterans Day" },
+      { date: "2026-11-26", name: "Thanksgiving" },
+    ],
+    daily_caps: { email: 20, message: 25, connection_request: 20, x_dm: 5, x_follow: 10 },
+    your_role: mockOrgRole,
+    moved_sends: movedSends,
+  });
+  const settingsError = (status: number, code: string, detail: string) =>
+    new Response(JSON.stringify({ error: { detail, code } }), { status, headers: { "Content-Type": "application/json" } });
+  const settingsApi = (init?: RequestInit) => {
+    if ((init?.method ?? "GET") !== "PUT") return settingsPage(null);
+    if (mockMode === "member") return settingsError(403, "forbidden", "Only an owner or admin can change the send schedule.");
+    const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
+    const days: number[] = Array.isArray(body.days) ? body.days.filter((d: unknown) => Number.isInteger(d)) : [];
+    if (days.length === 0) return settingsError(422, "invalid_send_schedule", "Pick at least one day.");
+    if (typeof body.start !== "string" || typeof body.end !== "string" || body.start >= body.end) {
+      return settingsError(422, "invalid_send_schedule", "The window has to close after it opens.");
+    }
+    mockSchedule.days = days;
+    mockSchedule.start = body.start;
+    mockSchedule.end = body.end;
+    if (typeof body.tz === "string" && body.tz) mockSchedule.tz = body.tz;
+    mockSchedule.skip_us_holidays = body.skip_us_holidays === true;
+    return settingsPage(3);
+  };
   // The admin routes act on the impersonated user's workspace, which in mock
   // mode is this same org. The invite answers with the row plus the receipt.
   const adminInviteApi = (init?: RequestInit, url?: string) => {
@@ -2194,6 +2236,7 @@ if (mockMode) {
     // express slow and failing states (see the knob comment above).
     ["/api/v1/imports/leads", (init?: RequestInit) => audKnob("upload", () => leadImportsApi(init))],
     ["/api/v1/dashboard/org", orgApi],
+    ["/api/v1/dashboard/settings", settingsApi],
     ["/api/v1/dashboard/accounts", accountsApi],
     ["/api/v1/dashboard/audiences", (init?: RequestInit, url?: string) => audKnob(audienceOp(init, url), () => audiencesApi(init, url))],
     ["/api/v1/dashboard/leads", dashboardLeadsApi],

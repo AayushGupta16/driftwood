@@ -15,6 +15,7 @@ import {
   PlusIcon,
   ReviewIcon,
   SearchVisibilityIcon,
+  SettingsIcon,
   FleetIcon,
   DriftIcon,
   TriggerIcon,
@@ -64,6 +65,7 @@ const ICONS: Record<DashboardIconName, (props: DashboardIconProps) => ReactNode>
   search: SearchVisibilityIcon,
   fleet: FleetIcon,
   drift: DriftIcon,
+  settings: SettingsIcon,
 };
 
 function Navigation({ active, mode }: { active: DashboardSection; mode: NavigationMode }) {
