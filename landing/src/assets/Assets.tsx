@@ -6,11 +6,10 @@ import {
   assetKindLabel,
   filterAssets,
   formatBytes,
-  uploadKindFor,
   type AssetFilter,
   type AssetAgent,
   type AssetAssignmentMode,
-  type AssetUploadKind,
+  type AssetKind,
   type CompanyAsset,
 } from "./model";
 import { useWorkspacePermissions } from "../dashboard/workspace-permissions-context";
@@ -23,20 +22,19 @@ import {
   TrashIcon,
   UploadIcon,
 } from "./icons";
+import { AssetFileDropzone } from "./AssetFileDropzone";
 import { AssetThumbnail, AssetViewer } from "./AssetViewer";
+import { AssetAddMenu } from "./AssetAddMenu";
+import { ASSET_DESTINATIONS } from "./destinations";
+import { UPLOAD_OPTIONS, uploadDestinationError, type UploadDestination } from "./upload-options";
 import "./assets.css";
 
 const FILTERS: Array<{ id: AssetFilter; label: string }> = [
   { id: "all", label: "All assets" },
-  { id: "image", label: "Images" },
-  { id: "video", label: "Videos" },
-  { id: "audio", label: "Audio" },
-  { id: "link", label: "Links" },
-  { id: "skill", label: "Skills" },
-  { id: "repo", label: "Repos" },
+  ...ASSET_DESTINATIONS,
 ];
 
-type Composer = "upload" | "link" | null;
+type Composer = { type: "upload"; destination: UploadDestination; file?: File } | { type: "link"; destination: "link" | "repo" } | null;
 
 function domainFor(url: string | null): string {
   if (!url) return "";
@@ -58,6 +56,7 @@ export default function Assets() {
   const [loadFailed, setLoadFailed] = useState(false);
   const [viewingAsset, setViewingAsset] = useState<CompanyAsset | null>(null);
   const [composer, setComposer] = useState<Composer>(null);
+  const composerTriggerRef = useRef<HTMLElement | null>(null);
   const [assignmentAsset, setAssignmentAsset] = useState<CompanyAsset | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [agentsLoading, setAgentsLoading] = useState(true);
@@ -65,6 +64,18 @@ export default function Assets() {
   const [agentsErrorVisible, setAgentsErrorVisible] = useState(false);
   const [armedDeleteId, setArmedDeleteId] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    function preventFileNavigation(event: globalThis.DragEvent) {
+      if (event.dataTransfer?.types.includes("Files")) event.preventDefault();
+    }
+    window.addEventListener("dragover", preventFileNavigation);
+    window.addEventListener("drop", preventFileNavigation);
+    return () => {
+      window.removeEventListener("dragover", preventFileNavigation);
+      window.removeEventListener("drop", preventFileNavigation);
+    };
+  }, []);
 
   /* An armed Remove disarms itself after a beat — no stale confirm buttons
      (the Review-queue arm-then-confirm idiom). */
@@ -117,10 +128,25 @@ export default function Assets() {
     [assets, filter, query],
   );
   const assignmentsReady = assetAssignmentsReady(agentsLoading, agentsError);
+  const destination = ASSET_DESTINATIONS.find((item) => item.id === filter);
+  const ViewIcon = destination?.icon ?? ImageIcon;
+  const viewAction = filter === "all" ? "Add asset" : filter === "link" ? "Add link" : UPLOAD_OPTIONS[filter].action;
+
+  function openComposer(kind: AssetKind, file?: File) {
+    composerTriggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setComposer(kind === "link" ? { type: "link", destination: kind } : { type: "upload", destination: kind, file });
+  }
+
+  function closeComposer() {
+    setComposer(null);
+    requestAnimationFrame(() => composerTriggerRef.current?.focus());
+  }
 
   function addAsset(asset: CompanyAsset) {
     setAssets((current) => [asset, ...current]);
-    setComposer(null);
+    setFilter(asset.kind);
+    setQuery("");
+    closeComposer();
     setError(null);
   }
 
@@ -158,12 +184,7 @@ export default function Assets() {
         <h1 id="assets-heading">Assets</h1>
         {canWrite ? (
           <div className="asset-heading-actions">
-            <button className="asset-button asset-button-secondary" type="button" onClick={() => setComposer("link")}>
-              <LinkIcon size={16} /> Add link
-            </button>
-            <button className="asset-button asset-button-primary" type="button" onClick={() => setComposer("upload")}>
-              <UploadIcon size={16} /> Upload asset
-            </button>
+            <AssetAddMenu onChoose={openComposer} />
           </div>
         ) : <span className="asset-read-only">Read-only access</span>}
       </header>
@@ -215,6 +236,19 @@ export default function Assets() {
         </label>
       </div>
 
+      <div className="asset-view-heading">
+        <div>
+          <h2>{destination?.label ?? "All assets"}</h2>
+          <p>{destination?.description ?? "Files and references your agents can use."}</p>
+        </div>
+        {canWrite && filter === "all" && <AssetAddMenu onChoose={openComposer} secondary />}
+        {canWrite && filter === "link" && <button className="asset-button asset-button-secondary" type="button" onClick={() => openComposer("link")}><LinkIcon size={16} /> Add link</button>}
+        {canWrite && filter === "repo" && <button className="asset-button asset-button-secondary" type="button" onClick={(event) => { composerTriggerRef.current = event.currentTarget; setComposer({ type: "link", destination: "repo" }); }}><LinkIcon size={16} /> Add repository URL</button>}
+      </div>
+      {canWrite && filter !== "all" && filter !== "link" && (
+        <AssetFileDropzone key={filter} destination={filter} compact onFile={(file) => { if (file) openComposer(filter, file); }} />
+      )}
+
       <div className="asset-library" aria-live="polite" aria-busy={loading}>
         {loading ? (
           /* Card skeletons mirror the loaded grid so nothing jumps when the
@@ -239,9 +273,16 @@ export default function Assets() {
           <div className="asset-state" role="alert"><ImageIcon size={27} /><h2>Assets are unavailable</h2><p>We could not load the private library. Try again before adding or changing an asset.</p><button className="asset-button asset-button-secondary" type="button" onClick={() => window.location.reload()}>Try again</button></div>
         ) : visible.length === 0 ? (
           <div className="asset-state">
-            <ImageIcon size={27} />
-            <h2>{assets.length === 0 ? "Your asset library is empty" : "No assets match this view"}</h2>
-            <p>{assets.length === 0 ? canWrite ? "Upload an image, video, audio, skill, or repository file, or add a link your agents can reference." : "An owner or admin can add the first asset." : "Try another type or clear the search."}</p>
+            <ViewIcon size={27} />
+            <h2>{query.trim() ? "No assets match your search" : destination ? `No ${destination.label.toLowerCase()} yet` : "Your asset library is empty"}</h2>
+            <p>{query.trim() ? "Try another search or clear it to see this tab’s assets." : canWrite ? destination ? `Add your first ${filter === "repo" ? "repository" : filter === "audio" ? "audio file" : filter} to this tab.` : "Choose the type of asset you want to add." : "An owner or admin can add assets to this tab."}</p>
+            {query.trim() ? (
+              <button className="asset-button asset-button-secondary" type="button" onClick={() => setQuery("")}>Clear search</button>
+            ) : canWrite && filter !== "all" ? (
+              <button className="asset-button asset-button-secondary" type="button" onClick={() => openComposer(filter)}>
+                {filter === "link" ? <LinkIcon size={16} /> : <UploadIcon size={16} />}{viewAction}
+              </button>
+            ) : null}
           </div>
         ) : (
           <div className="asset-grid">
@@ -336,11 +377,11 @@ export default function Assets() {
       </div>
 
       {viewingAsset && <AssetViewer key={viewingAsset.id} asset={viewingAsset} onClose={() => setViewingAsset(null)} />}
-      {composer === "upload" && (
-        <UploadComposer onClose={() => setComposer(null)} onCreated={addAsset} />
+      {composer?.type === "upload" && (
+        <UploadComposer initialFile={composer.file} destination={composer.destination} onRepositoryLink={() => setComposer({ type: "link", destination: "repo" })} onClose={closeComposer} onCreated={addAsset} />
       )}
-      {composer === "link" && (
-        <LinkComposer onClose={() => setComposer(null)} onCreated={addAsset} />
+      {composer?.type === "link" && (
+        <LinkComposer kind={composer.destination} onRepositoryUpload={() => setComposer({ type: "upload", destination: "repo" })} onClose={closeComposer} onCreated={addAsset} />
       )}
       {assignmentAsset && (
         <AssignmentComposer
@@ -522,34 +563,22 @@ function AssignmentComposer({
   );
 }
 
-function UploadComposer({ onClose, onCreated }: ComposerProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [file, setFile] = useState<File | null>(null);
-  /* The kind picked for an archive. Media sends none; markdown is always a skill. */
-  const [archiveKind, setArchiveKind] = useState<AssetUploadKind | null>(null);
+function UploadComposer({ destination, initialFile, onRepositoryLink, onClose, onCreated }: ComposerProps & { destination: UploadDestination; initialFile?: File; onRepositoryLink: () => void }) {
+  const [file, setFile] = useState<File | null>(initialFile ?? null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
   const [saving, setSaving] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const fileClass = file ? uploadKindFor(file.name) : null;
-  const kind: AssetUploadKind | undefined = fileClass === "archive"
-    ? archiveKind ?? undefined
-    : fileClass === "markdown"
-      ? "skill"
-      : undefined;
-  const needsKind = fileClass === "archive" && !archiveKind;
-
-  function chooseFile(next: File | null) {
-    setFile(next);
-    setArchiveKind(null);
-  }
+  const options = UPLOAD_OPTIONS[destination];
+  const kind = destination === "skill" || destination === "repo" ? destination : undefined;
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    if (!file || needsKind) return;
-    if (file.size > 25 * 1024 * 1024) {
-      setSubmitError("Choose a file smaller than 25 MB.");
+    if (!file || saving) return;
+    const validationError = uploadDestinationError(file, destination);
+    if (validationError) {
+      setSubmitError(validationError);
       return;
     }
     setSaving(true);
@@ -563,28 +592,11 @@ function UploadComposer({ onClose, onCreated }: ComposerProps) {
   }
 
   return (
-    <ComposerShell title="Upload an asset" intro="Files stay private to this workspace." locked={saving} onClose={onClose}>
+    <ComposerShell title={options.title} intro={`Add to ${ASSET_DESTINATIONS.find((item) => item.id === destination)?.label}. Files stay private to this workspace.`} locked={saving} onClose={onClose}>
       <form className="asset-form" onSubmit={(event) => void submit(event)}>
-        <button className="asset-dropzone" type="button" onClick={() => inputRef.current?.click()} disabled={saving}>
-          <UploadIcon size={23} />
-          <strong>{file ? file.name : "Choose an image, video, audio, skill, or repository file"}</strong>
-          <span>{file ? formatBytes(file.size) : "PNG, JPEG, GIF, WebP, MP4, MOV, WebM, MP3, WAV, M4A, OGG, ZIP, TAR.GZ, or Markdown · up to 25 MB"}</span>
-        </button>
-        <input ref={inputRef} className="sr-only" type="file" accept="image/png,image/jpeg,image/gif,image/webp,video/mp4,video/quicktime,video/webm,audio/mpeg,audio/wav,audio/x-wav,audio/mp4,audio/x-m4a,audio/ogg,audio/webm,.zip,.tar.gz,.tgz,.md,application/zip,application/gzip,text/markdown" onChange={(event) => chooseFile(event.target.files?.[0] ?? null)} />
-        {fileClass === "archive" && (
-          <fieldset className="asset-kind-choice">
-            <legend>This file is</legend>
-            <label>
-              <input type="radio" name="upload-kind" checked={archiveKind === "skill"} onChange={() => setArchiveKind("skill")} disabled={saving} />
-              <span><strong>Skill</strong><small>A folder with a SKILL.md, zipped</small></span>
-            </label>
-            <label>
-              <input type="radio" name="upload-kind" checked={archiveKind === "repo"} onChange={() => setArchiveKind("repo")} disabled={saving} />
-              <span><strong>Repository</strong><small>A code repository, zipped</small></span>
-            </label>
-          </fieldset>
-        )}
-        {fileClass === "markdown" && <p className="asset-form-note">Uploads as a skill.</p>}
+        <AssetFileDropzone destination={destination} file={file} disabled={saving} onFile={(next) => { setFile(next); setSubmitError(null); }} />
+        {destination === "skill" && <p className="asset-form-note">Choose a Markdown file or an archive containing SKILL.md.</p>}
+        {destination === "repo" && <button className="asset-source-switch" type="button" onClick={onRepositoryLink} disabled={saving}><LinkIcon size={15} /> Use a repository URL instead</button>}
         <label>Display name <span>Optional</span><input value={name} onChange={(event) => setName(event.target.value)} maxLength={255} placeholder={file?.name ?? "Product walkthrough"} disabled={saving} /></label>
         <label>Description <span>Optional</span><textarea value={description} onChange={(event) => setDescription(event.target.value)} maxLength={2000} rows={3} placeholder="How should the agent use this?" disabled={saving} /></label>
         <label>Tags <span>Comma separated</span><input value={tags} onChange={(event) => setTags(event.target.value)} maxLength={1000} placeholder="product, proof, enterprise" disabled={saving} /></label>
@@ -597,16 +609,15 @@ function UploadComposer({ onClose, onCreated }: ComposerProps) {
           </div>
         )}
         {submitError && <p className="asset-dialog-error" role="alert">{submitError}</p>}
-        <div className="asset-form-actions"><button className="asset-button asset-button-secondary" type="button" onClick={onClose} disabled={saving}>Cancel</button><button className="asset-button asset-button-primary" type="submit" disabled={!file || needsKind || saving}>{saving ? "Uploading…" : "Upload asset"}</button></div>
+        <div className="asset-form-actions"><button className="asset-button asset-button-secondary" type="button" onClick={onClose} disabled={saving}>Cancel</button><button className="asset-button asset-button-primary" type="submit" disabled={!file || saving} title={!file ? "Choose a file to upload" : undefined}>{saving ? "Uploading…" : options.action}</button></div>
       </form>
     </ComposerShell>
   );
 }
 
-function LinkComposer({ onClose, onCreated }: ComposerProps) {
+function LinkComposer({ kind, onRepositoryUpload, onClose, onCreated }: ComposerProps & { kind: "link" | "repo"; onRepositoryUpload: () => void }) {
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
-  const [kind, setKind] = useState<"link" | "repo">("link");
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
   const [saving, setSaving] = useState(false);
@@ -637,25 +648,15 @@ function LinkComposer({ onClose, onCreated }: ComposerProps) {
   }
 
   return (
-    <ComposerShell title="Add a reference link" intro="Save approved work, documentation, proof, or a git repository the agent should know." onClose={onClose}>
+    <ComposerShell title={kind === "repo" ? "Add a repository URL" : "Add a link"} intro={kind === "repo" ? "Save a repository URL to Repos for your agents to clone." : "Save a web page to Links for your agents to reference."} locked={saving} onClose={onClose}>
       <form className="asset-form" onSubmit={(event) => void submit(event)}>
-        <label>Display name<input required value={name} onChange={(event) => setName(event.target.value)} maxLength={255} placeholder="Enterprise case study" /></label>
-        <label>URL<input required type="url" value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://" /></label>
-        <fieldset className="asset-kind-choice">
-          <legend>This link is</legend>
-          <label>
-            <input type="radio" name="link-kind" checked={kind === "link"} onChange={() => setKind("link")} disabled={saving} />
-            <span><strong>A web page</strong></span>
-          </label>
-          <label>
-            <input type="radio" name="link-kind" checked={kind === "repo"} onChange={() => setKind("repo")} disabled={saving} />
-            <span><strong>A git repository</strong><small>An https URL the agent can clone</small></span>
-          </label>
-        </fieldset>
-        <label>Description <span>Optional</span><textarea value={description} onChange={(event) => setDescription(event.target.value)} maxLength={2000} rows={3} placeholder="When should the agent use this?" /></label>
-        <label>Tags <span>Comma separated</span><input value={tags} onChange={(event) => setTags(event.target.value)} maxLength={1000} placeholder="case study, proof" /></label>
+        <label>Display name<input required value={name} onChange={(event) => setName(event.target.value)} maxLength={255} placeholder={kind === "repo" ? "Product repository" : "Enterprise case study"} disabled={saving} /></label>
+        <label>URL<input required type="url" value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://" disabled={saving} /></label>
+        {kind === "repo" && <button className="asset-source-switch" type="button" onClick={onRepositoryUpload} disabled={saving}><UploadIcon size={15} /> Upload a repository archive instead</button>}
+        <label>Description <span>Optional</span><textarea value={description} onChange={(event) => setDescription(event.target.value)} maxLength={2000} rows={3} placeholder="When should the agent use this?" disabled={saving} /></label>
+        <label>Tags <span>Comma separated</span><input value={tags} onChange={(event) => setTags(event.target.value)} maxLength={1000} placeholder="case study, proof" disabled={saving} /></label>
         {submitError && <p className="asset-dialog-error" role="alert">{submitError}</p>}
-        <div className="asset-form-actions"><button className="asset-button asset-button-secondary" type="button" onClick={onClose} disabled={saving}>Cancel</button><button className="asset-button asset-button-primary" type="submit" disabled={saving}>{saving ? "Saving…" : "Save link"}</button></div>
+        <div className="asset-form-actions"><button className="asset-button asset-button-secondary" type="button" onClick={onClose} disabled={saving}>Cancel</button><button className="asset-button asset-button-primary" type="submit" disabled={saving}>{saving ? "Saving…" : kind === "repo" ? "Save repository" : "Save link"}</button></div>
       </form>
     </ComposerShell>
   );

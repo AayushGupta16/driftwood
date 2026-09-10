@@ -1,0 +1,119 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Asset upload interaction checks</title>
+<style>body{font:14px system-ui;margin:24px}#results{white-space:pre-wrap}#fixture{max-width:1100px}</style>
+<button id="run">Run upload interaction checks</button>
+<pre id="results" role="status">Ready. Uses synthetic files and an isolated API stub; no real uploads.</pre>
+<div id="fixture"></div>
+<script type="module">
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import Assets from '/src/assets/Assets.tsx';
+import { WorkspacePermissionsContext, DEFAULT_WORKSPACE_PERMISSIONS } from '/src/dashboard/workspace-permissions-context.ts';
+import '/src/index.css';
+const fixture = document.querySelector('#fixture');
+const root = createRoot(fixture);
+const output = document.querySelector('#results');
+let rows = [], uploads = [], generation = 0;
+const tick = () => new Promise(resolve => setTimeout(resolve, 20));
+const check = (condition, message) => { if (!condition) throw new Error(message); };
+const find = (selector, text) => [...fixture.querySelectorAll(selector)].find(el => el.textContent.includes(text));
+const wait = async (predicate) => { for (let i = 0; i < 100; i++) { if (predicate()) return; await tick(); } throw new Error('Timed out waiting for UI'); };
+window.fetch = async (url, init = {}) => {
+  const path = String(url);
+  let data;
+  if (path.endsWith('/agents')) data = { agents: [] };
+  else if (path.endsWith('/upload')) {
+    const form = init.body, file = form.get('file');
+    uploads.push(form);
+    const kind = form.get('kind') || file.type.split('/')[0];
+    data = { id: crypto.randomUUID(), kind, name: form.get('name') || file.name, description: '', tags: [], original_filename: file.name, content_type: file.type, byte_size: file.size, external_url: null, content_url: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+    rows.unshift(data);
+  } else if (path.endsWith('/link')) {
+    const body = JSON.parse(init.body);
+    data = { ...body, id: crypto.randomUUID(), external_url: body.url, content_url: null, original_filename: null, content_type: null, byte_size: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+    rows.unshift(data);
+  } else data = { assets: rows };
+  return new Response(JSON.stringify(data), { headers: { 'Content-Type': 'application/json' } });
+};
+async function reset(canWrite = true) {
+  rows = []; uploads = [];
+  root.render(React.createElement(WorkspacePermissionsContext.Provider, { value: { ...DEFAULT_WORKSPACE_PERMISSIONS, canWrite } }, React.createElement(Assets, { key: ++generation })));
+  await wait(() => fixture.querySelector('.asset-library')?.getAttribute('aria-busy') === 'false');
+  await tick();
+}
+function drag(target, files, type = 'drop') {
+  const dataTransfer = new DataTransfer();
+  for (const file of files) dataTransfer.items.add(file);
+  target.dispatchEvent(new DragEvent(type, { bubbles: true, cancelable: true, dataTransfer }));
+  return dataTransfer;
+}
+async function close() { fixture.querySelector('dialog [aria-label="Close"]').click(); await tick(); }
+const cases = [
+  ['Images', 'image', 'photo.png', 'image/png'],
+  ['Videos', 'video', 'clip.mp4', 'video/mp4'],
+  ['Audio', 'audio', 'voice.mp3', 'audio/mpeg'],
+  ['Skills', 'skill', 'SKILL.md', 'text/markdown'],
+  ['Repos', 'repo', 'repo.zip', 'application/zip'],
+];
+async function run() {
+  output.textContent = '';
+  const log = text => { output.textContent += `PASS ${text}\n`; };
+  await reset();
+  for (const [label, kind, name, type] of cases) {
+    find('.asset-filters button', label).click(); await tick();
+    const zone = fixture.querySelector('.is-compact .asset-dropzone');
+    check(zone, `${label} drop area missing`);
+    const previous = uploads.length;
+    const wrong = new File(['wrong'], 'document.pdf', { type: 'application/pdf' });
+    const rejected = drag(zone, [wrong], 'dragover'); await tick();
+    check(rejected.dropEffect === 'none' && zone.classList.contains('is-rejected'), `${label} drag was not rejected`);
+    drag(zone, [wrong]); await tick();
+    check(!fixture.querySelector('dialog') && uploads.length === previous && fixture.querySelector('[role="alert"]'), `${label} invalid drop reached upload`);
+    const valid = new File(['fixture'], name, { type });
+    drag(zone, [valid], 'dragover'); await tick();
+    check(zone.classList.contains('is-accepted'), `${label} drag was not accepted`);
+    drag(zone, [valid]); await wait(() => fixture.querySelector('dialog[open]'));
+    check(fixture.querySelector('dialog').textContent.includes(name), `${label} lost the dropped file`);
+    fixture.querySelector('dialog button[type="submit"]').click();
+    await wait(() => !fixture.querySelector('dialog'));
+    check(uploads.length === previous + 1, `${label} wrong upload count`);
+    check(uploads.at(-1).get('kind') === (kind === 'skill' || kind === 'repo' ? kind : null), `${label} wrong upload kind`);
+    check(find('.asset-card h2', name), `${label} upload not visible`);
+    check(find('.asset-filters button', label).getAttribute('aria-pressed') === 'true', `${label} not selected after upload`);
+    log(`${label}: accepted matching drag, blocked PDF, submitted correct kind, showed asset`);
+  }
+  find('.asset-filters button', 'Images').click(); await tick();
+  const zone = fixture.querySelector('.is-compact .asset-dropzone');
+  const png = new File(['fixture'], 'photo.png', { type: 'image/png' });
+  drag(zone, [png, png]); await tick();
+  check(!fixture.querySelector('dialog') && fixture.textContent.includes('Add one file at a time.'), 'Multiple files were not rejected');
+  const large = new File([new Uint8Array(25 * 1024 * 1024 + 1)], 'large.png', { type: 'image/png' });
+  drag(zone, [large]); await tick();
+  check(!fixture.querySelector('dialog') && fixture.textContent.includes('no larger than 25 MB'), 'Oversized file was not rejected');
+  log('Multiple files and files above 25 MB are rejected before upload');
+  for (const [label] of [...cases, ['Links']]) {
+    fixture.querySelector('.asset-heading-actions button').click(); await tick();
+    check(fixture.querySelectorAll('[role="menuitem"]').length === 6, 'Wrong destination count');
+    find('[role="menuitem"]', label).click(); await wait(() => fixture.querySelector('dialog[open]'));
+    check(fixture.querySelector('dialog').textContent.includes(label === 'Links' ? 'Save a web page to Links' : `Add to ${label}`), `${label} menu opened wrong form`);
+    await close();
+    check(document.activeElement === fixture.querySelector('.asset-heading-actions button'), 'Menu opener focus was not restored');
+  }
+  log('All six menu destinations open the right form and restore focus');
+  find('.asset-filters button', 'Repos').click(); await tick();
+  find('.asset-view-heading button', 'Add repository URL').click(); await tick();
+  check(fixture.querySelector('dialog').textContent.includes('Add a repository URL'), 'Repo URL form missing');
+  find('dialog button', 'Upload a repository archive instead').click(); await tick();
+  check(fixture.querySelector('dialog').textContent.includes('Upload a repository'), 'Repo archive switch failed');
+  await close();
+  check(document.activeElement === find('.asset-view-heading button', 'Add repository URL'), 'Repo mode switch lost focus restoration');
+  log('Repository URL/archive switching preserves the destination and return focus');
+  await reset(false);
+  find('.asset-filters button', 'Images').click(); await tick();
+  check(!fixture.querySelector('.asset-dropzone') && !fixture.querySelector('.asset-add-menu'), 'Read-only workspace has upload controls');
+  log('Read-only workspace has no upload entry points');
+  output.textContent += '\nAll upload interaction checks passed. No requests left the test page.';
+}
+document.querySelector('#run').onclick = async () => { try { await run(); } catch (error) { output.textContent += `\nFAIL ${error.message}`; } };
+</script>
