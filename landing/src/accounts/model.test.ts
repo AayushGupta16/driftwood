@@ -7,6 +7,7 @@ import {
   channelConnected,
   connectedChannelCount,
   isUsable,
+  linkedBy,
   linkedByLine,
   ownAccount,
 } from "./model.ts";
@@ -41,6 +42,8 @@ test("the label falls back from display to the linker's name, then their email",
 });
 
 test("the second line names the linker, or says 'you' on the viewer's own row", () => {
+  assert.equal(linkedBy(account({ channelState: {} })), "Yuvan Sharma");
+  assert.equal(linkedBy(account({ isMine: true, channelState: {} })), "you");
   assert.equal(linkedByLine(account({ channelState: {} })), "Linked by Yuvan Sharma");
   assert.equal(linkedByLine(account({ isMine: true, channelState: {} })), "Linked by you");
   assert.equal(

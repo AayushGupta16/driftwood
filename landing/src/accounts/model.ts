@@ -11,11 +11,16 @@ export function accountLabel(account: SendingAccount<unknown>): string {
   return account.display ?? account.connectedBy.name ?? account.connectedBy.email;
 }
 
-/* The row's second line. The viewer's own row says so instead of naming
-   them. */
+/* Who the row's second line names: "you" on the viewer's own row, else
+   the linker's name, then their email. */
+export function linkedBy(account: SendingAccount<unknown>): string {
+  if (account.isMine) return "you";
+  return account.connectedBy.name ?? account.connectedBy.email;
+}
+
+/* The row's second line as one string (the title attribute, tests). */
 export function linkedByLine(account: SendingAccount<unknown>): string {
-  if (account.isMine) return "Linked by you";
-  return `Linked by ${account.connectedBy.name ?? account.connectedBy.email}`;
+  return `Linked by ${linkedBy(account)}`;
 }
 
 /* A row that can send now. An X login that still sits behind the chat PIN

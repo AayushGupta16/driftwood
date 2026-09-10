@@ -22,6 +22,7 @@ import {
   channelConnected,
   connectedChannelCount,
   isUsable,
+  linkedBy,
   linkedByLine,
   ownAccount,
 } from "./accounts/model";
@@ -952,7 +953,8 @@ function AccountRows<S>({
       {rows.map((account) => {
         const label = accountLabel(account);
         const extra = detail?.(account) ?? null;
-        const sub = extra && extra !== label ? `${extra} · ${linkedByLine(account)}` : linkedByLine(account);
+        const showExtra = extra !== null && extra !== label;
+        const sub = showExtra ? `${extra} · ${linkedByLine(account)}` : linkedByLine(account);
         const stateChip =
           account.status === "pending" ? "Pending" : account.status === "error" ? "Error" : (chip?.(account) ?? null);
         const busy = disconnecting === account.id;
@@ -963,7 +965,17 @@ function AccountRows<S>({
             </span>
             <div className="team-member-id">
               <div className="team-member-name">{label}</div>
-              <div className="team-member-sub">{sub}</div>
+              {/* one line, ellipsis at the end (team.css). An address or a
+                  name never breaks inside itself: the hyphen in
+                  new-hire@… is not a break point. */}
+              <div className="team-member-sub" title={sub}>
+                {showExtra && (
+                  <>
+                    <span className="overview-account-who">{extra}</span> ·{" "}
+                  </>
+                )}
+                Linked by <span className="overview-account-who">{linkedBy(account)}</span>
+              </div>
               {account.error && (
                 <p className="team-inline-error" role="alert">
                   {account.error}
@@ -1213,6 +1225,8 @@ function LinkedInCard({
   // Until the pool lands, offer connect only when nothing is connected — a
   // connected channel might already hold the viewer's own row.
   const showConnect = canConnect && (ready ? own?.status !== "active" : !connectedFallback);
+  // "Connect LinkedIn" only while the channel holds no row at all.
+  const hasRows = ready && rows.length > 0;
   const pending = connectPending || disconnecting !== null;
 
   async function handleConnect() {
@@ -1251,7 +1265,7 @@ function LinkedInCard({
         </span>
         <div className="min-w-0 flex-1">
           <h3 className="m-0 text-[18px] font-semibold tracking-[-0.01em]">
-            {connected ? "LinkedIn" : "Connect LinkedIn"}
+            {connected || hasRows ? "LinkedIn" : "Connect LinkedIn"}
           </h3>
           {!connected && (
             <p className="m-0 mt-2 text-[15px] leading-relaxed text-ink-soft">
@@ -1348,6 +1362,8 @@ function EmailCard({
   const canConnect = ready ? accounts.page.canConnect : canWrite;
   // Until the pool lands, offer connect only when nothing is connected.
   const showConnect = canConnect && (ready || !connectedFallback);
+  // "Connect email" only while the channel holds no row at all.
+  const hasRows = ready && rows.length > 0;
   /* the managed pool is null for every customer without one (and on any
      fetch error) — the tile then renders exactly as it did before the
      feature existed. The pool and its add flow do NOT wait for the
@@ -1405,7 +1421,7 @@ function EmailCard({
         </span>
         <div className="min-w-0 flex-1">
           <h3 className="m-0 text-[18px] font-semibold tracking-[-0.01em]">
-            {connected ? "Email" : "Connect email"}
+            {connected || hasRows ? "Email" : "Connect email"}
           </h3>
           {showPool ? (
             /* exactly one body line — the count, doubling as the way into
@@ -1641,6 +1657,9 @@ function TwitterCard({
   // Until the pool lands, offer connect only when nothing is connected — a
   // connected channel might already hold the viewer's own row.
   const showConnect = canConnect && (ready ? own?.status !== "active" : !connectedFallback);
+  // "Connect X" only while the channel holds no row at all. With any row
+  // the heading follows the viewer's own state, then reads "X".
+  const hasRows = ready && rows.length > 0;
   // Deliberately no noopener/noreferrer on the window.open below — we need
   // this reference back to watch for the user closing the tab (and to close
   // it ourselves if the backend confirms first), and the target is Kernel's
@@ -1761,7 +1780,7 @@ function TwitterCard({
               ? "Almost there — Messages is locked"
               : watching
                 ? "Finish in the X tab"
-                : connected
+                : connected || hasRows
                   ? "X"
                   : "Connect X"}
           </h3>
