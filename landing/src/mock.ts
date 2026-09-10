@@ -2227,6 +2227,7 @@ if (mockMode) {
   // come first — /sends/cancel and /sends/dismiss (POST) would otherwise be
   // swallowed by the /sends fixture, and /reviews/decide by /reviews.
   const routes: [string, unknown][] = [
+    ["/api/v1/dashboard/face-cloning/studio", {voice: null, jobs: [], busy: false, max_render_usd: 24, video_cost_ceiling_usd: 0, daily_render_limit: 3}],
     ["/api/v1/dashboard/face-cloning", (init?: RequestInit) =>
       !init?.method || init.method === "GET"
         ? { recording: null }

@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useWorkspacePermissions } from '../dashboard/workspace-permissions-context';
 import './face-cloning.css';
+import VoiceStudio from './VoiceStudio';
+import { API, json, uploadFile } from './api';
 
 type Recording = { id: string; filename: string; byte_size: number; duration: number; width: number; height: number; created_at: string };
-const API = '/api/v1/dashboard/face-cloning';
 const MAX_BYTES = 200 * 1024 * 1024;
 const SCRIPT = [
   ['Warm smile', 'Hey! I wanted to show you something that could make your day a little easier.'],
@@ -14,14 +15,6 @@ const SCRIPT = [
   ['Reassuring', 'You still have control. If something needs your attention, you can review it before moving forward.'],
   ['Friendly finish', 'That’s the idea: less time on repetitive work, and more time for the things that actually need you.'],
 ];
-async function json<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(path, { credentials: 'include', ...init });
-  if (!response.ok) {
-    const body = await response.json().catch(() => null);
-    throw new Error(body?.error?.detail || `Something went wrong (${response.status}). Please try again.`);
-  }
-  return response.json() as Promise<T>;
-}
 
 export default function FaceCloning() {
   const { canWrite } = useWorkspacePermissions();
@@ -60,22 +53,12 @@ export default function FaceCloning() {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ filename: file.name, byte_size: file.size }),
       });
-      await new Promise<void>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open('PUT', upload.upload_url);
-        xhr.setRequestHeader('Content-Type', 'video/mp4');
-        xhr.timeout = 10 * 60 * 1000;
-        xhr.upload.onprogress = event => { if (event.lengthComputable) setProgress(Math.round(event.loaded / event.total * 100)); };
-        xhr.onload = () => xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error('Upload failed. Your saved recording has not changed. Please try again.'));
-        xhr.onerror = () => reject(new Error('The upload lost its connection. Please try again.'));
-        xhr.ontimeout = () => reject(new Error('Upload timed out. Please try again on a faster connection.'));
-        xhr.send(file);
-      });
+      await uploadFile(upload.upload_url, file, 'video/mp4', setProgress);
       setProgress(null); setMessage('Checking your video…');
       const saved = await json<Recording>(`${API}/${upload.id}/complete`, { method: 'POST' });
       setRecording(saved); setFile(null); setPreview('');
       if (input.current) input.current.value = '';
-      setMessage('Recording saved. Your agent can use it in future demo videos.');
+      setMessage('Recording saved. Set up your voice below to generate a video.');
     } catch (reason) {
       setMessage(''); setError(reason instanceof Error ? reason.message : 'Could not save your recording.');
     } finally { setBusy(false); setProgress(null); }
@@ -116,6 +99,7 @@ export default function FaceCloning() {
         <div className="face-spec"><strong>File requirements</strong><p>H.264 MP4 · 15 seconds to 3 minutes · 720p to 4K · 20–60 fps · up to 200 MB</p><p>1080p at 30 fps is ideal. On iPhone, choose Camera → Formats → Most Compatible before recording.</p></div>
       </section>
     </div>
+    <VoiceStudio recordingId={recording?.id} duration={recording?.duration ?? 0} canWrite={canWrite} />
     <details className="face-card face-script"><summary>Need something to say? Use this recording script.</summary><p>Read the words naturally. The cues guide your delivery; don’t read them aloud. You don’t need to memorize it or act out big emotions.</p>{SCRIPT.map(([cue, words]) => <div key={cue}><span>{cue}</span><p>{words}</p></div>)}</details>
   </div>;
 }
