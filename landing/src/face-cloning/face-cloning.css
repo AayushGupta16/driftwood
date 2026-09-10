@@ -1,0 +1,39 @@
+.face-cloning { max-width: 1120px; margin: 0 auto; color: var(--ink, #16181b); }
+.face-cloning header { margin-bottom: 28px; }
+.face-cloning h1 { font-size: clamp(26px, 3vw, 38px); font-weight: 600; letter-spacing: -.025em; line-height: 1.2; margin: 8px 0 12px; }
+.face-cloning h1 em { font-family: Georgia, serif; color: #15557e; font-weight: 400; }
+.face-cloning p { font-size: 14px; line-height: 1.65; color: #6a737d; }
+.face-eyebrow { margin: 0; font-size: 12px !important; }
+.face-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+.face-card { background: #fff; border: 1px solid #e9ebee; border-radius: 12px; padding: 24px; }
+.face-card h2 { font-size: 18px; font-weight: 600; margin: 0 0 10px; }
+.face-card video { width: 100%; height: 310px; object-fit: contain; background: #f4f8fb; border-radius: 8px; margin-top: 12px; }
+.face-empty { min-height: 270px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f4f8fb; border-radius: 8px; margin: 22px 0; }
+.face-empty svg { width: 80px; fill: none; stroke: #15557e; stroke-width: 1.5; }
+.face-meta { font-size: 12px !important; overflow-wrap: anywhere; }
+.face-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 18px 0; }
+.face-actions input { display: none; }
+.face-cloning button { font: inherit; font-size: 13px; cursor: pointer; }
+.face-primary, .face-secondary { padding: 10px 18px; border: 1px solid #15557e; border-radius: 999px; }
+.face-primary { background: #15557e; color: white; }
+.face-primary:hover { background: #0d3c5b; }
+.face-secondary { background: white; color: #15557e; }
+.face-text { border: 0; background: none; color: #15557e; text-decoration: underline; padding: 8px; }
+.face-cloning button:disabled { opacity: .5; cursor: wait; }
+.face-cloning button:focus-visible, .face-script summary:focus-visible { outline: 2px solid #15557e; outline-offset: 4px; }
+.face-tips { padding-left: 20px; margin: 20px 0; }
+.face-tips li { padding-left: 8px; margin-bottom: 20px; font-size: 14px; }
+.face-tips strong, .face-tips span { display: block; }
+.face-tips span { margin-top: 5px; color: #6a737d; line-height: 1.6; }
+.face-spec { border-top: 1px solid #e9ebee; padding-top: 18px; font-size: 13px; }
+.face-spec p { font-size: 12px; margin-bottom: 0; }
+.face-script { margin-top: 24px; }
+.face-script summary { cursor: pointer; font-weight: 600; font-size: 15px; }
+.face-script > div { border-left: 2px solid #e9ebee; padding-left: 16px; margin: 22px 0; }
+.face-script span { font-size: 12px; color: #15557e; }
+.face-script > div p { color: #16181b; margin: 6px 0; }
+.face-error { color: #b42318 !important; }
+.face-confirm { border-top: 1px solid #e9ebee; padding: 10px 0; }
+.face-confirm button { margin-right: 8px; }
+.face-cloning progress { width: 100%; accent-color: #15557e; }
+@media(max-width: 800px) { .face-grid { grid-template-columns: 1fr; } .face-card { padding: 20px; } }

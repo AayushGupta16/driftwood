@@ -2185,6 +2185,10 @@ if (mockMode) {
   // come first — /sends/cancel and /sends/dismiss (POST) would otherwise be
   // swallowed by the /sends fixture, and /reviews/decide by /reviews.
   const routes: [string, unknown][] = [
+    ["/api/v1/dashboard/face-cloning", (init?: RequestInit) =>
+      !init?.method || init.method === "GET"
+        ? { recording: null }
+        : new Response(JSON.stringify({ error: { detail: "This is a preview. Open your live dashboard to save a recording." } }), { status: 400, headers: { "Content-Type": "application/json" } })],
     ["/api/v1/dashboard/triggers", triggersApi],
     // The audiences surface routes through audKnob so ?audlat/?auderr can
     // express slow and failing states (see the knob comment above).

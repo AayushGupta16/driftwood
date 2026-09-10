@@ -21,6 +21,7 @@ const CampaignBuilder = lazy(() => import('./campaigns/CampaignBuilder.tsx'))
 const Audiences = lazy(() => import('./audiences/Audiences.tsx'))
 const Triggers = lazy(() => import('./triggers/Triggers.tsx'))
 const TriggerDetail = lazy(() => import('./triggers/TriggerDetail.tsx'))
+const FaceCloning = lazy(() => import('./face-cloning/FaceCloning.tsx'))
 const Assets = lazy(() => import('./assets/Assets.tsx'))
 const AnalyticsDashboard = lazy(() => import('./analytics/AnalyticsDashboard.tsx'))
 const WorkspacePage = lazy(() => import('./dashboard/WorkspacePage.tsx'))
@@ -42,6 +43,8 @@ const page =
     <OgCard />
   ) : path === '/dashboard/audiences' || path === '/dashboard/lead-lists' ? (
     <WorkspacePage active="audiences"><Audiences /></WorkspacePage>
+  ) : path === '/dashboard/face-cloning' ? (
+    <WorkspacePage active="face-cloning"><FaceCloning /></WorkspacePage>
   ) : path === '/dashboard/assets' ? (
     <WorkspacePage active="assets"><Assets /></WorkspacePage>
   ) : path === '/dashboard/metrics' || path === '/dashboard/analytics' ? (

@@ -8,6 +8,7 @@ export type DashboardSection =
   | "companies"
   | "assets"
   | "review"
+  | "face-cloning"
   | "team"
   | "admin-agents"
   | "admin-search"
@@ -53,6 +54,7 @@ const CUSTOMER_WORKSPACE: NavItem[] = [
   { id: "companies", label: "Companies", href: "/dashboard/companies", icon: "companies" },
   { id: "assets", label: "Assets", href: "/dashboard/assets", icon: "assets" },
   { id: "review", label: "Review queue", href: "/dashboard/review", icon: "review" },
+  { id: "face-cloning", label: "Face Cloning", href: "/dashboard/face-cloning", icon: "people" },
   { id: "team", label: "Team", href: "/dashboard/team", icon: "people" },
 ];
 
