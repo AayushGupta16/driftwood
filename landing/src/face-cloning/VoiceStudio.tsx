@@ -1,5 +1,6 @@
 import {useEffect, useRef, useState} from 'react';
 import {API, json, post, uploadFile} from './api';
+import JobProgress from './JobProgress';
 
 type Job = {id: string; kind: string; status: string; filename: string; script: string | null; error: string | null; duration: number | null; created_at: string; audio_available: boolean; video_available: boolean};
 type Studio = {voice: Job | null; jobs: Job[]; busy: boolean; max_render_usd: number; video_cost_ceiling_usd: number; daily_render_limit: number};
@@ -87,6 +88,7 @@ export default function VoiceStudio({recordingId, duration, canWrite}: {recordin
   const voiceJob = studio?.jobs.find(job => job.kind === 'voice');
   const estimatedSeconds = script.trim() ? Math.ceil(script.trim().split(/\s+/).length / 2.3) : 0;
   const renders = studio?.jobs.filter(job => job.kind === 'render') ?? [];
+  const activeRender = renders.find(inProgress);
   return <div className="face-studio">
     <div className="face-grid">
       <section className="face-card" aria-labelledby="voice-title">
@@ -94,7 +96,9 @@ export default function VoiceStudio({recordingId, duration, canWrite}: {recordin
         <p>Use the speech in your face recording, or upload a clearer voice sample. ElevenLabs creates a voice you can reuse for new scripts.</p>
         {!studio && <p role="status">Loading voice setup…</p>}
         {studio?.voice && <div className="face-voice-ready"><strong>Voice ready</strong><p className="face-meta">Created from {studio.voice.filename}</p></div>}
-        {voiceJob && (inProgress(voiceJob) || voiceJob.status === 'verification_required' || voiceJob.status === 'failed') && <div role="status"><strong>{labels[voiceJob.status]}</strong><p>{voiceJob.error || 'Extracting the audio and setting up your ElevenLabs voice. You can leave this page and come back.'}</p></div>}
+        {voiceJob && inProgress(voiceJob) && <JobProgress key={voiceJob.id} kind="voice" status={voiceJob.status} createdAt={voiceJob.created_at} />}
+        {busy==='voice' && progress===null && !(voiceJob && inProgress(voiceJob)) && <JobProgress kind="voice" status="submitting" />}
+        {voiceJob && (voiceJob.status === 'verification_required' || voiceJob.status === 'failed') && <div role="status"><strong>{labels[voiceJob.status]}</strong><p>{voiceJob.error || 'Extracting the audio and setting up your ElevenLabs voice. You can leave this page and come back.'}</p></div>}
         {canWrite ? <>
           <fieldset className="face-source" disabled={locked}><legend>Voice source</legend>
             <label><input type="radio" name="voice-source" checked={source==='video'} onChange={()=>setSource('video')}/> Use my face recording</label>
@@ -120,7 +124,9 @@ export default function VoiceStudio({recordingId, duration, canWrite}: {recordin
         {(!studio?.voice || !recordingId) && <p>Save a face recording and finish voice setup to enable generation.</p>}
         {studio && recordingId && <p className="face-meta">Each generation uses paid ElevenLabs and fal credits. Video rendering is up to ${studio.video_cost_ceiling_usd.toFixed(2)} for your recording, plus narration. Up to {studio.daily_render_limit} generations per day.</p>}
         {canWrite && <button className="face-primary" disabled={locked || !studio?.voice || !recordingId || !script.trim()} onClick={()=>void generate()}>{busy==='render' ? 'Starting generation…' : 'Generate audio + video'}</button>}
-        {studio?.busy && <p role="status">A job is processing. You can leave this page; the result will be saved here.</p>}
+        {activeRender && <JobProgress key={activeRender.id} kind="render" status={activeRender.status} createdAt={activeRender.created_at} />}
+        {busy==='render' && !activeRender && <JobProgress kind="render" status="submitting" />}
+        {studio?.busy && !activeRender && <p role="status">Voice setup is processing. You can generate a video when it finishes.</p>}
       </section>
     </div>
     {error && <p className="face-error" role="alert">{error} <button className="face-text" onClick={()=>{setError('');setReload(value=>value+1);}}>Refresh status</button></p>}

@@ -52,3 +52,11 @@
 .face-result-heading span { color: #6a737d; font-size: 12px; }
 .face-result-script { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 160px; overflow: auto; }
 .face-result .face-actions a { color: #15557e; font-size: 14px; }
+.face-job-progress { padding: 16px; margin: 18px 0; border: 1px solid #e9ebee; border-radius: 8px; background: #f4f8fb; }
+.face-job-progress-heading { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 14px; line-height: 1.5; }
+.face-job-progress-heading > span { color: #6a737d; font-size: 12px; font-variant-numeric: tabular-nums; }
+.face-job-progress-track { height: 6px; margin-top: 12px; overflow: hidden; border-radius: 999px; background: #eaf1f7; }
+.face-job-progress-track > span { display: block; width: 35%; height: 100%; border-radius: inherit; background: #15557e; animation: face-job-loading 1.8s ease-in-out infinite; }
+.face-job-progress .face-meta { margin: 10px 0 0; }
+@keyframes face-job-loading { from { transform: translateX(-100%); } to { transform: translateX(386%); } }
+@media (prefers-reduced-motion: reduce) { .face-job-progress-track > span { animation: none; transform: translateX(93%); } }
