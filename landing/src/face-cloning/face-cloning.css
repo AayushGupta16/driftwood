@@ -1,9 +1,7 @@
 .face-cloning { max-width: 1120px; margin: 0 auto; color: var(--ink, #16181b); }
 .face-cloning header { margin-bottom: 28px; }
 .face-cloning h1 { font-size: clamp(26px, 3vw, 38px); font-weight: 600; letter-spacing: -.025em; line-height: 1.2; margin: 8px 0 12px; }
-.face-cloning h1 em { font-family: Georgia, serif; color: #15557e; font-weight: 400; }
 .face-cloning p { font-size: 14px; line-height: 1.65; color: #6a737d; }
-.face-eyebrow { margin: 0; font-size: 12px !important; }
 .face-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
 .face-card { background: #fff; border: 1px solid #e9ebee; border-radius: 12px; padding: 24px; }
 .face-card h2 { font-size: 18px; font-weight: 600; margin: 0 0 10px; }

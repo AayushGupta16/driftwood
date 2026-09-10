@@ -88,7 +88,7 @@ export default function FaceCloning() {
   }
 
   return <div className="face-cloning">
-    <header><p className="face-eyebrow">Face Cloning</p><h1>Put <em>your face</em> in the demo.</h1><p>Record once. We’ll use your footage to create a talking head that matches each demo’s narration.</p></header>
+    <header><h1>Face Cloning</h1></header>
     <div className="face-grid">
       <section className="face-card" aria-labelledby="recording-title">
         <h2 id="recording-title">{recording ? 'Your saved recording' : 'Clone yourself'}</h2>
