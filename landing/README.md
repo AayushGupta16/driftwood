@@ -2,7 +2,7 @@
 
 React 19, TypeScript, and Vite power the marketing site and the authenticated
 customer dashboard deployed on Vercel. The FastAPI/Neon control plane lives in
-the separate `AayushGupta16/driftwood-backend` repository.
+the separate `driftwood-sh/driftwood-backend` repository.
 
 ## Local development
 
