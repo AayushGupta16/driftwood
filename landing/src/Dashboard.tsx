@@ -82,7 +82,7 @@ type User = {
   is_admin?: boolean;
   impersonating?: boolean;
   /* org workspace membership; absent/null (solo accounts) reads as owner.
-     Only the owner manages channel connections; members are read-only. For
+     An owner and an admin get identical controls. A member is read-only. For
      admins/members the connection booleans above reflect the workspace
      owner's connections. */
   org?: { name: string; role: "owner" | "admin" | "member" } | null;
@@ -384,10 +384,10 @@ type InventoryState = {
 };
 
 function ApprovedView({ user }: { user: User }) {
-  // Solo accounts carry no org and stay full-control. Only the owner manages
-  // channel connections; members are read-only everywhere.
+  // Solo accounts carry no org and stay full-control. An owner and an admin
+  // get identical controls. A member sees every section and gets no write
+  // control.
   const role = user.org?.role ?? "owner";
-  const isOwner = role === "owner";
   const canWrite = role !== "member";
   // The managed pool feeds two surfaces: the email tile (count + add flow)
   // and the quiet capacity line on Today's sending — so it lives here.
@@ -500,7 +500,7 @@ function ApprovedView({ user }: { user: User }) {
 
       <ConnectionSetup
         user={user}
-        isOwner={isOwner}
+        canWrite={canWrite}
         pool={pool}
         applyPurchase={applyPurchase}
       />
@@ -531,18 +531,21 @@ function formatCount(state: SummaryState, key: "leads" | "companies") {
   return value.toLocaleString();
 }
 
+/* Every role sees this section, including a member: the same pages for
+   everyone, and only the write controls differ. `canWrite` therefore gates
+   the connect / disconnect / add-inbox / purchase controls inside the three
+   cards, and never the cards themselves. */
 function ConnectionSetup({
   user,
-  isOwner,
+  canWrite,
   pool,
   applyPurchase,
 }: {
   user: User;
-  isOwner: boolean;
+  canWrite: boolean;
   pool: MailboxesOverview | null;
   applyPurchase: (result: PurchaseResult, senders: SenderInput[]) => void;
 }) {
-  if (!isOwner) return null;
   const linkedInMissing = !user.linkedin_connected;
   const emailMissing = !(user.email_connected ?? false);
   const xMissing = !(user.twitter_connected ?? false) || (user.twitter_chat_locked ?? false);
@@ -556,18 +559,20 @@ function ConnectionSetup({
         <span>{connected} of 3 connected{remaining > 0 ? ` · ${remaining} left` : ""}</span>
       </div>
       <div className="overview-connection-grid">
-        <LinkedInCard connected={!linkedInMissing} />
+        <LinkedInCard connected={!linkedInMissing} canWrite={canWrite} />
         <EmailCard
           connected={!emailMissing}
           emailError={user.email_error ?? null}
           companyName={user.org?.name ?? null}
           pool={pool}
           applyPurchase={applyPurchase}
+          canWrite={canWrite}
         />
         <TwitterCard
           connected={user.twitter_connected ?? false}
           pending={user.twitter_pending ?? false}
           chatLocked={user.twitter_chat_locked ?? false}
+          canWrite={canWrite}
         />
       </div>
     </section>
@@ -979,7 +984,10 @@ function FunnelBars({ funnel }: { funnel: Funnel }) {
   );
 }
 
-function LinkedInCard({ connected }: { connected: boolean }) {
+/* `canWrite` hides the connect and disconnect controls for a member. The
+   card itself, and the connected-or-not state it shows, stay visible to
+   every role. */
+function LinkedInCard({ connected, canWrite }: { connected: boolean; canWrite: boolean }) {
   const [connectPending, setConnectPending] = useState(false);
   const [connectError, setConnectError] = useState<string | null>(null);
   const {
@@ -1032,26 +1040,27 @@ function LinkedInCard({ connected }: { connected: boolean }) {
             {connected ? "Ready." : "Required for LinkedIn outreach."}
           </p>
 
-          {connected ? (
-            <button
-              type="button"
-              onClick={handleDisconnect}
-              disabled={pending}
-              className="mt-5 cursor-pointer rounded-full border border-line bg-surface px-3.5 py-2 text-[13.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {pending ? "Disconnecting…" : "Disconnect"}
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={handleConnect}
-              disabled={pending}
-              className="mt-5 inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-full bg-tide px-4.5 py-2.5 text-[14.5px] font-semibold text-white transition-[background,transform] hover:-translate-y-px hover:bg-tide-deep disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <LinkedInMark className="size-4.5 shrink-0" />
-              {pending ? "Connecting…" : "Connect LinkedIn"}
-            </button>
-          )}
+          {canWrite &&
+            (connected ? (
+              <button
+                type="button"
+                onClick={handleDisconnect}
+                disabled={pending}
+                className="mt-5 cursor-pointer rounded-full border border-line bg-surface px-3.5 py-2 text-[13.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint/50 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {pending ? "Disconnecting…" : "Disconnect"}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleConnect}
+                disabled={pending}
+                className="mt-5 inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-full bg-tide px-4.5 py-2.5 text-[14.5px] font-semibold text-white transition-[background,transform] hover:-translate-y-px hover:bg-tide-deep disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <LinkedInMark className="size-4.5 shrink-0" />
+                {pending ? "Connecting…" : "Connect LinkedIn"}
+              </button>
+            ))}
 
           {error && (
             <p
@@ -1084,18 +1093,23 @@ type EmailProvider = "gmail" | "outlook";
    auth — the redirect comes back with ?email=connected|failed). Two connect
    buttons because the provider must match where the mailbox actually lives:
    a Google sign-in on an M365-hosted address completes OAuth but can't send. */
+/* `canWrite` hides the connect, disconnect, and add-inbox controls for a
+   member. The box count and the read-only inbox list stay visible to every
+   role. */
 function EmailCard({
   connected,
   emailError,
   companyName,
   pool,
   applyPurchase,
+  canWrite,
 }: {
   connected: boolean;
   emailError: string | null;
   companyName: string | null;
   pool: MailboxesOverview | null;
   applyPurchase: (result: PurchaseResult, senders: SenderInput[]) => void;
+  canWrite: boolean;
 }) {
   const [connectPending, setConnectPending] = useState<EmailProvider | null>(
     null,
@@ -1202,7 +1216,7 @@ function EmailCard({
             </p>
           )}
 
-          {connected ? (
+          {canWrite && (connected ? (
             <div className="flex flex-wrap items-center gap-2.5">
               <button
                 type="button"
@@ -1258,7 +1272,7 @@ function EmailCard({
                 </button>
               )}
             </div>
-          )}
+          ))}
 
           {!connected && emailError && (
             <p
@@ -1360,14 +1374,19 @@ function TwitterSteps({ loggedIn }: { loggedIn: boolean }) {
    for `closed` and POSTs /twitter/finish, which is what ends the Kernel
    session and confirms the login. It also polls /auth/me on the same
    interval + window focus, and reloads once connected. */
+/* `canWrite` hides the connect, reopen, and disconnect controls for a
+   member. The card and its state — connected, pending, or chat-locked —
+   stay visible to every role. */
 function TwitterCard({
   connected,
   pending: alreadyPending,
   chatLocked,
+  canWrite,
 }: {
   connected: boolean;
   pending: boolean;
   chatLocked: boolean;
+  canWrite: boolean;
 }) {
   const [state, setState] = useState<TwitterState>(
     alreadyPending ? "pending" : "idle",
@@ -1518,7 +1537,7 @@ function TwitterCard({
 
           {(watching || locked) && <TwitterSteps loggedIn={locked} />}
 
-          {locked ? (
+          {canWrite && (locked ? (
             <div className="mt-5 flex flex-wrap items-center gap-2.5">
               <button
                 type="button"
@@ -1561,7 +1580,7 @@ function TwitterCard({
                   ? "Reopen login tab"
                   : "Connect X"}
             </button>
-          )}
+          ))}
 
           {(error ?? disconnectError) && (
             <p

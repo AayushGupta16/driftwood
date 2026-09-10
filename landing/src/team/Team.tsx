@@ -1,9 +1,11 @@
 /* Workspace team panel: everyone with a seat, invite by email, remove,
-   and the auto-join domain. Rendered inside WorkspacePage; management
-   affordances only appear for the owner (the backend enforces the same). */
+   and the auto-join domain. Rendered inside WorkspacePage. An owner and an
+   admin get the same management controls (the backend enforces the same
+   rule). A member sees the same cards read-only. */
 
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { CARD, prefetch, useToast } from "../dashboard-shared";
+import { useWorkspacePermissions } from "../dashboard/workspace-permissions-context";
 import {
   getOrg,
   inviteMember,
@@ -55,6 +57,9 @@ export default function Team() {
   const [armedRemove, setArmedRemove] = useState<string | null>(null);
   const [actionNote, setActionNote] = useState<ActionNote>(null);
   const toast = useToast();
+  /* One rule for the whole dashboard: an owner and an admin write, a member
+     does not. WorkspacePage supplies it from /auth/me. */
+  const { canWrite } = useWorkspacePermissions();
 
   const load = useCallback(async (initial?: Promise<OrgPage> | null) => {
     setState((prev) => (prev.status === "ready" ? prev : { status: "loading" }));
@@ -233,6 +238,7 @@ export default function Team() {
       {state.status === "ready" && (
         <TeamView
           page={state.page}
+          canWrite={canWrite}
           email={email}
           setEmail={setEmail}
           role={role}
@@ -283,6 +289,7 @@ function TeamSkeleton() {
 
 function TeamView({
   page,
+  canWrite,
   email,
   setEmail,
   role,
@@ -298,6 +305,7 @@ function TeamView({
   inlineNote,
 }: {
   page: OrgPage;
+  canWrite: boolean;
   email: string;
   setEmail: (value: string) => void;
   role: "admin" | "member";
@@ -312,7 +320,6 @@ function TeamView({
   onDomainSave: (page: OrgPage) => void;
   inlineNote: (spot: string) => ReactNode;
 }) {
-  const isOwner = page.yourRole === "owner";
   const busyElsewhere = "Waiting for the current change to finish";
   const domainIsDirty = domainDirty(page.domain, domainDraft);
   const domainValue = domainDraft ?? page.domain ?? "";
@@ -359,7 +366,7 @@ function TeamView({
                 <span className={`team-role is-${member.role}`}>
                   {ROLE_LABEL[member.role]}
                 </span>
-                {isOwner && membershipId && (
+                {canWrite && membershipId && (
                   <div className="team-member-actions">
                     {invited && (
                       <button
@@ -389,7 +396,7 @@ function TeamView({
         </ul>
       </div>
 
-      {isOwner && (
+      {canWrite && (
         <form className={`${CARD} team-invite`} onSubmit={onInvite}>
           <h2>Invite a teammate</h2>
           <div className="team-invite-row">
@@ -432,21 +439,24 @@ function TeamView({
         </form>
       )}
 
-      {isOwner && (
-        <div className={`${CARD} team-invite`}>
-          <h2>Auto-join domain</h2>
-          <p className="team-hint">
-            Anyone who signs in with a verified email @ this domain joins
-            automatically with a read-only seat.
-          </p>
-          <div className="team-invite-row">
-            <input
-              type="text"
-              value={domainValue}
-              onChange={(e) => setDomainDraft(e.target.value)}
-              placeholder="yourcompany.com"
-              aria-label="Auto-join domain"
-            />
+      {/* Every role reads the current auto-join domain. Only a writer can
+          change it, so a member gets the field read-only and no Save. */}
+      <div className={`${CARD} team-invite`}>
+        <h2>Auto-join domain</h2>
+        <p className="team-hint">
+          Anyone who signs in with a verified email @ this domain joins
+          automatically with a read-only seat.
+        </p>
+        <div className="team-invite-row">
+          <input
+            type="text"
+            value={domainValue}
+            onChange={(e) => setDomainDraft(e.target.value)}
+            placeholder="yourcompany.com"
+            aria-label="Auto-join domain"
+            readOnly={!canWrite}
+          />
+          {canWrite && (
             <button
               type="button"
               disabled={pending !== null || !domainIsDirty}
@@ -465,10 +475,10 @@ function TeamView({
             >
               {pending?.kind === "domain" ? "Saving…" : "Save"}
             </button>
-          </div>
-          {inlineNote("domain")}
+          )}
         </div>
-      )}
+        {inlineNote("domain")}
+      </div>
     </>
   );
 }

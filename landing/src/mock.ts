@@ -57,6 +57,13 @@ const mockMode = typeof location === "undefined" ? null : initializeMockMode(sea
 if (mockMode) {
   params.set("mock", mockMode);
   const hoursAgo = (h: number) => new Date(Date.now() - h * 3600e3).toISOString();
+  /* The workspace role the fixture reports, for /auth/me and for the Team
+     page. `?mock=admin` already means the internal-admin chrome (is_admin
+     below), so the workspace-admin preview takes its own value:
+     `?mock=org-admin`. An owner and a workspace admin must render
+     identically, so this mode exists to prove that by hand. */
+  const mockOrgRole: "owner" | "admin" | "member" =
+    mockMode === "member" ? "member" : mockMode === "org-admin" ? "admin" : "owner";
   const me = {
     id: "mock",
     email: "marc@a16z.com",
@@ -72,7 +79,7 @@ if (mockMode) {
     is_admin: mockMode === "admin",
     org: {
       name: "Example workspace",
-      role: mockMode === "member" ? "member" : "owner",
+      role: mockOrgRole,
     },
     // ?x=pending|connected|locked walks the X card's later states without a
     // real Kernel profile. "locked" is the one worth looking at: connected,
@@ -1601,7 +1608,7 @@ if (mockMode) {
     id: mockOrg.id,
     name: mockOrg.name,
     domain: mockOrg.domain,
-    your_role: mockMode === "member" ? "member" : "owner",
+    your_role: mockOrgRole,
     members: [
       { membership_id: null, email: "marc@example.com", name: "Marc Andreessen", role: "owner", status: "active", invited_at: null, invite_sent_at: null, invite_note: null },
       ...mockOrg.members,
