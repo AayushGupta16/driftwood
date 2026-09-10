@@ -58,6 +58,11 @@ export function ReviewIcon(props: DashboardIconProps) {
   return <Icon {...props}><path d="M7 3h10v4H7zM5 5H4v16h16V5h-1" /><path d="m8 14 2.5 2.5L16 11" /></Icon>;
 }
 
+/* Three sliders: one knob per row, in the same 24-box as the rest of the set. */
+export function SettingsIcon(props: DashboardIconProps) {
+  return <Icon {...props}><path d="M4 7h8M18 7h2M10 12h10M4 17h10" /><circle cx="15" cy="7" r="2.25" /><circle cx="7" cy="12" r="2.25" /><circle cx="17" cy="17" r="2.25" /></Icon>;
+}
+
 export function AgentsIcon(props: DashboardIconProps) {
   return <Icon {...props}><rect x="4" y="7" width="16" height="13" rx="3" /><path d="M9 3h6M12 3v4M8 12h.01M16 12h.01M8.5 16h7" /></Icon>;
 }

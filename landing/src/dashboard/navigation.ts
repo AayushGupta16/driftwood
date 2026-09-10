@@ -10,6 +10,7 @@ export type DashboardSection =
   | "review"
   | "face-cloning"
   | "team"
+  | "settings"
   | "admin-agents"
   | "admin-search"
   | "admin-fleet"
@@ -30,7 +31,8 @@ export type DashboardIconName =
   | "agents"
   | "search"
   | "fleet"
-  | "drift";
+  | "drift"
+  | "settings";
 
 export type NavItem = {
   id: DashboardSection;
@@ -56,6 +58,7 @@ const CUSTOMER_WORKSPACE: NavItem[] = [
   { id: "review", label: "Review queue", href: "/dashboard/review", icon: "review" },
   { id: "face-cloning", label: "Face Cloning", href: "/dashboard/face-cloning", icon: "people" },
   { id: "team", label: "Team", href: "/dashboard/team", icon: "people" },
+  { id: "settings", label: "Settings", href: "/dashboard/settings", icon: "settings" },
 ];
 
 const ADMIN_INTERNAL: NavItem[] = [

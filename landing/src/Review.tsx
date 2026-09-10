@@ -7,6 +7,8 @@ import AppShell from "./dashboard/AppShell";
 import { EmailPreview } from "./EmailPreview";
 import { emailBodySummary } from "./email-preview";
 import { withMockMode } from "./mock-mode";
+import { getSettings, type SendSchedule } from "./settings/api";
+import { scheduleSentence } from "./settings/model";
 import {
   DEFAULT_SENT_QUERY,
   sendKindChips,
@@ -303,6 +305,8 @@ const initialSentPage = prefetch(() =>
     credentials: "include",
   }),
 );
+/* The workspace send schedule, for the one line above the runway strip. */
+const initialSettings = prefetch(() => getSettings());
 
 type QueueState =
   | { status: "loading" }
@@ -526,7 +530,23 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
   > | null>(null);
   const [sentAllTotal, setSentAllTotal] = useState<number | null>(null);
   const [sortMode, setSortMode] = useState<SortMode>("kind");
+  /* The saved send schedule; null while loading and when the fetch fails,
+     and the strip line renders nothing either way. */
+  const [schedule, setSchedule] = useState<SendSchedule | null>(null);
   const toast = useToast();
+
+  useEffect(() => {
+    let current = true;
+    (initialSettings.take() ?? getSettings()).then(
+      (page) => {
+        if (current) setSchedule(page.send_schedule);
+      },
+      () => {},
+    );
+    return () => {
+      current = false;
+    };
+  }, []);
 
   /* An armed "Approve all" disarms itself after a beat — no stale confirm
      button waiting to be fat-fingered minutes later. */
@@ -996,7 +1016,7 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
         />
       </div>
 
-      {state.status === "ready" && <QueueStatsStrip stats={state.stats} />}
+      {state.status === "ready" && <QueueStatsStrip stats={state.stats} schedule={schedule} />}
 
       {/* Quiet "more is coming" line: the first page is already interactive;
           this explains the growing list and the parked bulk buttons. */}
@@ -1519,14 +1539,21 @@ function statsDate(iso: string): string {
 /* "connection requests: 34 queued · 12/20 sent in last 24h · runs through
    ~Jul 20 · 2 failed" — one line per send kind; kinds with nothing queued,
    nothing sent, and nothing failed are noise, not news, so they're skipped
-   (nothing at all renders when all are quiet). */
-function QueueStatsStrip({ stats }: { stats: QueueStats[] }) {
+   (nothing at all renders when all are quiet). The workspace send schedule
+   spans the strip above them ("Sends Monday to Friday, … · Change") and is
+   omitted, not placeholdered, until it loads. */
+function QueueStatsStrip({ stats, schedule }: { stats: QueueStats[]; schedule: SendSchedule | null }) {
   const live = stats.filter(
     (s) => s.queued > 0 || s.sent_24h > 0 || (s.failed ?? 0) > 0,
   );
-  if (live.length === 0) return null;
+  if (live.length === 0 && !schedule) return null;
   return (
     <div className="review-runway">
+      {schedule && (
+        <p className="runway-schedule m-0 font-mono text-[11.5px] leading-[1.6] text-ink-soft tabular-nums">
+          {scheduleSentence(schedule)} &middot; <a href={withMockMode("/dashboard/settings")}>Change</a>
+        </p>
+      )}
       {live.map((s) => (
         <p
           key={s.kind}

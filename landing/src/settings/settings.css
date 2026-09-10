@@ -1,0 +1,68 @@
+/* Workspace settings page. The page frame, card, hint and Save pill come
+   from team.css and the field and checkbox controls from campaigns.css,
+   both imported by Settings.tsx. Only the day toggles and this page's own
+   spacing live here. Tokens come from the @theme block in index.css. */
+
+/* The card's own column gap already separates the fields; the campaign
+   editor's 1rem field margin would double it. */
+.settings-card .campaign-field,
+.settings-card .campaign-check-field { margin-top: 0.45rem; }
+
+.settings-field-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1rem; }
+
+.settings-hours { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.settings-hours select { width: auto; min-width: 6.5rem; }
+.settings-hours span { color: var(--color-ink-soft); font-size: 0.75rem; }
+
+/* Day toggles: the one button system. Pressed is the primary fill, at rest
+   the outline; a disabled unpressed pill goes sand like a disabled select. */
+.settings-days { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.settings-day {
+  display: inline-flex;
+  min-height: 2.1rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-ink-soft);
+  padding: 0.4rem 0.85rem;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 200ms cubic-bezier(0.2, 0, 0, 1), border-color 200ms cubic-bezier(0.2, 0, 0, 1), color 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+.settings-day:hover:not(:disabled) { border-color: color-mix(in srgb, var(--color-tide) 45%, var(--color-line)); background: var(--color-tide-wash); color: var(--color-tide-deep); }
+.settings-day[aria-pressed="true"] { border-color: var(--color-tide); background: var(--color-tide); color: #fff; }
+.settings-day[aria-pressed="true"]:hover:not(:disabled) { border-color: var(--color-tide-deep); background: var(--color-tide-deep); }
+.settings-day:disabled { cursor: default; }
+.settings-day:disabled[aria-pressed="false"] { background: var(--color-sand); }
+
+/* "Use my time zone (…)": a text button under the select, in the accent. */
+.settings-tz-use { align-self: flex-start; border: 0; background: transparent; color: var(--color-tide); padding: 0; font: inherit; font-size: 0.7rem; font-weight: 650; cursor: pointer; }
+.settings-tz-use:hover { text-decoration: underline; }
+
+/* Sending now / next window, from the saved schedule. */
+.settings-window { margin: 0.9rem 0 0; color: var(--color-ink-soft); font-size: 0.76rem; line-height: 1.5; }
+
+.settings-save { align-items: center; gap: 0.75rem; margin-top: 0.35rem; }
+.settings-save p { margin: 0; }
+/* A save that landed reads in the ok green; a failure keeps team.css's alert. */
+.settings-saved { color: var(--color-ok); }
+
+.settings-caps { margin: 0 0.1rem; color: var(--color-ink-faint); font-size: 0.76rem; line-height: 1.5; }
+
+@media (max-width: 959px) {
+  .settings-field-row { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+  .settings-days { display: grid; grid-template-columns: repeat(4, 1fr); }
+  .settings-day { padding-inline: 0.3rem; }
+  .settings-save button { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-day { transition: none; }
+}
