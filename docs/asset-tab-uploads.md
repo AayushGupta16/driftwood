@@ -19,3 +19,5 @@ Archives keep the chosen Skill or Repo kind throughout the flow. Media uploads k
 Prepared on `feat/asset-tab-uploads` from current `origin/main`, isolated from older local website checkouts. Production requires review of the preview per `design/design-language.md` and is not changed by this branch.
 
 The Engineering Todos page could not be updated. Its browser page explicitly reports no access for the signed-in account, and no Notion connector or registered treg tool is available in this session. No access request was sent.
+
+Review: [draft PR #8](https://github.com/driftwood-sh/driftwood/pull/8). Vercel successfully built the implementation commit (`aadf9e8`). The [hosted preview](https://driftwood-landing-git-feat-asset-tab-uploads-driftwood-d31ce40d.vercel.app/dashboard/assets?mock=1) requires Vercel sign-in in the available browser. The same commit was exercised locally at `http://127.0.0.1:5186/dashboard/assets?mock=1`.
