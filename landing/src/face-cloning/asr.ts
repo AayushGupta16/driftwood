@@ -6,6 +6,7 @@
 // The worklet URL is imported as an asset. `no-inline` keeps it a real file
 // under /assets/ instead of a data: URL, which a strict CSP would block.
 import workletUrl from './asr.worklet.js?url&no-inline';
+import { createVoiceDetector } from './voice-detector';
 
 export type Recognizer = {
   /** Begins feeding the stream's audio track to the worker. Waits for the engine to be ready. */
@@ -21,6 +22,8 @@ export type Recognizer = {
 export type RecognizerEvents = {
   onPartial(text: string): void;
   onError(message: string): void;
+  /** Voice activity. Called only when the value changes. The first call is always true. */
+  onVoice?(active: boolean): void;
 };
 
 const ASR_BASE = '/asr/';
@@ -80,6 +83,11 @@ export function createRecognizer(events: RecognizerEvents): Recognizer {
   let sourceNode: MediaStreamAudioSourceNode | null = null;
   let captureNode: AudioWorkletNode | null = null;
   let feeding = false;
+  const voice = createVoiceDetector();
+
+  function setVoice(change: boolean | null): void {
+    if (change !== null) events.onVoice?.(change);
+  }
 
   let readyResolve: () => void = () => {};
   let readyReject: (err: Error) => void = () => {};
@@ -118,6 +126,10 @@ export function createRecognizer(events: RecognizerEvents): Recognizer {
 
   function stopFeeding(): void {
     feeding = false;
+    if (voice.active()) {
+      voice.reset();
+      setVoice(false);
+    }
     if (captureNode) {
       captureNode.port.onmessage = null;
       captureNode.disconnect();
@@ -139,6 +151,7 @@ export function createRecognizer(events: RecognizerEvents): Recognizer {
       if (disposed) return;
       if (ctx.state === 'suspended') await ctx.resume();
       stopFeeding();
+      voice.reset();
       feeding = true;
       sourceNode = ctx.createMediaStreamSource(new MediaStream([track]));
       captureNode = new AudioWorkletNode(ctx, 'asr-capture', {
@@ -151,6 +164,7 @@ export function createRecognizer(events: RecognizerEvents): Recognizer {
       captureNode.port.onmessage = (e: MessageEvent<{ type: 'audio'; samples: Float32Array; sampleRate: number }>) => {
         if (!feeding || disposed) return;
         const m = e.data;
+        setVoice(voice.push(m.samples, m.sampleRate));
         worker.postMessage(m, [m.samples.buffer]);
       };
       sourceNode.connect(captureNode);

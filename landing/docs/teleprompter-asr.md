@@ -108,3 +108,29 @@ Engine load from worker start to `ready`, with the files in the local cache: Chr
 ## Content Security Policy
 
 `landing/vercel.json` sets `script-src 'self' ...` without `'wasm-unsafe-eval'`. Chromium blocks `WebAssembly.instantiate` under that policy. The CSP header needs `'wasm-unsafe-eval'` in `script-src` before this recognizer works on the deployed site.
+
+## Pacing and voice activity
+
+`landing/src/face-cloning/teleprompter.ts` exports `createTracker(words, { now? })`. Three members drive pacing:
+
+```ts
+speaking(active: boolean): void
+// Tells the tracker whether the microphone reports speech. Wire it to onVoice.
+
+tick(): Position
+// Advances the cursor by pacing when needed. Call it about every 100 ms while recording.
+
+rate(): number
+// The learned pace in words per second.
+```
+
+The pacing rules:
+
+- Recognition (`feed`) confirms the position. Pacing (`tick`) only fills the gap when recognition is late.
+- While the reader is speaking and no recognition match has arrived for 1 s (`STALL_MS`), `tick()` advances the cursor at the learned rate.
+- The rate starts at 2.5 words per second. The tracker learns it from confirmed progress over speaking time, in steps of at least 4 s of speech. The rate is clamped between 1.7 and 3.7 words per second (`MIN_RATE`, `MAX_RATE`).
+- The cursor never moves backward. Recognition only corrects drift forward.
+
+The page starts one `setInterval` of 100 ms when the recording starts and clears it when the recording ends. It sets the cursor and sentence state from `tick()` and from `feed()`, and never sets them backward.
+
+Voice activity. `createRecognizer` accepts an optional `onVoice(active)` event. The detector lives in `landing/src/face-cloning/voice-detector.ts`. The page computes it from the same 100 ms batches the worklet posts, before it forwards them to the worker. For each batch it takes the RMS of the samples. A noise floor starts at 0 and, on every batch that is not loud, moves to `max(min(floor * 1.02 + 0.0002, rms), 0.0005)`, so it tracks the quiet level and rises slowly. Loud batches never move the floor. The threshold is `max(0.012, floor * 3.5)`. Voice becomes active after 2 consecutive loud batches (about 200 ms) and inactive after 400 ms without a loud batch. Time is the sum of batch durations, not wall clock. `onVoice` fires only on a change. `stop()` and `dispose()` fire `onVoice(false)` when voice was active. `start()` resets the detector.

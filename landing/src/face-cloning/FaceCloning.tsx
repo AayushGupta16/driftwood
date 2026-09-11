@@ -8,6 +8,7 @@ import { recordingMediaUrl } from './mock';
 import { createRecognizer, preloadRecognizer, recognizerSupported } from './asr';
 import type { Recognizer } from './asr';
 import { buildScript, createTracker } from './teleprompter';
+import type { Position } from './teleprompter';
 import './face-cloning.css';
 
 type Phase = 'idle' | 'requesting' | 'countdown' | 'recording' | 'saving' | 'save-error';
@@ -16,7 +17,6 @@ const MIN_SECONDS = 60;
 const MAX_SECONDS = 175;
 const MAX_BYTES = 200 * 1024 * 1024;
 const SCRIPT = buildScript(PROMPTS);
-const LINES = PROMPTS.map((_, index) => SCRIPT.filter(word => word.sentence === index));
 
 export default function FaceCloning() {
   const { canWrite } = useWorkspacePermissions();
@@ -42,6 +42,7 @@ export default function FaceCloning() {
   const recorder = useRef<MediaRecorder | null>(null);
   const stream = useRef<MediaStream | null>(null);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pacer = useRef<ReturnType<typeof setInterval> | null>(null);
   const recognizer = useRef<Recognizer | null>(null);
   const tracker = useRef<ReturnType<typeof createTracker> | null>(null);
   const prompter = useRef<HTMLDivElement>(null);
@@ -60,6 +61,8 @@ export default function FaceCloning() {
   function release() {
     if (timer.current) clearInterval(timer.current);
     timer.current = null;
+    if (pacer.current) clearInterval(pacer.current);
+    pacer.current = null;
     stream.current?.getTracks().forEach(track => { track.onended = null; track.stop(); });
     stream.current = null;
     if (video.current) video.current.srcObject = null;
@@ -196,9 +199,14 @@ export default function FaceCloning() {
         if (timer.current) clearInterval(timer.current);
         try { capture.start(1000); }
         catch { fail(); return; }
-        tracker.current = createTracker(SCRIPT);
+        const follower = createTracker(SCRIPT);
+        tracker.current = follower;
         recognizer.current?.reset();
         setCursor(0); setSentence(0);
+        pacer.current = setInterval(() => {
+          if (tracker.current !== follower || !mounted.current) return;
+          show(follower.tick());
+        }, 100);
         setPhase('recording');
         const started = Date.now();
         timer.current = setInterval(() => {
@@ -212,6 +220,11 @@ export default function FaceCloning() {
       if (mounted.current) { setPhase('idle'); setError(cameraError(reason)); }
     }
   }
+  // Recognition and pacing only move forward. State never goes back.
+  function show(position: Position) {
+    setCursor(value => Math.max(value, position.cursor));
+    setSentence(value => Math.max(value, position.sentence));
+  }
   // The recognizer warms during the countdown. It must never delay the recording.
   function listen(media: MediaStream) {
     if (!recognizerSupported()) { setVoiceOff(true); return; }
@@ -219,8 +232,11 @@ export default function FaceCloning() {
       const engine = createRecognizer({
         onPartial: text => {
           if (recognizer.current !== engine || !tracker.current || !mounted.current) return;
-          const position = tracker.current.feed(text);
-          setCursor(position.cursor); setSentence(position.sentence);
+          show(tracker.current.feed(text));
+        },
+        onVoice: active => {
+          if (recognizer.current !== engine) return;
+          tracker.current?.speaking(active);
         },
         onError: () => { if (recognizer.current === engine && mounted.current) setVoiceOff(true); },
       });
@@ -256,9 +272,8 @@ export default function FaceCloning() {
         <div className="face-prompt">
           <div className="face-steps"><span>{sentence + 1} / {PROMPTS.length}</span><div aria-hidden="true">{PROMPTS.map((_, index) => <i key={index} className={index <= sentence ? 'is-current' : ''}/>)}</div></div>
           <div ref={prompter} className="face-script" data-sentence={sentence} data-cursor={cursor} aria-label="Script">
-            {LINES.map((words, index) => <p key={index} data-line={index} className={index === sentence ? 'is-current' : ''}>
-              <small>{PROMPTS[index][0]}</small>
-              {words.map(word => <span key={word.index} className={word.index < cursor ? 'is-spoken' : word.index === cursor ? 'is-current' : ''}>{word.text}</span>).flatMap(node => [node, ' '])}
+            {PROMPTS.map(([label, text], index) => <p key={index} data-line={index} className={index < sentence ? 'is-spoken' : index === sentence ? 'is-current' : ''}>
+              <small>{label}</small>{text}
             </p>)}
           </div>
           {voiceOff && <p className="face-voice-off">Voice tracking is off in this browser. Use Next sentence.</p>}

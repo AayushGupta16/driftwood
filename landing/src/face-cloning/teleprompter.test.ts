@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { PROMPTS } from "./model.ts";
-import { buildScript, createTracker, normalize } from "./teleprompter.ts";
+import { buildScript, createTracker, normalize, DEFAULT_RATE, MAX_RATE, MIN_RATE, STALL_MS } from "./teleprompter.ts";
 
 const WORDS = buildScript(PROMPTS);
 const sentenceWords = (n: number) => WORDS.filter((w) => w.sentence === n);
@@ -123,6 +123,123 @@ test("reading the whole script as a growing transcript finishes", () => {
     assert.ok(next.cursor >= pos.cursor);
     pos = next;
   }
+  assert.equal(pos.cursor, WORDS.length);
+  assert.equal(pos.sentence, PROMPTS.length - 1);
+});
+
+// ---- pacing -----------------------------------------------------------------
+
+const KEYS = WORDS.map((w) => w.key.toUpperCase());
+
+/** A tracker on a fake clock. `run(until)` ticks every 100 ms up to `until`. */
+function paced() {
+  let t = 0;
+  const tracker = createTracker(WORDS, { now: () => t });
+  const run = (until: number, onTick?: (at: number) => void) => {
+    while (t < until) {
+      t += 100;
+      tracker.tick();
+      onTick?.(t);
+    }
+    return tracker.position();
+  };
+  return { tracker, run, at: () => t, set: (v: number) => { t = v; } };
+}
+
+test("pacing: no speech and no feed moves nothing", () => {
+  const { run } = paced();
+  assert.equal(run(10_000).cursor, 0);
+});
+
+test("pacing: speaking with no feed advances at DEFAULT_RATE after the stall", () => {
+  const { tracker, run } = paced();
+  tracker.speaking(true);
+  assert.equal(run(STALL_MS).cursor, 0);
+  const pos = run(5000);
+  const expected = (DEFAULT_RATE * (5000 - STALL_MS)) / 1000; // 10
+  assert.ok(Math.abs(pos.cursor - expected) <= 1, `cursor ${pos.cursor}, expected about ${expected}`);
+});
+
+test("pacing: a feed that moves the cursor resets the stall", () => {
+  const { tracker, run, set } = paced();
+  tracker.speaking(true);
+  set(500);
+  assert.equal(tracker.feed(KEYS.slice(0, 5).join(" ")).cursor, 5);
+  assert.equal(run(1400).cursor, 5);
+  assert.ok(run(2600).cursor > 5);
+});
+
+test("pacing: speaking(false) stops pacing", () => {
+  const { tracker, run } = paced();
+  tracker.speaking(true);
+  const before = run(3000).cursor;
+  assert.ok(before > 0);
+  tracker.speaking(false);
+  assert.equal(run(13_000).cursor, before);
+});
+
+test("pacing: the rate follows the reader", () => {
+  const { tracker, run } = paced();
+  tracker.speaking(true);
+  // 3 words per second for 8 seconds.
+  run(8000, (at) => {
+    if (at % 1000 === 0) tracker.feed(KEYS.slice(0, 3 * (at / 1000)).join(" "));
+  });
+  assert.equal(tracker.position().cursor, 24);
+  assert.ok(tracker.rate() > DEFAULT_RATE, `rate ${tracker.rate()}`);
+  // Stop feeding, keep speaking. The stall ends at 9000.
+  const start = run(8000 + STALL_MS).cursor;
+  assert.equal(start, 24);
+  const moved = run(8000 + STALL_MS + 4000).cursor - start;
+  assert.ok(Math.abs(moved - 12) <= 3, `moved ${moved}, expected about 12`);
+});
+
+test("pacing: the rate stays inside the clamp", () => {
+  const { tracker, run } = paced();
+  tracker.speaking(true);
+  // 10 words per second for 8 seconds.
+  run(8000, (at) => {
+    if (at % 1000 === 0) tracker.feed(KEYS.slice(0, 10 * (at / 1000)).join(" "));
+  });
+  assert.equal(tracker.position().cursor, 80);
+  assert.ok(tracker.rate() <= MAX_RATE && tracker.rate() >= MIN_RATE, `rate ${tracker.rate()}`);
+  const start = run(8000 + STALL_MS).cursor;
+  assert.equal(start, 80);
+  const moved = run(8000 + STALL_MS + 4000).cursor - start;
+  assert.ok(moved <= MAX_RATE * 4 + 1, `moved ${moved} in 4 s, above MAX_RATE`);
+  assert.ok(moved >= MIN_RATE * 4 - 1, `moved ${moved} in 4 s, below MIN_RATE`);
+});
+
+test("pacing: recognition behind the paced cursor does not move it back", () => {
+  const { tracker, run, at } = paced();
+  tracker.speaking(true);
+  let pos = tracker.position();
+  while (pos.cursor < 12) pos = run(at() + 100);
+  assert.equal(pos.cursor, 12);
+  assert.equal(tracker.feed(KEYS.slice(6, 11).join(" ")).cursor, 12);
+  assert.equal(tracker.position().cursor, 12);
+});
+
+test("a distinctive single word moves the cursor past it", () => {
+  const t = createTracker(WORDS);
+  const word = sentenceWords(0).find((w) => w.key.length >= 6)!;
+  const pos = t.feed(word.key.toUpperCase());
+  assert.equal(pos.cursor, word.index + 1);
+});
+
+test("pacing: reading the whole script through pacing only finishes", () => {
+  const { tracker, run } = paced();
+  tracker.speaking(true);
+  const pos = run(200_000);
+  assert.equal(pos.cursor, WORDS.length);
+  assert.equal(pos.sentence, PROMPTS.length - 1);
+});
+
+test("pacing: stops at the end of the script", () => {
+  const { tracker, run } = paced();
+  tracker.speaking(true);
+  assert.equal(run(200_000).cursor, WORDS.length);
+  const pos = run(210_000);
   assert.equal(pos.cursor, WORDS.length);
   assert.equal(pos.sentence, PROMPTS.length - 1);
 });

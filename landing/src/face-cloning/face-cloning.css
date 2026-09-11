@@ -19,11 +19,10 @@
 .face-steps i { width: 19px; height: 3px; background: #d4dde3; border-radius: 2px; }
 .face-steps i.is-current { background: #15557e; }
 .face-script { position: relative; max-width: 760px; height: 216px; margin: 16px auto 8px; overflow: hidden; color: #16181b; font-size: clamp(19px, 1.9vw, 22px); line-height: 1.5; letter-spacing: -.02em; mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 80%, transparent); }
-.face-script > p { margin: 0 0 14px; color: inherit; font-size: inherit; line-height: inherit; }
+.face-script > p { margin: 0 0 14px; padding-left: 12px; border-left: 2px solid transparent; color: #6a737d; font-size: inherit; line-height: inherit; transition: color 180ms var(--ease-settle, ease), border-color 180ms var(--ease-settle, ease); }
+.face-script > p.is-spoken { color: #9aa2ab; }
+.face-script > p.is-current { color: #16181b; border-left-color: #15557e; }
 .face-script small { display: block; font-size: 12px; line-height: 1.4; color: #6a737d; letter-spacing: 0; margin-bottom: 2px; }
-.face-script span { color: #6a737d; transition: color 180ms var(--ease-settle, ease); }
-.face-script span.is-spoken { color: #9aa2ab; }
-.face-script span.is-current { color: #16181b; text-decoration: underline; text-decoration-color: #15557e; text-decoration-thickness: 2px; text-underline-offset: 4px; }
 .face-voice-off { margin: 0 auto; max-width: 760px; font-size: 12px; color: #6a737d; }
 .face-camera { position: relative; display: grid; place-items: center; height: 220px; flex: 1; min-height: 190px; }
 .face-camera video { display: none; width: 100%; height: 220px; object-fit: contain; transform: scaleX(-1); border-radius: 12px; }
