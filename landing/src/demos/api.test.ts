@@ -30,6 +30,18 @@ test("feedback delivery failures and replaced-demo conflicts remain actionable",
   await assert.rejects(() => sendFeedback(demo, "Looks good", "looks_good"), /Refresh and review/);
 });
 
+test("quick reactions use the existing attributed feedback endpoint without a written note", async (t) => {
+  t.mock.method(globalThis, "fetch", async (_url: string, init?: RequestInit) => {
+    const body = JSON.parse(init?.body as string);
+    assert.equal(body.message, "Looks good.");
+    assert.equal(body.sentiment, "looks_good");
+    assert.equal(body.artifact_id, demo.artifact_id);
+    assert.equal(body.artifact_updated_at, demo.updated_at);
+    return Response.json({ delivered: true });
+  });
+  await sendFeedback(demo, "Looks good.", "looks_good");
+});
+
 test("an undelivered response cannot display a success confirmation", async (t) => {
   t.mock.method(globalThis, "fetch", async () => Response.json({ delivered: false }));
   await assert.rejects(() => sendFeedback(demo, "Looks good", "looks_good"), /could not be delivered/);

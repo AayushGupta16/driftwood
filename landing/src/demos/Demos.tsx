@@ -1,20 +1,16 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type RefObject, type SyntheticEvent } from "react";
 import { ExternalIcon, SearchIcon, VideoIcon } from "../assets/icons";
-import { useWorkspacePermissions } from "../dashboard/workspace-permissions-context";
 import { listDemos, sendFeedback, type Demo, type DemosPage, type Sentiment } from "./api";
+import FeedbackForm from "./FeedbackForm";
+import { EMPTY_FEEDBACK, type FeedbackState } from "./feedback";
 import "./demos.css";
 
-const SENTIMENTS: { value: Sentiment; label: string }[] = [
-  { value: "general", label: "Suggestion" },
-  { value: "looks_good", label: "Looks good" },
-  { value: "needs_changes", label: "Needs changes" },
-];
-
-function DemoPreview({ demo }: { demo: Demo }) {
+function DemoPreview({ demo, videoRef, onPlaybackTime }: { demo: Demo; videoRef: RefObject<HTMLVideoElement | null>; onPlaybackTime: (time: number | null) => void }) {
   const [failed, setFailed] = useState(false);
   if (failed) return <div className="demo-placeholder"><VideoIcon size={30} /><p>Preview could not load.</p><a href={demo.content_url} target="_blank" rel="noopener noreferrer">Open the demo in a new tab</a></div>;
   if (demo.content_type === "video/mp4") {
-    return <video className="demo-video" controls preload="metadata" src={demo.content_url} onError={() => setFailed(true)} aria-label={`Demo for ${demo.company_name}`} />;
+    const updateTime = (event: SyntheticEvent<HTMLVideoElement>) => onPlaybackTime(Number.isFinite(event.currentTarget.currentTime) ? Math.floor(event.currentTarget.currentTime) : null);
+    return <video ref={videoRef} className="demo-video" controls preload="metadata" src={demo.content_url} onLoadedMetadata={updateTime} onTimeUpdate={updateTime} onEmptied={() => onPlaybackTime(null)} onError={() => { setFailed(true); onPlaybackTime(null); }} aria-label={`Demo for ${demo.company_name}`} />;
   }
   if (demo.content_type.startsWith("image/")) {
     return <img className="demo-image" src={demo.content_url} alt={`Demo for ${demo.company_name}`} onError={() => setFailed(true)} />;
@@ -25,57 +21,19 @@ function DemoPreview({ demo }: { demo: Demo }) {
   return <div className="demo-placeholder"><VideoIcon size={30} /><p>This demo is available in a separate tab.</p><a href={demo.content_url} target="_blank" rel="noopener noreferrer">Open demo</a></div>;
 }
 
-type Draft = { message: string; sentiment: Sentiment };
-const EMPTY_DRAFT: Draft = { message: "", sentiment: "general" };
-
-function FeedbackForm({ demo, draft, onDraft }: { demo: Demo; draft: Draft; onDraft: (draft: Draft) => void }) {
-  const { canWrite } = useWorkspacePermissions();
-  const [sending, setSending] = useState(false);
-  const [sent, setSent] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function submit(event: FormEvent) {
-    event.preventDefault();
-    if (sending || !draft.message.trim()) return;
-    setSending(true);
-    setSent(false);
-    setError(null);
-    try {
-      await sendFeedback(demo, draft.message.trim(), draft.sentiment);
-      onDraft(EMPTY_DRAFT);
-      setSent(true);
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Feedback could not be delivered. Please try again.");
-    } finally {
-      setSending(false);
-    }
-  }
-
+function DemoDetail({ demo, feedback, onFeedback, onSend }: { demo: Demo; feedback: FeedbackState; onFeedback: (patch: Partial<FeedbackState>) => void; onSend: (message: string, sentiment: Sentiment) => Promise<boolean> }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [playbackTime, setPlaybackTime] = useState<number | null>(null);
   return (
-    <section className="demo-feedback" aria-labelledby="demo-feedback-title">
-      <h3 id="demo-feedback-title">What do you think?</h3>
-      <p>Your feedback goes directly to the Driftwood team.</p>
-      {!canWrite ? <p className="demo-notice">Your workspace seat is read-only. An owner or admin can leave feedback.</p> : (
-        <form onSubmit={submit} aria-busy={sending}>
-          <fieldset disabled={sending} className="demo-sentiments">
-            <legend className="sr-only">Feedback type</legend>
-            {SENTIMENTS.map(({ value, label }) => (
-              <label key={value} className={draft.sentiment === value ? "is-selected" : ""}>
-                <input type="radio" name="sentiment" value={value} checked={draft.sentiment === value} onChange={() => onDraft({ ...draft, sentiment: value })} />{label}
-              </label>
-            ))}
-          </fieldset>
-          <label className="sr-only" htmlFor="demo-feedback-message">Your feedback</label>
-          <textarea id="demo-feedback-message" value={draft.message} required maxLength={2000} disabled={sending} placeholder="What worked well? What would you like us to change?" onChange={(event) => { onDraft({ ...draft, message: event.target.value }); setSent(false); }} />
-          <div className="demo-feedback-footer">
-            <span>{draft.message.length.toLocaleString()} / 2,000</span>
-            <button type="submit" className="demo-button is-primary" disabled={sending || !draft.message.trim()}>{sending ? "Sending…" : "Send feedback"}</button>
-          </div>
-          {error && <p className="demo-notice" role="alert">{error}</p>}
-          {sent && <p className="demo-notice" role="status">Feedback sent. The Driftwood team has been notified.</p>}
-        </form>
-      )}
-    </section>
+    <article className="demo-detail" aria-label={`Demo for ${demo.company_name}`}>
+      <div className="demo-detail-heading">
+        <div><h2>{demo.company_name}</h2><p>For {demo.lead_name ?? "your lead"} · Updated {new Date(demo.updated_at).toLocaleDateString()}</p></div>
+        <a className="demo-button" href={demo.content_url} target="_blank" rel="noopener noreferrer">Open demo <ExternalIcon size={15} /></a>
+      </div>
+      <div className="demo-preview"><DemoPreview demo={demo} videoRef={videoRef} onPlaybackTime={setPlaybackTime} /></div>
+      {demo.description && <p className="demo-description">{demo.description}</p>}
+      <FeedbackForm state={feedback} onChange={onFeedback} onSend={onSend} videoRef={videoRef} playbackTime={playbackTime} isVideo={demo.content_type === "video/mp4"} />
+    </article>
   );
 }
 
@@ -88,7 +46,8 @@ export default function Demos() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [drafts, setDrafts] = useState<Record<string, Draft>>({});
+  const [feedback, setFeedback] = useState<Record<string, FeedbackState>>({});
+  const pendingFeedback = useRef(new Set<string>());
 
   useEffect(() => {
     const controller = new AbortController();
@@ -100,6 +59,28 @@ export default function Demos() {
   }, [query, offset, refresh]);
 
   const selected = page?.demos.find((demo) => demo.lead_id === selectedId) ?? page?.demos[0];
+  // Drafts, timestamps and delivery state belong to the exact version reviewed.
+  const feedbackKey = selected ? `${selected.lead_id}:${selected.artifact_id}:${selected.updated_at}` : "";
+
+  function updateFeedback(key: string, patch: Partial<FeedbackState>) {
+    setFeedback((current) => ({ ...current, [key]: { ...(current[key] ?? EMPTY_FEEDBACK), ...patch } }));
+  }
+
+  async function submitFeedback(demo: Demo, key: string, message: string, sentiment: Sentiment): Promise<boolean> {
+    if (pendingFeedback.current.has(key)) return false;
+    pendingFeedback.current.add(key);
+    updateFeedback(key, { pending: sentiment, sent: null, error: null });
+    try {
+      await sendFeedback(demo, message, sentiment);
+      updateFeedback(key, { pending: null, sent: sentiment, mode: "idle", ...(sentiment !== "looks_good" ? { message: "", timestamp: null } : {}) });
+      return true;
+    } catch (reason) {
+      updateFeedback(key, { pending: null, error: reason instanceof Error ? reason.message : "Feedback could not be delivered. Please try again." });
+      return false;
+    } finally {
+      pendingFeedback.current.delete(key);
+    }
+  }
 
   function search(event: FormEvent) {
     event.preventDefault();
@@ -142,15 +123,7 @@ export default function Demos() {
               <button className="demo-button" disabled={offset + page!.limit >= page!.total} onClick={() => { setLoading(true); setOffset(offset + page!.limit); }}>Next</button>
             </div>}
           </aside>
-          <article className="demo-detail" aria-label={`Demo for ${selected.company_name}`}>
-            <div className="demo-detail-heading">
-              <div><h2>{selected.company_name}</h2><p>For {selected.lead_name ?? "your lead"} · Updated {new Date(selected.updated_at).toLocaleDateString()}</p></div>
-              <a className="demo-button" href={selected.content_url} target="_blank" rel="noopener noreferrer">Open demo <ExternalIcon size={15} /></a>
-            </div>
-            <div className="demo-preview"><DemoPreview key={`${selected.artifact_id}-${selected.updated_at}`} demo={selected} /></div>
-            {selected.description && <p className="demo-description">{selected.description}</p>}
-            <FeedbackForm key={selected.lead_id} demo={selected} draft={drafts[selected.lead_id] ?? EMPTY_DRAFT} onDraft={(draft) => setDrafts((current) => ({ ...current, [selected.lead_id]: draft }))} />
-          </article>
+          <DemoDetail key={feedbackKey} demo={selected} feedback={feedback[feedbackKey] ?? EMPTY_FEEDBACK} onFeedback={(patch) => updateFeedback(feedbackKey, patch)} onSend={(message, sentiment) => submitFeedback(selected, feedbackKey, message, sentiment)} />
         </div>
       )}
     </section>

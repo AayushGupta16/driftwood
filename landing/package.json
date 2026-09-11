@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build && vite build --ssr src/prerender-entry.tsx --outDir dist-ssr && node scripts/prerender.mjs && rm -rf dist-ssr",
     "lint": "eslint .",
     "test": "node --test 'src/**/*.test.ts'",
+    "test:demos": "node scripts/test-demo-feedback.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

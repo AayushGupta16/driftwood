@@ -71,13 +71,24 @@ The Demos page lists hosted artifacts attached through `leads.demo_artifact_id`.
 Media links use the server-minted `/d/{public_slug}` path; Vite and Vercel proxy
 it to the backend. HTML previews run in a sandbox with no script or same-origin
 permissions. The site's frame policy permits these same-origin previews.
-Feedback includes the viewed artifact ID and timestamp so replaced demos must
-be reviewed again. Drafts survive demo switching and failed delivery. Success
+Feedback includes the viewed artifact ID and version timestamp so replaced demos
+must be reviewed again. “Looks good” sends a quick reaction without a written
+note; “Request changes” expands the note composer. Video notes can attach the
+current playback time, pausing the video and including that moment in the internal
+Slack message. Notes remain editable after a failed send; drafts, timestamps,
+pending sends and confirmations survive switching between demos, scoped to the
+exact artifact version. Timestamp context counts toward the 2,000-character limit.
+After sending, customers can optionally add another note. Success
 means Slack accepted the notification; successful feedback also enters the
 backend audit trail. No send/approval action occurs on this page.
 
 Preview `/dashboard/demos?mock=1`; use `mock=member`, `mock=demos-empty`,
 `mock=demos-error`, or `mock=demos-feedback-error` to inspect those states.
+
+Run `npm run test:demos` against a built preview on port 5181 (or set
+`DEMO_TEST_BASE_URL`). It uses sample data and mocked feedback responses in
+Chromium and iPhone WebKit. `DEMO_TEST_SCREENSHOTS` optionally captures the
+feedback states; `DEMO_TEST_WEBKIT_PATH` selects an installed WebKit executable.
 Mock feedback never sends a Slack message.
 
 ## Quality gate

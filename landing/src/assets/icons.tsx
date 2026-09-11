@@ -72,3 +72,23 @@ export function TrashIcon(props: IconProps) {
 export function CloseIcon(props: IconProps) {
   return <Icon {...props}><path d="m6 6 12 12M18 6 6 18" /></Icon>;
 }
+
+export function ThumbsUpIcon(props: IconProps) {
+  return <Icon {...props}><path d="M7 10 11 3a2 2 0 0 1 2 2v4h6a2 2 0 0 1 2 2l-2 8a2 2 0 0 1-2 2H7" /><rect x="3" y="10" width="4" height="11" rx="1" /></Icon>;
+}
+
+export function MessageIcon(props: IconProps) {
+  return <Icon {...props}><path d="M21 15a3 3 0 0 1-3 3H8l-5 3V6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3Z" /></Icon>;
+}
+
+export function ClockIcon(props: IconProps) {
+  return <Icon {...props}><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></Icon>;
+}
+
+export function LockIcon(props: IconProps) {
+  return <Icon {...props}><rect x="5" y="10" width="14" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></Icon>;
+}
+
+export function CheckIcon(props: IconProps) {
+  return <Icon {...props}><circle cx="12" cy="12" r="9" /><path d="m8 12 3 3 5-6" /></Icon>;
+}
