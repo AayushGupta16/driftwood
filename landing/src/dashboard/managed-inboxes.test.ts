@@ -29,7 +29,7 @@ test("ownMailboxRow: disconnected or pre-field payloads render no row", () => {
   assert.equal(ownMailboxRow(null), null);
 });
 
-test("domainVariations: the proven five lead, all .com, seed cleaned", () => {
+test("domainVariations: the proven five lead, 17 .com then 12 .co, seed cleaned", () => {
   const names = domainVariations("Acme Corp");
   assert.deepEqual(names.slice(0, 5), [
     "acmecorp-ai.com",
@@ -38,8 +38,13 @@ test("domainVariations: the proven five lead, all .com, seed cleaned", () => {
     "joinacmecorp.com",
     "withacmecorp.com",
   ]);
-  assert.equal(names.length, 17);
-  assert.ok(names.every((name) => name.endsWith(".com")));
+  assert.equal(names.length, 29);
+  // .com leads: it is the safest choice for cold email
+  assert.ok(names.slice(0, 17).every((name) => name.endsWith(".com")));
+  // .co follows as the fallback when every .com name is taken
+  assert.ok(names.slice(17).every((name) => name.endsWith(".co")));
+  // the bare brand on .co leads the .co block
+  assert.equal(names[17], "acmecorp.co");
   assert.equal(new Set(names).size, names.length);
 });
 

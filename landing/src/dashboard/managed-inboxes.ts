@@ -196,9 +196,14 @@ export function managedInboxChip(box: ManagedMailbox): {
 /* ---------- buy-flow helpers ---------- */
 
 /* Ordered variation shapes applied to any base. The five Autosana-slate
-   originals lead (they're the proven favorites), then the wider set of
-   credible business shapes the search sweeps through in order.
-   All .com on purpose: exotic TLDs hurt cold-email deliverability. */
+   originals lead, because they are the proven favorites. The rest of the
+   credible business shapes follow in order.
+   The 17 .com names come first, because .com is the safest choice for
+   cold email. The 12 .co names come after them, as a fallback for a
+   company whose .com names are all taken. The vendor sells .co. It does
+   not sell .ai or .io (availability probe, 2026-09-11), so those stay out
+   until a bring-your-own-domain path exists. Cheap or abused TLDs stay
+   out: .top, .xyz, .click, .info, .biz, and .online. */
 export function domainVariations(base: string): string[] {
   const clean = base.toLowerCase().replace(/[^a-z0-9]/g, "");
   if (!clean) return [];
@@ -220,6 +225,18 @@ export function domainVariations(base: string): string[] {
     `${clean}-app.com`,
     `${clean}team.com`,
     `${clean}-team.com`,
+    `${clean}.co`,
+    `use${clean}.co`,
+    `join${clean}.co`,
+    `get${clean}.co`,
+    `try${clean}.co`,
+    `with${clean}.co`,
+    `meet${clean}.co`,
+    `${clean}hq.co`,
+    `hello${clean}.co`,
+    `go${clean}.co`,
+    `${clean}app.co`,
+    `${clean}team.co`,
   ];
 }
 
