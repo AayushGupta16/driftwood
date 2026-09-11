@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "node scripts/fetch-asr.mjs",
     "build": "tsc -b && vite build && vite build --ssr src/prerender-entry.tsx --outDir dist-ssr && node scripts/prerender.mjs && rm -rf dist-ssr",
     "lint": "eslint .",
     "test": "node --test 'src/**/*.test.ts'",

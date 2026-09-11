@@ -5,12 +5,18 @@ export const inProgress = (job: Job | null | undefined) => !!job && ['waiting_fo
 export const clock = (seconds: number) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 export const PROMPTS = [
   ['Small smile', 'Hey, I’m glad you’re here, and I’d love to give you a quick look at what we’ve been working on.'],
-  ['Speak naturally', 'Let me start with a simple example of how this could work for your team during a busy day.'],
+  ['Speak naturally', 'Let me start with a simple example of how this could work for your team on a busy day, when there are more requests than hours.'],
   ['Curious tone', 'Have you ever noticed how much time goes into the little tasks that you find yourself doing over and over again?'],
-  ['Explain calmly', 'We can walk through those steps together and find a way to make the whole process a little easier.'],
+  ['Explain calmly', 'We can walk through those steps together, one at a time, and find a way to make the whole process a little easier.'],
   ['Keep your eyes near the lens', 'First, we bring the information into one place so you can see what needs your attention and what is already done.'],
-  ['A little energy', 'The exciting part is seeing everything come together, with fewer things to keep track of and more time to focus.'],
-  ['Reassuring tone', 'You can take a closer look whenever you want, make a change, and keep moving at a pace that feels right.'],
+  ['Tell it like a story', 'Picture a typical Tuesday, where Kate opens her laptop, checks the board, and picks the three things that matter most before lunch.'],
+  ['Steady pace', 'Second, every update gets written down in the same spot, so nobody has to dig through old messages or ask twice about the same detail.'],
+  ['Ask it lightly', 'What would you do with an extra hour each week, if the busywork simply took care of itself while you focused on the bigger picture?'],
+  ['Matter of fact', 'Third, when something changes, the people who need to know get a short note, and the rest of the team can keep working without interruption.'],
+  ['Slow down a touch', 'Most people tell us the biggest surprise is how quickly the habit sticks, because the plan is right there each time they come back.'],
+  ['Nod as you speak', 'It also helps to keep a record of what was decided and why, so that a question from next month has a clear and simple answer.'],
+  ['A little energy', 'The exciting part is seeing everything come together, with fewer things to keep track of and more time to focus on the work you care about.'],
+  ['Reassuring tone', 'You can take a closer look whenever you want, make a change, ask a question, and keep moving at a pace that feels right for you.'],
   ['Warm finish', 'Thanks for spending a minute with me, and I’m looking forward to hearing your thoughts about what we could do next.'],
 ] as const;
 export function recordingMime(supported: (type: string) => boolean): string | undefined {

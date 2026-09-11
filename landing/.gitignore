@@ -23,3 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 .vercel
+
+# Teleprompter ASR: large engine and model files, fetched by scripts/fetch-asr.mjs at build time
+public/asr/*.wasm
+public/asr/*.onnx
+public/asr/tokens.txt
