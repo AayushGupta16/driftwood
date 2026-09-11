@@ -2225,10 +2225,29 @@ if (mockMode) {
     return { trigger: triggerRow(trigger), runs: trigger.runs, items: trigger.items };
   };
 
+  const demoRows = [
+    { lead_id: "demo-lead-1", lead_name: "Example lead", company_name: "Sample company", description: "A sample of the personalized walkthrough your leads will receive.", artifact_id: "demo-artifact-1", name: "sample-walkthrough", content_type: "video/mp4", content_url: "/case-autosana.mp4", created_at: hoursAgo(24), updated_at: hoursAgo(2) },
+    { lead_id: "demo-lead-2", lead_name: "Another example lead", company_name: "Sample account", description: "A still from the demo, ready for your review.", artifact_id: "demo-artifact-2", name: "sample-demo-preview", content_type: "image/webp", content_url: "/demo-still.webp", created_at: hoursAgo(48), updated_at: hoursAgo(24) },
+  ];
+  const demosApi = (init?: RequestInit, url?: string) => {
+    if (init?.method === "POST") {
+      if (mockMode === "demos-feedback-error") return new Response(JSON.stringify({ error: { detail: "Your feedback could not be delivered. Please try again." } }), { status: 502 });
+      return { delivered: true };
+    }
+    if (mockMode === "demos-error") return new Response(JSON.stringify({ error: { detail: "Demos could not load." } }), { status: 503 });
+    const query = new URL(url ?? location.href, location.href).searchParams;
+    const q = (query.get("q") ?? "").toLowerCase();
+    const limit = Number(query.get("limit") ?? 12);
+    const offset = Number(query.get("offset") ?? 0);
+    const rows = mockMode === "demos-empty" ? [] : demoRows.filter((demo) => `${demo.company_name} ${demo.lead_name} ${demo.name}`.toLowerCase().includes(q));
+    return { demos: rows.slice(offset, offset + limit), total: rows.length, limit, offset };
+  };
+
   // Matching is startsWith with NO method check, so more-specific paths must
   // come first — /sends/cancel and /sends/dismiss (POST) would otherwise be
   // swallowed by the /sends fixture, and /reviews/decide by /reviews.
   const routes: [string, unknown][] = [
+    ["/api/v1/dashboard/demos", demosApi],
     ["/api/v1/dashboard/face-cloning", faceMock(params)],
     ["/api/v1/dashboard/triggers", triggersApi],
     // The audiences surface routes through audKnob so ?audlat/?auderr can

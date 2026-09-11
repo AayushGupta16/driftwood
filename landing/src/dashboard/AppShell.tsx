@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Wordmark } from "../components/Chrome";
+import { VideoIcon } from "../assets/icons";
 import {
   AgentsIcon,
   AssetsIcon,
@@ -55,6 +56,7 @@ const ICONS: Record<DashboardIconName, (props: DashboardIconProps) => ReactNode>
   overview: OverviewIcon,
   audience: AudienceIcon,
   campaign: CampaignIcon,
+  demo: VideoIcon,
   trigger: TriggerIcon,
   metrics: MetricsIcon,
   people: PeopleIcon,

@@ -15,6 +15,7 @@ export default defineConfig({
   },
   server: {
     proxy: {
+      '/d/': { target: 'http://127.0.0.1:8000', changeOrigin: true },
       '/auth': { target: 'http://127.0.0.1:8000', changeOrigin: true },
       '/linkedin': { target: 'http://127.0.0.1:8000', changeOrigin: true },
       '/email': { target: 'http://127.0.0.1:8000', changeOrigin: true },

@@ -19,6 +19,7 @@ const Drift = lazy(() => import('./drift/Drift.tsx'))
 const Campaigns = lazy(() => import('./campaigns/Campaigns.tsx'))
 const CampaignBuilder = lazy(() => import('./campaigns/CampaignBuilder.tsx'))
 const Audiences = lazy(() => import('./audiences/Audiences.tsx'))
+const Demos = lazy(() => import('./demos/Demos.tsx'))
 const Triggers = lazy(() => import('./triggers/Triggers.tsx'))
 const TriggerDetail = lazy(() => import('./triggers/TriggerDetail.tsx'))
 const FaceCloning = lazy(() => import('./face-cloning/FaceCloning.tsx'))
@@ -48,6 +49,8 @@ const page =
     <WorkspacePage active="face-cloning"><FaceCloning /></WorkspacePage>
   ) : path === '/dashboard/assets' ? (
     <WorkspacePage active="assets"><Assets /></WorkspacePage>
+  ) : path === '/dashboard/demos' ? (
+    <WorkspacePage active="demos"><Demos /></WorkspacePage>
   ) : path === '/dashboard/metrics' || path === '/dashboard/analytics' ? (
     <WorkspacePage active="metrics"><AnalyticsDashboard /></WorkspacePage>
   ) : path === '/dashboard/campaigns' ? (

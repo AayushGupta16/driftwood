@@ -34,6 +34,8 @@ Neon procedure in the backend review guide for that.
   customer pages.
 - `src/audiences/` is the lead discovery and reusable audience library.
 - `src/campaigns/` is the persisted, versioned sequence builder.
+- `src/demos/` previews completed lead demos and sends attributed feedback to
+  the Driftwood team's Slack channel. Owners/admins submit; members view.
 - `src/assets/` is the private image/video/link library.
 - `src/analytics/` is the channel funnel and exact-person drilldown.
 - Existing Leads, Companies, Review, Agents, and Search visibility pages are
@@ -41,7 +43,7 @@ Neon procedure in the backend review guide for that.
   the documented lead-audience field.
 
 The route table is explicit in `src/main.tsx`. Customer navigation contains
-Overview, Audiences, Campaigns, Metrics, All leads, Companies, Assets, and
+Overview, Audiences, Campaigns, Demos, Metrics, All leads, Companies, Assets, and
 Review queue. Agents and Search visibility exist only in the admin shell.
 Internal dashboard destinations stay in the current browser tab; external
 evidence, LinkedIn profiles, and asset URLs may open separately.
@@ -55,6 +57,7 @@ session cookie remains first-party. The new UI uses:
 | --- | --- |
 | Audiences | `/api/v1/dashboard/audiences*` |
 | Campaigns | `/api/v1/dashboard/campaigns*` |
+| Demos | `GET /api/v1/dashboard/demos`, `POST /api/v1/dashboard/demos/{lead_id}/feedback` |
 | Assets | `/api/v1/dashboard/assets*` |
 | Metrics | `/api/v1/dashboard/channel-metrics` |
 | Leads | existing `/api/v1/dashboard/leads`, now including `audiences` |
@@ -63,6 +66,19 @@ The campaign activation dialog is intentionally explicit: activation freezes a
 version and initializes planning ledgers, but does not queue or send outreach.
 Open/click metrics render as unavailable because the current backend has no
 defensible event source for them.
+
+The Demos page lists hosted artifacts attached through `leads.demo_artifact_id`.
+Media links use the server-minted `/d/{public_slug}` path; Vite and Vercel proxy
+it to the backend. HTML previews run in a sandbox with no script or same-origin
+permissions. The site's frame policy permits these same-origin previews.
+Feedback includes the viewed artifact ID and timestamp so replaced demos must
+be reviewed again. Drafts survive demo switching and failed delivery. Success
+means Slack accepted the notification; successful feedback also enters the
+backend audit trail. No send/approval action occurs on this page.
+
+Preview `/dashboard/demos?mock=1`; use `mock=member`, `mock=demos-empty`,
+`mock=demos-error`, or `mock=demos-feedback-error` to inspect those states.
+Mock feedback never sends a Slack message.
 
 ## Quality gate
 

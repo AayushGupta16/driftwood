@@ -2,6 +2,7 @@ export type DashboardSection =
   | "home"
   | "audiences"
   | "campaigns"
+  | "demos"
   | "triggers"
   | "metrics"
   | "leads"
@@ -22,6 +23,7 @@ export type DashboardIconName =
   | "overview"
   | "audience"
   | "campaign"
+  | "demo"
   | "trigger"
   | "metrics"
   | "people"
@@ -47,6 +49,7 @@ const CUSTOMER_PRIMARY: NavItem[] = [
   { id: "home", label: "Overview", href: "/dashboard", icon: "overview" },
   { id: "audiences", label: "Audiences", href: "/dashboard/audiences", icon: "audience" },
   { id: "campaigns", label: "Campaigns", href: "/dashboard/campaigns", icon: "campaign" },
+  { id: "demos", label: "Demos", href: "/dashboard/demos", icon: "demo" },
   { id: "triggers", label: "Triggers", href: "/dashboard/triggers", icon: "trigger" },
   { id: "metrics", label: "Metrics", href: "/dashboard/metrics", icon: "metrics" },
 ];
