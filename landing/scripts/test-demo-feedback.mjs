@@ -36,7 +36,9 @@ async function requests(page) {
 }
 
 async function accessible(page) {
-  await page.addScriptTag({ content: axe });
+  // Run test instrumentation through the browser debugger so production CSP
+  // stays intact; inserting an inline script tag is correctly blocked there.
+  await page.evaluate(axe);
   const violations = await page.evaluate(async () => {
     const result = await window.axe.run(document.querySelector(".demo-feedback"), { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa"] } });
     return result.violations.map(({ id, nodes }) => ({ id, nodes: nodes.map(({ html, failureSummary }) => ({ html, failureSummary })) }));
