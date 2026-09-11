@@ -98,3 +98,7 @@ export function FleetIcon(props: DashboardIconProps) {
 export function DriftIcon(props: DashboardIconProps) {
   return <Icon {...props}><circle cx="6" cy="12" r="2.5" /><circle cx="15.5" cy="6" r="2" /><circle cx="16.5" cy="17" r="2" /><path d="M8.2 10.6 13.7 7M8.3 13.3l6.3 3M17 8l-0.5 7" /></Icon>;
 }
+
+export function InboxIcon(props: DashboardIconProps) {
+ return <Icon {...props}><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 6 9 7 9-7" /></Icon>;
+}

@@ -17,6 +17,7 @@ import {
   ReviewIcon,
   SearchVisibilityIcon,
   SettingsIcon,
+  InboxIcon,
   FleetIcon,
   DriftIcon,
   TriggerIcon,
@@ -68,6 +69,7 @@ const ICONS: Record<DashboardIconName, (props: DashboardIconProps) => ReactNode>
   fleet: FleetIcon,
   drift: DriftIcon,
   settings: SettingsIcon,
+  inbox: InboxIcon,
 };
 
 function Navigation({ active, mode }: { active: DashboardSection; mode: NavigationMode }) {
@@ -199,6 +201,7 @@ export default function AppShell({
         )}
         <Navigation active={active} mode={mode} />
         <div className="app-sidebar-footer">
+          {mode === "customer" && <a href={withMockMode("/dashboard/settings")} className={`app-sidebar-link ${active === "settings" ? "is-active" : ""}`} aria-current={active === "settings" ? "page" : undefined}><SettingsIcon size={17} /><span>Settings</span></a>}
           {adminControl && <div className="app-sidebar-admin">{adminControl}</div>}
           <div className="app-sidebar-identity">
             {identity?.avatarUrl ? (

@@ -1,0 +1,26 @@
+.approval-settings { max-width:1000px; }
+.approval-settings h2 { font-size:1.3rem; font-weight:600; }
+.approval-settings header p, .approval-note { color:var(--color-ink-soft); font-size:.85rem; margin:.5rem 0 1.5rem; line-height:1.6; }
+.approval-options { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1rem; }
+.approval-options label { display:flex; align-items:flex-start; flex-wrap:wrap; gap:.65rem; border:1px solid var(--color-line); border-radius:12px; padding:1.25rem; cursor:pointer; }
+.approval-options label.is-selected { background:var(--color-tide-wash); border-color:var(--color-tide); }
+.approval-options input { accent-color:var(--color-tide); margin-top:.2rem; }
+.approval-options strong { font-size:.95rem; }
+.approval-options span { flex-basis:100%; font-size:.85rem; line-height:1.6; color:var(--color-ink-soft); }
+.approval-campaigns { border:1px solid var(--color-line); border-radius:12px; padding:1.25rem; margin:1.25rem 0; }
+.approval-campaigns h3 { font-weight:600; }
+.approval-campaigns p { font-size:.8rem; color:var(--color-ink-soft); margin:.5rem 0 1rem; }
+.approval-campaigns label { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:.8rem 0; border-top:1px solid var(--color-line); font-size:.85rem; }
+.approval-campaigns select { border:1px solid var(--color-line); border-radius:8px; padding:.5rem; }
+.approval-settings-footer { display:flex; align-items:center; flex-wrap:wrap; gap:1rem; font-size:.85rem; }
+.approval-primary { padding:.65rem 1rem; border-radius:999px; color:white; background:var(--color-tide); font-size:.85rem; cursor:pointer; }
+.approval-primary:disabled { opacity:.5; cursor:default; }
+.approval-settings a, .approval-settings [role=alert] button { color:var(--color-tide); }
+.approval-note { margin-top:1rem; }
+.inbox-approval-banner { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; background:var(--color-tide-wash); border:1px solid var(--color-line); border-radius:10px; padding:1rem 1.25rem; }
+.inbox-approval-banner strong { font-size:.9rem; }
+.inbox-approval-banner p { font-size:.8rem; color:var(--color-ink-soft); margin-top:.3rem; max-width:760px; }
+.inbox-approval-banner a { font-size:.85rem; color:var(--color-tide); text-decoration:underline; }
+.inbox-pending-actions { display:flex; align-items:center; gap:1rem; flex-wrap:wrap; font-size:.8rem; }
+.inbox-pending-actions p { color:var(--color-ink-soft); }
+@media(max-width:700px) { .approval-options { grid-template-columns:1fr; } }

@@ -2222,3 +2222,19 @@ function EmailBanner({ emailError }: { emailError: string | null }) {
     </div>
   );
 }
+
+export function SendingAccountSettings() {
+ const [user, setUser] = useState<User | null>(null);
+ const [error, setError] = useState(false);
+ const [accounts, setAccounts] = useState<AccountsState>({status:"loading"});
+ const { pool, applyPurchase } = useManagedInboxes();
+ useEffect(() => {
+  let current = true;
+  loadIdentity<User>().fresh.then((u) => {if(current) {setUser(u);setError(!u);}}).catch(() => {if(current) setError(true);});
+  getAccounts().then((page) => {if(current) setAccounts({status:"ready",page});}).catch(() => {if(current) setAccounts({status:"error"});});
+  return () => {current = false;};
+ }, []);
+ if (error) return <p role="alert">Sending accounts could not load. Refresh to try again.</p>;
+ if (!user) return <p role="status">Loading sending accounts…</p>;
+ return <ConnectionSetup user={user} canWrite={user.org?.role !== "member"} pool={pool} applyPurchase={applyPurchase} accounts={accounts} onAccounts={(page) => setAccounts({status:"ready",page})} />;
+}
