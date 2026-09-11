@@ -1,3 +1,4 @@
+import { activeMockMode } from '../mock-mode.ts';
 export const API = '/api/v1/dashboard/face-cloning';
 export async function json<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, { credentials: 'include', ...init });
@@ -11,6 +12,10 @@ export function post<T>(path: string, body: unknown): Promise<T> {
   return json<T>(path, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
 }
 export function uploadFile(url: string, file: File, contentType: string, progress: (percent: number) => void): Promise<void> {
+  if (activeMockMode()) {
+    progress(0);
+    return json(url, {method: 'PUT', body: file}).then(() => { progress(100); });
+  }
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open('PUT', url);

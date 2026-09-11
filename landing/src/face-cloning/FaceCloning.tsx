@@ -1,105 +1,243 @@
 import { useEffect, useRef, useState } from 'react';
 import { useWorkspacePermissions } from '../dashboard/workspace-permissions-context';
-import './face-cloning.css';
+import { API, json, post, uploadFile } from './api';
+import { cameraError, clock, inProgress, PROMPTS, recordingMime } from './model';
+import type { Job, Recording, Studio } from './model';
 import VoiceStudio from './VoiceStudio';
-import { API, json, uploadFile } from './api';
+import { recordingMediaUrl } from './mock';
+import './face-cloning.css';
 
-type Recording = { id: string; filename: string; byte_size: number; duration: number; width: number; height: number; created_at: string };
+type Phase = 'idle' | 'requesting' | 'countdown' | 'recording' | 'saving' | 'save-error';
+type Take = { file: File; upload?: { id: string; upload_url: string; content_type: string }; uploaded: boolean };
+const MIN_SECONDS = 60;
+const MAX_SECONDS = 175;
 const MAX_BYTES = 200 * 1024 * 1024;
-const SCRIPT = [
-  ['Warm smile', 'Hey! I wanted to show you something that could make your day a little easier.'],
-  ['Thoughtful', 'Right now, this process takes a lot of clicking, checking, and repeating the same steps. And when something breaks, it’s not always obvious why.'],
-  ['Curious', 'So, what happens if we let the system handle that work for us?'],
-  ['Calm and explanatory', 'Let me walk you through it. First, we open the dashboard. Then we choose the workflow and give it the information it needs.'],
-  ['A little enthusiasm', 'And there we go. You can see the result right here, along with exactly what happened at each step.'],
-  ['Reassuring', 'You still have control. If something needs your attention, you can review it before moving forward.'],
-  ['Friendly finish', 'That’s the idea: less time on repetitive work, and more time for the things that actually need you.'],
-];
 
 export default function FaceCloning() {
   const { canWrite } = useWorkspacePermissions();
   const [recording, setRecording] = useState<Recording | null>(null);
+  const [studio, setStudio] = useState<Studio | null>(null);
   const [loaded, setLoaded] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState('');
-  const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
-  const [busy, setBusy] = useState(false);
+  const [phase, setPhase] = useState<Phase>('idle');
+  const [newTake, setNewTake] = useState(false);
+  const [consent, setConsent] = useState(false);
+  const [sentence, setSentence] = useState(0);
+  const [seconds, setSeconds] = useState(0);
+  const [countdown, setCountdown] = useState(3);
   const [progress, setProgress] = useState<number | null>(null);
-  const [deleting, setDeleting] = useState(false);
-  const input = useRef<HTMLInputElement>(null);
+  const [error, setError] = useState('');
+  const [loadError, setLoadError] = useState('');
+  const [preview, setPreview] = useState<Job | null>(null);
+  const [confirmRemove, setConfirmRemove] = useState(false);
+  const [removing, setRemoving] = useState(false);
+  const video = useRef<HTMLVideoElement>(null);
+  const dialog = useRef<HTMLDialogElement>(null);
+  const recorder = useRef<MediaRecorder | null>(null);
+  const stream = useRef<MediaStream | null>(null);
+  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const mounted = useRef(true);
+  const refreshSequence = useRef(0);
+  const busy = useRef(false);
+  const pending = useRef<Take | null>(null);
+  const intent = useRef<'discard' | 'save'>('discard');
+  const saveRef = useRef<(take: Take) => Promise<void>>(async () => {});
+  const previewJob = studio?.preview;
+  const showingRecorder = !recording || newTake;
+  const capturing = phase === 'recording' || phase === 'countdown';
+  const working = capturing || phase === 'requesting' || phase === 'saving';
 
-  useEffect(() => {
-    let active = true;
-    json<{ recording: Recording | null }>(API).then(data => {
-      if (active) { setRecording(data.recording); setLoaded(true); }
-    }).catch(reason => { if (active) setError(reason.message); });
-    return () => { active = false; };
-  }, []);
-  useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
-
-  function choose(next: File | undefined) {
-    setError(''); setMessage('');
-    if (!next) return;
-    if (!next.name.toLowerCase().endsWith('.mp4')) { setError('Choose an MP4 video. Export it with the H.264 codec.'); return; }
-    if (!next.size || next.size > MAX_BYTES) { setError('Choose a video under 200 MB.'); return; }
-    setFile(next); setPreview(URL.createObjectURL(next));
+  function release() {
+    if (timer.current) clearInterval(timer.current);
+    timer.current = null;
+    stream.current?.getTracks().forEach(track => { track.onended = null; track.stop(); });
+    stream.current = null;
+    if (video.current) video.current.srcObject = null;
   }
-  async function save() {
-    if (!file || busy) return;
-    setBusy(true); setError(''); setMessage(''); setProgress(0);
+  async function refresh() {
+    const sequence = ++refreshSequence.current;
+    const [page, next] = await Promise.all([json<{recording: Recording | null}>(API), json<Studio>(`${API}/studio`)]);
+    if (mounted.current && sequence === refreshSequence.current) { setRecording(page.recording); setStudio(next); setLoaded(true); setLoadError(''); }
+  }
+  useEffect(() => {
+    mounted.current = true;
+    let active = true;
+    let poll: ReturnType<typeof setTimeout>;
+    async function update() {
+      try { await refresh(); }
+      catch (reason) { if (active) setLoadError(cameraError(reason)); }
+      if (active) poll = setTimeout(() => void update(), 5000);
+    }
+    void update();
+    return () => {
+      active = false; mounted.current = false; clearTimeout(poll);
+      intent.current = 'discard';
+      if (recorder.current?.state === 'recording') recorder.current.stop();
+      release();
+    };
+  }, []);
+  useEffect(() => {
+    if (!working && phase !== 'save-error') return;
+    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [working, phase]);
+  useEffect(() => {
+    if (preview) dialog.current?.showModal();
+    else dialog.current?.close();
+  }, [preview]);
+  useEffect(() => {
+    if (!confirmRemove) return;
+    const timeout = setTimeout(() => setConfirmRemove(false), 5000);
+    return () => clearTimeout(timeout);
+  }, [confirmRemove]);
+
+  async function save(take: Take) {
+    setPhase('saving'); setError(''); setProgress(take.uploaded ? null : 0);
     try {
-      const upload = await json<{ id: string; upload_url: string }>(`${API}/upload`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filename: file.name, byte_size: file.size }),
-      });
-      await uploadFile(upload.upload_url, file, 'video/mp4', setProgress);
-      setProgress(null); setMessage('Checking your video…');
-      const saved = await json<Recording>(`${API}/${upload.id}/complete`, { method: 'POST' });
-      setRecording(saved); setFile(null); setPreview('');
-      if (input.current) input.current.value = '';
-      setMessage('Recording saved. Set up your voice below to generate a video.');
+      if (!take.upload) take.upload = await post(`${API}/upload`, { filename: take.file.name, byte_size: take.file.size });
+      if (!take.uploaded) {
+        await uploadFile(take.upload!.upload_url, take.file, take.upload!.content_type, setProgress);
+        take.uploaded = true;
+      }
+      if (mounted.current) setProgress(null);
+      const saved = await post<Recording>(`${API}/${take.upload!.id}/complete`, { create_preview: true, consent: true });
+      pending.current = null;
+      if (!mounted.current) return;
+      setRecording(saved); setNewTake(false); setPhase('idle');
+      // The server has reserved the preview even if the following refresh fails.
+      setStudio(current => current ? {...current, busy: true, preview: {id: '', kind: 'render', status: 'waiting_for_voice', script: null, error: null, created_at: new Date().toISOString(), audio_available: false, video_available: false}} : current);
+      void refresh().catch(reason => { if (mounted.current) setLoadError(cameraError(reason)); });
     } catch (reason) {
-      setMessage(''); setError(reason instanceof Error ? reason.message : 'Could not save your recording.');
-    } finally { setBusy(false); setProgress(null); }
+      // An uncertain storage PUT can be abandoned safely before any jobs exist.
+      if (!take.uploaded) take.upload = undefined;
+      if (mounted.current) { setError(cameraError(reason)); setPhase('save-error'); }
+    } finally { busy.current = false; }
+  }
+  useEffect(() => { saveRef.current = save; });
+
+  function finish() {
+    if (recorder.current?.state !== 'recording') return;
+    intent.current = 'save';
+    setPhase('saving');
+    recorder.current.stop();
+    release();
+  }
+  function cancel() {
+    intent.current = 'discard';
+    if (recorder.current?.state === 'recording') recorder.current.stop();
+    release(); busy.current = false; setPhase('idle'); setSeconds(0); setSentence(0);
+  }
+  async function start() {
+    if (busy.current || !consent) return;
+    busy.current = true; intent.current = 'discard'; setError(''); setSentence(0); setSeconds(0); setPhase('requesting');
+    try {
+      if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) throw new Error('Recording is unavailable in this browser. Open this page in a current Chrome or Safari browser.');
+      const mimeType = recordingMime(type => MediaRecorder.isTypeSupported(type));
+      if (!mimeType) throw new Error('This browser cannot record a supported video. Try Chrome or Safari.');
+      const media = await navigator.mediaDevices.getUserMedia({ video: { width: {ideal: 1280}, height: {ideal: 720}, frameRate: {ideal: 30, max: 30}, facingMode: 'user' }, audio: {echoCancellation: true, noiseSuppression: true} });
+      if (!mounted.current) { media.getTracks().forEach(track => track.stop()); return; }
+      stream.current = media;
+      const settings = media.getVideoTracks()[0]?.getSettings();
+      if (!settings || Math.min(settings.width ?? 0, settings.height ?? 0) < 720) throw new Error('Your camera needs to support at least 720p. Try another camera.');
+      if (!media.getAudioTracks().length) throw new Error('No microphone was found. Connect one and try again.');
+      if (video.current) { video.current.srcObject = media; await video.current.play(); }
+      const capture = new MediaRecorder(media, {mimeType, videoBitsPerSecond: 3_000_000, audioBitsPerSecond: 128_000});
+      recorder.current = capture;
+      const chunks: Blob[] = [];
+      let bytes = 0;
+      const fail = () => { cancel(); setError('Recording was interrupted. Check your camera and microphone, then start again.'); };
+      media.getTracks().forEach(track => { track.onended = fail; });
+      capture.onerror = fail;
+      capture.ondataavailable = event => {
+        if (event.data.size) { chunks.push(event.data); bytes += event.data.size; }
+        if (bytes > MAX_BYTES && capture.state === 'recording') { cancel(); setError('The recording is too large. Please record a shorter take.'); }
+      };
+      capture.onstop = () => {
+        const current = recorder.current === capture;
+        if (current) recorder.current = null;
+        if (!current || intent.current !== 'save' || !mounted.current) return;
+        const file = new File(chunks, `recording-${crypto.randomUUID()}.${mimeType.includes('webm') ? 'webm' : 'mp4'}`, { type: mimeType });
+        if (!file.size || file.size > MAX_BYTES) { setError('The recording could not be saved. Please record again.'); setPhase('idle'); busy.current = false; return; }
+        const take = {file, uploaded: false}; pending.current = take;
+        void saveRef.current(take);
+      };
+      let count = 3;
+      setCountdown(count); setPhase('countdown');
+      timer.current = setInterval(() => {
+        count -= 1;
+        if (count > 0) { setCountdown(count); return; }
+        if (timer.current) clearInterval(timer.current);
+        try { capture.start(1000); }
+        catch { fail(); return; }
+        setPhase('recording');
+        const started = Date.now();
+        timer.current = setInterval(() => {
+          const elapsed = Math.floor((Date.now() - started) / 1000);
+          setSeconds(elapsed);
+          if (elapsed >= MAX_SECONDS) finish();
+        }, 250);
+      }, 1000);
+    } catch (reason) {
+      release(); busy.current = false;
+      if (mounted.current) { setPhase('idle'); setError(cameraError(reason)); }
+    }
   }
   async function remove() {
-    setBusy(true); setError(''); setMessage('');
-    try { await json(API, { method: 'DELETE' }); setRecording(null); setDeleting(false); setMessage('Recording removed. Existing demo videos are unchanged.'); }
-    catch (reason) { setError(reason instanceof Error ? reason.message : 'Could not remove the recording.'); }
-    finally { setBusy(false); }
+    if (busy.current) return;
+    if (!confirmRemove) { setConfirmRemove(true); return; }
+    setRemoving(true);
+    busy.current = true; setError('');
+    try {
+      await json(API, {method: 'DELETE'});
+      setRecording(null); setNewTake(false); setConsent(false); setConfirmRemove(false); setStudio(current => current ? {...current, preview: null} : current);
+    } catch (reason) { setError(cameraError(reason)); }
+    finally { busy.current = false; setRemoving(false); }
   }
+  const recordingDisabled = !loaded || !canWrite || !consent || !!studio?.busy || !!loadError;
+  const disabledReason = !canWrite ? 'Only workspace owners and admins can record.' : !loaded || loadError ? 'Waiting for workspace status.' : studio?.busy ? 'Wait for the current generation to finish.' : !consent ? 'Confirm permission to use your face and voice.' : undefined;
+  const cue = phase === 'recording' && sentence === PROMPTS.length - 1 && seconds < MIN_SECONDS ? `Keep speaking naturally · ${MIN_SECONDS - seconds}s to go` : PROMPTS[sentence][0];
 
   return <div className="face-cloning">
-    <header><h1>Face Cloning</h1></header>
-    <div className="face-grid">
-      <section className="face-card" aria-labelledby="recording-title">
-        <h2 id="recording-title">{recording ? 'Your saved recording' : 'Clone yourself'}</h2>
-        <p>Save one recording for this workspace. Uploading saves your footage; video generation happens later, separately for each demo.</p>
-        {!loaded && !error && <p role="status">Loading your recording…</p>}
-        {loaded && <>
-          {(file && preview) || recording ? <video key={file ? preview : recording?.id} src={file ? preview : `${API}/content?v=${recording?.id}`} controls playsInline preload="metadata" aria-label={file ? 'Selected recording preview' : 'Saved recording preview'} /> : <div className="face-empty"><svg viewBox="0 0 80 80" aria-hidden="true"><circle cx="40" cy="29" r="13" /><path d="M16 68c0-24 48-24 48 0M8 24V8h16M56 8h16v16M72 56v16H56M24 72H8V56" /></svg><p>Your next demo, with you in it.</p></div>}
-          {recording && !file && <p className="face-meta">{recording.filename} · {Math.round(recording.duration)} sec · {recording.width} × {recording.height}</p>}
-          {file && <p className="face-meta">Selected: {file.name} · {(file.size / 1024 / 1024).toFixed(1)} MB</p>}
-          {canWrite ? <div className="face-actions">
-            <input ref={input} id="face-file" type="file" accept="video/mp4,.mp4" disabled={busy} onChange={event => choose(event.target.files?.[0])} />
-            <button className="face-secondary" disabled={busy} onClick={() => input.current?.click()}>{recording || file ? 'Choose another video' : 'Choose video'}</button>
-            {file && <button className="face-primary" disabled={busy} onClick={() => void save()}>{busy ? progress === null ? 'Checking video…' : `Uploading ${progress}%` : recording ? 'Replace recording' : 'Save recording'}</button>}
-            {recording && !file && !deleting && <button className="face-text" disabled={busy} onClick={() => setDeleting(true)}>Remove recording</button>}
-          </div> : <p>Only workspace owners and admins can change the recording.</p>}
-          {deleting && canWrite && <div className="face-confirm"><p>Remove this source recording? It will no longer be available for future demos.</p><button className="face-secondary" disabled={busy} onClick={() => setDeleting(false)}>Keep recording</button><button className="face-primary" disabled={busy} onClick={() => void remove()}>Remove</button></div>}
-          {progress !== null && <progress max="100" value={progress} aria-label="Video upload progress" />}
-        </>}
-        {error && <p className="face-error" role="alert">{error}{!loaded && <> <button className="face-text" onClick={() => window.location.reload()}>Reload</button></>}</p>}
-        {message && <p role="status">{message}</p>}
-        <p className="face-meta">Your source recording is private to this workspace. It is shared with our video provider when used to render a demo.</p>
-      </section>
-      <section className="face-card" aria-labelledby="recording-guide"><h2 id="recording-guide">A good recording makes the difference.</h2>
-        <ol className="face-tips"><li><strong>Look toward the lens.</strong><span>Put a teleprompter close to the camera. Avoid looking down at a phone or across at another screen.</span></li><li><strong>Make your face easy to see.</strong><span>Use soft light in front of you, a steady camera at eye level, and a simple background. Keep your full face and shoulders in frame.</span></li><li><strong>Speak like you’re explaining it to someone.</strong><span>Blink normally and use small, natural movements. Keep hands away from your mouth and avoid exaggerated expressions.</span></li><li><strong>Aim for 60–90 seconds.</strong><span>Use the script below, or something with similar pacing. Leave two seconds before and after speaking. One person in frame, with no filters or captions.</span></li></ol>
-        <div className="face-spec"><strong>File requirements</strong><p>H.264 MP4 · 15 seconds to 3 minutes · 720p to 4K · 20–60 fps · up to 200 MB</p><p>1080p at 30 fps is ideal. On iPhone, choose Camera → Formats → Most Compatible before recording.</p></div>
-      </section>
+    <header><h1>Face cloning</h1></header>
+    <section className={`face-capture ${!loaded ? 'face-loading' : ''}`} aria-label="Face recording">
+      {showingRecorder ? <>
+        <div className="face-prompt">
+          <div className="face-steps"><span>{sentence + 1} / {PROMPTS.length}</span><div aria-hidden="true">{PROMPTS.map((_, index) => <i key={index} className={index <= sentence ? 'is-current' : ''}/>)}</div></div>
+          <p>{PROMPTS[sentence][1]}</p>
+        </div>
+        <div className={`face-camera ${capturing ? 'is-live' : ''}`}>
+          <video ref={video} muted playsInline aria-label="Live camera preview" />
+          {!capturing && <svg className="face-outline" viewBox="0 0 240 190" aria-hidden="true"><rect x="8" y="8" width="224" height="174" rx="28"/><ellipse cx="120" cy="72" rx="32" ry="40"/><path d="M48 175c0-67 144-67 144 0"/></svg>}
+          {phase === 'countdown' && <span className="face-countdown" role="status">{countdown}</span>}
+        </div>
+        <div className="face-capture-footer"><span>{cue}</span><span className={phase === 'recording' ? 'face-timer is-recording' : 'face-timer'}>{phase === 'recording' && <i/>}{clock(seconds)}<span> / ~1 min</span></span></div>
+      </> : <div className="face-saved">
+        <video src={recordingMediaUrl(`${API}/content?v=${recording?.id}`)} muted playsInline preload="metadata" aria-label="Saved face recording" />
+        <div className="face-saved-status" role="status">
+          {inProgress(previewJob) ? <><div className="face-processing" aria-label="Generating preview"/><h2>{previewJob?.status === 'waiting_for_voice' ? 'Preparing your voice' : 'Generating your preview'}</h2><p>You can leave this page. We’ll keep going.</p></>
+            : previewJob?.video_available ? <><span className="face-ready-mark" aria-hidden="true">✓</span><h2>Your preview is ready</h2><button className="face-primary" onClick={() => setPreview(previewJob)}>View preview</button></>
+            : previewJob?.status === 'failed' ? <><h2>Preview couldn’t finish</h2><p className="face-error">{previewJob.error || 'Please contact support to continue.'}</p></>
+            : <><h2>Your recording is saved</h2><p>{Math.round(recording?.duration ?? 0)} seconds</p></>}
+        </div>
+      </div>}
+    </section>
+    <div className="face-controls">
+      {showingRecorder && phase === 'idle' && <>
+        {canWrite && <label className="face-consent"><input type="checkbox" checked={consent} onChange={event => setConsent(event.target.checked)}/> I have permission to use this face and voice.</label>}
+        <div className="face-actions"><button className="face-primary" disabled={recordingDisabled} title={disabledReason} onClick={() => void start()}>Start recording</button>{recording && <button className="face-secondary" onClick={() => {setNewTake(false); setError('');}}>Cancel</button>}</div>
+      </>}
+      {(phase === 'requesting' || phase === 'countdown') && <div className="face-actions"><button className="face-primary" disabled title="Recording will start after camera access and the countdown.">{phase === 'requesting' ? 'Opening camera…' : `Starting in ${countdown}…`}</button>{phase === 'countdown' && <button className="face-secondary" onClick={cancel}>Cancel</button>}</div>}
+      {phase === 'recording' && <div className="face-actions"><button className="face-primary" disabled={sentence === PROMPTS.length - 1 && seconds < MIN_SECONDS} title={seconds < MIN_SECONDS ? 'Keep recording for at least one minute.' : undefined} onClick={() => sentence < PROMPTS.length - 1 ? setSentence(value => value + 1) : finish()}>{sentence < PROMPTS.length - 1 ? 'Next sentence' : 'Finish recording'}</button><button className="face-secondary" onClick={cancel}>Start over</button></div>}
+      {phase === 'saving' && <div className="face-save-progress" role="status"><strong>{progress === null ? 'Preparing your preview…' : `Saving recording · ${progress}%`}</strong><progress max={100} value={progress ?? undefined}/><p>Keep this page open until saving finishes.</p></div>}
+      {phase === 'save-error' && <div className="face-actions"><button className="face-primary" onClick={() => { if (pending.current && !busy.current) {busy.current = true; void save(pending.current);} }}>Retry saving</button><button className="face-secondary" onClick={() => {pending.current = null; cancel();}}>Record again</button></div>}
+      {!showingRecorder && canWrite && <div className="face-actions"><button className="face-secondary" disabled={!!studio?.busy || removing} title={removing ? 'Removing your recording.' : studio?.busy ? 'Wait for generation to finish.' : undefined} onClick={() => {setNewTake(true); setSentence(0); setSeconds(0); setConsent(false); setError('');}}>Record again</button><button className="face-text" disabled={!!studio?.busy || removing} title={removing ? 'Removing your recording.' : studio?.busy ? 'Wait for generation to finish.' : undefined} onClick={() => void remove()}>{removing ? 'Removing…' : confirmRemove ? 'Confirm removal' : 'Remove recording'}</button></div>}
+      {error && <p className="face-error" role="alert">{error}</p>}
+      {loadError && <p className="face-error" role="alert">{loadError} <button className="face-text" onClick={() => void refresh().catch(reason => setLoadError(cameraError(reason)))}>Refresh</button></p>}
+      {!canWrite && <p>Only workspace owners and admins can record.</p>}
     </div>
-    <VoiceStudio recordingId={recording?.id} duration={recording?.duration ?? 0} canWrite={canWrite} />
-    <details className="face-card face-script"><summary>Need something to say? Use this recording script.</summary><p>Read the words naturally. The cues guide your delivery; don’t read them aloud. You don’t need to memorize it or act out big emotions.</p>{SCRIPT.map(([cue, words]) => <div key={cue}><span>{cue}</span><p>{words}</p></div>)}</details>
+    {recording && !showingRecorder && studio && <VoiceStudio studio={studio} duration={recording.duration} canWrite={canWrite} onRefresh={refresh} onPreview={setPreview}/>}
+    <dialog ref={dialog} className="face-preview-dialog" aria-labelledby="face-preview-title" onClose={() => setPreview(null)} onClick={event => {if (event.target === event.currentTarget) setPreview(null);}}>
+      {preview && <><div className="face-preview-heading"><h2 id="face-preview-title">Your preview</h2><button className="face-secondary" onClick={() => setPreview(null)} aria-label="Close preview">Close</button></div><video src={recordingMediaUrl(`${API}/generations/${preview.id}/video`)} controls playsInline autoPlay aria-label="Generated video preview"/></>}
+    </dialog>
   </div>;
 }

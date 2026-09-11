@@ -1,6 +1,7 @@
 import { initializeMockMode, mockBlockedResponse } from "./mock-mode.ts";
 import { resendRefusalMessage, resendWaitMinutes } from "./team/team-model.ts";
 import { uploadKindFor } from "./assets/model.ts";
+import { faceMock, installCaptureFixture } from "./face-cloning/mock.ts";
 
 /* Preview-branch mock: `?mock=1` serves canned dashboard data so the
    redesigned dashboard can be seen (and screenshotted) without the backend.
@@ -56,6 +57,7 @@ const search = typeof location === "undefined" ? "" : location.search;
 const params = new URLSearchParams(search);
 const mockMode = typeof location === "undefined" ? null : initializeMockMode(search, location.pathname);
 if (mockMode) {
+  if (import.meta.env.DEV && params.has("facecamera")) installCaptureFixture(params.get("facecamera")!);
   params.set("mock", mockMode);
   const hoursAgo = (h: number) => new Date(Date.now() - h * 3600e3).toISOString();
   /* The workspace role the fixture reports, for /auth/me and for the Team
@@ -2227,11 +2229,7 @@ if (mockMode) {
   // come first — /sends/cancel and /sends/dismiss (POST) would otherwise be
   // swallowed by the /sends fixture, and /reviews/decide by /reviews.
   const routes: [string, unknown][] = [
-    ["/api/v1/dashboard/face-cloning/studio", {voice: null, jobs: [], busy: false, max_render_usd: 24, video_cost_ceiling_usd: 0, daily_render_limit: 3}],
-    ["/api/v1/dashboard/face-cloning", (init?: RequestInit) =>
-      !init?.method || init.method === "GET"
-        ? { recording: null }
-        : new Response(JSON.stringify({ error: { detail: "This is a preview. Open your live dashboard to save a recording." } }), { status: 400, headers: { "Content-Type": "application/json" } })],
+    ["/api/v1/dashboard/face-cloning", faceMock(params)],
     ["/api/v1/dashboard/triggers", triggersApi],
     // The audiences surface routes through audKnob so ?audlat/?auderr can
     // express slow and failing states (see the knob comment above).
