@@ -31,6 +31,39 @@ async function load(page, mode = "1") {
   });
 }
 
+async function companyDemos(page) {
+  await load(page);
+  await page.evaluate(() => {
+    const original = window.fetch;
+    window.companyFeedbackUrl = null;
+    window.fetch = async (url, init) => {
+      if (String(url).includes("/dashboard/demos/") && init?.method === "POST") window.companyFeedbackUrl = String(url);
+      const response = await original(url, init);
+      if (String(url).includes("/dashboard/demos?") && !init?.method) {
+        const body = await response.json();
+        body.demos = body.demos.map((demo, index) => ({
+          ...demo, demo_id: `html:${index + 1}`, lead_id: null, lead_name: null,
+          preview_url: `/api/v1/dashboard/demos/html:${index + 1}/preview`,
+        }));
+        return Response.json(body);
+      }
+      return response;
+    };
+  });
+  await page.getByRole("button", { name: "Refresh", exact: true }).click();
+  await page.getByRole("button", { name: /Sample company Company demo/ }).waitFor();
+  assert.equal(await page.getByRole("link", { name: "Open demo", exact: true }).getAttribute("href"), "/api/v1/dashboard/demos/html:1/preview");
+  assert.match(await page.locator(".demo-detail-heading p").innerText(), /^Updated /);
+  await page.getByRole("button", { name: /Sample account Company demo/ }).click();
+  await page.getByRole("heading", { name: "Sample account", exact: true }).waitFor();
+  await page.getByRole("button", { name: "Looks good", exact: true }).click();
+  await page.getByRole("status").filter({ hasText: "Glad you like it." }).waitFor();
+  assert.equal(await page.evaluate(() => window.companyFeedbackUrl), "/api/v1/dashboard/demos/html%3A2/feedback");
+  await page.getByRole("button", { name: /Sample company Company demo/ }).click();
+  assert.equal(await page.getByRole("status").filter({ hasText: "Glad you like it." }).count(), 0);
+  if (screenshotDir) await page.locator(".demos-page").screenshot({ path: `${screenshotDir}/company-demos-${page.viewportSize().width}.png` });
+}
+
 async function requests(page) {
   return page.evaluate(() => window.demoFeedbackRequests);
 }
@@ -144,6 +177,8 @@ try {
   await changes.click();
   assert.equal(await note.inputValue(), "");
 
+  await companyDemos(page);
+
   await load(page, "member");
   await page.getByText("Your workspace seat is read-only.", { exact: false }).waitFor();
   assert.equal(await changes.count(), 0);
@@ -171,6 +206,7 @@ try {
   await page.setViewportSize({ width: 320, height: 740 });
   await page.getByRole("button", { name: "Add a note", exact: true }).click();
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  await companyDemos(page);
   console.log("iPhone WebKit passed: notes, quick reaction, cancellation and responsive layout down to 320px.");
 } finally {
   await mobile.close();

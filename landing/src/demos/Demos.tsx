@@ -27,8 +27,8 @@ function DemoDetail({ demo, feedback, onFeedback, onSend }: { demo: Demo; feedba
   return (
     <article className="demo-detail" aria-label={`Demo for ${demo.company_name}`}>
       <div className="demo-detail-heading">
-        <div><h2>{demo.company_name}</h2><p>For {demo.lead_name ?? "your lead"} · Updated {new Date(demo.updated_at).toLocaleDateString()}</p></div>
-        <a className="demo-button" href={demo.content_url} target="_blank" rel="noopener noreferrer">Open demo <ExternalIcon size={15} /></a>
+        <div><h2>{demo.company_name}</h2><p>{demo.lead_name ? `For ${demo.lead_name} · ` : ""}Updated {new Date(demo.updated_at).toLocaleDateString()}</p></div>
+        <a className="demo-button" href={demo.preview_url ?? demo.content_url} target="_blank" rel="noopener noreferrer">Open demo <ExternalIcon size={15} /></a>
       </div>
       <div className="demo-preview"><DemoPreview demo={demo} videoRef={videoRef} onPlaybackTime={setPlaybackTime} /></div>
       {demo.description && <p className="demo-description">{demo.description}</p>}
@@ -58,9 +58,9 @@ export default function Demos() {
     return () => controller.abort();
   }, [query, offset, refresh]);
 
-  const selected = page?.demos.find((demo) => demo.lead_id === selectedId) ?? page?.demos[0];
+  const selected = page?.demos.find((demo) => demo.demo_id === selectedId) ?? page?.demos[0];
   // Drafts, timestamps and delivery state belong to the exact version reviewed.
-  const feedbackKey = selected ? `${selected.lead_id}:${selected.artifact_id}:${selected.updated_at}` : "";
+  const feedbackKey = selected ? `${selected.demo_id}:${selected.artifact_id}:${selected.updated_at}` : "";
 
   function updateFeedback(key: string, patch: Partial<FeedbackState>) {
     setFeedback((current) => ({ ...current, [key]: { ...(current[key] ?? EMPTY_FEEDBACK), ...patch } }));
@@ -93,7 +93,7 @@ export default function Demos() {
   return (
     <section className="demos-page" aria-labelledby="demos-heading">
       <header className="demos-heading">
-        <div><h1 id="demos-heading">Demos</h1><p>See what we’ve created for your leads. Help us make the next version better.</p></div>
+        <div><h1 id="demos-heading">Demos</h1><p>See what we’ve created for your companies and contacts. Help us make the next version better.</p></div>
         <button className="demo-button" type="button" disabled={loading} onClick={() => { setLoading(true); setRefresh((value) => value + 1); }}>Refresh</button>
       </header>
       <form className="demos-search" role="search" onSubmit={search}>
@@ -104,16 +104,16 @@ export default function Demos() {
       {loading ? <div className="demos-state" role="status">Loading demos…</div> : error ? (
         <div className="demos-state" role="alert"><h2>Demos could not load</h2><p>{error}</p><button className="demo-button" onClick={() => { setLoading(true); setRefresh((value) => value + 1); }}>Try again</button></div>
       ) : !selected ? (
-        <div className="demos-state"><VideoIcon size={30} /><h2>{query ? "No matching demos" : "Your demos will appear here"}</h2><p>{query ? "Try another company or lead name." : "Once a demo is ready and attached to a lead, you can preview it and share feedback here."}</p></div>
+        <div className="demos-state"><VideoIcon size={30} /><h2>{query ? "No matching demos" : "Your demos will appear here"}</h2><p>{query ? "Try another company or lead name." : "Your completed demos appear here, ready to preview and share feedback."}</p></div>
       ) : (
         <div className="demos-layout">
           <aside className="demos-library" aria-label="Created demos">
             <p className="demos-count">{page!.total} {page!.total === 1 ? "demo" : "demos"}{query ? " found" : " created"}</p>
             <div className="demos-list">
               {page!.demos.map((demo) => (
-                <button key={demo.lead_id} className={`demo-list-item ${selected.lead_id === demo.lead_id ? "is-active" : ""}`} type="button" aria-pressed={selected.lead_id === demo.lead_id} onClick={() => setSelectedId(demo.lead_id)}>
+                <button key={demo.demo_id} className={`demo-list-item ${selected.demo_id === demo.demo_id ? "is-active" : ""}`} type="button" aria-pressed={selected.demo_id === demo.demo_id} onClick={() => setSelectedId(demo.demo_id)}>
                   <span className="demo-list-icon"><VideoIcon size={19} /></span>
-                  <span><strong>{demo.company_name}</strong><span>{demo.lead_name ?? demo.name}</span><small>{new Date(demo.updated_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</small></span>
+                  <span><strong>{demo.company_name}</strong><span>{demo.lead_name ?? "Company demo"}</span><small>{new Date(demo.updated_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</small></span>
                 </button>
               ))}
             </div>
