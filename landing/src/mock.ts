@@ -2293,8 +2293,8 @@ if (mockMode) {
   };
 
   const demoRows = [
-    { lead_id: "demo-lead-1", lead_name: "Example lead", company_name: "Sample company", description: "A sample of the personalized walkthrough your leads will receive.", artifact_id: "demo-artifact-1", name: "sample-walkthrough", content_type: "video/mp4", content_url: "/case-autosana.mp4", created_at: hoursAgo(24), updated_at: hoursAgo(2) },
-    { lead_id: "demo-lead-2", lead_name: "Another example lead", company_name: "Sample account", description: "A still from the demo, ready for your review.", artifact_id: "demo-artifact-2", name: "sample-demo-preview", content_type: "image/webp", content_url: "/demo-still.webp", created_at: hoursAgo(48), updated_at: hoursAgo(24) },
+    { demo_id: "demo-lead-1", lead_id: "demo-lead-1", lead_name: "Example lead", company_name: "Sample company", description: "A sample of the personalized walkthrough your leads will receive.", artifact_id: "demo-artifact-1", name: "sample-walkthrough", content_type: "video/mp4", content_url: "/case-autosana.mp4", created_at: hoursAgo(24), updated_at: hoursAgo(2) },
+    { demo_id: "demo-lead-2", lead_id: "demo-lead-2", lead_name: "Another example lead", company_name: "Sample account", description: "A still from the demo, ready for your review.", artifact_id: "demo-artifact-2", name: "sample-demo-preview", content_type: "image/webp", content_url: "/demo-still.webp", created_at: hoursAgo(48), updated_at: hoursAgo(24) },
   ];
   const demosApi = (init?: RequestInit, url?: string) => {
     if (init?.method === "POST") {

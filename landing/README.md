@@ -57,7 +57,7 @@ session cookie remains first-party. The new UI uses:
 | --- | --- |
 | Audiences | `/api/v1/dashboard/audiences*` |
 | Campaigns | `/api/v1/dashboard/campaigns*` |
-| Demos | `GET /api/v1/dashboard/demos`, `POST /api/v1/dashboard/demos/{lead_id}/feedback` |
+| Demos | `GET /api/v1/dashboard/demos`, `POST /api/v1/dashboard/demos/{demo_id}/feedback` |
 | Assets | `/api/v1/dashboard/assets*` |
 | Metrics | `/api/v1/dashboard/channel-metrics` |
 | Leads | existing `/api/v1/dashboard/leads`, now including `audiences` |
@@ -67,10 +67,17 @@ version and initializes planning ledgers, but does not queue or send outreach.
 Open/click metrics render as unavailable because the current backend has no
 defensible event source for them.
 
-The Demos page lists hosted artifacts attached through `leads.demo_artifact_id`.
-Media links use the server-minted `/d/{public_slug}` path; Vite and Vercel proxy
-it to the backend. HTML previews run in a sandbox with no script or same-origin
-permissions. The site's frame policy permits these same-origin previews.
+The Demos page lists hosted artifacts attached through `leads.demo_artifact_id`
+and successful company-only private runs. Rows use the API's `demo_id` for
+selection and feedback; company-only rows have no lead. The backend selects the
+latest successful private package per normalized company, deduplicating retries.
+Legacy media uses `/d/{public_slug}`; private video uses authenticated
+`/api/v1/dashboard/demos/{demo_id}/video` with byte-range playback. “Open demo”
+opens the optional `preview_url` for a private run. Its backend wrapper isolates
+generated scripts in an opaque-origin, network-blocked iframe; legacy HTML
+continues to use a script-free sandbox. Vite and Vercel proxy these API paths.
+Roll out this site client before the backend: it normalizes older lead-only API
+responses to `demo_id` until the additive backend response is deployed.
 Feedback includes the viewed artifact ID and version timestamp so replaced demos
 must be reviewed again. “Looks good” sends a quick reaction without a written
 note; “Request changes” expands the note composer. Video notes can attach the

@@ -3,7 +3,7 @@ import test from "node:test";
 import { listDemos, sendFeedback, type Demo } from "./api.ts";
 
 const demo: Demo = {
-  lead_id: "lead-1", lead_name: "Person", company_name: "Company",
+  demo_id: "lead-1", lead_id: "lead-1", lead_name: "Person", company_name: "Company",
   description: null, artifact_id: "artifact-1", name: "demo",
   content_type: "video/mp4", content_url: "/d/randomslug",
   created_at: "2026-09-11T08:00:00Z", updated_at: "2026-09-11T08:01:00.123456Z",
@@ -57,4 +57,24 @@ test("library searches encode special characters and pass cancellation through",
     return Response.json({ demos: [demo], total: 13, limit: 12, offset: 12 });
   });
   assert.equal((await listDemos("Sales & Marketing", 12, controller.signal)).total, 13);
+});
+
+
+test("company demo feedback uses its package identity without a fabricated lead", async (t) => {
+  const companyDemo: Demo = { ...demo, demo_id: "html:123abc", lead_id: null, lead_name: null };
+  t.mock.method(globalThis, "fetch", async (url: string, init?: RequestInit) => {
+    assert.equal(url, "/api/v1/dashboard/demos/html%3A123abc/feedback");
+    assert.equal(JSON.parse(init?.body as string).artifact_id, companyDemo.artifact_id);
+    return Response.json({ delivered: true });
+  });
+  await sendFeedback(companyDemo, "Looks good.", "looks_good");
+});
+
+
+test("the new client can roll out before the backend adds company identities", async (t) => {
+  t.mock.method(globalThis, "fetch", async () => Response.json({
+    demos: [{ ...demo, demo_id: undefined }], total: 1, limit: 12, offset: 0,
+  }));
+  const page = await listDemos("", 0, new AbortController().signal);
+  assert.equal(page.demos[0].demo_id, demo.lead_id);
 });
