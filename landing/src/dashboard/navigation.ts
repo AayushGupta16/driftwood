@@ -49,17 +49,12 @@ export type NavGroup = { label?: string; items: NavItem[] };
 
 const CUSTOMER_PRIMARY: NavItem[] = [
   { id: "home", label: "Overview", href: "/dashboard", icon: "overview" },
-  { id: "audiences", label: "Audiences", href: "/dashboard/audiences", icon: "audience" },
   { id: "campaigns", label: "Campaigns", href: "/dashboard/campaigns", icon: "campaign" },
+  { id: "audiences", label: "Audiences", href: "/dashboard/audiences", icon: "audience" },
   { id: "demos", label: "Demos", href: "/dashboard/demos", icon: "demo" },
   { id: "triggers", label: "Triggers", href: "/dashboard/triggers", icon: "trigger" },
-  { id: "metrics", label: "Metrics", href: "/dashboard/metrics", icon: "metrics" },
+  { id: "face-cloning", label: "Face Cloning", href: "/dashboard/face-cloning", icon: "people" },
   { id: "inbox", label: "Inbox", href: "/dashboard/inbox", icon: "inbox" },
-];
-
-const CUSTOMER_WORKSPACE: NavItem[] = [
-  { id: "leads", label: "All leads", href: "/dashboard/leads", icon: "people" },
-  { id: "companies", label: "Companies", href: "/dashboard/companies", icon: "companies" },
 ];
 
 const ADMIN_INTERNAL: NavItem[] = [
@@ -76,6 +71,5 @@ export function navigationGroups(mode: NavigationMode): NavGroup[] {
     ? [{ label: "Internal tools", items: ADMIN_INTERNAL }]
     : [
         { items: CUSTOMER_PRIMARY },
-        { label: "Workspace", items: CUSTOMER_WORKSPACE },
       ];
 }

@@ -22,7 +22,7 @@ export default function Inbox() {
  const [data, setData] = useState<Snapshot>({pages:{},errors:{}});
  const [busy,setBusy] = useState(true);
  const [request,setRequest] = useState({offsets:Object.fromEntries(FEEDS.map((f) => [f,0])) as Partial<Record<Feed,number>>, append:false, revision:0});
- const [filter,setFilter] = useState<InboxFilter>('queued');
+ const [filter,setFilter] = useState<InboxFilter>(() => new URLSearchParams(window.location.search).get('tab') === 'sent' ? 'sent' : 'queued');
  const [query,setQuery] = useState('');
  const [channel,setChannel] = useState('all');
  const [replyKind,setReplyKind] = useState('all');

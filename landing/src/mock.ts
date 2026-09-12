@@ -513,7 +513,7 @@ if (mockMode) {
   const isOutreachReview = (kind: string) => ["send_email", "send_message", "send_connection", "send_x_dm"].includes(kind);
   const reviewPermissions = (row: typeof reviews.pending[number]) => {
     const reviewer = isOutreachReview(row.kind) ? reviewerFor(approvalPolicy,reviewCampaign(row.id)) : "driftwood";
-    return {campaign_id:reviewCampaign(row.id),reviewer,can_decide:mockMode !== "member" && reviewer === "customer",approval_policy_version:approvalPolicy.version};
+    return {campaign_id:reviewCampaign(row.id),reviewer,can_decide:mockMode !== "member" && (mockMode === "admin" ? reviewer === "driftwood" : reviewer === "customer"),approval_policy_version:approvalPolicy.version};
   };
   let savedDecisions: Array<{item_id:string;decision:string}> = [];
   const applyMockDecision = (id: string, decision: string) => {
@@ -970,6 +970,7 @@ if (mockMode) {
     }
   }
   if (hydratedStoredCampaign) persistMockCampaigns();
+  const demoRequests = new Map<string, Array<{id:string;status:string;lead_count:number;error:null}>>();
   const campaignsApi = (init?: RequestInit, url?: string) => {
     const method = init?.method ?? "GET";
     const pathname = new URL(url ?? location.href, location.href).pathname;
@@ -1028,6 +1029,13 @@ if (mockMode) {
     const id = decodeURIComponent(encodedId);
     const campaign = mockCampaigns.find((row) => row.id === id);
     if (!campaign) return new Response(JSON.stringify({ error: { detail: "Campaign not found" } }), { status: 404, headers: { "Content-Type": "application/json" } });
+    if (action === "demo-requests") {
+      if (method === "GET") return demoRequests.get(id) ?? [];
+      if (mockMode === "member") return new Response(null,{status:403});
+      const body=JSON.parse(typeof init?.body === "string" ? init.body : "{}");
+      const result={id:crypto.randomUUID(),status:"queued",lead_count:body.lead_ids.length,error:null};
+      demoRequests.set(id,[result,...(demoRequests.get(id) ?? [])]);return result;
+    }
     if (method === "GET" && action === "contacts") {
       const query = new URL(url ?? location.href, location.href).searchParams;
       const search = (query.get("q") ?? "").trim().toLowerCase();
@@ -1396,7 +1404,7 @@ if (mockMode) {
     return { companies: filtered.slice(offset, offset + limit), total: filtered.length, limit, offset };
   };
   type MockAudience = {
-    id: string; name: string; description: string; source_provider: string;
+    id: string; name: string; description: string; source_provider: string; source_kind?: string; tags?: string[];
     discovery_filters: Record<string, string>; members: Array<{
       lead_id: string; name: string; title: string; company: string;
       email: string | null; linkedin_url: string; stage: string; contactable: boolean;
@@ -1408,6 +1416,8 @@ if (mockMode) {
     name: audience.name,
     description: audience.description,
     source_provider: audience.source_provider,
+    source_kind: audience.source_kind ?? (audience.source_provider === "csv_upload" ? "uploaded" : "other"),
+    tags: audience.tags ?? [],
     member_count: audience.members.length,
     created_at: audience.created_at,
     updated_at: audience.updated_at,
@@ -1420,6 +1430,7 @@ if (mockMode) {
   const mockAudiences: MockAudience[] = [{
     id: "audience-qualified-qa",
     name: "Qualified QA leaders",
+    source_kind: "curated", tags: ["QA", "High intent"],
     description: "QA and operations leaders at teams with a live release workflow.",
     source_provider: "orange_slice",
     discovery_filters: { prompt: "QA and operations leaders at teams with a live release workflow" },
@@ -1429,6 +1440,7 @@ if (mockMode) {
   }, {
     id: "audience-product-led",
     name: "Product-led teams",
+    source_kind: "campaign", tags: ["Product-led"],
     description: "Product leaders evaluating a hands-on launch workflow.",
     source_provider: "workspace",
     discovery_filters: { prompt: "Product leaders evaluating a hands-on QA workflow" },
@@ -1593,6 +1605,7 @@ if (mockMode) {
     const audience = mockAudiences.find((item) => item.id === audienceId);
     if (method === "PATCH" && audience) {
       const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
+      if (Array.isArray(body.tags)) audience.tags = [...new Set<string>(body.tags.map((tag: unknown) => String(tag)))];
       if (typeof body.name === "string" && body.name.trim())
         audience.name = body.name.trim();
       if (typeof body.description === "string")

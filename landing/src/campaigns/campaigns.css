@@ -451,7 +451,7 @@
   display: grid;
   min-height: calc(100dvh - 7.3rem);
   grid-template-columns: minmax(32rem, 1fr) 21rem;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto auto 1fr;
   overflow: hidden;
   background: var(--color-paper);
 }
@@ -752,3 +752,24 @@
   .campaign-skel-node::before,
   .campaign-skel-node::after { animation: none; }
 }
+
+.campaign-outbound-guide { grid-column:1 / -1; padding:1.25rem 1.5rem; border-bottom:1px solid var(--color-line); background:var(--color-surface); }
+.campaign-outbound-steps { display:flex; flex-wrap:wrap; gap:1.3rem; font-size:.8rem; margin-bottom:1rem; }
+.campaign-outbound-steps span { display:flex; align-items:center; gap:.5rem; }
+.campaign-outbound-steps b { display:grid; place-items:center; width:1.5rem; height:1.5rem; border-radius:50%; background:var(--color-tide-wash); color:var(--color-tide); }
+.campaign-outbound-actions { display:flex; align-items:center; gap:1rem; flex-wrap:wrap; }
+.campaign-outbound-actions > div { flex:1; min-width:200px; }
+.campaign-outbound-actions strong { font-size:.9rem; }
+.campaign-outbound-actions p { font-size:.8rem; color:var(--color-ink-soft); max-width:650px; margin-top:.4rem; }
+.campaign-outbound-guide form { margin-top:1rem; }
+.campaign-outbound-guide label { font-size:.8rem; font-weight:600; }
+.campaign-outbound-guide form > div { display:flex; gap:.6rem; margin-top:.5rem; }
+.campaign-outbound-guide input { min-width:0; flex:1; border:1px solid var(--color-line); padding:.7rem; border-radius:8px; font-size:.85rem; }
+.campaign-outbound-guide small { display:block; font-size:.72rem; color:var(--color-ink-soft); margin-top:.5rem; }
+.campaign-request-notice { background:var(--color-tide-wash); border-radius:8px; padding:1rem; margin-top:1rem; font-size:.8rem; }
+.campaign-email-preview { max-width:700px; margin-top:1rem; border:1px solid var(--color-line); border-radius:12px; overflow:hidden; }
+.campaign-email-preview > div:first-child { display:flex; justify-content:space-between; gap:1rem; padding:1rem; background:var(--color-tide-wash); font-size:.8rem; }
+.campaign-email-preview .email-preview-subject { display:flex; gap:1rem; padding:1rem; border-bottom:1px solid var(--color-line); font-size:.85rem; }
+.campaign-email-preview .email-preview-body { padding:1.5rem; font-size:.9rem; line-height:1.7; }
+.campaign-email-preview .email-preview-body p + p { margin-top:1rem; }
+@media(max-width:650px) { .campaign-outbound-guide { padding:1rem; } .campaign-outbound-guide form > div { flex-direction:column; } }

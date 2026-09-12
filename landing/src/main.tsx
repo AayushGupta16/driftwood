@@ -48,7 +48,7 @@ const page =
   ) : path === '/dashboard/audiences' || path === '/dashboard/lead-lists' ? (
     <WorkspacePage active="audiences"><Audiences /></WorkspacePage>
   ) : path === '/dashboard/face-cloning' ? (
-    <WorkspacePage active="settings"><SettingsTabs active="Face Cloning" /><FaceCloning /></WorkspacePage>
+    <WorkspacePage active="face-cloning"><FaceCloning /></WorkspacePage>
   ) : path === '/dashboard/assets' ? (
     <WorkspacePage active="settings"><SettingsTabs active="Product & brand assets" /><Assets /></WorkspacePage>
   ) : path === '/dashboard/demos' ? (

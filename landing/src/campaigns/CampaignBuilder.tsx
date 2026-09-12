@@ -1,3 +1,4 @@
+import CampaignOutputs from "./CampaignOutputs";
 import { useCallback, useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import {
   getAudience as getSavedAudience,
@@ -530,6 +531,7 @@ function CampaignBuilderWorkspace({ campaignId }: { campaignId: string }) {
           )}
         </header>
 
+        <CampaignOutputs key={campaign.id} campaign={campaign} editable={editable && canWrite && saveState !== "saving" && saveState !== "error"} />
         <div className="campaign-mobile-switcher" role="group" aria-label="Campaign workspace panels">
           {(["flow", "editor"] as MobilePanel[]).map((panel) => (
             <button

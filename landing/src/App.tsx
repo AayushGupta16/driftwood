@@ -198,27 +198,26 @@ const CASE_STUDIES: CaseStudy[] = [
 
 /* the interactive dashboard section: hotspots over the baked dashboard image
    (positions are % of the image so they scale with it). Hovering one lights it
-   up and fills the info panel; nothing hovered shows the prompt. The image is
-   cropped to ~90% height (the "all leads" strip removed), so the t/h below are
-   already scaled into that cropped box. */
+   up and fills the info panel; nothing hovered shows the prompt. The image and regions are captured from the current overview with
+   scripts/refresh-dashboard-shot.mjs; coordinates are percentages of that image. */
 type Widget = { id: string; l: number; t: number; w: number; h: number; title: string; body: string };
 const WIDGETS: Widget[] = [
-  { id: "linkedin", l: 1.5, t: 23.6, w: 96.5, h: 10.2,
-    title: "Send from LinkedIn, Twitter, or email",
-    body: "Demos go out from your own accounts, within safe daily limits, so nothing gets flagged." },
-  { id: "results", l: 1.5, t: 34.9, w: 57.2, h: 16.8,
+  { id: "linkedin", l: 0.00, t: 8.56, w: 66.00, h: 16.28,
+    title: "See today’s outbound at a glance",
+    body: "Track email volume, remaining capacity, queued outreach, and the messages waiting for review." },
+  { id: "results", l: 0.00, t: 25.99, w: 100.00, h: 23.26,
     title: "Track your conversion rates",
     body: "Meetings booked, replies, and reply rate, updated the moment each one lands." },
-  { id: "pipeline", l: 1.5, t: 51.4, w: 57.2, h: 18.2,
-    title: "Spot the bottleneck in your pipeline",
-    body: "Every lead's stage at a glance, so you can see exactly where deals stall." },
-  { id: "latest", l: 1.5, t: 69.4, w: 57.2, h: 30.4,
+  { id: "pipeline", l: 0.00, t: 60.87, w: 100.00, h: 18.18,
+    title: "Keep campaigns moving",
+    body: "Open a campaign to see its audience, outreach sequence, and current status." },
+  { id: "latest", l: 68.07, t: 13.75, w: 30.11, h: 9.61,
     title: "Daily movement across your accounts",
-    body: "Every reply, send, and new connection as it happens. You never have to refresh." },
-  { id: "leads", l: 61.6, t: 49.5, w: 33.9, h: 23.7,
+    body: "See recent sends at a glance, then open Inbox for sent messages and replies." },
+  { id: "leads", l: 0.00, t: 50.39, w: 100.00, h: 9.33,
     title: "Find leads that fit your ICP",
     body: "Bring a CSV or let us source them. We match and enrich every lead either way." },
-  { id: "blacklist", l: 61.6, t: 74.4, w: 33.9, h: 23,
+  { id: "blacklist", l: 0.00, t: 80.21, w: 100.00, h: 19.79,
     title: "We keep track so you don't have to",
     body: "We exclude do-not-contact emails, domains, and URLs from every send." },
 ];
@@ -1533,11 +1532,11 @@ export default function App() {
               >
                 <img
                   src="/dw-demo-dashboard-hero.webp"
-                  width="2000"
-                  height="1940"
+                  width="2048"
+                  height="2506"
                   loading="lazy"
                   decoding="async"
-                  alt="The driftwood dashboard: LinkedIn connected, results, pipeline, activity feed, and your lists"
+                  alt="The Driftwood dashboard: daily email volume, pipeline metrics, campaigns, and audience controls"
                 />
                 {WIDGETS.map((w) => (
                   <button
