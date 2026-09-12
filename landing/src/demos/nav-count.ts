@@ -12,18 +12,28 @@
 import { useEffect, useState } from "react";
 import {
   approvalPolicy,
+  fetchQueuePage,
+  fetchReviewsPage,
   firstQueuePage,
   firstReviewsPage,
 } from "./staging-api";
 import { groupStagedDemos, queueSends, readyForYou } from "./staging-model";
 
-export async function demosNavCount(): Promise<number> {
+/* The Demos page fires this after a decision, so the badge beside it never
+   disagrees with the list the customer is looking at. */
+export const DEMOS_COUNT_CHANGED = "driftwood:demos-count-changed";
+
+export function announceDemosCountChanged() {
+  window.dispatchEvent(new Event(DEMOS_COUNT_CHANGED));
+}
+
+export async function demosNavCount(fresh = false): Promise<number> {
   const policy = await approvalPolicy();
   if (policy.mode === "auto") {
-    const page = await firstQueuePage();
+    const page = await (fresh ? fetchQueuePage(0) : firstQueuePage());
     return queueSends(page.sends).length;
   }
-  const page = await firstReviewsPage();
+  const page = await (fresh ? fetchReviewsPage(0) : firstReviewsPage());
   return readyForYou(groupStagedDemos(page.pending)).length;
 }
 
@@ -35,14 +45,19 @@ export function useDemosNavCount(active: boolean): number | null {
   useEffect(() => {
     if (!active) return;
     let live = true;
-    demosNavCount().then(
-      (value) => {
-        if (live) setCount(value);
-      },
-      () => {},
-    );
+    const read = (fresh: boolean) =>
+      demosNavCount(fresh).then(
+        (value) => {
+          if (live) setCount(value);
+        },
+        () => {},
+      );
+    void read(false);
+    const again = () => void read(true);
+    window.addEventListener(DEMOS_COUNT_CHANGED, again);
     return () => {
       live = false;
+      window.removeEventListener(DEMOS_COUNT_CHANGED, again);
     };
   }, [active]);
 

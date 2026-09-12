@@ -4,6 +4,7 @@ import { fetchInWaves, useToast } from "../dashboard-shared";
 import { analyticsWindow } from "../analytics/model";
 import { scheduleSentence } from "../settings/model";
 import { withMockMode } from "../mock-mode";
+import { announceDemosCountChanged } from "./nav-count";
 import {
   PAGE_GUARD,
   REVIEW_CHUNK,
@@ -368,6 +369,7 @@ export default function DemosPage() {
       setChangeFor((prev) => (prev?.key === demo.key ? null : prev));
       setArmedSkip((prev) => (prev === demo.key ? null : prev));
       toast(done, "success");
+      announceDemosCountChanged();
       /* An approve becomes a scheduled send, so the queue moved too. */
       if (decision === "approve") void loadQueue(true);
     } catch (error) {
@@ -407,6 +409,7 @@ export default function DemosPage() {
         `${decidable.length} ${decidable.length === 1 ? "demo" : "demos"} approved.`,
         "success",
       );
+      announceDemosCountChanged();
       void loadQueue(true);
     } catch (error) {
       setCardError({
@@ -459,6 +462,7 @@ export default function DemosPage() {
           : prev,
       );
       toast("Pulled back to staging.", "success");
+      announceDemosCountChanged();
       void loadStaging(true);
       return;
     }
@@ -488,9 +492,14 @@ export default function DemosPage() {
 
   const stagingCount = staging.status === "ready" && staging.data.complete ? stagedDemos.length : null;
   const queueCount = queue.status === "ready" && queue.data.complete ? rows.length : null;
-  const sentCount = sent.status === "ready" ? sent.data.total : null;
+  /* The count is what the segment lists, not what the ledger holds: the
+     ledger also carries connection requests, which are not demos and are not
+     on this page, so `total` would name rows the reader cannot find. */
+  const sentCount = sent.status === "ready" ? sentDays.reduce((n, day) => n + day.rows.length, 0) : null;
   const counts: Record<Segment, number | null> = {
-    staging: stagingCount,
+    /* Nothing waits on a customer whose demos Driftwood approves, so the
+       segment carries no number rather than a zero that reads as "empty". */
+    staging: autoApproved === true ? null : stagingCount,
     queue: queueCount,
     sent: sentCount,
   };
