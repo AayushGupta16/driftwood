@@ -965,10 +965,23 @@ function Evidence({ demo }: { demo: StagedDemo }) {
 }
 
 /* The clip, with its length in the corner once the file reports one. The
-   number is read off the video, never guessed. */
+   number is read off the video, never guessed. A clip that will not play says
+   so and offers the tab that can, rather than leaving a dead player where the
+   card's whole point should be (the demo library's idiom). */
 function DemoVideo({ slug, label }: { slug: string; label: string }) {
   const ref = useRef<HTMLVideoElement>(null);
   const [duration, setDuration] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+  const href = `/d/${slug}`;
+  if (failed)
+    return (
+      <div className="dp-media dp-video-missing">
+        <p>This demo will not play here.</p>
+        <a className="dp-btn is-small" href={href} target="_blank" rel="noopener noreferrer">
+          Open it in a new tab
+        </a>
+      </div>
+    );
   return (
     <div className="dp-media">
       <div className="dp-video-shell">
@@ -978,8 +991,9 @@ function DemoVideo({ slug, label }: { slug: string; label: string }) {
           controls
           playsInline
           preload="metadata"
-          src={`/d/${slug}`}
+          src={href}
           aria-label={`Demo for ${label}`}
+          onError={() => setFailed(true)}
           onLoadedMetadata={() => {
             const seconds = ref.current?.duration;
             if (typeof seconds === "number" && Number.isFinite(seconds) && seconds > 0)

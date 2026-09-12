@@ -266,6 +266,18 @@
   font-variant-numeric: tabular-nums;
 }
 
+.dp-video-missing {
+  display: grid;
+  justify-items: start;
+  gap: 0.6rem;
+  border: 1px solid var(--color-line);
+  border-radius: 0.7rem;
+  background: var(--color-paper);
+  padding: 1.1rem 1rem;
+}
+
+.dp-video-missing p { margin: 0; color: var(--color-ink-soft); font-size: 0.82rem; }
+
 .dp-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
 
 .dp-change { margin-top: 0.8rem; border-top: 1px dashed var(--color-line); padding-top: 0.8rem; }
