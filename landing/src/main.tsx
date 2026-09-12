@@ -19,7 +19,8 @@ const Drift = lazy(() => import('./drift/Drift.tsx'))
 const Campaigns = lazy(() => import('./campaigns/Campaigns.tsx'))
 const CampaignBuilder = lazy(() => import('./campaigns/CampaignBuilder.tsx'))
 const Audiences = lazy(() => import('./audiences/Audiences.tsx'))
-const Demos = lazy(() => import('./demos/Demos.tsx'))
+const DemosPage = lazy(() => import('./demos/DemosPage.tsx'))
+const DemoLibrary = lazy(() => import('./demos/Demos.tsx'))
 const Triggers = lazy(() => import('./triggers/Triggers.tsx'))
 const TriggerDetail = lazy(() => import('./triggers/TriggerDetail.tsx'))
 const FaceCloning = lazy(() => import('./face-cloning/FaceCloning.tsx'))
@@ -52,7 +53,11 @@ const page =
   ) : path === '/dashboard/assets' ? (
     <WorkspacePage active="settings"><SettingsTabs active="Product & brand assets" /><Assets /></WorkspacePage>
   ) : path === '/dashboard/demos' ? (
-    <WorkspacePage active="demos"><Demos /></WorkspacePage>
+    <WorkspacePage active="demos"><DemosPage /></WorkspacePage>
+  ) : path === '/dashboard/demos/library' ? (
+    // Every demo we ever made, searchable. The Demos page links here from the
+    // foot of Sent; the day-to-day page is Staging, Queue and Sent.
+    <WorkspacePage active="demos"><DemoLibrary /></WorkspacePage>
   ) : path === '/dashboard/metrics' || path === '/dashboard/analytics' ? (
     <WorkspacePage active="metrics"><AnalyticsDashboard /></WorkspacePage>
   ) : path === '/dashboard/campaigns' ? (
