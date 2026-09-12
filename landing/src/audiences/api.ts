@@ -10,6 +10,8 @@ import type {
 } from "./model";
 
 type RawAudienceSummary = {
+  source_kind?: AudienceSummary["sourceKind"];
+  tags?: string[];
   id: string;
   name: string;
   description: string;
@@ -94,6 +96,8 @@ export function mapAudienceSummary(raw: RawAudienceSummary): AudienceSummary {
     name: raw.name,
     description: raw.description,
     sourceProvider: raw.source_provider,
+    sourceKind: raw.source_kind,
+    tags: raw.tags ?? [],
     memberCount: raw.member_count,
     createdAt: raw.created_at,
     updatedAt: raw.updated_at,
@@ -285,4 +289,12 @@ export async function deleteAudience(id: string): Promise<void> {
   await requestJson<void>(`/api/v1/dashboard/audiences/${encodeURIComponent(id)}`, {
     method: "DELETE",
   });
+}
+
+export async function saveAudienceTags(id: string, tags: string[]): Promise<Audience> {
+  const raw = await requestJson<RawAudience>(`/api/v1/dashboard/audiences/${encodeURIComponent(id)}`, {
+    method: "PATCH", body: JSON.stringify({ tags }),
+  });
+  if (!raw.tags || JSON.stringify([...raw.tags].sort()) !== JSON.stringify([...tags].sort())) throw new Error("Tags were not saved. This backend needs the audience tags update.");
+  return mapAudience(raw);
 }

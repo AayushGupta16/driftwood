@@ -772,3 +772,15 @@
 .audience-rename-button:disabled { color: var(--color-ink-faint); cursor: wait; text-decoration: none; }
 .audience-rename-button:focus-visible { outline: 2px solid var(--color-tide); outline-offset: 2px; }
 .audience-rename-input:disabled { opacity: 0.6; cursor: wait; }
+
+.audience-source-tabs { display:flex; flex-wrap:wrap; gap:.5rem; }
+.audience-source-tabs button { border:1px solid var(--color-line); border-radius:999px; padding:.5rem 1rem; font-size:.8rem; cursor:pointer; }
+.audience-source-tabs button[aria-pressed="true"] { background:var(--color-tide-wash); border-color:var(--color-tide); color:var(--color-tide); }
+.audience-source-tabs button span { margin-left:.5rem; }
+.audience-upload-bar { display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; background:var(--color-tide-wash); padding:1rem 1.25rem; border-radius:12px; }
+.audience-upload-bar p { margin:.3rem 0 0; font-size:.8rem; color:var(--color-ink-soft); }
+.audience-tags { display:flex; flex-wrap:wrap; gap:.3rem; margin-top:.4rem; }
+.audience-tags small { font-size:.72rem; padding:.15rem .5rem; background:var(--color-tide-wash); border-radius:4px; }
+.audience-tag-editor { padding:1rem; border-bottom:1px solid var(--color-line); font-size:.8rem; }
+.audience-tag-editor form { display:flex; gap:.5rem; margin-top:.6rem; }
+.audience-tag-editor input { min-width:0; flex:1; padding:.5rem; border:1px solid var(--color-line); border-radius:6px; }

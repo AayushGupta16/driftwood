@@ -116,6 +116,8 @@ type BugEvidence = {
 };
 
 type ReviewItemRow = {
+  can_decide: boolean;
+  approval_policy_version: number;
   id: string;
   batch_id: string;
   agent_id: string;
@@ -771,13 +773,15 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
   const decide = useCallback(
     async (decisions: DecideItem[], source: string | null) => {
       if (decisions.length === 0) return;
+      const selectedItems = state.status === "ready" ? state.items.filter((item) => decisions.some((d) => d.item_id === item.id)) : [];
+      if (selectedItems.length !== decisions.length || selectedItems.some((item) => !item.can_decide) || new Set(selectedItems.map((item) => item.approval_policy_version)).size !== 1) { setDecideError({itemId:source,message:"Approval assignments changed. Refresh the queue."}); return; }
       setBusyIds(new Set(decisions.map((d) => d.item_id)));
       setDecideError(null);
       try {
         const res = await fetch("/api/v1/dashboard/reviews/decide", {
           method: "POST",
           credentials: "include",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", "If-Match": String(selectedItems[0].approval_policy_version) },
           body: JSON.stringify(decisions),
         });
         if (!res.ok) throw new Error(await readErrorDetail(res, DECIDE_FALLBACK));
@@ -806,7 +810,7 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
         setBusyIds(EMPTY_SET);
       }
     },
-    [toast, refreshStats],
+    [toast, refreshStats, state],
   );
 
   /* Optimistic reconciliation for cancels — the QueuedList posts, then hands
@@ -839,7 +843,7 @@ function ReviewQueue({ canWrite }: { canWrite: boolean }) {
      installs sit behind their own chip. Within the send list the sort
      control applies; "by type" (default) keeps the historical KIND_ORDER
      grouping with the API's oldest-first order inside each kind. */
-  const allItems = state.status === "ready" ? state.items : [];
+  const allItems = state.status === "ready" ? state.items.filter((item) => !canWrite || item.can_decide) : [];
   const systemItems = allItems.filter((item) => !SEND_ITEM_KINDS.has(item.kind));
   const items = sortItems(
     allItems.filter((item) => SEND_ITEM_KINDS.has(item.kind)),

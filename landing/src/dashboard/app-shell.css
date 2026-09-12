@@ -337,3 +337,7 @@
   .app-sidebar-link,
   .god-mode-banner-exit { transition: none; }
 }
+
+.section-tabs { display:flex; flex-wrap:wrap; gap:1.5rem; border-bottom:1px solid var(--color-line); margin-bottom:1.5rem; }
+.section-tabs a { padding:.65rem 0; font-size:.85rem; color:var(--color-ink-soft); border-bottom:2px solid transparent; }
+.section-tabs a[aria-current] { color:var(--color-tide); border-color:var(--color-tide); font-weight:600; }

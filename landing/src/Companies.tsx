@@ -1,3 +1,4 @@
+import SectionTabs from "./dashboard/SectionTabs";
 import {
   useCallback,
   useDeferredValue,
@@ -215,13 +216,13 @@ function CompaniesView({ user }: { user: User }) {
     <>
       {user.impersonating && <ImpersonationBanner email={user.email} />}
       <AppShell
-        active="companies"
+        active="audiences"
         identity={{ name: displayName, workspace: user.org?.name, avatarUrl: user.avatar_url }}
         onLogout={handleLogout}
         adminControl={user.is_admin ? <AdminPanelControls /> : undefined}
         canWrite={canWrite}
       >
-        <div className="mx-auto w-full max-w-7xl"><CompaniesTable canWrite={canWrite} /></div>
+        <div className="mx-auto w-full max-w-7xl"><SectionTabs active="Companies" /><CompaniesTable canWrite={canWrite} /></div>
       </AppShell>
     </>
   );

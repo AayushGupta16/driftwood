@@ -423,7 +423,7 @@ function ApprovedView({ user }: { user: User }) {
   const canWrite = role !== "member";
   // The managed pool feeds two surfaces: the email tile (count + add flow)
   // and the quiet capacity line on Today's sending — so it lives here.
-  const { pool, applyPurchase } = useManagedInboxes();
+  const { pool } = useManagedInboxes();
   const [summary, setSummary] = useState<SummaryState>({ status: "loading" });
   const [activity, setActivity] = useState<ActivityState>({ status: "loading" });
   const [inventory, setInventory] = useState<InventoryState>({
@@ -512,9 +512,7 @@ function ApprovedView({ user }: { user: User }) {
 
   // A disconnect answers with the page after the removal, which replaces
   // the lists in place.
-  const applyAccounts = useCallback((page: AccountsPage) => {
-    setAccounts({ status: "ready", page });
-  }, []);
+
 
   const snapshot = buildOverviewSnapshot(
     summary.status === "ready" ? summary.summary.pending_reviews : null,
@@ -556,14 +554,7 @@ function ApprovedView({ user }: { user: User }) {
         </div>
       </header>
 
-      <ConnectionSetup
-        user={user}
-        canWrite={canWrite}
-        pool={pool}
-        applyPurchase={applyPurchase}
-        accounts={accounts}
-        onAccounts={applyAccounts}
-      />
+      <div className="overview-heading-links"><a href={withMockMode("/dashboard/settings?tab=accounts")}>Manage sending accounts →</a><a href={withMockMode("/dashboard/metrics")}>Detailed performance →</a></div>
       <TodaysSending summary={summary} activity={activity} emailCapLine={emailCapLine} />
       <MetricsCard state={summary} />
       {canWrite && <QuickActions onImport={openImports} />}
@@ -706,25 +697,19 @@ function TodaysSending({
     <section className="overview-panel overview-sending" aria-labelledby="sending-title">
       <div className="overview-panel-heading">
         <h2 id="sending-title">Today&rsquo;s sending</h2>
-        <a href={withMockMode("/dashboard/review")}>Open review queue</a>
+        <a href={withMockMode("/dashboard/inbox")}>Open Inbox</a>
       </div>
       <div className="overview-sending-layout">
         <div className="overview-sending-stats">
+          <SendingStat label="Email capacity remaining" value={summary.status !== "ready" ? "—" : emailSending ? Math.max(0, emailSending.emails_cap - emailSending.emails_sent).toLocaleString() : "Not connected"} />
+          <SendingStat label="Outreach queued" value={queuedSends === null ? "—" : queuedSends.toLocaleString()} sub="Across all channels" />
           <SendingStat
-            label="LinkedIn invites"
-            value={summary.status !== "ready" ? "—" : sending ? `${sending.invites_sent}/${sending.invites_cap}` : "Not connected"}
-          />
-          <SendingStat
-            label="LinkedIn messages"
-            value={summary.status !== "ready" ? "—" : sending ? `${sending.messages_sent}/${sending.messages_cap}` : "Not connected"}
-          />
-          <SendingStat
-            label="Emails sent"
-            value={summary.status !== "ready" ? "—" : emailSending ? `${emailSending.emails_sent}/${emailSending.emails_cap}` : "Not connected"}
+            label="Emails sent today"
+            value={summary.status !== "ready" ? "—" : emailSending ? emailSending.emails_sent.toLocaleString() : "Not connected"}
             sub={emailCapLine}
           />
           <SendingStat
-            label="Waiting for review"
+            label="Awaiting approval"
             value={pendingReviews === null ? "—" : pendingReviews.toLocaleString()}
           />
           <SendingStat
@@ -738,7 +723,7 @@ function TodaysSending({
             Latest sends
             <a
               className="overview-latest-sends-all"
-              href={withMockMode("/dashboard/review?tab=sent")}
+              href={withMockMode("/dashboard/inbox?tab=sent")}
             >
               View all
             </a>
@@ -2221,4 +2206,20 @@ function EmailBanner({ emailError }: { emailError: string | null }) {
         : "Connection failed, please try again."}
     </div>
   );
+}
+
+export function SendingAccountSettings() {
+ const [user, setUser] = useState<User | null>(null);
+ const [error, setError] = useState(false);
+ const [accounts, setAccounts] = useState<AccountsState>({status:"loading"});
+ const { pool, applyPurchase } = useManagedInboxes();
+ useEffect(() => {
+  let current = true;
+  loadIdentity<User>().fresh.then((u) => {if(current) {setUser(u);setError(!u);}}).catch(() => {if(current) setError(true);});
+  getAccounts().then((page) => {if(current) setAccounts({status:"ready",page});}).catch(() => {if(current) setAccounts({status:"error"});});
+  return () => {current = false;};
+ }, []);
+ if (error) return <p role="alert">Sending accounts could not load. Refresh to try again.</p>;
+ if (!user) return <p role="status">Loading sending accounts…</p>;
+ return <ConnectionSetup user={user} canWrite={user.org?.role !== "member"} pool={pool} applyPurchase={applyPurchase} accounts={accounts} onAccounts={(page) => setAccounts({status:"ready",page})} />;
 }

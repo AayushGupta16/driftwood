@@ -1,3 +1,4 @@
+import { parsePolicy, reviewerFor, type ApprovalPolicy } from "./approvals/model.ts";
 import { initializeMockMode, mockBlockedResponse } from "./mock-mode.ts";
 import { resendRefusalMessage, resendWaitMinutes } from "./team/team-model.ts";
 import { uploadKindFor } from "./assets/model.ts";
@@ -393,7 +394,8 @@ if (mockMode) {
   // Approved-but-undelivered ScheduledSends (the review page's Queued tab),
   // due_at asc = the send order. One sending, two failed (one classified,
   // one pre-classification null), the rest pending.
-  const sends = {
+  type MockSend = { id: string; batch_id: string; kind: string; subject?: string | null; note: string; attachment_slug: string | null; lead: ReturnType<typeof lead> | null; status: string; error: string | null; error_class: string | null; due_at: string; projected_date: string | null; created_at: string };
+  const sends: { sends: MockSend[]; total: number; limit: number; offset: number; counts: { pending: number; sending: number; failed: number; sent: number } } = {
     sends: [
       {
         id: "s1", batch_id: "sb1", kind: "connection_request",
@@ -503,20 +505,61 @@ if (mockMode) {
     } catch { /* malformed body — report 0 dismissed */ }
     return { dismissed: n, skipped: [] };
   };
+  const approvalStorageKey = "driftwood.dashboard.mock-approval-policy";
+  const decisionStorageKey = "driftwood.dashboard.mock-review-decisions";
+  let approvalPolicy: ApprovalPolicy = { mode: "auto", campaign_reviewers: {}, version: 1 };
+  try { const saved = sessionStorage.getItem(approvalStorageKey); if (saved) approvalPolicy = parsePolicy(JSON.parse(saved)); } catch { /* Use the explicit fixture default. */ }
+  const reviewCampaign = (id: string) => ["r1", "r4"].includes(id) ? "founder-led-qa" : id === "r2" ? "expansion-outreach" : null;
+  const isOutreachReview = (kind: string) => ["send_email", "send_message", "send_connection", "send_x_dm"].includes(kind);
+  const reviewPermissions = (row: typeof reviews.pending[number]) => {
+    const reviewer = isOutreachReview(row.kind) ? reviewerFor(approvalPolicy,reviewCampaign(row.id)) : "driftwood";
+    return {campaign_id:reviewCampaign(row.id),reviewer,can_decide:mockMode !== "member" && (mockMode === "admin" ? reviewer === "driftwood" : reviewer === "customer"),approval_policy_version:approvalPolicy.version};
+  };
+  let savedDecisions: Array<{item_id:string;decision:string}> = [];
+  const applyMockDecision = (id: string, decision: string) => {
+    const row = reviews.pending.find((item) => item.id === id);
+    if (!row || row.status !== "pending") return false;
+    row.status = decision === "approve" ? "approved" : "denied";
+    if (decision === "approve" && isOutreachReview(row.kind)) {
+      sends.sends.push({id:`approved-${row.id}`,batch_id:row.batch_id,kind:row.kind === "send_email" ? "email" : row.kind === "send_connection" ? "connection_request" : "message",subject:row.subject,note:row.body,attachment_slug:row.attachment_slug,lead:row.lead,status:"pending",error:null,error_class:null,due_at:daysAhead(0.1),projected_date:dateAhead(0),created_at:new Date().toISOString()});
+      sends.counts.pending += 1; sends.total += 1;
+    }
+    return true;
+  };
+  try { const stored = JSON.parse(sessionStorage.getItem(decisionStorageKey) ?? "[]"); if (Array.isArray(stored)) savedDecisions = stored.filter((row) => typeof row?.item_id === "string" && ["approve","deny"].includes(row.decision)); } catch { /* No stored fixture decisions. */ }
+  savedDecisions.forEach((row) => applyMockDecision(row.item_id,row.decision));
+  const approvalPolicyApi = (init?:RequestInit) => {
+    if ((init?.method ?? "GET") === "GET") return approvalPolicy;
+    if (mockMode === "member") return new Response(JSON.stringify({error:{detail:"Only owners and admins can change approvals."}}),{status:403});
+    const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
+    if (body.expected_version !== approvalPolicy.version) return new Response(JSON.stringify({error:{detail:"Approval settings changed. Reload before saving."}}),{status:409});
+    let next: ApprovalPolicy;
+    try { next = parsePolicy({...body,version:approvalPolicy.version+1}); } catch { return new Response(JSON.stringify({error:{detail:"Invalid approval settings."}}),{status:422}); }
+    sessionStorage.setItem(approvalStorageKey,JSON.stringify(next)); approvalPolicy = next;
+    return approvalPolicy;
+  };
+  const pendingReviewsApi = (_init?:RequestInit,url?:string) => {
+    const query = new URL(url ?? location.href,location.href).searchParams;
+    const offset = Number(query.get("offset") ?? 0), limit = Number(query.get("limit") ?? 100);
+    const pending = reviews.pending.filter((row) => row.status === "pending");
+    return {...reviews,pending:pending.slice(offset,offset+limit).map((row) => ({...row,...reviewPermissions(row)})),total_pending:pending.length,offset,limit};
+  };
   const decideReviews = (init?: RequestInit) => {
-    let approved = 0, denied = 0;
-    try {
-      const parsed = JSON.parse(typeof init?.body === "string" ? init.body : "[]") as { decision?: string }[];
-      if (Array.isArray(parsed))
-        for (const d of parsed) {
-          if (d.decision === "approve") approved++;
-          else if (d.decision === "deny") denied++;
-        }
-    } catch { /* malformed body — report nothing decided */ }
-    const queued = approved
-      ? [`queued ${approved} message${approved === 1 ? "" : "s"}: delivery over ~${Math.max(approved * 2, 1)} min`]
-      : [];
-    return { approved, denied, skipped: [], queued, agent_woken: true };
+    const parsed = JSON.parse(typeof init?.body === "string" ? init.body : "[]") as Array<{item_id:string;decision:string}>;
+    const headers = new Headers(init?.headers);
+    if (!Array.isArray(parsed)) return new Response(JSON.stringify({error:{detail:"Choose pending messages."}}),{status:422});
+    if (mockMode === "member" || (mockMode !== "admin" && parsed.some((d) => {
+      const row=reviews.pending.find((r) => r.id === d.item_id);
+      return !row || !reviewPermissions(row).can_decide;
+    }))) return new Response(JSON.stringify({error:{detail:"These messages are assigned to Driftwood for review."}}),{status:403});
+    if (mockMode !== "admin" && headers.get("If-Match") !== String(approvalPolicy.version)) return new Response(JSON.stringify({error:{detail:"Approval settings changed. Refresh Pending before approving."}}),{status:409});
+    let approved=0,denied=0; const skipped:string[]=[];
+    for (const d of parsed) {
+      if (!["approve","deny"].includes(d.decision) || !applyMockDecision(d.item_id,d.decision)) {skipped.push(d.item_id);continue;}
+      savedDecisions.push(d); if (d.decision === "approve") approved++; else denied++;
+    }
+    sessionStorage.setItem(decisionStorageKey,JSON.stringify(savedDecisions));
+    return {approved,denied,skipped,queued:approved ? [`${approved} messages queued`] : [],agent_woken:true};
   };
   // /api/v1/admin/probes/dashboard deliberately mocks a 404, not data: that
   // exercises the SEO/GEO page's run-zero empty state (its launch state)
@@ -927,6 +970,7 @@ if (mockMode) {
     }
   }
   if (hydratedStoredCampaign) persistMockCampaigns();
+  const demoRequests = new Map<string, Array<{id:string;status:string;lead_count:number;error:null}>>();
   const campaignsApi = (init?: RequestInit, url?: string) => {
     const method = init?.method ?? "GET";
     const pathname = new URL(url ?? location.href, location.href).pathname;
@@ -985,6 +1029,13 @@ if (mockMode) {
     const id = decodeURIComponent(encodedId);
     const campaign = mockCampaigns.find((row) => row.id === id);
     if (!campaign) return new Response(JSON.stringify({ error: { detail: "Campaign not found" } }), { status: 404, headers: { "Content-Type": "application/json" } });
+    if (action === "demo-requests") {
+      if (method === "GET") return demoRequests.get(id) ?? [];
+      if (mockMode === "member") return new Response(null,{status:403});
+      const body=JSON.parse(typeof init?.body === "string" ? init.body : "{}");
+      const result={id:crypto.randomUUID(),status:"queued",lead_count:body.lead_ids.length,error:null};
+      demoRequests.set(id,[result,...(demoRequests.get(id) ?? [])]);return result;
+    }
     if (method === "GET" && action === "contacts") {
       const query = new URL(url ?? location.href, location.href).searchParams;
       const search = (query.get("q") ?? "").trim().toLowerCase();
@@ -1353,7 +1404,7 @@ if (mockMode) {
     return { companies: filtered.slice(offset, offset + limit), total: filtered.length, limit, offset };
   };
   type MockAudience = {
-    id: string; name: string; description: string; source_provider: string;
+    id: string; name: string; description: string; source_provider: string; source_kind?: string; tags?: string[];
     discovery_filters: Record<string, string>; members: Array<{
       lead_id: string; name: string; title: string; company: string;
       email: string | null; linkedin_url: string; stage: string; contactable: boolean;
@@ -1365,6 +1416,8 @@ if (mockMode) {
     name: audience.name,
     description: audience.description,
     source_provider: audience.source_provider,
+    source_kind: audience.source_kind ?? (audience.source_provider === "csv_upload" ? "uploaded" : "other"),
+    tags: audience.tags ?? [],
     member_count: audience.members.length,
     created_at: audience.created_at,
     updated_at: audience.updated_at,
@@ -1377,6 +1430,7 @@ if (mockMode) {
   const mockAudiences: MockAudience[] = [{
     id: "audience-qualified-qa",
     name: "Qualified QA leaders",
+    source_kind: "curated", tags: ["QA", "High intent"],
     description: "QA and operations leaders at teams with a live release workflow.",
     source_provider: "orange_slice",
     discovery_filters: { prompt: "QA and operations leaders at teams with a live release workflow" },
@@ -1386,6 +1440,7 @@ if (mockMode) {
   }, {
     id: "audience-product-led",
     name: "Product-led teams",
+    source_kind: "campaign", tags: ["Product-led"],
     description: "Product leaders evaluating a hands-on launch workflow.",
     source_provider: "workspace",
     discovery_filters: { prompt: "Product leaders evaluating a hands-on QA workflow" },
@@ -1550,6 +1605,7 @@ if (mockMode) {
     const audience = mockAudiences.find((item) => item.id === audienceId);
     if (method === "PATCH" && audience) {
       const body = JSON.parse(typeof init?.body === "string" ? init.body : "{}");
+      if (Array.isArray(body.tags)) audience.tags = [...new Set<string>(body.tags.map((tag: unknown) => String(tag)))];
       if (typeof body.name === "string" && body.name.trim())
         audience.name = body.name.trim();
       if (typeof body.description === "string")
@@ -2253,6 +2309,7 @@ if (mockMode) {
     // The audiences surface routes through audKnob so ?audlat/?auderr can
     // express slow and failing states (see the knob comment above).
     ["/api/v1/imports/leads", (init?: RequestInit) => audKnob("upload", () => leadImportsApi(init))],
+    ["/api/v1/dashboard/org/approval-policy", approvalPolicyApi],
     ["/api/v1/dashboard/org", orgApi],
     ["/api/v1/dashboard/settings", settingsApi],
     ["/api/v1/dashboard/accounts", accountsApi],
@@ -2277,7 +2334,7 @@ if (mockMode) {
     ["/api/v1/dashboard/sends/dismiss", dismissSends],
     ["/api/v1/dashboard/sends", sendsApi],
     ["/api/v1/dashboard/reviews/decide", decideReviews],
-    ["/api/v1/dashboard/reviews", reviews],
+    ["/api/v1/dashboard/reviews", pendingReviewsApi],
     ["/auth/me", me],
     ["/api/v1/dashboard/summary", summary],
     ["/api/v1/dashboard/activity", activity],

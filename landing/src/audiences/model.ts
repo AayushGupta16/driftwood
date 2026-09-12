@@ -10,7 +10,11 @@ export type AudienceMember = {
   outreachEligible: boolean;
 };
 
+export type AudienceSource = "uploaded" | "campaign" | "curated" | "other";
+
 export type AudienceSummary = {
+  sourceKind?: AudienceSource;
+  tags?: string[];
   id: string;
   name: string;
   description: string;
@@ -200,4 +204,9 @@ export function formatAudienceDate(iso: string): string {
 
 export function stageLabel(stage: string): string {
   return stage.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+export function audienceSource(audience: AudienceSummary): AudienceSource {
+  if (audience.sourceKind) return audience.sourceKind;
+  return audience.sourceProvider === "csv_upload" ? "uploaded" : "other";
 }

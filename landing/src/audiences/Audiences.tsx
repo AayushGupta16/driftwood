@@ -1,3 +1,6 @@
+import SectionTabs from "../dashboard/SectionTabs";
+import { audienceSource, type AudienceSource } from "./model";
+import { saveAudienceTags } from "./api";
 import {
   useEffect,
   useMemo,
@@ -56,6 +59,9 @@ export default function Audiences() {
   const [view, setView] = useState<View>("library");
   const [audiences, setAudiences] = useState<AudienceSummary[]>([]);
   const [selectedAudience, setSelectedAudience] = useState<Audience | null>(null);
+  const [source, setSource] = useState<AudienceSource | "all">("all");
+  const [tagDraft, setTagDraft] = useState("");
+  const [tagsBusy, setTagsBusy] = useState(false);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
@@ -146,8 +152,8 @@ export default function Audiences() {
   }, [confirmDelete]);
 
   const filteredAudiences = useMemo(
-    () => filterAudiences(audiences, query),
-    [audiences, query],
+    () => filterAudiences(audiences, "").filter((a) => `${a.name} ${a.description} ${(a.tags ?? []).join(" ")}`.toLowerCase().includes(query.trim().toLowerCase())).filter((a) => source === "all" || audienceSource(a) === source),
+    [audiences, query, source],
   );
 
   function startBuilder() {
@@ -179,18 +185,25 @@ export default function Audiences() {
     );
   }, [resultQuery, results]);
 
+  const audienceRequest = useRef(0);
   async function openAudience(id: string) {
+    const request = ++audienceRequest.current;
     setDetailLoading(true);
     setDetailError(null);
     setDetailFailedId(null);
     setConfirmDelete(false);
     try {
-      setSelectedAudience(await getAudience(id));
+      const audience = await getAudience(id);
+      if (request !== audienceRequest.current) return;
+      setSelectedAudience(audience);
+      setTagDraft((audience.tags ?? []).join(", "));
     } catch (reason) {
+      if (request === audienceRequest.current) {
       setDetailError(reason instanceof Error ? reason.message : "This audience could not load.");
       setDetailFailedId(id);
+      }
     } finally {
-      setDetailLoading(false);
+      if (request === audienceRequest.current) setDetailLoading(false);
     }
   }
 
@@ -685,13 +698,17 @@ export default function Audiences() {
         )}
       </header>
 
-      <input ref={uploadInputRef} hidden type="file" accept=".csv,text/csv" onChange={handleLeadUpload} disabled={importing} />
+      <SectionTabs section="audiences" active="Lists" />
+      <div className="audience-source-tabs" aria-label="Audience source">
+        {([['all','All'],['uploaded','Uploaded'],['campaign','Campaign-generated'],['curated','Driftwood-curated']] as const).map(([id,label]) => <button type="button" key={id} aria-pressed={source === id} onClick={() => setSource(id)}>{label}<span>{audiences.filter((a) => id === 'all' || audienceSource(a) === id).length}</span></button>)}
+      </div>
+      {canWrite && <div className="audience-upload-bar"><div><strong>Bring your own audience</strong><p>Upload a CSV, check the imported contacts, then create a campaign.</p></div><button className="audience-secondary" onClick={() => uploadInputRef.current?.click()} disabled={importing}>{importing ? "Importing…" : "Upload CSV"}</button><input ref={uploadInputRef} hidden type="file" accept=".csv,text/csv" onChange={handleLeadUpload} /></div>}
 
       {importNotice && <ImportNoticeCard notice={importNotice} banner />}
 
       <div className="audience-library-grid">
         <div className="audience-library">
-          <label className="audience-library-search"><SearchIcon size={16} /><span className="audience-visually-hidden">Search audiences</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search audiences" /></label>
+          <label className="audience-library-search"><SearchIcon size={16} /><span className="audience-visually-hidden">Search audiences</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search audiences or tags" /></label>
           <div className="audience-list" aria-busy={loading} aria-live="polite">
             {loading ? (
               /* Skeleton rows mirror the loaded list (rule 2) so nothing
@@ -735,9 +752,9 @@ export default function Audiences() {
                 )}
               </div>
             ) : filteredAudiences.map((audience) => (
-              <button key={audience.id} className={`audience-list-row ${selectedAudience?.id === audience.id ? "is-active" : ""}`} type="button" onClick={() => openAudience(audience.id)}>
+              <button key={audience.id} className={`audience-list-row ${selectedAudience?.id === audience.id ? "is-active" : ""}`} type="button" disabled={tagsBusy} onClick={() => openAudience(audience.id)}>
                 <span className="audience-list-icon"><AudienceIcon size={18} /></span>
-                <span className="audience-list-copy"><strong>{audience.name}</strong><span>{audience.description || "No description"}</span></span>
+                <span className="audience-list-copy"><strong>{audience.name}</strong><span>{audience.description || "No description"}</span><span className="audience-tags">{audience.tags?.map((tag) => <small key={tag}>{tag}</small>)}</span></span>
                 <span className="audience-list-meta"><strong>{audience.memberCount.toLocaleString()}</strong><small>{audience.memberCount === 1 ? "lead" : "leads"}</small></span>
                 <span className="audience-list-meta audience-source"><strong>{providerLabel(audience.sourceProvider)}</strong><small>source</small></span>
                 <span className="audience-list-date"><small>Updated</small><span>{formatAudienceDate(audience.updatedAt)}</span></span>
@@ -836,6 +853,15 @@ export default function Audiences() {
                     )}
                   </div>
                 )}
+              </div>
+              <div className="audience-tag-editor"><strong>Tags</strong><div className="audience-tags">{selectedAudience.tags?.map((tag) => <small key={tag}>{tag}</small>)}</div>
+                {canWrite && <form key={selectedAudience.id} onSubmit={async (event) => {
+                  event.preventDefault(); if (tagsBusy) return; setTagsBusy(true); setSaveError(null);
+                  const tags = [...new Set(tagDraft.split(',').map((t) => t.trim()).filter(Boolean))];
+                  try { const saved = await saveAudienceTags(selectedAudience.id, tags); setSelectedAudience(saved); setAudiences((rows) => rows.map((a) => a.id === saved.id ? saved : a)); }
+                  catch (reason) { setSaveError(reason instanceof Error ? reason.message : "Could not save tags."); }
+                  finally { setTagsBusy(false); }
+                }}><input aria-label="Audience tags" placeholder="Add tags, separated by commas" value={tagDraft} onChange={(e) => setTagDraft(e.target.value)} /><button className="audience-secondary" disabled={tagsBusy}>{tagsBusy ? "Saving…" : "Save tags"}</button></form>}
               </div>
               {detailError && <div className="audience-error audience-detail-error" role="alert">{detailError}</div>}
               {campaignError && !campaignPrompt && (

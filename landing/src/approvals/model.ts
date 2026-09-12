@@ -1,0 +1,16 @@
+export type ApprovalMode = 'auto' | 'manual' | 'hybrid';
+export type Reviewer = 'customer' | 'driftwood';
+export type ApprovalPolicy = { mode: ApprovalMode; campaign_reviewers: Record<string, Reviewer>; version: number };
+export const MODE_LABELS: Record<ApprovalMode,string> = { auto:'Auto approval', manual:'Manual approval', hybrid:'Hybrid approval' };
+export const MODE_DESCRIPTIONS: Record<ApprovalMode,string> = { auto:'Driftwood reviews and approves messages in our dashboard before they enter the sending queue.', manual:'Your workspace owners and admins review and approve messages in Pending before they enter the sending queue.', hybrid:'Choose who approves each campaign. Driftwood reviews messages from campaigns without an override.' };
+export function reviewerFor(policy: ApprovalPolicy, campaignId: string | null): Reviewer {
+ if (policy.mode === 'manual') return 'customer';
+ if (policy.mode === 'auto') return 'driftwood';
+ return campaignId ? policy.campaign_reviewers[campaignId] ?? 'driftwood' : 'driftwood';
+}
+export function parsePolicy(value: unknown): ApprovalPolicy {
+ if (!value || typeof value !== 'object') throw new Error('Approval settings are unavailable.');
+ const row = value as Partial<ApprovalPolicy>;
+ if (!row.mode || !Object.hasOwn(MODE_LABELS,row.mode) || (!Number.isInteger(row.version) || (row.version ?? 0) < 1) || !row.campaign_reviewers || typeof row.campaign_reviewers !== 'object' || Array.isArray(row.campaign_reviewers) || Object.values(row.campaign_reviewers).some((v) => v !== 'customer' && v !== 'driftwood')) throw new Error('Approval settings are unavailable.');
+ return row as ApprovalPolicy;
+}

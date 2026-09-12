@@ -1,4 +1,5 @@
 export type DashboardSection =
+  | "inbox"
   | "home"
   | "audiences"
   | "campaigns"
@@ -20,6 +21,7 @@ export type DashboardSection =
 export type NavigationMode = "customer" | "admin";
 
 export type DashboardIconName =
+  | "inbox"
   | "overview"
   | "audience"
   | "campaign"
@@ -47,24 +49,16 @@ export type NavGroup = { label?: string; items: NavItem[] };
 
 const CUSTOMER_PRIMARY: NavItem[] = [
   { id: "home", label: "Overview", href: "/dashboard", icon: "overview" },
-  { id: "audiences", label: "Audiences", href: "/dashboard/audiences", icon: "audience" },
   { id: "campaigns", label: "Campaigns", href: "/dashboard/campaigns", icon: "campaign" },
+  { id: "audiences", label: "Audiences", href: "/dashboard/audiences", icon: "audience" },
   { id: "demos", label: "Demos", href: "/dashboard/demos", icon: "demo" },
   { id: "triggers", label: "Triggers", href: "/dashboard/triggers", icon: "trigger" },
-  { id: "metrics", label: "Metrics", href: "/dashboard/metrics", icon: "metrics" },
-];
-
-const CUSTOMER_WORKSPACE: NavItem[] = [
-  { id: "leads", label: "All leads", href: "/dashboard/leads", icon: "people" },
-  { id: "companies", label: "Companies", href: "/dashboard/companies", icon: "companies" },
-  { id: "assets", label: "Assets", href: "/dashboard/assets", icon: "assets" },
-  { id: "review", label: "Review queue", href: "/dashboard/review", icon: "review" },
   { id: "face-cloning", label: "Face Cloning", href: "/dashboard/face-cloning", icon: "people" },
-  { id: "team", label: "Team", href: "/dashboard/team", icon: "people" },
-  { id: "settings", label: "Settings", href: "/dashboard/settings", icon: "settings" },
+  { id: "inbox", label: "Inbox", href: "/dashboard/inbox", icon: "inbox" },
 ];
 
 const ADMIN_INTERNAL: NavItem[] = [
+  { id: "review", label: "Review queue", href: "/dashboard/review", icon: "review" },
   { id: "admin-fleet", label: "Fleet", href: "/dashboard/admin/fleet", icon: "fleet" },
   { id: "admin-agents", label: "Agents", href: "/dashboard/admin/agents", icon: "agents" },
   { id: "admin-drift", label: "Drift runs", href: "/dashboard/admin/drift", icon: "drift" },
@@ -77,6 +71,5 @@ export function navigationGroups(mode: NavigationMode): NavGroup[] {
     ? [{ label: "Internal tools", items: ADMIN_INTERNAL }]
     : [
         { items: CUSTOMER_PRIMARY },
-        { label: "Workspace", items: CUSTOMER_WORKSPACE },
       ];
 }
