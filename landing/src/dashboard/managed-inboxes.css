@@ -1,44 +1,8 @@
-/* Managed inboxes — the EmailCard's compact pool view and its sender-first
-   add flow (managed-inboxes.ts, AddInboxes.tsx, InboxListOverlay.tsx).
-   The tile keeps exactly one body line; everything deeper floats over the
-   grid on the shared overlay surface so the tile never grows past its
-   siblings. Green stays reserved for live/ok; warming rides the tide wash;
-   paused is amber, never red. No prices anywhere. */
-
-/* ---------- the tile's count line (opens the inbox list overlay) ---------- */
-
-/* body-text button — undoes the tile-wide button recipe from overview.css
-   (.overview-channel-row button) and matches the tile's paragraph voice
-   (.overview-channel-row p: .72rem/1.45, ink-soft, mt-2 = .5rem) */
-.overview-channel-row button.managed-inboxes-count {
-  display: inline-flex;
-  align-items: center;
-  gap: .3rem;
-  min-height: 0;
-  margin: .5rem 0 0;
-  border: 0;
-  background: transparent;
-  color: var(--color-ink-soft);
-  padding: 0;
-  font: inherit;
-  font-size: .72rem;
-  line-height: 1.45;
-  text-align: left;
-  cursor: pointer;
-}
-
-.overview-channel-row button.managed-inboxes-count:hover { color: var(--color-ink); }
-
-.managed-inboxes-caret {
-  width: .6rem;
-  height: .6rem;
-  flex: none;
-  color: var(--color-ink-faint);
-}
-
-.overview-channel-row button.managed-inboxes-count:hover .managed-inboxes-caret {
-  color: var(--color-ink);
-}
+/* Managed inboxes — the EmailCard's sender-first add flow
+   (managed-inboxes.ts, AddInboxes.tsx). Bought inboxes list inside the
+   Email card itself (overview.css); the add flow floats over the grid on
+   the overlay surface below. Warming rides the tide wash; paused is
+   amber, never red. No prices anywhere. */
 
 /* ---------- shared overlay surface ---------- */
 
@@ -104,61 +68,6 @@
 .managed-overlay-panel :is(input, button):focus-visible {
   outline: 2px solid var(--color-tide);
   outline-offset: 1px;
-}
-
-/* ---------- the inbox list (overlay rows) ---------- */
-
-.managed-inboxes-list {
-  margin: .5rem 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.managed-inboxes-list li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: .5rem;
-  min-height: 1.9rem;
-  padding: .18rem 0;
-}
-
-.managed-inboxes-list li + li { border-top: 1px solid var(--color-line); }
-
-.managed-inboxes-addr {
-  min-width: 0;
-  overflow: hidden;
-  font-size: .72rem;
-  font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.managed-inboxes-chip {
-  flex: none;
-  border-radius: .35rem;
-  background: var(--color-sand);
-  color: var(--color-ink-soft);
-  padding: .24rem .38rem;
-  font-family: var(--font-mono);
-  font-size: .58rem;
-  line-height: 1;
-  white-space: nowrap;
-}
-
-.managed-inboxes-chip.is-active {
-  background: color-mix(in srgb, var(--color-ok) 10%, var(--color-surface));
-  color: var(--color-ok);
-}
-
-.managed-inboxes-chip.is-warming {
-  background: var(--color-tide-wash);
-  color: var(--color-tide-deep);
-}
-
-.managed-inboxes-chip.is-paused {
-  background: color-mix(in srgb, #f59e0b 12%, var(--color-surface));
-  color: #92400e;
 }
 
 /* ---------- the add-inboxes flow ---------- */

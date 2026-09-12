@@ -1,9 +1,12 @@
 import {
+  Fragment,
   useCallback,
   useEffect,
+  useId,
   useRef,
   useState,
   type ChangeEvent,
+  type KeyboardEvent,
   type ReactNode,
 } from "react";
 import { AdminPanelControls, ImpersonationBanner } from "./GodMode";
@@ -21,9 +24,16 @@ import {
   accountLabel,
   channelConnected,
   connectedChannelCount,
-  isUsable,
+  emailAddress,
+  emailDailyCap,
+  emailProviderName,
+  emailRowState,
+  emailSummary,
+  emailSummaryLine,
+  linkMinutesLeft,
   linkedBy,
   linkedByLine,
+  newestOwnActive,
   ownAccount,
 } from "./accounts/model";
 import { listAssets } from "./assets/api";
@@ -34,13 +44,15 @@ import { listCampaigns } from "./campaigns/api";
 import type { CampaignSummary } from "./campaigns/model";
 import AddInboxes from "./dashboard/AddInboxes";
 import AppShell from "./dashboard/AppShell";
-import InboxListOverlay from "./dashboard/InboxListOverlay";
+import HelmMark from "./components/HelmMark";
 import {
   DOMAIN_CAP,
   INBOX_CAP,
   managedInboxCap,
+  managedInboxChip,
   useManagedInboxes,
   type MailboxesOverview,
+  type ManagedMailbox,
   type PurchaseResult,
   type SenderInput,
 } from "./dashboard/managed-inboxes";
@@ -545,7 +557,6 @@ function ApprovedView({ user }: { user: User }) {
   return (
     <div className="overview-page">
       <LinkedInBanner />
-      <EmailBanner emailError={user.email_error ?? null} />
       <header className="overview-heading">
         <h1>Overview</h1>
         <div className="overview-heading-links" aria-label="Lead database shortcuts">
@@ -589,7 +600,9 @@ function formatCount(state: SummaryState, key: "leads" | "companies") {
    gates only the connect and add-inbox controls; a row's Disconnect
    follows that row's can_disconnect. Until the pool lands the cards paint
    from the /auth/me booleans, which now mean "the workspace has at least
-   one active account for that channel". */
+   one active account for that channel". LinkedIn and X share one row as
+   half-width cards; Email, which can hold many mailboxes, takes the full
+   width below them (overview.css). */
 function ConnectionSetup({
   user,
   canWrite,
@@ -631,6 +644,14 @@ function ConnectionSetup({
           canWrite={canWrite}
           onAccounts={onAccounts}
         />
+        <TwitterCard
+          connected={xFallback}
+          chatLocked={xLockedFallback}
+          rows={page?.x ?? []}
+          accounts={accounts}
+          canWrite={canWrite}
+          onAccounts={onAccounts}
+        />
         <EmailCard
           connected={emailFallback}
           rows={page?.email ?? []}
@@ -639,14 +660,6 @@ function ConnectionSetup({
           companyName={user.org?.name ?? null}
           pool={pool}
           applyPurchase={applyPurchase}
-          canWrite={canWrite}
-          onAccounts={onAccounts}
-        />
-        <TwitterCard
-          connected={xFallback}
-          chatLocked={xLockedFallback}
-          rows={page?.x ?? []}
-          accounts={accounts}
           canWrite={canWrite}
           onAccounts={onAccounts}
         />
@@ -1307,15 +1320,19 @@ function MicrosoftMark({ className }: { className?: string }) {
 
 type EmailProvider = "gmail" | "outlook";
 
-/* Same card as LinkedInCard, against the /email/* endpoints (Composio hosted
-   auth — the redirect comes back with ?email=connected|failed). Two connect
-   buttons because the provider must match where the mailbox actually lives:
-   a Google sign-in on an M365-hosted address completes OAuth but can't send. */
-/* `canWrite` (then the page's can_connect) hides the connect and add-inbox
-   controls for a member; a row's Disconnect follows its own
-   can_disconnect. The box count and the read-only inbox list stay visible
-   to every role. A person may link more than one mailbox, so "Connect
-   mine" stays even when the viewer already has a row. */
+/* The Email card, against the /email/* endpoints (Composio hosted auth;
+   the redirect comes back to the settings accounts tab with
+   ?email=connected|failed). One primary "Add mailbox" menu starts a
+   Google or Microsoft sign-in, or opens the buy flow. The provider must
+   match where the mailbox lives: a Google sign-in on an M365-hosted
+   address completes OAuth but can't send. One list holds the connected
+   mailboxes and the bought pool alike. */
+/* `canWrite` (then the page's can_connect) hides the menu's sign-in items
+   for a member, and `canWrite` with the pool caps hides its buy item; a
+   row's Disconnect follows its own can_disconnect. A bought inbox has no
+   Disconnect here. The card, its summary and every row stay visible to
+   every role. A person may link more than one mailbox, so the menu stays
+   even when the viewer already has a row. */
 function EmailCard({
   connected: connectedFallback,
   rows,
@@ -1341,33 +1358,45 @@ function EmailCard({
     null,
   );
   const [connectError, setConnectError] = useState<string | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
   const { disconnecting, rowError, disconnect } = useAccountDisconnect(onAccounts);
   const ready = accounts.status === "ready";
   const connected = ready ? channelConnected(rows) : connectedFallback;
   const canConnect = ready ? accounts.page.canConnect : canWrite;
   // Until the pool lands, offer connect only when nothing is connected.
   const showConnect = canConnect && (ready || !connectedFallback);
-  // "Connect email" only while the channel holds no row at all.
-  const hasRows = ready && rows.length > 0;
   /* the managed pool is null for every customer without one (and on any
-     fetch error) — the tile then renders exactly as it did before the
-     feature existed. The pool and its add flow do NOT wait for the
-     customer's own mailbox: warmup takes weeks, so a fresh account buys
-     inboxes first and connects Gmail/Outlook whenever. The tile itself
-     never grows past its siblings: the inbox list and the add flow both
-     float over the grid as overlays. */
-  const [listOpen, setListOpen] = useState(false);
-  const [addOpen, setAddOpen] = useState(false);
-  const showPool = pool !== null;
-  // own connected mailboxes (the pool's usable rows once it lands) + the
-  // managed pool
-  const ownBoxes = ready ? rows.filter(isUsable).length : connectedFallback ? 1 : 0;
-  const boxCount = ownBoxes + (pool?.mailboxes.length ?? 0);
+     fetch error); its inboxes then simply do not appear in the list. The
+     pool and its buy flow do NOT wait for the customer's own mailbox:
+     warmup takes weeks, so a fresh account buys inboxes first and
+     connects Gmail/Outlook whenever. */
+  const mailboxes = pool?.mailboxes ?? [];
   const underCaps =
-    (pool?.domains.length ?? 0) < DOMAIN_CAP &&
-    (pool?.mailboxes.length ?? 0) < INBOX_CAP;
+    (pool?.domains.length ?? 0) < DOMAIN_CAP && mailboxes.length < INBOX_CAP;
+  const showBuy = canWrite && underCaps;
+  // "Connect email" only while the card holds no row at all.
+  const hasRows = (ready && rows.length > 0) || mailboxes.length > 0;
+  const empty = !connected && !hasRows;
   const pending = connectPending !== null || disconnecting !== null;
+  const summary = ready && !empty ? emailSummaryLine(emailSummary(rows, mailboxes)) : null;
 
+  /* Back from the consent screen: ?email=connected names the viewer's
+     newest active mailbox and highlights its row; ?email=failed keeps the
+     fixed line. The redirect only proves OAuth finished — when the
+     server-side mailbox probe failed (email_error), stay quiet and let
+     the card explain instead of flashing green over a red error. */
+  const returned = useOneShotParam("email");
+  const justConnected =
+    returned === "connected" && !emailError && ready ? newestOwnActive(rows) : null;
+
+  // A pending link's "expires in N min" ticks while any row carries one.
+  const now = useClock(
+    rows.some((row) => row.status === "pending" && row.linkMintedAt !== null) ? 30_000 : null,
+  );
+
+  /* One opener for the menu's sign-in items, the pending row's "Open the
+     sign-in again" and the expired row's Reconnect: the backend re-mints
+     the link into the same row for the provider it is given. */
   async function handleConnect(provider: EmailProvider) {
     setConnectPending(provider);
     setConnectError(null);
@@ -1388,7 +1417,21 @@ function EmailCard({
   }
 
   return (
-    <div className="overview-channel-row">
+    <div className="overview-channel-row is-email">
+      {justConnected && (
+        <div className="email-return-banner" role="status">
+          <CheckMark />
+          <span>
+            <b>{emailAddress(justConnected)}</b> is connected.
+          </span>
+        </div>
+      )}
+      {returned === "failed" && (
+        <div className="email-return-banner is-failed" role="status">
+          <span aria-hidden="true">✕</span>
+          Connection failed, please try again.
+        </div>
+      )}
       <div className="flex items-start gap-4">
         <span
           className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${
@@ -1405,97 +1448,46 @@ function EmailCard({
           )}
         </span>
         <div className="min-w-0 flex-1">
-          <h3 className="m-0 text-[18px] font-semibold tracking-[-0.01em]">
-            {connected || hasRows ? "Email" : "Connect email"}
-          </h3>
-          {showPool ? (
-            /* exactly one body line — the count, doubling as the way into
-               the inbox list, which floats over the grid so the tile never
-               grows past its siblings */
-            pool.mailboxes.length > 0 ? (
-              <button
-                type="button"
-                className="managed-inboxes-count"
-                aria-haspopup="dialog"
-                onClick={() => setListOpen(true)}
-              >
-                {boxCount} email {boxCount === 1 ? "box" : "boxes"} connected
-                <svg
-                  className="managed-inboxes-caret"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="m9 6 6 6-6 6" />
-                </svg>
-              </button>
-            ) : (
-              <p className="m-0 mt-2 text-[15px] leading-relaxed text-ink-soft">
-                {boxCount} email {boxCount === 1 ? "box" : "boxes"} connected
-              </p>
-            )
-          ) : (
-            !connected && (
-              <p className="m-0 mt-2 text-[15px] leading-relaxed text-ink-soft">
-                Send from Gmail or Outlook.
-              </p>
-            )
-          )}
-
-          <AccountRows
-            accounts={accounts}
-            rows={rows}
-            connected={connectedFallback}
-            canConnect={canConnect}
-            detail={(account) => account.channelState.address}
-            disconnecting={disconnecting}
-            rowError={rowError}
-            onDisconnect={(account) => void disconnect(account.id)}
-          />
-
-          {(showConnect || (canWrite && underCaps)) && (
-            <div className="mt-5 flex flex-wrap gap-2.5">
-              {showConnect && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => void handleConnect("gmail")}
-                    disabled={pending}
-                    className="inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-full border border-line bg-surface px-4.5 py-2.5 text-[14.5px] font-semibold text-ink transition-colors hover:border-ink-faint/50 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    <GoogleMark className="size-4.5 shrink-0" />
-                    {connectPending === "gmail" ? "Connecting…" : "Connect my Gmail"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void handleConnect("outlook")}
-                    disabled={pending}
-                    className="inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-full border border-line bg-surface px-4.5 py-2.5 text-[14.5px] font-semibold text-ink transition-colors hover:border-ink-faint/50 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    <MicrosoftMark className="size-4.5 shrink-0" />
-                    {connectPending === "outlook"
-                      ? "Connecting…"
-                      : "Connect my Outlook"}
-                  </button>
-                </>
-              )}
-              {canWrite && underCaps && (
-                <button
-                  type="button"
-                  aria-haspopup="dialog"
-                  disabled={pending}
-                  onClick={() => setAddOpen(true)}
-                  className="inline-flex cursor-pointer items-center justify-center rounded-full border border-line bg-surface px-4.5 py-2.5 text-[14.5px] font-semibold text-ink-soft transition-colors hover:border-tide/40 hover:bg-tide-wash hover:text-tide-deep disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  Add inboxes
-                </button>
+          <div className="email-card-head">
+            <div className="email-card-title">
+              <h3 className="m-0 text-[18px] font-semibold tracking-[-0.01em]">
+                {empty ? "Connect email" : "Email"}
+              </h3>
+              {summary !== null ? (
+                <p className="m-0 text-[15px] leading-relaxed text-ink-soft">{summary}</p>
+              ) : (
+                empty && (
+                  <p className="m-0 text-[15px] leading-relaxed text-ink-soft">
+                    Send from your own Google Workspace or Outlook mailboxes, or buy warmed inboxes.
+                  </p>
+                )
               )}
             </div>
-          )}
+            {(showConnect || showBuy) && (
+              <AddMailboxMenu
+                connect={showConnect}
+                buy={showBuy}
+                disabled={pending}
+                onConnect={(provider) => void handleConnect(provider)}
+                onBuy={() => setAddOpen(true)}
+              />
+            )}
+          </div>
+
+          <EmailRows
+            accounts={accounts}
+            rows={rows}
+            mailboxes={mailboxes}
+            connected={connectedFallback}
+            canConnect={canConnect}
+            now={now}
+            highlightId={justConnected?.id ?? null}
+            disconnecting={disconnecting}
+            connectPending={connectPending}
+            rowError={rowError}
+            onDisconnect={(account) => void disconnect(account.id)}
+            onReconnect={(provider) => void handleConnect(provider)}
+          />
 
           {!connected && emailError && (
             <p
@@ -1515,19 +1507,12 @@ function EmailCard({
             </p>
           )}
 
-          {listOpen && pool && (
-            <InboxListOverlay
-              mailboxes={pool.mailboxes}
-              ownMailbox={pool.own_mailbox}
-              onClose={() => setListOpen(false)}
-            />
-          )}
           {addOpen && (
             <AddInboxes
               companyName={companyName}
               ownedDomains={pool?.domains.map((d) => d.name) ?? []}
               existingDomains={pool?.domains.length ?? 0}
-              existingInboxes={pool?.mailboxes.length ?? 0}
+              existingInboxes={mailboxes.length}
               onClose={() => setAddOpen(false)}
               onPurchased={(result, senders) => {
                 applyPurchase(result, senders);
@@ -1539,6 +1524,449 @@ function EmailCard({
       </div>
     </div>
   );
+}
+
+/* The card's one control: a primary pill with a menu. Two sign-in items
+   when the viewer can connect, then the buy item when the pool has room.
+   Keyboard handling follows the assets page's add menu: arrows move,
+   Home/End jump, a letter jumps to the item that starts with it, Escape
+   closes and returns focus to the pill. */
+function AddMailboxMenu({
+  connect,
+  buy,
+  disabled,
+  onConnect,
+  onBuy,
+}: {
+  connect: boolean;
+  buy: boolean;
+  disabled: boolean;
+  onConnect: (provider: EmailProvider) => void;
+  onBuy: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const initialIndex = useRef(0);
+  const id = useId();
+
+  const items: { key: string; label: string; icon: ReactNode; run: () => void }[] = [];
+  if (connect) {
+    items.push({
+      key: "gmail",
+      label: "Google Workspace or Gmail",
+      icon: <GoogleMark />,
+      run: () => onConnect("gmail"),
+    });
+    items.push({
+      key: "outlook",
+      label: "Outlook or Microsoft 365",
+      icon: <MicrosoftMark />,
+      run: () => onConnect("outlook"),
+    });
+  }
+  if (buy) {
+    items.push({
+      key: "buy",
+      label: "Buy warmed inboxes",
+      icon: <HelmMark variant="line" />,
+      run: onBuy,
+    });
+  }
+
+  useEffect(() => {
+    if (!open) return;
+    itemRefs.current[initialIndex.current]?.focus();
+    function outside(event: PointerEvent) {
+      if (event.target instanceof Node && !rootRef.current?.contains(event.target)) setOpen(false);
+    }
+    document.addEventListener("pointerdown", outside);
+    return () => document.removeEventListener("pointerdown", outside);
+  }, [open]);
+
+  function menuKeyDown(event: KeyboardEvent) {
+    const current = itemRefs.current.findIndex((item) => item === document.activeElement);
+    let next: number;
+    if (event.key === "ArrowDown") next = (current + 1) % items.length;
+    else if (event.key === "ArrowUp") next = (current - 1 + items.length) % items.length;
+    else if (event.key === "Home") next = 0;
+    else if (event.key === "End") next = items.length - 1;
+    else if (event.key === "Escape") {
+      event.preventDefault();
+      setOpen(false);
+      triggerRef.current?.focus();
+      return;
+    } else if (event.key.length === 1 && !event.altKey && !event.ctrlKey && !event.metaKey) {
+      next = items.findIndex((item) => item.label.toLowerCase().startsWith(event.key.toLowerCase()));
+    } else return;
+    if (next < 0) return;
+    event.preventDefault();
+    itemRefs.current[next]?.focus();
+  }
+
+  return (
+    <div
+      className="email-card-actions"
+      ref={rootRef}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
+      }}
+    >
+      <button
+        ref={triggerRef}
+        id={`${id}-trigger`}
+        type="button"
+        className="email-add-btn"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={open ? id : undefined}
+        disabled={disabled}
+        onClick={() => {
+          initialIndex.current = 0;
+          setOpen((current) => !current);
+        }}
+        onKeyDown={(event) => {
+          if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+          event.preventDefault();
+          initialIndex.current = event.key === "ArrowUp" ? items.length - 1 : 0;
+          setOpen(true);
+        }}
+      >
+        Add mailbox
+        <svg className="email-add-caret" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </button>
+      {open && (
+        <div id={id} className="email-add-menu" role="menu" aria-labelledby={`${id}-trigger`} onKeyDown={menuKeyDown}>
+          {items.map((item, index) => (
+            <Fragment key={item.key}>
+              {item.key === "buy" && index > 0 && <div className="email-add-sep" role="separator" />}
+              <button
+                ref={(element) => {
+                  itemRefs.current[index] = element;
+                }}
+                type="button"
+                role="menuitem"
+                tabIndex={-1}
+                onClick={() => {
+                  setOpen(false);
+                  triggerRef.current?.focus();
+                  item.run();
+                }}
+              >
+                {item.icon}
+                {item.label}
+              </button>
+            </Fragment>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* The Email card's list: the connected mailboxes (one row per linked
+   account, in the backend's order), then the bought pool. While the
+   account pool loads it mirrors the /auth/me boolean, as AccountRows
+   does, so a single-mailbox customer never sees the menu flash over
+   their own row. Bought inboxes render whatever the account pool is
+   doing, since they come from a separate fetch. */
+function EmailRows({
+  accounts,
+  rows,
+  mailboxes,
+  connected,
+  canConnect,
+  now,
+  highlightId,
+  disconnecting,
+  connectPending,
+  rowError,
+  onDisconnect,
+  onReconnect,
+}: {
+  accounts: AccountsState;
+  rows: SendingAccount<EmailState>[];
+  mailboxes: ManagedMailbox[];
+  /** the /auth/me boolean — drives the paint until the pool lands */
+  connected: boolean;
+  canConnect: boolean;
+  /** the clock the pending rows count down against */
+  now: number;
+  /** the row the return banner names, washed in the accent */
+  highlightId: string | null;
+  disconnecting: string | null;
+  connectPending: EmailProvider | null;
+  rowError: { id: string; message: string } | null;
+  onDisconnect: (account: SendingAccount<EmailState>) => void;
+  onReconnect: (provider: EmailProvider) => void;
+}) {
+  const ready = accounts.status === "ready";
+  if (ready && rows.length === 0 && mailboxes.length === 0) {
+    return canConnect ? null : <p className="overview-accounts-note">No accounts linked yet.</p>;
+  }
+  const skeleton = accounts.status === "loading" && connected;
+  const hasList = skeleton || (ready && rows.length > 0) || mailboxes.length > 0;
+  const busy = disconnecting !== null || connectPending !== null;
+  return (
+    <>
+      {accounts.status === "error" && (
+        <p className="overview-accounts-note is-error" role="alert">
+          Couldn&rsquo;t load the account list.
+        </p>
+      )}
+      {hasList && (
+        <ul className="team-member-list overview-accounts email-accounts">
+          {skeleton && (
+            <li className="team-member-row is-skeleton" aria-hidden="true">
+              <span className="team-avatar team-skel" />
+              <div className="team-member-id">
+                <span className="team-skel team-skel-line" style={{ width: "7rem" }} />
+                <span className="team-skel team-skel-line is-faint" style={{ width: "5rem" }} />
+              </div>
+            </li>
+          )}
+          {ready &&
+            rows.map((account) => (
+              <EmailAccountRow
+                key={account.id}
+                account={account}
+                now={now}
+                highlighted={account.id === highlightId}
+                canReconnect={canConnect}
+                busy={busy}
+                disconnecting={disconnecting === account.id}
+                connectPending={connectPending}
+                rowError={rowError?.id === account.id ? rowError.message : null}
+                onDisconnect={() => onDisconnect(account)}
+                onReconnect={onReconnect}
+              />
+            ))}
+          {mailboxes.map((box) => (
+            <BoughtInboxRow key={box.address} box={box} />
+          ))}
+        </ul>
+      )}
+    </>
+  );
+}
+
+/* One connected mailbox: the provider mark, the address, one sub line,
+   then a state chip when the row is not simply active, and the quiet
+   Disconnect. What the sub line and the tail hold follows the row's
+   state (emailRowState):
+   - active: who linked it and today's count against the cap;
+   - pending: the tab to finish in, how long the link has left, and a
+     text link that mints a fresh one;
+   - expired: what happened, the Workspace-admin hint for Google, and a
+     Reconnect pill;
+   - error: the backend's own sentence, as before.
+   The text link and the Reconnect pill both start a sign-in, so they
+   follow the same gate as the Add mailbox menu: a member sees the state
+   and neither control. */
+function EmailAccountRow({
+  account,
+  now,
+  highlighted,
+  canReconnect,
+  busy,
+  disconnecting,
+  connectPending,
+  rowError,
+  onDisconnect,
+  onReconnect,
+}: {
+  account: SendingAccount<EmailState>;
+  now: number;
+  highlighted: boolean;
+  /** the viewer holds a seat that can start a sign-in */
+  canReconnect: boolean;
+  /** any connect or disconnect in flight on the card */
+  busy: boolean;
+  /** this row's Disconnect is the one in flight */
+  disconnecting: boolean;
+  connectPending: EmailProvider | null;
+  rowError: string | null;
+  onDisconnect: () => void;
+  onReconnect: (provider: EmailProvider) => void;
+}) {
+  const state = emailRowState(account);
+  const provider = account.channelState.provider;
+  const providerName = emailProviderName(provider);
+  const who = <span className="overview-account-who">{linkedBy(account)}</span>;
+  const linkedLine = `Linked by ${linkedBy(account)}`;
+
+  let chip: string | null = null;
+  let chipError = false;
+  let sub: ReactNode;
+  let subTitle: string | undefined = linkedLine;
+  let action: ReactNode = null;
+  let showError = false;
+
+  if (state === "active") {
+    sub =
+      account.sentToday === null ? (
+        <>Linked by {who}</>
+      ) : (
+        <>
+          Linked by {who} · {account.sentToday} of {emailDailyCap(account)} sent today
+        </>
+      );
+    if (account.sentToday !== null) {
+      subTitle = `${linkedLine} · ${account.sentToday} of ${emailDailyCap(account)} sent today`;
+    }
+  } else if (state === "pending" && provider !== null && providerName !== null) {
+    chip = `Waiting for ${providerName}`;
+    const minutes = linkMinutesLeft(account.linkMintedAt, now);
+    subTitle = undefined;
+    sub = (
+      <>
+        Finish the sign-in in the {providerName} tab.
+        {minutes !== null && <> The link expires in {minutes} min.</>}
+        {canReconnect && (
+          <>
+            {" "}
+            <button
+              type="button"
+              className="email-row-link"
+              disabled={busy}
+              onClick={() => onReconnect(provider)}
+            >
+              Open the sign-in again
+            </button>
+          </>
+        )}
+      </>
+    );
+  } else if (state === "pending") {
+    // no provider on the row: nothing to re-mint, so the row reads as before
+    chip = "Pending";
+    sub = <>Linked by {who}</>;
+  } else if (state === "expired") {
+    chip = "Link expired";
+    subTitle = undefined;
+    sub = (
+      <>
+        The sign-in was not finished in time.
+        {providerName === "Google" && (
+          <>
+            {" "}
+            If Google showed Access blocked, ask your Workspace admin to trust driftwood under
+            Security, API controls, Manage app access.
+          </>
+        )}
+      </>
+    );
+    if (canReconnect && provider !== null) {
+      action = (
+        <button
+          type="button"
+          className="team-resend"
+          disabled={busy}
+          onClick={() => onReconnect(provider)}
+        >
+          {connectPending === provider ? "Connecting…" : "Reconnect"}
+        </button>
+      );
+    }
+  } else {
+    chip = "Error";
+    chipError = true;
+    showError = true;
+    sub = <>Linked by {who}</>;
+  }
+
+  const stateLine = subTitle === undefined;
+  return (
+    <li className={`team-member-row${highlighted ? " is-new" : ""}`}>
+      <span className={`email-provider-mark${provider === null ? " is-plain" : ""}`} aria-hidden="true">
+        {provider === "outlook" ? <MicrosoftMark /> : provider === "gmail" ? <GoogleMark /> : <MailMark />}
+      </span>
+      <div className="team-member-id">
+        <div className="team-member-name">{emailAddress(account)}</div>
+        {/* one line with an ellipsis at the end while it names the
+            linker (team.css); a state line wraps instead. An address or a
+            name never breaks inside itself. */}
+        <div className={`team-member-sub${stateLine ? " is-state" : ""}`} title={subTitle}>
+          {sub}
+        </div>
+        {showError && account.error && (
+          <p className="team-inline-error" role="alert">
+            {account.error}
+          </p>
+        )}
+        {rowError && (
+          <p className="team-inline-error" role="alert">
+            {rowError}
+          </p>
+        )}
+      </div>
+      {(chip || action || account.canDisconnect) && (
+        /* chip + buttons travel as one cluster, so in a narrow card they
+           wrap under the address together instead of squeezing it */
+        <div className="overview-account-tail">
+          {chip && <span className={`team-role${chipError ? " is-error" : ""}`}>{chip}</span>}
+          {action}
+          {account.canDisconnect && (
+            <button type="button" className="team-remove" disabled={busy} onClick={onDisconnect}>
+              {disconnecting ? "Disconnecting…" : "Disconnect"}
+            </button>
+          )}
+        </div>
+      )}
+    </li>
+  );
+}
+
+/* One bought inbox: the helm in the provider square, the address, and a
+   sub line from the pool's own fields. A warming inbox names today's
+   ramp (its cap rises day by day); a warm one counts against its cap
+   like a person's row; provisioning and paused carry their state as a
+   chip, in the pool's own words. No Disconnect: the pool has no remove
+   flow here. */
+function BoughtInboxRow({ box }: { box: ManagedMailbox }) {
+  let sub: string;
+  let chip: string | null = null;
+  if (box.status === "warming") {
+    sub = box.todays_cap > 0 ? `Bought inbox · warming up, ${box.todays_cap} a day` : "Bought inbox · warming up";
+  } else if (box.status === "active" || box.status === "ready") {
+    sub = `Bought inbox · ${box.sent_today} of ${box.todays_cap} sent today`;
+  } else {
+    sub = "Bought inbox";
+    chip = managedInboxChip(box).label;
+  }
+  return (
+    <li className="team-member-row">
+      <span className="email-provider-mark is-helm" aria-hidden="true">
+        <HelmMark variant="line" />
+      </span>
+      <div className="team-member-id">
+        <div className="team-member-name">{box.address}</div>
+        <div className="team-member-sub" title={sub}>
+          {sub}
+        </div>
+      </div>
+      {chip && (
+        <div className="overview-account-tail">
+          <span className="team-role">{chip}</span>
+        </div>
+      )}
+    </li>
+  );
+}
+
+/* A clock that re-renders on an interval, or never when given null. The
+   pending rows read their "expires in N min" against it. */
+function useClock(intervalMs: number | null): number {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (intervalMs === null) return;
+    const id = window.setInterval(() => setNow(Date.now()), intervalMs);
+    return () => window.clearInterval(id);
+  }, [intervalMs]);
+  return now;
 }
 
 type TwitterState =
@@ -2176,33 +2604,6 @@ function LinkedInBanner() {
       <span aria-hidden="true">{connected ? "✓" : "✕"}</span>
       {connected
         ? "LinkedIn connected — you're all set."
-        : "Connection failed, please try again."}
-    </div>
-  );
-}
-
-/* Same banner for the hosted email auth's ?email=connected|failed redirect.
-   The redirect only proves OAuth finished — when the server-side mailbox
-   probe failed (email_error), stay quiet and let the card explain instead
-   of flashing a green "all set" over a red error. */
-function EmailBanner({ emailError }: { emailError: string | null }) {
-  const status = useOneShotParam("email");
-  if (status !== "connected" && status !== "failed") return null;
-  if (status === "connected" && emailError) return null;
-
-  const connected = status === "connected";
-  return (
-    <div
-      role="status"
-      className={`mb-7 flex items-center gap-2.5 rounded-xl border px-4 py-3 text-[14px] font-medium ${
-        connected
-          ? "border-ok/25 bg-ok/10 text-ok"
-          : "border-red-600/25 bg-red-500/10 text-red-800"
-      }`}
-    >
-      <span aria-hidden="true">{connected ? "✓" : "✕"}</span>
-      {connected
-        ? "Email connected — you're all set."
         : "Connection failed, please try again."}
     </div>
   );

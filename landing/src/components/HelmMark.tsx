@@ -1,12 +1,17 @@
-/** Ship's wheel mark — reads as a helm at 16px and holds detail at nav size. */
-export default function HelmMark({ className }: { className?: string }) {
+/** Ship's wheel mark — reads as a helm at 16px and holds detail at nav size.
+ *  `variant="line"` drops the brand tile and draws the wheel in the accent
+ *  on whatever sits behind it (the dashboard's bought-inbox rows). */
+export default function HelmMark({ className, variant = "tile" }: { className?: string; variant?: "tile" | "line" }) {
+  const line = variant === "line";
+  const stroke = line ? "#15557e" : "#f7f4ec";
+  const hub = line ? "#eef2f5" : "#15557e";
   return (
     <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
-      <rect width="64" height="64" rx="14" fill="#15557e" />
+      {!line && <rect width="64" height="64" rx="14" fill="#15557e" />}
       <g
         transform="translate(32 32) scale(0.88)"
         fill="none"
-        stroke="#f7f4ec"
+        stroke={stroke}
         strokeLinecap="round"
         strokeLinejoin="round"
       >
@@ -63,8 +68,8 @@ export default function HelmMark({ className }: { className?: string }) {
           </g>
         </g>
         {/* hub */}
-        <circle r="7.5" strokeWidth="2.6" fill="#15557e" />
-        <circle r="2.8" fill="#f7f4ec" stroke="none" />
+        <circle r="7.5" strokeWidth="2.6" fill={hub} />
+        <circle r="2.8" fill={stroke} stroke="none" />
       </g>
     </svg>
   );

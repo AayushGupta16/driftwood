@@ -91,10 +91,12 @@ if (mockMode) {
     connected_by: MockPerson;
     is_mine: boolean; can_disconnect: boolean; status: string; error: string | null;
     connected_at: string | null; channel_state: Record<string, unknown>;
+    sent_today?: number | null; daily_cap?: number | null; link_minted_at?: string | null;
   };
   const account = (
     id: string, display: string | null, by: MockPerson, status: string,
     channel_state: Record<string, unknown>, error: string | null = null,
+    extra: Pick<MockAccount, "sent_today" | "daily_cap" | "link_minted_at"> = {},
   ): MockAccount => ({
     id, display, connected_by: by,
     is_mine: viewerCanConnect && by === viewer,
@@ -102,6 +104,7 @@ if (mockMode) {
     status, error: status === "error" ? error : null,
     connected_at: status === "pending" ? null : hoursAgo(24 * 12),
     channel_state,
+    ...extra,
   });
   const xMode = params.get("x");
   const mockAccounts: Record<"linkedin" | "email" | "x", MockAccount[]> = {
@@ -109,11 +112,19 @@ if (mockMode) {
       account("acct-li-1", viewer.name, viewer, "active", {}),
       account("acct-li-2", sam.name, sam, "active", {}),
     ],
+    // Email rows also carry the day's count, the cap, and (while pending)
+    // when the sign-in link was minted, so the card's row states render.
+    // The expired row is an error row whose channel state says the link
+    // ran out.
     email: [
-      account("acct-em-1", viewer.email, viewer, "active", { provider: "gmail", address: viewer.email }),
-      account("acct-em-2", sam.email, sam, "pending", { provider: "outlook", address: sam.email }),
+      account("acct-em-1", viewer.email, viewer, "active", { provider: "gmail", address: viewer.email }, null,
+        { sent_today: 12, daily_cap: 20 }),
+      account("acct-em-2", sam.email, sam, "pending", { provider: "outlook", address: sam.email }, null,
+        { link_minted_at: new Date(Date.now() - 2 * 60e3).toISOString() }),
       account("acct-em-3", null, newHire, "error", { provider: "gmail", address: newHire.email },
         "Google signed this mailbox out. Connect it again to resume sending."),
+      account("acct-em-4", "team@example.com", sam, "error",
+        { provider: "gmail", address: "team@example.com", link_state: "expired" }),
     ],
     x: [
       account("acct-x-1", "Sam Field", sam, "active", { handle: "samfield", pending: false, chat_locked: true }),

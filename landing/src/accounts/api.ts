@@ -15,7 +15,14 @@ export type ConnectedBy = {
 };
 
 export type LinkedInState = Record<string, never>;
-export type EmailState = { provider: "gmail" | "outlook" | null; address: string | null };
+/* `linkState` is "expired" when a pending sign-in link ran out before the
+   person finished it (the row then carries status "error"). Null on every
+   other row, and on payloads from a backend that predates the field. */
+export type EmailState = {
+  provider: "gmail" | "outlook" | null;
+  address: string | null;
+  linkState: "expired" | null;
+};
 export type XState = { handle: string | null; pending: boolean; chatLocked: boolean };
 
 export type SendingAccount<S> = {
@@ -31,6 +38,14 @@ export type SendingAccount<S> = {
   error: string | null;
   /* Null while pending. */
   connectedAt: string | null;
+  /* Today's sends and the row's daily ceiling. Null on channels that do
+     not report them, and on payloads from a backend that predates the
+     fields (the email card then shows no count and falls back to 20). */
+  sentToday: number | null;
+  dailyCap: number | null;
+  /* When the pending sign-in link was minted (ten minutes of life). Null
+     once the row is active, and on older payloads. */
+  linkMintedAt: string | null;
   channelState: S;
 };
 
@@ -53,6 +68,9 @@ type RawAccount = {
   status: string;
   error?: string | null;
   connected_at?: string | null;
+  sent_today?: number | null;
+  daily_cap?: number | null;
+  link_minted_at?: string | null;
   channel_state?: Record<string, unknown> | null;
 };
 
@@ -94,6 +112,9 @@ function mapAccount<S>(raw: RawAccount, mapState: (state: Record<string, unknown
     status,
     error: status === "error" ? (raw.error ?? null) : null,
     connectedAt: raw.connected_at ?? null,
+    sentToday: typeof raw.sent_today === "number" ? raw.sent_today : null,
+    dailyCap: typeof raw.daily_cap === "number" ? raw.daily_cap : null,
+    linkMintedAt: typeof raw.link_minted_at === "string" ? raw.link_minted_at : null,
     channelState: mapState(raw.channel_state ?? {}),
   };
 }
@@ -105,6 +126,7 @@ function emailState(state: Record<string, unknown>): EmailState {
   return {
     provider: provider === "gmail" || provider === "outlook" ? provider : null,
     address: typeof state.address === "string" ? state.address : null,
+    linkState: state.link_state === "expired" ? "expired" : null,
   };
 }
 

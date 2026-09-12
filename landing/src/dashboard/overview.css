@@ -136,12 +136,16 @@
   border-bottom: 1px solid var(--color-line);
 }
 
+/* Sending accounts: LinkedIn and X share a row as half-width cards, and
+   the Email card, which can hold many mailboxes, spans the row below. */
 .overview-connection-grid,
 .overview-connected-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: .7rem;
 }
+
+.overview-channel-row.is-email { grid-column: 1 / -1; }
 
 .overview-channel-row {
   min-width: 0;
@@ -179,6 +183,133 @@
 .overview-channel-row .overview-accounts button { min-height: 1.75rem; margin-top: 0; padding: .2rem .65rem; font-size: .68rem; }
 .overview-accounts-note { margin: .5rem 0 0; color: var(--color-ink-faint); }
 .overview-accounts-note.is-error { color: var(--color-alert); }
+
+/* ---------- the Email card ----------
+   One header row: the title and its summary line on the left, the primary
+   "Add mailbox" pill at the top right with its menu under it. One list
+   below, holding connected and bought mailboxes alike, each behind a
+   provider mark in the card mark's rounded square. */
+.email-card-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: .5rem 1rem; }
+.email-card-title { min-width: 0; flex: 1 1 9rem; }
+.email-card-title p { margin-top: .3rem; }
+.email-card-actions { position: relative; display: flex; flex: none; align-items: center; gap: .5rem; margin-left: auto; }
+
+/* the pill: the card's one primary action, so the accent fill */
+.overview-channel-row .email-add-btn {
+  display: inline-flex;
+  min-height: 2rem;
+  align-items: center;
+  justify-content: center;
+  gap: .35rem;
+  margin: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-tide);
+  color: #fff;
+  padding: .45rem .55rem .45rem .8rem;
+  font: inherit;
+  font-size: .72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 200ms cubic-bezier(.2, 0, 0, 1);
+}
+.overview-channel-row .email-add-btn:hover:not(:disabled) { background: var(--color-tide-deep); }
+.overview-channel-row .email-add-btn:disabled { cursor: not-allowed; opacity: .6; }
+.email-add-caret { width: 13px; height: 13px; flex: none; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+
+.email-add-menu {
+  position: absolute;
+  top: calc(100% + .4rem);
+  right: 0;
+  z-index: 5;
+  min-width: 15.5rem;
+  border: 1px solid var(--color-line);
+  border-radius: .65rem;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-win);
+  padding: .3rem;
+}
+/* menu rows undo the card-wide button recipe above */
+.overview-channel-row .email-add-menu button {
+  display: flex;
+  width: 100%;
+  min-height: 0;
+  align-items: center;
+  gap: .6rem;
+  margin: 0;
+  border: 0;
+  border-radius: .5rem;
+  background: transparent;
+  color: var(--color-ink);
+  padding: .5rem .6rem;
+  font: inherit;
+  font-size: .76rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+.overview-channel-row .email-add-menu button:hover,
+.overview-channel-row .email-add-menu button:focus-visible { background: var(--color-sand); }
+.email-add-menu svg { width: 1.05rem; height: 1.05rem; flex: none; }
+.email-add-sep { height: 1px; margin: .3rem .4rem; background: var(--color-line); }
+
+/* the list: a provider mark in place of the initial avatar */
+.email-accounts { position: relative; z-index: 0; margin-top: 1rem; }
+.email-accounts .team-member-row { position: relative; }
+.email-provider-mark { display: flex; width: 2.25rem; height: 2.25rem; flex: none; align-items: center; justify-content: center; border-radius: .65rem; background: var(--color-sand); }
+.email-provider-mark svg { width: 1.15rem; height: 1.15rem; }
+.email-provider-mark.is-helm svg { width: 1.45rem; height: 1.45rem; }
+.email-provider-mark.is-plain { color: var(--color-ink-soft); }
+/* a state line (pending, expired) wraps; the linker line keeps its ellipsis */
+.email-accounts .team-member-sub.is-state { white-space: normal; line-height: 1.45; }
+/* "Open the sign-in again": a text link inside the state line, in the accent */
+.overview-channel-row .email-accounts .email-row-link {
+  display: inline;
+  min-height: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-tide);
+  padding: 0;
+  font: inherit;
+  font-size: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.overview-channel-row .email-accounts .email-row-link:hover:not(:disabled) { text-decoration: underline; }
+.overview-channel-row .email-accounts .email-row-link:disabled { cursor: not-allowed; opacity: .55; }
+/* the row the return banner names: a faint accent wash behind it */
+.email-accounts .team-member-row.is-new::before {
+  content: "";
+  position: absolute;
+  inset: 3px -.5rem;
+  z-index: -1;
+  border-radius: .5rem;
+  background: color-mix(in srgb, var(--color-tide-wash) 65%, var(--color-surface));
+}
+
+/* the slim banner at the top of the card after the consent redirect:
+   ok green when the mailbox landed, the alert red when it did not */
+.email-return-banner {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin: 0 0 .9rem;
+  border: 1px solid color-mix(in srgb, var(--color-ok) 28%, var(--color-line));
+  border-radius: .6rem;
+  background: color-mix(in srgb, var(--color-ok) 7%, var(--color-surface));
+  color: var(--color-ok);
+  padding: .45rem .7rem;
+  font-size: .74rem;
+  font-weight: 500;
+}
+.email-return-banner b { font-weight: 650; }
+.email-return-banner svg { width: 15px; height: 15px; flex: none; }
+.email-return-banner.is-failed {
+  border-color: color-mix(in srgb, var(--color-alert) 28%, var(--color-line));
+  background: color-mix(in srgb, var(--color-alert) 7%, var(--color-surface));
+  color: var(--color-alert);
+}
 
 .overview-panel {
   min-width: 0;
@@ -423,6 +554,8 @@
 @media (max-width: 560px) {
   .overview-accounts .team-member-id { flex-basis: calc(100% - 2.35rem); }
   .overview-accounts .team-member-actions { margin-left: 0; }
+  /* the email rows sit behind the wider provider square */
+  .email-accounts .team-member-id { flex-basis: calc(100% - 2.85rem); }
 }
 
 @media (max-width: 520px) {
