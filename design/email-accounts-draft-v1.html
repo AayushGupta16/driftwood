@@ -1,0 +1,720 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sending accounts, many mailboxes (design draft v1, 2026-09-11)</title>
+<!--
+  DESIGN DRAFT: Settings > Sending accounts, Email card for many mailboxes.
+  2026-09-11, v1. Standalone, self-contained, no scripts. For Aayush's
+  review before any React is written (design-changes-draft-first).
+
+  The ask. Thomas at switchfrog wants to attach about ten Google Workspace
+  mailboxes and send from all of them. The current Email card is a third of
+  the page and shows three equal pills (Connect my Gmail, Connect my
+  Outlook, Add inboxes). Bought inboxes hide behind a count button that
+  opens an overlay.
+
+  The rule for this draft. Reproduce the whole page as it is today. Change
+  only the Email card and the card layout. Every change carries a small
+  "new" chip. Everything without a chip is unchanged.
+
+  Chrome and tokens are lifted from the live dashboard:
+  - tokens: landing/src/index.css @theme (white ground, ink scale, hairline
+    #e9ebee, one tide accent, green #197142 reserved for ok)
+  - shell: landing/src/dashboard/AppShell.tsx + app-shell.css (15.25rem
+    sidebar, brand row, create button, nav, Settings in the footer, admin
+    controls, identity). Nav order from landing/src/dashboard/navigation.ts.
+  - tabs: landing/src/settings/SettingsTabs.tsx + .section-tabs
+  - cards and rows: landing/src/Dashboard.tsx ConnectionSetup, AccountRows,
+    LinkedInCard, EmailCard, TwitterCard, with overview.css, team.css,
+    managed-inboxes.css
+  - fonts: the same self-hosted files the app uses, from driftwood.sh
+
+  All data on the page is sample data.
+-->
+<style>
+  @font-face{font-family:"Public Sans";src:url(https://driftwood.sh/fonts/public-sans-latin-wght-normal.woff2) format("woff2-variations");font-weight:100 900;font-display:swap}
+  @font-face{font-family:"Source Serif 4";src:url(https://driftwood.sh/fonts/source-serif-4-latin-600-normal.woff2) format("woff2");font-weight:600;font-display:swap}
+
+  :root {
+    --paper: #ffffff;
+    --surface: #ffffff;
+    --ink: #16181b;
+    --ink-soft: #6a737d;
+    --ink-faint: #6f7780;
+    --tide: #15557e;
+    --tide-deep: #0d3c5b;
+    --tide-wash: #eaf1f7;
+    --sand: #eef2f5;
+    --line: #e9ebee;
+    --ok: #197142;
+    --alert: #b42318;
+    --shadow-win: 0 1px 2px rgba(22, 24, 27, 0.05), 0 24px 48px -24px rgba(22, 24, 27, 0.18);
+    --shadow-win-sm: 0 1px 2px rgba(22, 24, 27, 0.04), 0 10px 20px -14px rgba(22, 24, 27, 0.12);
+    --sans: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --brand: "Source Serif 4", Georgia, serif;
+    --r-win: 12px;
+    --overview-radius: .85rem;
+    --ease: cubic-bezier(.2, 0, 0, 1);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  a { color: inherit; }
+  button { font: inherit; }
+  :focus-visible { outline: 2px solid var(--tide); outline-offset: 2px; }
+  .ic { width: 17px; height: 17px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+  .ic.sm { width: 15px; height: 15px; }
+
+  /* ---------- draft framing (not part of the design) ---------- */
+  .canvas { max-width: 90rem; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; }
+  .draft-head { margin-bottom: 2rem; }
+  .draft-head .k { margin: 0; color: var(--ink-faint); font-size: .68rem; font-weight: 620; }
+  .draft-head h1 { margin: .4rem 0 0; font-size: 1.45rem; font-weight: 650; letter-spacing: -.02em; line-height: 1.15; }
+  .draft-head .sub { margin: .6rem 0 0; max-width: 46rem; color: var(--ink-soft); font-size: .8rem; line-height: 1.55; }
+  .section-title { margin: 3rem 0 .4rem; font-size: 1rem; font-weight: 650; letter-spacing: -.012em; }
+  .section-note { margin: 0 0 1.2rem; max-width: 46rem; color: var(--ink-soft); font-size: .78rem; line-height: 1.55; }
+  .state-label { margin: 1.8rem 0 .55rem; color: var(--ink-soft); font-size: .66rem; font-weight: 620; letter-spacing: .05em; text-transform: uppercase; }
+  .state-label small { color: var(--ink-faint); font-weight: 400; letter-spacing: 0; text-transform: none; }
+  /* the delta chip: the send-schedule draft's .draft-tag, in the accent */
+  .new-tag {
+    display: inline-flex; align-items: center; margin-left: .45rem; vertical-align: middle;
+    border: 1px dashed var(--tide); border-radius: 999px; background: var(--surface);
+    color: var(--tide); padding: .04rem .45rem; font-size: .6rem; font-weight: 620; line-height: 1.5;
+    font-family: var(--sans); letter-spacing: 0; text-transform: none; white-space: nowrap;
+  }
+  .new-tag.is-corner { position: absolute; top: -.62rem; right: 0; margin: 0; z-index: 2; }
+  .state-panel { max-width: 67.75rem; }
+  .state-panel.has-menu { margin-bottom: 8.5rem; }
+
+  /* ---------- the dashboard shell, mirrored from app-shell.css ---------- */
+  .frame {
+    border: 1px solid var(--line); border-radius: var(--r-win);
+    background: var(--paper); box-shadow: var(--shadow-win-sm);
+    overflow: hidden;
+  }
+  .shell { display: grid; grid-template-columns: 15.25rem minmax(0, 1fr); min-height: 30rem; }
+  .sidebar {
+    display: flex; flex-direction: column;
+    border-right: 1px solid var(--line);
+    background: color-mix(in srgb, var(--paper) 98%, var(--tide-wash));
+    padding: 1rem .8rem .8rem;
+  }
+  .brand-row { display: flex; min-height: 2.6rem; align-items: center; padding: 0 .55rem; }
+  .wordmark {
+    display: inline-flex; align-items: center; gap: .75rem;
+    color: var(--ink); text-decoration: none;
+    font-family: var(--brand); font-weight: 600; font-size: 17px; line-height: 1;
+  }
+  .wordmark svg { width: 1.75rem; height: 1.75rem; flex: none; }
+  .side-create {
+    display: flex; min-height: 2.45rem; align-items: center; justify-content: center; gap: .45rem;
+    margin: .9rem .25rem .7rem;
+    border: 1px solid var(--tide); border-radius: .65rem;
+    background: var(--tide); color: #fff;
+    font-size: .78rem; font-weight: 650; text-decoration: none;
+    transition: background 200ms var(--ease);
+  }
+  .side-create:hover { background: var(--tide-deep); }
+  .side-create .ic { width: 16px; height: 16px; }
+  .side-nav { flex: 1; padding: .15rem .25rem 1rem; }
+  .side-link {
+    position: relative; display: flex; min-height: 2.25rem; align-items: center; gap: .65rem;
+    border-radius: .55rem; color: var(--ink-soft); padding: 0 .65rem;
+    font-size: .79rem; font-weight: 520; text-decoration: none;
+    transition: color 200ms var(--ease), background 200ms var(--ease);
+  }
+  .side-link:hover { background: var(--tide-wash); color: var(--tide-deep); }
+  .side-link.is-active { background: var(--tide-wash); color: var(--tide-deep); font-weight: 650; }
+  .side-link.is-active::before {
+    position: absolute; top: .55rem; bottom: .55rem; left: -.25rem; width: 2px;
+    border-radius: 2px; background: var(--tide); content: "";
+  }
+  .side-footer { border-top: 1px solid var(--line); padding: .7rem .25rem 0; }
+  .side-admin { padding: 0 .3rem .6rem; }
+  .admin-controls { display: grid; gap: .4rem; }
+  .admin-action {
+    display: flex; width: 100%; min-height: 2.25rem; align-items: center; justify-content: center; gap: .45rem;
+    border: 1px solid var(--line); border-radius: .55rem; background: var(--surface); color: var(--ink-soft);
+    padding: .45rem .65rem; font-size: .72rem; font-weight: 620; text-decoration: none; cursor: pointer;
+    transition: border-color 200ms var(--ease), color 200ms var(--ease), background 200ms var(--ease);
+  }
+  .admin-action:hover { border-color: color-mix(in srgb, var(--tide) 45%, var(--line)); background: var(--tide-wash); color: var(--tide-deep); }
+  .admin-action .ic { width: 15px; height: 15px; }
+  .identity { display: grid; grid-template-columns: 1.85rem minmax(0, 1fr) 1.85rem; align-items: center; gap: .55rem; padding: .4rem; }
+  .avatar {
+    display: grid; width: 1.85rem; height: 1.85rem; place-items: center;
+    border-radius: .45rem; background: var(--tide); color: #fff; font-size: .7rem; font-weight: 700;
+  }
+  .identity div { display: flex; min-width: 0; flex-direction: column; gap: .1rem; }
+  .identity strong, .identity small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .identity strong { font-size: .72rem; font-weight: 650; }
+  .identity small { color: var(--ink-faint); font-size: .63rem; }
+  .identity button {
+    display: grid; width: 1.85rem; height: 1.85rem; place-items: center;
+    border: 0; border-radius: .45rem; background: transparent; color: var(--ink-faint); cursor: pointer;
+  }
+  .identity button:hover { background: var(--sand); color: var(--ink); }
+  .identity button .ic { width: 16px; height: 16px; }
+
+  .stage { min-width: 0; }
+  .main { width: min(100%, 90rem); margin: 0 auto; padding: 2.4rem 2rem 4rem; }
+
+  /* settings tabs: app-shell.css .section-tabs, unchanged */
+  .section-tabs { display: flex; flex-wrap: wrap; gap: 1.5rem; border-bottom: 1px solid var(--line); margin-bottom: 1.5rem; }
+  .section-tabs a { padding: .65rem 0; font-size: .85rem; color: var(--ink-soft); border-bottom: 2px solid transparent; text-decoration: none; }
+  .section-tabs a[aria-current] { color: var(--tide); border-color: var(--tide); font-weight: 600; }
+
+  /* ---------- Sending accounts (overview.css), unchanged rules ---------- */
+  .overview-section-heading { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: .55rem; padding: 0 .1rem; }
+  .overview-section-heading h2 { margin: 0; font-size: .95rem; font-weight: 650; letter-spacing: -.012em; line-height: 1.3; }
+  .overview-section-heading > span { color: var(--ink-faint); font-size: .7rem; font-variant-numeric: tabular-nums; }
+  /* DELTA A: two columns instead of three; the Email card spans both */
+  .overview-connection-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem; }
+  .overview-channel-row { position: relative; min-width: 0; border: 1px solid var(--line); border-radius: var(--overview-radius); background: var(--surface); padding: 1rem; }
+  .overview-channel-row.is-email { grid-column: 1 / -1; }
+  .overview-channel-row > .flex { display: flex; align-items: flex-start; gap: .8rem; }
+  .channel-mark { display: flex; width: 2.25rem; height: 2.25rem; flex: none; align-items: center; justify-content: center; border-radius: .65rem; }
+  .channel-mark.is-connected { background: color-mix(in srgb, var(--ok) 10%, transparent); color: var(--ok); }
+  .channel-mark.is-open { background: color-mix(in srgb, var(--tide) 10%, transparent); color: var(--tide); }
+  .channel-mark svg { width: 1.5rem; height: 1.5rem; }
+  .channel-body { min-width: 0; flex: 1; }
+  .overview-channel-row h3 { margin: 0; font-size: .85rem; font-weight: 600; letter-spacing: -.01em; }
+  .overview-channel-row p { margin: .5rem 0 0; color: var(--ink-soft); font-size: .72rem; line-height: 1.45; }
+  .connect-btn {
+    display: inline-flex; min-height: 2rem; align-items: center; justify-content: center; gap: .4rem;
+    margin-top: .8rem; border: 0; border-radius: 999px; background: var(--tide); color: #fff;
+    padding: .45rem .7rem; font-size: .72rem; font-weight: 600; cursor: pointer;
+    transition: background 200ms var(--ease);
+  }
+  .connect-btn:hover { background: var(--tide-deep); }
+  .connect-btn svg { width: 1.1rem; height: 1.1rem; fill: currentColor; }
+
+  /* the per-channel account list: team.css member row at the card's scale */
+  .overview-accounts { position: relative; z-index: 0; margin: .55rem 0 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+  .overview-accounts li { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: .4rem .6rem; padding: .5rem 0; border-bottom: 1px solid var(--line); }
+  .overview-accounts li:last-child { border-bottom: 0; }
+  .team-avatar { display: grid; flex: 0 0 auto; width: 1.75rem; height: 1.75rem; place-items: center; border-radius: 50%; background: var(--tide-wash); color: var(--tide); font-size: .7rem; font-weight: 650; }
+  .team-member-id { min-width: 0; flex: 1 1 8rem; }
+  .team-member-name { overflow: hidden; color: var(--ink); font-size: .78rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+  .team-member-sub { overflow: hidden; color: var(--ink-faint); font-size: .68rem; text-overflow: ellipsis; white-space: nowrap; }
+  .overview-account-tail { display: flex; flex: 0 0 auto; align-items: center; gap: .4rem; margin-left: auto; }
+  .team-role { flex: 0 0 auto; border: 1px solid var(--line); border-radius: 999px; background: var(--sand); color: var(--ink-soft); padding: .14rem .6rem; font-size: .64rem; font-weight: 650; white-space: nowrap; }
+  .team-role.is-error { border-color: transparent; background: color-mix(in srgb, var(--alert) 10%, var(--surface)); color: var(--alert); }
+  .team-remove { min-height: 1.75rem; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--alert); padding: .2rem .65rem; font-size: .68rem; font-weight: 600; cursor: pointer; transition: border-color 200ms var(--ease); }
+  .team-remove:hover { border-color: color-mix(in srgb, var(--alert) 45%, var(--line)); }
+  /* team.css .team-resend: the same quiet pill in the accent, for the safe action */
+  .team-resend { min-height: 1.75rem; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--tide); padding: .2rem .65rem; font-size: .68rem; font-weight: 600; cursor: pointer; transition: border-color 200ms var(--ease), background 200ms var(--ease); }
+  .team-resend:hover { border-color: color-mix(in srgb, var(--tide) 45%, var(--line)); background: var(--tide-wash); }
+
+  /* ---------- DELTAS on the Email card ---------- */
+  /* B: one header row, the primary pill at the top right */
+  .card-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: .5rem 1rem; }
+  .card-title { min-width: 0; flex: 1 1 9rem; }
+  .card-title p { margin-top: .3rem; }
+  .card-actions { position: relative; display: flex; flex: none; align-items: center; gap: .5rem; margin-left: auto; }
+  .add-btn {
+    display: inline-flex; min-height: 2rem; align-items: center; justify-content: center; gap: .35rem;
+    margin: 0; border: 0; border-radius: 999px; background: var(--tide); color: #fff;
+    padding: .45rem .55rem .45rem .8rem; font-size: .72rem; font-weight: 600; cursor: pointer;
+    transition: background 200ms var(--ease);
+  }
+  .add-btn:hover { background: var(--tide-deep); }
+  .add-btn .ic { width: 13px; height: 13px; stroke-width: 2.2; }
+  .add-menu {
+    position: absolute; top: calc(100% + .4rem); right: 0; z-index: 5; min-width: 15.5rem;
+    border: 1px solid var(--line); border-radius: .65rem; background: var(--surface);
+    box-shadow: var(--shadow-win); padding: .3rem;
+  }
+  .add-menu button {
+    display: flex; width: 100%; align-items: center; gap: .6rem;
+    border: 0; border-radius: .5rem; background: transparent; color: var(--ink);
+    padding: .5rem .6rem; font-size: .76rem; font-weight: 500; text-align: left; cursor: pointer;
+  }
+  .add-menu button:hover { background: var(--sand); }
+  .add-menu button.is-hover { background: var(--sand); }
+  .add-menu button svg { width: 1.05rem; height: 1.05rem; flex: none; }
+  .add-menu .sep { height: 1px; margin: .3rem .4rem; background: var(--line); }
+
+  /* C: the list holds connected and bought mailboxes alike */
+  .list-wrap { position: relative; margin-top: 1rem; }
+  .list-wrap .overview-accounts { margin-top: 0; }
+
+  /* D: a provider mark in place of the initial avatar; the card mark's rounded square */
+  .provider-mark { display: flex; width: 2.25rem; height: 2.25rem; flex: none; align-items: center; justify-content: center; border-radius: .65rem; background: var(--sand); }
+  .provider-mark svg { width: 1.15rem; height: 1.15rem; }
+  .provider-mark.is-helm svg { width: 1.45rem; height: 1.45rem; }
+  .team-member-sub.is-state { white-space: normal; line-height: 1.45; }
+  .team-member-sub a { color: var(--tide); font-weight: 600; text-decoration: none; }
+  .team-member-sub a:hover { text-decoration: underline; }
+
+  /* F: the return banner and the just-added row */
+  .connected-banner {
+    display: flex; align-items: center; gap: .5rem; margin: 0 0 .9rem;
+    border: 1px solid color-mix(in srgb, var(--ok) 28%, var(--line)); border-radius: .6rem;
+    background: color-mix(in srgb, var(--ok) 7%, var(--surface)); color: var(--ok);
+    padding: .45rem .7rem; font-size: .74rem; font-weight: 500;
+  }
+  .connected-banner b { font-weight: 650; }
+  .connected-banner .ic { width: 15px; height: 15px; stroke-width: 2.4; }
+  .connected-banner .new-tag { margin-left: auto; }
+  .overview-accounts li.is-new::before {
+    content: ""; position: absolute; inset: 3px -.5rem; z-index: -1;
+    border-radius: .5rem; background: color-mix(in srgb, var(--tide-wash) 65%, var(--surface));
+  }
+
+  /* ---------- mobile panel: the card at 390px, wrap rules from the 560px media query ---------- */
+  .mobile-frame { width: 390px; border: 1px solid var(--line); border-radius: var(--r-win); background: var(--paper); box-shadow: var(--shadow-win-sm); padding: 1rem; }
+  .is-mobile .team-member-id { flex-basis: calc(100% - 2.85rem); }
+  .is-mobile .card-actions { margin-left: auto; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="helm-brand" viewBox="0 0 64 64">
+      <rect width="64" height="64" rx="14" fill="#15557e"/>
+      <g transform="translate(32 32) scale(0.88)" fill="none" stroke="#f7f4ec" stroke-linecap="round" stroke-linejoin="round">
+        <circle r="22.5" stroke-width="3.4"/>
+        <g stroke-width="3.6"><line y1="-22.5" y2="-27.5"/><g transform="rotate(45)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(90)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(135)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(180)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(225)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(270)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(315)"><line y1="-22.5" y2="-27.5"/></g></g>
+        <g stroke-width="2.5"><line y1="-8.5" y2="-19.5"/><g transform="rotate(45)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(90)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(135)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(180)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(225)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(270)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(315)"><line y1="-8.5" y2="-19.5"/></g></g>
+        <circle r="7.5" stroke-width="2.6" fill="#15557e"/>
+        <circle r="2.8" fill="#f7f4ec" stroke="none"/>
+      </g>
+    </symbol>
+    <!-- the same helm in the accent, on a light square, for a bought inbox -->
+    <symbol id="helm-mark" viewBox="0 0 64 64">
+      <g transform="translate(32 32) scale(0.88)" fill="none" stroke="#15557e" stroke-linecap="round" stroke-linejoin="round">
+        <circle r="22.5" stroke-width="3.4"/>
+        <g stroke-width="3.6"><line y1="-22.5" y2="-27.5"/><g transform="rotate(45)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(90)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(135)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(180)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(225)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(270)"><line y1="-22.5" y2="-27.5"/></g><g transform="rotate(315)"><line y1="-22.5" y2="-27.5"/></g></g>
+        <g stroke-width="2.5"><line y1="-8.5" y2="-19.5"/><g transform="rotate(45)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(90)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(135)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(180)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(225)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(270)"><line y1="-8.5" y2="-19.5"/></g><g transform="rotate(315)"><line y1="-8.5" y2="-19.5"/></g></g>
+        <circle r="7.5" stroke-width="2.6" fill="#eef2f5"/>
+        <circle r="2.8" fill="#15557e" stroke="none"/>
+      </g>
+    </symbol>
+    <symbol id="google" viewBox="0 0 18 18">
+      <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/>
+      <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.81.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18z"/>
+      <path fill="#FBBC05" d="M3.97 10.72a5.4 5.4 0 0 1 0-3.44V4.95H.96a9 9 0 0 0 0 8.1l3.01-2.33z"/>
+      <path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58A9 9 0 0 0 .96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/>
+    </symbol>
+    <symbol id="microsoft" viewBox="0 0 21 21">
+      <rect x="1" y="1" width="9" height="9" fill="#F25022"/><rect x="11" y="1" width="9" height="9" fill="#7FBA00"/>
+      <rect x="1" y="11" width="9" height="9" fill="#00A4EF"/><rect x="11" y="11" width="9" height="9" fill="#FFB900"/>
+    </symbol>
+    <symbol id="linkedin" viewBox="0 0 24 24"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zm1.78 13.02H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.22.79 24 1.77 24h20.45c.98 0 1.78-.78 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z"/></symbol>
+    <symbol id="xmark" viewBox="0 0 24 24"><path d="M18.24 2.25h3.31l-7.23 8.26L23 21.75h-6.66l-5.22-6.83-5.97 6.83H1.83l7.73-8.84L1 2.25h6.83l4.71 6.24 5.7-6.24Zm-1.16 17.52h1.84L7.02 4.13H5.04l12.04 15.64Z"/></symbol>
+    <symbol id="check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="mail" viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="m3.5 7.5 8.5 6 8.5-6"/></symbol>
+    <symbol id="caret" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-overview" viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v10h-6zM4 14h6v6H4zM14 18h6v2h-6z"/></symbol>
+    <symbol id="i-campaign" viewBox="0 0 24 24"><path d="M5 5.5h14M5 12h14M5 18.5h9"/><circle cx="3.5" cy="5.5" r=".75" fill="currentColor" stroke="none"/><circle cx="3.5" cy="12" r=".75" fill="currentColor" stroke="none"/><circle cx="3.5" cy="18.5" r=".75" fill="currentColor" stroke="none"/><path d="m17 16 3 2.5-3 2.5z"/></symbol>
+    <symbol id="i-audience" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.35-3.35 2.15-5 5.5-5s5.15 1.65 5.5 5M16 7h4M18 5v4M16.5 14.5c2.35.45 3.65 1.95 4 4.5"/></symbol>
+    <symbol id="i-demo" viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="13" height="13" rx="1.5"/><path d="m16.5 10 4-2v8l-4-2"/><path d="m9 10 4 2-4 2Z"/></symbol>
+    <symbol id="i-trigger" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.25"/><path d="M8.2 8.2a5.4 5.4 0 0 0 0 7.6M15.8 8.2a5.4 5.4 0 0 1 0 7.6M5.4 5.4a9.3 9.3 0 0 0 0 13.2M18.6 5.4a9.3 9.3 0 0 1 0 13.2"/></symbol>
+    <symbol id="i-people" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.35-3.35 2.15-5 5.5-5s5.15 1.65 5.5 5M16 6.5a2.5 2.5 0 0 1 0 5M16 14c2.7.25 4.15 1.9 4.5 5"/></symbol>
+    <symbol id="i-inbox" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 6 9 7 9-7"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 7h8M18 7h2M10 12h10M4 17h10"/><circle cx="15" cy="7" r="2.25"/><circle cx="7" cy="12" r="2.25"/><circle cx="17" cy="17" r="2.25"/></symbol>
+    <symbol id="i-admin" viewBox="0 0 24 24"><path d="M4 5.5h6v5H4zM14 5.5h6v5h-6zM4 14.5h6v4H4zM14 14.5h6v4h-6z"/><path d="M7 3v2.5M17 3v2.5M7 18.5V21M17 18.5V21"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 16 16"><path d="M9.6 1.5 4.2 8.2h3.4l-1.1 6.3 5.3-7H8.5l1.1-6Z" stroke-width="1.35"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24"><path d="M10 5H5v14h5M14 8l4 4-4 4M8 12h10"/></symbol>
+  </defs>
+</svg>
+
+<div class="canvas">
+
+  <header class="draft-head">
+    <p class="k">Design draft v1 · 2026-09-11 · sample data throughout · not wired up</p>
+    <h1>Sending accounts, many mailboxes</h1>
+    <p class="sub">Thomas at switchfrog wants to attach about ten Google Workspace mailboxes and send from all of them. Today the Email card is a third of the page, offers three equal pills, and hides bought inboxes behind a count. This draft keeps the whole page as it is and changes the Email card only. Each change carries a dashed "new" chip. Anything without a chip is unchanged. The page is drawn first, then the Email card alone in three states, then the card at phone width.</p>
+  </header>
+
+  <!-- ================= the page: /dashboard/settings?tab=accounts ================= -->
+  <p class="state-label" id="page">The page <small>· switchfrog, just back from the Google consent screen for tommy@</small></p>
+  <div class="frame">
+    <div class="shell">
+      <aside class="sidebar" aria-label="Workspace navigation">
+        <!-- sidebar: unchanged -->
+        <div class="brand-row">
+          <a class="wordmark" href="#"><svg aria-hidden="true"><use href="#helm-brand"/></svg><span>driftwood</span></a>
+        </div>
+        <a class="side-create" href="#"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>New campaign</a>
+        <nav class="side-nav" aria-label="Dashboard">
+          <a class="side-link" href="#"><svg class="ic" aria-hidden="true"><use href="#i-overview"/></svg><span>Overview</span></a>
+          <a class="side-link" href="#"><svg class="ic" aria-hidden="true"><use href="#i-campaign"/></svg><span>Campaigns</span></a>
+          <a class="side-link" href="#"><svg class="ic" aria-hidden="true"><use href="#i-audience"/></svg><span>Audiences</span></a>
+          <a class="side-link" href="#"><svg class="ic" aria-hidden="true"><use href="#i-demo"/></svg><span>Demos</span></a>
+          <a class="side-link" href="#"><svg class="ic" aria-hidden="true"><use href="#i-trigger"/></svg><span>Triggers</span></a>
+          <a class="side-link" href="#"><svg class="ic" aria-hidden="true"><use href="#i-people"/></svg><span>Face Cloning</span></a>
+          <a class="side-link" href="#"><svg class="ic" aria-hidden="true"><use href="#i-inbox"/></svg><span>Inbox</span></a>
+        </nav>
+        <div class="side-footer">
+          <a class="side-link is-active" href="#" aria-current="page"><svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg><span>Settings</span></a>
+          <div class="side-admin">
+            <div class="admin-controls">
+              <a class="admin-action" href="#"><svg class="ic" aria-hidden="true"><use href="#i-admin"/></svg>Admin panel</a>
+              <button class="admin-action" type="button"><svg class="ic" aria-hidden="true" style="width:14px;height:14px"><use href="#i-bolt"/></svg>Impersonate user</button>
+            </div>
+          </div>
+          <div class="identity">
+            <span class="avatar" aria-hidden="true">T</span>
+            <div><strong>Thomas McCormick</strong><small>switchfrog</small></div>
+            <button type="button" aria-label="Log out" title="Log out"><svg class="ic" aria-hidden="true"><use href="#i-logout"/></svg></button>
+          </div>
+        </div>
+      </aside>
+
+      <div class="stage">
+        <main class="main">
+          <!-- tabs: unchanged -->
+          <nav aria-label="Settings views" class="section-tabs">
+            <a href="#">Send schedule</a>
+            <a href="#" aria-current="page">Sending accounts</a>
+            <a href="#">Approvals</a>
+            <a href="#">Product &amp; brand assets</a>
+            <a href="#">Team</a>
+          </nav>
+
+          <section class="overview-connections" aria-labelledby="connections-title">
+            <!-- heading line: unchanged -->
+            <div class="overview-section-heading">
+              <h2 id="connections-title">Sending accounts</h2>
+              <span>3 of 3 connected</span>
+            </div>
+
+            <div class="overview-connection-grid">
+              <!-- LinkedIn card: unchanged, now half width because Email moved below -->
+              <div class="overview-channel-row">
+                <div class="flex">
+                  <span class="channel-mark is-connected" aria-hidden="true"><svg class="ic"><use href="#check"/></svg></span>
+                  <div class="channel-body">
+                    <h3>LinkedIn</h3>
+                    <ul class="overview-accounts">
+                      <li>
+                        <span class="team-avatar" aria-hidden="true">T</span>
+                        <div class="team-member-id">
+                          <div class="team-member-name">Thomas McCormick</div>
+                          <div class="team-member-sub">Linked by Thomas</div>
+                        </div>
+                        <div class="overview-account-tail"><button class="team-remove" type="button">Disconnect</button></div>
+                      </li>
+                    </ul>
+                    <button class="connect-btn" type="button"><svg aria-hidden="true"><use href="#linkedin"/></svg>Connect mine</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- X card: unchanged -->
+              <div class="overview-channel-row">
+                <div class="flex">
+                  <span class="channel-mark is-connected" aria-hidden="true"><svg class="ic"><use href="#check"/></svg></span>
+                  <div class="channel-body">
+                    <h3>X</h3>
+                    <ul class="overview-accounts">
+                      <li>
+                        <span class="team-avatar" aria-hidden="true">S</span>
+                        <div class="team-member-id">
+                          <div class="team-member-name">@switchfrog</div>
+                          <div class="team-member-sub">Linked by Thomas</div>
+                        </div>
+                        <div class="overview-account-tail"><button class="team-remove" type="button">Disconnect</button></div>
+                      </li>
+                    </ul>
+                    <button class="connect-btn" type="button"><svg aria-hidden="true"><use href="#xmark"/></svg>Connect mine</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Email card: the deltas live here -->
+              <div class="overview-channel-row is-email">
+                <div class="connected-banner" role="status">
+                  <svg class="ic" aria-hidden="true"><use href="#check"/></svg>
+                  <span><b>tommy@switchfrog.com</b> is connected.</span>
+                  <span class="new-tag">new: lands back here</span>
+                </div>
+                <div class="flex">
+                  <span class="channel-mark is-connected" aria-hidden="true"><svg class="ic"><use href="#check"/></svg></span>
+                  <div class="channel-body">
+                    <div class="card-head">
+                      <div class="card-title">
+                        <h3>Email<span class="new-tag">new: full width</span></h3>
+                        <p>3 mailboxes ready · up to 60 sends a day<span class="new-tag">new: mailbox count</span></p>
+                      </div>
+                      <div class="card-actions">
+                        <span class="new-tag" style="margin-left:0">new: one button</span>
+                        <button class="add-btn" type="button" aria-haspopup="menu">Add mailbox<svg class="ic" aria-hidden="true"><use href="#caret"/></svg></button>
+                      </div>
+                    </div>
+
+                    <div class="list-wrap">
+                      <span class="new-tag is-corner">new: one list, bought inboxes included</span>
+                      <ul class="overview-accounts">
+                        <li class="is-new">
+                          <span class="provider-mark" aria-hidden="true"><svg><use href="#google"/></svg></span>
+                          <div class="team-member-id">
+                            <div class="team-member-name">tommy@switchfrog.com</div>
+                            <div class="team-member-sub">Linked by Thomas · 12 of 20 sent today<span class="new-tag">new: row states</span></div>
+                          </div>
+                          <div class="overview-account-tail"><button class="team-remove" type="button">Disconnect</button></div>
+                        </li>
+                        <li>
+                          <span class="provider-mark" aria-hidden="true"><svg><use href="#google"/></svg></span>
+                          <div class="team-member-id">
+                            <div class="team-member-name">sales@switchfrog.com</div>
+                            <div class="team-member-sub">Linked by Thomas · 9 of 20 sent today</div>
+                          </div>
+                          <div class="overview-account-tail"><button class="team-remove" type="button">Disconnect</button></div>
+                        </li>
+                        <li>
+                          <span class="provider-mark" aria-hidden="true"><svg><use href="#google"/></svg></span>
+                          <div class="team-member-id">
+                            <div class="team-member-name">hello@switchfrog.io</div>
+                            <div class="team-member-sub is-state">Finish the sign-in in the Google tab. The link expires in 8 min. <a href="#">Open the sign-in again</a></div>
+                          </div>
+                          <div class="overview-account-tail">
+                            <span class="team-role">Waiting for Google</span>
+                            <button class="team-remove" type="button">Disconnect</button>
+                          </div>
+                        </li>
+                        <li>
+                          <span class="provider-mark" aria-hidden="true"><svg><use href="#google"/></svg></span>
+                          <div class="team-member-id">
+                            <div class="team-member-name">team@switchfrog.com</div>
+                            <div class="team-member-sub is-state">The sign-in was not finished in time.</div>
+                          </div>
+                          <div class="overview-account-tail">
+                            <span class="team-role">Link expired</span>
+                            <button class="team-resend" type="button">Reconnect</button>
+                            <button class="team-remove" type="button">Disconnect</button>
+                          </div>
+                        </li>
+                        <li>
+                          <span class="provider-mark is-helm" aria-hidden="true"><svg><use href="#helm-mark"/></svg></span>
+                          <div class="team-member-id">
+                            <div class="team-member-name">outreach@switchfrog-mail.com</div>
+                            <div class="team-member-sub">Bought inbox · warming up, 5 a day this week</div>
+                          </div>
+                          <div class="overview-account-tail"><button class="team-remove" type="button">Disconnect</button></div>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= the Email card alone, three states ================= -->
+  <h2 class="section-title">Email card states</h2>
+  <p class="section-note">The Email card on its own, at the width it has on the page above. Three states: nothing connected yet, a mailbox the Workspace admin has not allowed, and ten mailboxes.</p>
+
+  <p class="state-label">Empty <small>· nothing connected, the Add mailbox menu is open</small></p>
+  <div class="state-panel has-menu">
+    <div class="overview-channel-row is-email">
+      <div class="flex">
+        <span class="channel-mark is-open" aria-hidden="true"><svg class="ic"><use href="#mail"/></svg></span>
+        <div class="channel-body">
+          <div class="card-head">
+            <div class="card-title">
+              <h3>Connect email</h3>
+              <p>Send from your own Google Workspace or Outlook mailboxes, or buy warmed inboxes.</p>
+            </div>
+            <div class="card-actions">
+              <span class="new-tag" style="margin-left:0">new: one button</span>
+              <button class="add-btn" type="button" aria-haspopup="menu" aria-expanded="true">Add mailbox<svg class="ic" aria-hidden="true"><use href="#caret"/></svg></button>
+              <div class="add-menu" role="menu">
+                <button type="button" role="menuitem" class="is-hover"><svg aria-hidden="true"><use href="#google"/></svg>Google Workspace or Gmail</button>
+                <button type="button" role="menuitem"><svg aria-hidden="true"><use href="#microsoft"/></svg>Outlook or Microsoft 365</button>
+                <div class="sep" role="separator"></div>
+                <button type="button" role="menuitem"><svg aria-hidden="true"><use href="#helm-mark"/></svg>Buy warmed inboxes</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="state-label">Blocked by the Workspace admin <small>· the sign-in came back, but the admin has not allowed driftwood</small></p>
+  <div class="state-panel">
+    <div class="overview-channel-row is-email">
+      <div class="flex">
+        <span class="channel-mark is-open" aria-hidden="true"><svg class="ic"><use href="#mail"/></svg></span>
+        <div class="channel-body">
+          <div class="card-head">
+            <div class="card-title">
+              <h3>Email</h3>
+              <p>0 mailboxes ready</p>
+            </div>
+            <div class="card-actions">
+              <button class="add-btn" type="button" aria-haspopup="menu">Add mailbox<svg class="ic" aria-hidden="true"><use href="#caret"/></svg></button>
+            </div>
+          </div>
+          <div class="list-wrap">
+            <ul class="overview-accounts">
+              <li>
+                <span class="provider-mark" aria-hidden="true"><svg><use href="#google"/></svg></span>
+                <div class="team-member-id">
+                  <div class="team-member-name">tommy@switchfrog.com<span class="new-tag">new: row states</span></div>
+                  <div class="team-member-sub is-state">Your Google Workspace admin has not allowed driftwood yet. Ask them to trust it under Security, API controls, Manage app access.</div>
+                </div>
+                <div class="overview-account-tail">
+                  <span class="team-role is-error">Blocked</span>
+                  <button class="team-resend" type="button">Try again</button>
+                  <button class="team-remove" type="button">Disconnect</button>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="state-label">Ten mailboxes <small>· the layout at the size Thomas asked for</small></p>
+  <div class="state-panel">
+    <div class="overview-channel-row is-email">
+      <div class="flex">
+        <span class="channel-mark is-connected" aria-hidden="true"><svg class="ic"><use href="#check"/></svg></span>
+        <div class="channel-body">
+          <div class="card-head">
+            <div class="card-title">
+              <h3>Email</h3>
+              <p>10 mailboxes ready · up to 200 sends a day<span class="new-tag">new: mailbox count</span></p>
+            </div>
+            <div class="card-actions">
+              <button class="add-btn" type="button" aria-haspopup="menu">Add mailbox<svg class="ic" aria-hidden="true"><use href="#caret"/></svg></button>
+            </div>
+          </div>
+          <div class="list-wrap">
+            <ul class="overview-accounts">
+              <li>
+                <span class="provider-mark" aria-hidden="true"><svg><use href="#google"/></svg></span>
+                <div class="team-member-id"><div class="team-member-name">tommy@switchfrog.com</div><div class="team-member-sub">Linked by Thomas · 12 of 20 sent today</div></div>
+                <div class="overview-account-tail"><button class="team-remove" type="button">Disconnect</button></div>
+              </li>
+              <li>
+                <span class="provider-mark" aria-hidden="true"><svg><use href="#google"/></svg></span>
+                <div class="team-member-id"><div class="team-member-name">sales@switchfrog.com</div><div class="team-member-sub">Linked by Thomas · 9 of 20 sent today</div></div>
+                <div class="overview-account-tail"><button class="team-remove" type="button">Disconnect</button></div>
+              </li>
+              <li>
+                <span class="provider-mark" aria-hidden="true"><svg><use href="#google"/></svg></span>
+                <div class="team-member-id"><div class="team-member-name">hello@switchfrog.com</div><div class="team-member-sub">Linked by Thomas · 14 of 20 sent today</div></div>
+                <div class="overview-account-tail"><button class="team-remove" type="button">Disconnect</button></div>
+              </li>
+              <li>
+                <span class="provider-mark" aria-hidden="true"><svg><use href="#google"/></svg></span>
+                <div class="team-member-id"><div class="team-member-name">team@switchfrog.com</div><div class="team-member-sub">Linked by Thomas · 6 of 20 sent today</div></div>
+                <div class="overview-account-tail"><button class="team-remove" type="button">Disconnect</button></div>
+              </li>
+              <li>
+                <span class="provider-mark" aria-hidden="true"><svg><use href="#google"/></svg></span>
+                <div class="team-member-id"><div class="team-member-name">hi@switchfrog.com</div><div class="team-member-sub">Linked by Sam · 11 of 20 sent today</div></div>
+                <div class="overview-account-tail"><button class="team-remove" type="button">Disconnect</button></div>
+              </li>
+              <li>
+                <span class="provider-mark" aria-hidden="true"><svg><use href="#google"/></svg></span>
+                <div class="team-member-id"><div class="team-member-name">outreach@switchfrog.com</div><div class="team-member-sub">Linked by Thomas · 8 of 20 sent today</div></div>
+                <div class="overview-account-tail"><button class="team-remove" type="button">Disconnect</button></div>
+              </li>
+              <li>
+                <span class="provider-mark" aria-hidden="true"><svg><use href="#google"/></svg></span>
+                <div class="team-member-id"><div class="team-member-name">contact@switchfrog.com</div><div class="team-member-sub">Linked by Sam · 3 of 20 sent today</div></div>
+                <div class="overview-account-tail"><button class="team-remove" type="button">Disconnect</button></div>
+              </li>
+              <li>
+                <span class="provider-mark" aria-hidden="true"><svg><use href="#google"/></svg></span>
+                <div class="team-member-id"><div class="team-member-name">partners@switchfrog.com</div><div class="team-member-sub">Linked by Thomas · 0 of 20 sent today</div></div>
+                <div class="overview-account-tail"><button class="team-remove" type="button">Disconnect</button></div>
+              </li>
+              <li>
+                <span class="provider-mark" aria-hidden="true"><svg><use href="#google"/></svg></span>
+                <div class="team-member-id"><div class="team-member-name">growth@switchfrog.com</div><div class="team-member-sub">Linked by Thomas · 17 of 20 sent today</div></div>
+                <div class="overview-account-tail"><button class="team-remove" type="button">Disconnect</button></div>
+              </li>
+              <li>
+                <span class="provider-mark" aria-hidden="true"><svg><use href="#google"/></svg></span>
+                <div class="team-member-id"><div class="team-member-name">founders@switchfrog.com</div><div class="team-member-sub">Linked by Thomas · 5 of 20 sent today</div></div>
+                <div class="overview-account-tail"><button class="team-remove" type="button">Disconnect</button></div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= mobile ================= -->
+  <h2 class="section-title">Mobile</h2>
+  <p class="section-note">The Email card at 390px. The chip and Disconnect wrap under the address together, the way today's row cluster does.</p>
+  <div class="mobile-frame">
+    <div class="overview-channel-row is-email is-mobile">
+      <div class="flex">
+        <span class="channel-mark is-connected" aria-hidden="true"><svg class="ic"><use href="#check"/></svg></span>
+        <div class="channel-body">
+          <div class="card-head">
+            <div class="card-title">
+              <h3>Email</h3>
+              <p>3 mailboxes ready · up to 60 sends a day</p>
+            </div>
+            <div class="card-actions">
+              <button class="add-btn" type="button" aria-haspopup="menu">Add mailbox<svg class="ic" aria-hidden="true"><use href="#caret"/></svg></button>
+            </div>
+          </div>
+          <div class="list-wrap">
+            <ul class="overview-accounts">
+              <li>
+                <span class="provider-mark" aria-hidden="true"><svg><use href="#google"/></svg></span>
+                <div class="team-member-id"><div class="team-member-name">tommy@switchfrog.com</div><div class="team-member-sub">Linked by Thomas · 12 of 20 sent today</div></div>
+                <div class="overview-account-tail"><button class="team-remove" type="button">Disconnect</button></div>
+              </li>
+              <li>
+                <span class="provider-mark" aria-hidden="true"><svg><use href="#google"/></svg></span>
+                <div class="team-member-id"><div class="team-member-name">sales@switchfrog.com</div><div class="team-member-sub">Linked by Thomas · 9 of 20 sent today</div></div>
+                <div class="overview-account-tail"><button class="team-remove" type="button">Disconnect</button></div>
+              </li>
+              <li>
+                <span class="provider-mark" aria-hidden="true"><svg><use href="#google"/></svg></span>
+                <div class="team-member-id"><div class="team-member-name">hello@switchfrog.io</div><div class="team-member-sub is-state">Finish the sign-in in the Google tab. The link expires in 8 min. <a href="#">Open the sign-in again</a></div></div>
+                <div class="overview-account-tail"><span class="team-role">Waiting for Google</span><button class="team-remove" type="button">Disconnect</button></div>
+              </li>
+              <li>
+                <span class="provider-mark" aria-hidden="true"><svg><use href="#google"/></svg></span>
+                <div class="team-member-id"><div class="team-member-name">team@switchfrog.com</div><div class="team-member-sub is-state">The sign-in was not finished in time.</div></div>
+                <div class="overview-account-tail"><span class="team-role">Link expired</span><button class="team-resend" type="button">Reconnect</button><button class="team-remove" type="button">Disconnect</button></div>
+              </li>
+              <li>
+                <span class="provider-mark is-helm" aria-hidden="true"><svg><use href="#helm-mark"/></svg></span>
+                <div class="team-member-id"><div class="team-member-name">outreach@switchfrog-mail.com</div><div class="team-member-sub">Bought inbox · warming up, 5 a day this week</div></div>
+                <div class="overview-account-tail"><button class="team-remove" type="button">Disconnect</button></div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
