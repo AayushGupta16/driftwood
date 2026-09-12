@@ -93,9 +93,13 @@ export type StagedDemo = {
   /* Stable across reloads: the lead the demo is for, or the lone item. */
   key: string;
   lead: LeadContext | null;
-  /* Every pending item the card decides for, oldest first. */
+  /* Every pending item of this demo, oldest first. */
   itemIds: string[];
-  /* True only when the viewer may decide every item on the card. */
+  /* The items this viewer may decide. The bug_validation item is always
+     assigned to Driftwood (our own gate on whether the bug is real), so the
+     customer's decision lands on the send_email item. */
+  decidableIds: string[];
+  /* True when the demo is waiting on this viewer at all. */
   canDecide: boolean;
   /* The version every decide POST must send as If-Match. */
   policyVersion: number;
@@ -153,12 +157,14 @@ export function groupStagedDemos(items: ReviewItem[]): StagedDemo[] {
     const bug = sorted.find((item) => item.kind === "bug_validation") ?? null;
     const email = sorted.find((item) => item.kind === "send_email") ?? null;
     const lead = sorted.find((item) => item.lead)?.lead ?? null;
+    const decidable = sorted.filter((item) => item.can_decide);
     demos.push({
       key,
       lead,
       itemIds: sorted.map((item) => item.id),
-      canDecide: sorted.every((item) => item.can_decide),
-      policyVersion: sorted[0].approval_policy_version,
+      decidableIds: decidable.map((item) => item.id),
+      canDecide: decidable.length > 0,
+      policyVersion: (decidable[0] ?? sorted[0]).approval_policy_version,
       createdAt: sorted[0].created_at,
       heading: demoHeading(lead, sorted[0].title),
       subject: email?.subject ?? null,
@@ -173,17 +179,25 @@ export function groupStagedDemos(items: ReviewItem[]): StagedDemo[] {
   return demos.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
 
-/* Every pending item of one demo, as one decide POST. */
+/* One demo's decision, as one decide POST. Only the items this viewer may
+   decide go in it: the endpoint answers 403 for anything else. */
 export function decisionsFor(
   demo: StagedDemo,
   decision: "approve" | "deny",
   reason?: string,
 ): { item_id: string; decision: "approve" | "deny"; reason?: string }[] {
-  return demo.itemIds.map((id) =>
+  return demo.decidableIds.map((id) =>
     reason
       ? { item_id: id, decision, reason }
       : { item_id: id, decision },
   );
+}
+
+/* The cards that belong under "Ready for you". A demo whose items are all
+   assigned to Driftwood is waiting on us, not on the customer, so it stays
+   off their page: the quality gate is ours and stays internal. */
+export function readyForYou(demos: StagedDemo[]): StagedDemo[] {
+  return demos.filter((demo) => demo.canDecide);
 }
 
 /* ---------- Queue ---------- */

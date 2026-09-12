@@ -12,6 +12,7 @@ import {
   plannedTime,
   queueHeadline,
   queueSends,
+  readyForYou,
   runsThrough,
   sendingAccount,
   threadHref,
@@ -119,12 +120,34 @@ test("cards run oldest first, because the oldest is the one about to expire", ()
   );
 });
 
-test("a card that holds one undecidable item offers no decisions", () => {
+test("the bug item belongs to us: the decision lands on the email item only", () => {
   const demos = groupStagedDemos([
-    item({ id: "bug-1", kind: "bug_validation", can_decide: false }),
-    item({ id: "email-1" }),
+    item({ id: "bug-1", kind: "bug_validation", can_decide: false, approval_policy_version: 3 }),
+    item({ id: "email-1", can_decide: true, approval_policy_version: 3 }),
   ]);
-  assert.equal(demos[0].canDecide, false);
+  assert.deepEqual(demos[0].itemIds, ["bug-1", "email-1"]);
+  assert.deepEqual(demos[0].decidableIds, ["email-1"]);
+  assert.equal(demos[0].canDecide, true);
+  assert.equal(demos[0].policyVersion, 3);
+  assert.deepEqual(decisionsFor(demos[0], "approve"), [
+    { item_id: "email-1", decision: "approve" },
+  ]);
+});
+
+test("a demo still in our own gate never reaches the customer's list", () => {
+  const demos = groupStagedDemos([
+    item({ id: "bug-only", kind: "bug_validation", can_decide: false }),
+    item({
+      id: "ready",
+      lead: lead("l2", "Sam Okafor", "Ledgerline"),
+      can_decide: true,
+    }),
+  ]);
+  assert.equal(demos.length, 2);
+  assert.deepEqual(
+    readyForYou(demos).map((demo) => demo.itemIds),
+    [["ready"]],
+  );
 });
 
 test("the video slug is salvaged from evidence text when the column is empty", () => {
@@ -156,6 +179,7 @@ test("one decide call carries every item of the demo, with the reason when there
     { item_id: "bug-1", decision: "deny", reason: "Shorter" },
     { item_id: "email-1", decision: "deny", reason: "Shorter" },
   ]);
+  assert.deepEqual(demo.decidableIds, demo.itemIds);
 });
 
 test("the queue holds email and message rows that are still going out", () => {

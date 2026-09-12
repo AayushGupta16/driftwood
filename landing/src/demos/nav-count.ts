@@ -15,7 +15,7 @@ import {
   firstQueuePage,
   firstReviewsPage,
 } from "./staging-api";
-import { groupStagedDemos, queueSends } from "./staging-model";
+import { groupStagedDemos, queueSends, readyForYou } from "./staging-model";
 
 export async function demosNavCount(): Promise<number> {
   const policy = await approvalPolicy();
@@ -24,7 +24,7 @@ export async function demosNavCount(): Promise<number> {
     return queueSends(page.sends).length;
   }
   const page = await firstReviewsPage();
-  return groupStagedDemos(page.pending.filter((item) => item.can_decide)).length;
+  return readyForYou(groupStagedDemos(page.pending)).length;
 }
 
 /* null until the count is known, and it stays null when the read fails —

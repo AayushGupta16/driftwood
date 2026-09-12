@@ -37,6 +37,7 @@ import {
   groupSentByDay,
   groupStagedDemos,
   queueHeadline,
+  readyForYou,
   queueRows,
   runsThrough,
   threadHref,
@@ -330,10 +331,12 @@ export default function DemosPage() {
     });
   }
 
+  /* Cards are built from every pending item of a demo, then narrowed to the
+     demos that are actually waiting on this viewer. The bug_validation item
+     always belongs to Driftwood, so a demo with no customer-decidable item is
+     still in our own gate and never reaches their page. */
   const stagedDemos: StagedDemo[] =
-    staging.status === "ready"
-      ? groupStagedDemos(staging.data.items.filter((item) => item.can_decide))
-      : [];
+    staging.status === "ready" ? readyForYou(groupStagedDemos(staging.data.items)) : [];
 
   const rows =
     queue.status === "ready" ? queueRows(queue.data.sends, heldIds, senders) : [];
