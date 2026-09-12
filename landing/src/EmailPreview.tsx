@@ -1,5 +1,6 @@
 import { Fragment } from "react";
 import { parseEmailBody } from "./email-preview";
+import "./email-preview.css";
 
 type EmailPreviewProps = {
   subject: string | null;
