@@ -205,7 +205,7 @@ export function readyForYou(demos: StagedDemo[]): StagedDemo[] {
 export type QueueRow = {
   send: SendRow;
   channel: string;
-  /* "Tue Sep 16, 9:00 AM", or "Held". */
+  /* "Tue Sep 16, 9:00 AM", or "Paused". */
   planned: string;
   held: boolean;
   account: string;
@@ -266,7 +266,9 @@ export function projectedDateOf(send: SendRow): string | null {
    stamp falls on that same day, so a deferred send never claims a time it
    is not going to keep. */
 export function plannedTime(send: SendRow, held: boolean): string {
-  if (held) return "Held";
+  /* "Paused", never "held": the control that puts a row here reads "Pause
+     all sends", and one concept gets one word. */
+  if (held) return "Paused";
   const projected = projectedDateOf(send);
   const day = projected ? parseDateOnly(projected) : null;
   const due = new Date(send.due_at);
@@ -390,7 +392,9 @@ export const STAGING_BOUND =
 export const STAGING_AUTO =
   "Driftwood approves demos. Yours go straight to the queue.";
 export const EMPTY_STAGING = "Nothing waiting for you.";
-export const EMPTY_QUEUE = "Nothing scheduled.";
+/* One term per concept: the segment is the Queue, so nothing here is
+   "scheduled" or "pending". */
+export const EMPTY_QUEUE = "Nothing queued yet.";
 export const EMPTY_SENT = "Nothing sent yet.";
 export const NOT_AVAILABLE = "Not available yet.";
 
@@ -533,7 +537,7 @@ export function laterSummary(later: QueueDay[]): string {
    only the time. A send whose due stamp lands on another day has no time of
    its own yet: it goes when the window next opens. */
 export function plannedClock(send: SendRow, held: boolean): string {
-  if (held) return "Held";
+  if (held) return "Paused";
   const due = new Date(send.due_at);
   if (Number.isNaN(due.getTime())) return "In sending hours";
   return localDay(due) === sendDay(send) ? timeShort(due) : "In sending hours";

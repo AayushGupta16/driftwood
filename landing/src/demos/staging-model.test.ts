@@ -234,7 +234,7 @@ test("planned time takes the projected day, and the time only when the due stamp
   );
   assert.match(deferred, /Sep 18/);
   assert.doesNotMatch(deferred, /9:00/);
-  assert.equal(plannedTime(send({}), true), "Held");
+  assert.equal(plannedTime(send({}), true), "Paused");
 });
 
 test("the newer projected_send_date field wins over projected_date", () => {
