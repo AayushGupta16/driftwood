@@ -683,12 +683,18 @@ export default function DemosPage() {
               {staging.status === "loading" ? (
                 <CardSkeletons />
               ) : staging.status === "error" ? (
-                <ErrorState message={staging.message} onRetry={() => void loadStaging(true)} />
+                <ErrorState
+                  message={staging.message}
+                  onRetry={() => {
+                    setStaging({ status: "loading" });
+                    void loadStaging(true);
+                  }}
+                />
               ) : stagedDemos.length === 0 ? (
                 <div className="dp-empty">
                   <p>{EMPTY_STAGING}</p>
                   <button type="button" className="dp-btn" onClick={() => switchSegment("queue")}>
-                    See the queue
+                    See Queue
                   </button>
                 </div>
               ) : (
@@ -733,12 +739,20 @@ export default function DemosPage() {
       {segment === "queue" && (
         <>
           <div className="dp-bar">
-            <p className="dp-note is-flush">
-              {queue.status === "ready"
-                ? queueHeadline(runsThrough(staging.status === "ready" ? staging.data.stats : []), scheduleLine) ||
-                  "Demos go out on your sending hours."
-                : " "}
-            </p>
+            {queue.status === "ready" ? (
+              <p className="dp-note is-flush">
+                {queueHeadline(
+                  runsThrough(staging.status === "ready" ? staging.data.stats : []),
+                  scheduleLine,
+                ) || "Demos go out on your sending hours."}
+              </p>
+            ) : (
+              /* A line of nothing reads as "there is nothing to say"; this
+                 reads as "it is coming", and holds the same height. */
+              <p className="dp-note is-flush" role="status" aria-label="Loading the queue">
+                <span className="dp-skel dp-skel-headline dp-skel-pulse" />
+              </p>
+            )}
             {rows.length > 0 && (
               <div className="dp-bar-actions">
                 <button
@@ -759,7 +773,7 @@ export default function DemosPage() {
                         : "Pausing your sends now"
                       : allHeld
                         ? "Lets every paused demo go out again"
-                        : "Holds every demo in the queue until you resume"
+                        : "Pauses every demo in the Queue until you resume"
                   }
                 >
                   {busy.has("sends")
@@ -783,12 +797,18 @@ export default function DemosPage() {
           {queue.status === "loading" ? (
             <RowSkeletons />
           ) : queue.status === "error" ? (
-            <ErrorState message={queue.message} onRetry={() => void loadQueue(true)} />
+            <ErrorState
+              message={queue.message}
+              onRetry={() => {
+                setQueue({ status: "loading" });
+                void loadQueue(true);
+              }}
+            />
           ) : rows.length === 0 ? (
             <div className="dp-empty">
               <p>{EMPTY_QUEUE}</p>
               <button type="button" className="dp-btn" onClick={() => switchSegment("staging")}>
-                See staging
+                See Staging
               </button>
             </div>
           ) : (
@@ -813,7 +833,11 @@ export default function DemosPage() {
                     className="dp-later-toggle"
                     aria-expanded={laterOpen}
                     onClick={() => setLaterOpen((open) => !open)}
+                    title={laterOpen ? "Hides the days past the first week" : "Shows the days past the first week"}
                   >
+                    <span className="dp-caret" aria-hidden="true">
+                      {laterOpen ? "\u2013" : "+"}
+                    </span>
                     {laterSummary(laterDays)}
                   </button>
                   {laterOpen && (
@@ -836,8 +860,10 @@ export default function DemosPage() {
                           type="button"
                           className="dp-btn"
                           onClick={() => setLaterShown((shown) => shown + LATER_PAGE)}
+                          title="Opens the next week of the queue"
                         >
-                          Show more days
+                          Show {Math.min(LATER_PAGE, laterDays.length - laterShown).toLocaleString()} more
+                          days
                         </button>
                       )}
                     </>
@@ -858,12 +884,18 @@ export default function DemosPage() {
           {sent.status === "loading" ? (
             <RowSkeletons />
           ) : sent.status === "error" ? (
-            <ErrorState message={sent.message} onRetry={() => void loadSent(true)} />
+            <ErrorState
+              message={sent.message}
+              onRetry={() => {
+                setSent({ status: "loading" });
+                void loadSent(true);
+              }}
+            />
           ) : sentDays.length === 0 ? (
             <div className="dp-empty">
               <p>{EMPTY_SENT}</p>
               <button type="button" className="dp-btn" onClick={() => switchSegment("queue")}>
-                See the queue
+                See Queue
               </button>
             </div>
           ) : (
@@ -1236,7 +1268,7 @@ function QueueDayBlock({
       <div className="dp-day-head">
         <h3>{day.label}</h3>
         <span className="dp-day-load">{dayLoadLine(day)}</span>
-        {day.full && <span className="dp-held">Full</span>}
+        {day.full && <span className="dp-chip">Full</span>}
       </div>
       <div className="dp-tablewrap">
         <table className="dp-table">
@@ -1260,7 +1292,7 @@ function QueueDayBlock({
                 <td className="dp-muted">{row.channel}</td>
                 <td className="dp-num">
                   {row.held ? (
-                    <span className="dp-held">Held</span>
+                    <span className="dp-chip">Paused</span>
                   ) : (
                     plannedClock(row.send, row.held)
                   )}
@@ -1288,8 +1320,8 @@ function QueueDayBlock({
                       onClick={() => onUnstage(row.send)}
                       title={
                         busy.has(row.send.id)
-                          ? "Taking this demo out of the queue now"
-                          : "Takes this demo out of the queue, back to Staging"
+                          ? "Taking this demo out of the Queue now"
+                          : "Takes this demo out of the Queue, back to Staging"
                       }
                     >
                       {busy.has(row.send.id)
@@ -1328,9 +1360,9 @@ function SentDayRows({
   return (
     <>
       <tr>
-        <td className="dp-dayhead" colSpan={5}>
+        <th className="dp-dayhead" colSpan={5} scope="rowgroup">
           {label}
-        </td>
+        </th>
       </tr>
       {rows.map((send) => {
         const href = threadHref(send);
@@ -1383,11 +1415,21 @@ function RowSkeletons() {
 }
 
 function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
+  const [tried, setTried] = useState(false);
   return (
     <div className="dp-empty">
       <p role="alert">{message}</p>
-      <button type="button" className="dp-btn" onClick={onRetry}>
-        Try again
+      <button
+        type="button"
+        className="dp-btn"
+        disabled={tried}
+        title={tried ? "Loading it again now" : "Asks for this list again"}
+        onClick={() => {
+          setTried(true);
+          onRetry();
+        }}
+      >
+        {tried ? "Loading" : "Try again"}
       </button>
     </div>
   );

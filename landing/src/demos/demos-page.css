@@ -366,6 +366,7 @@
 }
 
 .dp-later-toggle:hover { border-color: var(--color-ink-faint); }
+.dp-caret { display: inline-block; width: 1rem; color: var(--color-ink-soft); font-weight: 700; }
 .dp-later .dp-day:first-of-type { margin-top: 1rem; }
 .dp-later > .dp-btn { margin-top: 1rem; }
 
@@ -402,11 +403,15 @@
 .dp-table .dp-rowacts { display: flex; flex-wrap: wrap; gap: 0.35rem; justify-content: flex-end; }
 .dp-table .dp-rowerr { color: var(--color-alert); font-size: 0.76rem; }
 
-.dp-table td.dp-dayhead {
+.dp-table th.dp-dayhead {
   background: color-mix(in srgb, var(--color-sand) 55%, white);
   color: var(--color-ink);
+  padding: 0.6rem 0.8rem;
   font-size: 0.76rem;
   font-weight: 650;
+  letter-spacing: 0;
+  text-align: left;
+  text-transform: none;
 }
 
 .dp-badge {
@@ -421,7 +426,7 @@
   font-weight: 650;
 }
 
-.dp-held {
+.dp-chip {
   display: inline-flex;
   align-items: center;
   border: 1px solid var(--color-line);
@@ -469,6 +474,7 @@
 .dp-skel-cell { height: 0.85rem; width: 8rem; }
 .dp-skel-cell.is-wide { width: 9rem; }
 .dp-skel-cell.is-narrow { width: 5rem; }
+.dp-skel-headline { display: inline-block; height: 0.8rem; width: min(100%, 27rem); vertical-align: middle; }
 
 @media (max-width: 48rem) {
   .dp-head { align-items: flex-start; flex-direction: column; }
