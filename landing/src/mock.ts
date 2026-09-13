@@ -765,11 +765,13 @@ if (mockMode) {
     sends.sends.forEach((send) => { send.held = false; });
     return { resumed: sends.sends.length };
   };
-  /* Pin keeps one demo in staging past the 3-day expiry. */
+  /* Pin keeps one demo in Staging past the 3-day expiry, and unpin is the way
+     back out. Both answer here, so the pair can be driven end to end. */
   const pinReviewApi = (_init?: RequestInit, url?: string) => {
     const path = new URL(url ?? "", location.origin).pathname;
-    if (!queueOpsLive || !path.endsWith("/pin")) return notBuiltYet(path);
-    return { pinned: true };
+    if (!queueOpsLive || !(path.endsWith("/pin") || path.endsWith("/unpin")))
+      return notBuiltYet(path);
+    return { pinned: path.endsWith("/unpin") ? false : true };
   };
   const approvalStorageKey = "driftwood.dashboard.mock-approval-policy";
   const decisionStorageKey = "driftwood.dashboard.mock-review-decisions";

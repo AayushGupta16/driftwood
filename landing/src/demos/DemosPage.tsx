@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState, type RefObject } from "react"
 import { EmailPreview } from "../EmailPreview";
 import { fetchInWaves, useToast } from "../dashboard-shared";
 import { analyticsWindow } from "../analytics/model";
-import { scheduleSentence } from "../settings/model";
 import { withMockMode } from "../mock-mode";
 import { announceDemosCountChanged } from "./nav-count";
 import {
@@ -35,9 +34,8 @@ import {
   EMPTY_STAGING,
   NOT_AVAILABLE,
   NO_LIMITS,
-  STAGING_AUTO,
-  STAGING_BOUND,
-  dayLoadLine,
+  dayChannelTitle,
+  dayRemaining,
   daySentence,
   decisionsFor,
   groupQueueByDay,
@@ -137,7 +135,7 @@ const ARM_GUARD_MS = 400;
 const OPEN_DAYS = 7;
 const LATER_PAGE = 7;
 const REPLY_WINDOW_DAYS = 90;
-const LOAD_FAILED = "That did not load. Try again.";
+const LOAD_FAILED = "That did not load.";
 
 function segmentFromUrl(): Segment {
   const value = new URLSearchParams(window.location.search).get("seg");
@@ -194,7 +192,6 @@ export default function DemosPage() {
   const [queue, setQueue] = useState<Load<QueueData>>({ status: "loading" });
   const [sent, setSent] = useState<Load<SentData>>({ status: "loading" });
   const [autoApproved, setAutoApproved] = useState<boolean | null>(null);
-  const [scheduleLine, setScheduleLine] = useState<string | null>(null);
   const [senders, setSenders] = useState<SenderPools>({ email: [], linkedin: [] });
   const [replied, setReplied] = useState<ReadonlySet<string>>(new Set());
 
@@ -321,7 +318,6 @@ export default function DemosPage() {
     workspaceSettings().then(
       (page) => {
         if (!live) return;
-        setScheduleLine(scheduleSentence(page.send_schedule));
         setLimits({
           email: page.daily_caps?.email ?? null,
           message: page.daily_caps?.message ?? null,
@@ -413,6 +409,12 @@ export default function DemosPage() {
     queue.status === "ready" ? queueRows(queue.data.sends, heldIds, senders) : [];
   const allHeld = rows.length > 0 && rows.every((row) => row.held);
   const queueDays = groupQueueByDay(rows, limits);
+  /* The From column earns its place only where a channel could send from more
+     than one account. One mailbox and one profile is the common case, and a
+     column repeating it is nine hundred rows of nothing, so a row whose
+     channel has a single account leaves the cell empty. */
+  const ambiguous = { Email: senders.email.length > 1, LinkedIn: senders.linkedin.length > 1 };
+  const showAccount = ambiguous.Email || ambiguous.LinkedIn;
   const { shown: openDays, later: laterDays } = splitQueueDays(queueDays, OPEN_DAYS);
   const sentDays = sent.status === "ready" ? groupSentByDay(sent.data.sends) : [];
 
@@ -520,7 +522,7 @@ export default function DemosPage() {
         else next.add(demo.key);
         return next;
       });
-      toast(isPinned ? "Unpinned. It can expire again." : "Pinned. It stays in Staging.", "success");
+      toast(isPinned ? "Unpinned." : "Pinned.", "success");
       return;
     }
     /* Nothing serves pinning yet. Hide the control rather than offer a dead
@@ -631,14 +633,20 @@ export default function DemosPage() {
 
       {segment === "staging" && (
         <>
-          <p className="dp-note">{STAGING_BOUND}</p>
           {autoApproved === true ? (
-            <p className="dp-note">{STAGING_AUTO}</p>
+            /* Driftwood approves here, so nothing waits on this customer. The
+               empty state says that in four words; a paragraph about who
+               approves said it in eleven and changed nothing. */
+            <div className="dp-empty">
+              <p>{EMPTY_STAGING}</p>
+              <button type="button" className="dp-btn" onClick={() => switchSegment("queue")}>
+                See Queue
+              </button>
+            </div>
           ) : (
             <>
-              <div className="dp-bar">
+              <div className="dp-bar is-bare">
                 <div>
-                  <h2>Ready for you</h2>
                   {staging.status === "ready" && !staging.data.complete && (
                     <p className="dp-quiet" role="status">
                       Loading the rest.
@@ -663,7 +671,7 @@ export default function DemosPage() {
                           ? "Approving these demos now"
                           : staging.status === "ready" && !staging.data.complete
                             ? "Available once the whole list loads"
-                            : "Approves every demo waiting for you"
+                            : undefined
                       }
                     >
                       {busy.has("all")
@@ -724,7 +732,7 @@ export default function DemosPage() {
                       onSendChange={() => {
                         const text = (drafts[demo.key] ?? "").trim();
                         if (!text) return;
-                        void submitDecision(demo, "deny", text, "Change sent. The next version comes back here.");
+                        void submitDecision(demo, "deny", text, "Change sent.");
                       }}
                       onPin={() => void togglePin(demo)}
                     />
@@ -741,10 +749,7 @@ export default function DemosPage() {
           <div className="dp-bar">
             {queue.status === "ready" ? (
               <p className="dp-note is-flush">
-                {queueHeadline(
-                  runsThrough(staging.status === "ready" ? staging.data.stats : []),
-                  scheduleLine,
-                ) || "Demos go out on your sending hours."}
+                {queueHeadline(runsThrough(staging.status === "ready" ? staging.data.stats : []))}
               </p>
             ) : (
               /* A line of nothing reads as "there is nothing to say"; this
@@ -766,15 +771,7 @@ export default function DemosPage() {
                     )
                   }
                   disabled={busy.has("sends")}
-                  title={
-                    busy.has("sends")
-                      ? allHeld
-                        ? "Resuming your sends now"
-                        : "Pausing your sends now"
-                      : allHeld
-                        ? "Lets every paused demo go out again"
-                        : "Pauses every demo in the Queue until you resume"
-                  }
+                  title={busy.has("sends") ? "Working on your sends now" : undefined}
                 >
                   {busy.has("sends")
                     ? "Working"
@@ -820,6 +817,8 @@ export default function DemosPage() {
                   busy={busy}
                   rowError={rowError}
                   armedUnstage={(id) => isArmed({ kind: "unstage", key: id })}
+                  showAccount={showAccount}
+                  accountFor={(channel) => (ambiguous[channel as "Email" | "LinkedIn"] ? true : false)}
                   onMoveToTop={(send) => void moveRowToTop(send)}
                   onUnstage={(send) =>
                     armOrRun({ kind: "unstage", key: send.id }, () => void unstageRow(send))
@@ -833,7 +832,6 @@ export default function DemosPage() {
                     className="dp-later-toggle"
                     aria-expanded={laterOpen}
                     onClick={() => setLaterOpen((open) => !open)}
-                    title={laterOpen ? "Hides the days past the first week" : "Shows the days past the first week"}
                   >
                     <span className="dp-caret" aria-hidden="true">
                       {laterOpen ? "\u2013" : "+"}
@@ -849,6 +847,8 @@ export default function DemosPage() {
                           busy={busy}
                           rowError={rowError}
                           armedUnstage={(id) => isArmed({ kind: "unstage", key: id })}
+                          showAccount={showAccount}
+                          accountFor={(channel) => (ambiguous[channel as "Email" | "LinkedIn"] ? true : false)}
                           onMoveToTop={(send) => void moveRowToTop(send)}
                           onUnstage={(send) =>
                             armOrRun({ kind: "unstage", key: send.id }, () => void unstageRow(send))
@@ -860,7 +860,6 @@ export default function DemosPage() {
                           type="button"
                           className="dp-btn"
                           onClick={() => setLaterShown((shown) => shown + LATER_PAGE)}
-                          title="Opens the next week of the queue"
                         >
                           Show {Math.min(LATER_PAGE, laterDays.length - laterShown).toLocaleString()} more
                           days
@@ -963,7 +962,6 @@ function DemoCard({
   onPin: () => void;
 }) {
   const lead = demo.lead;
-  const role = [lead?.title, lead?.company].filter(Boolean).join(", ");
   const videoRef = useRef<HTMLVideoElement>(null);
   /* A clip that will not play has no moment to jump to, so the timestamp
      link goes with it rather than becoming a dead click. */
@@ -984,21 +982,21 @@ function DemoCard({
   return (
     <article className="dp-card" aria-label={demo.heading}>
       <div className="dp-card-top">
-        <h3>{demo.heading}</h3>
-        <span className="dp-age">{ageLabel(demo.createdAt)}</span>
-      </div>
-      {lead && (
-        <p className="dp-lead">
-          {lead.linkedin_url && lead.name ? (
+        <h3>
+          {lead?.linkedin_url ? (
             <a href={lead.linkedin_url} target="_blank" rel="noopener noreferrer">
-              {lead.name}
+              {demo.heading}
             </a>
           ) : (
-            lead.name
+            demo.heading
           )}
-          {role && (lead.name ? `, ${role}` : role)}
-        </p>
-      )}
+        </h3>
+        <span className="dp-age">{ageLabel(demo.createdAt)}</span>
+      </div>
+      {/* The heading already carries the name and the company. The line under
+          it used to repeat both to add a job title, so it carries the title
+          alone now, and the profile link rides on the heading. */}
+      {lead?.title && <p className="dp-lead">{lead.title}</p>}
 
       {/* The bug in one line, the moment it happens, then the email, then the
           clip. The four label rows this replaced pushed the demo itself off
@@ -1027,7 +1025,7 @@ function DemoCard({
               className="dp-btn is-primary"
               onClick={onApprove}
               disabled={busy}
-              title={busy ? "Working on this demo now" : "Sends this demo, on your sending hours"}
+              title={busy ? "Working on this demo now" : undefined}
             >
               {busy ? "Working" : "Approve"}
             </button>
@@ -1037,13 +1035,7 @@ function DemoCard({
               onClick={onOpenChange}
               aria-expanded={change !== null}
               disabled={busy}
-              title={
-                busy
-                  ? "Working on this demo now"
-                  : change !== null
-                    ? "Closes the box. What you typed is kept."
-                    : "Say what to change and we make it again"
-              }
+              title={busy ? "Working on this demo now" : undefined}
             >
               Ask for a change
             </button>
@@ -1052,9 +1044,9 @@ function DemoCard({
               className={`dp-btn ${armedSkip ? "is-armed" : ""}`}
               onClick={onSkip}
               disabled={busy}
-              title={busy ? "Working on this demo now" : "Drops this demo. Nothing goes to this person."}
+              title={busy ? "Working on this demo now" : undefined}
             >
-              {busy ? "Working" : armedSkip ? "Skip this demo? Confirm" : "Skip"}
+              {busy ? "Working" : armedSkip ? "Skip? Confirm" : "Skip"}
             </button>
             {pinnable && (
               <button
@@ -1063,13 +1055,7 @@ function DemoCard({
                 onClick={onPin}
                 aria-pressed={pinned}
                 disabled={busy}
-                title={
-                  busy
-                    ? "Working on this demo now"
-                    : pinned
-                      ? "Lets this demo expire again"
-                      : "Keeps this demo in Staging past 3 days"
-                }
+                title={busy ? "Working on this demo now" : undefined}
               >
                 {busy ? "Working" : pinned ? "Unpin" : "Pin"}
               </button>
@@ -1084,7 +1070,6 @@ function DemoCard({
                 id={`change-${demo.key}`}
                 value={change}
                 onChange={(event) => onChangeText(event.target.value)}
-                placeholder="What should change?"
               />
               <div className="dp-change-row">
                 <button
@@ -1097,7 +1082,7 @@ function DemoCard({
                       ? "Sending your note now"
                       : change.trim().length === 0
                         ? "Say what should change first"
-                        : "Sends your note. The next version comes back here."
+                        : undefined
                   }
                 >
                   {busy ? "Sending" : "Send"}
@@ -1107,7 +1092,7 @@ function DemoCard({
                   className="dp-btn"
                   onClick={onOpenChange}
                   disabled={busy}
-                  title={busy ? "Sending your note now" : "Closes the box. What you typed is kept."}
+                  title={busy ? "Sending your note now" : undefined}
                 >
                   Cancel
                 </button>
@@ -1211,7 +1196,7 @@ function DemoVideo({
   if (failed)
     return (
       <div className="dp-media dp-video-missing">
-        <p>This demo will not play here.</p>
+        <p>Cannot play here.</p>
         <a className="dp-btn is-small" href={href} target="_blank" rel="noopener noreferrer">
           Open it in a new tab
         </a>
@@ -1253,6 +1238,8 @@ function QueueDayBlock({
   busy,
   rowError,
   armedUnstage,
+  showAccount,
+  accountFor,
   onMoveToTop,
   onUnstage,
 }: {
@@ -1260,25 +1247,38 @@ function QueueDayBlock({
   busy: ReadonlySet<string>;
   rowError: { id: string; message: string } | null;
   armedUnstage: (sendId: string) => boolean;
+  showAccount: boolean;
+  accountFor: (channel: string) => boolean;
   onMoveToTop: (send: SendRow) => void;
   onUnstage: (send: SendRow) => void;
 }) {
+  const left = dayRemaining(day);
   return (
     <section className="dp-day" aria-label={day.label}>
       <div className="dp-day-head">
         <h3>{day.label}</h3>
-        <span className="dp-day-load">{dayLoadLine(day)}</span>
-        {day.full && <span className="dp-chip">Full</span>}
+        {day.full ? (
+          <span className="dp-chip" title={dayChannelTitle(day)}>
+            Full
+          </span>
+        ) : (
+          left !== null && (
+            <span className="dp-day-load" title={dayChannelTitle(day)}>
+              {left.toLocaleString()} left
+            </span>
+          )
+        )}
       </div>
       <div className="dp-tablewrap">
         <table className="dp-table">
           <thead>
             <tr>
-              <th scope="col">Contact</th>
-              <th scope="col">Company</th>
-              <th scope="col">Channel</th>
+              <th scope="col">Who</th>
+              <th scope="col">
+                <span className="sr-only">Channel</span>
+              </th>
               <th scope="col">Planned</th>
-              <th scope="col">From</th>
+              {showAccount && <th scope="col">From</th>}
               <th scope="col">
                 <span className="sr-only">Actions</span>
               </th>
@@ -1287,9 +1287,15 @@ function QueueDayBlock({
           <tbody>
             {day.rows.map((row) => (
               <tr key={row.send.id}>
-                <td>{row.send.lead?.name ?? "Not named yet"}</td>
-                <td className="dp-muted">{row.send.lead?.company ?? ""}</td>
-                <td className="dp-muted">{row.channel}</td>
+                <td>
+                  {row.send.lead?.name ?? "Not named yet"}
+                  {row.send.lead?.company && (
+                    <span className="dp-muted">, {row.send.lead.company}</span>
+                  )}
+                </td>
+                <td>
+                  <ChannelGlyph channel={row.channel} />
+                </td>
                 <td className="dp-num">
                   {row.held ? (
                     <span className="dp-chip">Paused</span>
@@ -1297,7 +1303,9 @@ function QueueDayBlock({
                     plannedClock(row.send, row.held)
                   )}
                 </td>
-                <td className="dp-muted">{row.account}</td>
+                {showAccount && (
+                  <td className="dp-muted">{accountFor(row.channel) ? row.account : ""}</td>
+                )}
                 <td>
                   <div className="dp-rowacts">
                     <button
@@ -1305,11 +1313,7 @@ function QueueDayBlock({
                       className="dp-btn is-small"
                       disabled={busy.has(row.send.id)}
                       onClick={() => onMoveToTop(row.send)}
-                      title={
-                        busy.has(row.send.id)
-                          ? "Moving this demo now"
-                          : "Sends this one first today and moves the last one on"
-                      }
+                      title={busy.has(row.send.id) ? "Moving this demo now" : undefined}
                     >
                       {busy.has(row.send.id) ? "Working" : "Move to top"}
                     </button>
@@ -1318,11 +1322,7 @@ function QueueDayBlock({
                       className={`dp-btn is-small ${armedUnstage(row.send.id) ? "is-armed" : ""}`}
                       disabled={busy.has(row.send.id)}
                       onClick={() => onUnstage(row.send)}
-                      title={
-                        busy.has(row.send.id)
-                          ? "Taking this demo out of the Queue now"
-                          : "Takes this demo out of the Queue, back to Staging"
-                      }
+                      title={busy.has(row.send.id) ? "Taking this demo out now" : undefined}
                     >
                       {busy.has(row.send.id)
                         ? "Working"
@@ -1343,6 +1343,34 @@ function QueueDayBlock({
         </table>
       </div>
     </section>
+  );
+}
+
+/* The channel, as a mark rather than a word: the column repeats itself down
+   forty days, and "Email" written out nine hundred times is not information.
+   The label rides on aria-label, so a reader still hears it. */
+function ChannelGlyph({ channel }: { channel: string }) {
+  const email = channel === "Email";
+  return (
+    <span className="dp-glyph" role="img" aria-label={channel}>
+      {email ? (
+        <svg viewBox="0 0 16 16" width="15" height="15" fill="none" aria-hidden="true">
+          <rect x="1.5" y="3.5" width="13" height="9" rx="1.6" stroke="currentColor" strokeWidth="1.3" />
+          <path d="M2.5 5 8 8.8 13.5 5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">
+          <rect x="1.2" y="1.2" width="13.6" height="13.6" rx="2.6" fill="currentColor" opacity=".14" />
+          <path
+            d="M4.6 6.4v5m0-7.1v.02M7.4 11.4v-5m0 1.6c.5-1 1.4-1.6 2.4-1.6 1.2 0 1.9.8 1.9 2.2v2.8"
+            stroke="currentColor"
+            strokeWidth="1.35"
+            strokeLinecap="round"
+            fill="none"
+          />
+        </svg>
+      )}
+    </span>
   );
 }
 
@@ -1423,7 +1451,7 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
         type="button"
         className="dp-btn"
         disabled={tried}
-        title={tried ? "Loading it again now" : "Asks for this list again"}
+        title={tried ? "Loading it again now" : undefined}
         onClick={() => {
           setTried(true);
           onRetry();

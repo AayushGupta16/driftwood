@@ -94,6 +94,13 @@ here in the same commit. Testable rules only; taste lives in the other file.
     what happened and what happens next, and a backend that ships vendor
     strings to a customer-visible field is a bug on the backend.
 
+19. **A line of text earns its place only if it changes what the user does
+    next.** Delete the rest, then cut half the words from what survives.
+    Explanations of our own mechanism, bounds and rules that are not switched
+    on, and labels that repeat the heading above them are all text the reader
+    pays for and gets nothing back. A tooltip is optional context only: never
+    put a rule, a limit, or anything a task depends on inside one.
+
 ## Process
 
 - Audit → findings ranked by user pain → fix in minimal, tagged deltas.

@@ -333,17 +333,11 @@ export function runsThrough(stats: QueueStat[]): string | null {
   return dates.length ? dates[dates.length - 1] : null;
 }
 
-/* "Queue runs through Thu Sep 17. Sends Monday to Friday, 9:00 AM to 6:00 PM
-   PDT." Either half stands alone when the other is not known yet. */
-export function queueHeadline(
-  runsThroughDate: string | null,
-  scheduleLine: string | null,
-): string {
+/* "Runs through Thu Sep 17." The sending window used to ride along here and
+   was cut: it is a setting, and it lives in settings. */
+export function queueHeadline(runsThroughDate: string | null): string {
   const day = runsThroughDate ? parseDateOnly(runsThroughDate) : null;
-  const parts: string[] = [];
-  if (day) parts.push(`Queue runs through ${dayShort(day)}.`);
-  if (scheduleLine) parts.push(`${scheduleLine}.`);
-  return parts.join(" ");
+  return day ? `Runs through ${dayShort(day)}.` : "";
 }
 
 /* ---------- Sent ---------- */
@@ -387,10 +381,10 @@ export function threadHref(send: SendRow): string | null {
 
 /* ---------- copy ---------- */
 
-export const STAGING_BOUND =
-  "Staging holds up to 30. Anything older than 3 days expires unless you pin it.";
-export const STAGING_AUTO =
-  "Driftwood approves demos. Yours go straight to the queue.";
+/* The staging bound and the "Driftwood approves" line used to sit here. Both
+   described our mechanism rather than the customer's next move, and the
+   expiry they named is not switched on for any workspace. When a workspace
+   really carries an expiry flag, one short line comes back then. */
 export const EMPTY_STAGING = "Nothing waiting for you.";
 /* One term per concept: the segment is the Queue, so nothing here is
    "scheduled" or "pending". */
@@ -501,9 +495,17 @@ export function groupQueueByDay(
     });
 }
 
-/* "8 of 20 emails · 3 of 25 LinkedIn", or the bare counts when the workspace
-   exposes no limit for that channel. */
-export function dayLoadLine(day: QueueDay): string {
+/* How many more demos the day can take. Null when the workspace exposes no
+   limit, and the header then carries the day alone. */
+export function dayRemaining(day: QueueDay): number | null {
+  const capped = day.channels.filter((load) => load.cap !== null);
+  if (capped.length === 0) return null;
+  return capped.reduce((left, load) => left + Math.max(0, (load.cap ?? 0) - load.used), 0);
+}
+
+/* The per-channel arithmetic, for the one place it belongs: a title on the
+   number, for the reader who wants the split. Never on screen. */
+export function dayChannelTitle(day: QueueDay): string {
   return day.channels
     .map((load) =>
       load.cap === null
@@ -539,8 +541,8 @@ export function laterSummary(later: QueueDay[]): string {
 export function plannedClock(send: SendRow, held: boolean): string {
   if (held) return "Paused";
   const due = new Date(send.due_at);
-  if (Number.isNaN(due.getTime())) return "In sending hours";
-  return localDay(due) === sendDay(send) ? timeShort(due) : "In sending hours";
+  if (Number.isNaN(due.getTime())) return "Sending hours";
+  return localDay(due) === sendDay(send) ? timeShort(due) : "Sending hours";
 }
 
 /* ---------- the bug, on the card ---------- */

@@ -16,7 +16,8 @@ import {
   runsThrough,
   NO_LIMITS,
   dayLabel,
-  dayLoadLine,
+  dayChannelTitle,
+  dayRemaining,
   daySentence,
   groupQueueByDay,
   laterSummary,
@@ -277,16 +278,9 @@ test("runs-through takes the last day across the kinds this page shows", () => {
   assert.equal(runsThrough([]), null);
 });
 
-test("the queue headline drops the half it does not know", () => {
-  assert.match(
-    queueHeadline("2026-09-17", "Sends Monday to Friday, 9:00 AM to 6:00 PM PDT"),
-    /^Queue runs through .+\. Sends Monday to Friday, 9:00 AM to 6:00 PM PDT\.$/,
-  );
-  assert.equal(
-    queueHeadline(null, "Sends every day, 9:00 AM to 5:00 PM PDT"),
-    "Sends every day, 9:00 AM to 5:00 PM PDT.",
-  );
-  assert.equal(queueHeadline(null, null), "");
+test("the queue headline is the date and nothing else", () => {
+  assert.match(queueHeadline("2026-09-17"), /^Runs through .*Sep 17\.$/);
+  assert.equal(queueHeadline(null), "");
 });
 
 test("sent rows group by the day they went out, newest first", () => {
@@ -350,7 +344,8 @@ test("rows group into days, in order, with per-channel load against the limits",
   );
   assert.deepEqual(days.map((day) => day.label), ["Today", "Tomorrow"]);
   assert.deepEqual(days[0].rows.map((row) => row.send.id), ["b", "c", "d"]);
-  assert.equal(dayLoadLine(days[0]), "2 of 2 emails · 1 of 5 LinkedIn");
+  assert.equal(dayChannelTitle(days[0]), "2 of 2 emails · 1 of 5 LinkedIn");
+  assert.equal(dayRemaining(days[0]), 4);
   // Email is at its limit but LinkedIn is not, so the day still takes work.
   assert.equal(days[0].full, false);
 });
@@ -366,7 +361,8 @@ test("a day whose every channel is at its limit reads as full", () => {
 
 test("with no limits exposed, a day shows its counts and is never full", () => {
   const days = groupQueueByDay([qrow("a", "email", "2026-09-12")], NO_LIMITS, TODAY);
-  assert.equal(dayLoadLine(days[0]), "1 email");
+  assert.equal(dayChannelTitle(days[0]), "1 email");
+  assert.equal(dayRemaining(days[0]), null);
   assert.equal(days[0].full, false);
 });
 
