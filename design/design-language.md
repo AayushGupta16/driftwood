@@ -86,6 +86,12 @@ on marketing pages and is never a second brand accent.
 - **Buttons**: pills (`border-radius: 999px`). Primary action = tide
   background, white text, hover tide-deep. There are no black buttons.
   Secondary = outlined/ghost. This applies to the dashboard too.
+  **Tertiary is quiet text** (2026-09-13, on "the on hover for the controls is
+  terrible ui"): no border, no fill, `ink-soft` at the type size of the text
+  around it, darkening to `ink` on hover with the standard focus ring. It is
+  for a control that repeats down a list, where a pill per row is the loudest
+  thing on the page. It is the answer to that noise; hiding the control until
+  hover is not (see ux-principles.md rule 20).
 - **The backed-by line** (2026-08-09, placed by Aayush after one round):
   investor provenance is two words and the mark — "Backed by" + the ink
   alpha lockup at 1.8rem, opacity 0.82 — riding the open water *under the

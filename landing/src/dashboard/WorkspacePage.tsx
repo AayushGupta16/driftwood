@@ -6,6 +6,7 @@ import { WorkspacePermissionsProvider } from "./workspace-permissions";
 import type { WorkspaceRole } from "./workspace-permissions-context";
 import { withMockMode } from "../mock-mode";
 import { clearIdentity, loadIdentity } from "../identity";
+import { useDemosNavCount } from "../demos/nav-count";
 
 type WorkspaceUser = {
   email: string;
@@ -70,6 +71,11 @@ export default function WorkspacePage({
     };
   }, []);
 
+  /* The Demos badge: what waits on the customer, or what is scheduled when
+     Driftwood approves. Read once the viewer is known, so an unauthed page
+     load asks for nothing. */
+  const demosCount = useDemosNavCount(auth.status === "ready");
+
   async function logout() {
     try {
       await fetch("/auth/logout", { method: "POST", credentials: "include" });
@@ -104,6 +110,7 @@ export default function WorkspacePage({
           adminControl={user.is_admin ? <AdminPanelControls /> : undefined}
           notice={notice}
           canWrite={canWrite}
+          navCounts={{ demos: demosCount }}
         >
           {children}
         </AppShell>

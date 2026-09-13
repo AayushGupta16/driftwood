@@ -1,4 +1,4 @@
-import { parsePolicy, reviewerFor, type ApprovalPolicy } from "./approvals/model.ts";
+import { parsePolicy, reviewerFor, type ApprovalMode, type ApprovalPolicy } from "./approvals/model.ts";
 import { initializeMockMode, mockBlockedResponse } from "./mock-mode.ts";
 import { resendRefusalMessage, resendWaitMinutes } from "./team/team-model.ts";
 import { uploadKindFor } from "./assets/model.ts";
@@ -106,6 +106,11 @@ if (mockMode) {
     channel_state,
     ...extra,
   });
+  /* `?senders=named` puts a sender on every queued row, which is the only
+     thing that brings the queue's From column back: the column reads the
+     rows, not the account list. Nothing serves that field yet, so the default
+     fixture leaves it unset and the column stays away. */
+  const namedSenders = params.get("senders") === "named";
   const xMode = params.get("x");
   const mockAccounts: Record<"linkedin" | "email" | "x", MockAccount[]> = {
     linkedin: [
@@ -293,6 +298,20 @@ if (mockMode) {
     new Date(Date.now() + d * 86400e3).toISOString();
   const dateAhead = (d: number) =>
     new Date(Date.now() + d * 86400e3).toISOString().slice(0, 10);
+  /* The page groups by the projected date in the reader's own timezone, so
+     the fixture's days are local days. dateAhead() is UTC and drifts a day
+     after 5pm Pacific, which would label today's block "Tomorrow". */
+  /* Demo slugs that resolve to real bytes. The page asks for /d/<slug>, and
+     the browser folds "/d/../case-autosana.mp4" to "/case-autosana.mp4"
+     before it ever leaves, so these fixtures serve three clips that really
+     play, out of the landing assets, in dev and on a preview alike. Without
+     them every card is a dead frame and the console carries a 404 per card. */
+  const clip = (name: string) => `../${name}`;
+  const localDateAhead = (dayOffset: number) => {
+    const at = new Date();
+    at.setDate(at.getDate() + dayOffset);
+    return `${at.getFullYear()}-${String(at.getMonth() + 1).padStart(2, "0")}-${String(at.getDate()).padStart(2, "0")}`;
+  };
   const lead = (name: string, title: string, company: string) => ({
     lead_id: name, name, title, company,
     linkedin_url: `https://www.linkedin.com/in/${name.toLowerCase().replace(/\s+/g, "-")}`,
@@ -339,21 +358,84 @@ if (mockMode) {
       sent_at: hoursAgo(99),
     },
   ];
+  /* Three demos, each the pair the agent files: a bug_validation item that
+     carries the clip and its evidence, and a send_email item that carries the
+     copy. The Demos page groups a pair into one card by lead. The message and
+     the connection request below are the rest of the review queue, and prove
+     the customer's page leaves them out. */
+  sentLedger.push({
+    id: "sl5", batch_id: "sb0", kind: "message",
+    note: "hey ines \u2014 the relayworks segment editor saves an empty rule without a warning. 36-second clip attached.",
+    subject: null, attachment_slug: null,
+    lead: lead("Ines Duarte", "Product lead", "Relayworks"),
+    status: "sent", error: null, error_class: null,
+    due_at: hoursAgo(76), projected_date: null, created_at: hoursAgo(77),
+    sent_at: hoursAgo(73),
+  });
   const reviews = {
     counts: {
-      pending: 5,
-      pending_sends: 4,
-      pending_system: 1,
+      pending: 8,
+      pending_sends: 5,
+      pending_system: 3,
       approved_7d: 12,
       denied_7d: 2,
     },
     pending: [
       {
         id: "rb1", batch_id: "b9", agent_id: "demo", kind: "bug_validation",
+        title: "Northstar · pricing page drops the plan choice",
+        body: "Picking the Growth plan on northstar.io/pricing and pressing back loses the choice, so checkout opens on Starter.",
+        lead: lead("Priya Patel", "Head of Growth", "Northstar"),
+        attachment_slug: clip("compare.mp4"),
+        evidence: {
+          repro_steps: [
+            "Open northstar.io/pricing on a clean profile",
+            "Pick the Growth plan and press Continue",
+            "Press back once, then Continue again",
+            "Checkout opens on Starter, with the Growth price still shown above it",
+          ],
+          url: "northstar.io/pricing",
+          device: "iPhone 15 Pro · iOS 18.5 · 393x852",
+          video_timestamp: "bug visible at 0:19",
+        },
+        status: "pending", decision_reason: null, decided_at: null,
+        scheduled_batch_id: null, created_at: hoursAgo(30),
+      },
+      {
+        id: "rb2", batch_id: "b9", agent_id: "demo", kind: "bug_validation",
+        title: "Autosana · run history loses its filter",
+        body: "The run history filter resets to All every time a run finishes, so a long suite cannot be watched on one label.",
+        lead: lead("Yuvan Kumar", "CEO", "Autosana"),
+        attachment_slug: clip("case-autosana.mp4"),
+        evidence: {
+          repro_steps: [
+            "Open the run history and filter to one label",
+            "Start a run and wait for it to finish",
+            "The filter is back on All",
+          ],
+          url: "app.autosana.dev/runs",
+          device: "Chrome 141 · macOS 15.6",
+          video_timestamp: "bug visible at 0:08",
+        },
+        status: "pending", decision_reason: null, decided_at: null,
+        scheduled_batch_id: null, created_at: hoursAgo(6),
+      },
+      {
+        id: "rb3", batch_id: "b10", agent_id: "demo", kind: "bug_validation",
         title: "Meridian · booking flow bug",
         body: "Selecting a same-day slot on meridian.com/book throws a 500 and drops the reservation.",
-        lead: null, attachment_slug: null,
-        evidence: { device: "Pixel 9", video_timestamp: "0:12" },
+        lead: lead("Dana Whitfield", "VP Ops", "Meridian"),
+        attachment_slug: clip("case-oruk.mp4"),
+        evidence: {
+          repro_steps: [
+            "Open meridian.com/book and pick today",
+            "Choose any open slot and press Reserve",
+            "The page shows a 500 and the reservation is gone from the list",
+          ],
+          url: "meridian.com/book",
+          device: "Pixel 9 · Android 16",
+          video_timestamp: "bug visible at 0:12",
+        },
         status: "pending", decision_reason: null, decided_at: null,
         scheduled_batch_id: null, created_at: hoursAgo(1.2),
       },
@@ -367,13 +449,24 @@ if (mockMode) {
         created_at: hoursAgo(0.15),
       },
       {
-        id: "r2", batch_id: "b1", agent_id: "demo", kind: "send_message",
-        title: "Northstar \u00b7 Priya Patel (message)",
-        body: "hey priya, found a dead link on northstar's pricing page. built you a working demo of the fix, 19 seconds, link below. worth a look?",
+        id: "r2", batch_id: "b1", agent_id: "demo", kind: "send_email",
+        title: "Northstar \u00b7 Priya Patel (email)",
+        subject: "The plan choice your pricing page loses",
+        body: "Hey Priya,\n\nPicking Growth on your pricing page and pressing back opens checkout on Starter. Here is a 22-second clip of it, and the fix running.\n\nWorth a look?\n\nBest,\nAayush",
         lead: lead("Priya Patel", "Head of Growth", "Northstar"),
-        attachment_slug: null, evidence: null, status: "pending",
+        attachment_slug: clip("compare.mp4"), evidence: null, status: "pending",
         decision_reason: null, decided_at: null, scheduled_batch_id: null,
-        created_at: hoursAgo(0.4),
+        created_at: hoursAgo(29.5),
+      },
+      {
+        id: "r5", batch_id: "b10", agent_id: "demo", kind: "send_email",
+        title: "Meridian \u00b7 Dana Whitfield (email)",
+        subject: "Same-day booking is dropping reservations",
+        body: "Hey Dana,\n\nA same-day slot on meridian.com/book returns a 500 and the reservation disappears. Short clip of the repro, and of it working after the fix.\n\nHappy to run the same pass on your next release.\n\nBest,\nAayush",
+        lead: lead("Dana Whitfield", "VP Ops", "Meridian"),
+        attachment_slug: clip("case-oruk.mp4"), evidence: null, status: "pending",
+        decision_reason: null, decided_at: null, scheduled_batch_id: null,
+        created_at: hoursAgo(1),
       },
       {
         id: "r3", batch_id: "b2", agent_id: "demo", kind: "send_connection",
@@ -395,17 +488,17 @@ if (mockMode) {
         created_at: hoursAgo(1.4),
       },
     ],
-    decided: [], total_pending: 4, limit: 25, offset: 0,
+    decided: [], total_pending: 8, limit: 25, offset: 0,
     queue_stats: [
       { kind: "connection_request", queued: 2, sent_24h: 3, cap: 20, runs_through: dateAhead(2), failed: 2 },
-      { kind: "message", queued: 3, sent_24h: 6, cap: 25, runs_through: dateAhead(2), failed: 0 },
-      { kind: "email", queued: 1, sent_24h: 2, cap: 20, runs_through: dateAhead(1), failed: 0 },
+      { kind: "message", queued: 5, sent_24h: 6, cap: 25, runs_through: localDateAhead(39), failed: 0 },
+      { kind: "email", queued: 3, sent_24h: 2, cap: 20, runs_through: localDateAhead(39), failed: 0 },
     ],
   };
   // Approved-but-undelivered ScheduledSends (the review page's Queued tab),
   // due_at asc = the send order. One sending, two failed (one classified,
   // one pre-classification null), the rest pending.
-  type MockSend = { id: string; batch_id: string; kind: string; subject?: string | null; note: string; attachment_slug: string | null; lead: ReturnType<typeof lead> | null; status: string; error: string | null; error_class: string | null; due_at: string; projected_date: string | null; created_at: string };
+  type MockSend = { id: string; batch_id: string; kind: string; subject?: string | null; note: string; attachment_slug: string | null; lead: ReturnType<typeof lead> | null; status: string; error: string | null; error_class: string | null; due_at: string; projected_date: string | null; created_at: string; held?: boolean; sending_account?: string | null };
   const sends: { sends: MockSend[]; total: number; limit: number; offset: number; counts: { pending: number; sending: number; failed: number; sent: number } } = {
     sends: [
       {
@@ -434,7 +527,7 @@ if (mockMode) {
       {
         id: "s3", batch_id: "sb2", kind: "message",
         note: "hey priya, found a dead link on northstar's pricing page. built you a working demo of the fix, 19 seconds, link below. worth a look?",
-        attachment_slug: "northstar-pricing-fix", lead: lead("Priya Patel", "Head of Growth", "Northstar"),
+        attachment_slug: clip("compare.mp4"), lead: lead("Priya Patel", "Head of Growth", "Northstar"),
         status: "pending", error: null, error_class: null,
         due_at: daysAhead(0.2), projected_date: dateAhead(0), created_at: hoursAgo(21),
       },
@@ -460,6 +553,36 @@ if (mockMode) {
         due_at: daysAhead(2.5), projected_date: null, created_at: hoursAgo(4),
       },
       {
+        id: "s9", batch_id: "sb5", kind: "email",
+        subject: "The plan choice your pricing page loses",
+        note: "Hey Priya,\n\nPicking Growth on your pricing page and pressing back opens checkout on Starter. Here is a 22-second clip of it, and the fix running.\n\nWorth a look?\n\nBest,\nAayush",
+        attachment_slug: clip("compare.mp4"), lead: lead("Priya Patel", "Head of Growth", "Northstar"),
+        status: "pending", error: null, error_class: null,
+        due_at: daysAhead(0.3), projected_date: dateAhead(0), created_at: hoursAgo(9),
+      },
+      {
+        id: "s10", batch_id: "sb5", kind: "message",
+        note: "hey ines — the relayworks segment editor saves an empty rule without a warning. 36-second clip of it, and of the guard that catches it.",
+        attachment_slug: "relayworks-segment-rule", lead: lead("Ines Duarte", "Product lead", "Relayworks"),
+        status: "pending", error: null, error_class: null,
+        due_at: daysAhead(1.2), projected_date: dateAhead(1), created_at: hoursAgo(9),
+      },
+      {
+        id: "s11", batch_id: "sb5", kind: "email",
+        subject: "Same-day booking is dropping reservations",
+        note: "Hey Dana,\n\nA same-day slot on meridian.com/book returns a 500 and the reservation disappears. Short clip of the repro, and of it working after the fix.\n\nBest,\nAayush",
+        attachment_slug: clip("case-oruk.mp4"), lead: lead("Dana Whitfield", "VP Ops", "Meridian"),
+        status: "pending", error: null, error_class: null,
+        due_at: daysAhead(1.4), projected_date: dateAhead(1), created_at: hoursAgo(7),
+      },
+      {
+        id: "s12", batch_id: "sb6", kind: "message",
+        note: "hey owen — juniper's photo upload reports done before the bytes land. clip attached, plus the retry that fixes it.",
+        attachment_slug: "juniper-upload-race", lead: lead("Owen Brooks", "Engineering director", "Juniper Systems"),
+        status: "pending", error: null, error_class: null,
+        due_at: daysAhead(2.2), projected_date: dateAhead(2), created_at: hoursAgo(5),
+      },
+      {
         id: "s8", batch_id: "sb4", kind: "email",
         subject: "Two outreach fixes from this week",
         note: "Hey Yuvan,\n\nI pulled the two workflow changes into one short walkthrough.\n\n[![Autosana outreach workflow](https://driftwood.sh/case-autosana-poster.webp)](https://driftwood.sh/customers/autosana)\n\nWorth a look before our next check-in?\n\nBest,\nAayush",
@@ -468,9 +591,68 @@ if (mockMode) {
         due_at: daysAhead(1.5), projected_date: dateAhead(1), created_at: hoursAgo(8),
       },
     ],
-    total: 8, limit: 100, offset: 0,
-    counts: { pending: 5, sending: 1, failed: 2, sent: 2 },
+    total: 12, limit: 100, offset: 0,
+    counts: { pending: 9, sending: 1, failed: 2, sent: 2 },
   };
+  /* A real customer's queue is weeks deep, so the fixture is too: about
+     1,200 demos over 40 sending days, paced by the same daily caps the
+     settings endpoint reports (20 emails, 25 LinkedIn). That is what makes
+     the day collapse, the "Full" day, and the displacement cascade real
+     rather than a drawing of themselves. */
+  const QUEUE_DAYS = 40;
+  const DAY_EMAIL_CAP = 20;
+  const DAY_MESSAGE_CAP = 25;
+  const bulkCompanies = [
+    "Chime", "Rosebud", "Roame", "Inkitt", "Superhuman", "Instabug", "OneSignal",
+    "DraftKings", "Sentry", "Coinbase", "Notion", "Figma", "Linear", "Retool",
+    "Vanta", "Deel", "Mercury", "Ramp", "Loom", "Airtable", "Webflow", "Zapier",
+    "Miro", "Cal", "Render", "Fly", "Neon", "Clerk", "Resend", "Sanity",
+  ];
+  const bulkFirst = ["Ava", "Noah", "Mia", "Leo", "Zoe", "Kai", "Ida", "Rey", "Nora", "Otis"];
+  const bulkLast = ["Marsh", "Okafor", "Hale", "Duarte", "Brooks", "Nair", "Reyes", "Chen", "Moretti", "Shah"];
+  const bulkRoles = ["Head of Growth", "VP Engineering", "CTO", "Head of Product", "Director of Marketing"];
+  /* The dispatcher hands out due stamps inside the sending window, so the
+     fixture does too: 9am plus a slot, capped inside the day. */
+  const slotAt = (dayOffset: number, index: number) => {
+    const at = new Date();
+    at.setDate(at.getDate() + dayOffset);
+    at.setHours(9, 0, 0, 0);
+    at.setMinutes(index * 11);
+    return at.toISOString();
+  };
+  let bulkId = 0;
+  for (let day = 0; day < QUEUE_DAYS; day += 1) {
+    /* Today is deliberately at its email cap, so Move to top has a full day
+       to displace out of. */
+    const emails = day === 0 ? DAY_EMAIL_CAP : 12 + (day % 7);
+    const messages = day === 0 ? DAY_MESSAGE_CAP : 14 + (day % 6);
+    for (let i = 0; i < emails + messages; i += 1) {
+      const isEmail = i < emails;
+      const company = bulkCompanies[bulkId % bulkCompanies.length];
+      const person = `${bulkFirst[bulkId % bulkFirst.length]} ${bulkLast[(bulkId >> 1) % bulkLast.length]}`;
+      bulkId += 1;
+      sends.sends.push({
+        id: `q${bulkId}`,
+        batch_id: `qb${day}`,
+        kind: isEmail ? "email" : "message",
+        subject: isEmail ? `A working demo for ${company}` : null,
+        note: `Hey ${person.split(" ")[0]},\n\nWe put ${company}'s checkout through a pass and filmed what it does on a slow connection. Short clip, real data.\n\nWorth a look?\n\nBest,\nAayush`,
+        attachment_slug: null,
+        lead: lead(person, bulkRoles[bulkId % bulkRoles.length], company),
+        status: "pending", error: null, error_class: null,
+        due_at: slotAt(day, i),
+        projected_date: localDateAhead(day),
+        created_at: hoursAgo(20 + day),
+        sending_account: namedSenders
+          ? isEmail
+            ? `outbound${(bulkId % 3) + 1}@example.test`
+            : `${viewer.name ?? "you"} on LinkedIn`
+          : null,
+      });
+    }
+  }
+  sends.total = sends.sends.length;
+  sends.counts.pending = sends.sends.filter((row) => row.status === "pending").length;
   // GET /sends mirrors the real endpoint's contract: view=sent serves the
   // delivered ledger with server-side kind filtering + newest/oldest order,
   // and both views carry kind_counts (the census behind the filter chips,
@@ -483,7 +665,13 @@ if (mockMode) {
   const sendsApi = (_init?: RequestInit, url?: string) => {
     const params = new URL(url ?? "", location.origin).searchParams;
     if (params.get("view") !== "sent")
-      return { ...sends, kind_counts: kindCensus(sends.sends) };
+      return {
+        ...sends,
+        // due_at asc is the send order the real endpoint returns, so fixture
+        // order never has to be kept by hand.
+        sends: [...sends.sends].sort((a, b) => a.due_at.localeCompare(b.due_at)),
+        kind_counts: kindCensus(sends.sends),
+      };
     const kind = params.get("kind");
     const rows = sentLedger
       .filter((row) => kind === null || row.kind === kind)
@@ -516,10 +704,108 @@ if (mockMode) {
     } catch { /* malformed body — report 0 dismissed */ }
     return { dismissed: n, skipped: [] };
   };
+  /* The queue controls and the staging pin are being added on the backend. By
+     default they answer 404 here, which is what the page meets in prod today
+     and what makes it say "Not available yet." beside the control; `?queueops=1`
+     turns them on so the flows can be driven end to end. */
+  const queueOpsLive = params.get("queueops") === "1";
+  const notBuiltYet = (path: string) =>
+    new Response(
+      JSON.stringify({ error: { code: "not_found", detail: `Nothing serves ${path} yet.` } }),
+      { status: 404, headers: { "Content-Type": "application/json" } },
+    );
+  /* One send: Send next moves it to the front of the due order, Hold and
+     Resume flip the row's own flag, Pull takes it out of the queue. */
+  const sendOpApi = (_init?: RequestInit, url?: string) => {
+    const path = new URL(url ?? "", location.origin).pathname;
+    const [, sendId, action] = /\/sends\/([^/]+)\/([^/]+)$/.exec(path) ?? [];
+    if (!sendId || !action) return notBuiltYet(path);
+    if (!queueOpsLive) return notBuiltYet(path);
+    const row = sends.sends.find((send) => send.id === sendId);
+    if (!row)
+      return new Response(JSON.stringify({ error: { detail: "That send is gone." } }), { status: 404 });
+    if (action === "hold") { row.held = true; return { id: row.id, held: true }; }
+    if (action === "resume") { row.held = false; return { id: row.id, held: false }; }
+    if (action === "send-next") {
+      /* The real rule, mirrored: the row takes the first slot of today, today
+         is bounded by the daily cap for its channel, so the day's last row of
+         that channel moves to the next day, and that cascades while the next
+         day is full too. The response names what moved, which is what the
+         toast reads. */
+      const capFor = (kind: string) => (kind === "email" ? DAY_EMAIL_CAP : DAY_MESSAGE_CAP);
+      const onDay = (day: string, kind: string) =>
+        sends.sends
+          .filter((send) => send.projected_date === day && send.kind === kind && send.status === "pending")
+          .sort((a, b) => a.due_at.localeCompare(b.due_at));
+      const soonest = sends.sends.reduce((min, send) => (send.due_at < min ? send.due_at : min), row.due_at);
+      const fromDay = row.projected_date;
+      row.due_at = new Date(Date.parse(soonest) - 60_000).toISOString();
+      row.projected_date = localDateAhead(0);
+      row.held = false;
+      const displaced: Array<Record<string, unknown>> = [];
+      let dayIndex = 0;
+      while (dayIndex < QUEUE_DAYS) {
+        const day = localDateAhead(dayIndex);
+        const rows = onDay(day, row.kind);
+        if (rows.length <= capFor(row.kind)) break;
+        const last = rows[rows.length - 1];
+        if (last.id === row.id) break;
+        const nextDay = localDateAhead(dayIndex + 1);
+        last.projected_date = nextDay;
+        last.due_at = slotAt(dayIndex + 1, onDay(nextDay, row.kind).length);
+        displaced.push({
+          id: last.id,
+          name: last.lead?.name ?? null,
+          company: last.lead?.company ?? null,
+          projected_date: nextDay,
+        });
+        dayIndex += 1;
+      }
+      return { id: row.id, due_at: row.due_at, moved_from: fromDay, displaced };
+    }
+    if (action === "pull") {
+      sends.sends = sends.sends.filter((send) => send.id !== sendId);
+      sends.total = Math.max(0, sends.total - 1);
+      sends.counts.pending = Math.max(0, sends.counts.pending - 1);
+      return { id: sendId, pulled: true };
+    }
+    return notBuiltYet(path);
+  };
+  const holdAllApi = () => {
+    if (!queueOpsLive) return notBuiltYet("/api/v1/dashboard/sends/hold-all");
+    sends.sends.forEach((send) => { if (send.status === "pending") send.held = true; });
+    return { held: sends.sends.filter((send) => send.held).length };
+  };
+  const resumeAllApi = () => {
+    if (!queueOpsLive) return notBuiltYet("/api/v1/dashboard/sends/resume-all");
+    sends.sends.forEach((send) => { send.held = false; });
+    return { resumed: sends.sends.length };
+  };
+  /* Pin keeps one demo in Staging past the 3-day expiry, and unpin is the way
+     back out. Both answer here, so the pair can be driven end to end. */
+  const pinReviewApi = (_init?: RequestInit, url?: string) => {
+    const path = new URL(url ?? "", location.origin).pathname;
+    if (!queueOpsLive || !(path.endsWith("/pin") || path.endsWith("/unpin")))
+      return notBuiltYet(path);
+    return { pinned: path.endsWith("/unpin") ? false : true };
+  };
   const approvalStorageKey = "driftwood.dashboard.mock-approval-policy";
   const decisionStorageKey = "driftwood.dashboard.mock-review-decisions";
-  let approvalPolicy: ApprovalPolicy = { mode: "auto", campaign_reviewers: {}, version: 1 };
-  try { const saved = sessionStorage.getItem(approvalStorageKey); if (saved) approvalPolicy = parsePolicy(JSON.parse(saved)); } catch { /* Use the explicit fixture default. */ }
+  /* Who approves. `?approval=auto` and `?approval=manual` set it outright and
+     beat anything the approvals UI saved, so both halves of the Demos page
+     (the cards, and the one line that replaces them) are one URL apart.
+     Without the param: manual on a customer workspace, so Staging has cards
+     to show, and auto in `?mock=admin`, where Driftwood is the reviewer and
+     the internal queue is what is being looked at. */
+  const approvalParam = params.get("approval");
+  const explicitApproval: ApprovalMode | null =
+    approvalParam === "auto" ? "auto" : approvalParam === "manual" ? "manual" : null;
+  let approvalPolicy: ApprovalPolicy = {
+    mode: explicitApproval ?? (mockMode === "admin" ? "auto" : "manual"),
+    campaign_reviewers: {},
+    version: 1,
+  };
+  try { const saved = sessionStorage.getItem(approvalStorageKey); if (saved && !explicitApproval) approvalPolicy = parsePolicy(JSON.parse(saved)); } catch { /* Use the explicit fixture default. */ }
   const reviewCampaign = (id: string) => ["r1", "r4"].includes(id) ? "founder-led-qa" : id === "r2" ? "expansion-outreach" : null;
   const isOutreachReview = (kind: string) => ["send_email", "send_message", "send_connection", "send_x_dm"].includes(kind);
   const reviewPermissions = (row: typeof reviews.pending[number]) => {
@@ -532,7 +818,20 @@ if (mockMode) {
     if (!row || row.status !== "pending") return false;
     row.status = decision === "approve" ? "approved" : "denied";
     if (decision === "approve" && isOutreachReview(row.kind)) {
-      sends.sends.push({id:`approved-${row.id}`,batch_id:row.batch_id,kind:row.kind === "send_email" ? "email" : row.kind === "send_connection" ? "connection_request" : "message",subject:row.subject,note:row.body,attachment_slug:row.attachment_slug,lead:row.lead,status:"pending",error:null,error_class:null,due_at:daysAhead(0.1),projected_date:dateAhead(0),created_at:new Date().toISOString()});
+      /* An approved demo joins the END of the queue: the dispatcher gives it
+         the first day that still has room on its channel, which is what the
+         "Queued for Tuesday" toast reads back. */
+      const kind = row.kind === "send_email" ? "email" : row.kind === "send_connection" ? "connection_request" : "message";
+      const cap = kind === "email" ? DAY_EMAIL_CAP : DAY_MESSAGE_CAP;
+      const usedOn = (day: number) =>
+        sends.sends.filter((send) => send.projected_date === localDateAhead(day) && send.kind === kind && send.status === "pending").length;
+      let last = 0;
+      for (let day = 0; day <= QUEUE_DAYS + 1; day += 1)
+        if (sends.sends.some((send) => send.projected_date === localDateAhead(day) && send.status === "pending")) last = day;
+      const landing = usedOn(last) < cap ? last : last + 1;
+      const landingDate = localDateAhead(landing);
+      const slot = sends.sends.filter((send) => send.projected_date === landingDate && send.status === "pending").length;
+      sends.sends.push({id:`approved-${row.id}`,batch_id:row.batch_id,kind,subject:row.subject,note:row.body,attachment_slug:row.attachment_slug,lead:row.lead,status:"pending",error:null,error_class:null,due_at:slotAt(landing,slot),projected_date:landingDate,created_at:new Date().toISOString()});
       sends.counts.pending += 1; sends.total += 1;
     }
     return true;
@@ -1254,6 +1553,10 @@ if (mockMode) {
     { lead_id: "lead-4", name: "Ines Duarte", title: "Product lead", email: "ines@example.test", company_name: "Relayworks", channel: "email", status: "replied", occurred_at: hoursAgo(5), source: "email_reply", reply_subject: "Automatic reply: quick idea for Relayworks", reply_text: "I am out of the office until Monday, September 7, with limited access to email. For urgent matters contact ops@relayworks.test.", reply_is_automatic: true, reply_auto_reason: 'subject says "automatic reply"' },
     { lead_id: "lead-5", name: "Owen Brooks", title: "Engineering director", email: "owen@example.test", company_name: "Juniper Systems", channel: "email", status: "replied", occurred_at: hoursAgo(12), source: "email_reply", reply_subject: "Re: quick idea for Juniper", reply_text: "Owen is no longer with the company. Please direct product inquiries to engineering@juniper.test.", reply_is_automatic: true, reply_auto_reason: 'mentions "no longer with the company"' },
     { lead_id: "lead-3", name: "Luca Moretti", title: "Founder", email: "luca@example.test", company_name: "Clearline", channel: "email", status: "demos_booked", occurred_at: hoursAgo(26), source: "lead_stage" },
+    /* These two carry the lead ids the delivered ledger uses, so the Demos
+       page's Sent segment has a Replied badge to show on two of its rows. */
+    { lead_id: "Dana Whitfield", name: "Dana Whitfield", title: "VP Ops", email: "dana@example.test", company_name: "Meridian", channel: "email", status: "replied", occurred_at: hoursAgo(24), source: "email_reply", reply_subject: "Re: same-day booking fix", reply_text: "Good catch. Can you send the repro to our platform lead?" },
+    { lead_id: "Jordan Reyes", name: "Jordan Reyes", title: "Head of Growth", email: "jordan@example.test", company_name: "Brex", channel: "linkedin", status: "replied", occurred_at: hoursAgo(44), source: "linkedin_reply", reply_text: "This is useful. What would the rollout look like for us?" },
   ];
   const channelMetricsApi = (_init?: RequestInit, url?: string) => {
     const query = new URL(url ?? location.href, location.href).searchParams;
@@ -1263,8 +1566,8 @@ if (mockMode) {
     return {
       window: { start: query.get("start"), end: query.get("end") },
       channels: [
-        { channel: "linkedin", contacted: { count: 3, available: true }, opened: { count: null, available: false }, clicked: { count: null, available: false }, replied: { count: 1, available: true }, demos_booked: { count: 0, available: true } },
-        { channel: "email", contacted: { count: 2, available: true }, opened: { count: null, available: false }, clicked: { count: null, available: false }, replied: { count: 3, available: true }, demos_booked: { count: 1, available: true } },
+        { channel: "linkedin", contacted: { count: 3, available: true }, opened: { count: null, available: false }, clicked: { count: null, available: false }, replied: { count: 2, available: true }, demos_booked: { count: 0, available: true } },
+        { channel: "email", contacted: { count: 2, available: true }, opened: { count: null, available: false }, clicked: { count: null, available: false }, replied: { count: 4, available: true }, demos_booked: { count: 1, available: true } },
         { channel: "x", contacted: { count: 1, available: true }, opened: { count: null, available: false }, clicked: { count: null, available: false }, replied: { count: null, available: false }, demos_booked: { count: 0, available: true } },
       ],
       definitions: [
@@ -2343,8 +2646,14 @@ if (mockMode) {
     ["/api/v1/admin/memberships/", adminResendApi],
     ["/api/v1/dashboard/sends/cancel", cancelSends],
     ["/api/v1/dashboard/sends/dismiss", dismissSends],
+    ["/api/v1/dashboard/sends/hold-all", holdAllApi],
+    ["/api/v1/dashboard/sends/resume-all", resumeAllApi],
+    // Trailing slash: the per-send controls only, never GET /sends?limit=.
+    ["/api/v1/dashboard/sends/", sendOpApi],
     ["/api/v1/dashboard/sends", sendsApi],
     ["/api/v1/dashboard/reviews/decide", decideReviews],
+    // Same trailing-slash trick for POST /reviews/{id}/pin.
+    ["/api/v1/dashboard/reviews/", pinReviewApi],
     ["/api/v1/dashboard/reviews", pendingReviewsApi],
     ["/auth/me", me],
     ["/api/v1/dashboard/summary", summary],

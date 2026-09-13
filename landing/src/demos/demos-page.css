@@ -1,0 +1,694 @@
+/* /dashboard/demos — Staging, Queue, Sent.
+   Every value is a token from index.css. One button system on this page
+   (.dp-btn): pill, tide primary, outlined secondary, per design-language §3.
+   Type sizes and the page width match the review workbench, so the two read
+   as one dashboard. */
+
+.demos-page {
+  width: min(100%, 82rem);
+  margin: 0 auto;
+  padding-bottom: 4.5rem;
+  color: var(--color-ink);
+}
+
+.dp-head {
+  display: flex;
+  min-height: 2.8rem;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.dp-head h1 {
+  margin: 0;
+  font-size: clamp(1.7rem, 3.6vw, 2.25rem);
+  font-weight: 620;
+  letter-spacing: -0.028em;
+}
+
+/* ---------- segments ---------- */
+
+.dp-segments {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-top: 1.1rem;
+  border: 1px solid var(--color-line);
+  border-radius: 0.7rem;
+  background: var(--color-sand);
+  padding: 0.22rem;
+}
+
+.dp-segments button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--color-ink-soft);
+  padding: 0.42rem 0.8rem;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 560;
+  cursor: pointer;
+  transition: background 200ms cubic-bezier(0.2, 0, 0, 1), color 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.dp-segments button:hover { color: var(--color-ink); }
+
+.dp-segments button[aria-pressed="true"] {
+  background: var(--color-surface);
+  box-shadow: var(--shadow-win-sm);
+  color: var(--color-ink);
+  font-weight: 650;
+}
+
+.dp-segments .dp-count {
+  border-radius: 999px;
+  background: var(--color-tide-wash);
+  color: var(--color-tide-deep);
+  padding: 0 0.36rem;
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- shared bits ---------- */
+
+.dp-note {
+  margin: 1rem 0 0;
+  color: var(--color-ink-soft);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.dp-bar {
+  display: flex;
+  min-height: 2.6rem;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin: 1.35rem 0 0.85rem;
+  border-bottom: 1px solid var(--color-line);
+  padding-bottom: 0.7rem;
+}
+
+.dp-bar h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.dp-bar-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+
+/* A bar that carries only its actions needs no rule under it: the line was
+   there to close a heading that no longer exists. */
+.dp-bar.is-bare { min-height: 0; border-bottom: 0; margin-bottom: 0; padding-bottom: 0; }
+
+.dp-label {
+  color: var(--color-ink-soft);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.dp-error {
+  margin: 0.5rem 0 0;
+  color: var(--color-alert);
+  font-size: 0.8rem;
+  font-weight: 560;
+  line-height: 1.5;
+}
+
+.dp-empty {
+  margin-top: 1.25rem;
+  border: 1px solid var(--color-line);
+  border-radius: 0.9rem;
+  background: var(--color-surface);
+  padding: 2.4rem 1.5rem;
+  text-align: center;
+}
+
+.dp-empty p {
+  margin: 0 auto;
+  max-width: 26rem;
+  color: var(--color-ink-soft);
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+
+.dp-empty .dp-btn { margin-top: 1rem; }
+
+.dp-quiet {
+  margin: 0.9rem 0 0;
+  color: var(--color-ink-faint);
+  font-size: 0.76rem;
+}
+
+.dp-bar .dp-quiet { margin: 0.2rem 0 0; }
+.dp-note.is-flush { margin-top: 0; }
+.dp-rows { margin-top: 1.35rem; }
+
+/* ---------- one button system ---------- */
+
+.dp-btn {
+  display: inline-flex;
+  min-height: 2.4rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-ink-soft);
+  padding: 0.42rem 0.95rem;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 620;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 200ms cubic-bezier(0.2, 0, 0, 1), border-color 200ms cubic-bezier(0.2, 0, 0, 1), color 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.dp-btn:hover { border-color: var(--color-ink-faint); color: var(--color-ink); }
+
+.dp-btn.is-primary {
+  border-color: var(--color-tide);
+  background: var(--color-tide);
+  color: #fff;
+}
+
+.dp-btn.is-primary:hover { border-color: var(--color-tide-deep); background: var(--color-tide-deep); color: #fff; }
+
+/* Armed, waiting for the second press. */
+.dp-btn.is-armed {
+  border-color: var(--color-alert);
+  background: var(--color-surface);
+  color: var(--color-alert);
+}
+
+.dp-btn.is-on { border-color: var(--color-tide); color: var(--color-tide-deep); }
+
+.dp-btn.is-small { min-height: 2rem; padding: 0.28rem 0.7rem; font-size: 0.75rem; }
+
+/* Tertiary (design-language.md §3): no border, no fill, muted ink at the
+   type size around it. For controls that repeat down a list, where a pill
+   each would be the loudest thing on the page. */
+.dp-btn.is-quiet {
+  min-height: 2rem;
+  border: 0;
+  background: transparent;
+  color: var(--color-ink-soft);
+  padding: 0.25rem 0.35rem;
+  font-size: inherit;
+  font-weight: 560;
+}
+
+.dp-btn.is-quiet:hover { background: transparent; color: var(--color-ink); }
+.dp-btn.is-quiet.is-armed { color: var(--color-alert); }
+
+.dp-btn:disabled { cursor: not-allowed; opacity: 0.55; }
+
+/* ---------- the demo card ---------- */
+
+.dp-cards { display: grid; gap: 1rem; }
+
+.dp-card {
+  border: 1px solid var(--color-line);
+  border-radius: 0.9rem;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-win-sm);
+  padding: 0.85rem 1rem 0.9rem;
+}
+
+/* The clip takes a narrow rail, the email takes the rest. Under 56rem the
+   two stack, because a 320px clip beside a 200px email reads as neither. */
+.dp-card-body {
+  display: grid;
+  grid-template-columns: 20rem minmax(0, 1fr);
+  gap: 1rem;
+  margin-top: 0.6rem;
+  align-items: start;
+}
+
+.dp-col-clip { min-width: 0; }
+.dp-col-email { min-width: 0; }
+
+.dp-subject {
+  margin: 0 0 0.4rem;
+  font-size: 0.875rem;
+  font-weight: 650;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+/* The email body is the content, so it carries no box: a bordered panel
+   inside a bordered card is a card inside a card. */
+.dp-email .email-preview {
+  margin-bottom: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.dp-email .email-preview-body { padding: 0; font-size: 0.82rem; }
+.dp-email .email-preview-body p { margin: 0 0 0.6em; }
+.dp-email .email-preview-body p:last-child { margin-bottom: 0; }
+
+.dp-card-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.dp-card-top h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+  letter-spacing: -0.012em;
+}
+
+.dp-role { color: var(--color-ink-soft); font-weight: 400; }
+
+.dp-age { color: var(--color-ink-faint); font-size: 0.74rem; font-variant-numeric: tabular-nums; }
+
+.dp-card-top h3 a { color: inherit; text-decoration: none; }
+.dp-card-top h3 a:hover { color: var(--color-tide); text-decoration: underline; }
+
+/* The channel mark in a queue row. */
+.dp-glyph { display: inline-flex; color: var(--color-ink-soft); }
+
+
+/* The bug line: where it happens, and the steps behind a disclosure. */
+.dp-bugline { margin-top: 0.5rem; }
+.dp-bugline > p { display: flex; flex-wrap: wrap; gap: 1rem; margin: 0; }
+
+.dp-seek {
+  border: 0;
+  background: none;
+  color: var(--color-tide);
+  padding: 0;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 620;
+  cursor: pointer;
+}
+
+.dp-seek:hover { color: var(--color-tide-deep); text-decoration: underline; }
+.dp-seek.is-quiet { color: var(--color-ink-soft); font-weight: 560; }
+.dp-seek.is-quiet:hover { color: var(--color-ink); }
+
+.dp-steps {
+  margin-top: 0.6rem;
+  border: 1px solid var(--color-line);
+  border-radius: 0.625rem;
+  background: var(--color-paper);
+  padding: 0.75rem 0.9rem;
+}
+
+/* list-style is named: the base reset strips markers from every ol. */
+.dp-steps ol {
+  margin: 0;
+  list-style: decimal;
+  padding-left: 1.15rem;
+  font-size: 0.8rem;
+  line-height: 1.6;
+  font-variant-numeric: tabular-nums;
+}
+
+.dp-steps p { margin: 0.55rem 0 0; font-size: 0.8rem; overflow-wrap: anywhere; }
+.dp-steps a { color: var(--color-tide); }
+
+/* The clip leads the card, and is bounded: a 16:9 frame that cannot grow
+   past a third of a laptop screen, so twenty demos stay reviewable. */
+.dp-video-shell {
+  position: relative;
+  width: 100%;
+}
+
+.dp-video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 0.7rem;
+  background: var(--color-ink);
+  /* contain, not cover: a prospect's clip is whatever shape it was recorded
+     in, and cropping it hides the thing being judged. */
+  object-fit: contain;
+}
+
+/* The same frame when the clip will not render here: a poster, a play mark
+   and a way out, never a grey box carrying a sentence. */
+.dp-video-dead {
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--color-line);
+  background:
+    radial-gradient(120% 120% at 50% 0%, color-mix(in srgb, var(--color-tide) 22%, #101820), #101820);
+  text-decoration: none;
+}
+
+.dp-play {
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.9);
+  clip-path: circle(50%);
+  position: relative;
+}
+
+.dp-play::after {
+  position: absolute;
+  top: 50%;
+  left: 54%;
+  translate: -50% -50%;
+  border-block: 0.5rem solid transparent;
+  border-left: 0.8rem solid var(--color-ink);
+  content: "";
+}
+
+.dp-video-out {
+  position: absolute;
+  left: 0.6rem;
+  bottom: 0.6rem;
+  color: rgb(255 255 255 / 0.85);
+  font-size: 0.7rem;
+}
+
+/* Top right, clear of the native control bar. */
+.dp-duration {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  border-radius: 0.3rem;
+  background: rgb(22 24 27 / 0.78);
+  color: #fff;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+/* An inline screenshot is a reference, not the card. Full size is one click
+   away in the demo itself. */
+.dp-email .email-preview-body img { max-height: 7.5rem; width: auto; }
+
+.dp-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.7rem; }
+
+.dp-change { margin-top: 0.6rem; border-top: 1px dashed var(--color-line); padding-top: 0.8rem; }
+
+.dp-change textarea {
+  display: block;
+  width: 100%;
+  min-height: 4.5rem;
+  box-sizing: border-box;
+  border: 1px solid var(--color-line);
+  border-radius: 0.625rem;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  padding: 0.6rem 0.7rem;
+  font: inherit;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.dp-change textarea:focus { border-color: var(--color-tide); outline: none; }
+.dp-change-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-top: 0.6rem; }
+
+/* ---------- rows (Queue and Sent) ---------- */
+
+/* One block per send day: the header carries how full the day is, so a
+   customer reading forty days sees capacity, not just rows. */
+.dp-day { margin-top: 1.35rem; }
+
+.dp-day-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+/* The whole header is the control that folds the day. */
+.dp-day-toggle {
+  display: flex;
+  min-height: 2rem;
+  flex: 1;
+  align-items: center;
+  gap: 0.5rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--color-ink);
+  padding: 0.2rem 0.35rem;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dp-day-toggle:hover { background: var(--color-sand); }
+
+.dp-chevron {
+  flex: 0 0 auto;
+  color: var(--color-ink-soft);
+  transition: rotate 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.dp-chevron.is-open { rotate: 90deg; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dp-chevron { transition: none; }
+}
+
+.dp-day-name { font-size: 0.9rem; font-weight: 650; letter-spacing: -0.01em; }
+
+.dp-day-load {
+  border-radius: 999px;
+  background: var(--color-sand);
+  color: var(--color-ink-soft);
+  padding: 0 0.4rem;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.dp-check { width: 1rem; height: 1rem; flex: 0 0 auto; accent-color: var(--color-tide); cursor: pointer; }
+
+.dp-table tr.is-picked { background: var(--color-tide-wash); }
+
+/* The selection bar holds the verbs, once, where they are read once. */
+.dp-selbar {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+  border: 1px solid var(--color-line);
+  border-radius: 0.7rem;
+  background: var(--color-tide-wash);
+  padding: 0.5rem 0.7rem;
+  font-size: 0.82rem;
+}
+
+/* One row's actions, behind one mark. */
+.dp-menu { position: relative; display: flex; justify-content: flex-end; }
+
+.dp-menu-btn { min-width: 2rem; padding: 0.25rem 0.4rem; font-size: 1rem; line-height: 1; }
+
+.dp-menu-pop {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  right: 0;
+  z-index: 4;
+  display: grid;
+  min-width: 10rem;
+  border: 1px solid var(--color-line);
+  border-radius: 0.6rem;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-win);
+  padding: 0.25rem;
+}
+
+.dp-menu-pop button {
+  border: 0;
+  border-radius: 0.4rem;
+  background: transparent;
+  color: var(--color-ink);
+  padding: 0.45rem 0.6rem;
+  font: inherit;
+  font-size: 0.82rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dp-menu-pop button:hover:not(:disabled) { background: var(--color-sand); }
+.dp-menu-pop button:disabled { color: var(--color-ink-faint); cursor: not-allowed; }
+.dp-menu-pop button.is-armed { color: var(--color-alert); font-weight: 620; }
+
+.dp-later { margin-top: 1.35rem; }
+
+.dp-later-toggle {
+  display: block;
+  width: 100%;
+  border: 1px solid var(--color-line);
+  border-radius: 0.9rem;
+  background: var(--color-sand);
+  color: var(--color-ink);
+  padding: 0.85rem 1rem;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 620;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dp-later-toggle:hover { border-color: var(--color-ink-faint); }
+.dp-caret { display: inline-block; width: 1rem; color: var(--color-ink-soft); font-weight: 700; }
+.dp-later .dp-day:first-of-type { margin-top: 1rem; }
+.dp-later > .dp-btn { margin-top: 1rem; }
+
+.dp-tablewrap {
+  /* Positioned so the sr-only column labels inside the table are contained:
+     absolutely positioned children of an unpositioned scroller escape it and
+     stretch the document's own scroll width on a phone. */
+  position: relative;
+  overflow-x: auto;
+  border: 1px solid var(--color-line);
+  border-radius: 0.9rem;
+  background: var(--color-surface);
+}
+
+.dp-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+
+/* The name column takes the slack; everything else is its own width, so a
+   four-column table does not spread into a field of gaps. */
+.dp-table col.dp-w-pick { width: 2.4rem; }
+.dp-table col.dp-w-channel { width: 2.6rem; }
+.dp-table col.dp-w-planned { width: 9rem; }
+.dp-table col.dp-w-from { width: 12rem; }
+.dp-table col.dp-w-menu { width: 3rem; }
+
+.dp-table th {
+  border-bottom: 1px solid var(--color-line);
+  background: var(--color-sand);
+  color: var(--color-ink-soft);
+  padding: 0.6rem 0.8rem;
+  font-size: 0.7rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.dp-table td { border-bottom: 1px solid var(--color-line); padding: 0.7rem 0.8rem; vertical-align: middle; }
+.dp-table tr:last-child td { border-bottom: 0; }
+.dp-table .dp-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dp-table .dp-muted { color: var(--color-ink-soft); }
+/* Always visible. A control that appears on hover is undiscoverable, dead on
+   touch, and tells a first-time reader the row does nothing. The noise that
+   drove them into hiding is answered by the quiet variant instead. */
+.dp-table .dp-rowacts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  justify-content: flex-end;
+}
+.dp-table .dp-rowerr { color: var(--color-alert); font-size: 0.76rem; }
+
+.dp-table th.dp-dayhead {
+  background: color-mix(in srgb, var(--color-sand) 55%, white);
+  color: var(--color-ink);
+  padding: 0.6rem 0.8rem;
+  font-size: 0.76rem;
+  font-weight: 650;
+  letter-spacing: 0;
+  text-align: left;
+  text-transform: none;
+}
+
+.dp-badge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid color-mix(in srgb, var(--color-ok) 35%, var(--color-line));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-ok) 8%, white);
+  color: var(--color-ok);
+  padding: 0.08rem 0.45rem;
+  font-size: 0.7rem;
+  font-weight: 650;
+}
+
+.dp-chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  background: var(--color-sand);
+  color: var(--color-ink-soft);
+  padding: 0.08rem 0.45rem;
+  font-size: 0.7rem;
+  font-weight: 650;
+}
+
+.dp-table a { color: var(--color-tide); text-decoration: none; }
+.dp-table a:hover { text-decoration: underline; }
+
+/* ---------- skeletons ---------- */
+
+.dp-skel { border-radius: 0.35rem; background: var(--color-sand); }
+.dp-skel-pulse { animation: dp-pulse 1.7s ease-in-out infinite; }
+
+@keyframes dp-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+.dp-skel-card {
+  display: grid;
+  gap: 0.7rem;
+  border: 1px solid var(--color-line);
+  border-radius: 0.9rem;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-win-sm);
+  padding: 1.15rem 1.25rem 1.25rem;
+}
+
+.dp-skel-row { display: flex; gap: 0.8rem; border-bottom: 1px solid var(--color-line); padding: 0.8rem; }
+.dp-skel-row:last-child { border-bottom: 0; }
+
+/* Placeholder geometry mirrors what lands: a heading, a contact line, the
+   email block, the clip, then the button row (ux-principles rule 2). */
+.dp-skel-title { height: 1rem; width: 14rem; }
+.dp-skel-sub { height: 0.8rem; width: min(100%, 20rem); }
+.dp-skel-email { height: 7rem; }
+.dp-skel-video { height: 11rem; border-radius: 0.7rem; }
+.dp-skel-pill { height: 2.4rem; width: min(100%, 20rem); border-radius: 999px; }
+.dp-skel-cell { height: 0.85rem; width: 8rem; }
+.dp-skel-cell.is-wide { width: 9rem; }
+.dp-skel-cell.is-narrow { width: 5rem; }
+.dp-skel-headline { display: inline-block; height: 0.8rem; width: min(100%, 27rem); vertical-align: middle; }
+
+@media (max-width: 56rem) {
+  .dp-card-body { grid-template-columns: 1fr; }
+  .dp-col-clip { max-width: 26rem; }
+}
+
+@media (max-width: 48rem) {
+  .dp-head { align-items: flex-start; flex-direction: column; }
+  .dp-segments { width: 100%; }
+  .dp-segments button { flex: 1; justify-content: center; }
+  .dp-table .dp-rowacts { justify-content: flex-start; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dp-segments button,
+  .dp-btn { transition: none; }
+  .dp-skel-pulse { animation: none; }
+}

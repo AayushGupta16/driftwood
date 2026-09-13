@@ -51,6 +51,11 @@ type AppShellProps = {
   mode?: NavigationMode;
   mainClassName?: string;
   canWrite?: boolean;
+  /* A number beside a nav item, for the sections that hold work: the count
+     of demos waiting on the customer, or of demos scheduled to go out.
+     Absent or null renders no badge, so a count that failed to load never
+     shows as zero. */
+  navCounts?: Partial<Record<DashboardSection, number | null>>;
 };
 
 const ICONS: Record<DashboardIconName, (props: DashboardIconProps) => ReactNode> = {
@@ -72,27 +77,33 @@ const ICONS: Record<DashboardIconName, (props: DashboardIconProps) => ReactNode>
   inbox: InboxIcon,
 };
 
-function Navigation({ active, mode }: { active: DashboardSection; mode: NavigationMode }) {
+type NavCounts = Partial<Record<DashboardSection, number | null>>;
+
+function Navigation({ active, mode, counts }: { active: DashboardSection; mode: NavigationMode; counts: NavCounts }) {
   return (
     <nav className="app-sidebar-nav" aria-label={mode === "admin" ? "Admin panel" : "Dashboard"}>
       {navigationGroups(mode).map((group, index) => (
-        <NavGroup key={group.label ?? index} label={group.label} items={group.items} active={active} />
+        <NavGroup key={group.label ?? index} label={group.label} items={group.items} active={active} counts={counts} />
       ))}
     </nav>
   );
 }
 
-function NavGroup({ label, items, active }: { label?: string; items: ReturnType<typeof navigationGroups>[number]["items"]; active: DashboardSection }) {
+function NavGroup({ label, items, active, counts }: { label?: string; items: ReturnType<typeof navigationGroups>[number]["items"]; active: DashboardSection; counts: NavCounts }) {
   return (
     <div className="app-sidebar-group">
       {label && <p className="app-sidebar-label">{label}</p>}
       {items.map((item) => {
         const Icon = ICONS[item.icon];
         const current = item.id === active;
+        const count = counts[item.id];
         return (
           <a key={item.id} href={withMockMode(item.href)} className={`app-sidebar-link ${current ? "is-active" : ""}`} aria-current={current ? "page" : undefined}>
             <Icon size={17} />
             <span>{item.label}</span>
+            {typeof count === "number" && count > 0 && (
+              <span className="app-sidebar-count">{count.toLocaleString()}</span>
+            )}
           </a>
         );
       })}
@@ -111,6 +122,7 @@ export default function AppShell({
   mode = "customer",
   mainClassName = "",
   canWrite = true,
+  navCounts = {},
 }: AppShellProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileLayout, setMobileLayout] = useState(false);
@@ -199,7 +211,7 @@ export default function AppShell({
         ) : (
           <div className="app-sidebar-context"><span>Workspace access</span><strong>Read only</strong></div>
         )}
-        <Navigation active={active} mode={mode} />
+        <Navigation active={active} mode={mode} counts={navCounts} />
         <div className="app-sidebar-footer">
           {mode === "customer" && <a href={withMockMode("/dashboard/settings")} className={`app-sidebar-link ${active === "settings" ? "is-active" : ""}`} aria-current={active === "settings" ? "page" : undefined}><SettingsIcon size={17} /><span>Settings</span></a>}
           {adminControl && <div className="app-sidebar-admin">{adminControl}</div>}

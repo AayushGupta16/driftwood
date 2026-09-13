@@ -173,6 +173,19 @@
 }
 
 .app-sidebar-link svg { flex: 0 0 auto; }
+
+/* The number beside a section that holds work. Tinted chip, tide ink, tabular
+   so it does not jiggle as it changes. */
+.app-sidebar-count {
+  margin-left: auto;
+  border-radius: 999px;
+  background: var(--color-tide-wash);
+  color: var(--color-tide-deep);
+  padding: 0 .38rem;
+  font-size: .7rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
 .app-sidebar-link:hover { background: var(--color-tide-wash); color: var(--color-tide-deep); }
 .app-sidebar-link.is-active { background: var(--color-tide-wash); color: var(--color-tide-deep); font-weight: 650; }
 .app-sidebar-link.is-active::before {
