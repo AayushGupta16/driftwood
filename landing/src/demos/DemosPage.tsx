@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import { EmailPreview } from "../EmailPreview";
 import { fetchInWaves, useToast } from "../dashboard-shared";
 import { analyticsWindow } from "../analytics/model";
@@ -19,12 +19,13 @@ import {
   firstReviewsPage,
   firstSentPage,
   holdAllSends,
+  landingDayFor,
+  moveToTop,
   pinDemo,
   queueAction,
   resumeAllSends,
   senderPools,
   workspaceSettings,
-  type QueueAction,
   type SenderPools,
 } from "./staging-api";
 import {
@@ -32,16 +33,27 @@ import {
   EMPTY_SENT,
   EMPTY_STAGING,
   NOT_AVAILABLE,
+  NO_LIMITS,
   STAGING_AUTO,
   STAGING_BOUND,
+  dayLoadLine,
+  daySentence,
   decisionsFor,
+  groupQueueByDay,
   groupSentByDay,
   groupStagedDemos,
+  laterSummary,
+  plannedClock,
   queueHeadline,
   readyForYou,
   queueRows,
   runsThrough,
+  splitQueueDays,
   threadHref,
+  timestampLabel,
+  videoSeconds,
+  type DailyLimits,
+  type QueueDay,
   type QueueStat,
   type ReviewItem,
   type SendRow,
@@ -92,6 +104,10 @@ type QueueData = { sends: SendRow[]; complete: boolean; loadingMore: boolean };
 type SentData = { sends: SendRow[]; total: number };
 
 const ARM_MS = 5000;
+/* Days that stand open in the queue; everything past them collapses into one
+   line, because a customer can have two months of sends queued. */
+const OPEN_DAYS = 7;
+const LATER_PAGE = 7;
 const REPLY_WINDOW_DAYS = 90;
 const LOAD_FAILED = "That did not load. Try again.";
 
@@ -166,6 +182,12 @@ export default function DemosPage() {
   const [heldIds, setHeldIds] = useState<ReadonlySet<string>>(new Set());
   const [rowError, setRowError] = useState<{ id: string; message: string } | null>(null);
   const [bulkQueueError, setBulkQueueError] = useState<string | null>(null);
+  const [laterOpen, setLaterOpen] = useState(false);
+  const [laterShown, setLaterShown] = useState(LATER_PAGE);
+  /* The org's own daily sending limits, which is what makes a day "full".
+     Null until settings land, and null per channel on a backend that does
+     not report one, in which case a day header shows bare counts. */
+  const [limits, setLimits] = useState<DailyLimits>(NO_LIMITS);
 
   const loadStaging = useCallback(async (fresh: boolean) => {
     try {
@@ -269,7 +291,12 @@ export default function DemosPage() {
     );
     workspaceSettings().then(
       (page) => {
-        if (live) setScheduleLine(scheduleSentence(page.send_schedule));
+        if (!live) return;
+        setScheduleLine(scheduleSentence(page.send_schedule));
+        setLimits({
+          email: page.daily_caps?.email ?? null,
+          message: page.daily_caps?.message ?? null,
+        });
       },
       () => {},
     );
@@ -342,6 +369,8 @@ export default function DemosPage() {
   const rows =
     queue.status === "ready" ? queueRows(queue.data.sends, heldIds, senders) : [];
   const allHeld = rows.length > 0 && rows.every((row) => row.held);
+  const queueDays = groupQueueByDay(rows, limits);
+  const { shown: openDays, later: laterDays } = splitQueueDays(queueDays, OPEN_DAYS);
   const sentDays = sent.status === "ready" ? groupSentByDay(sent.data.sends) : [];
 
   /* One decide POST per press: every pending item of the demo, together. */
@@ -368,10 +397,19 @@ export default function DemosPage() {
       );
       setChangeFor((prev) => (prev?.key === demo.key ? null : prev));
       setArmedSkip((prev) => (prev === demo.key ? null : prev));
-      toast(done, "success");
       announceDemosCountChanged();
-      /* An approve becomes a scheduled send, so the queue moved too. */
-      if (decision === "approve") void loadQueue(true);
+      if (decision !== "approve") {
+        toast(done, "success");
+      } else {
+        /* An approved demo joins the END of the queue, so the customer is
+           told which day that is rather than left to go and count. */
+        const leadId = demo.lead?.lead_id ?? null;
+        void (async () => {
+          const day = leadId ? await landingDayFor(leadId).catch(() => null) : null;
+          toast(day ? `Queued for ${daySentence(day)}.` : done, "success");
+        })();
+        void loadQueue(true);
+      }
     } catch (error) {
       setCardError({
         key: demo.key,
@@ -436,40 +474,53 @@ export default function DemosPage() {
     else setCardError({ key: demo.key, message: result.message });
   }
 
-  async function runQueueAction(send: SendRow, action: QueueAction) {
+  /* Move to top puts the demo in the first slot of today. Today is bounded by
+     the day's sending limit, so the last row of today moves to tomorrow, and
+     the backend cascades that forward when tomorrow is full too. The toast
+     names what moved, because a send that changed day without being mentioned
+     is a change made behind the customer's back. */
+  async function moveRowToTop(send: SendRow) {
     markBusy(send.id, true);
     setRowError(null);
-    const result = await queueAction(send.id, action);
+    const result = await moveToTop(send.id);
     markBusy(send.id, false);
     if (!result.ok) {
       setRowError({ id: send.id, message: result.missing ? NOT_AVAILABLE : result.message });
       return;
     }
-    if (action === "hold") setHeldIds((prev) => new Set(prev).add(send.id));
-    if (action === "resume")
-      setHeldIds((prev) => {
-        const next = new Set(prev);
-        next.delete(send.id);
-        return next;
-      });
-    if (action === "pull") {
-      setQueue((prev) =>
-        prev.status === "ready"
-          ? {
-              status: "ready",
-              data: { ...prev.data, sends: prev.data.sends.filter((row) => row.id !== send.id) },
-            }
-          : prev,
-      );
-      toast("Pulled back to staging.", "success");
-      announceDemosCountChanged();
-      void loadStaging(true);
+    const moved = result.result?.displaced?.[0];
+    const who = moved?.company || moved?.name;
+    toast(
+      who && moved?.projected_date
+        ? `${who} moved to ${daySentence(moved.projected_date)} to make room.`
+        : "Moved to the front of today.",
+      "success",
+    );
+    void loadQueue(true);
+  }
+
+  /* Unstage takes the demo out of the queue and back to Staging as a card,
+     un-approved, which is the only way back once something is approved. */
+  async function unstageRow(send: SendRow) {
+    markBusy(send.id, true);
+    setRowError(null);
+    const result = await queueAction(send.id, "unstage");
+    markBusy(send.id, false);
+    if (!result.ok) {
+      setRowError({ id: send.id, message: result.missing ? NOT_AVAILABLE : result.message });
       return;
     }
-    if (action === "send-next") {
-      toast("Moved to the front of the queue.", "success");
-      void loadQueue(true);
-    }
+    setQueue((prev) =>
+      prev.status === "ready"
+        ? {
+            status: "ready",
+            data: { ...prev.data, sends: prev.data.sends.filter((row) => row.id !== send.id) },
+          }
+        : prev,
+    );
+    toast("Back in staging.", "success");
+    announceDemosCountChanged();
+    void loadStaging(true);
   }
 
   async function pauseOrResumeAll() {
@@ -635,7 +686,7 @@ export default function DemosPage() {
               {queue.status === "ready"
                 ? queueHeadline(runsThrough(staging.status === "ready" ? staging.data.stats : []), scheduleLine) ||
                   "Demos go out on your sending hours."
-                : " "}
+                : " "}
             </p>
             {rows.length > 0 && (
               <div className="dp-bar-actions">
@@ -673,74 +724,61 @@ export default function DemosPage() {
               </button>
             </div>
           ) : (
-            <div className="dp-tablewrap">
-              <table className="dp-table">
-                <thead>
-                  <tr>
-                    <th scope="col">Contact</th>
-                    <th scope="col">Company</th>
-                    <th scope="col">Channel</th>
-                    <th scope="col">Planned</th>
-                    <th scope="col">From</th>
-                    <th scope="col">
-                      <span className="sr-only">Actions</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row) => (
-                    <tr key={row.send.id}>
-                      <td>{row.send.lead?.name ?? "Not named yet"}</td>
-                      <td className="dp-muted">{row.send.lead?.company ?? ""}</td>
-                      <td className="dp-muted">{row.channel}</td>
-                      <td className="dp-num">
-                        {row.held ? <span className="dp-held">Held</span> : row.planned}
-                      </td>
-                      <td className="dp-muted">{row.account}</td>
-                      <td>
-                        <div className="dp-rowacts">
-                          <button
-                            type="button"
-                            className="dp-btn is-small"
-                            disabled={busy.has(row.send.id)}
-                            onClick={() => void runQueueAction(row.send, "send-next")}
-                          >
-                            Send next
-                          </button>
-                          <button
-                            type="button"
-                            className="dp-btn is-small"
-                            disabled={busy.has(row.send.id)}
-                            onClick={() =>
-                              void runQueueAction(row.send, row.held ? "resume" : "hold")
-                            }
-                          >
-                            {row.held ? "Resume" : "Hold"}
-                          </button>
-                          <button
-                            type="button"
-                            className="dp-btn is-small"
-                            disabled={busy.has(row.send.id)}
-                            onClick={() => void runQueueAction(row.send, "pull")}
-                          >
-                            Pull
-                          </button>
-                        </div>
-                        {rowError?.id === row.send.id && (
-                          <p className="dp-rowerr" role="alert">
-                            {rowError.message}
-                          </p>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <>
+              {openDays.map((day) => (
+                <QueueDayBlock
+                  key={day.day}
+                  day={day}
+                  busy={busy}
+                  rowError={rowError}
+                  onMoveToTop={(send) => void moveRowToTop(send)}
+                  onUnstage={(send) => void unstageRow(send)}
+                />
+              ))}
+              {laterDays.length > 0 && (
+                <div className="dp-later">
+                  <button
+                    type="button"
+                    className="dp-later-toggle"
+                    aria-expanded={laterOpen}
+                    onClick={() => setLaterOpen((open) => !open)}
+                  >
+                    {laterSummary(laterDays)}
+                  </button>
+                  {laterOpen && (
+                    <>
+                      {laterDays.slice(0, laterShown).map((day) => (
+                        <QueueDayBlock
+                          key={day.day}
+                          day={day}
+                          busy={busy}
+                          rowError={rowError}
+                          onMoveToTop={(send) => void moveRowToTop(send)}
+                          onUnstage={(send) => void unstageRow(send)}
+                        />
+                      ))}
+                      {laterShown < laterDays.length && (
+                        <button
+                          type="button"
+                          className="dp-btn"
+                          onClick={() => setLaterShown((shown) => shown + LATER_PAGE)}
+                        >
+                          Show more days
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+              {queue.status === "ready" && !queue.data.complete && (
+                <p className="dp-quiet" role="status">
+                  Loading the rest.
+                </p>
+              )}
+            </>
           )}
         </>
       )}
-
       {segment === "sent" && (
         <>
           {sent.status === "loading" ? (
@@ -820,6 +858,20 @@ function DemoCard({
 }) {
   const lead = demo.lead;
   const role = [lead?.title, lead?.company].filter(Boolean).join(", ");
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  /* The timestamp link drives the clip on this card: jump there, play, and
+     bring the player into view, since it sits under the email. */
+  function seekVideo(seconds: number) {
+    const video = videoRef.current;
+    if (!video) return;
+    video.currentTime = seconds;
+    video.scrollIntoView({ block: "center", behavior: "smooth" });
+    void video.play().catch(() => {
+      /* Autoplay can be refused; the frame is already at the right moment. */
+    });
+  }
+
   return (
     <article className="dp-card" aria-label={demo.heading}>
       <div className="dp-card-top">
@@ -839,17 +891,19 @@ function DemoCard({
         </p>
       )}
 
-      {/* The bug the demo shows, then its evidence, then the email, then the
-          video: the customer judges the claim before watching, and the clip
-          sits under the copy it is attached to (design/review-queue.html). */}
+      {/* The bug in one line, the moment it happens, then the email, then the
+          clip. The four label rows this replaced pushed the demo itself off
+          the bottom of the card, which is the one thing an approver watches. */}
       {demo.claim && <p className="dp-claim">{demo.claim}</p>}
-      <Evidence demo={demo} />
+      <BugLine demo={demo} onSeek={seekVideo} />
       {demo.body && (
         <div className="dp-media">
           <EmailPreview subject={demo.subject} body={demo.body} />
         </div>
       )}
-      {demo.videoSlug && <DemoVideo slug={demo.videoSlug} label={demo.heading} />}
+      {demo.videoSlug && (
+        <DemoVideo ref={videoRef} slug={demo.videoSlug} label={demo.heading} />
+      )}
 
       {demo.canDecide && (
         <>
@@ -924,49 +978,56 @@ function DemoCard({
   );
 }
 
-function Evidence({ demo }: { demo: StagedDemo }) {
+/* One line for where the bug shows, and the steps behind a disclosure. The
+   device is gone from the card: it does not help anyone decide whether to
+   send this demo, and it cost a whole row above the clip. */
+function BugLine({ demo, onSeek }: { demo: StagedDemo; onSeek: (seconds: number) => void }) {
+  const [stepsOpen, setStepsOpen] = useState(false);
   const evidence = demo.evidence;
-  if (!evidence) return null;
-  const steps = Array.isArray(evidence.repro_steps) ? evidence.repro_steps : [];
-  if (!steps.length && !evidence.url && !evidence.device && !evidence.video_timestamp)
-    return null;
-  const href = evidence.url
+  const steps = Array.isArray(evidence?.repro_steps) ? evidence.repro_steps : [];
+  const seconds = videoSeconds(evidence?.video_timestamp);
+  const href = evidence?.url
     ? /^https?:\/\//i.test(evidence.url)
       ? evidence.url
       : `https://${evidence.url}`
     : null;
+  const hasSteps = steps.length > 0 || Boolean(href);
+  if (seconds === null && !hasSteps) return null;
   return (
-    <div className="dp-evidence">
-      {steps.length > 0 && (
-        <div className="dp-ev">
-          <span>Steps</span>
-          <ol>
-            {steps.map((step, index) => (
-              <li key={index}>{step}</li>
-            ))}
-          </ol>
-        </div>
-      )}
-      {href && (
-        <div className="dp-ev">
-          <span>Where</span>
-          <p>
-            <a href={href} target="_blank" rel="noopener noreferrer">
-              {evidence.url}
-            </a>
-          </p>
-        </div>
-      )}
-      {evidence.device && (
-        <div className="dp-ev">
-          <span>Device</span>
-          <p>{evidence.device}</p>
-        </div>
-      )}
-      {evidence.video_timestamp && (
-        <div className="dp-ev">
-          <span>In video</span>
-          <p>{evidence.video_timestamp}</p>
+    <div className="dp-bugline">
+      <p>
+        {seconds !== null && demo.videoSlug && (
+          <button type="button" className="dp-seek" onClick={() => onSeek(seconds)}>
+            Bug visible at {timestampLabel(seconds)}
+          </button>
+        )}
+        {hasSteps && (
+          <button
+            type="button"
+            className="dp-seek is-quiet"
+            aria-expanded={stepsOpen}
+            onClick={() => setStepsOpen((open) => !open)}
+          >
+            {stepsOpen ? "Hide steps" : "Show steps"}
+          </button>
+        )}
+      </p>
+      {stepsOpen && hasSteps && (
+        <div className="dp-steps">
+          {steps.length > 0 && (
+            <ol>
+              {steps.map((step, index) => (
+                <li key={index}>{step}</li>
+              ))}
+            </ol>
+          )}
+          {href && (
+            <p>
+              <a href={href} target="_blank" rel="noopener noreferrer">
+                {evidence?.url}
+              </a>
+            </p>
+          )}
         </div>
       )}
     </div>
@@ -977,8 +1038,15 @@ function Evidence({ demo }: { demo: StagedDemo }) {
    number is read off the video, never guessed. A clip that will not play says
    so and offers the tab that can, rather than leaving a dead player where the
    card's whole point should be (the demo library's idiom). */
-function DemoVideo({ slug, label }: { slug: string; label: string }) {
-  const ref = useRef<HTMLVideoElement>(null);
+function DemoVideo({
+  ref,
+  slug,
+  label,
+}: {
+  ref: RefObject<HTMLVideoElement | null>;
+  slug: string;
+  label: string;
+}) {
   const [duration, setDuration] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
   const href = `/d/${slug}`;
@@ -1014,6 +1082,90 @@ function DemoVideo({ slug, label }: { slug: string; label: string }) {
         {duration && <span className="dp-duration">{duration}</span>}
       </div>
     </div>
+  );
+}
+
+/* ---------- one day of the queue ---------- */
+
+function QueueDayBlock({
+  day,
+  busy,
+  rowError,
+  onMoveToTop,
+  onUnstage,
+}: {
+  day: QueueDay;
+  busy: ReadonlySet<string>;
+  rowError: { id: string; message: string } | null;
+  onMoveToTop: (send: SendRow) => void;
+  onUnstage: (send: SendRow) => void;
+}) {
+  return (
+    <section className="dp-day" aria-label={day.label}>
+      <div className="dp-day-head">
+        <h3>{day.label}</h3>
+        <span className="dp-day-load">{dayLoadLine(day)}</span>
+        {day.full && <span className="dp-held">Full</span>}
+      </div>
+      <div className="dp-tablewrap">
+        <table className="dp-table">
+          <thead>
+            <tr>
+              <th scope="col">Contact</th>
+              <th scope="col">Company</th>
+              <th scope="col">Channel</th>
+              <th scope="col">Planned</th>
+              <th scope="col">From</th>
+              <th scope="col">
+                <span className="sr-only">Actions</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {day.rows.map((row) => (
+              <tr key={row.send.id}>
+                <td>{row.send.lead?.name ?? "Not named yet"}</td>
+                <td className="dp-muted">{row.send.lead?.company ?? ""}</td>
+                <td className="dp-muted">{row.channel}</td>
+                <td className="dp-num">
+                  {row.held ? (
+                    <span className="dp-held">Held</span>
+                  ) : (
+                    plannedClock(row.send, row.held)
+                  )}
+                </td>
+                <td className="dp-muted">{row.account}</td>
+                <td>
+                  <div className="dp-rowacts">
+                    <button
+                      type="button"
+                      className="dp-btn is-small"
+                      disabled={busy.has(row.send.id)}
+                      onClick={() => onMoveToTop(row.send)}
+                    >
+                      Move to top
+                    </button>
+                    <button
+                      type="button"
+                      className="dp-btn is-small"
+                      disabled={busy.has(row.send.id)}
+                      onClick={() => onUnstage(row.send)}
+                    >
+                      Unstage
+                    </button>
+                  </div>
+                  {rowError?.id === row.send.id && (
+                    <p className="dp-rowerr" role="alert">
+                      {rowError.message}
+                    </p>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
   );
 }
 

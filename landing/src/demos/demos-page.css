@@ -226,22 +226,45 @@
 
 .dp-claim { margin: 0.9rem 0 0; font-size: 0.85rem; line-height: 1.55; }
 
-.dp-evidence {
-  display: grid;
-  gap: 0.6rem;
-  margin-top: 0.85rem;
+/* The bug line: where it happens, and the steps behind a disclosure. */
+.dp-bugline { margin-top: 0.7rem; }
+.dp-bugline > p { display: flex; flex-wrap: wrap; gap: 1rem; margin: 0; }
+
+.dp-seek {
+  border: 0;
+  background: none;
+  color: var(--color-tide);
+  padding: 0;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 620;
+  cursor: pointer;
+}
+
+.dp-seek:hover { color: var(--color-tide-deep); text-decoration: underline; }
+.dp-seek.is-quiet { color: var(--color-ink-soft); font-weight: 560; }
+.dp-seek.is-quiet:hover { color: var(--color-ink); }
+
+.dp-steps {
+  margin-top: 0.6rem;
   border: 1px solid var(--color-line);
   border-radius: 0.625rem;
   background: var(--color-paper);
-  padding: 0.8rem 0.9rem;
+  padding: 0.75rem 0.9rem;
 }
 
-.dp-ev { display: grid; grid-template-columns: 5rem minmax(0, 1fr); gap: 0.6rem; }
-.dp-ev > span:first-child { color: var(--color-ink-soft); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding-top: 0.1rem; }
 /* list-style is named: the base reset strips markers from every ol. */
-.dp-ev ol { margin: 0; list-style: decimal; padding-left: 1.15rem; font-size: 0.8rem; line-height: 1.55; font-variant-numeric: tabular-nums; }
-.dp-ev p { margin: 0; font-size: 0.8rem; line-height: 1.55; overflow-wrap: anywhere; }
-.dp-ev a { color: var(--color-tide); }
+.dp-steps ol {
+  margin: 0;
+  list-style: decimal;
+  padding-left: 1.15rem;
+  font-size: 0.8rem;
+  line-height: 1.6;
+  font-variant-numeric: tabular-nums;
+}
+
+.dp-steps p { margin: 0.55rem 0 0; font-size: 0.8rem; overflow-wrap: anywhere; }
+.dp-steps a { color: var(--color-tide); }
 
 .dp-media { margin-top: 0.9rem; }
 
@@ -303,6 +326,48 @@
 .dp-change-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-top: 0.6rem; }
 
 /* ---------- rows (Queue and Sent) ---------- */
+
+/* One block per send day: the header carries how full the day is, so a
+   customer reading forty days sees capacity, not just rows. */
+.dp-day { margin-top: 1.35rem; }
+
+.dp-day-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+}
+
+.dp-day-head h3 {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.dp-day-load { color: var(--color-ink-soft); font-size: 0.78rem; font-variant-numeric: tabular-nums; }
+
+.dp-later { margin-top: 1.35rem; }
+
+.dp-later-toggle {
+  display: block;
+  width: 100%;
+  border: 1px solid var(--color-line);
+  border-radius: 0.9rem;
+  background: var(--color-sand);
+  color: var(--color-ink);
+  padding: 0.85rem 1rem;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 620;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dp-later-toggle:hover { border-color: var(--color-ink-faint); }
+.dp-later .dp-day:first-of-type { margin-top: 1rem; }
+.dp-later > .dp-btn { margin-top: 1rem; }
 
 .dp-tablewrap {
   /* Positioned so the sr-only column labels inside the table are contained:
@@ -409,7 +474,6 @@
   .dp-head { align-items: flex-start; flex-direction: column; }
   .dp-segments { width: 100%; }
   .dp-segments button { flex: 1; justify-content: center; }
-  .dp-ev { grid-template-columns: 1fr; gap: 0.2rem; }
   .dp-table .dp-rowacts { justify-content: flex-start; }
 }
 
