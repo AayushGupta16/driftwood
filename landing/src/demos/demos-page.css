@@ -273,9 +273,13 @@
 .dp-steps p { margin: 0.55rem 0 0; font-size: 0.8rem; overflow-wrap: anywhere; }
 .dp-steps a { color: var(--color-tide); }
 
-.dp-media { margin-top: 0.9rem; }
-
-.dp-video-shell { position: relative; }
+/* The clip leads the card, and is bounded: a 16:9 frame that cannot grow
+   past a third of a laptop screen, so twenty demos stay reviewable. */
+.dp-video-shell {
+  position: relative;
+  width: min(100%, 26rem);
+  margin-top: 0.85rem;
+}
 
 .dp-video {
   display: block;
@@ -283,31 +287,102 @@
   aspect-ratio: 16 / 9;
   border-radius: 0.7rem;
   background: var(--color-ink);
+  /* contain, not cover: a prospect's clip is whatever shape it was recorded
+     in, and cropping it hides the thing being judged. */
+  object-fit: contain;
 }
 
+/* The same frame when the clip will not render here: a poster, a play mark
+   and a way out, never a grey box carrying a sentence. */
+.dp-video-dead {
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--color-line);
+  background:
+    radial-gradient(120% 120% at 50% 0%, color-mix(in srgb, var(--color-tide) 22%, #101820), #101820);
+  text-decoration: none;
+}
+
+.dp-play {
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.9);
+  clip-path: circle(50%);
+  position: relative;
+}
+
+.dp-play::after {
+  position: absolute;
+  top: 50%;
+  left: 54%;
+  translate: -50% -50%;
+  border-block: 0.5rem solid transparent;
+  border-left: 0.8rem solid var(--color-ink);
+  content: "";
+}
+
+.dp-video-out {
+  position: absolute;
+  left: 0.6rem;
+  bottom: 0.6rem;
+  color: rgb(255 255 255 / 0.85);
+  font-size: 0.7rem;
+}
+
+/* Top right, clear of the native control bar. */
 .dp-duration {
   position: absolute;
+  top: 0.55rem;
   right: 0.55rem;
-  bottom: 0.7rem;
   border-radius: 0.3rem;
   background: rgb(22 24 27 / 0.78);
   color: #fff;
   padding: 0.1rem 0.35rem;
   font-size: 0.7rem;
   font-variant-numeric: tabular-nums;
+  pointer-events: none;
 }
 
-.dp-video-missing {
-  display: grid;
-  justify-items: start;
-  gap: 0.6rem;
+/* The email, shut. Subject, greeting, and the one line that differs. */
+.dp-email { margin-top: 0.85rem; }
+
+.dp-email-shut {
   border: 1px solid var(--color-line);
-  border-radius: 0.7rem;
+  border-radius: 0.625rem;
   background: var(--color-paper);
-  padding: 1.1rem 1rem;
+  padding: 0.7rem 0.9rem;
 }
 
-.dp-video-missing p { margin: 0; color: var(--color-ink-soft); font-size: 0.82rem; }
+.dp-email-subject {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0.6rem;
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.dp-email-subject span { color: var(--color-ink-soft); font-size: 0.72rem; }
+.dp-email-subject strong { min-width: 0; overflow-wrap: anywhere; font-weight: 600; }
+.dp-email-peek { margin-top: 0.4rem; }
+.dp-email-peek p { margin: 0; color: var(--color-ink-soft); font-size: 0.82rem; line-height: 1.5; }
+
+.dp-email-personal {
+  display: -webkit-box;
+  overflow: hidden;
+  margin-top: 0.15rem !important;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  color: var(--color-ink) !important;
+}
+
+.dp-email .email-preview { margin-bottom: 0; }
+
+/* An inline screenshot is a reference, not the card. Full size is one click
+   away in the demo itself. */
+.dp-email .email-preview-body img { max-height: 7.5rem; width: auto; }
 
 .dp-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
 
@@ -407,7 +482,33 @@
 .dp-table tr:last-child td { border-bottom: 0; }
 .dp-table .dp-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .dp-table .dp-muted { color: var(--color-ink-soft); }
-.dp-table .dp-rowacts { display: flex; flex-wrap: wrap; gap: 0.35rem; justify-content: flex-end; }
+/* Forty buttons on one screen is what a full day looked like. The pair stays
+   in the DOM and in the tab order, so nothing is hidden from a keyboard or a
+   screen reader, and it only paints when the row is hovered or holds focus.
+   Touch has no hover, so there it stays visible. */
+.dp-table .dp-rowacts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  justify-content: flex-end;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.dp-table tr:hover .dp-rowacts,
+.dp-table .dp-rowacts:focus-within {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (hover: none) {
+  .dp-table .dp-rowacts { opacity: 1; pointer-events: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dp-table .dp-rowacts { transition: none; }
+}
 .dp-table .dp-rowerr { color: var(--color-alert); font-size: 0.76rem; }
 
 .dp-table th.dp-dayhead {

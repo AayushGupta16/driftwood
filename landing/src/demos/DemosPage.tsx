@@ -36,6 +36,7 @@ import {
   NO_LIMITS,
   dayChannelTitle,
   dayRemaining,
+  emailCollapsed,
   daySentence,
   decisionsFor,
   groupQueueByDay,
@@ -414,8 +415,11 @@ export default function DemosPage() {
      column repeating it is nine hundred rows of nothing, so a row whose
      channel has a single account leaves the cell empty. */
   const ambiguous = { Email: senders.email.length > 1, LinkedIn: senders.linkedin.length > 1 };
-  const showAccount = ambiguous.Email || ambiguous.LinkedIn;
+  const showAccount = rows.some((row) => ambiguous[row.channel as "Email" | "LinkedIn"]);
   const { shown: openDays, later: laterDays } = splitQueueDays(queueDays, OPEN_DAYS);
+  /* The row that already sends first. Moving it to the top does nothing, so
+     its control says so instead of pretending (ux-principles rule 8). */
+  const firstQueuedId = queueDays[0]?.rows[0]?.send.id ?? null;
   const sentDays = sent.status === "ready" ? groupSentByDay(sent.data.sends) : [];
 
   /* One decide POST per press: every pending item of the demo, together. */
@@ -819,6 +823,7 @@ export default function DemosPage() {
                   armedUnstage={(id) => isArmed({ kind: "unstage", key: id })}
                   showAccount={showAccount}
                   accountFor={(channel) => (ambiguous[channel as "Email" | "LinkedIn"] ? true : false)}
+                  firstInQueue={firstQueuedId}
                   onMoveToTop={(send) => void moveRowToTop(send)}
                   onUnstage={(send) =>
                     armOrRun({ kind: "unstage", key: send.id }, () => void unstageRow(send))
@@ -849,7 +854,8 @@ export default function DemosPage() {
                           armedUnstage={(id) => isArmed({ kind: "unstage", key: id })}
                           showAccount={showAccount}
                           accountFor={(channel) => (ambiguous[channel as "Email" | "LinkedIn"] ? true : false)}
-                          onMoveToTop={(send) => void moveRowToTop(send)}
+                          firstInQueue={firstQueuedId}
+                  onMoveToTop={(send) => void moveRowToTop(send)}
                           onUnstage={(send) =>
                             armOrRun({ kind: "unstage", key: send.id }, () => void unstageRow(send))
                           }
@@ -998,16 +1004,9 @@ function DemoCard({
           alone now, and the profile link rides on the heading. */}
       {lead?.title && <p className="dp-lead">{lead.title}</p>}
 
-      {/* The bug in one line, the moment it happens, then the email, then the
-          clip. The four label rows this replaced pushed the demo itself off
-          the bottom of the card, which is the one thing an approver watches. */}
-      {demo.claim && <p className="dp-claim">{demo.claim}</p>}
-      <BugLine demo={demo} playable={Boolean(demo.videoSlug) && !videoFailed} onSeek={seekVideo} />
-      {demo.body && (
-        <div className="dp-media">
-          <EmailPreview subject={demo.subject} body={demo.body} />
-        </div>
-      )}
+      {/* The clip leads. It is what the demo IS, and it used to sit under a
+          full email, three screens down. Then the bug in one line, then the
+          email collapsed to the part that differs per demo. */}
       {demo.videoSlug && (
         <DemoVideo
           ref={videoRef}
@@ -1016,6 +1015,9 @@ function DemoCard({
           onFailed={() => setVideoFailed(true)}
         />
       )}
+      {demo.claim && <p className="dp-claim">{demo.claim}</p>}
+      <BugLine demo={demo} playable={Boolean(demo.videoSlug) && !videoFailed} onSeek={seekVideo} />
+      {demo.body && <EmailBlock subject={demo.subject} body={demo.body} />}
 
       {demo.canDecide && (
         <>
@@ -1110,6 +1112,42 @@ function DemoCard({
   );
 }
 
+/* The email, collapsed to its subject, its greeting and the personal line.
+   The rest is the same template on every demo, so it waits behind a press.
+   Twenty of these a day is the job; a full email each was four screens. */
+function EmailBlock({ subject, body }: { subject: string | null; body: string }) {
+  const [open, setOpen] = useState(false);
+  const { first, personal } = emailCollapsed(body);
+  return (
+    <div className="dp-email">
+      {open ? (
+        <EmailPreview subject={subject} body={body} />
+      ) : (
+        <div className="dp-email-shut">
+          {subject && (
+            <p className="dp-email-subject">
+              <span>Subject</span>
+              <strong>{subject}</strong>
+            </p>
+          )}
+          <div className="dp-email-peek">
+            {first && <p>{first}</p>}
+            {personal && <p className="dp-email-personal">{personal}</p>}
+          </div>
+        </div>
+      )}
+      <button
+        type="button"
+        className="dp-seek is-quiet"
+        aria-expanded={open}
+        onClick={() => setOpen((was) => !was)}
+      >
+        {open ? "Hide email" : "Show email"}
+      </button>
+    </div>
+  );
+}
+
 /* One line for where the bug shows, and the steps behind a disclosure. The
    device is gone from the card: it does not help anyone decide whether to
    send this demo, and it cost a whole row above the clip. */
@@ -1175,10 +1213,10 @@ function BugLine({
   );
 }
 
-/* The clip, with its length in the corner once the file reports one. The
-   number is read off the video, never guessed. A clip that will not play says
-   so and offers the tab that can, rather than leaving a dead player where the
-   card's whole point should be (the demo library's idiom). */
+/* The clip: a real thumbnail with its length in the corner, which is the
+   first frame the file itself reports. A clip that genuinely will not render
+   keeps the same frame, a play mark and a way out to a tab, rather than
+   turning the card's biggest element into an error message. */
 function DemoVideo({
   ref,
   slug,
@@ -1193,18 +1231,20 @@ function DemoVideo({
   const [duration, setDuration] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
   const href = `/d/${slug}`;
-  if (failed)
-    return (
-      <div className="dp-media dp-video-missing">
-        <p>Cannot play here.</p>
-        <a className="dp-btn is-small" href={href} target="_blank" rel="noopener noreferrer">
-          Open it in a new tab
-        </a>
-      </div>
-    );
   return (
-    <div className="dp-media">
-      <div className="dp-video-shell">
+    <div className="dp-video-shell">
+      {failed ? (
+        <a
+          className="dp-video dp-video-dead"
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`Open the demo for ${label} in a new tab`}
+        >
+          <span className="dp-play" aria-hidden="true" />
+          <span className="dp-video-out">Opens in a new tab</span>
+        </a>
+      ) : (
         <video
           ref={ref}
           className="dp-video"
@@ -1220,13 +1260,11 @@ function DemoVideo({
           onLoadedMetadata={() => {
             const seconds = ref.current?.duration;
             if (typeof seconds === "number" && Number.isFinite(seconds) && seconds > 0)
-              setDuration(
-                `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`,
-              );
+              setDuration(timestampLabel(seconds));
           }}
         />
-        {duration && <span className="dp-duration">{duration}</span>}
-      </div>
+      )}
+      {duration && <span className="dp-duration">{duration}</span>}
     </div>
   );
 }
@@ -1240,6 +1278,7 @@ function QueueDayBlock({
   armedUnstage,
   showAccount,
   accountFor,
+  firstInQueue,
   onMoveToTop,
   onUnstage,
 }: {
@@ -1249,6 +1288,7 @@ function QueueDayBlock({
   armedUnstage: (sendId: string) => boolean;
   showAccount: boolean;
   accountFor: (channel: string) => boolean;
+  firstInQueue: string | null;
   onMoveToTop: (send: SendRow) => void;
   onUnstage: (send: SendRow) => void;
 }) {
@@ -1311,9 +1351,15 @@ function QueueDayBlock({
                     <button
                       type="button"
                       className="dp-btn is-small"
-                      disabled={busy.has(row.send.id)}
+                      disabled={busy.has(row.send.id) || row.send.id === firstInQueue}
                       onClick={() => onMoveToTop(row.send)}
-                      title={busy.has(row.send.id) ? "Moving this demo now" : undefined}
+                      title={
+                        busy.has(row.send.id)
+                          ? "Moving this demo now"
+                          : row.send.id === firstInQueue
+                            ? "This one already sends first"
+                            : undefined
+                      }
                     >
                       {busy.has(row.send.id) ? "Working" : "Move to top"}
                     </button>

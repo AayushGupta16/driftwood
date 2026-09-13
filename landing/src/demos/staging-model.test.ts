@@ -17,6 +17,7 @@ import {
   NO_LIMITS,
   dayLabel,
   dayChannelTitle,
+  emailCollapsed,
   dayRemaining,
   daySentence,
   groupQueueByDay,
@@ -395,4 +396,28 @@ test("a video timestamp is read out of the agent's free text", () => {
   assert.equal(videoSeconds("no timestamp here"), null);
   assert.equal(videoSeconds(null), null);
   assert.equal(timestampLabel(67), "1:07");
+});
+
+test("a collapsed email keeps the greeting and the line that differs per demo", () => {
+  const body = [
+    "Hey Priya,",
+    "",
+    "Picking Growth on your pricing page and pressing back opens checkout on Starter.",
+    "",
+    "Worth a look?",
+    "",
+    "Best,\nAayush",
+  ].join("\n");
+  assert.deepEqual(emailCollapsed(body), {
+    first: "Hey Priya,",
+    personal: "Picking Growth on your pricing page and pressing back opens checkout on Starter.",
+  });
+});
+
+test("an inline image is media, not a line to quote, and a bare body still collapses", () => {
+  const body = "Hey Yuvan,\n\n[![Shot](https://driftwood.sh/a.webp)](https://driftwood.sh/b)\n\nI pulled the two workflow changes into one short walkthrough for you.";
+  assert.equal(emailCollapsed(body).first, "Hey Yuvan,");
+  assert.match(emailCollapsed(body).personal ?? "", /^I pulled the two workflow/);
+  assert.deepEqual(emailCollapsed(null), { first: null, personal: null });
+  assert.deepEqual(emailCollapsed("Hi."), { first: "Hi.", personal: null });
 });

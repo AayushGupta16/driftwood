@@ -379,6 +379,32 @@ export function threadHref(send: SendRow): string | null {
   return id ? `/dashboard/inbox?lead=${encodeURIComponent(id)}` : null;
 }
 
+/* ---------- the email, collapsed ---------- */
+
+/* What a demo card shows before the email is opened: the greeting line, and
+   the paragraph that carries the personal line. Everything after it is the
+   same template on every demo, so it stays behind "Show email". The threshold
+   picks the paragraph that says something over "Worth a look?". */
+const PERSONAL_MIN = 40;
+
+export function emailCollapsed(body: string | null): {
+  first: string | null;
+  personal: string | null;
+} {
+  if (!body) return { first: null, personal: null };
+  const paragraphs = body
+    .split(/\n\s*\n/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+    /* An inline image is media, not a line to quote. */
+    .filter((block) => !/^\[!\[/.test(block));
+  if (paragraphs.length === 0) return { first: null, personal: null };
+  const first = paragraphs[0].split("\n")[0].trim();
+  const personal =
+    paragraphs.slice(1).find((block) => block.length > PERSONAL_MIN) ?? null;
+  return { first, personal: personal ? personal.replace(/\s+/g, " ") : null };
+}
+
 /* ---------- copy ---------- */
 
 /* The staging bound and the "Driftwood approves" line used to sit here. Both
