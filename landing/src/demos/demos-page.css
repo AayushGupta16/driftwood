@@ -205,8 +205,42 @@
   border-radius: 0.9rem;
   background: var(--color-surface);
   box-shadow: var(--shadow-win-sm);
-  padding: 1.15rem 1.25rem 1.25rem;
+  padding: 0.85rem 1rem 0.9rem;
 }
+
+/* The clip takes a narrow rail, the email takes the rest. Under 56rem the
+   two stack, because a 320px clip beside a 200px email reads as neither. */
+.dp-card-body {
+  display: grid;
+  grid-template-columns: 20rem minmax(0, 1fr);
+  gap: 1rem;
+  margin-top: 0.6rem;
+  align-items: start;
+}
+
+.dp-col-clip { min-width: 0; }
+.dp-col-email { min-width: 0; }
+
+.dp-subject {
+  margin: 0 0 0.4rem;
+  font-size: 0.875rem;
+  font-weight: 650;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+/* The email body is the content, so it carries no box: a bordered panel
+   inside a bordered card is a card inside a card. */
+.dp-email .email-preview {
+  margin-bottom: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.dp-email .email-preview-body { padding: 0; font-size: 0.82rem; }
+.dp-email .email-preview-body p { margin: 0 0 0.6em; }
+.dp-email .email-preview-body p:last-child { margin-bottom: 0; }
 
 .dp-card-top {
   display: flex;
@@ -217,24 +251,24 @@
 
 .dp-card-top h3 {
   margin: 0;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 650;
   letter-spacing: -0.012em;
 }
 
+.dp-role { color: var(--color-ink-soft); font-weight: 400; }
+
 .dp-age { color: var(--color-ink-faint); font-size: 0.74rem; font-variant-numeric: tabular-nums; }
 
-.dp-lead { margin: 0.25rem 0 0; color: var(--color-ink-soft); font-size: 0.8rem; line-height: 1.5; }
 .dp-card-top h3 a { color: inherit; text-decoration: none; }
 .dp-card-top h3 a:hover { color: var(--color-tide); text-decoration: underline; }
 
 /* The channel mark in a queue row. */
 .dp-glyph { display: inline-flex; color: var(--color-ink-soft); }
 
-.dp-claim { margin: 0.9rem 0 0; font-size: 0.85rem; line-height: 1.55; }
 
 /* The bug line: where it happens, and the steps behind a disclosure. */
-.dp-bugline { margin-top: 0.7rem; }
+.dp-bugline { margin-top: 0.5rem; }
 .dp-bugline > p { display: flex; flex-wrap: wrap; gap: 1rem; margin: 0; }
 
 .dp-seek {
@@ -277,8 +311,7 @@
    past a third of a laptop screen, so twenty demos stay reviewable. */
 .dp-video-shell {
   position: relative;
-  width: min(100%, 26rem);
-  margin-top: 0.85rem;
+  width: 100%;
 }
 
 .dp-video {
@@ -344,49 +377,13 @@
   pointer-events: none;
 }
 
-/* The email, shut. Subject, greeting, and the one line that differs. */
-.dp-email { margin-top: 0.85rem; }
-
-.dp-email-shut {
-  border: 1px solid var(--color-line);
-  border-radius: 0.625rem;
-  background: var(--color-paper);
-  padding: 0.7rem 0.9rem;
-}
-
-.dp-email-subject {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: baseline;
-  gap: 0.6rem;
-  margin: 0;
-  font-size: 0.85rem;
-  line-height: 1.4;
-}
-
-.dp-email-subject span { color: var(--color-ink-soft); font-size: 0.72rem; }
-.dp-email-subject strong { min-width: 0; overflow-wrap: anywhere; font-weight: 600; }
-.dp-email-peek { margin-top: 0.4rem; }
-.dp-email-peek p { margin: 0; color: var(--color-ink-soft); font-size: 0.82rem; line-height: 1.5; }
-
-.dp-email-personal {
-  display: -webkit-box;
-  overflow: hidden;
-  margin-top: 0.15rem !important;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  color: var(--color-ink) !important;
-}
-
-.dp-email .email-preview { margin-bottom: 0; }
-
 /* An inline screenshot is a reference, not the card. Full size is one click
    away in the demo itself. */
 .dp-email .email-preview-body img { max-height: 7.5rem; width: auto; }
 
-.dp-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+.dp-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.7rem; }
 
-.dp-change { margin-top: 0.8rem; border-top: 1px dashed var(--color-line); padding-top: 0.8rem; }
+.dp-change { margin-top: 0.6rem; border-top: 1px dashed var(--color-line); padding-top: 0.8rem; }
 
 .dp-change textarea {
   display: block;
@@ -583,6 +580,11 @@
 .dp-skel-cell.is-wide { width: 9rem; }
 .dp-skel-cell.is-narrow { width: 5rem; }
 .dp-skel-headline { display: inline-block; height: 0.8rem; width: min(100%, 27rem); vertical-align: middle; }
+
+@media (max-width: 56rem) {
+  .dp-card-body { grid-template-columns: 1fr; }
+  .dp-col-clip { max-width: 26rem; }
+}
 
 @media (max-width: 48rem) {
   .dp-head { align-items: flex-start; flex-direction: column; }

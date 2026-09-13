@@ -990,6 +990,8 @@ function DemoCard({
 
   return (
     <article className="dp-card" aria-label={demo.heading}>
+      {/* Name, company and title on one line: three lines of the same person
+          was three lines of chrome. */}
       <div className="dp-card-top">
         <h3>
           {lead?.linkedin_url ? (
@@ -999,28 +1001,46 @@ function DemoCard({
           ) : (
             demo.heading
           )}
+          {lead?.title && <span className="dp-role"> &middot; {lead.title}</span>}
         </h3>
         <span className="dp-age">{ageLabel(demo.createdAt)}</span>
       </div>
-      {/* The heading already carries the name and the company. The line under
-          it used to repeat both to add a job title, so it carries the title
-          alone now, and the profile link rides on the heading. */}
-      {lead?.title && <p className="dp-lead">{lead.title}</p>}
 
-      {/* The clip leads. It is what the demo IS, and it used to sit under a
-          full email, three screens down. Then the bug in one line, then the
-          email collapsed to the part that differs per demo. */}
-      {demo.videoSlug && (
-        <DemoVideo
-          ref={videoRef}
-          slug={demo.videoSlug}
-          label={demo.heading}
-          onFailed={() => setVideoFailed(true)}
-        />
-      )}
-      {demo.claim && <p className="dp-claim">{demo.claim}</p>}
-      <BugLine demo={demo} playable={Boolean(demo.videoSlug) && !videoFailed} onSeek={seekVideo} />
-      {demo.body && <EmailBlock subject={demo.subject} body={demo.body} />}
+      {/* Two columns: the clip holds a narrow left rail, the email takes the
+          rest. Stacked in one column the card ran past a screen while half
+          the width sat empty. */}
+      <div className="dp-card-body">
+        <div className="dp-col-clip">
+          {demo.videoSlug && (
+            <DemoVideo
+              ref={videoRef}
+              slug={demo.videoSlug}
+              label={demo.heading}
+              onFailed={() => setVideoFailed(true)}
+            />
+          )}
+          <BugLine
+            demo={demo}
+            playable={Boolean(demo.videoSlug) && !videoFailed}
+            onSeek={seekVideo}
+          />
+        </div>
+        {demo.body && (
+          <div className="dp-col-email">
+            {/* The whole email, always. It is the content; everything else on
+                this card is chrome. The subject is bold text, not a labelled
+                row, and the body carries no box of its own. */}
+            {demo.subject && <p className="dp-subject">{demo.subject}</p>}
+            <div className="dp-email">
+              <EmailPreview
+                subject={null}
+                body={demo.body}
+                emphasize={emailCollapsed(demo.body).personal}
+              />
+            </div>
+          </div>
+        )}
+      </div>
 
       {demo.canDecide && (
         <>
@@ -1112,42 +1132,6 @@ function DemoCard({
         </p>
       )}
     </article>
-  );
-}
-
-/* The email, collapsed to its subject, its greeting and the personal line.
-   The rest is the same template on every demo, so it waits behind a press.
-   Twenty of these a day is the job; a full email each was four screens. */
-function EmailBlock({ subject, body }: { subject: string | null; body: string }) {
-  const [open, setOpen] = useState(false);
-  const { first, personal } = emailCollapsed(body);
-  return (
-    <div className="dp-email">
-      {open ? (
-        <EmailPreview subject={subject} body={body} />
-      ) : (
-        <div className="dp-email-shut">
-          {subject && (
-            <p className="dp-email-subject">
-              <span>Subject</span>
-              <strong>{subject}</strong>
-            </p>
-          )}
-          <div className="dp-email-peek">
-            {first && <p>{first}</p>}
-            {personal && <p className="dp-email-personal">{personal}</p>}
-          </div>
-        </div>
-      )}
-      <button
-        type="button"
-        className="dp-seek is-quiet"
-        aria-expanded={open}
-        onClick={() => setOpen((was) => !was)}
-      >
-        {open ? "Hide email" : "Show email"}
-      </button>
-    </div>
   );
 }
 

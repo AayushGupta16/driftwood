@@ -5,11 +5,15 @@ import "./email-preview.css";
 type EmailPreviewProps = {
   subject: string | null;
   body: string;
+  /** One paragraph to mark as the line written for this recipient. Callers
+      that pass nothing render exactly as before. */
+  emphasize?: string | null;
 };
 
 /** The recipient-facing email, rendered from the same narrow contract sent. */
-export function EmailPreview({ subject, body }: EmailPreviewProps) {
+export function EmailPreview({ subject, body, emphasize }: EmailPreviewProps) {
   const paragraphs = parseEmailBody(body);
+  const marked = emphasize?.replace(/\s+/g, " ").trim() || null;
 
   return (
     <section className="email-preview" aria-label="Email as the recipient will see it">
@@ -21,7 +25,19 @@ export function EmailPreview({ subject, body }: EmailPreviewProps) {
       )}
       <div className="email-preview-body">
         {paragraphs.map((paragraph, paragraphIndex) => (
-          <p key={paragraphIndex}>
+          <p
+            key={paragraphIndex}
+            className={
+              marked &&
+              paragraph.lines
+                .map((line) => (line.kind === "text" ? line.text : ""))
+                .join(" ")
+                .replace(/\s+/g, " ")
+                .trim() === marked
+                ? "email-preview-personal"
+                : undefined
+            }
+          >
             {paragraph.lines.map((line, lineIndex) => (
               <Fragment key={lineIndex}>
                 {lineIndex > 0 && <br />}

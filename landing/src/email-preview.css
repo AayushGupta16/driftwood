@@ -49,6 +49,13 @@
   margin: 0 0 1em;
 }
 
+/* The line written for this recipient, marked where it sits in the email. */
+.email-preview-body p.email-preview-personal {
+  border-left: 2px solid var(--color-tide);
+  padding-left: 0.6rem;
+  color: var(--color-ink);
+}
+
 .email-preview-body a {
   color: var(--color-tide);
   text-decoration: underline;
