@@ -106,15 +106,14 @@ if (mockMode) {
     channel_state,
     ...extra,
   });
-  /* `?senders=one` leaves one account per channel, which is the common
-     workspace and the state where the queue's From column has nothing to
-     say. Without it the fixture keeps two LinkedIn seats. */
-  const oneSenderPerChannel = params.get("senders") === "one";
+  /* `?senders=named` puts a sender on every queued row, which is the only
+     thing that brings the queue's From column back: the column reads the
+     rows, not the account list. Nothing serves that field yet, so the default
+     fixture leaves it unset and the column stays away. */
+  const namedSenders = params.get("senders") === "named";
   const xMode = params.get("x");
   const mockAccounts: Record<"linkedin" | "email" | "x", MockAccount[]> = {
-    linkedin: oneSenderPerChannel
-      ? [account("acct-li-1", viewer.name, viewer, "active", {})]
-      : [
+    linkedin: [
       account("acct-li-1", viewer.name, viewer, "active", {}),
       account("acct-li-2", sam.name, sam, "active", {}),
     ],
@@ -499,7 +498,7 @@ if (mockMode) {
   // Approved-but-undelivered ScheduledSends (the review page's Queued tab),
   // due_at asc = the send order. One sending, two failed (one classified,
   // one pre-classification null), the rest pending.
-  type MockSend = { id: string; batch_id: string; kind: string; subject?: string | null; note: string; attachment_slug: string | null; lead: ReturnType<typeof lead> | null; status: string; error: string | null; error_class: string | null; due_at: string; projected_date: string | null; created_at: string; held?: boolean };
+  type MockSend = { id: string; batch_id: string; kind: string; subject?: string | null; note: string; attachment_slug: string | null; lead: ReturnType<typeof lead> | null; status: string; error: string | null; error_class: string | null; due_at: string; projected_date: string | null; created_at: string; held?: boolean; sending_account?: string | null };
   const sends: { sends: MockSend[]; total: number; limit: number; offset: number; counts: { pending: number; sending: number; failed: number; sent: number } } = {
     sends: [
       {
@@ -644,6 +643,11 @@ if (mockMode) {
         due_at: slotAt(day, i),
         projected_date: localDateAhead(day),
         created_at: hoursAgo(20 + day),
+        sending_account: namedSenders
+          ? isEmail
+            ? `outbound${(bulkId % 3) + 1}@example.test`
+            : `${viewer.name ?? "you"} on LinkedIn`
+          : null,
       });
     }
   }

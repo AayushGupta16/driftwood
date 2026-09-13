@@ -24,9 +24,8 @@ import {
   queueAction,
   unpinDemo,
   resumeAllSends,
-  senderPools,
   workspaceSettings,
-  type SenderPools,
+  EMPTY_SENDERS,
 } from "./staging-api";
 import {
   EMPTY_QUEUE,
@@ -54,6 +53,7 @@ import {
   videoSeconds,
   type DailyLimits,
   type QueueDay,
+  type QueueRow,
   type QueueStat,
   type ReviewItem,
   type SendRow,
@@ -138,6 +138,13 @@ const LATER_PAGE = 7;
 const REPLY_WINDOW_DAYS = 90;
 const LOAD_FAILED = "That did not load.";
 
+/* What a queue row puts in the From cell: the sender it actually names. A
+   pool placeholder ("picked when it sends") and a workspace's one obvious
+   mailbox are not row values, so both leave the cell empty. */
+function rowSender(row: QueueRow): string | null {
+  return row.send.sending_account ?? null;
+}
+
 function segmentFromUrl(): Segment {
   const value = new URLSearchParams(window.location.search).get("seg");
   return value === "queue" || value === "sent" ? value : "staging";
@@ -184,7 +191,6 @@ void firstQueuePage();
 void firstSentPage();
 void approvalPolicy();
 void workspaceSettings();
-void senderPools();
 
 export default function DemosPage() {
   const toast = useToast();
@@ -193,7 +199,6 @@ export default function DemosPage() {
   const [queue, setQueue] = useState<Load<QueueData>>({ status: "loading" });
   const [sent, setSent] = useState<Load<SentData>>({ status: "loading" });
   const [autoApproved, setAutoApproved] = useState<boolean | null>(null);
-  const [senders, setSenders] = useState<SenderPools>({ email: [], linkedin: [] });
   const [replied, setReplied] = useState<ReadonlySet<string>>(new Set());
 
   /* Per-card and per-row work in flight, keyed the way the press was. */
@@ -326,12 +331,6 @@ export default function DemosPage() {
       },
       () => {},
     );
-    senderPools().then(
-      (pools) => {
-        if (live) setSenders(pools);
-      },
-      () => {},
-    );
     fetchRepliedLeads(analyticsWindow(REPLY_WINDOW_DAYS)).then(
       (ids) => {
         if (live) setReplied(ids);
@@ -407,19 +406,25 @@ export default function DemosPage() {
     staging.status === "ready" ? readyForYou(groupStagedDemos(staging.data.items)) : [];
 
   const rows =
-    queue.status === "ready" ? queueRows(queue.data.sends, heldIds, senders) : [];
+    /* The account pools are no longer read here: the From cell comes from the
+       row, so the page does not ask the accounts endpoint at all. */
+    queue.status === "ready" ? queueRows(queue.data.sends, heldIds, EMPTY_SENDERS) : [];
   const allHeld = rows.length > 0 && rows.every((row) => row.held);
   const queueDays = groupQueueByDay(rows, limits);
-  /* The From column earns its place only where a channel could send from more
-     than one account. One mailbox and one profile is the common case, and a
-     column repeating it is nine hundred rows of nothing, so a row whose
-     channel has a single account leaves the cell empty. */
-  const ambiguous = { Email: senders.email.length > 1, LinkedIn: senders.linkedin.length > 1 };
-  const showAccount = rows.some((row) => ambiguous[row.channel as "Email" | "LinkedIn"]);
   const { shown: openDays, later: laterDays } = splitQueueDays(queueDays, OPEN_DAYS);
   /* The row that already sends first. Moving it to the top does nothing, so
      its control says so instead of pretending (ux-principles rule 8). */
   const firstQueuedId = queueDays[0]?.rows[0]?.send.id ?? null;
+  /* The days actually on screen: the open ones, plus the later ones only
+     while they are expanded and paged in. */
+  const visibleDays = laterOpen
+    ? [...openDays, ...laterDays.slice(0, laterShown)]
+    : openDays;
+  /* The From column exists only if a row in view would fill it. Read from the
+     rows, not from the account list: a workspace with three mailboxes whose
+     rows name none of them still has nothing to put in the column, and a
+     header over empty cells is worse than no column. */
+  const showAccount = visibleDays.some((day) => day.rows.some((row) => rowSender(row) !== null));
   const sentDays = sent.status === "ready" ? groupSentByDay(sent.data.sends) : [];
 
   /* One decide POST per press: every pending item of the demo, together. */
@@ -822,7 +827,6 @@ export default function DemosPage() {
                   rowError={rowError}
                   armedUnstage={(id) => isArmed({ kind: "unstage", key: id })}
                   showAccount={showAccount}
-                  accountFor={(channel) => (ambiguous[channel as "Email" | "LinkedIn"] ? true : false)}
                   firstInQueue={firstQueuedId}
                   onMoveToTop={(send) => void moveRowToTop(send)}
                   onUnstage={(send) =>
@@ -853,7 +857,6 @@ export default function DemosPage() {
                           rowError={rowError}
                           armedUnstage={(id) => isArmed({ kind: "unstage", key: id })}
                           showAccount={showAccount}
-                          accountFor={(channel) => (ambiguous[channel as "Email" | "LinkedIn"] ? true : false)}
                           firstInQueue={firstQueuedId}
                   onMoveToTop={(send) => void moveRowToTop(send)}
                           onUnstage={(send) =>
@@ -1277,7 +1280,6 @@ function QueueDayBlock({
   rowError,
   armedUnstage,
   showAccount,
-  accountFor,
   firstInQueue,
   onMoveToTop,
   onUnstage,
@@ -1287,7 +1289,6 @@ function QueueDayBlock({
   rowError: { id: string; message: string } | null;
   armedUnstage: (sendId: string) => boolean;
   showAccount: boolean;
-  accountFor: (channel: string) => boolean;
   firstInQueue: string | null;
   onMoveToTop: (send: SendRow) => void;
   onUnstage: (send: SendRow) => void;
@@ -1343,9 +1344,7 @@ function QueueDayBlock({
                     plannedClock(row.send, row.held)
                   )}
                 </td>
-                {showAccount && (
-                  <td className="dp-muted">{accountFor(row.channel) ? row.account : ""}</td>
-                )}
+                {showAccount && <td className="dp-muted">{rowSender(row) ?? ""}</td>}
                 <td>
                   <div className="dp-rowacts">
                     <button
