@@ -1,0 +1,60 @@
+import { useState } from "react";
+
+const commands = [
+  { label: "Sign in to your workspace", command: "driftwood login" },
+  { label: "Continue company setup", command: "driftwood onboard resume" },
+  { label: "Check your connections", command: "driftwood doctor" },
+];
+
+export default function Integrations() {
+  const [message, setMessage] = useState("");
+
+  async function copy(command: string) {
+    try {
+      await navigator.clipboard.writeText(command);
+      setMessage(`Copied: ${command}`);
+    } catch {
+      setMessage("Copy is unavailable. Select the command and copy it manually.");
+    }
+  }
+
+  return (
+    <div className="mx-auto w-full max-w-4xl space-y-8">
+      <header>
+        <h1 className="text-3xl font-semibold tracking-tight">Your <em className="voice">integrations</em></h1>
+        <p className="mt-3 text-gray">Connect your AI assistant or terminal to this Driftwood workspace.</p>
+      </header>
+
+      <section aria-labelledby="mcp-heading" className="rounded-xl border border-line bg-white p-6 sm:p-8">
+        <h2 id="mcp-heading" className="text-xl font-semibold">Connect your <em className="voice">AI assistant</em></h2>
+        <p className="mt-3 text-gray">Use an assistant that supports remote MCP servers to explore your pipeline, browse completed demos, and manage supported outreach tasks.</p>
+        <ol className="my-5 list-decimal space-y-2 pl-5 text-sm text-gray">
+          <li>Open connection settings and create a personal access token.</li>
+          <li>Copy the server configuration into your assistant’s MCP settings.</li>
+          <li>Ask it to show your pipeline or list your completed demos.</li>
+        </ol>
+        <a href="/api/v1/dashboard/mcp/connect" className="inline-flex rounded-full bg-tide px-5 py-2.5 text-sm font-medium text-white hover:bg-tide-deep focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-tide">Manage MCP connections</a>
+        <p className="mt-4 text-sm text-gray">Access follows your workspace role. You can revoke tokens in connection settings. Final outreach approval stays in Driftwood; demo editing and workflow source are unavailable through the customer MCP.</p>
+      </section>
+
+      <section aria-labelledby="cli-heading" className="rounded-xl border border-line bg-white p-6 sm:p-8">
+        <h2 id="cli-heading" className="text-xl font-semibold">Set up from your <em className="voice">terminal</em></h2>
+        <p className="mt-3 text-gray">The Driftwood CLI guides company setup, account connections, team invitations, assets, and send schedules. You can resume setup where you left off.</p>
+        <p className="mt-4 rounded-lg bg-tide-wash p-4 text-sm text-ink">Available for early testing through the Driftwood team. Public installation is not available yet. Once the CLI is installed, use these commands:</p>
+        <div className="mt-5 space-y-4">
+          {commands.map(({ label, command }) => (
+            <div key={command}>
+              <p className="mb-2 text-sm text-gray">{label}</p>
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line p-3">
+                <code className="break-all text-sm">{command}</code>
+                <button type="button" onClick={() => void copy(command)} aria-label={`Copy ${command}`} className="rounded-full border border-line px-4 py-1.5 text-sm text-tide hover:bg-tide-wash focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tide">Copy</button>
+              </div>
+            </div>
+          ))}
+        </div>
+        <p role="status" className="mt-3 min-h-5 text-sm text-gray">{message}</p>
+        <p className="mt-2 text-sm text-gray">Login and account consent open in your browser. Workspace approval is still required, and completing setup does not start outreach.</p>
+      </section>
+    </div>
+  );
+}

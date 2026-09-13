@@ -26,6 +26,7 @@ const FaceCloning = lazy(() => import('./face-cloning/FaceCloning.tsx'))
 const Assets = lazy(() => import('./assets/Assets.tsx'))
 const AnalyticsDashboard = lazy(() => import('./analytics/AnalyticsDashboard.tsx'))
 const WorkspacePage = lazy(() => import('./dashboard/WorkspacePage.tsx'))
+const Integrations = lazy(() => import('./dashboard/Integrations.tsx'))
 const Team = lazy(() => import('./team/Team.tsx'))
 const Inbox = lazy(() => import('./inbox/Inbox.tsx'))
 const SettingsTabs = lazy(() => import('./settings/SettingsTabs.tsx'))
@@ -66,6 +67,8 @@ const page =
     <WorkspacePage active="triggers"><Triggers /></WorkspacePage>
   ) : triggerPathMatch ? (
     <WorkspacePage active="triggers"><TriggerDetail triggerId={decodeURIComponent(triggerPathMatch[1])} /></WorkspacePage>
+  ) : path === '/dashboard/integrations' ? (
+    <WorkspacePage active="settings"><SettingsTabs active="Integrations" /><Integrations /></WorkspacePage>
   ) : path === '/dashboard/team' ? (
     <WorkspacePage active="settings"><SettingsTabs active="Team" /><Team /></WorkspacePage>
   ) : path === '/dashboard/inbox' ? (
