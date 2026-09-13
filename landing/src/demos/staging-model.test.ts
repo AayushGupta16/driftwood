@@ -14,6 +14,15 @@ import {
   queueSends,
   readyForYou,
   runsThrough,
+  NO_LIMITS,
+  dayLabel,
+  dayLoadLine,
+  daySentence,
+  groupQueueByDay,
+  laterSummary,
+  splitQueueDays,
+  timestampLabel,
+  videoSeconds,
   sendingAccount,
   threadHref,
   type LeadContext,
@@ -301,4 +310,93 @@ test("sent rows group by the day they went out, newest first", () => {
 test("the thread link carries the lead, and is absent without one", () => {
   assert.equal(threadHref(send({})), "/dashboard/inbox?lead=l1");
   assert.equal(threadHref(send({ lead: null })), null);
+});
+
+/* ---------- the queue, by day ---------- */
+
+const TODAY = new Date(2026, 8, 12);
+
+const qrow = (id: string, kind: string, day: string) => ({
+  send: send({ id, kind, projected_date: day }),
+  channel: channelLabel(kind),
+  planned: day,
+  held: false,
+  account: "dana@meridian.com",
+});
+
+test("days are named Today, Tomorrow, then weekday and date", () => {
+  assert.equal(dayLabel("2026-09-12", TODAY), "Today");
+  assert.equal(dayLabel("2026-09-13", TODAY), "Tomorrow");
+  assert.match(dayLabel("2026-09-17", TODAY), /Sep 17/);
+});
+
+test("a toast names a day the way a sentence would", () => {
+  assert.equal(daySentence("2026-09-12", TODAY), "today");
+  assert.equal(daySentence("2026-09-13", TODAY), "tomorrow");
+  assert.equal(daySentence("2026-09-15", TODAY), "Tuesday");
+  assert.match(daySentence("2026-10-01", TODAY), /Oct 1/);
+});
+
+test("rows group into days, in order, with per-channel load against the limits", () => {
+  const days = groupQueueByDay(
+    [
+      qrow("a", "email", "2026-09-13"),
+      qrow("b", "email", "2026-09-12"),
+      qrow("c", "message", "2026-09-12"),
+      qrow("d", "email", "2026-09-12"),
+    ],
+    { email: 2, message: 5 },
+    TODAY,
+  );
+  assert.deepEqual(days.map((day) => day.label), ["Today", "Tomorrow"]);
+  assert.deepEqual(days[0].rows.map((row) => row.send.id), ["b", "c", "d"]);
+  assert.equal(dayLoadLine(days[0]), "2 of 2 emails · 1 of 5 LinkedIn");
+  // Email is at its limit but LinkedIn is not, so the day still takes work.
+  assert.equal(days[0].full, false);
+});
+
+test("a day whose every channel is at its limit reads as full", () => {
+  const days = groupQueueByDay(
+    [qrow("a", "email", "2026-09-12"), qrow("b", "email", "2026-09-12")],
+    { email: 2, message: 5 },
+    TODAY,
+  );
+  assert.equal(days[0].full, true);
+});
+
+test("with no limits exposed, a day shows its counts and is never full", () => {
+  const days = groupQueueByDay([qrow("a", "email", "2026-09-12")], NO_LIMITS, TODAY);
+  assert.equal(dayLoadLine(days[0]), "1 email");
+  assert.equal(days[0].full, false);
+});
+
+test("a row with no projected date falls back to the day its due stamp lands on", () => {
+  const due = new Date(2026, 8, 14, 10, 0).toISOString();
+  const days = groupQueueByDay(
+    [{ send: send({ id: "x", projected_date: null, due_at: due }), channel: "Email", planned: "", held: false, account: "" }],
+    NO_LIMITS,
+    TODAY,
+  );
+  assert.equal(days[0].day, "2026-09-14");
+});
+
+test("the first seven days stand open and the rest collapse into one line", () => {
+  const days = groupQueueByDay(
+    Array.from({ length: 10 }, (_, i) => qrow(`r${i}`, "email", `2026-09-${String(12 + i).padStart(2, "0")}`)),
+    NO_LIMITS,
+    TODAY,
+  );
+  const { shown, later } = splitQueueDays(days, 7);
+  assert.equal(shown.length, 7);
+  assert.equal(later.length, 3);
+  assert.match(laterSummary(later), /^Later, 3 demos through .*Sep 21$/);
+  assert.equal(laterSummary([]), "Later, 0 demos");
+});
+
+test("a video timestamp is read out of the agent's free text", () => {
+  assert.equal(videoSeconds("bug visible at 0:19"), 19);
+  assert.equal(videoSeconds("1:07"), 67);
+  assert.equal(videoSeconds("no timestamp here"), null);
+  assert.equal(videoSeconds(null), null);
+  assert.equal(timestampLabel(67), "1:07");
 });

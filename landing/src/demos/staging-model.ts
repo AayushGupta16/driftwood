@@ -393,3 +393,163 @@ export const EMPTY_STAGING = "Nothing waiting for you.";
 export const EMPTY_QUEUE = "Nothing scheduled.";
 export const EMPTY_SENT = "Nothing sent yet.";
 export const NOT_AVAILABLE = "Not available yet.";
+
+/* ---------- the queue, by day ---------- */
+
+/* The queue is read as days, not as one ordered list: a customer can have two
+   months of sends in it, and a flat list of twelve hundred rows answers no
+   question anyone has. Each day carries how full it is against the org's own
+   daily sending limits. */
+
+export type ChannelLoad = { channel: string; label: string; one: string; used: number; cap: number | null };
+
+export type QueueDay = {
+  /* "YYYY-MM-DD", the projected send day. */
+  day: string;
+  /* "Today", "Tomorrow", then "Wed Sep 17". */
+  label: string;
+  rows: QueueRow[];
+  channels: ChannelLoad[];
+  /* Every channel with rows is at or over its limit. */
+  full: boolean;
+};
+
+export type DailyLimits = { email: number | null; message: number | null };
+
+export const NO_LIMITS: DailyLimits = { email: null, message: null };
+
+export function localDay(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+/* The day a queued send is expected to go out on: the projected date, or the
+   day its due stamp falls on when nothing is projected yet. */
+export function sendDay(send: SendRow): string {
+  const projected = projectedDateOf(send);
+  if (projected) return projected;
+  const due = new Date(send.due_at);
+  return Number.isNaN(due.getTime()) ? "" : localDay(due);
+}
+
+/* "Today" / "Tomorrow" / "Wed Sep 17". */
+export function dayLabel(day: string, today: Date = new Date()): string {
+  const date = parseDateOnly(day);
+  if (!date) return day;
+  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const days = Math.round((date.getTime() - start.getTime()) / 86400e3);
+  if (days === 0) return "Today";
+  if (days === 1) return "Tomorrow";
+  return dayShort(date);
+}
+
+/* How a toast names a day: "today", "tomorrow", the weekday inside a week,
+   then the date. Lower case, because it sits inside a sentence. */
+export function daySentence(day: string, today: Date = new Date()): string {
+  const date = parseDateOnly(day);
+  if (!date) return day;
+  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const days = Math.round((date.getTime() - start.getTime()) / 86400e3);
+  if (days === 0) return "today";
+  if (days === 1) return "tomorrow";
+  if (days > 1 && days < 7)
+    return date.toLocaleDateString(undefined, { weekday: "long" });
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+const CHANNEL_UNIT: Record<string, string> = { email: "emails", message: "LinkedIn" };
+const CHANNEL_ONE: Record<string, string> = { email: "email", message: "LinkedIn" };
+
+export function groupQueueByDay(
+  rows: QueueRow[],
+  limits: DailyLimits = NO_LIMITS,
+  today: Date = new Date(),
+): QueueDay[] {
+  const byDay = new Map<string, QueueRow[]>();
+  for (const row of rows) {
+    const day = sendDay(row.send);
+    if (!day) continue;
+    const list = byDay.get(day);
+    if (list) list.push(row);
+    else byDay.set(day, [row]);
+  }
+  return [...byDay.entries()]
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([day, dayRows]) => {
+      /* A channel appears on a day header when it has rows there: a "0 of 20
+         emails" on every one of forty days is noise, not status. */
+      const channels: ChannelLoad[] = (["email", "message"] as const)
+        .map((kind) => ({
+          channel: kind,
+          label: CHANNEL_UNIT[kind],
+          one: CHANNEL_ONE[kind],
+          used: dayRows.filter((row) => row.send.kind === kind).length,
+          cap: limits[kind],
+        }))
+        .filter((load) => load.used > 0);
+      const capped = channels.filter((load) => load.cap !== null);
+      return {
+        day,
+        label: dayLabel(day, today),
+        rows: dayRows,
+        channels,
+        full: capped.length > 0 && capped.every((load) => load.used >= (load.cap ?? 0)),
+      };
+    });
+}
+
+/* "8 of 20 emails · 3 of 25 LinkedIn", or the bare counts when the workspace
+   exposes no limit for that channel. */
+export function dayLoadLine(day: QueueDay): string {
+  return day.channels
+    .map((load) =>
+      load.cap === null
+        ? `${load.used.toLocaleString()} ${load.used === 1 ? load.one : load.label}`
+        : `${load.used.toLocaleString()} of ${load.cap.toLocaleString()} ${load.label}`,
+    )
+    .join(" · ");
+}
+
+/* The first `open` days stand open; everything past them collapses into one
+   row, so sixty days of queue is still one screen. */
+export function splitQueueDays(
+  days: QueueDay[],
+  open: number,
+): { shown: QueueDay[]; later: QueueDay[] } {
+  return { shown: days.slice(0, open), later: days.slice(open) };
+}
+
+/* "Later, 1,180 demos through Nov 14". */
+export function laterSummary(later: QueueDay[]): string {
+  const count = later.reduce((total, day) => total + day.rows.length, 0);
+  const last = later[later.length - 1];
+  const end = last ? parseDateOnly(last.day) : null;
+  const through = end
+    ? ` through ${end.toLocaleDateString(undefined, { month: "short", day: "numeric" })}`
+    : "";
+  return `Later, ${count.toLocaleString()} ${count === 1 ? "demo" : "demos"}${through}`;
+}
+
+/* Inside a day group the day is already in the header, so the row carries
+   only the time. A send whose due stamp lands on another day has no time of
+   its own yet: it goes when the window next opens. */
+export function plannedClock(send: SendRow, held: boolean): string {
+  if (held) return "Held";
+  const due = new Date(send.due_at);
+  if (Number.isNaN(due.getTime())) return "In sending hours";
+  return localDay(due) === sendDay(send) ? timeShort(due) : "In sending hours";
+}
+
+/* ---------- the bug, on the card ---------- */
+
+/* "bug visible at 0:19" -> 19. The column is free text written by the agent,
+   so the timestamp is read out of it rather than demanded of it. */
+export function videoSeconds(text: string | null | undefined): number | null {
+  if (!text) return null;
+  const match = /(\d{1,2}):([0-5]\d)/.exec(text);
+  if (!match) return null;
+  return Number(match[1]) * 60 + Number(match[2]);
+}
+
+export function timestampLabel(seconds: number): string {
+  return `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
+}
