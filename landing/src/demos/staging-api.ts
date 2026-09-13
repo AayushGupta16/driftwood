@@ -141,9 +141,13 @@ export async function decide(
   return (await response.json()) as DecideResult;
 }
 
-/* Keeps one demo in Staging past the 3-day expiry. */
+/* Keeps one demo in Staging past the 3-day expiry, and the way back out of
+   that state. A state with no inverse is a trap, so the two ship together. */
 export const pinDemo = (itemId: string) =>
   post(`/api/v1/dashboard/reviews/${encodeURIComponent(itemId)}/pin`);
+
+export const unpinDemo = (itemId: string) =>
+  post(`/api/v1/dashboard/reviews/${encodeURIComponent(itemId)}/unpin`);
 
 /* What the queue's two row controls are called here. The paths they post to
    are the backend's names; the customer never reads either word. */

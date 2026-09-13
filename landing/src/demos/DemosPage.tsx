@@ -23,6 +23,7 @@ import {
   moveToTop,
   pinDemo,
   queueAction,
+  unpinDemo,
   resumeAllSends,
   senderPools,
   workspaceSettings,
@@ -103,7 +104,34 @@ type StagingData = {
 type QueueData = { sends: SendRow[]; complete: boolean; loadingMore: boolean };
 type SentData = { sends: SendRow[]; total: number };
 
+/* Every control on the page that arms before it runs. One at a time, so
+   arming any of them disarms the rest (ux-principles rule 9). */
+type Armed =
+  | { kind: "approve-all" }
+  | { kind: "pause" }
+  | { kind: "resume" }
+  | { kind: "skip"; key: string }
+  | { kind: "unstage"; key: string };
+
+function sameArmed(a: Armed, b: Armed): boolean {
+  if (a.kind !== b.kind) return false;
+  return "key" in a && "key" in b ? a.key === b.key : true;
+}
+
+/* The clock lives out here: a component body may not read one, because a
+   render has to give the same answer twice. */
+function armStamp(): number {
+  return Date.now();
+}
+
+function armedTooRecently(at: number): boolean {
+  return armStamp() - at < ARM_GUARD_MS;
+}
+
 const ARM_MS = 5000;
+/* A press inside this window of arming is a double-click, not a decision.
+   Without it, two fast clicks walk straight through a two-press guard. */
+const ARM_GUARD_MS = 400;
 /* Days that stand open in the queue; everything past them collapses into one
    line, because a customer can have two months of sends queued. */
 const OPEN_DAYS = 7;
@@ -173,10 +201,11 @@ export default function DemosPage() {
   /* Per-card and per-row work in flight, keyed the way the press was. */
   const [busy, setBusy] = useState<ReadonlySet<string>>(new Set());
   const [cardError, setCardError] = useState<{ key: string; message: string } | null>(null);
-  const [changeFor, setChangeFor] = useState<{ key: string; text: string } | null>(null);
-  const [armedSkip, setArmedSkip] = useState<string | null>(null);
-  const [armedApproveAll, setArmedApproveAll] = useState(false);
-  const [armedPause, setArmedPause] = useState(false);
+  /* The open change box, and the drafts behind it. A draft outlives closing
+     the box: a mis-press must not throw away what the customer typed. */
+  const [changeOpen, setChangeOpen] = useState<string | null>(null);
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [armed, setArmed] = useState<{ at: number; what: Armed } | null>(null);
   const [pinnable, setPinnable] = useState(true);
   const [pinned, setPinned] = useState<ReadonlySet<string>>(new Set());
   const [heldIds, setHeldIds] = useState<ReadonlySet<string>>(new Set());
@@ -317,25 +346,21 @@ export default function DemosPage() {
     };
   }, []);
 
-  /* Armed buttons disarm themselves, so no stale confirm waits to be
-     fat-fingered minutes later (ux-principles rule 9). */
+  /* An armed button disarms itself after a beat, so no stale confirm waits to
+     be fat-fingered minutes later, and Escape disarms it on purpose: waiting
+     out a timer is not an exit anyone should have to take. */
   useEffect(() => {
-    if (!armedSkip) return;
-    const timer = window.setTimeout(() => setArmedSkip(null), ARM_MS);
-    return () => window.clearTimeout(timer);
-  }, [armedSkip]);
-
-  useEffect(() => {
-    if (!armedApproveAll) return;
-    const timer = window.setTimeout(() => setArmedApproveAll(false), ARM_MS);
-    return () => window.clearTimeout(timer);
-  }, [armedApproveAll]);
-
-  useEffect(() => {
-    if (!armedPause) return;
-    const timer = window.setTimeout(() => setArmedPause(false), ARM_MS);
-    return () => window.clearTimeout(timer);
-  }, [armedPause]);
+    if (!armed) return;
+    const timer = window.setTimeout(() => setArmed(null), ARM_MS);
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setArmed(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [armed]);
 
   function switchSegment(next: Segment) {
     setSegment(next);
@@ -348,6 +373,24 @@ export default function DemosPage() {
       "",
       window.location.pathname + (query ? `?${query}` : "") + window.location.hash,
     );
+  }
+
+  function isArmed(what: Armed): boolean {
+    return armed !== null && sameArmed(armed.what, what);
+  }
+
+  /* First press arms, second runs. Arming anything disarms whatever else was
+     armed, and a press inside the guard window is swallowed as a double
+     click. */
+  function armOrRun(what: Armed, run: () => void) {
+    const current = armed;
+    if (!current || !sameArmed(current.what, what)) {
+      setArmed({ at: armStamp(), what });
+      return;
+    }
+    if (armedTooRecently(current.at)) return;
+    setArmed(null);
+    run();
   }
 
   function markBusy(key: string, on: boolean) {
@@ -395,8 +438,16 @@ export default function DemosPage() {
             }
           : prev,
       );
-      setChangeFor((prev) => (prev?.key === demo.key ? null : prev));
-      setArmedSkip((prev) => (prev === demo.key ? null : prev));
+      setChangeOpen((prev) => (prev === demo.key ? null : prev));
+      setDrafts((prev) => {
+        if (!(demo.key in prev)) return prev;
+        const next = { ...prev };
+        delete next[demo.key];
+        return next;
+      });
+      setArmed((prev) =>
+        prev && "key" in prev.what && prev.what.key === demo.key ? null : prev,
+      );
       announceDemosCountChanged();
       if (decision !== "approve") {
         toast(done, "success");
@@ -420,13 +471,7 @@ export default function DemosPage() {
     }
   }
 
-  async function approveAll() {
-    if (staging.status !== "ready" || !staging.data.complete) return;
-    if (!armedApproveAll) {
-      setArmedApproveAll(true);
-      return;
-    }
-    setArmedApproveAll(false);
+  async function runApproveAll() {
     const decidable = stagedDemos;
     if (decidable.length === 0) return;
     markBusy("all", true);
@@ -459,19 +504,30 @@ export default function DemosPage() {
     }
   }
 
-  async function pin(demo: StagedDemo) {
+  /* Pin and its inverse. Pinning keeps a demo past the 3-day expiry, and
+     unpinning lets it expire again: a state the customer can enter and not
+     leave is the bug this pair exists to close. */
+  async function togglePin(demo: StagedDemo) {
+    const isPinned = pinned.has(demo.key);
     markBusy(demo.key, true);
     setCardError(null);
-    const result = await pinDemo(demo.pinId);
+    const result = isPinned ? await unpinDemo(demo.pinId) : await pinDemo(demo.pinId);
     markBusy(demo.key, false);
     if (result.ok) {
-      setPinned((prev) => new Set(prev).add(demo.key));
-      toast("Pinned. It stays in staging.", "success");
+      setPinned((prev) => {
+        const next = new Set(prev);
+        if (isPinned) next.delete(demo.key);
+        else next.add(demo.key);
+        return next;
+      });
+      toast(isPinned ? "Unpinned. It can expire again." : "Pinned. It stays in Staging.", "success");
       return;
     }
-    /* No pin endpoint yet: drop the button rather than offer a dead one. */
-    if (result.missing) setPinnable(false);
-    else setCardError({ key: demo.key, message: result.message });
+    /* Nothing serves pinning yet. Hide the control rather than offer a dead
+       one, but never while a demo is pinned: that would strip the only way
+       back out of the state. */
+    if (result.missing && !isPinned) setPinnable(false);
+    else setCardError({ key: demo.key, message: result.missing ? NOT_AVAILABLE : result.message });
   }
 
   /* Move to top puts the demo in the first slot of today. Today is bounded by
@@ -493,14 +549,15 @@ export default function DemosPage() {
     toast(
       who && moved?.projected_date
         ? `${who} moved to ${daySentence(moved.projected_date)} to make room.`
-        : "Moved to the front of today.",
+        : "Moved to the top of today.",
       "success",
     );
     void loadQueue(true);
   }
 
   /* Unstage takes the demo out of the queue and back to Staging as a card,
-     un-approved, which is the only way back once something is approved. */
+     un-approved, which is the only way back once something is approved. It
+     un-approves work the customer already decided, so it arms first. */
   async function unstageRow(send: SendRow) {
     markBusy(send.id, true);
     setRowError(null);
@@ -518,17 +575,12 @@ export default function DemosPage() {
           }
         : prev,
     );
-    toast("Back in staging.", "success");
+    toast("Back in Staging.", "success");
     announceDemosCountChanged();
     void loadStaging(true);
   }
 
-  async function pauseOrResumeAll() {
-    if (!allHeld && !armedPause) {
-      setArmedPause(true);
-      return;
-    }
-    setArmedPause(false);
+  async function runPauseOrResumeAll() {
     markBusy("sends", true);
     setBulkQueueError(null);
     const result = allHeld ? await resumeAllSends() : await holdAllSends();
@@ -538,7 +590,7 @@ export default function DemosPage() {
       return;
     }
     setHeldIds(allHeld ? new Set() : new Set(rows.map((row) => row.send.id)));
-    toast(allHeld ? "Sends resumed." : "Sends held.", "success");
+    toast(allHeld ? "Sends resumed." : "Sends paused.", "success");
   }
 
   const stagingCount = staging.status === "ready" && staging.data.complete ? stagedDemos.length : null;
@@ -597,23 +649,27 @@ export default function DemosPage() {
                   <div className="dp-bar-actions">
                     <button
                       type="button"
-                      className={`dp-btn ${armedApproveAll ? "is-armed" : "is-primary"}`}
-                      onClick={() => void approveAll()}
+                      className={`dp-btn ${isArmed({ kind: "approve-all" }) ? "is-armed" : "is-primary"}`}
+                      onClick={() =>
+                        armOrRun({ kind: "approve-all" }, () => void runApproveAll())
+                      }
                       disabled={
                         busy.has("all") ||
                         staging.status !== "ready" ||
                         !staging.data.complete
                       }
                       title={
-                        staging.status === "ready" && !staging.data.complete
-                          ? "Available once the whole list loads"
-                          : undefined
+                        busy.has("all")
+                          ? "Approving these demos now"
+                          : staging.status === "ready" && !staging.data.complete
+                            ? "Available once the whole list loads"
+                            : "Approves every demo waiting for you"
                       }
                     >
                       {busy.has("all")
                         ? "Approving"
-                        : armedApproveAll
-                          ? `Approve all ${stagedDemos.length}? Confirm`
+                        : isArmed({ kind: "approve-all" })
+                          ? `Approve all ${stagedDemos.length.toLocaleString()}? Confirm`
                           : "Approve all"}
                     </button>
                   </div>
@@ -642,34 +698,29 @@ export default function DemosPage() {
                       key={demo.key}
                       demo={demo}
                       busy={busy.has(demo.key)}
-                      pinnable={pinnable}
+                      pinnable={pinnable || pinned.has(demo.key)}
                       pinned={pinned.has(demo.key)}
-                      armedSkip={armedSkip === demo.key}
-                      change={changeFor?.key === demo.key ? changeFor.text : null}
+                      armedSkip={isArmed({ kind: "skip", key: demo.key })}
+                      change={changeOpen === demo.key ? (drafts[demo.key] ?? "") : null}
                       error={cardError?.key === demo.key ? cardError.message : null}
-                      onApprove={() =>
-                        void submitDecision(demo, "approve", undefined, "Approved. It joins the queue.")
-                      }
-                      onSkip={() => {
-                        if (armedSkip !== demo.key) {
-                          setArmedSkip(demo.key);
-                          return;
-                        }
-                        setArmedSkip(null);
-                        void submitDecision(demo, "deny", "Skipped in staging", "Skipped.");
-                      }}
-                      onOpenChange={() =>
-                        setChangeFor((prev) =>
-                          prev?.key === demo.key ? null : { key: demo.key, text: "" },
+                      onApprove={() => void submitDecision(demo, "approve", undefined, "Approved.")}
+                      onSkip={() =>
+                        armOrRun({ kind: "skip", key: demo.key }, () =>
+                          void submitDecision(demo, "deny", "Skipped in Staging", "Skipped."),
                         )
                       }
-                      onChangeText={(text) => setChangeFor({ key: demo.key, text })}
+                      onOpenChange={() =>
+                        setChangeOpen((prev) => (prev === demo.key ? null : demo.key))
+                      }
+                      onChangeText={(text) =>
+                        setDrafts((prev) => ({ ...prev, [demo.key]: text }))
+                      }
                       onSendChange={() => {
-                        const text = changeFor?.text.trim();
+                        const text = (drafts[demo.key] ?? "").trim();
                         if (!text) return;
                         void submitDecision(demo, "deny", text, "Change sent. The next version comes back here.");
                       }}
-                      onPin={() => void pin(demo)}
+                      onPin={() => void togglePin(demo)}
                     />
                   ))}
                 </div>
@@ -692,15 +743,32 @@ export default function DemosPage() {
               <div className="dp-bar-actions">
                 <button
                   type="button"
-                  className={`dp-btn ${armedPause ? "is-armed" : ""}`}
-                  onClick={() => void pauseOrResumeAll()}
+                  className={`dp-btn ${
+                    isArmed({ kind: allHeld ? "resume" : "pause" }) ? "is-armed" : ""
+                  }`}
+                  onClick={() =>
+                    armOrRun({ kind: allHeld ? "resume" : "pause" }, () =>
+                      void runPauseOrResumeAll(),
+                    )
+                  }
                   disabled={busy.has("sends")}
+                  title={
+                    busy.has("sends")
+                      ? allHeld
+                        ? "Resuming your sends now"
+                        : "Pausing your sends now"
+                      : allHeld
+                        ? "Lets every paused demo go out again"
+                        : "Holds every demo in the queue until you resume"
+                  }
                 >
                   {busy.has("sends")
                     ? "Working"
                     : allHeld
-                      ? "Resume all"
-                      : armedPause
+                      ? isArmed({ kind: "resume" })
+                        ? "Resume all sends? Confirm"
+                        : "Resume all"
+                      : isArmed({ kind: "pause" })
                         ? "Pause all sends? Confirm"
                         : "Pause all sends"}
                 </button>
@@ -731,8 +799,11 @@ export default function DemosPage() {
                   day={day}
                   busy={busy}
                   rowError={rowError}
+                  armedUnstage={(id) => isArmed({ kind: "unstage", key: id })}
                   onMoveToTop={(send) => void moveRowToTop(send)}
-                  onUnstage={(send) => void unstageRow(send)}
+                  onUnstage={(send) =>
+                    armOrRun({ kind: "unstage", key: send.id }, () => void unstageRow(send))
+                  }
                 />
               ))}
               {laterDays.length > 0 && (
@@ -753,8 +824,11 @@ export default function DemosPage() {
                           day={day}
                           busy={busy}
                           rowError={rowError}
+                          armedUnstage={(id) => isArmed({ kind: "unstage", key: id })}
                           onMoveToTop={(send) => void moveRowToTop(send)}
-                          onUnstage={(send) => void unstageRow(send)}
+                          onUnstage={(send) =>
+                            armOrRun({ kind: "unstage", key: send.id }, () => void unstageRow(send))
+                          }
                         />
                       ))}
                       {laterShown < laterDays.length && (
@@ -916,7 +990,13 @@ function DemoCard({
       {demo.canDecide && (
         <>
           <div className="dp-actions">
-            <button type="button" className="dp-btn is-primary" onClick={onApprove} disabled={busy}>
+            <button
+              type="button"
+              className="dp-btn is-primary"
+              onClick={onApprove}
+              disabled={busy}
+              title={busy ? "Working on this demo now" : "Sends this demo, on your sending hours"}
+            >
               {busy ? "Working" : "Approve"}
             </button>
             <button
@@ -925,6 +1005,13 @@ function DemoCard({
               onClick={onOpenChange}
               aria-expanded={change !== null}
               disabled={busy}
+              title={
+                busy
+                  ? "Working on this demo now"
+                  : change !== null
+                    ? "Closes the box. What you typed is kept."
+                    : "Say what to change and we make it again"
+              }
             >
               Ask for a change
             </button>
@@ -933,18 +1020,26 @@ function DemoCard({
               className={`dp-btn ${armedSkip ? "is-armed" : ""}`}
               onClick={onSkip}
               disabled={busy}
+              title={busy ? "Working on this demo now" : "Drops this demo. Nothing goes to this person."}
             >
-              {armedSkip ? "Skip this demo? Confirm" : "Skip"}
+              {busy ? "Working" : armedSkip ? "Skip this demo? Confirm" : "Skip"}
             </button>
             {pinnable && (
               <button
                 type="button"
                 className={`dp-btn ${pinned ? "is-on" : ""}`}
                 onClick={onPin}
-                disabled={busy || pinned}
-                title={pinned ? "This demo stays in staging" : undefined}
+                aria-pressed={pinned}
+                disabled={busy}
+                title={
+                  busy
+                    ? "Working on this demo now"
+                    : pinned
+                      ? "Lets this demo expire again"
+                      : "Keeps this demo in Staging past 3 days"
+                }
               >
-                {pinned ? "Pinned" : "Pin"}
+                {busy ? "Working" : pinned ? "Unpin" : "Pin"}
               </button>
             )}
           </div>
@@ -965,11 +1060,23 @@ function DemoCard({
                   className="dp-btn is-primary"
                   onClick={onSendChange}
                   disabled={busy || change.trim().length === 0}
-                  title={change.trim().length === 0 ? "Say what should change first" : undefined}
+                  title={
+                    busy
+                      ? "Sending your note now"
+                      : change.trim().length === 0
+                        ? "Say what should change first"
+                        : "Sends your note. The next version comes back here."
+                  }
                 >
-                  Send
+                  {busy ? "Sending" : "Send"}
                 </button>
-                <button type="button" className="dp-btn" onClick={onOpenChange} disabled={busy}>
+                <button
+                  type="button"
+                  className="dp-btn"
+                  onClick={onOpenChange}
+                  disabled={busy}
+                  title={busy ? "Sending your note now" : "Closes the box. What you typed is kept."}
+                >
                   Cancel
                 </button>
               </div>
@@ -1113,12 +1220,14 @@ function QueueDayBlock({
   day,
   busy,
   rowError,
+  armedUnstage,
   onMoveToTop,
   onUnstage,
 }: {
   day: QueueDay;
   busy: ReadonlySet<string>;
   rowError: { id: string; message: string } | null;
+  armedUnstage: (sendId: string) => boolean;
   onMoveToTop: (send: SendRow) => void;
   onUnstage: (send: SendRow) => void;
 }) {
@@ -1164,16 +1273,30 @@ function QueueDayBlock({
                       className="dp-btn is-small"
                       disabled={busy.has(row.send.id)}
                       onClick={() => onMoveToTop(row.send)}
+                      title={
+                        busy.has(row.send.id)
+                          ? "Moving this demo now"
+                          : "Sends this one first today and moves the last one on"
+                      }
                     >
-                      Move to top
+                      {busy.has(row.send.id) ? "Working" : "Move to top"}
                     </button>
                     <button
                       type="button"
-                      className="dp-btn is-small"
+                      className={`dp-btn is-small ${armedUnstage(row.send.id) ? "is-armed" : ""}`}
                       disabled={busy.has(row.send.id)}
                       onClick={() => onUnstage(row.send)}
+                      title={
+                        busy.has(row.send.id)
+                          ? "Taking this demo out of the queue now"
+                          : "Takes this demo out of the queue, back to Staging"
+                      }
                     >
-                      Unstage
+                      {busy.has(row.send.id)
+                        ? "Working"
+                        : armedUnstage(row.send.id)
+                          ? "Unstage? Confirm"
+                          : "Unstage"}
                     </button>
                   </div>
                   {rowError?.id === row.send.id && (
