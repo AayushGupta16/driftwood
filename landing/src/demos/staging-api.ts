@@ -103,6 +103,20 @@ export const fetchQueuePage = (offset: number) =>
 export const fetchSentPage = () =>
   getJson<SendsPage>(`/api/v1/dashboard/sends?view=sent&limit=${SEND_CHUNK}`);
 
+/* An approved demo joins the END of the queue, and the customer is told which
+   day that is. The queue is due-ordered, so the answer is on its last page. */
+export async function landingDayFor(leadId: string): Promise<string | null> {
+  const head = await fetchQueuePage(0);
+  const lastOffset = Math.max(0, Math.floor(Math.max(0, head.total - 1) / SEND_CHUNK) * SEND_CHUNK);
+  const page = lastOffset === 0 ? head : await fetchQueuePage(lastOffset);
+  for (let i = page.sends.length - 1; i >= 0; i -= 1) {
+    const row = page.sends[i];
+    if (row.lead?.lead_id === leadId)
+      return row.projected_send_date ?? row.projected_date ?? null;
+  }
+  return null;
+}
+
 /* Every decision on a card is one POST, so approving a demo is one agent
    wake whether it carries one item or three. If-Match is the approval
    policy version the card was rendered against: a policy change between
@@ -131,10 +145,54 @@ export async function decide(
 export const pinDemo = (itemId: string) =>
   post(`/api/v1/dashboard/reviews/${encodeURIComponent(itemId)}/pin`);
 
-export type QueueAction = "send-next" | "hold" | "resume" | "pull";
+/* What the queue's two row controls are called here. The paths they post to
+   are the backend's names; the customer never reads either word. */
+export type QueueAction = "move-to-top" | "unstage";
+
+const ACTION_PATH: Record<QueueAction, string> = {
+  "move-to-top": "send-next",
+  unstage: "pull",
+};
+
+/* Move to top displaces the last row of the day, and the backend cascades
+   that forward when the next day is full. It reports what moved so the toast
+   can name it; a backend that reports nothing gets a plain confirmation. */
+export type DisplacedRow = {
+  id?: string;
+  name?: string | null;
+  company?: string | null;
+  projected_date?: string | null;
+};
+
+export type MoveResult = { displaced?: DisplacedRow[] };
 
 export const queueAction = (sendId: string, action: QueueAction) =>
-  post(`/api/v1/dashboard/sends/${encodeURIComponent(sendId)}/${action}`);
+  post(`/api/v1/dashboard/sends/${encodeURIComponent(sendId)}/${ACTION_PATH[action]}`);
+
+/* Same call, but the body comes back: Move to top needs it for the toast. */
+export async function moveToTop(sendId: string): Promise<Outcome & { result?: MoveResult }> {
+  try {
+    const response = await fetch(
+      `/api/v1/dashboard/sends/${encodeURIComponent(sendId)}/send-next`,
+      { method: "POST", credentials: "include" },
+    );
+    if (!response.ok)
+      return {
+        ok: false,
+        missing: response.status === 404 || response.status === 405,
+        message: await errorDetail(response, FALLBACK),
+      };
+    let result: MoveResult = {};
+    try {
+      result = (await response.json()) as MoveResult;
+    } catch {
+      /* An empty body is a fine answer; the toast falls back. */
+    }
+    return { ok: true, result };
+  } catch {
+    return { ok: false, missing: false, message: FALLBACK };
+  }
+}
 
 export const holdAllSends = () => post("/api/v1/dashboard/sends/hold-all");
 export const resumeAllSends = () => post("/api/v1/dashboard/sends/resume-all");
