@@ -34,7 +34,6 @@ import {
   NOT_AVAILABLE,
   NO_LIMITS,
   dayChannelTitle,
-  dayRemaining,
   emailCollapsed,
   daySentence,
   decisionsFor,
@@ -110,7 +109,8 @@ type Armed =
   | { kind: "pause" }
   | { kind: "resume" }
   | { kind: "skip"; key: string }
-  | { kind: "unstage"; key: string };
+  | { kind: "unstage"; key: string }
+  | { kind: "bulk-unstage" };
 
 function sameArmed(a: Armed, b: Armed): boolean {
   if (a.kind !== b.kind) return false;
@@ -143,6 +143,32 @@ const LOAD_FAILED = "That did not load.";
    mailbox are not row values, so both leave the cell empty. */
 function rowSender(row: QueueRow): string | null {
   return row.send.sending_account ?? null;
+}
+
+/* Which days the reader has folded, kept for the session so a reload does not
+   undo the work. A day with no entry follows the default: the first day open,
+   the rest folded. */
+const DAY_STATE_KEY = "driftwood.demos.queue-days";
+
+function readDayState(): Record<string, boolean> {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(DAY_STATE_KEY) ?? "{}") as unknown;
+    if (!saved || typeof saved !== "object" || Array.isArray(saved)) return {};
+    const out: Record<string, boolean> = {};
+    for (const [day, open] of Object.entries(saved as Record<string, unknown>))
+      if (typeof open === "boolean") out[day] = open;
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+function writeDayState(state: Record<string, boolean>) {
+  try {
+    sessionStorage.setItem(DAY_STATE_KEY, JSON.stringify(state));
+  } catch {
+    /* A browser with storage off keeps the folds for this render only. */
+  }
 }
 
 function segmentFromUrl(): Segment {
@@ -214,6 +240,9 @@ export default function DemosPage() {
   const [heldIds, setHeldIds] = useState<ReadonlySet<string>>(new Set());
   const [rowError, setRowError] = useState<{ id: string; message: string } | null>(null);
   const [bulkQueueError, setBulkQueueError] = useState<string | null>(null);
+  const [dayState, setDayState] = useState<Record<string, boolean>>(readDayState);
+  const [picked, setPicked] = useState<ReadonlySet<string>>(new Set());
+  const [bulkError, setBulkError] = useState<string | null>(null);
   const [laterOpen, setLaterOpen] = useState(false);
   const [laterShown, setLaterShown] = useState(LATER_PAGE);
   /* The org's own daily sending limits, which is what makes a day "full".
@@ -360,6 +389,8 @@ export default function DemosPage() {
 
   function switchSegment(next: Segment) {
     setSegment(next);
+    setPicked(new Set());
+    setBulkError(null);
     const params = new URLSearchParams(window.location.search);
     if (next === "staging") params.delete("seg");
     else params.set("seg", next);
@@ -415,6 +446,13 @@ export default function DemosPage() {
   /* The row that already sends first. Moving it to the top does nothing, so
      its control says so instead of pretending (ux-principles rule 8). */
   const firstQueuedId = queueDays[0]?.rows[0]?.send.id ?? null;
+  /* Today stands open, the rest fold, until the reader says otherwise. */
+  const dayIsOpen = (day: QueueDay) => dayState[day.day] ?? day.day === queueDays[0]?.day;
+  /* Selected rows in the order the table shows them, which is the order a
+     bulk action runs in. */
+  const pickedRows = queueDays.flatMap((day) =>
+    day.rows.filter((row) => picked.has(row.send.id)),
+  );
   /* The days actually on screen: the open ones, plus the later ones only
      while they are expanded and paged in. */
   const visibleDays = laterOpen
@@ -587,6 +625,88 @@ export default function DemosPage() {
         : prev,
     );
     toast("Back in Staging.", "success");
+    announceDemosCountChanged();
+    void loadStaging(true);
+  }
+
+  function toggleDayOpen(day: QueueDay) {
+    setDayState((prev) => {
+      const next = { ...prev, [day.day]: !dayIsOpen(day) };
+      writeDayState(next);
+      return next;
+    });
+  }
+
+  function toggleRowPicked(sendId: string) {
+    setPicked((prev) => {
+      const next = new Set(prev);
+      if (next.has(sendId)) next.delete(sendId);
+      else next.add(sendId);
+      return next;
+    });
+  }
+
+  function toggleDayPicked(day: QueueDay, on: boolean) {
+    setPicked((prev) => {
+      const next = new Set(prev);
+      for (const row of day.rows) {
+        if (on) next.add(row.send.id);
+        else next.delete(row.send.id);
+      }
+      return next;
+    });
+  }
+
+  /* Several rows against a one-row endpoint: run them in the order the table
+     shows, top row first, so the result is the order the reader saw. */
+  async function bulkMoveToTop() {
+    const rowsToMove = pickedRows;
+    if (rowsToMove.length === 0) return;
+    markBusy("bulk", true);
+    setBulkError(null);
+    let moved = 0;
+    for (const row of rowsToMove) {
+      const result = await moveToTop(row.send.id);
+      if (!result.ok) {
+        setBulkError(result.missing ? NOT_AVAILABLE : result.message);
+        break;
+      }
+      moved += 1;
+    }
+    markBusy("bulk", false);
+    if (moved > 0) {
+      toast(`${moved.toLocaleString()} moved to the top of today.`, "success");
+      setPicked(new Set());
+      void loadQueue(true);
+    }
+  }
+
+  async function bulkUnstage() {
+    const rowsToPull = pickedRows;
+    if (rowsToPull.length === 0) return;
+    markBusy("bulk", true);
+    setBulkError(null);
+    const done = new Set<string>();
+    for (const row of rowsToPull) {
+      const result = await queueAction(row.send.id, "unstage");
+      if (!result.ok) {
+        setBulkError(result.missing ? NOT_AVAILABLE : result.message);
+        break;
+      }
+      done.add(row.send.id);
+    }
+    markBusy("bulk", false);
+    if (done.size === 0) return;
+    setQueue((prev) =>
+      prev.status === "ready"
+        ? {
+            status: "ready",
+            data: { ...prev.data, sends: prev.data.sends.filter((row) => !done.has(row.id)) },
+          }
+        : prev,
+    );
+    setPicked(new Set());
+    toast(`${done.size.toLocaleString()} back in Staging.`, "success");
     announceDemosCountChanged();
     void loadStaging(true);
   }
@@ -800,6 +920,52 @@ export default function DemosPage() {
               {bulkQueueError}
             </p>
           )}
+          {picked.size > 0 && (
+            /* Sticky, so a selection made forty rows down is still actionable
+               without scrolling back. */
+            <div className="dp-selbar" role="region" aria-label="Selected demos">
+              <strong>{picked.size.toLocaleString()} selected</strong>
+              <button
+                type="button"
+                className="dp-btn is-small"
+                disabled={busy.has("bulk")}
+                onClick={() => void bulkMoveToTop()}
+                title={busy.has("bulk") ? "Working on your selection now" : undefined}
+              >
+                {busy.has("bulk") ? "Working" : "Move to top"}
+              </button>
+              <button
+                type="button"
+                className={`dp-btn is-small ${isArmed({ kind: "bulk-unstage" }) ? "is-armed" : ""}`}
+                disabled={busy.has("bulk")}
+                onClick={() =>
+                  armOrRun({ kind: "bulk-unstage" }, () => void bulkUnstage())
+                }
+                title={busy.has("bulk") ? "Working on your selection now" : undefined}
+              >
+                {busy.has("bulk")
+                  ? "Working"
+                  : isArmed({ kind: "bulk-unstage" })
+                    ? `Unstage ${picked.size.toLocaleString()}? Confirm`
+                    : "Unstage"}
+              </button>
+              <button
+                type="button"
+                className="dp-btn is-small"
+                onClick={() => {
+                  setPicked(new Set());
+                  setBulkError(null);
+                }}
+              >
+                Clear
+              </button>
+              {bulkError && (
+                <span className="dp-rowerr" role="alert">
+                  {bulkError}
+                </span>
+              )}
+            </div>
+          )}
           {queue.status === "loading" ? (
             <RowSkeletons />
           ) : queue.status === "error" ? (
@@ -825,7 +991,12 @@ export default function DemosPage() {
                   day={day}
                   busy={busy}
                   rowError={rowError}
+                  open={dayIsOpen(day)}
                   armedUnstage={(id) => isArmed({ kind: "unstage", key: id })}
+                  selected={picked}
+                  onToggleOpen={() => toggleDayOpen(day)}
+                  onToggleDay={toggleDayPicked}
+                  onToggleRow={toggleRowPicked}
                   showAccount={showAccount}
                   firstInQueue={firstQueuedId}
                   onMoveToTop={(send) => void moveRowToTop(send)}
@@ -855,7 +1026,12 @@ export default function DemosPage() {
                           day={day}
                           busy={busy}
                           rowError={rowError}
+                          open={dayIsOpen(day)}
                           armedUnstage={(id) => isArmed({ kind: "unstage", key: id })}
+                          selected={picked}
+                          onToggleOpen={() => toggleDayOpen(day)}
+                          onToggleDay={toggleDayPicked}
+                          onToggleRow={toggleRowPicked}
                           showAccount={showAccount}
                           firstInQueue={firstQueuedId}
                   onMoveToTop={(send) => void moveRowToTop(send)}
@@ -1260,118 +1436,275 @@ function DemoVideo({
 
 function QueueDayBlock({
   day,
+  open,
   busy,
   rowError,
-  armedUnstage,
   showAccount,
   firstInQueue,
+  armedUnstage,
+  selected,
+  onToggleOpen,
+  onToggleDay,
+  onToggleRow,
   onMoveToTop,
   onUnstage,
 }: {
   day: QueueDay;
+  open: boolean;
   busy: ReadonlySet<string>;
   rowError: { id: string; message: string } | null;
-  armedUnstage: (sendId: string) => boolean;
   showAccount: boolean;
   firstInQueue: string | null;
+  armedUnstage: (sendId: string) => boolean;
+  selected: ReadonlySet<string>;
+  onToggleOpen: () => void;
+  onToggleDay: (day: QueueDay, on: boolean) => void;
+  onToggleRow: (sendId: string) => void;
   onMoveToTop: (send: SendRow) => void;
   onUnstage: (send: SendRow) => void;
 }) {
-  const left = dayRemaining(day);
+  const box = useRef<HTMLInputElement>(null);
+  const chosen = day.rows.filter((row) => selected.has(row.send.id)).length;
+  const all = chosen > 0 && chosen === day.rows.length;
+
+  /* Part of a day selected is neither checked nor clear, and only the DOM
+     property can say so. */
+  useEffect(() => {
+    if (box.current) box.current.indeterminate = chosen > 0 && !all;
+  }, [chosen, all]);
+
   return (
     <section className="dp-day" aria-label={day.label}>
       <div className="dp-day-head">
-        <h3>{day.label}</h3>
-        {day.full ? (
-          <span className="dp-chip" title={dayChannelTitle(day)}>
-            Full
+        <input
+          ref={box}
+          type="checkbox"
+          className="dp-check"
+          checked={all}
+          onChange={() => onToggleDay(day, !all)}
+          aria-label={`Select every demo on ${day.label}`}
+        />
+        {/* A folded day still shows its name, its count and its chip: folded,
+            not hidden. */}
+        <button
+          type="button"
+          className="dp-day-toggle"
+          aria-expanded={open}
+          onClick={onToggleOpen}
+        >
+          <svg
+            className={`dp-chevron ${open ? "is-open" : ""}`}
+            viewBox="0 0 12 12"
+            width="11"
+            height="11"
+            aria-hidden="true"
+          >
+            <path
+              d="M4.5 2.5 8 6l-3.5 3.5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          <span className="dp-day-name">{day.label}</span>
+          <span className="dp-day-load" title={dayChannelTitle(day)}>
+            {day.rows.length.toLocaleString()}
           </span>
-        ) : (
-          left !== null && (
-            <span className="dp-day-load" title={dayChannelTitle(day)}>
-              {left.toLocaleString()} left
-            </span>
-          )
-        )}
+          {day.full && <span className="dp-chip">Full</span>}
+        </button>
       </div>
-      <div className="dp-tablewrap">
-        <table className="dp-table">
-          <thead>
-            <tr>
-              <th scope="col">Who</th>
-              <th scope="col">
-                <span className="sr-only">Channel</span>
-              </th>
-              <th scope="col">Planned</th>
-              {showAccount && <th scope="col">From</th>}
-              <th scope="col">
-                <span className="sr-only">Actions</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {day.rows.map((row) => (
-              <tr key={row.send.id}>
-                <td>
-                  {row.send.lead?.name ?? "Not named yet"}
-                  {row.send.lead?.company && (
-                    <span className="dp-muted">, {row.send.lead.company}</span>
-                  )}
-                </td>
-                <td>
-                  <ChannelGlyph channel={row.channel} />
-                </td>
-                <td className="dp-num">
-                  {row.held ? (
-                    <span className="dp-chip">Paused</span>
-                  ) : (
-                    plannedClock(row.send, row.held)
-                  )}
-                </td>
-                {showAccount && <td className="dp-muted">{rowSender(row) ?? ""}</td>}
-                <td>
-                  <div className="dp-rowacts">
-                    <button
-                      type="button"
-                      className="dp-btn is-quiet"
-                      disabled={busy.has(row.send.id) || row.send.id === firstInQueue}
-                      onClick={() => onMoveToTop(row.send)}
-                      title={
-                        busy.has(row.send.id)
-                          ? "Moving this demo now"
-                          : row.send.id === firstInQueue
-                            ? "This one already sends first"
-                            : undefined
-                      }
-                    >
-                      {busy.has(row.send.id) ? "Working" : "Move to top"}
-                    </button>
-                    <button
-                      type="button"
-                      className={`dp-btn is-quiet ${armedUnstage(row.send.id) ? "is-armed" : ""}`}
-                      disabled={busy.has(row.send.id)}
-                      onClick={() => onUnstage(row.send)}
-                      title={busy.has(row.send.id) ? "Taking this demo out now" : undefined}
-                    >
-                      {busy.has(row.send.id)
-                        ? "Working"
-                        : armedUnstage(row.send.id)
-                          ? "Unstage? Confirm"
-                          : "Unstage"}
-                    </button>
-                  </div>
-                  {rowError?.id === row.send.id && (
-                    <p className="dp-rowerr" role="alert">
-                      {rowError.message}
-                    </p>
-                  )}
-                </td>
+      {open && (
+        <div className="dp-tablewrap">
+          <table className="dp-table">
+            <colgroup>
+              <col className="dp-w-pick" />
+              <col />
+              <col className="dp-w-channel" />
+              <col className="dp-w-planned" />
+              {showAccount && <col className="dp-w-from" />}
+              <col className="dp-w-menu" />
+            </colgroup>
+            <thead>
+              <tr>
+                <th scope="col">
+                  <span className="sr-only">Select</span>
+                </th>
+                <th scope="col">Who</th>
+                <th scope="col">
+                  <span className="sr-only">Channel</span>
+                </th>
+                <th scope="col">Planned</th>
+                {showAccount && <th scope="col">From</th>}
+                <th scope="col">
+                  <span className="sr-only">Actions</span>
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {day.rows.map((row) => (
+                <tr key={row.send.id} className={selected.has(row.send.id) ? "is-picked" : ""}>
+                  <td>
+                    <input
+                      type="checkbox"
+                      className="dp-check"
+                      checked={selected.has(row.send.id)}
+                      onChange={() => onToggleRow(row.send.id)}
+                      aria-label={`Select the demo for ${row.send.lead?.name ?? "this contact"}`}
+                    />
+                  </td>
+                  <td>
+                    {row.send.lead?.name ?? "Not named yet"}
+                    {row.send.lead?.company && (
+                      <span className="dp-muted">, {row.send.lead.company}</span>
+                    )}
+                  </td>
+                  <td>
+                    <ChannelGlyph channel={row.channel} />
+                  </td>
+                  <td className="dp-num">
+                    {row.held ? (
+                      <span className="dp-chip">Paused</span>
+                    ) : (
+                      plannedClock(row.send, row.held)
+                    )}
+                  </td>
+                  {showAccount && <td className="dp-muted">{rowSender(row) ?? ""}</td>}
+                  <td>
+                    <RowMenu
+                      row={row}
+                      busy={busy.has(row.send.id)}
+                      isFirst={row.send.id === firstInQueue}
+                      armedUnstage={armedUnstage(row.send.id)}
+                      onMoveToTop={() => onMoveToTop(row.send)}
+                      onUnstage={() => onUnstage(row.send)}
+                    />
+                    {rowError?.id === row.send.id && (
+                      <p className="dp-rowerr" role="alert">
+                        {rowError.message}
+                      </p>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </section>
+  );
+}
+
+/* One row's actions, behind one mark. The two verbs written out on every row
+   were the same eight words two hundred and forty-five times; as words they
+   live in the selection bar, where they are said once. */
+function RowMenu({
+  row,
+  busy,
+  isFirst,
+  armedUnstage,
+  onMoveToTop,
+  onUnstage,
+}: {
+  row: QueueRow;
+  busy: boolean;
+  isFirst: boolean;
+  armedUnstage: boolean;
+  onMoveToTop: () => void;
+  onUnstage: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const wrap = useRef<HTMLDivElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+
+  function shut(returnFocus: boolean) {
+    setOpen(false);
+    /* After the commit: focusing the trigger while the menu item is still
+       mounted loses the focus to the body when React removes it. */
+    if (returnFocus) requestAnimationFrame(() => trigger.current?.focus());
+  }
+
+  /* Open means: focus lands inside, Escape leaves the way it came, Tab cycles
+     within, and a press anywhere else closes it. */
+  useEffect(() => {
+    if (!open) return;
+    const items = () =>
+      [...(wrap.current?.querySelectorAll<HTMLButtonElement>(".dp-menu-pop button") ?? [])];
+    items()[0]?.focus();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.stopPropagation();
+        shut(true);
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const list = items();
+      if (list.length === 0) return;
+      const first = list[0];
+      const last = list[list.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    const onDown = (event: MouseEvent) => {
+      if (!wrap.current?.contains(event.target as Node)) setOpen(false);
+    };
+    window.addEventListener("keydown", onKey, true);
+    window.addEventListener("mousedown", onDown);
+    return () => {
+      window.removeEventListener("keydown", onKey, true);
+      window.removeEventListener("mousedown", onDown);
+    };
+  }, [open]);
+
+  const who = row.send.lead?.name ?? "this demo";
+  return (
+    <div className="dp-menu" ref={wrap}>
+      <button
+        ref={trigger}
+        type="button"
+        className="dp-btn is-quiet dp-menu-btn"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={`Actions for ${who}`}
+        disabled={busy}
+        title={busy ? "Working on this demo now" : undefined}
+        onClick={() => setOpen((was) => !was)}
+      >
+        {busy ? "\u2026" : "\u22ef"}
+      </button>
+      {open && (
+        <div className="dp-menu-pop" role="menu" aria-label={`Actions for ${who}`}>
+          <button
+            type="button"
+            role="menuitem"
+            disabled={isFirst}
+            title={isFirst ? "This one already sends first" : undefined}
+            onClick={() => {
+              shut(false);
+              onMoveToTop();
+            }}
+          >
+            Move to top
+          </button>
+          {/* Stays open through the first press: an armed control the reader
+              cannot see is not a confirmation. */}
+          <button
+            type="button"
+            role="menuitem"
+            className={armedUnstage ? "is-armed" : ""}
+            onClick={onUnstage}
+          >
+            {armedUnstage ? "Unstage? Confirm" : "Unstage"}
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 

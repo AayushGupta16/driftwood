@@ -192,6 +192,8 @@
 
 .dp-btn.is-on { border-color: var(--color-tide); color: var(--color-tide-deep); }
 
+.dp-btn.is-small { min-height: 2rem; padding: 0.28rem 0.7rem; font-size: 0.75rem; }
+
 /* Tertiary (design-language.md §3): no border, no fill, muted ink at the
    type size around it. For controls that repeat down a list, where a pill
    each would be the loudest thing on the page. */
@@ -426,20 +428,108 @@
 
 .dp-day-head {
   display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+/* The whole header is the control that folds the day. */
+.dp-day-toggle {
+  display: flex;
+  min-height: 2rem;
+  flex: 1;
+  align-items: center;
+  gap: 0.5rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--color-ink);
+  padding: 0.2rem 0.35rem;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dp-day-toggle:hover { background: var(--color-sand); }
+
+.dp-chevron {
+  flex: 0 0 auto;
+  color: var(--color-ink-soft);
+  transition: rotate 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.dp-chevron.is-open { rotate: 90deg; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dp-chevron { transition: none; }
+}
+
+.dp-day-name { font-size: 0.9rem; font-weight: 650; letter-spacing: -0.01em; }
+
+.dp-day-load {
+  border-radius: 999px;
+  background: var(--color-sand);
+  color: var(--color-ink-soft);
+  padding: 0 0.4rem;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.dp-check { width: 1rem; height: 1rem; flex: 0 0 auto; accent-color: var(--color-tide); cursor: pointer; }
+
+.dp-table tr.is-picked { background: var(--color-tide-wash); }
+
+/* The selection bar holds the verbs, once, where they are read once. */
+.dp-selbar {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.6rem;
-  margin-bottom: 0.5rem;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+  border: 1px solid var(--color-line);
+  border-radius: 0.7rem;
+  background: var(--color-tide-wash);
+  padding: 0.5rem 0.7rem;
+  font-size: 0.82rem;
 }
 
-.dp-day-head h3 {
-  margin: 0;
-  font-size: 0.9rem;
-  font-weight: 650;
-  letter-spacing: -0.01em;
+/* One row's actions, behind one mark. */
+.dp-menu { position: relative; display: flex; justify-content: flex-end; }
+
+.dp-menu-btn { min-width: 2rem; padding: 0.25rem 0.4rem; font-size: 1rem; line-height: 1; }
+
+.dp-menu-pop {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  right: 0;
+  z-index: 4;
+  display: grid;
+  min-width: 10rem;
+  border: 1px solid var(--color-line);
+  border-radius: 0.6rem;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-win);
+  padding: 0.25rem;
 }
 
-.dp-day-load { color: var(--color-ink-soft); font-size: 0.78rem; font-variant-numeric: tabular-nums; }
+.dp-menu-pop button {
+  border: 0;
+  border-radius: 0.4rem;
+  background: transparent;
+  color: var(--color-ink);
+  padding: 0.45rem 0.6rem;
+  font: inherit;
+  font-size: 0.82rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dp-menu-pop button:hover:not(:disabled) { background: var(--color-sand); }
+.dp-menu-pop button:disabled { color: var(--color-ink-faint); cursor: not-allowed; }
+.dp-menu-pop button.is-armed { color: var(--color-alert); font-weight: 620; }
 
 .dp-later { margin-top: 1.35rem; }
 
@@ -475,6 +565,14 @@
 }
 
 .dp-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+
+/* The name column takes the slack; everything else is its own width, so a
+   four-column table does not spread into a field of gaps. */
+.dp-table col.dp-w-pick { width: 2.4rem; }
+.dp-table col.dp-w-channel { width: 2.6rem; }
+.dp-table col.dp-w-planned { width: 9rem; }
+.dp-table col.dp-w-from { width: 12rem; }
+.dp-table col.dp-w-menu { width: 3rem; }
 
 .dp-table th {
   border-bottom: 1px solid var(--color-line);
