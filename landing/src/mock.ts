@@ -293,6 +293,14 @@ if (mockMode) {
     new Date(Date.now() + d * 86400e3).toISOString();
   const dateAhead = (d: number) =>
     new Date(Date.now() + d * 86400e3).toISOString().slice(0, 10);
+  /* The page groups by the projected date in the reader's own timezone, so
+     the fixture's days are local days. dateAhead() is UTC and drifts a day
+     after 5pm Pacific, which would label today's block "Tomorrow". */
+  const localDateAhead = (dayOffset: number) => {
+    const at = new Date();
+    at.setDate(at.getDate() + dayOffset);
+    return `${at.getFullYear()}-${String(at.getMonth() + 1).padStart(2, "0")}-${String(at.getDate()).padStart(2, "0")}`;
+  };
   const lead = (name: string, title: string, company: string) => ({
     lead_id: name, name, title, company,
     linkedin_url: `https://www.linkedin.com/in/${name.toLowerCase().replace(/\s+/g, "-")}`,
@@ -472,8 +480,8 @@ if (mockMode) {
     decided: [], total_pending: 8, limit: 25, offset: 0,
     queue_stats: [
       { kind: "connection_request", queued: 2, sent_24h: 3, cap: 20, runs_through: dateAhead(2), failed: 2 },
-      { kind: "message", queued: 5, sent_24h: 6, cap: 25, runs_through: dateAhead(2), failed: 0 },
-      { kind: "email", queued: 3, sent_24h: 2, cap: 20, runs_through: dateAhead(1), failed: 0 },
+      { kind: "message", queued: 5, sent_24h: 6, cap: 25, runs_through: localDateAhead(39), failed: 0 },
+      { kind: "email", queued: 3, sent_24h: 2, cap: 20, runs_through: localDateAhead(39), failed: 0 },
     ],
   };
   // Approved-but-undelivered ScheduledSends (the review page's Queued tab),
@@ -575,6 +583,60 @@ if (mockMode) {
     total: 12, limit: 100, offset: 0,
     counts: { pending: 9, sending: 1, failed: 2, sent: 2 },
   };
+  /* A real customer's queue is weeks deep, so the fixture is too: about
+     1,200 demos over 40 sending days, paced by the same daily caps the
+     settings endpoint reports (20 emails, 25 LinkedIn). That is what makes
+     the day collapse, the "Full" day, and the displacement cascade real
+     rather than a drawing of themselves. */
+  const QUEUE_DAYS = 40;
+  const DAY_EMAIL_CAP = 20;
+  const DAY_MESSAGE_CAP = 25;
+  const bulkCompanies = [
+    "Chime", "Rosebud", "Roame", "Inkitt", "Superhuman", "Instabug", "OneSignal",
+    "DraftKings", "Sentry", "Coinbase", "Notion", "Figma", "Linear", "Retool",
+    "Vanta", "Deel", "Mercury", "Ramp", "Loom", "Airtable", "Webflow", "Zapier",
+    "Miro", "Cal", "Render", "Fly", "Neon", "Clerk", "Resend", "Sanity",
+  ];
+  const bulkFirst = ["Ava", "Noah", "Mia", "Leo", "Zoe", "Kai", "Ida", "Rey", "Nora", "Otis"];
+  const bulkLast = ["Marsh", "Okafor", "Hale", "Duarte", "Brooks", "Nair", "Reyes", "Chen", "Moretti", "Shah"];
+  const bulkRoles = ["Head of Growth", "VP Engineering", "CTO", "Head of Product", "Director of Marketing"];
+  /* The dispatcher hands out due stamps inside the sending window, so the
+     fixture does too: 9am plus a slot, capped inside the day. */
+  const slotAt = (dayOffset: number, index: number) => {
+    const at = new Date();
+    at.setDate(at.getDate() + dayOffset);
+    at.setHours(9, 0, 0, 0);
+    at.setMinutes(index * 11);
+    return at.toISOString();
+  };
+  let bulkId = 0;
+  for (let day = 0; day < QUEUE_DAYS; day += 1) {
+    /* Today is deliberately at its email cap, so Move to top has a full day
+       to displace out of. */
+    const emails = day === 0 ? DAY_EMAIL_CAP : 12 + (day % 7);
+    const messages = day === 0 ? DAY_MESSAGE_CAP : 14 + (day % 6);
+    for (let i = 0; i < emails + messages; i += 1) {
+      const isEmail = i < emails;
+      const company = bulkCompanies[bulkId % bulkCompanies.length];
+      const person = `${bulkFirst[bulkId % bulkFirst.length]} ${bulkLast[(bulkId >> 1) % bulkLast.length]}`;
+      bulkId += 1;
+      sends.sends.push({
+        id: `q${bulkId}`,
+        batch_id: `qb${day}`,
+        kind: isEmail ? "email" : "message",
+        subject: isEmail ? `A working demo for ${company}` : null,
+        note: `Hey ${person.split(" ")[0]},\n\nWe put ${company}'s checkout through a pass and filmed what it does on a slow connection. Short clip, real data.\n\nWorth a look?\n\nBest,\nAayush`,
+        attachment_slug: null,
+        lead: lead(person, bulkRoles[bulkId % bulkRoles.length], company),
+        status: "pending", error: null, error_class: null,
+        due_at: slotAt(day, i),
+        projected_date: localDateAhead(day),
+        created_at: hoursAgo(20 + day),
+      });
+    }
+  }
+  sends.total = sends.sends.length;
+  sends.counts.pending = sends.sends.filter((row) => row.status === "pending").length;
   // GET /sends mirrors the real endpoint's contract: view=sent serves the
   // delivered ledger with server-side kind filtering + newest/oldest order,
   // and both views carry kind_counts (the census behind the filter chips,
@@ -649,11 +711,41 @@ if (mockMode) {
     if (action === "hold") { row.held = true; return { id: row.id, held: true }; }
     if (action === "resume") { row.held = false; return { id: row.id, held: false }; }
     if (action === "send-next") {
+      /* The real rule, mirrored: the row takes the first slot of today, today
+         is bounded by the daily cap for its channel, so the day's last row of
+         that channel moves to the next day, and that cascades while the next
+         day is full too. The response names what moved, which is what the
+         toast reads. */
+      const capFor = (kind: string) => (kind === "email" ? DAY_EMAIL_CAP : DAY_MESSAGE_CAP);
+      const onDay = (day: string, kind: string) =>
+        sends.sends
+          .filter((send) => send.projected_date === day && send.kind === kind && send.status === "pending")
+          .sort((a, b) => a.due_at.localeCompare(b.due_at));
       const soonest = sends.sends.reduce((min, send) => (send.due_at < min ? send.due_at : min), row.due_at);
+      const fromDay = row.projected_date;
       row.due_at = new Date(Date.parse(soonest) - 60_000).toISOString();
-      row.projected_date = dateAhead(0);
+      row.projected_date = localDateAhead(0);
       row.held = false;
-      return { id: row.id, due_at: row.due_at };
+      const displaced: Array<Record<string, unknown>> = [];
+      let dayIndex = 0;
+      while (dayIndex < QUEUE_DAYS) {
+        const day = localDateAhead(dayIndex);
+        const rows = onDay(day, row.kind);
+        if (rows.length <= capFor(row.kind)) break;
+        const last = rows[rows.length - 1];
+        if (last.id === row.id) break;
+        const nextDay = localDateAhead(dayIndex + 1);
+        last.projected_date = nextDay;
+        last.due_at = slotAt(dayIndex + 1, onDay(nextDay, row.kind).length);
+        displaced.push({
+          id: last.id,
+          name: last.lead?.name ?? null,
+          company: last.lead?.company ?? null,
+          projected_date: nextDay,
+        });
+        dayIndex += 1;
+      }
+      return { id: row.id, due_at: row.due_at, moved_from: fromDay, displaced };
     }
     if (action === "pull") {
       sends.sends = sends.sends.filter((send) => send.id !== sendId);
@@ -708,7 +800,20 @@ if (mockMode) {
     if (!row || row.status !== "pending") return false;
     row.status = decision === "approve" ? "approved" : "denied";
     if (decision === "approve" && isOutreachReview(row.kind)) {
-      sends.sends.push({id:`approved-${row.id}`,batch_id:row.batch_id,kind:row.kind === "send_email" ? "email" : row.kind === "send_connection" ? "connection_request" : "message",subject:row.subject,note:row.body,attachment_slug:row.attachment_slug,lead:row.lead,status:"pending",error:null,error_class:null,due_at:daysAhead(0.1),projected_date:dateAhead(0),created_at:new Date().toISOString()});
+      /* An approved demo joins the END of the queue: the dispatcher gives it
+         the first day that still has room on its channel, which is what the
+         "Queued for Tuesday" toast reads back. */
+      const kind = row.kind === "send_email" ? "email" : row.kind === "send_connection" ? "connection_request" : "message";
+      const cap = kind === "email" ? DAY_EMAIL_CAP : DAY_MESSAGE_CAP;
+      const usedOn = (day: number) =>
+        sends.sends.filter((send) => send.projected_date === localDateAhead(day) && send.kind === kind && send.status === "pending").length;
+      let last = 0;
+      for (let day = 0; day <= QUEUE_DAYS + 1; day += 1)
+        if (sends.sends.some((send) => send.projected_date === localDateAhead(day) && send.status === "pending")) last = day;
+      const landing = usedOn(last) < cap ? last : last + 1;
+      const landingDate = localDateAhead(landing);
+      const slot = sends.sends.filter((send) => send.projected_date === landingDate && send.status === "pending").length;
+      sends.sends.push({id:`approved-${row.id}`,batch_id:row.batch_id,kind,subject:row.subject,note:row.body,attachment_slug:row.attachment_slug,lead:row.lead,status:"pending",error:null,error_class:null,due_at:slotAt(landing,slot),projected_date:landingDate,created_at:new Date().toISOString()});
       sends.counts.pending += 1; sends.total += 1;
     }
     return true;
