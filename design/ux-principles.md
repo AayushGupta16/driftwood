@@ -101,6 +101,13 @@ here in the same commit. Testable rules only; taste lives in the other file.
     pays for and gets nothing back. A tooltip is optional context only: never
     put a rule, a limit, or anything a task depends on inside one.
 
+20. **A control is always visible.** Row actions and every other primary
+    control render whether or not a pointer is near them. Hover may change a
+    control's emphasis; it may never be what reveals it. A control that
+    appears on hover is undiscoverable, absent on touch, and tells a
+    first-time reader that the row does nothing. When repeated controls read
+    as noise, make them quieter (design-language.md §3, tertiary), not hidden.
+
 ## Process
 
 - Audit → findings ranked by user pain → fix in minimal, tagged deltas.

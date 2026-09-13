@@ -192,7 +192,21 @@
 
 .dp-btn.is-on { border-color: var(--color-tide); color: var(--color-tide-deep); }
 
-.dp-btn.is-small { min-height: 2rem; padding: 0.28rem 0.7rem; font-size: 0.75rem; }
+/* Tertiary (design-language.md §3): no border, no fill, muted ink at the
+   type size around it. For controls that repeat down a list, where a pill
+   each would be the loudest thing on the page. */
+.dp-btn.is-quiet {
+  min-height: 2rem;
+  border: 0;
+  background: transparent;
+  color: var(--color-ink-soft);
+  padding: 0.25rem 0.35rem;
+  font-size: inherit;
+  font-weight: 560;
+}
+
+.dp-btn.is-quiet:hover { background: transparent; color: var(--color-ink); }
+.dp-btn.is-quiet.is-armed { color: var(--color-alert); }
 
 .dp-btn:disabled { cursor: not-allowed; opacity: 0.55; }
 
@@ -479,32 +493,14 @@
 .dp-table tr:last-child td { border-bottom: 0; }
 .dp-table .dp-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .dp-table .dp-muted { color: var(--color-ink-soft); }
-/* Forty buttons on one screen is what a full day looked like. The pair stays
-   in the DOM and in the tab order, so nothing is hidden from a keyboard or a
-   screen reader, and it only paints when the row is hovered or holds focus.
-   Touch has no hover, so there it stays visible. */
+/* Always visible. A control that appears on hover is undiscoverable, dead on
+   touch, and tells a first-time reader the row does nothing. The noise that
+   drove them into hiding is answered by the quiet variant instead. */
 .dp-table .dp-rowacts {
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
   justify-content: flex-end;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 160ms cubic-bezier(0.2, 0, 0, 1);
-}
-
-.dp-table tr:hover .dp-rowacts,
-.dp-table .dp-rowacts:focus-within {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-@media (hover: none) {
-  .dp-table .dp-rowacts { opacity: 1; pointer-events: auto; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .dp-table .dp-rowacts { transition: none; }
 }
 .dp-table .dp-rowerr { color: var(--color-alert); font-size: 0.76rem; }
 

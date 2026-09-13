@@ -1333,7 +1333,7 @@ function QueueDayBlock({
                   <div className="dp-rowacts">
                     <button
                       type="button"
-                      className="dp-btn is-small"
+                      className="dp-btn is-quiet"
                       disabled={busy.has(row.send.id) || row.send.id === firstInQueue}
                       onClick={() => onMoveToTop(row.send)}
                       title={
@@ -1348,7 +1348,7 @@ function QueueDayBlock({
                     </button>
                     <button
                       type="button"
-                      className={`dp-btn is-small ${armedUnstage(row.send.id) ? "is-armed" : ""}`}
+                      className={`dp-btn is-quiet ${armedUnstage(row.send.id) ? "is-armed" : ""}`}
                       disabled={busy.has(row.send.id)}
                       onClick={() => onUnstage(row.send)}
                       title={busy.has(row.send.id) ? "Taking this demo out now" : undefined}
