@@ -21,12 +21,12 @@ export default function Integrations() {
   return (
     <div className="mx-auto w-full max-w-4xl space-y-8">
       <header>
-        <h1 className="text-3xl font-semibold tracking-tight">Your <em className="voice">integrations</em></h1>
+        <h1 className="text-3xl font-semibold tracking-tight">Your <em className="voice text-tide [font-family:Georgia,serif]">integrations</em></h1>
         <p className="mt-3 text-gray">Connect your AI assistant or terminal to this Driftwood workspace.</p>
       </header>
 
       <section aria-labelledby="mcp-heading" className="rounded-xl border border-line bg-white p-6 sm:p-8">
-        <h2 id="mcp-heading" className="text-xl font-semibold">Connect your <em className="voice">AI assistant</em></h2>
+        <h2 id="mcp-heading" className="text-xl font-semibold">Connect your <em className="voice text-tide [font-family:Georgia,serif]">AI assistant</em></h2>
         <p className="mt-3 text-gray">Use an assistant that supports remote MCP servers to explore your pipeline, browse completed demos, and manage supported outreach tasks.</p>
         <ol className="my-5 list-decimal space-y-2 pl-5 text-sm text-gray">
           <li>Open connection settings and create a personal access token.</li>
@@ -38,7 +38,7 @@ export default function Integrations() {
       </section>
 
       <section aria-labelledby="cli-heading" className="rounded-xl border border-line bg-white p-6 sm:p-8">
-        <h2 id="cli-heading" className="text-xl font-semibold">Set up from your <em className="voice">terminal</em></h2>
+        <h2 id="cli-heading" className="text-xl font-semibold">Set up from your <em className="voice text-tide [font-family:Georgia,serif]">terminal</em></h2>
         <p className="mt-3 text-gray">The Driftwood CLI guides company setup, account connections, team invitations, assets, and send schedules. You can resume setup where you left off.</p>
         <p className="mt-4 rounded-lg bg-tide-wash p-4 text-sm text-ink">Available for early testing through the Driftwood team. Public installation is not available yet. Once the CLI is installed, use these commands:</p>
         <div className="mt-5 space-y-4">
