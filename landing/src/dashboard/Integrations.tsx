@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 const commands = [
+  { label: "Install the CLI", command: "uv tool install --python 3.12 driftwood-cli" },
   { label: "Sign in to your workspace", command: "driftwood login" },
   { label: "Continue company setup", command: "driftwood onboard resume" },
   { label: "Check your connections", command: "driftwood doctor" },
@@ -40,7 +41,7 @@ export default function Integrations() {
       <section aria-labelledby="cli-heading" className="rounded-xl border border-line bg-white p-6 sm:p-8">
         <h2 id="cli-heading" className="text-xl font-semibold">Set up from your <em className="voice text-tide [font-family:Georgia,serif]">terminal</em></h2>
         <p className="mt-3 text-gray">The Driftwood CLI guides company setup, account connections, team invitations, assets, and send schedules. You can resume setup where you left off.</p>
-        <p className="mt-4 rounded-lg bg-tide-wash p-4 text-sm text-ink">Available for early testing through the Driftwood team. Public installation is not available yet. Once the CLI is installed, use these commands:</p>
+        <p className="mt-4 rounded-lg bg-tide-wash p-4 text-sm text-ink">Start by <a href="https://docs.astral.sh/uv/getting-started/installation/" className="text-tide underline underline-offset-2">installing uv</a>, then run the commands below. The CLI uses Python 3.12 and your operating system’s credential store. <a href="https://pypi.org/project/driftwood-cli/" className="text-tide underline underline-offset-2">View the package on PyPI.</a></p>
         <div className="mt-5 space-y-4">
           {commands.map(({ label, command }) => (
             <div key={command}>
