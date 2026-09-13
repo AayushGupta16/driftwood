@@ -106,9 +106,15 @@ if (mockMode) {
     channel_state,
     ...extra,
   });
+  /* `?senders=one` leaves one account per channel, which is the common
+     workspace and the state where the queue's From column has nothing to
+     say. Without it the fixture keeps two LinkedIn seats. */
+  const oneSenderPerChannel = params.get("senders") === "one";
   const xMode = params.get("x");
   const mockAccounts: Record<"linkedin" | "email" | "x", MockAccount[]> = {
-    linkedin: [
+    linkedin: oneSenderPerChannel
+      ? [account("acct-li-1", viewer.name, viewer, "active", {})]
+      : [
       account("acct-li-1", viewer.name, viewer, "active", {}),
       account("acct-li-2", sam.name, sam, "active", {}),
     ],
@@ -296,6 +302,12 @@ if (mockMode) {
   /* The page groups by the projected date in the reader's own timezone, so
      the fixture's days are local days. dateAhead() is UTC and drifts a day
      after 5pm Pacific, which would label today's block "Tomorrow". */
+  /* Demo slugs that resolve to real bytes. The page asks for /d/<slug>, and
+     the browser folds "/d/../case-autosana.mp4" to "/case-autosana.mp4"
+     before it ever leaves, so these fixtures serve three clips that really
+     play, out of the landing assets, in dev and on a preview alike. Without
+     them every card is a dead frame and the console carries a 404 per card. */
+  const clip = (name: string) => `../${name}`;
   const localDateAhead = (dayOffset: number) => {
     const at = new Date();
     at.setDate(at.getDate() + dayOffset);
@@ -375,7 +387,7 @@ if (mockMode) {
         title: "Northstar · pricing page drops the plan choice",
         body: "Picking the Growth plan on northstar.io/pricing and pressing back loses the choice, so checkout opens on Starter.",
         lead: lead("Priya Patel", "Head of Growth", "Northstar"),
-        attachment_slug: "northstar-pricing-fix",
+        attachment_slug: clip("compare.mp4"),
         evidence: {
           repro_steps: [
             "Open northstar.io/pricing on a clean profile",
@@ -395,7 +407,7 @@ if (mockMode) {
         title: "Autosana · run history loses its filter",
         body: "The run history filter resets to All every time a run finishes, so a long suite cannot be watched on one label.",
         lead: lead("Yuvan Kumar", "CEO", "Autosana"),
-        attachment_slug: "autosana-run-filter",
+        attachment_slug: clip("case-autosana.mp4"),
         evidence: {
           repro_steps: [
             "Open the run history and filter to one label",
@@ -414,7 +426,7 @@ if (mockMode) {
         title: "Meridian · booking flow bug",
         body: "Selecting a same-day slot on meridian.com/book throws a 500 and drops the reservation.",
         lead: lead("Dana Whitfield", "VP Ops", "Meridian"),
-        attachment_slug: "meridian-booking-500",
+        attachment_slug: clip("case-oruk.mp4"),
         evidence: {
           repro_steps: [
             "Open meridian.com/book and pick today",
@@ -443,7 +455,7 @@ if (mockMode) {
         subject: "The plan choice your pricing page loses",
         body: "Hey Priya,\n\nPicking Growth on your pricing page and pressing back opens checkout on Starter. Here is a 22-second clip of it, and the fix running.\n\nWorth a look?\n\nBest,\nAayush",
         lead: lead("Priya Patel", "Head of Growth", "Northstar"),
-        attachment_slug: "northstar-pricing-fix", evidence: null, status: "pending",
+        attachment_slug: clip("compare.mp4"), evidence: null, status: "pending",
         decision_reason: null, decided_at: null, scheduled_batch_id: null,
         created_at: hoursAgo(29.5),
       },
@@ -453,7 +465,7 @@ if (mockMode) {
         subject: "Same-day booking is dropping reservations",
         body: "Hey Dana,\n\nA same-day slot on meridian.com/book returns a 500 and the reservation disappears. Short clip of the repro, and of it working after the fix.\n\nHappy to run the same pass on your next release.\n\nBest,\nAayush",
         lead: lead("Dana Whitfield", "VP Ops", "Meridian"),
-        attachment_slug: "meridian-booking-500", evidence: null, status: "pending",
+        attachment_slug: clip("case-oruk.mp4"), evidence: null, status: "pending",
         decision_reason: null, decided_at: null, scheduled_batch_id: null,
         created_at: hoursAgo(1),
       },
@@ -516,7 +528,7 @@ if (mockMode) {
       {
         id: "s3", batch_id: "sb2", kind: "message",
         note: "hey priya, found a dead link on northstar's pricing page. built you a working demo of the fix, 19 seconds, link below. worth a look?",
-        attachment_slug: "northstar-pricing-fix", lead: lead("Priya Patel", "Head of Growth", "Northstar"),
+        attachment_slug: clip("compare.mp4"), lead: lead("Priya Patel", "Head of Growth", "Northstar"),
         status: "pending", error: null, error_class: null,
         due_at: daysAhead(0.2), projected_date: dateAhead(0), created_at: hoursAgo(21),
       },
@@ -545,7 +557,7 @@ if (mockMode) {
         id: "s9", batch_id: "sb5", kind: "email",
         subject: "The plan choice your pricing page loses",
         note: "Hey Priya,\n\nPicking Growth on your pricing page and pressing back opens checkout on Starter. Here is a 22-second clip of it, and the fix running.\n\nWorth a look?\n\nBest,\nAayush",
-        attachment_slug: "northstar-pricing-fix", lead: lead("Priya Patel", "Head of Growth", "Northstar"),
+        attachment_slug: clip("compare.mp4"), lead: lead("Priya Patel", "Head of Growth", "Northstar"),
         status: "pending", error: null, error_class: null,
         due_at: daysAhead(0.3), projected_date: dateAhead(0), created_at: hoursAgo(9),
       },
@@ -560,7 +572,7 @@ if (mockMode) {
         id: "s11", batch_id: "sb5", kind: "email",
         subject: "Same-day booking is dropping reservations",
         note: "Hey Dana,\n\nA same-day slot on meridian.com/book returns a 500 and the reservation disappears. Short clip of the repro, and of it working after the fix.\n\nBest,\nAayush",
-        attachment_slug: "meridian-booking-500", lead: lead("Dana Whitfield", "VP Ops", "Meridian"),
+        attachment_slug: clip("case-oruk.mp4"), lead: lead("Dana Whitfield", "VP Ops", "Meridian"),
         status: "pending", error: null, error_class: null,
         due_at: daysAhead(1.4), projected_date: dateAhead(1), created_at: hoursAgo(7),
       },
