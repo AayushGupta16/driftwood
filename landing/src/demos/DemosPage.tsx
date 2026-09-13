@@ -859,6 +859,9 @@ function DemoCard({
   const lead = demo.lead;
   const role = [lead?.title, lead?.company].filter(Boolean).join(", ");
   const videoRef = useRef<HTMLVideoElement>(null);
+  /* A clip that will not play has no moment to jump to, so the timestamp
+     link goes with it rather than becoming a dead click. */
+  const [videoFailed, setVideoFailed] = useState(false);
 
   /* The timestamp link drives the clip on this card: jump there, play, and
      bring the player into view, since it sits under the email. */
@@ -895,14 +898,19 @@ function DemoCard({
           clip. The four label rows this replaced pushed the demo itself off
           the bottom of the card, which is the one thing an approver watches. */}
       {demo.claim && <p className="dp-claim">{demo.claim}</p>}
-      <BugLine demo={demo} onSeek={seekVideo} />
+      <BugLine demo={demo} playable={Boolean(demo.videoSlug) && !videoFailed} onSeek={seekVideo} />
       {demo.body && (
         <div className="dp-media">
           <EmailPreview subject={demo.subject} body={demo.body} />
         </div>
       )}
       {demo.videoSlug && (
-        <DemoVideo ref={videoRef} slug={demo.videoSlug} label={demo.heading} />
+        <DemoVideo
+          ref={videoRef}
+          slug={demo.videoSlug}
+          label={demo.heading}
+          onFailed={() => setVideoFailed(true)}
+        />
       )}
 
       {demo.canDecide && (
@@ -981,7 +989,15 @@ function DemoCard({
 /* One line for where the bug shows, and the steps behind a disclosure. The
    device is gone from the card: it does not help anyone decide whether to
    send this demo, and it cost a whole row above the clip. */
-function BugLine({ demo, onSeek }: { demo: StagedDemo; onSeek: (seconds: number) => void }) {
+function BugLine({
+  demo,
+  playable,
+  onSeek,
+}: {
+  demo: StagedDemo;
+  playable: boolean;
+  onSeek: (seconds: number) => void;
+}) {
   const [stepsOpen, setStepsOpen] = useState(false);
   const evidence = demo.evidence;
   const steps = Array.isArray(evidence?.repro_steps) ? evidence.repro_steps : [];
@@ -992,11 +1008,12 @@ function BugLine({ demo, onSeek }: { demo: StagedDemo; onSeek: (seconds: number)
       : `https://${evidence.url}`
     : null;
   const hasSteps = steps.length > 0 || Boolean(href);
-  if (seconds === null && !hasSteps) return null;
+  const canSeek = seconds !== null && playable;
+  if (!canSeek && !hasSteps) return null;
   return (
     <div className="dp-bugline">
       <p>
-        {seconds !== null && demo.videoSlug && (
+        {canSeek && (
           <button type="button" className="dp-seek" onClick={() => onSeek(seconds)}>
             Bug visible at {timestampLabel(seconds)}
           </button>
@@ -1042,10 +1059,12 @@ function DemoVideo({
   ref,
   slug,
   label,
+  onFailed,
 }: {
   ref: RefObject<HTMLVideoElement | null>;
   slug: string;
   label: string;
+  onFailed: () => void;
 }) {
   const [duration, setDuration] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
@@ -1070,7 +1089,10 @@ function DemoVideo({
           preload="metadata"
           src={href}
           aria-label={`Demo for ${label}`}
-          onError={() => setFailed(true)}
+          onError={() => {
+            setFailed(true);
+            onFailed();
+          }}
           onLoadedMetadata={() => {
             const seconds = ref.current?.duration;
             if (typeof seconds === "number" && Number.isFinite(seconds) && seconds > 0)
